@@ -1,2 +1,11 @@
-# Auto detect text files and perform LF normalization
+# Normalize text across development machines.
 * text=auto
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.svg text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.woff2 binary

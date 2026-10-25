@@ -1,44 +1,78 @@
-# Dependencies
-node_modules
-.pnp
-.pnp.js
+# Dependencies and package-manager caches
+node_modules/
+.pnp.*
+.npm/
+.pnpm-store/
+.yarn/*
+!.yarn/patches/
+!.yarn/plugins/
+!.yarn/releases/
+!.yarn/sdks/
+!.yarn/versions/
 
-# Next.js
+# Framework and build output
 .next/
 out/
-
-# Build
 dist/
 build/
+.turbo/
+.cache/
 *.tsbuildinfo
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Local environment and credentials (keep distributable templates)
+.env*
+*.env
+*.env.*
+!.env.example
+!**/.env.example
+!*.env.example
+!**/*.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# Test, coverage and browser artifacts
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+scripts/testbench/reports/
 
-# OS
-.DS_Store
-Thumbs.db
+# Local databases and dumps
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-journal
+*.dump
 
-# IDE
-.idea/
-.vscode/
+# Logs and temporary files
+*.log
+*.pid
+*.pid.lock
+*.tmp
+*.temp
 *.swp
 *.swo
-.env*
+*~
+
+# OS, editors, hosting and local infrastructure
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
 .vercel/
+.netlify/
+supabase/.temp/
+supabase/.branches/
 
-# Catatan agen lokal (tidak di-push)
+# Machine-local agent instructions and isolated workspaces
 AGENTS.md
-
-# Laporan test bench lokal (berisi output model)
-scripts/testbench/reports/
+.worktrees/

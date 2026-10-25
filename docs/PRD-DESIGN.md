@@ -1,9 +1,11 @@
 # Dengar.in — Design Product Requirements Document (Design PRD)
 
+> Historical Dengar.in / AMD project record. For current Sela setup, ownership, and event scope, see the [README](../README.md) and [documentation index](README.md).
+
 > **Document Status:** Active / Canonical Design Specification  
 > **Target Audience:** Stitch, UI/UX Designers, Frontend Engineers, Visual Reviewers, Design QA  
 > **Scope:** Pure Visual Language, Interaction Principles, Design System, Layouts, Components, Responsive Behavior, States, and Screen Specifications.  
-> *Note: This is a standalone design specification. For product strategy, backend architecture, or AI models, refer to [PRD.md](file:///c:/Users/Iqbal%20Dovandra/Project%20Code/Kompe/Denger.in/docs/PRD.md) and [API_SPEC.md](file:///c:/Users/Iqbal%20Dovandra/Project%20Code/Kompe/Denger.in/docs/API_SPEC.md).*
+> *Note: This is a standalone design specification. For product strategy, backend architecture, or AI models, refer to [PRD.md](PRD.md) and [API_SPEC.md](API_SPEC.md).*
 
 ---
 

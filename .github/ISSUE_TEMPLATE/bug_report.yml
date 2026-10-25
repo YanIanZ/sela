@@ -1,0 +1,25 @@
+name: Bug report
+description: Report a reproducible problem using synthetic data.
+body:
+  - type: markdown
+    attributes:
+      value: "For vulnerabilities or exposed data, use the private process in SECURITY.md. Do not include personal stories, credentials, or recovery keys."
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the page, selected language, and a synthetic example.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, operating system, and commit or deployment URL.

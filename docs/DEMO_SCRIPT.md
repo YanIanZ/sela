@@ -1,5 +1,7 @@
 # Skrip Demo Dengar.in CareBridge (≤ 4 menit)
 
+> Historical Dengar.in / AMD project record. For current Sela setup, ownership, and event scope, see the [README](../README.md) and [documentation index](README.md).
+
 Task: AMD-16 · Fixture: `tests/carebridge/fixtures.mjs` (hanya kasus sintetis A–E) · Rubrik: [CAREBRIDGE_EVAL_RUBRIC.md](CAREBRIDGE_EVAL_RUBRIC.md) · Batas video lablab: **≤ 5 menit, < 300 MB** (target internal 4 menit agar ada ruang potong).
 
 **Status 16 Oktober 2026:** halaman `/care-passport`, route `/api/care-passport`, pratinjau redaksi, review, ekspor, `/support-options`, dan `/review-demo` sudah diimplementasikan dan memiliki cakupan test (AMD-12 selesai). Endpoint AMD dapat diuji melalui probe. Bagian "Yang bisa direkam hari ini" (§5) menjelaskan apa yang sudah bisa diperlihatkan tanpa AMD. Jangan merekam versi final sebelum trace AMD nyata ada.

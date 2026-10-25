@@ -1,5 +1,7 @@
 # Aturan Kolaborasi: Push, PR, dan Kepemilikan File
 
+> Historical Dengar.in / AMD project record. For current Sela setup, ownership, and event scope, see the [README](../README.md) and [documentation index](README.md).
+
 Berlaku untuk seluruh tim Dengar.in 2.0 mulai 14 Okt 2026. Tujuannya satu: **tidak ada dua orang
 mengubah file yang sama di waktu yang sama**, dan setiap perubahan bisa dilacak ke tiket Jira.
 Pemetaan wilayah mengikuti epic Jira (proyek `SCRUM`).

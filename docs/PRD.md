@@ -1,5 +1,7 @@
 # PRODUCT REQUIREMENTS DOCUMENT (PRD) — Dengar.in
 
+> Historical Dengar.in / AMD project record. For current Sela setup, ownership, and event scope, see the [README](../README.md) and [documentation index](README.md).
+
 **Product**: Dengar.in (Pendamping Mental Well-being Anonim Berbasis AI)  
 **Version**: 1.0.0 (MVP Foundation)  
 **Competition Target**: MindCraft Web Competition 2026  

@@ -1,5 +1,7 @@
 # Dengar.in CareBridge — AMD Track 2 Development Plan
 
+> Historical Dengar.in / AMD project record. For current Sela setup, ownership, and event scope, see the [README](../README.md) and [documentation index](README.md).
+
 **Event:** AMD Developer Hackathon: ACT III — Track 2, Health & Wellbeing  
 **Planning date:** 2026-10-13 (Asia/Jakarta)  
 **Repository:** https://github.com/iqbalscript/Denger.in-Web-Project  

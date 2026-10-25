@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest an improvement to Sela.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User need
+      description: Who needs this, and what are they trying to do? Use synthetic examples.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the behavior and any Indonesian/English or privacy considerations.
+    validations:
+      required: true

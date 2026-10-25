@@ -1,5 +1,7 @@
 # PROJECT CONTEXT — Dengar.in
 
+> Historical Dengar.in / AMD project record. For current Sela setup, ownership, and event scope, see the [README](../README.md) and [documentation index](README.md).
+
 **Product Name**: Dengar.in  
 **Tagline / Positioning**: *"Pendamping Mental Well-being Anonim Berbasis AI"*  
 **Target Group**: Users aged 15–54 across Indonesia  

@@ -1,5 +1,7 @@
 # Submission Copy — Dengar.in (AMD Developer Hackathon ACT III, Track 2)
 
+> Historical Dengar.in / AMD project record. For current Sela setup, ownership, and event scope, see the [README](../README.md) and [documentation index](README.md).
+
 Language: English (lablab.ai submissions are in English). Brand: **Dengar.in**. "CareBridge" is the module name only.
 Limits, verified 13 Oct 2026 at https://lablab.ai/ai-articles/hackathon-guidelines: title ≤ 50 chars, short description ≤ 255 chars, long description ≥ 100 words, video ≤ 5 min and < 300 MB, cover 16:9 recommended.
 

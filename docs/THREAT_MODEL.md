@@ -1,4 +1,4 @@
-> Audit correction, 16 Oct 2026: DREAD values below are prior estimates, not measured incident impact. BUG-09 is an observed shared-device risk, BUG-10 production logging is unverified, and BUG-11 is patched on this branch. Valid tracking is SCRUM-19; see docs/bugs/BUG_REPORT_2026-10-16_SECURITY_THREAT_MODEL.md.
+> Audit correction, 16 Oct 2026: DREAD values below are prior estimates, not measured incident impact. BUG-09 is an observed shared-device risk, BUG-10 production logging is unverified, and BUG-11 is patched on this branch. Valid tracking is SCRUM-19; the originally referenced security bug report is absent from this snapshot. See the [available bug index](bugs/README.md).
 
 # THREAT MODEL & SECURITY RISK ANALYSIS — Dengar.in
 
