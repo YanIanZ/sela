@@ -3,7 +3,7 @@
 > **A little space to feel heard.**
 > An anonymous, privacy-first wellbeing companion in **Indonesian and English**: talk, reflect, and prepare for a first mental health consultation.
 
-Sela is an individual continuation by **I Wayan Bagus Arya Darma Wiguna**, built on the existing Dengar.in team project. The inherited AMD / CareBridge work is documented below as project history; it does not describe a new Meta hackathon submission. Meta event requirements and submission scope have not yet been confirmed.
+Sela is an individual continuation by **I Wayan Bagus Arya Darma Wiguna**, built on the existing Dengar.in team project. The inherited AMD / CareBridge work is documented below as project history; it does not describe a new Meta hackathon submission. The target event is the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon). See [event notes](docs/META_EVENT_NOTES.md) for the checked waiver and remaining submission decisions.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)

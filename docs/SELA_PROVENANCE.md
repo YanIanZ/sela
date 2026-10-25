@@ -15,9 +15,11 @@ Sela is an individual continuation by I Wayan Bagus Arya Darma Wiguna
 - Original contributors and the MIT copyright notice are retained.
 - Historical commits owned by the Sela maintainer were normalized to one
   name and email; other contributors retain their authorship.
-- Historical AMD documents describe inherited work. The Meta event link,
-  eligibility requirements, model integration, and new submission scope
-  still need to be confirmed. No Meta integration is claimed by this rebrand.
+- Target event: Meta Global AI Developer Hackathon, Indie Developer track.
+  See [event notes](META_EVENT_NOTES.md). The user intends to participate solo.
+- Historical AMD documents describe inherited work. Meta model integration,
+  the new submission scope, and final eligibility still need verification.
+  No Meta integration is claimed by this rebrand.
 
 Internal `@dengarin/*` package names, storage keys, cookies, database
 migrations, and deployment examples retain their existing identifiers for
