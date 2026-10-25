@@ -26,19 +26,20 @@ export const metadata: Metadata = {
   // sehingga tab peramban, riwayat, dan pengumuman pembaca layar saat pindah
   // halaman (Next route announcer membaca document.title) menyebut halaman yang benar.
   title: {
-    default: 'Dengar.in: Ruang Aman untuk Bercerita & Rujukan Kesehatan Mental',
-    template: '%s | Dengar.in',
+    default: 'Sela: Ruang Aman untuk Bercerita & Rujukan Kesehatan Mental',
+    template: '%s | Sela',
   },
-  description: 'Ruang aman anonim tanpa registrasi untuk usia 15 hingga 50+ tahun. Tempat rehat, bercerita tanpa dihakimi, dan melangkah pelan-pelan, dengan asesmen non-diagnostik dan akses ke bantuan krisis terverifikasi.',
+  description: 'Pendamping wellbeing anonim dalam bahasa Indonesia dan Inggris. Ruang untuk bercerita, refleksi, dan menyiapkan catatan konsultasi. An anonymous wellbeing companion in Indonesian and English.',
   icons: {
     icon: '/icon.svg',
   },
   openGraph: {
-    title: 'Dengar.in: Gak harus beres semuanya hari ini.',
+    title: 'Sela — A little space to feel heard.',
     description: 'Ruang aman anonim untuk rehat, bercerita tanpa dihakimi, dan melangkah pelan-pelan. Tanpa akun, tanpa email.',
     locale: 'id_ID',
+    alternateLocale: ['en_US'],
     type: 'website',
-    siteName: 'Dengar.in',
+    siteName: 'Sela',
   },
 };
 

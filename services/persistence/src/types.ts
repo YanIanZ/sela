@@ -141,7 +141,7 @@ export interface SyncRepository {
 }
 
 /**
- * Operator/moderator account. NOT an end-user account — Dengar.in's
+ * Operator/moderator account. NOT an end-user account — Sela's
  * anonymous users never authenticate (see docs/SAFETY.md, Zero Unnecessary
  * PII). This exists solely to gate `/api/forum/[postId]/moderate`.
  */

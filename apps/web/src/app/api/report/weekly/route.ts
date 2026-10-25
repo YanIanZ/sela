@@ -37,7 +37,7 @@ function computeDominantMood(checkins: DailyCheckin[]): MoodScore {
 
 /**
  * POST /api/report/weekly
- * Dengar.in stores check-ins and missions locally in the browser (Zero
+ * Sela stores check-ins and missions locally in the browser (Zero
  * Unnecessary PII), so this endpoint stays stateless: it synthesizes a
  * WeeklyReportSummary from the client's own local history rather than
  * reading from a server-side database.

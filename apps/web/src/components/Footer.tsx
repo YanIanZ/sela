@@ -47,7 +47,7 @@ export function Footer() {
           <div className="md:col-span-5 space-y-5">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-[4px] bg-[#3357EE] border-2 border-[#151515] flex items-center justify-center text-white text-base font-bold shadow-[2px_2px_0px_#151515]" aria-hidden="true">
-                D
+                S
               </div>
               <span className="font-bold text-xl text-[#151515] tracking-[-0.02em]">{common.brand}</span>
             </div>

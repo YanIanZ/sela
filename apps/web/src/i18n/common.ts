@@ -7,7 +7,7 @@ import type { TextBundle } from './language';
 
 const id = {
   skipToContent: 'Langsung ke konten utama',
-  brand: 'Dengar.in',
+  brand: 'Sela',
   anonymous: '100% anonim',
   loading: 'Memuat...',
   preparingRoom: 'Menyiapkan ruangmu...',
@@ -23,7 +23,7 @@ const id = {
     main: 'Navigasi utama',
     bottom: 'Navigasi bawah',
     mobileMenu: 'Menu seluler',
-    brandHome: 'Dengar.in, ke halaman depan',
+    brandHome: 'Sela, ke halaman depan',
     chat: 'Ngobrol',
     chatMenu: 'Pilih cara ngobrol',
     chatMenuClose: 'Tutup pilihan cara ngobrol',
@@ -96,19 +96,19 @@ const id = {
 
   footer: {
     tagline:
-      'Teman cerita anonim yang mendengarkan tanpa menghakimi. Menemanimu memahami beban pikiran (sekolah, kampus, kerja, uang) dan mengambil langkah kecil yang aman.',
+      'Ruang sejenak untuk didengar. Teman cerita anonim yang mendengarkan tanpa menghakimi. Menemanimu memahami beban pikiran (sekolah, kampus, kerja, uang) dan mengambil langkah kecil yang aman.',
     noSignup: 'Tanpa daftar akun, tanpa email, tanpa nomor HP.',
     links: 'Akses mandiri',
     emergency: 'Kontak darurat',
     recoveryKey: 'Kunci Pemulihan (12 Bagian)',
     legalTitle: 'Batasan medis dan hukum:',
-    legalA: 'Dengar.in adalah pendamping mandiri,',
+    legalA: 'Sela adalah pendamping mandiri,',
     legalB: 'bukan pengganti psikolog, psikiater, layanan darurat, atau penasihat keuangan/hukum berizin',
     legalC:
-      '. Dengar.in tidak memberi diagnosis atau resep obat. Jika kamu dalam bahaya mendesak atau punya pikiran untuk mengakhiri hidup, segera hubungi',
+      '. Sela tidak memberi diagnosis atau resep obat. Jika kamu dalam bahaya mendesak atau punya pikiran untuk mengakhiri hidup, segera hubungi',
     legalLink: 'Healing119 di 119 ext 8',
     legalD: 'atau datang ke puskesmas, klinik, atau rumah sakit terdekat.',
-    copyright: '© 2026 Dengar.in',
+    copyright: '© 2026 Sela',
     credit: 'Website by Kata Justin Nama Timnya Gokil Udah (Telkom University Surabaya)',
   },
 
@@ -159,7 +159,7 @@ const id = {
 
   /** Disclaimer yang tampil di UI (artinya sama dengan CLINICAL_DISCLAIMER di packages/config). */
   disclaimer:
-    'Dengar.in adalah pendamping mandiri berbasis AI dan BUKAN pengganti psikolog, psikiater, diagnosis medis, atau layanan darurat. Jika kamu dalam bahaya mendesak, segera hubungi 119 ext 8.',
+    'Sela adalah pendamping mandiri berbasis AI dan BUKAN pengganti psikolog, psikiater, diagnosis medis, atau layanan darurat. Jika kamu dalam bahaya mendesak, segera hubungi 119 ext 8.',
 
   notFound: {
     title: 'Halaman tidak ditemukan',
@@ -170,7 +170,7 @@ const id = {
 
 const en: typeof id = {
   skipToContent: 'Skip to main content',
-  brand: 'Dengar.in',
+  brand: 'Sela',
   anonymous: '100% anonymous',
   loading: 'Loading...',
   preparingRoom: 'Getting your space ready...',
@@ -186,7 +186,7 @@ const en: typeof id = {
     main: 'Main navigation',
     bottom: 'Bottom navigation',
     mobileMenu: 'Mobile menu',
-    brandHome: 'Dengar.in, go to the front page',
+    brandHome: 'Sela, go to the front page',
     chat: 'Talk',
     chatMenu: 'Choose how to talk',
     chatMenuClose: 'Close the talk options',
@@ -258,19 +258,19 @@ const en: typeof id = {
 
   footer: {
     tagline:
-      'An anonymous listening companion that never judges. It helps you understand what is weighing on you (school, campus, work, money) and take small, safe steps.',
+      'A little space to feel heard. An anonymous listening companion that never judges. It helps you understand what is weighing on you (school, campus, work, money) and take small, safe steps.',
     noSignup: 'No sign-up, no email, no phone number.',
     links: 'Self-help',
     emergency: 'Emergency contacts',
     recoveryKey: 'Recovery Key (12 Parts)',
     legalTitle: 'Medical and legal limits:',
-    legalA: 'Dengar.in is a self-help companion,',
+    legalA: 'Sela is a self-help companion,',
     legalB: 'not a replacement for a psychologist, psychiatrist, emergency service, or licensed financial/legal adviser',
     legalC:
-      '. Dengar.in does not give diagnoses or prescriptions. If you are in immediate danger or thinking about ending your life, call',
+      '. Sela does not give diagnoses or prescriptions. If you are in immediate danger or thinking about ending your life, call',
     legalLink: 'Healing119 at 119 ext 8',
     legalD: 'or go to the nearest hospital or community health centre (puskesmas).',
-    copyright: '© 2026 Dengar.in',
+    copyright: '© 2026 Sela',
     credit: 'Website by Kata Justin Nama Timnya Gokil Udah (Telkom University Surabaya)',
   },
 
@@ -315,7 +315,7 @@ const en: typeof id = {
   cost: { gratis: 'Free', tarif_standar: 'Standard call rates' },
 
   disclaimer:
-    'Dengar.in is an AI-based self-help companion and NOT a replacement for a psychologist, psychiatrist, medical diagnosis, or emergency service. If you are in immediate danger, call 119 ext 8 right away.',
+    'Sela is an AI-based self-help companion and NOT a replacement for a psychologist, psychiatrist, medical diagnosis, or emergency service. If you are in immediate danger, call 119 ext 8 right away.',
 
   notFound: {
     title: 'Page not found',

@@ -40,7 +40,7 @@ function isRouteActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-// Dua cara ngobrol dengan Dengar.in, dikumpulkan dalam satu tombol: menulis
+// Dua cara ngobrol dengan Sela, dikumpulkan dalam satu tombol: menulis
 // (/chat) atau berbicara (/ruang-ngobrol). Dipakai oleh menu desktop dan dock bawah.
 function ngobrolOptions(t: NavText) {
   return [
@@ -405,7 +405,7 @@ export function Navbar() {
             Saat teks diperbesar, .brand-wordmark disembunyikan di bawah 480px (globals.css). */}
         <div className="w-full max-w-7xl 2xl:max-w-none mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between min-h-[4.25rem] gap-2 xl:gap-4">
-            {/* LEFT: Dengar.in logo & 100% ANONIM */}
+            {/* LEFT: Sela logo & 100% ANONIM */}
             <div className="flex items-center gap-3 shrink-0">
               <Link
                 href="/"
@@ -413,7 +413,7 @@ export function Navbar() {
                 aria-label={t.brandHome}
               >
                 <div className="w-9 h-9 rounded-[4px] bg-[#3357EE] border-2 border-[#151515] flex items-center justify-center text-white shadow-[2px_2px_0px_#151515] transition-transform duration-120 group-hover:-translate-x-[1px] group-hover:-translate-y-[1px] shrink-0" aria-hidden="true">
-                  <span className="font-bold text-base tracking-tight">D</span>
+                  <span className="font-bold text-base tracking-tight">S</span>
                 </div>
                 <div className="brand-wordmark flex flex-col">
                   <span className="font-bold text-lg text-[#151515] tracking-tight leading-none whitespace-nowrap">

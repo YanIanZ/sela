@@ -59,7 +59,7 @@ const id = {
   export: (input: {
     date: string; activeDays: number; percent: number; day: number; journals: number;
     mood: string; observation: string; note: string;
-  }) => `--- Refleksi mingguan Dengar.in ---
+  }) => `--- Refleksi mingguan Sela ---
 Tanggal: ${input.date}
 Keteraturan check-in: ${input.activeDays} dari 7 hari (${input.percent}%)
 Misi selesai: hari ke-${input.day}
@@ -124,7 +124,7 @@ const en: typeof id = {
   nextFocusLabel: 'Focus for next week',
   nextFocus: 'Keep up the 5-minute daily mission, and try slow breathing when stress shows up.',
   continueToday: 'Continue to today',
-  export: (input) => `--- Dengar.in weekly reflection ---
+  export: (input) => `--- Sela weekly reflection ---
 Date: ${input.date}
 Check-in regularity: ${input.activeDays} of 7 days (${input.percent}%)
 Missions done: day ${input.day}

@@ -336,7 +336,7 @@ export const DOMAIN_CONFIGS: Record<InterventionDomain, { label: string; descrip
  * Mandatory Clinical & Legal Disclaimer
  */
 export const CLINICAL_DISCLAIMER = 
-  'Dengar.in adalah pendamping mandiri berbasis kecerdasan buatan dan BUKAN pengganti psikolog, psikiater, diagnosis medis, atau layanan darurat. Jika Anda berada dalam situasi bahaya mendesak, segera hubungi 119 ext 8.';
+  'Sela adalah pendamping mandiri berbasis kecerdasan buatan dan BUKAN pengganti psikolog, psikiater, diagnosis medis, atau layanan darurat. Jika Anda berada dalam situasi bahaya mendesak, segera hubungi 119 ext 8.';
 
 /**
  * Occupation & Context options for Onboarding

@@ -6,9 +6,9 @@
 import type { Language } from '../i18n/language.ts';
 
 export const BROWSER_VOICE_PRIVACY_DISCLOSURE =
-  'Suaramu diproses oleh fitur suara browser/perangkatmu. Dengar.in tidak menyimpan rekaman suara. Dukungan dan hasilnya bisa berbeda tiap browser.';
+  'Suaramu diproses oleh fitur suara browser/perangkatmu. Sela tidak menyimpan rekaman suara. Dukungan dan hasilnya bisa berbeda tiap browser.';
 export const BROWSER_VOICE_PRIVACY_DISCLOSURE_EN =
-  'Your voice is processed by your browser or device speech feature. Dengar.in does not store voice recordings. Support and results differ between browsers.';
+  'Your voice is processed by your browser or device speech feature. Sela does not store voice recordings. Support and results differ between browsers.';
 
 /** Pengungkapan privasi fitur suara sesuai bahasa antarmuka (makna sama). */
 export function browserVoicePrivacyDisclosure(lang: Language = 'id'): string {

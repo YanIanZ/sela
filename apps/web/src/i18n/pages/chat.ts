@@ -4,7 +4,7 @@ import type { TextBundle } from '@/i18n/language';
 const id = {
   backHome: 'Kembali ke beranda',
   crisisCheckActive: 'Pengecekan krisis aktif, tanpa AI',
-  pageTitle: 'Teman Bicara Dengar.in',
+  pageTitle: 'Teman Bicara Sela',
   headerTitle: 'Teman Bicara',
   headerStatus: 'Aktif',
   headerSubtitle: 'Dibantu AI, mendengarkan tanpa menghakimi',
@@ -35,7 +35,7 @@ const id = {
     'Aku cuma butuh tempat aman buat cerita tanpa dihakimi',
   ],
   welcome:
-    'Halo, aku Dengar.in, teman ngobrol anonimmu. Di sini kamu boleh cerita apa saja tanpa dihakimi, entah soal tugas, kerjaan, hubungan, atau uang. Tidak perlu rapi, dan tidak perlu buru-buru. Apa yang lagi paling terasa berat buatmu sekarang?',
+    'Halo, aku Sela, teman ngobrol anonimmu. Di sini kamu boleh cerita apa saja tanpa dihakimi, entah soal tugas, kerjaan, hubungan, atau uang. Tidak perlu rapi, dan tidak perlu buru-buru. Apa yang lagi paling terasa berat buatmu sekarang?',
   welcomeAgain: 'Halo lagi. Kita mulai obrolan baru, ya. Aku di sini kalau kamu mau cerita, kapan pun kamu siap.',
   voiceDisclosureCancel: 'Batal',
   voiceDisclosureStart: 'Mulai bicara',
@@ -75,7 +75,7 @@ const id = {
 const en: typeof id = {
   backHome: 'Back to home',
   crisisCheckActive: 'Crisis check on, no AI',
-  pageTitle: 'Dengar.in Listening Companion',
+  pageTitle: 'Sela Listening Companion',
   headerTitle: 'Listening Companion',
   headerStatus: 'Active',
   headerSubtitle: 'AI-assisted, listening without judging',
@@ -106,7 +106,7 @@ const en: typeof id = {
     'I just need a safe place to talk without being judged',
   ],
   welcome:
-    'Hi, I am Dengar.in, your anonymous listening companion. You can talk about anything here without being judged, whether it is school, work, relationships, or money. It does not have to be neat, and there is no rush. What feels heaviest for you right now?',
+    'Hi, I am Sela, your anonymous listening companion. You can talk about anything here without being judged, whether it is school, work, relationships, or money. It does not have to be neat, and there is no rush. What feels heaviest for you right now?',
   welcomeAgain: 'Hello again. We are starting a new conversation. I am here whenever you are ready to talk.',
   voiceDisclosureCancel: 'Cancel',
   voiceDisclosureStart: 'Start speaking',

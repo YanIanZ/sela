@@ -1,8 +1,8 @@
 {
-  "name": "dengarin-monorepo",
+  "name": "sela-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "Dengar.in — Pendamping Mental Well-being Anonim Berbasis AI",
+  "description": "Sela — an anonymous wellbeing companion in Indonesian and English",
   "workspaces": [
     "apps/*",
     "packages/*",
@@ -73,9 +73,12 @@
     "ai-orchestrator",
     "crisis-safety"
   ],
-  "author": "Dengar.in Team",
+  "author": "I Wayan Bagus Arya Darma Wiguna",
   "license": "MIT",
   "devDependencies": {
     "protobufjs": "^8.8.1"
-  }
+  },
+  "contributors": [
+    "Dengar.in Team (original project)"
+  ]
 }

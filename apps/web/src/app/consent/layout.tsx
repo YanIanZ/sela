@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 // Halaman ini komponen klien, jadi judul tab dan deskripsinya ditetapkan di sini.
 export const metadata: Metadata = {
   title: 'Persetujuan dan privasi',
-  description: 'Apa yang Dengar.in simpan, apa yang tidak, dan bagaimana datamu dijaga.',
+  description: 'Apa yang Sela simpan, apa yang tidak, dan bagaimana datamu dijaga.',
 };
 
 export default function Layout({ children }: { children: ReactNode }) {

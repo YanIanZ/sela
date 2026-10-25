@@ -1,6 +1,6 @@
 /**
  * @dengarin/types
- * Core shared TypeScript contracts for Dengar.in
+ * Core shared TypeScript contracts for Sela
  */
 
 // ==========================================

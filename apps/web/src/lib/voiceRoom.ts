@@ -13,9 +13,9 @@ export const VOICE_ROOM_EXPIRY_WARNING_MS = 60 * 1000;
 export const VOICE_ROOM_MAX_CAPTIONS = 8;
 export const VOICE_ROOM_MAX_HISTORY = 6;
 export const VOICE_ROOM_PRIVACY_DISCLOSURE =
-  'Suaramu diproses oleh fitur suara browser/perangkatmu; dukungan dan hasilnya bisa berbeda tiap browser. Suara Dengar.in dibuat Google Gemini dari balasan yang sudah dicek aman. Dengar.in tidak menyimpan rekaman mikrofon atau audio suara yang dibuat.';
+  'Suaramu diproses oleh fitur suara browser/perangkatmu; dukungan dan hasilnya bisa berbeda tiap browser. Suara Sela dibuat Google Gemini dari balasan yang sudah dicek aman. Sela tidak menyimpan rekaman mikrofon atau audio suara yang dibuat.';
 export const VOICE_ROOM_PRIVACY_DISCLOSURE_EN =
-  'Your voice is processed by your browser or device speech feature; support and results differ between browsers. The Dengar.in voice is made by Google Gemini from a reply that has already passed safety checks. Dengar.in does not store microphone recordings or the generated audio.';
+  'Your voice is processed by your browser or device speech feature; support and results differ between browsers. The Sela voice is made by Google Gemini from a reply that has already passed safety checks. Sela does not store microphone recordings or the generated audio.';
 
 /** Pengungkapan privasi ruang suara sesuai bahasa antarmuka (makna sama di kedua bahasa). */
 export function voiceRoomPrivacyDisclosure(lang: Language = 'id'): string {
@@ -100,7 +100,7 @@ const ACTION_FALLBACK_TEXT = {
     suggest_mission: 'Aku menyarankan satu misi singkat untuk membantumu saat ini:',
     open_journal_prompt: 'Mungkin menulis isi pikiranmu di jurnal bisa membantu melegakan:',
     suggest_forum: (topic: string) =>
-      `Banyak teman di Ruang Cerita Dengar.in yang juga menghadapi hal serupa di topik ${topic}. Kamu bisa membaca cerita mereka atau ikut bercerita secara anonim:`,
+      `Banyak teman di Ruang Cerita Sela yang juga menghadapi hal serupa di topik ${topic}. Kamu bisa membaca cerita mereka atau ikut bercerita secara anonim:`,
     show_help_directory: 'Kalau beban ini terasa butuh bantuan profesional, kamu bisa melihat daftar bantuan kami:',
     adjust_path: 'Kami menyarankan kamu mengatur ulang kecepatan langkahmu:',
   },
@@ -108,7 +108,7 @@ const ACTION_FALLBACK_TEXT = {
     suggest_mission: 'I suggest one short mission that may help you right now:',
     open_journal_prompt: 'Writing what is on your mind in your journal might bring some relief:',
     suggest_forum: (topic: string) =>
-      `Many people in the Dengar.in Story Room are going through something similar under the topic ${topic}. You can read their stories or share yours anonymously:`,
+      `Many people in the Sela Story Room are going through something similar under the topic ${topic}. You can read their stories or share yours anonymously:`,
     show_help_directory: 'If this feels like it needs professional help, you can look at our help directory:',
     adjust_path: 'We suggest adjusting the pace of your steps:',
   },

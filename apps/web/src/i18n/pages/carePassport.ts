@@ -12,7 +12,7 @@ const id = {
     networkError: 'Koneksi terputus atau server tidak menjawab. Ceritamu masih ada di sini; coba lagi sebentar lagi.',
     minorStep: 'Catatan Konsultasi',
     minorTitle: 'Bagian ini untuk pengguna 18 tahun ke atas.',
-    minorLede: 'Bagian lain Dengar.in tetap bisa kamu pakai. Kalau kamu butuh teman ngobrol sekarang, bantuan selalu ada.',
+    minorLede: 'Bagian lain Sela tetap bisa kamu pakai. Kalau kamu butuh teman ngobrol sekarang, bantuan selalu ada.',
     seeHelp: 'Lihat daftar bantuan',
     or: 'atau',
     backHome: 'kembali ke beranda',
@@ -47,7 +47,7 @@ const id = {
     points: [
       {
         title: 'Ini persetujuan terpisah',
-        body: 'Persetujuan umum Dengar.in tidak otomatis mencakup ini. Khusus halaman ini, ceritamu dikirim ke model AI untuk disusun menjadi catatan. Kamu boleh menolak dan tetap menulis catatan sendiri.',
+        body: 'Persetujuan umum Sela tidak otomatis mencakup ini. Khusus halaman ini, ceritamu dikirim ke model AI untuk disusun menjadi catatan. Kamu boleh menolak dan tetap menulis catatan sendiri.',
       },
       {
         title: 'Data pribadi disamarkan dulu',
@@ -281,7 +281,7 @@ const id = {
       seekHelp: 'Kapan perlu bantuan profesional',
       cautions: 'Perlu diingat',
       source: 'Sumber',
-      adapted: 'Diadaptasi oleh Dengar.in; penerbit asli tidak membuat dan tidak bertanggung jawab atas adaptasi ini.',
+      adapted: 'Diadaptasi oleh Sela; penerbit asli tidak membuat dan tidak bertanggung jawab atas adaptasi ini.',
       hide: 'Tidak perlu',
       hideAria: (title: string) => `Hapus langkah: ${title}`,
       hiddenNote: 'Kartu yang kamu hapus tidak ikut masuk ke file unduhan.',
@@ -365,7 +365,7 @@ const id = {
       seekHelp: 'Kapan perlu bantuan profesional',
       cautions: 'Perlu diingat',
       source: 'Sumber',
-      adapted: 'Diadaptasi oleh Dengar.in; penerbit asli tidak membuat dan tidak bertanggung jawab atas adaptasi ini.',
+      adapted: 'Diadaptasi oleh Sela; penerbit asli tidak membuat dan tidak bertanggung jawab atas adaptasi ini.',
     },
   },
 };
@@ -375,7 +375,7 @@ const en: typeof id = {
     networkError: 'The connection dropped or the server did not answer. Your story is still here; try again in a moment.',
     minorStep: 'Consultation Notes',
     minorTitle: 'This part is for people aged 18 and over.',
-    minorLede: 'You can still use the rest of Dengar.in. If you need someone to talk to right now, help is always there.',
+    minorLede: 'You can still use the rest of Sela. If you need someone to talk to right now, help is always there.',
     seeHelp: 'See the help list',
     or: 'or',
     backHome: 'go back home',
@@ -410,7 +410,7 @@ const en: typeof id = {
     points: [
       {
         title: 'This is a separate consent',
-        body: 'The general Dengar.in consent does not cover this automatically. On this page only, your story is sent to an AI model to be turned into notes. You can say no and still write the notes yourself.',
+        body: 'The general Sela consent does not cover this automatically. On this page only, your story is sent to an AI model to be turned into notes. You can say no and still write the notes yourself.',
       },
       {
         title: 'Personal data is masked first',
@@ -644,7 +644,7 @@ const en: typeof id = {
       seekHelp: 'When to seek professional help',
       cautions: 'Keep in mind',
       source: 'Source',
-      adapted: 'Adapted by Dengar.in; the original publisher did not create and is not responsible for this adaptation.',
+      adapted: 'Adapted by Sela; the original publisher did not create and is not responsible for this adaptation.',
       hide: 'Not for me',
       hideAria: (title: string) => `Remove step: ${title}`,
       hiddenNote: 'Cards you remove are left out of the downloaded file.',
@@ -728,7 +728,7 @@ const en: typeof id = {
       seekHelp: 'When to seek professional help',
       cautions: 'Keep in mind',
       source: 'Source',
-      adapted: 'Adapted by Dengar.in; the original publisher did not create and is not responsible for this adaptation.',
+      adapted: 'Adapted by Sela; the original publisher did not create and is not responsible for this adaptation.',
     },
   },
 };

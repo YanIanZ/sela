@@ -9,7 +9,7 @@ import type { Language, TextBundle } from '../language';
 const id = {
   levels: ['Mulai Pelan', 'Buka Ruang', 'Kenal Diri', 'Jaga Ritme', 'Bertumbuh', 'Tetap Berjalan'],
   badges: {
-    'langkah-pertama': { name: 'Langkah Pertama', description: 'Melakukan hal pertama di Dengar.in' },
+    'langkah-pertama': { name: 'Langkah Pertama', description: 'Melakukan hal pertama di Sela' },
     'berani-jujur': { name: 'Berani Jujur', description: 'Menulis jurnal untuk pertama kali' },
     'kasih-ruang': { name: 'Kasih Ruang', description: 'Menyelesaikan misi dengan refleksi' },
     'balik-lagi': { name: 'Balik Lagi', description: 'Aktif di 3 hari berbeda' },
@@ -26,7 +26,7 @@ const id = {
 const en: typeof id = {
   levels: ['Slow Start', 'Making Room', 'Knowing Yourself', 'Keeping Rhythm', 'Growing', 'Still Walking'],
   badges: {
-    'langkah-pertama': { name: 'First Step', description: 'Did your first thing on Dengar.in' },
+    'langkah-pertama': { name: 'First Step', description: 'Did your first thing on Sela' },
     'berani-jujur': { name: 'Brave and Honest', description: 'Wrote your first journal entry' },
     'kasih-ruang': { name: 'Making Space', description: 'Finished a mission with a reflection' },
     'balik-lagi': { name: 'Came Back', description: 'Active on 3 different days' },

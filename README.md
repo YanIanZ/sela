@@ -1,16 +1,19 @@
-# Dengar.in
+# Sela
 
-> **Anonymous, local-first mental wellbeing companion for Indonesia, with CareBridge: grounded consultation prep built for inference on AMD.**
-> Submission for **AMD Developer Hackathon ACT III, Track 2: Health and Wellbeing** (lablab.ai, October 2026).
+> **A little space to feel heard.**
+> An anonymous, privacy-first wellbeing companion in **Indonesian and English**: talk, reflect, and prepare for a first mental health consultation.
 
-[![AMD Developer Hackathon ACT III](https://img.shields.io/badge/AMD%20Developer%20Hackathon-ACT%20III%20%C2%B7%20Track%202-ED1C24.svg)](https://lablab.ai/ai-hackathons/amd-developer-hackathon-act-iii)
+Sela is an individual continuation by **I Wayan Bagus Arya Darma Wiguna**, built on the existing Dengar.in team project. The inherited AMD / CareBridge work is documented below as project history; it does not describe a new Meta hackathon submission. Meta event requirements and submission scope have not yet been confirmed.
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Live app:** https://dengar-in.vertalt.my.id · **Repository:** https://github.com/zlxrnn/dengar.in-2.0
+**Repository:** https://github.com/YanIanZ/sela
+
+The previous project deployment is not a Sela deployment. A Sela deployment has not been configured.
 
 ---
 
@@ -39,7 +42,7 @@
 
 Many Indonesian adults finally book a first session with a psychologist or counselor, then sit there unable to explain what has been happening, for how long, and what it affects. Stigma makes registration and real names a barrier, and hotlines are hard to find in the moment.
 
-Dengar.in is a privacy-first, zero-registration companion: chat (text or voice), daily check-ins, a private journal, an anonymous story forum, verified crisis contacts, and short micro-missions. For the hackathon we added **CareBridge**, which turns a hard-to-explain story into a user-owned **Care Passport** for that first consultation.
+Sela is a privacy-first, zero-registration companion: chat (text or voice), daily check-ins, a private journal, an anonymous story forum, verified crisis contacts, and short micro-missions. The inherited project includes **CareBridge**, which turns a hard-to-explain story into a user-owned **Care Passport** for that first consultation.
 
 ## AMD Developer Hackathon ACT III: what we built
 
@@ -88,7 +91,7 @@ Setup paths and the probe procedure: [`docs/AMD_SETUP.md`](docs/AMD_SETUP.md). T
 
 ## Pre-existing project and hackathon scope
 
-Dengar.in existed before the hackathon (anonymous chat, check-in, journal, forum, crisis resources). Work for AMD Developer Hackathon ACT III started on **13 October 2026**, beginning with commit `ff707c7` (CareBridge / Care Passport). Everything from that commit onward is hackathon work, including:
+Dengar.in existed before the hackathon (anonymous chat, check-in, journal, forum, crisis resources). Work for AMD Developer Hackathon ACT III started on **13 October 2026**, beginning with commit `bb55c01` (CareBridge / Care Passport). Everything from that commit onward is hackathon work, including:
 
 - CareBridge: Care Passport pipeline, AMD adapter and probe, grounding validator, PII redactor, `/api/care-passport/*`, `/care-passport` UI, dated evidence, opening lines, local export.
 - Safety: high-distress support pathway, English crisis detection, expanded crisis phrase coverage with regression tests.
@@ -304,10 +307,12 @@ Next.js route handlers in `apps/web/src/app/api/`. Full contracts: [`docs/API_SP
 
 ## Team
 
-Built by **Kata Justin Nama Timnya Gokil Udah** (Telkom University Surabaya).
+**Sela:** individual continuation by **I Wayan Bagus Arya Darma Wiguna** ([YanIanZ](https://github.com/YanIanZ)).
+
+**Original project:** Dengar.in, built by **Kata Justin Nama Timnya Gokil Udah** (Telkom University Surabaya). Original contributor attribution and the MIT copyright notice are retained. See [provenance](docs/SELA_PROVENANCE.md).
 
 ## Disclaimer and license
 
-> **Disclaimer:** Dengar.in is a self-help companion prototype and **not a replacement for licensed medical, psychiatric, or emergency services**. It does not diagnose, treat, triage, or prescribe, and it does not give legal or financial advice. All CareBridge demo data is synthetic. If you are in acute distress in Indonesia, contact **Healing119 (Kemenkes) at 119 ext 8** or local emergency services.
+> **Disclaimer:** Sela is a self-help companion prototype and **not a replacement for licensed medical, psychiatric, or emergency services**. It does not diagnose, treat, triage, or prescribe, and it does not give legal or financial advice. All CareBridge demo data is synthetic. If you are in acute distress in Indonesia, contact **Healing119 (Kemenkes) at 119 ext 8** or local emergency services.
 
 Licensed under the [MIT License](LICENSE).

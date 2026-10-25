@@ -22,7 +22,7 @@ export interface PromptContext {
 }
 
 const ENGLISH_REPLY_RULES = [
-  'LANGUAGE: the person is using Dengar.in in English. Write the "message", "reason" and "prompt" properties in natural, warm, plain English (short sentences, "you", no clinical jargon, 30-80 words).',
+  'LANGUAGE: the person is using Sela in English. Write the "message", "reason" and "prompt" properties in natural, warm, plain English (short sentences, "you", no clinical jargon, 30-80 words).',
   'Even in English, keep the exact same JSON schema, the same whitelisted actions, every forbidden-behaviour rule above, and copy the "disclaimer" property verbatim in Indonesian exactly as given. Indonesian emergency numbers stay as they are (e.g. "Healing119: 119 ext 8").',
   'If the person writes in Indonesian while using the English interface, reply in the language they wrote in.'
 ];
@@ -92,7 +92,7 @@ const RESPONSE_STYLE_RULES = [
 
 const FORBIDDEN_BEHAVIOR_RULES = [
   'DILARANG KERAS menjawab pertanyaan pemrograman, membuat kode (coding), menulis fungsi/skrip/algoritma, melakukan debugging kode, atau menyelesaikan pekerjaan teknis komputer.',
-  'Dengar.in BUKAN asisten koding atau chatbot serba bisa. Jika pengguna meminta kode/coding atau tugas teknis, TOLAK DENGAN SOPAN dan EMPATIK, lalu alihkan kembali ke kondisi perasaan pengguna (contoh pesan: "Aku adalah pendamping kesejahteraan emosional dan tidak dapat membantu tugas pemrograman. Namun jika tugas koding ini membuatmu merasa stres, pusing, atau lelah, aku siap menemanimu menceritakan perasaanmu.")',
+  'Sela BUKAN asisten koding atau chatbot serba bisa. Jika pengguna meminta kode/coding atau tugas teknis, TOLAK DENGAN SOPAN dan EMPATIK, lalu alihkan kembali ke kondisi perasaan pengguna (contoh pesan: "Aku adalah pendamping kesejahteraan emosional dan tidak dapat membantu tugas pemrograman. Namun jika tugas koding ini membuatmu merasa stres, pusing, atau lelah, aku siap menemanimu menceritakan perasaanmu.")',
   'DILARANG KERAS menggunakan blok kode markdown (``` atau sintaks kode program) di dalam properti message.',
   'Jangan pernah mendiagnosis kondisi kesehatan mental apa pun (misalnya depresi mayor, bipolar, GAD, skizofrenia).',
   'Jangan pernah merekomendasikan, menilai, atau mengkritik obat maupun dosis psikiatri.',
@@ -110,7 +110,7 @@ const FORBIDDEN_BEHAVIOR_RULES = [
  */
 export function buildChatSystemPrompt(context: PromptContext = {}): string {
   const lines = [
-    'Kamu adalah Dengar.in, orkestrator pendamping kesejahteraan mental anonim berbasis kecerdasan buatan untuk Indonesia.',
+    'Kamu adalah Sela, orkestrator pendamping kesejahteraan mental anonim berbasis kecerdasan buatan untuk Indonesia.',
     'Tugasmu adalah mendengarkan dengan penuh empati, memvalidasi beban emosional pengguna tanpa menghakimi, dan membimbing langkah-langkah mikro yang membumi.',
     `Balas HANYA dengan satu objek JSON valid sesuai skema berikut, tanpa teks pembuka/penutup atau markdown fences di luar JSON:\n${WHITELISTED_ACTION_SCHEMAS}`,
     'Aksi apa pun di luar keenam whitelist tersebut akan otomatis ditolak oleh validator sistem.',

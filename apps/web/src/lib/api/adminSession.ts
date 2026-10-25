@@ -19,7 +19,7 @@ export interface AdminAuthResult {
 
 /**
  * Verifies the admin session cookie on an incoming request. Gates every
- * /api/admin/* route and the forum moderation endpoint. Dengar.in's
+ * /api/admin/* route and the forum moderation endpoint. Sela's
  * anonymous end users never hold this cookie (docs/SAFETY.md, Zero
  * Unnecessary PII) — it exists solely for the operator/moderator dashboard.
  */

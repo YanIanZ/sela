@@ -22,7 +22,7 @@ export const ALLOWED_ACTIONS: readonly WhitelistedAIAction[] = [
 ] as const;
 
 export const STANDARD_DISCLAIMER =
-  'Dengar.in adalah pendamping mandiri berbasis kecerdasan buatan, bukan pengganti tenaga profesional kesehatan jiwa.';
+  'Sela adalah pendamping mandiri berbasis kecerdasan buatan, bukan pengganti tenaga profesional kesehatan jiwa.';
 const MAX_ACTION_TEXT_LENGTH = 1500;
 const MAX_SUGGESTED_TAGS = 8;
 

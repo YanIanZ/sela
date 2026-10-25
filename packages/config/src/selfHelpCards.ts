@@ -120,7 +120,7 @@ export interface SelfHelpAttribution {
   url: string;
   /**
    * True for CC BY-NC-SA material (WHO): the display must add the adaptation
-   * disclaimer required by the licence (adapted by Dengar.in; the licensor is
+   * disclaimer required by the licence (adapted by Sela; the licensor is
    * not responsible for the adaptation).
    */
   adapted: boolean;

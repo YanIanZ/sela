@@ -36,7 +36,7 @@ export const LEVEL_THRESHOLDS: LevelDefinition[] = [
 export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   // Nama level dan lencana Indonesia adalah data tersimpan dan dipakai tes;
   // teks Inggris dipetakan per id di i18n/pages/gamification.ts.
-  { id: 'langkah-pertama', name: 'Langkah Pertama', description: 'Melakukan hal pertama di Dengar.in' },
+  { id: 'langkah-pertama', name: 'Langkah Pertama', description: 'Melakukan hal pertama di Sela' },
   { id: 'berani-jujur',    name: 'Berani Jujur',    description: 'Menulis jurnal untuk pertama kali' },
   { id: 'kasih-ruang',     name: 'Kasih Ruang',     description: 'Menyelesaikan misi dengan refleksi' },
   { id: 'balik-lagi',      name: 'Balik Lagi',      description: 'Aktif di 3 hari berbeda' },

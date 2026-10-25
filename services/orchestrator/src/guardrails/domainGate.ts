@@ -4,7 +4,7 @@ import type { ValidatedAIAction } from '@dengarin/types';
 /**
  * DETERMINISTIC DOMAIN & CODING GATE (Pre-LLM Guardrail)
  *
- * Dengar.in is an anonymous emotional well-being companion, NOT a general-purpose
+ * Sela is an anonymous emotional well-being companion, NOT a general-purpose
  * coding assistant, homework solver, or programming terminal.
  *
  * This gate detects pure technical/coding prompts that lack genuine emotional
@@ -35,8 +35,8 @@ export interface DomainGateResult {
 }
 
 const OUT_OF_DOMAIN_MESSAGE = {
-  id: 'Dengar.in hadir khusus sebagai ruang aman untuk menemani perasaan dan kesehatan mentalmu, bukan asisten pemrograman. Aku tidak bisa membuatkan kode, skrip, atau mengerjakan tugas koding. Tapi kalau pekerjaan atau tugas ini sedang membuatmu tertekan, cemas, atau lelah, aku siap mendengarkan dan menemanimu.',
-  en: 'Dengar.in is here as a safe space for your feelings and mental well-being, not as a coding assistant. I cannot write code, scripts, or do programming tasks. But if this work is making you feel stressed, anxious, or worn out, I am here to listen and keep you company.'
+  id: 'Sela hadir khusus sebagai ruang aman untuk menemani perasaan dan kesehatan mentalmu, bukan asisten pemrograman. Aku tidak bisa membuatkan kode, skrip, atau mengerjakan tugas koding. Tapi kalau pekerjaan atau tugas ini sedang membuatmu tertekan, cemas, atau lelah, aku siap mendengarkan dan menemanimu.',
+  en: 'Sela is here as a safe space for your feelings and mental well-being, not as a coding assistant. I cannot write code, scripts, or do programming tasks. But if this work is making you feel stressed, anxious, or worn out, I am here to listen and keep you company.'
 } as const;
 
 export function evaluateDomainGate(message: string, lang: 'id' | 'en' = 'id'): DomainGateResult {

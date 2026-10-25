@@ -155,7 +155,7 @@ const EMPTY = 'Ceritanya masih kosong. Tulis dulu sedikit saja, ya.';
 const TOO_LARGE = `Ceritamu terlalu panjang untuk satu catatan. Coba ringkas sampai ${CARE_PASSPORT_MAX_TEXT} karakter, ya.`;
 const TOO_LARGE_TOTAL = `Cerita dan entri yang dipilih terlalu panjang untuk satu catatan. Batasnya ${CARE_PASSPORT_MAX_TOTAL_TEXT} karakter; coba kurangi entri yang disertakan.`;
 const TOO_MANY_SEGMENTS = `Entri yang disertakan terlalu banyak. Pilih paling banyak ${CARE_PASSPORT_MAX_SEGMENTS - 1} entri, ya.`;
-const MINOR = 'Fitur ini hanya untuk pengguna berusia 18 tahun ke atas. Kamu tetap bisa memakai bagian lain Dengar.in.';
+const MINOR = 'Fitur ini hanya untuk pengguna berusia 18 tahun ke atas. Kamu tetap bisa memakai bagian lain Sela.';
 
 type Validated =
   | {

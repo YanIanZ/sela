@@ -5,7 +5,7 @@ const id = {
   badge: 'Salinan dan pemulihan',
   title: 'Kunci pemulihan sesi pribadimu',
   intro:
-    'Dengar.in tidak menyimpan email atau nomor HP. Simpan 12 bagian kunci ini untuk membuat salinan dan memulihkan semua progresmu sendiri.',
+    'Sela tidak menyimpan email atau nomor HP. Simpan 12 bagian kunci ini untuk membuat salinan dan memulihkan semua progresmu sendiri.',
   keyTitle: '12 bagian kunci rahasia',
   keyOnlyYou: 'Hanya kamu yang memegang kunci ini',
   keyListAria: '12 bagian kunci pemulihan',
@@ -60,7 +60,7 @@ const en: typeof id = {
   badge: 'Backup copy and recovery',
   title: 'The recovery key for your private session',
   intro:
-    'Dengar.in does not store an email or phone number. Keep these 12 key parts to save a copy and restore all your progress on your own.',
+    'Sela does not store an email or phone number. Keep these 12 key parts to save a copy and restore all your progress on your own.',
   keyTitle: '12 secret key parts',
   keyOnlyYou: 'Only you hold this key',
   keyListAria: '12-part recovery key',
