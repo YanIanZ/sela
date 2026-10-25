@@ -38,7 +38,7 @@ const SELF_HELP_RULE = `"selfHelp": 0 sampai ${SELF_HELP_MAX_CARDS} kartu dari K
  * Escalation criteria (SCRUM-44). Kept as ONE rule so the model reads the
  * positive list, the negative list and the quote requirement together.
  * The validator enforces the quote; the deterministic crisis engine stays
- * the safety net underneath (docs/CAREBRIDGE_SAFETY_POLICY.md §4).
+ * the safety net underneath (docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §4).
  */
 const ESCALATION_RULE = `"humanSupportSuggested" HANYA true jika cerita memuat salah satu dari ini, dan "humanSupportQuote" WAJIB berisi kutipan persis kalimat pengguna yang menjadi alasannya:
    a. pikiran tentang kematian, menghilang, atau menyakiti diri, walau samar, pasif, atau tanpa rencana ("semua orang lebih baik tanpa aku", "lebih baik aku nggak ada");

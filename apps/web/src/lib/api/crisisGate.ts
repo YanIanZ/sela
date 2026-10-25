@@ -24,7 +24,7 @@ export type SupportPathwayContact = Pick<
  *
  * Built ONLY from the rule engine's evaluation, never from model output, and
  * attached by the API after the orchestrator returns. The model therefore can
- * neither remove nor downgrade it (docs/CAREBRIDGE_SAFETY_POLICY.md §3–4:
+ * neither remove nor downgrade it (docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §3–4:
  * deterministic gate first, AI may only escalate).
  */
 export interface SupportPathway {
@@ -90,7 +90,7 @@ export function buildSupportPathway(evaluation: CrisisEvaluationResult | undefin
 
 /**
  * Mandatory Step 0 for every API route that accepts free-form user text
- * (chat, forum submissions). Per docs/SAFETY.md, "AI is NEVER the crisis
+ * (chat, forum submissions). Per docs/archive/v1/SAFETY.md, "AI is NEVER the crisis
  * gatekeeper" — this MUST run before any orchestrator/LLM call, and its
  * verdict can never be overridden downstream.
  */

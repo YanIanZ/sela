@@ -2,7 +2,7 @@ import type { InterventionDomain, ValidatedAIAction } from '@dengarin/types';
 import { CLINICAL_DISCLAIMER, DOMAIN_MISSION_TEMPLATES } from '@dengarin/config';
 
 /**
- * TIER 3 — Deterministic Offline Fallback (docs/AI_POLICY.md).
+ * TIER 3 — Deterministic Offline Fallback (docs/archive/v1/AI_POLICY.md).
  * Zero external HTTP calls, guaranteed instant response. Never leaves the
  * user with a broken screen when every AI tier is unreachable.
  */

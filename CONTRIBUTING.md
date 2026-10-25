@@ -1,10 +1,16 @@
 # Contributing to Sela
 
-Sela is maintained by [YanIanZ](https://github.com/YanIanZ). Read the [README](README.md), [documentation index](docs/README.md), and [provenance](docs/SELA_PROVENANCE.md) before changing inherited behavior.
+Start with [SPEC.md](SPEC.md), then the [documentation index](docs/README.md). Go is the selected v2 backend; code is still v1 Next.js/TypeScript. Never describe a proposed endpoint, provider or deployment as implemented.
 
-## Local setup
+## Work boundaries
 
-Use Node.js 22.18+ and npm 10+. With nvm, run `nvm install` and `nvm use`; CI uses Node.js 22.
+Update the spec before changing requirements; use [FORMAT.md](FORMAT.md) for stable IDs and task status. Supporting docs must cite the relevant invariants and agree with the spec. Archived v1 docs are evidence/reference, not current directives. Preserve original contributor and license notices.
+
+Keep changes focused. Describe the resulting behavior, limitations and checks in each PR. Use synthetic data in fixtures, screenshots, issues and recordings. No real professional/patient registration, medical claims or real care transaction belongs in this demo.
+
+## Commands that work now
+
+Use Node.js 22.18+ and npm 10+; `nvm install && nvm use` selects the CI major version.
 
 ```sh
 npm ci
@@ -12,11 +18,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Keep real credentials in ignored environment files. Use synthetic examples in tests, issues, screenshots and demo recordings.
-
-## Changes and checks
-
-Use a focused branch and describe the user-visible result, relevant limitations and validation in your pull request. Preserve the MIT notice and original contributor credits.
+Current checks:
 
 ```sh
 npm run lint
@@ -26,16 +28,12 @@ npm test
 npm run build
 ```
 
-The Redis tests start an isolated local instance using `redis-server` or Docker. Full CI runs the same tests plus the production Redis checks. Live provider probes and evaluations require explicit credentials and are separate from the mock test suite.
+Full v1 tests need `redis-server` or Docker. Go module/version/build/test commands will be documented when T2/T3 create them. See [development](docs/DEVELOPMENT.md).
 
-For a focused change, start with the relevant existing script, such as `npm run test:voice`, `npm run test:carebridge`, or `npm run test:crisis`. Add regression coverage when changing behavior; documentation-only edits need link and formatting checks.
+## Review focus
 
-## Product constraints
+Preserve ID/EN parity, crisis interruption, independent consent/approval/share decisions, exact-version snapshots, session isolation and truthful AI provenance. Tests changing those behaviors should exercise failure/race/revocation cases, not merely mirror implementation. Never publish keys, raw stories or model payloads in logs.
 
-- Update Indonesian and English copy together; preserve dictionary key parity.
-- Preserve consent, crisis gates, redaction, review and export boundaries.
-- Do not introduce diagnostic or treatment claims.
-- Retain existing storage and database identifiers unless a migration is part of the change.
-- Distinguish inherited functionality, newly implemented work, mocks and verified live integrations.
+Docs-only changes need link/anchor checks and source-reference validation; runtime fixture moves also need affected tests. Update [document inventory](docs/DOCUMENT_INVENTORY.md) when adding/moving/removing documentation. Check [validation](docs/VALIDATION.md) before claiming v2 acceptance.
 
-Report reproducible bugs through [GitHub Issues](https://github.com/YanIanZ/sela/issues). For security vulnerabilities or exposed data, use the private process in [SECURITY.md](SECURITY.md).
+Use [GitHub Issues](https://github.com/YanIanZ/sela/issues) for reproducible bugs. Report sensitive vulnerabilities privately through [SECURITY.md](SECURITY.md).

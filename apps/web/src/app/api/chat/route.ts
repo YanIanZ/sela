@@ -11,7 +11,7 @@ import { createGeminiTtsProvider } from '@/lib/api/geminiTts';
  * owns the pipeline: bounded input -> deterministic crisis gate (Step 0) ->
  * AI quota -> optional opt-in cache -> AI orchestrator within a turn budget ->
  * whitelist-validated action (+ deterministic support pathway for `high`).
- * Mirrors docs/AI_POLICY.md and docs/SAFETY.md.
+ * Mirrors docs/archive/v1/AI_POLICY.md and docs/archive/v1/SAFETY.md.
  */
 export async function POST(request: NextRequest) {
   const parsed = await readJsonLimited(request, CHAT_MAX_BYTES);

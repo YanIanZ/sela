@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS synced_sessions (
 );
 
 -- Operator/moderator accounts only — never an end-user table. Dengar.in's
--- anonymous users never authenticate (docs/SAFETY.md, Zero Unnecessary PII).
+-- anonymous users never authenticate (docs/archive/v1/SAFETY.md, Zero Unnecessary PII).
 CREATE TABLE IF NOT EXISTS admin_users (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username       TEXT NOT NULL UNIQUE,

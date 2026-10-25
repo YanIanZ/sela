@@ -56,7 +56,7 @@ export function SourceChip({ sourceRef, className = '' }: { sourceRef?: Pick<Evi
 
 /**
  * Always-visible path to human help. Rendered outside any Reveal or
- * animate-reveal-up wrapper on purpose (docs/CAREBRIDGE_SAFETY_POLICY.md §8).
+ * animate-reveal-up wrapper on purpose (docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §8).
  */
 export function UrgentHelpLink({ className = '' }: { className?: string }) {
   const t = usePassportText();

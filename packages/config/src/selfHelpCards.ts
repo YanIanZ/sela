@@ -8,7 +8,7 @@ import cardsJson from './selfHelpCards.v1.json' with { type: 'json' };
  * `tests/carebridge/dataset/self_help_cards.v1.pb.zst` and the card test
  * validates it. This module only exposes typed, read-only accessors.
  *
- * Safety contract (docs/CAREBRIDGE_SAFETY_POLICY.md §4.3):
+ * Safety contract (docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §4.3):
  * - the model may only PICK a card id from `selfHelpCatalogForPrompt()`; step
  *   text always comes from this file, never from model output;
  * - `safety_plan` cards are never selectable by the model; they are rendered

@@ -1,7 +1,7 @@
 -- Dengar.in — forum thread replies for Supabase / PostgreSQL.
 -- Matches services/persistence/migrations/003_forum_replies.sql (canonical
 -- schema) plus the Supabase-only hardening below. Idempotent, so it is also
--- safe on projects where docs/forum-replies-migration.sql was pasted manually.
+-- safe on projects where docs/archive/v1/forum-replies-migration.sql was pasted manually.
 
 ALTER TABLE forum_posts ADD COLUMN IF NOT EXISTS reply_state TEXT NOT NULL DEFAULT 'open'
   CHECK (reply_state IN ('open', 'locked'));

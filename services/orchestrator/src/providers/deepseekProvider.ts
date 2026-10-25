@@ -11,7 +11,7 @@ interface DeepseekChatCompletion {
 }
 
 /**
- * TIER 1 — Primary Model (docs/AI_POLICY.md), called directly against the
+ * TIER 1 — Primary Model (docs/archive/v1/AI_POLICY.md), called directly against the
  * DeepSeek Platform (api.deepseek.com), not through OpenRouter.
  * Reads DEEPSEEK_API_KEY (required) and DEEPSEEK_MODEL (optional override)
  * from the environment by default; pass explicit values to control

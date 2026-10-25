@@ -10,7 +10,7 @@ import { evaluateDomainGate } from './guardrails/domainGate.ts';
 import { buildDeterministicFallbackAction } from './fallback/deterministicFallback.ts';
 
 /**
- * PURE AI ORCHESTRATION PIPELINE (docs/AI_POLICY.md)
+ * PURE AI ORCHESTRATION PIPELINE (docs/archive/v1/AI_POLICY.md)
  *
  * ARCHITECTURAL BOUNDARY: callers MUST have already cleared the request
  * through services/crisis-engine (Step 0 of every pipeline). This module has

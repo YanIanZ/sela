@@ -20,7 +20,7 @@ import {
  * app/api/care-passport/* only read the body, apply quotas and map the result
  * to an HTTP response.
  *
- * Order (docs/CAREBRIDGE_SAFETY_POLICY.md §1, research doc §4.2):
+ * Order (docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §1, research doc §4.2):
  *   0. Shape validation; `ageBracket: '15-17'` is refused (403) before anything runs.
  *   1. Deterministic crisis gate on the RAW text of ALL segments joined, before
  *      consent, redaction or any AI.

@@ -1,29 +1,23 @@
-# Sela: identity and provenance
+# Sela identity and provenance
 
-Sela is an individual continuation by I Wayan Bagus Arya Darma Wiguna
-(GitHub: YanIanZ) of the Dengar.in team project.
+Current requirements: [SPEC.md](../SPEC.md). Maintainer: **I Wayan Bagus Arya Darma Wiguna** ([YanIanZ](https://github.com/YanIanZ)).
 
-- Tagline: **A little space to feel heard.**
-- Indonesian tagline: **Ruang sejenak untuk didengar.**
-- Product: an anonymous wellbeing companion for everyday conversation,
-  reflection, and preparation for a first mental health consultation.
-- Languages: Indonesian and English, using the existing language selector,
-  chat language, voice support, journals, and consultation-note flow.
-- English support does not imply that emergency contacts cover every country.
-  The current help directory remains focused on Indonesia.
-- Original source: https://github.com/zlxrnn/dengar.in-2.0
-- Original contributors and the MIT copyright notice are retained.
-- Historical commits owned by the Sela maintainer were normalized to one
-  name and email; other contributors retain their authorship.
-- Target event: Meta Global AI Developer Hackathon, Indie Developer track.
-  See [event notes](META_EVENT_NOTES.md). The user intends to participate solo.
-- Historical AMD documents describe inherited work. Meta model integration,
-  the new submission scope, and final eligibility still need verification.
-  No Meta integration is claimed by this rebrand.
+## Current direction
 
-Internal `@dengarin/*` package names, storage keys, cookies, database
-migrations, and deployment examples retain their existing identifiers for
-compatibility. Public product copy and AI companion identity use Sela.
-Existing deployment URLs are historical and are not Sela deployment URLs.
+Sela v2 is a Go-backed, Indonesian/English care-journey demonstration aligned with the Meta hackathon. Professional profiles, handoffs, consultation and follow-up are synthetic. Optional anonymity supports privacy; it is not the primary positioning. The new runtime and live Meta integration are not implemented yet.
 
-Brand/domain availability has not been verified.
+Tagline: **A little space to feel heard.** / **Ruang sejenak untuk didengar.** Brand/domain availability has not been established.
+
+## Inherited work
+
+Original project: [Dengar.in](https://github.com/zlxrnn/dengar.in-2.0), built by **Kata Justin Nama Timnya Gokil Udah** (Telkom University Surabaya). Its bilingual support, CareBridge, safety tests, forum, storage and AMD work predate this v2 refactor. Preserve original MIT notices and authorship; no rewriting another contributor's work as sole authorship.
+
+The maintainer's own historical Git name/email aliases were normalized, with other authors preserved. A pre-normalization Git bundle was retained locally. The recoverable repository baseline immediately before this documentation refactor is `d5da323`.
+
+All pre-v2 documents and supporting docs assets are indexed in the [archive](archive/v1/README.md) and [document inventory](DOCUMENT_INVENTORY.md). They retain original claims/dates as historical content. Removing AMD from the future runtime does not erase those records or original contributor credit.
+
+Internal `@dengarin/*` names, keys, cookies, schemas, scripts and old deployments still belong to the running v1 code. New naming/removal occurs during the verified v2 cutover. Old deployment URLs are not a Sela v2 deployment.
+
+## New-work boundary
+
+Record each new Go/Meta/demo capability against spec tasks and observed evidence. Do not count inherited ID/EN/CareBridge features or documentation-only changes as a newly completed Meta integration. See [event notes](META_EVENT_NOTES.md) for unresolved reuse/eligibility questions.

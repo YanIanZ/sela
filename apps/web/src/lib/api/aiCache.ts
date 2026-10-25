@@ -7,7 +7,7 @@ import type { Language } from '../../i18n/language.ts';
 /**
  * Cache hasil orkestrator AI di Redis.
  *
- * ATURAN PRIVASI (docs/SAFETY.md): Redis TIDAK PERNAH menyimpan teks mentah
+ * ATURAN PRIVASI (docs/archive/v1/SAFETY.md): Redis TIDAK PERNAH menyimpan teks mentah
  * pengguna. Pesan hanya dipakai untuk menghitung sidik jari SHA-256 yang
  * menjadi nama key — fungsi hash itu satu arah, jadi isi curhat tidak bisa
  * dipulihkan dari key. Yang tersimpan sebagai value hanyalah jawaban AI yang

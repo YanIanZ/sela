@@ -369,7 +369,7 @@ export interface BadgeDefinition {
 
 // ==========================================
 // Care Passport (AMD Track 2) — schema version 1
-// See docs/AMD_TRACK2_DEVELOPMENT_PLAN.md §3 and §5B.
+// See docs/archive/v1/AMD_TRACK2_DEVELOPMENT_PLAN.md §3 and §5B.
 // ==========================================
 
 /**

@@ -1,7 +1,7 @@
 /**
  * Synthetic CareBridge fixtures (AMD-04). Every input below is invented for
  * testing; no real person, case or record. Scoring rules live in
- * docs/CAREBRIDGE_EVAL_RUBRIC.md.
+ * docs/archive/v1/CAREBRIDGE_EVAL_RUBRIC.md.
  *
  * `mockModelOutput` is a hand-written draft standing in for the AMD model. It
  * mixes grounded facts with deliberate fabrications so the validator can be
@@ -12,7 +12,7 @@
 const field = (value, sourceQuote, source = 'user_input') => ({ value, source, sourceQuote });
 
 // ---------------------------------------------------------------------------
-// Golden cases A-E (docs/AMD_TRACK2_DEVELOPMENT_PLAN.md §6)
+// Golden cases A-E (docs/archive/v1/AMD_TRACK2_DEVELOPMENT_PLAN.md §6)
 // ---------------------------------------------------------------------------
 
 const CASE_A_INPUT =

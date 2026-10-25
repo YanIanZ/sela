@@ -11,7 +11,7 @@ import { verifyAdminRequest } from '@/lib/api/adminSession';
  * Di produksi endpoint ini hanya untuk operator: butuh cookie sesi admin yang
  * valid (lihat /api/admin/login). Tanpa itu dijawab 404 agar keberadaan
  * infrastruktur (Redis, pesan error internal) tidak bocor ke publik. Di
- * development tetap terbuka supaya checklist docs/REDIS_TESTING_CHECKLIST.md
+ * development tetap terbuka supaya checklist docs/archive/v1/REDIS_TESTING_CHECKLIST.md
  * dan tests/redis/integration.test.mjs bisa memakainya tanpa login.
  */
 

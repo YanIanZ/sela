@@ -1,3 +1,5 @@
+> V1 IMPLEMENTATION REFERENCE — existing Next.js/TypeScript infrastructure only. Not a Sela v2 Go requirement or deployment guide. See [current source of truth](../../../SPEC.md).
+
 # Migrations (canonical schema)
 
 This folder is the **canonical** source of the Dengar.in database schema.
@@ -27,5 +29,5 @@ the shared schema of a pair drifts.
 | `003_forum_replies.sql` | `20261014000000_forum_replies.sql` |
 | `004_lock_legacy_tables.sql` | `20261014000001_lock_legacy_tables.sql` |
 
-`docs/forum-replies-migration.sql` is the earlier copy-paste version of 003 for
+`docs/archive/v1/forum-replies-migration.sql` is the earlier copy-paste version of 003 for
 the Supabase SQL Editor; it is safe to have run it already (003 is idempotent).

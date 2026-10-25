@@ -8,7 +8,7 @@ import { createAmdProvider } from './providers/amdProvider.ts';
 /**
  * CARE PASSPORT PIPELINE (AMD Track 2)
  *
- * Mandatory order (docs/CAREBRIDGE_SAFETY_POLICY.md):
+ * Mandatory order (docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md):
  *   1. Deterministic crisis gate on the RAW text. Crisis -> no AI at all.
  *   2. AI-processing consent. Declined -> no AI at all.
  *   3. Inference on the SANITIZED text only, provider by provider.

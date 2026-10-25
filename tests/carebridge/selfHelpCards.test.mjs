@@ -22,7 +22,7 @@ import {
  * Validates packages/config/src/selfHelpCards.v1.json (the runtime knowledge
  * base since SCRUM-45): schema, topic coverage, bilingual text, source +
  * licence, and forbidden terms. The cards are content, not code; see
- * docs/CAREBRIDGE_KNOWLEDGE_BASE.md for the source table and review status.
+ * docs/archive/v1/CAREBRIDGE_KNOWLEDGE_BASE.md for the source table and review status.
  * The second half locks the typed accessor the prompt, validator, UI and
  * export rely on.
  */
@@ -204,7 +204,7 @@ describe('Self-help cards dataset: sources and licences', () => {
     }
   });
 
-  it('only sources from the approved publisher list are used (see docs/CAREBRIDGE_KNOWLEDGE_BASE.md)', () => {
+  it('only sources from the approved publisher list are used (see docs/archive/v1/CAREBRIDGE_KNOWLEDGE_BASE.md)', () => {
     const approvedHosts = new Set(['www.who.int', 'iris.who.int', 'www.cdc.gov', 'ayosehat.kemkes.go.id', 'keslan.kemkes.go.id', 'doi.org']);
     for (const card of cards) {
       const host = new URL(card.source.url).host;

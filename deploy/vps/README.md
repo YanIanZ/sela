@@ -1,3 +1,5 @@
+> V1 IMPLEMENTATION REFERENCE — existing Next.js/TypeScript infrastructure only. Not a Sela v2 Go requirement or deployment guide. See [current source of truth](../../SPEC.md).
+
 # Dengar.in on a shared Docker VPS
 
 Public URL: `https://dengar-in.vertalt.my.id`. The existing Caddy container

@@ -21,7 +21,7 @@ import { isLanguage, type Language } from '../../i18n/language.ts';
  * The Next.js route only reads the size-bounded body, wires the real quota,
  * concurrency slot and TTS dependencies, and maps the outcome to HTTP.
  *
- * Order (docs/AI_POLICY.md, docs/SAFETY.md, docs/CAREBRIDGE_SAFETY_POLICY.md §1):
+ * Order (docs/archive/v1/AI_POLICY.md, docs/archive/v1/SAFETY.md, docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §1):
  *   0. Shape + size limits (requestLimits.ts, single source of truth).
  *   1. Deterministic crisis screen of message AND history. `crisis` halts here:
  *      no quota, no cache, no LLM.

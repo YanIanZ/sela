@@ -1,3 +1,5 @@
+> V1 IMPLEMENTATION REFERENCE — existing Next.js/TypeScript infrastructure only. Not a Sela v2 Go requirement or deployment guide. See [current source of truth](../../SPEC.md).
+
 # Supabase migrations (derived)
 
 The **canonical** schema lives in `services/persistence/migrations/` (applied
@@ -16,7 +18,7 @@ Rules:
   `REVOKE ALL … FROM PUBLIC` / `FROM anon, authenticated` for every table.
   All access goes through the Next.js server, never directly from browsers.
 - Keep files idempotent (`IF NOT EXISTS`) so projects where SQL was pasted by
-  hand (e.g. `docs/forum-replies-migration.sql`) still push cleanly.
+  hand (e.g. `docs/archive/v1/forum-replies-migration.sql`) still push cleanly.
 - New files need a timestamp later than the last one applied remotely.
 - `tests/persistence/migrations.test.mjs` checks the pairing and the shared
   schema. The pairing table is in `services/persistence/migrations/README.md`.

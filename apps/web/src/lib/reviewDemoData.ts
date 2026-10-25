@@ -4,7 +4,7 @@
  * Everything here is invented and hand-written for judges. It is NOT output of
  * any model, NOT a real person, and NOT connected to any clinical system. The
  * four public texts mirror tests/carebridge/fixtures.mjs (cases A, B, D, E).
- * Case C (high-risk) is never shown verbatim, per docs/DEMO_SCRIPT.md §1.
+ * Case C (high-risk) is never shown verbatim, per docs/archive/v1/DEMO_SCRIPT.md §1.
  *
  * Keep this file free of imports so tests can load it directly.
  */

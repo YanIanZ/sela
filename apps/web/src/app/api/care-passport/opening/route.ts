@@ -10,7 +10,7 @@ import {
 
 const BUSY = 'Sedang cukup ramai. Tarik napas dulu, lalu coba lagi sebentar lagi, ya.';
 
-/** Metadata only (docs/CAREBRIDGE_SAFETY_POLICY.md §7): never passport text. */
+/** Metadata only (docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §7): never passport text. */
 function logTelemetry(meta: OpeningLinesTelemetry) {
   console.info('[OpeningLines]', JSON.stringify(meta));
 }

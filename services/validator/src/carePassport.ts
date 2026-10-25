@@ -361,7 +361,7 @@ interface HumanSupportOutcome {
  * model escalation on text the engine already flagged changes nothing. What
  * remains exposed is text the engine does not know AND the model escalated
  * without quoting; that gap is measured by `missed_esc` on the synthetic
- * dataset and must stay 0 (docs/CAREBRIDGE_DATASET.md).
+ * dataset and must stay 0 (docs/archive/v1/CAREBRIDGE_DATASET.md).
  */
 function groundHumanSupport(draft: Record<string, unknown>, sanitizedInput: string, warnings: string[]): HumanSupportOutcome {
   if (draft.humanSupportSuggested !== true) return { suggested: false };

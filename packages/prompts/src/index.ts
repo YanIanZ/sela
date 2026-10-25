@@ -106,7 +106,7 @@ const FORBIDDEN_BEHAVIOR_RULES = [
 
 /**
  * Builds the system prompt enforced on every orchestrator call.
- * Mirrors the whitelist and negative boundaries defined in docs/AI_POLICY.md.
+ * Mirrors the whitelist and negative boundaries defined in docs/archive/v1/AI_POLICY.md.
  */
 export function buildChatSystemPrompt(context: PromptContext = {}): string {
   const lines = [

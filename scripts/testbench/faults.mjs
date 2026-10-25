@@ -1,4 +1,4 @@
-// Care Passport fault injection against running web containers (docs/TESTBENCH.md, SCRUM-33).
+// Care Passport fault injection against running web containers (docs/archive/v1/TESTBENCH.md, SCRUM-33).
 //
 // Each scenario targets its own web container (started by scripts/testbench/faults.sh with a
 // different AMD_* config) and records metadata only: HTTP status, state, providerId, isAmd,

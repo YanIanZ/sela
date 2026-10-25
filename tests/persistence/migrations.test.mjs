@@ -52,8 +52,8 @@ describe('migration trees (M12/L10)', () => {
     }
   });
 
-  it('matches the manual docs/forum-replies-migration.sql schema', async () => {
-    const docs = schemaCore(await readFile(new URL('docs/forum-replies-migration.sql', root), 'utf8'))
+  it('matches the manual docs/archive/v1/forum-replies-migration.sql schema', async () => {
+    const docs = schemaCore(await readFile(new URL('docs/archive/v1/forum-replies-migration.sql', root), 'utf8'))
       .filter((s) => !/^DO \$\$/.test(s) && !/^(BEGIN|IF|END)/.test(s));
     const pg = schemaCore(await read(pgDir, '003_forum_replies.sql'));
     assert.deepEqual(pg, docs);

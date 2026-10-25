@@ -1,33 +1,39 @@
 # Sela documentation
 
-Start with the [project README](../README.md) for setup, features and current limitations.
+**Start with [SPEC.md](../SPEC.md), the source of truth for Sela v2.** Backend Go is selected. V2 is designed, not implemented; the runnable application is still the inherited Next.js/TypeScript v1.
 
-## Current identity and event scope
+## Authority and document ownership
 
-- [Sela provenance](SELA_PROVENANCE.md): maintainer, original project, credits and compatibility decisions.
-- [Meta event notes](META_EVENT_NOTES.md): source links, judging criteria and outstanding submission decisions.
+1. User decisions govern product scope; record them in `SPEC.md`.
+2. `SPEC.md` governs requirements, invariants and task status.
+3. Active docs below elaborate those requirements; resolve conflicts in the spec first.
+4. Existing source/tests establish what currently runs, not what v2 already implements.
+5. Archived documents preserve old decisions and evidence; none override v2.
 
-## Engineering guides
+External event terms govern event eligibility and third-party rights. The repo's notes do not replace those terms. Update the spec and affected docs together when a decision changes. Use [FORMAT.md](../FORMAT.md) for IDs/status; never mark implementation complete from a document alone.
 
-These guides describe the inherited implementation. References to Dengar.in and `@dengarin/*` may remain where they identify the original architecture, storage or deployment. They do not establish a Sela deployment or a Meta integration.
+## Active documents
 
-| Topic | Guides |
+| Document | Responsibility |
 | --- | --- |
-| Architecture and API | [CareBridge](CAREBRIDGE_ARCHITECTURE.md), [API](API_SPEC.md), [diagrams](CAREBRIDGE_STRUCTURE_MERMAID.md) |
-| Safety and privacy | [Safety](SAFETY.md), [AI policy](AI_POLICY.md), [CareBridge policy](CAREBRIDGE_SAFETY_POLICY.md), [crisis classification](CRISIS_CLASSIFICATION.md), [threat model](THREAT_MODEL.md) |
-| Data and evaluation | [Dataset](CAREBRIDGE_DATASET.md), [knowledge base](CAREBRIDGE_KNOWLEDGE_BASE.md), [rubric](CAREBRIDGE_EVAL_RUBRIC.md), [test bench](TESTBENCH.md) |
-| Voice and accessibility | [Voice room](RUANG_NGOBROL.md), [accessibility](VOICE_ACCESSIBILITY.md), [voice audition](VOICE_AUDITION.md) |
-| Storage and operations | [Database migrations](../services/persistence/migrations/README.md), [Supabase migrations](../supabase/migrations/README.md), [recovery](RECOVERY_MIGRATION.md), [rate limiting](M01_RATE_LIMITING.md), [Redis](REDIS.md), [Redis setup](REDIS_SETUP.md), [Redis checks](REDIS_TESTING_CHECKLIST.md), [VPS deployment](../deploy/vps/README.md) |
-| Bug history | [Bug index](bugs/README.md) |
+| [Source of truth](../SPEC.md) | Goal, confirmed constraints, engineering defaults, interfaces, invariants, task status |
+| [Product](PRODUCT.md) | User/professional journeys, feature boundaries, languages |
+| [Architecture](ARCHITECTURE.md) | Target Go/static-web design, state ownership, migration boundary |
+| [API contract](API_SPEC.md) | Planned `/api/v2` resources, states, consent/version rules |
+| [Synthetic demo data](DEMO_DATA.md) | Fixtures, identity choices, repeatability, session isolation |
+| [Safety](SAFETY.md) | Crisis and care boundaries, sharing, privacy |
+| [AI policy](AI_POLICY.md) | Allowed model work, validation, human control, truthful provenance |
+| [Meta integration](META_INTEGRATION.md) | Provider boundary, access verification, failure behavior |
+| [Development](DEVELOPMENT.md) | Commands that work now and the future Go cutover |
+| [Validation and demo](VALIDATION.md) | Acceptance matrix, demonstration script, evidence |
+| [Migration roadmap](ROADMAP.md) | Ordered transition tasks and removal criteria |
+| [Decision record](DECISIONS.md) | User-confirmed decisions versus revisable engineering defaults |
+| [Meta event notes](META_EVENT_NOTES.md) | Official references and unresolved event requirements |
+| [Provenance](SELA_PROVENANCE.md) | Credits, historical basis and new-work boundary |
+| [Document inventory](DOCUMENT_INVENTORY.md) | Every repository Markdown document and moved legacy asset |
 
-## Historical project and competition records
+## Historical implementation
 
-These records are preserved for context. They are not the current Sela roadmap, team assignment, deployment status, or Meta submission copy.
+[Archive index](archive/v1/README.md) contains the complete pre-refactor documentation, including AMD work, old product requirements, Next.js API contracts, Redis/PostgreSQL operations, evaluation reports and bug history. Old file paths in source comments and scripts now point there. License/source-attribution instructions stay attached to their artifacts.
 
-- [Archived long project overview](LEGACY_PROJECT_README.md)
-- Original product: [context](PROJECT_CONTEXT.md), [requirements](PRD.md), [design](PRD-DESIGN.md), [UX flows](UX_FLOW.md), [team collaboration](COLLABORATION_RULES.md)
-- AMD work: [scope](AMD_01_SCOPE_DAN_SYARAT.md), [setup](AMD_SETUP.md), [development plan](AMD_TRACK2_DEVELOPMENT_PLAN.md), [task record](AMD_TRACK2_TASKS.md)
-- Previous submission: [submission copy](SUBMISSION_COPY.md), [demo script](DEMO_SCRIPT.md)
-- Historical evaluation: [report](eval/EVAL_REPORT.md), [accessibility audit](eval/A11Y_AUDIT_REPORT_2026-10-16.md), [release gate](RELEASE_GATE_2026-10-16.md), [gap audit](GAP_AUDIT_2026-10-13.md)
-
-Historical files stay at their original paths so existing code comments and references continue to resolve.
+The [font provenance](../apps/web/src/app/fonts/README.md) remains current for the checked-in font. The [database](../services/persistence/migrations/README.md), [Supabase](../supabase/migrations/README.md) and [VPS](../deploy/vps/README.md) READMEs describe v1 only.

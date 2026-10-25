@@ -23,7 +23,7 @@ interface OpenrouterChatCompletion {
 }
 
 /**
- * TIER 2 — Secondary Cloud Fallback / "second brain" (docs/AI_POLICY.md).
+ * TIER 2 — Secondary Cloud Fallback / "second brain" (docs/archive/v1/AI_POLICY.md).
  * Reads OPENROUTER_API_KEY (required) and OPENROUTER_MODEL (optional
  * override) from the environment by default; pass explicit values to
  * control configuration in tests. OPENROUTER_SITE_URL / OPENROUTER_SITE_NAME

@@ -1,4 +1,4 @@
-// CareBridge evaluation runner (AMD-14, rubric: docs/CAREBRIDGE_EVAL_RUBRIC.md).
+// CareBridge evaluation runner (AMD-14, rubric: docs/archive/v1/CAREBRIDGE_EVAL_RUBRIC.md).
 //
 //   npm run eval:carebridge:mock                 # offline, hand-written drafts
 //   npm run eval:carebridge:live                 # live AMD endpoint (.env.local)
@@ -450,7 +450,7 @@ if (options.mode === 'mock' || options.mode === 'all') {
 if (options.mode === 'live' || options.mode === 'all') {
   const report = await runLive(options);
   if (report.skipped) {
-    console.error(`[live] DILEWATI: ${report.reason}. Isi AMD_BASE_URL/AMD_MODEL/AMD_API_KEY di .env.local (lihat docs/AMD_SETUP.md).`);
+    console.error(`[live] DILEWATI: ${report.reason}. Isi AMD_BASE_URL/AMD_MODEL/AMD_API_KEY di .env.local (lihat docs/archive/v1/AMD_SETUP.md).`);
     if (options.mode === 'live') exitCode = 2;
   } else {
     await writeFile(join(options.outputDir, 'live_results.json'), `${JSON.stringify(report, null, 2)}\n`);

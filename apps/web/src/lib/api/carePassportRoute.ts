@@ -12,7 +12,7 @@ import {
 
 const BUSY = 'Sedang cukup ramai. Tarik napas dulu, lalu coba lagi sebentar lagi, ya.';
 
-/** Metadata only (docs/CAREBRIDGE_SAFETY_POLICY.md §7): never text, never findings' content. */
+/** Metadata only (docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §7): never text, never findings' content. */
 function logTelemetry(meta: CarePassportTelemetry) {
   console.info('[CarePassport]', JSON.stringify(meta));
 }

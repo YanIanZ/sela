@@ -1,4 +1,4 @@
-# Local test bench (docs/TESTBENCH.md). Secrets live in .env.testbench
+# Local test bench (docs/archive/v1/TESTBENCH.md). Secrets live in .env.testbench
 # (gitignored); always pass it with --env-file:
 #
 #   docker compose --env-file .env.testbench -f docker-compose.testbench.yml up -d --build web

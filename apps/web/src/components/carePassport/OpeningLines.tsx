@@ -94,7 +94,7 @@ function LinesSkeleton() {
 function ImmediateHelpBlock({ result }: { result: OpeningLinesResult }) {
   const t = usePassportText().opening;
   const { lang } = useLanguage();
-  // Static on purpose: no animation, no AI text (docs/CAREBRIDGE_SAFETY_POLICY.md §2).
+  // Static on purpose: no animation, no AI text (docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §2).
   return (
     <SectionCard as="aside" tone="crisis" elevation="medium" className="space-y-4" aria-label={t.immediateAria}>
       <div className="space-y-1">

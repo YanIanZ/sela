@@ -16,7 +16,7 @@ import { isUrgentHelpRequest } from './carePassportPipeline.ts';
 /**
  * OPENING LINES PIPELINE (F-B "Kalimat Pembuka per Tujuan")
  *
- * Order, mirroring docs/CAREBRIDGE_SAFETY_POLICY.md §1:
+ * Order, mirroring docs/archive/v1/CAREBRIDGE_SAFETY_POLICY.md §1:
  *   1. Deterministic crisis gate, re-run on the APPROVED passport text.
  *      Crisis -> no AI, no lines, emergency contacts only.
  *   2. AI-processing consent. Declined -> deterministic template, "tanpa AI".

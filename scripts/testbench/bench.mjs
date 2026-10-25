@@ -1,4 +1,4 @@
-// Local LLM test bench (docs/TESTBENCH.md).
+// Local LLM test bench (docs/archive/v1/TESTBENCH.md).
 //
 // Runs the REAL orchestrator and Care Passport pipelines against every model
 // in the matrix, one model per run, so their outputs cross the same validator
