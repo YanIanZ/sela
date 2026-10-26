@@ -20,9 +20,11 @@ type Config struct {
 	SecureCookies bool
 	TrustProxy    bool
 	MaxSessions   int
-	ResearchKB    string
-	LogLevel      string
-	Env           string
+	// MaxSessionsPerClient bounds live sessions per client address (IPv6 /64).
+	MaxSessionsPerClient int
+	ResearchKB           string
+	LogLevel             string
+	Env                  string
 	// MetricsToken, when set, enables GET /api/v2/metrics for requests with
 	// "Authorization: Bearer <MetricsToken>". Never logged.
 	MetricsToken string
@@ -112,6 +114,8 @@ func Load() (Config, error) {
 	c.TrustProxy, err = envBool("SELA_TRUST_PROXY", false)
 	add(err)
 	c.MaxSessions, err = envInt("SELA_MAX_SESSIONS", 500, 1, 100000)
+	add(err)
+	c.MaxSessionsPerClient, err = envInt("SELA_MAX_SESSIONS_PER_CLIENT", 50, 1, 100000)
 	add(err)
 	c.MetricsToken = env("SELA_METRICS_TOKEN", "")
 	if c.MetricsToken != "" && (len(c.MetricsToken) < minMetricsToken || strings.ContainsAny(c.MetricsToken, " \t\r\n")) {

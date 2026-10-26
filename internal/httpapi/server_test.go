@@ -88,11 +88,15 @@ func newEnv(t *testing.T, webDir string) *env {
 }
 
 func newEnvWith(t *testing.T, opt httpapi.Options, provider llm.Provider) *env {
+	return newEnvStore(t, opt, provider, store.Options{})
+}
+
+func newEnvStore(t *testing.T, opt httpapi.Options, provider llm.Provider, so store.Options) *env {
 	t.Helper()
 	logs := &syncBuffer{}
 	logger := slog.New(slog.NewJSONHandler(logs, nil))
 	cat := fixtures.MustLoad()
-	svc := journey.New(journey.Config{Logger: logger, OpTimeout: 5 * time.Second}, store.NewMemory(store.Options{}), cat, provider, llm.NewAdmission(2))
+	svc := journey.New(journey.Config{Logger: logger, OpTimeout: 5 * time.Second}, store.NewMemory(so), cat, provider, llm.NewAdmission(2))
 	opt.Logger, opt.Version = logger, "test"
 	h := httpapi.New(svc, opt)
 	srv := httptest.NewServer(h)
@@ -485,6 +489,22 @@ func TestRateLimitOnSessionCreation(t *testing.T) {
 	}
 	if !limited {
 		t.Fatal("session creation was never rate limited")
+	}
+}
+
+// One client address cannot hold more live sessions than the store allows
+// (review finding: one client could fill the store for every visitor).
+func TestLiveSessionsPerClientAreBounded(t *testing.T) {
+	e := newEnvStore(t, httpapi.Options{}, scripted{}, store.Options{MaxSessionsPerClient: 2})
+	body := map[string]any{"language": "id", "adultAttested": true, "privacyPolicy": e.svc.Catalog().Policies["privacy"].Version}
+	for i := 0; i < 2; i++ {
+		if res, b := e.client().do("POST", "/api/v2/sessions", body, nil); res.StatusCode != http.StatusCreated {
+			t.Fatalf("session %d: %d %v", i, res.StatusCode, b)
+		}
+	}
+	res, b := e.client().do("POST", "/api/v2/sessions", body, nil)
+	if res.StatusCode != http.StatusTooManyRequests || errCode(b) != "rate_limited" {
+		t.Fatalf("third live session from one client: %d %v", res.StatusCode, b)
 	}
 }
 

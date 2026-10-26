@@ -9,6 +9,9 @@ import (
 var (
 	ErrNotFound = errors.New("journey: session not found")
 	ErrCapacity = errors.New("journey: demo session capacity reached")
+	// ErrClientLimit: the client address already holds the maximum number of
+	// live sessions.
+	ErrClientLimit = errors.New("journey: too many live sessions for this client")
 )
 
 // Session lifetime policy (memory only; restart erases everything).

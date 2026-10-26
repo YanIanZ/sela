@@ -1007,3 +1007,45 @@ func TestStoreCapacityNeverEvictsActiveSessions(t *testing.T) {
 		t.Fatalf("idle eviction failed: %v", err)
 	}
 }
+
+// Template lines ("Draft without AI") wrap the approved items' wording in
+// Sela's own frames; when that wording is the model's, the opening keeps the
+// model's provenance instead of claiming to be manual.
+func TestTemplateOpeningKeepsAIProvenanceOfItsWording(t *testing.T) {
+	h := newHarness(t)
+	h.llm.respond = func(req llm.Request) (string, error) {
+		in := inputOf(t, req)
+		seg := in["segments"].([]any)[0].(map[string]any)
+		raw, _ := json.Marshal(map[string]any{"claims": []map[string]any{{"segment_id": seg["id"], "quote": seg["text"], "kind": "feeling", "text": "Aku kewalahan dengan skripsi",
+			"subject": "self", "time": "unspecified", "certainty": "stated", "negated": false}}, "unknowns": []string{}, "clarification": map[string]any{"field": "none"}})
+		return string(raw), nil
+	}
+	id, _ := h.session("id")
+	h.consentAI(id, true)
+	if _, err := h.svc.SubmitStory(id, journey.StoryInput{ExpectedVersion: h.state(id).Version, Mode: journey.StoryPractice, Text: "Aku merasa kewalahan dengan skripsi dan kerja paruh waktu."}); err != nil {
+		t.Fatal(err)
+	}
+	op, err := h.svc.StartLedgerDraft(id, h.state(id).Version)
+	if err != nil {
+		t.Fatal(err)
+	}
+	waitOp(t, h.svc, id, op.ID)
+	v := h.state(id)
+	if len(v.Ledger.Items) != 1 || v.Ledger.Items[0].WordingOrigin != journey.WordingModel {
+		t.Fatalf("setup: want one item with model wording, got %+v", v.Ledger.Items)
+	}
+	v, err = h.svc.ReviewItem(id, v.Ledger.Items[0].ID, journey.ItemInput{ExpectedVersion: v.Version, Action: journey.ActionConfirm})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := h.svc.Approve(id, journey.ApproveInput{ExpectedVersion: v.Version, LedgerVersion: v.Ledger.Version}); err != nil {
+		t.Fatal(err)
+	}
+	v, err = h.svc.TemplateOpening(id, journey.OpeningInput{ExpectedVersion: h.state(id).Version, Recipient: "professional"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.Opening == nil || v.Opening.Provenance != journey.ProvenanceTestDouble {
+		t.Fatalf("template over model wording labelled %+v", v.Opening)
+	}
+}

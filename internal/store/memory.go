@@ -21,6 +21,7 @@ type Memory struct {
 	maxSessions   int
 	maxRecips     int
 	maxPerHandoff int
+	maxPerClient  int
 	onPurge       func(sessionID string)
 	now           func() time.Time
 }
@@ -47,7 +48,11 @@ type Options struct {
 	// MaxRecipientsPerHandoff bounds live principals per handoff; a new
 	// sign-in replaces the oldest (default journey.MaxRecipientsPerHandoff).
 	MaxRecipientsPerHandoff int
-	Now                     func() time.Time
+	// MaxSessionsPerClient bounds live sessions created from one client
+	// key (address, or IPv6 /64), so one client cannot fill the store
+	// (default 50; sessions without a key are not counted).
+	MaxSessionsPerClient int
+	Now                  func() time.Time
 }
 
 // NewMemory returns an empty store.
@@ -57,6 +62,9 @@ func NewMemory(o Options) *Memory {
 	}
 	if o.MaxRecipientsPerHandoff <= 0 {
 		o.MaxRecipientsPerHandoff = journey.MaxRecipientsPerHandoff
+	}
+	if o.MaxSessionsPerClient <= 0 {
+		o.MaxSessionsPerClient = 50
 	}
 	if o.MaxRecipients <= 0 {
 		o.MaxRecipients = o.MaxSessions * journey.MaxHandoffs * o.MaxRecipientsPerHandoff
@@ -71,6 +79,7 @@ func NewMemory(o Options) *Memory {
 		maxSessions:   o.MaxSessions,
 		maxRecips:     o.MaxRecipients,
 		maxPerHandoff: o.MaxRecipientsPerHandoff,
+		maxPerClient:  o.MaxSessionsPerClient,
 		now:           o.Now,
 	}
 }
@@ -123,13 +132,39 @@ func (m *Memory) Create(s *journey.Session) error {
 	return err
 }
 
+// liveForClientLocked counts unexpired sessions created by key. A session
+// that is in use (its lock is held) counts as live. m.mu must be held.
+func (m *Memory) liveForClientLocked(key string, now time.Time) int {
+	n := 0
+	for _, e := range m.sessions {
+		if e.s.ClientKey != key { // ClientKey never changes after Create
+			continue
+		}
+		if !e.mu.TryLock() {
+			n++
+			continue
+		}
+		if !e.deleted && !e.s.Expired(now) {
+			n++
+		}
+		e.mu.Unlock()
+	}
+	return n
+}
+
 func (m *Memory) create(s *journey.Session) ([]string, error) {
 	now := m.now()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	var purged []string
-	if len(m.sessions) >= m.maxSessions {
+	if s.ClientKey != "" && m.liveForClientLocked(s.ClientKey, now) >= m.maxPerClient {
 		purged = m.sweepLocked(now)
+		if m.liveForClientLocked(s.ClientKey, now) >= m.maxPerClient {
+			return purged, journey.ErrClientLimit
+		}
+	}
+	if len(m.sessions) >= m.maxSessions {
+		purged = append(purged, m.sweepLocked(now)...)
 	}
 	if len(m.sessions) >= m.maxSessions {
 		var victim string

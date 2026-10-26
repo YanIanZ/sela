@@ -169,6 +169,7 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &in) {
 		return
 	}
+	in.ClientKey = limitKey(s.clientIP(r))
 	id, view, err := s.svc.CreateSession(in)
 	if err != nil {
 		writeAppError(w, r, err)

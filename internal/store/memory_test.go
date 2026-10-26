@@ -280,3 +280,39 @@ func TestOnPurgeReportsEveryPurge(t *testing.T) {
 		t.Fatalf("reports = %d, want 4", n)
 	}
 }
+
+func TestLiveSessionsArePerClientBounded(t *testing.T) {
+	c := &fakeClock{t: time.Unix(1_800_000_000, 0)}
+	m := NewMemory(Options{MaxSessions: 100, MaxSessionsPerClient: 3, Now: c.now})
+	mk := func(id, key string) error {
+		s := newSession(id, c.now())
+		s.ClientKey = key
+		return m.Create(s)
+	}
+	for i := 0; i < 3; i++ {
+		if err := mk("a"+string(rune('0'+i)), "198.51.100.7"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := mk("a3", "198.51.100.7"); err != journey.ErrClientLimit {
+		t.Fatalf("fourth session from one client: %v", err)
+	}
+	// Another client and key-less sessions are unaffected.
+	if err := mk("b0", "203.0.113.9"); err != nil {
+		t.Fatal(err)
+	}
+	if err := mk("c0", ""); err != nil {
+		t.Fatal(err)
+	}
+	// Deleted and expired sessions no longer count.
+	m.Delete("a0")
+	if err := mk("a4", "198.51.100.7"); err != nil {
+		t.Fatalf("after delete: %v", err)
+	}
+	c.add(journey.SessionMaxLife + time.Minute)
+	for i := 5; i < 8; i++ {
+		if err := mk("a"+string(rune('0'+i)), "198.51.100.7"); err != nil {
+			t.Fatalf("after expiry: %v", err)
+		}
+	}
+}

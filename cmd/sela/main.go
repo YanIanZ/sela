@@ -71,7 +71,7 @@ func run() error {
 		logger.Warn("research.unavailable", "reason", err.Error())
 	}
 
-	st := store.NewMemory(store.Options{MaxSessions: cfg.MaxSessions})
+	st := store.NewMemory(store.Options{MaxSessions: cfg.MaxSessions, MaxSessionsPerClient: cfg.MaxSessionsPerClient})
 	svc := journey.New(journey.Config{
 		OpTimeout: cfg.OpTimeout, MaxOpsPerWindow: cfg.MaxOpsPerHour, WarmWindow: cfg.WarmWindow, ColdStartEstimate: cfg.ColdStart, Logger: logger,
 	}, st, catalog, provider, llm.NewAdmission(cfg.LLMConcurrency))

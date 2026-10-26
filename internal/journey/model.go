@@ -340,7 +340,11 @@ const (
 // Session is one isolated demo visitor's state. It is only accessed through
 // Store.View/Store.Update, which serialise access per session.
 type Session struct {
-	ID            string                  `json:"-"`
+	ID string `json:"-"`
+	// ClientKey is the rate-limit key of the address that created the
+	// session (set by the HTTP layer, never serialised); the store bounds
+	// live sessions per key.
+	ClientKey     string                  `json:"-"`
 	Version       int                     `json:"version"`
 	CreatedAt     time.Time               `json:"createdAt"`
 	LastSeen      time.Time               `json:"lastSeen"`

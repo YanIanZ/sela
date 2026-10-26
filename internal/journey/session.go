@@ -1,6 +1,7 @@
 package journey
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 	"time"
@@ -15,6 +16,9 @@ type CreateInput struct {
 	AdultAttested bool     `json:"adultAttested"`
 	// PrivacyPolicy is the privacy/boundaries notice version the user saw.
 	PrivacyPolicy string `json:"privacyPolicy"`
+	// ClientKey is set by the HTTP layer from the client address, never
+	// from the request body.
+	ClientKey string `json:"-"`
 }
 
 // CreateSession creates an isolated session and returns its opaque id. The
@@ -34,6 +38,7 @@ func (s *Service) CreateSession(in CreateInput) (string, *SessionView, error) {
 	now := s.now()
 	sess := &Session{
 		ID:            randomToken(32),
+		ClientKey:     in.ClientKey,
 		Version:       1,
 		CreatedAt:     now,
 		LastSeen:      now,
@@ -58,6 +63,9 @@ func (s *Service) CreateSession(in CreateInput) (string, *SessionView, error) {
 		sess.Identity = id
 	}
 	if err := s.store.Create(sess); err != nil {
+		if errors.Is(err, ErrClientLimit) {
+			return "", nil, errf(CodeRateLimited, 429, "")
+		}
 		return "", nil, errf(CodeCapacity, 503, "")
 	}
 	s.metrics.add("session_created")

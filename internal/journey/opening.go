@@ -36,6 +36,18 @@ type OpeningInput struct {
 
 // TemplateOpening builds deterministic opening lines from the approved brief
 // without a model (manual provenance).
+// templateProvenance labels template lines by the wording they carry: the
+// frames are Sela's own, but an item's wording may be the model's, so the
+// lines keep that item's AI provenance (never "manual" over AI wording).
+func templateProvenance(snap BriefSnapshot) Provenance {
+	for _, it := range snap.Items {
+		if it.WordingOrigin == WordingModel && it.Provenance != ProvenanceManual && it.Provenance != "" {
+			return it.Provenance
+		}
+	}
+	return ProvenanceManual
+}
+
 func (s *Service) TemplateOpening(sessionID string, in OpeningInput) (*SessionView, error) {
 	var view *SessionView
 	err := s.update(sessionID, func(sess *Session) error {
@@ -51,7 +63,7 @@ func (s *Service) TemplateOpening(sessionID string, in OpeningInput) (*SessionVi
 		if sess.Opening != nil {
 			v = sess.Opening.Version + 1
 		}
-		sess.Opening = &Opening{Lines: lines, Provenance: ProvenanceManual, BriefVersion: snap.Version, Version: v}
+		sess.Opening = &Opening{Lines: lines, Provenance: templateProvenance(snap), BriefVersion: snap.Version, Version: v}
 		sess.openingRev++
 		bump(sess)
 		view = s.buildView(sess)
