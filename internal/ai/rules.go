@@ -71,6 +71,27 @@ const (
 	// the remaining requests, sent only so that CK-9 could still raise the
 	// route, could not all be checked. The output stays withheld.
 	ReasonSafetyPassIncomplete = "safety_pass_incomplete"
+	// ReasonFallbackNotEligible: Meta failed with an availability failure
+	// that is not an upstream Meta outage (Sela's admission queue, a
+	// credential problem, a spend ceiling or billing error, a certificate
+	// failure). It ends in the no-AI path with an operator alert, never in
+	// the fallback (V19, ADR-0003 §17 O-1).
+	ReasonFallbackNotEligible = "fallback_not_eligible"
+	// ReasonSyntheticOnly: DeepSeek receives only synthetic, versioned demo
+	// or test data until the operator enables real-user processing (V21,
+	// ADR-0003 §17 O-3), and this operation's data is not marked synthetic
+	// (or the environment is production, which has no demo data).
+	ReasonSyntheticOnly = "deepseek_synthetic_only"
+	// ReasonFallbackNeedsVerifier: every fallback output of the task is
+	// verified by Claude (AT-1: RR-8, §17 O-6), and the Claude route is not
+	// permitted now (consent, age band, configuration, per-user limit,
+	// spend ceiling), so DeepSeek is not called (RR-4 i). The Claude
+	// reason follows.
+	ReasonFallbackNeedsVerifier = "fallback_needs_verifier"
+	// ReasonNoVersionCheck: the caller gave no commit re-check (Input.Commit)
+	// of the session, record and fixture versions, which every fallback
+	// result needs before it is kept (V21), so DeepSeek is not called.
+	ReasonNoVersionCheck = "fallback_needs_version_check"
 )
 
 // isStale reports a reason that discards the run as stale (RR-13): a
@@ -138,6 +159,14 @@ type fallbackFacts struct {
 	Switched       bool            // RR-6
 	Remaining      time.Duration   // (f)
 	Reserve        time.Duration   // (f)
+	// Eligible: the failure is an upstream Meta availability failure
+	// (a fallback_reason; §4 note, §17 O-1, V19).
+	Eligible bool
+	// DataAllowed: DeepSeek may receive this operation's data (V21, O-3).
+	DataAllowed bool
+	// VersionCheck: the caller rechecks versions before the result is kept
+	// (V21).
+	VersionCheck bool
 }
 
 // fallbackDecision applies RR-4 (a, b, e, f, g), RR-5 and RR-6. It
@@ -149,6 +178,8 @@ func fallbackDecision(f fallbackFacts) string {
 		return ReasonNotAvailability
 	case f.ContentStarted:
 		return ReasonContentStarted
+	case !f.Eligible:
+		return ReasonFallbackNotEligible
 	case !f.TaskAllows:
 		return ReasonTaskDisallows
 	case f.Switched:
@@ -159,6 +190,10 @@ func fallbackDecision(f fallbackFacts) string {
 		return ReasonFlagOff
 	case !f.Configured:
 		return ReasonNotConfigured
+	case !f.DataAllowed:
+		return ReasonSyntheticOnly
+	case !f.VersionCheck:
+		return ReasonNoVersionCheck
 	case f.Remaining < f.Reserve:
 		return ReasonBudget
 	}
@@ -175,6 +210,8 @@ type altFacts struct {
 	Configured    bool
 	Remaining     time.Duration // (f)
 	Attempt       time.Duration
+	// DataAllowed: DeepSeek may receive this operation's data (V21, O-3).
+	DataAllowed bool
 }
 
 // altDecision applies RR-9 (a, b, e, f) and RR-10: refusal, truncation and
@@ -192,6 +229,8 @@ func altDecision(f altFacts) string {
 		return ReasonFlagOff
 	case !f.Configured:
 		return ReasonNotConfigured
+	case !f.DataAllowed:
+		return ReasonSyntheticOnly
 	case f.Remaining < f.Attempt:
 		return ReasonBudget
 	}
@@ -199,21 +238,26 @@ func altDecision(f altFacts) string {
 }
 
 // needsVerification applies RR-8: always for AT-3, AT-4 and AT-6; for
-// AT-1, AT-2 and AT-5 when the health-claim detector flags the output.
+// AT-1, AT-2 and AT-5 when the health-claim detector flags the output;
+// and for an AT-1 reply the fallback generator wrote, always (§17 O-6).
 // Guards can only add a requirement, never remove one.
-func needsVerification(pol Policy, g guard.Result) bool {
-	switch pol.Verification {
-	case VerifyAlways:
+func needsVerification(pol Policy, g guard.Result, route Route) bool {
+	switch {
+	case pol.Verification == VerifyAlways:
 		return true
-	case VerifyWhenFlagged:
+	case route == RouteFallback && pol.VerifyFallback:
+		return true
+	case pol.Verification == VerifyWhenFlagged:
 		return g.Flagged()
 	}
 	return false
 }
 
-// breaker is the RR-14 circuit breaker: after 3 consecutive Meta
-// availability failures within 2 minutes, interactive tasks skip the Meta
-// wait for 60 s and go straight to the RR-4 check.
+// breaker is the RR-14 circuit breaker: after 3 consecutive upstream Meta
+// availability failures within 2 minutes, interactive tasks stop waiting
+// for a Meta cold start for 60 s. Meta is still called first (§17 O-12):
+// its immediate 503 is the availability failure, and only then does the
+// RR-4 check run.
 type breaker struct {
 	mu        sync.Mutex
 	failures  []time.Time

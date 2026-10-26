@@ -43,10 +43,15 @@ var (
 	ErrSpendCap = errors.New("ai: daily spend ceiling reached")
 )
 
-// Limiter enforces Sela's per-user limits and daily spend ceilings. It is
-// called right before every provider call. A nil Limiter allows all.
+// Limiter enforces Sela's per-user limits and daily spend ceilings. Allow
+// is called right before every provider call and counts it. Check reports
+// what Allow would return now without counting a call: the router asks it
+// before a call that depends on a later one (RR-4 i: DeepSeek writes an
+// AT-1 reply only when the Claude check it needs is still allowed). A nil
+// Limiter allows all.
 type Limiter interface {
 	Allow(ctx context.Context, subject Subject, provider ProviderName, task Task) error
+	Check(ctx context.Context, subject Subject, provider ProviderName, task Task) error
 }
 
 // Screener is the deterministic crisis screen of RR-1, run on every
@@ -82,7 +87,11 @@ const (
 	StageAltVerify Stage = "alt_verify"
 	StageCommit    Stage = "commit"
 	StageIntegrity Stage = "integrity_alert"
-	StageResult    Stage = "result"
+	// StageOperatorAlert: Meta failed for a reason on Sela's side (its
+	// admission queue, credentials, a spend ceiling or billing, a
+	// certificate failure). Not an outage: no fallback (§17 O-1).
+	StageOperatorAlert Stage = "operator_alert"
+	StageResult        Stage = "result"
 )
 
 // Event is a metadata-only observation (DM-5): provider, task, route,
@@ -180,10 +189,19 @@ type Input struct {
 	CrisisPaused bool
 	// Validate is the task's Meaning Lock check.
 	Validate Validator
-	// Commit rechecks the entry or conversation version, the crisis state
+	// Commit rechecks the entry or conversation version (and, for
+	// synthetic data, the fixture or scenario version), the crisis state
 	// and the account session right before the result is accepted
-	// (RR-13); any error discards the result as stale.
+	// (RR-13); any error discards the result as stale. A fallback result
+	// is rechecked right after the DeepSeek call and again at commit
+	// (V21), so the fallback is never attempted without it.
 	Commit func(ctx context.Context) error
+	// Synthetic marks the operation's data as synthetic, versioned demo or
+	// test data (a fixture or demo scenario), set by server code from the
+	// validated fixture, never from a browser field. While DeepSeek is
+	// limited to synthetic data (Config.DeepSeekData, V21, §17 O-3) it is
+	// called only for such operations, and never in production.
+	Synthetic bool
 	// Budget, when positive and shorter, replaces the task budget.
 	Budget time.Duration
 }

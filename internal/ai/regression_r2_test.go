@@ -330,7 +330,9 @@ func TestBody200BreakIsContentFailure(t *testing.T) {
 		h := newHarness(t)
 		h.meta.consent = nil
 		h.meta.steps = []genStep{unavailableErr()}
-		r, err := NewRouter(h.cfg, Deps{Meta: h.meta, DeepSeek: NewDeepSeekGenerator(ds), Consent: h.c, Screener: screenFake{}})
+		// Claude is configured: DeepSeek writes an AT-1 reply only when the
+		// Claude check it needs is permitted (RR-4 i).
+		r, err := NewRouter(h.cfg, Deps{Meta: h.meta, DeepSeek: NewDeepSeekGenerator(ds), Claude: h.claude, Consent: h.c, Screener: screenFake{}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -354,6 +356,9 @@ func (l *countLimiter) Allow(_ context.Context, _ Subject, p ProviderName, _ Tas
 	l.n[p]++
 	return nil
 }
+
+// Check never counts.
+func (l *countLimiter) Check(context.Context, Subject, ProviderName, Task) error { return nil }
 
 func (l *countLimiter) get(p ProviderName) int {
 	l.mu.Lock()

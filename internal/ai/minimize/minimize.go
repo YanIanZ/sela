@@ -48,6 +48,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/YanIanZ/sela/internal/ai/textnorm"
@@ -105,11 +106,13 @@ var (
 	}
 	cardRe = regexp.MustCompile(`\d(?:[ \-]?\d){12,18}`)
 	// phoneRunRe is a phone-number run: a prefix ("+", or "0" or "62" at
-	// the start of a word) and then digits with any whitespace, dots,
-	// hyphens and parentheses between them ("0812 - 3456 - 7890",
-	// "0812  3456  7890", "+62 (812) 3456-7890", "0 8 1 2 3 4 5 6"). See
-	// FindPhones for the digit count.
-	phoneRunRe = regexp.MustCompile(`(?:\+|\b0|\b62)[\d\s().\-]*\d`)
+	// the start of a word) and then digits with any whitespace, dots
+	// (a View maps the middle dots "·", "•", "∙", "・" to '.'), hyphens,
+	// slashes, underscores and parentheses between them ("0812 - 3456 -
+	// 7890", "0812  3456  7890", "+62 (812) 3456-7890", "0 8 1 2 3 4 5 6",
+	// "0812·3456·7890", "0812/3456/7890", "0812_3456_7890"). See
+	// FindPhones for the digit count and the date rule.
+	phoneRunRe = regexp.MustCompile(`(?:\+|\b0|\b62)[\d\s().\-/_]*\d`)
 	handleRe   = regexp.MustCompile(`(?:^|[^\w.@])(@[A-Za-z0-9_](?:[A-Za-z0-9_.]{0,28}[A-Za-z0-9_])?)`)
 	// CueHandleRe matches a handle named by a platform cue without "@":
 	// "ig aku raka.putra", "line: raka99", "tiktoknya @raka". Group 1 is
@@ -162,10 +165,18 @@ const (
 )
 
 // FindPhones returns the byte ranges of phone numbers in text: runs of
-// phoneRunRe with 8 to 15 digits. Whitespace may surround a separator
+// phoneRunRe with 8 to 15 digits. Leading digit groups shaped like a date
+// (dateAt: "08/10/2026", "05.11.2026", "05-11-2026", "05/11",
+// "01/02/2026 10/11/2026") are not part of a number: they are skipped and
+// the rest of the run is read as numbers again, so "05/11 08123456789" and
+// "05.11.2026 0812 3456 789" keep the date and match the whole number. A run that opens with "+" or "62" is an
+// international number and never holds a date ("+62 812/3456/7890").
+// Slashes otherwise join a number ("021/7654321", "0812/3456/7890").
+// Whitespace may surround a separator
 // ("0812 - 3456 - 7890", "WA 0812 . 3456 . 7890"). A run with more digits
 // (two numbers side by side) is cut at the gaps between digit groups into
-// consecutive numbers of at most 15 digits, and one-digit groups that
+// consecutive numbers of at most 15 digits (a rest too short to be a
+// number goes with the number before it), and one-digit groups that
 // follow a number ("0812 3456 7890 2 kali") are left out while 8 digits
 // remain; a number spelled digit by digit keeps every digit. The output
 // guard (CON-1) uses this matcher on the same normalised view, so a form
@@ -187,7 +198,15 @@ func FindPhones(text string) [][2]int {
 			i = j
 		}
 		width := func(g [2]int) int { return g[1] - g[0] }
+		intl := text[loc[0]] == '+' || strings.HasPrefix(text[loc[0]:], "62")
+		prev, prevEnd := -1, -1 // the last number of this run (index in out) and the group after it
 		for i := 0; i < len(groups); {
+			if !intl {
+				if k := dateAt(text, groups, i); k > 0 {
+					i += k // a date, never part of a number
+					continue
+				}
+			}
 			j, n := i, 0
 			for j < len(groups) && n+width(groups[j]) <= phoneMaxDigits {
 				n += width(groups[j])
@@ -220,11 +239,84 @@ func FindPhones(text string) [][2]int {
 					start = loc[0] // keep the "+" of the prefix
 				}
 				out = append(out, [2]int{start, groups[j-1][1]})
+				prev, prevEnd = len(out)-1, j
+			} else if prev >= 0 && prevEnd == i {
+				// The rest of a run cut at 15 digits right after a number
+				// is too short to be a number: it goes with that number
+				// (one-digit groups excepted), so no part of it is left in
+				// clear.
+				for k := j - 1; k >= i; k-- {
+					if width(groups[k]) > 1 {
+						out[prev][1] = groups[k][1]
+						break
+					}
+				}
 			}
 			i = j
 		}
 	}
 	return out
+}
+
+// dateAt returns how many digit groups from groups[i] form a date, or 0:
+// a day and a month (one or two digits each, 1 to 31, one of them at most
+// 12) and an optional year of two digits or of four starting 19 or 20,
+// joined by one separator used throughout the date, "/", "." or "-"
+// (whitespace may surround it), with no such separator directly before or
+// after the date; or a day, a month and a four-digit year starting 19 or
+// 20 separated by whitespace alone ("05 11 2026"). So "05/11",
+// "08/10/2026", "1/2/26", "05.11.2026" and "05-11-2026" are dates, while
+// "08/12/3456/7890", "08.12.3456.7890", "02/1234567" and "021/7654321" are
+// not.
+func dateAt(text string, groups [][2]int, i int) int {
+	sep := func(k int) string { // the separator before groups[k]
+		if k <= 0 || k >= len(groups) {
+			return ""
+		}
+		return text[groups[k-1][1]:groups[k][0]]
+	}
+	digits := func(k int) string { return text[groups[k][0]:groups[k][1]] }
+	dayOrMonth := func(k int) int {
+		d := digits(k)
+		if len(d) > 2 {
+			return 0
+		}
+		v, _ := strconv.Atoi(d)
+		if v > 31 {
+			return 0
+		}
+		return v
+	}
+	longYear := func(y string) bool { return len(y) == 4 && (strings.HasPrefix(y, "19") || strings.HasPrefix(y, "20")) }
+	if i+1 >= len(groups) {
+		return 0
+	}
+	a, b := dayOrMonth(i), dayOrMonth(i+1)
+	if a == 0 || b == 0 || (a > 12 && b > 12) {
+		return 0
+	}
+	c := strings.TrimSpace(sep(i + 1))
+	if c == "" {
+		// "05 11 2026": whitespace alone, so the four-digit year is needed.
+		if i+2 < len(groups) && strings.TrimSpace(sep(i+2)) == "" && longYear(digits(i+2)) &&
+			strings.TrimSpace(sep(i)) == "" && strings.TrimSpace(sep(i+3)) == "" {
+			return 3
+		}
+		return 0
+	}
+	if c != "/" && c != "." && c != "-" || strings.Contains(sep(i), c) {
+		return 0
+	}
+	n := 2
+	if i+2 < len(groups) && strings.TrimSpace(sep(i+2)) == c {
+		if y := digits(i + 2); len(y) == 2 || longYear(y) {
+			n = 3
+		}
+	}
+	if strings.Contains(sep(i+n), c) {
+		return 0 // more groups with the separator follow: a number, not a date
+	}
+	return n
 }
 
 // honorifics are address terms that may open a self-introduced name
@@ -393,6 +485,9 @@ type nameEntry struct {
 	// value, for a learned name, is the full name as introduced (the
 	// original text), which the owner's view restores the placeholder to.
 	value string
+	// common marks a part of a private name that is also an everyday word
+	// ("Kasih" of "Kasih Ramadhani"): it is matched by FindCommonPart.
+	common bool
 }
 
 // nameKey is the placeholder key of a name: "Ｄｅｗｉ" and "Dewi" are one
@@ -418,13 +513,198 @@ type Session struct {
 }
 
 // NewSession returns a session for one request. privateNames are the
-// names the user marked private; longer names are matched first.
+// names the user marked private; longer names are matched first. Each word
+// of a private name of two or more words is listed too ("Budi Santoso":
+// "Budi" and "Santoso" alone), with the full name's placeholder and
+// restore value, so a part that appears alone is redacted and blocked by
+// the output guard like the full name. Address terms ("Pak", "Kak") and
+// name particles ("bin", "van") are not parts, and a part that two private
+// names share gets a placeholder of its own (it names neither for sure).
+// A part that is also an everyday word ("Kasih", "Cinta", "Indah", see
+// commonParts) is matched alone only where FindCommonPart finds it, so
+// "terima kasih" is neither redacted nor blocked while "Kasih bilang" is;
+// the full name is matched in any case.
 func NewSession(privateNames []string) *Session {
 	s := &Session{listed: map[string]nameEntry{}, byValue: map[string]string{}, restore: map[string]string{}, counts: map[Kind]int{}}
 	for _, n := range privateNames {
 		s.addName(nameEntry{name: n, key: nameKey(n), kind: KindName})
 	}
+	owners := map[string]map[string]bool{} // folded part -> keys of the names it is part of
+	for _, n := range privateNames {
+		for _, part := range nameParts(n) {
+			f := textnorm.Fold(part)
+			if owners[f] == nil {
+				owners[f] = map[string]bool{}
+			}
+			owners[f][nameKey(n)] = true
+		}
+	}
+	for _, n := range privateNames {
+		for _, part := range nameParts(n) {
+			e := nameEntry{name: part, key: nameKey(n), kind: KindName, value: strings.Join(strings.Fields(n), " "),
+				common: isCommonPart(part)}
+			if len(owners[textnorm.Fold(part)]) > 1 {
+				e.key, e.value = nameKey(part), ""
+			}
+			s.addName(e) // a part that is itself a listed name keeps that entry
+		}
+	}
 	return s
+}
+
+// commonParts are words of Indonesian given names that are also everyday
+// words (and so appear in ordinary text and in replies: "terima kasih",
+// "aku cinta kamu", "pemandangannya indah"). As a standalone part of a
+// private name they are matched by FindCommonPart only. The value is true
+// where the everyday meaning dominates ("kasih", "sayang", "indah",
+// "bagus", "sabar"): such a part names the person only capitalised. The
+// others are rarely an everyday word in chat ("bayu", "agung", "intan",
+// "lestari", "fajar"): they are matched in any case outside a fixed phrase,
+// so "agung blm bales" is the name.
+var commonParts = map[string]bool{
+	// The everyday meaning dominates: capitalised only.
+	"kasih": true, "cinta": true, "sayang": true, "indah": true, "bunga": true, "bintang": true, "cahaya": true,
+	"senja": true, "embun": true, "mentari": true, "pelangi": true, "suci": true, "murni": true, "setia": true,
+	"sabar": true, "damai": true, "bahagia": true, "harapan": true, "berkah": true, "mulia": true, "bagus": true,
+	"langit": true, "manis": true, "cantik": true, "rezeki": true, "hidayah": true,
+	// Rarely an everyday word: any case.
+	"putri": false, "putra": false, "ayu": false, "fajar": false, "intan": false, "mutiara": false, "permata": false,
+	"melati": false, "mawar": false, "rahmat": false, "teguh": false, "jaya": false, "agung": false, "bayu": false,
+	"surya": false, "ratu": false, "raja": false, "lestari": false}
+
+// isCommonPart reports whether a word of a private name is also an
+// everyday word (commonParts).
+func isCommonPart(part string) bool {
+	_, ok := commonParts[textnorm.Fold(part)]
+	return ok
+}
+
+// fixedPhrases are everyday phrases that hold a common part as an ordinary
+// word ("Terima kasih", "Kasih sayang itu penting"); see FindCommonPart for
+// where a common part inside one is still the name.
+var fixedPhrases = []string{"terima kasih", "trima kasih", "kasih sayang", "kasih tahu", "kasih tau", "maha pengasih",
+	"jatuh cinta", "cinta kasih", "rasa cinta", "sayang sekali", "sayang banget", "indah sekali", "indah banget",
+	"bunga tidur", "bintang jatuh", "putri saya", "putra saya", "putri kami", "putra kami", "tuan putri", "cahaya matahari",
+	"fajar menyingsing", "harapan baru", "rahmat tuhan", "rahmat allah", "bagus sekali", "bagus banget", "bagus kok",
+	"bagus ya", "maha agung", "masjid agung", "mahkamah agung", "jaksa agung", "tetap sabar", "sabar ya", "sabar dulu",
+	"rasa damai", "rasa bahagia", "sehat selalu", "tetap teguh", "teguh pendirian", "tenaga surya", "panel surya",
+	"tata surya", "bunga mawar", "bunga melati", "permata hati"}
+
+// FindCommonPart returns the spans of part, a word of a private name that
+// is also an everyday word (commonParts), in text (a name view, as for
+// textnorm.FindName) where it names the person. A lowercase occurrence
+// counts only for a part whose everyday meaning is rare ("bayu", "agung")
+// and outside a fixed phrase ("masjid agung"). A capitalised occurrence
+// ("Kasih bilang", "KASIH") counts unless it is inside a fixed phrase and
+// is the everyday word there: it opens a sentence ("Indah banget!",
+// "Kasih sayang itu penting") or follows a capitalised word of the phrase
+// ("Terima Kasih"). After a lowercase word in the middle of a sentence it
+// is the name ("aku kangen Indah banget", "cerita ke Bagus ya"). The
+// redactor and the output guard (NAME-1) both use it, so a form one of
+// them matches the other matches too.
+func FindCommonPart(text, part string) []textnorm.Span {
+	f := textnorm.Fold(part)
+	capOnly := commonParts[f]
+	var phrases []textnorm.Span
+	for _, ph := range fixedPhrases {
+		for _, w := range strings.Fields(ph) {
+			if w == f {
+				phrases = append(phrases, textnorm.FindName(text, ph)...)
+				break
+			}
+		}
+	}
+	var out []textnorm.Span
+	for _, sp := range textnorm.FindName(text, part) {
+		upper := startsUpper(text[sp.Start:])
+		if capOnly && !upper {
+			continue
+		}
+		everyday := false
+		for _, p := range phrases {
+			if p.Start <= sp.Start && sp.End <= p.End {
+				everyday = !upper || opensSentence(text, sp.Start) || (sp.Start > p.Start && startsUpper(text[prevWord(text, sp.Start):]))
+				if everyday {
+					break
+				}
+			}
+		}
+		if !everyday {
+			out = append(out, sp)
+		}
+	}
+	return out
+}
+
+func startsUpper(s string) bool {
+	r, _ := utf8.DecodeRuneInString(s)
+	return unicode.IsUpper(r)
+}
+
+// opensSentence reports whether the word at text[at:] opens a sentence:
+// only spaces and opening quotes or brackets stand between it and the
+// start of text, a line break or ".", "!", "?" or "…".
+func opensSentence(text string, at int) bool {
+	for at > 0 {
+		r, size := utf8.DecodeLastRuneInString(text[:at])
+		switch {
+		case r == '\n' || r == '\r' || r == '.' || r == '!' || r == '?' || r == '…':
+			return true
+		case unicode.IsSpace(r) || unicode.Is(unicode.Pi, r) || unicode.Is(unicode.Ps, r) || r == '"' || r == '\'' || r == '*' || r == '_':
+			at -= size
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+// prevWord returns the start of the word before the one at text[at:]
+// (at itself when there is none).
+func prevWord(text string, at int) int {
+	i := at
+	for i > 0 {
+		r, size := utf8.DecodeLastRuneInString(text[:i])
+		if !unicode.IsSpace(r) {
+			break
+		}
+		i -= size
+	}
+	if i == at {
+		return at
+	}
+	for i > 0 {
+		r, size := utf8.DecodeLastRuneInString(text[:i])
+		if !textnorm.WordRune(r) && r != '\'' {
+			break
+		}
+		i -= size
+	}
+	return i
+}
+
+// nameParticles are words inside a name that are not a name on their own.
+var nameParticles = map[string]bool{"bin": true, "binti": true, "bt": true, "ibn": true, "ibnu": true, "al": true, "el": true,
+	"van": true, "von": true, "der": true, "den": true, "de": true, "del": true, "della": true, "di": true, "da": true,
+	"dos": true, "du": true, "la": true, "le": true, "y": true}
+
+// nameParts returns the words of a name of two or more words that may
+// name the person alone: not an address term or a particle, at least two
+// letters (addName's minimum).
+func nameParts(name string) []string {
+	toks := strings.Fields(name)
+	if len(toks) < 2 {
+		return nil
+	}
+	var out []string
+	for _, tok := range toks {
+		tok = strings.Trim(tok, ".,-")
+		if honorific(tok) || nameParticles[textnorm.Fold(tok)] || utf8.RuneCountInString(tok) < 2 {
+			continue
+		}
+		out = append(out, tok)
+	}
+	return out
 }
 
 // addName lists a name (once; a name shorter than two letters is never
@@ -494,22 +774,59 @@ func (s *Session) learn(text string) {
 			}
 			start, end := v.Orig(m[2], m[3])
 			e := nameEntry{name: name, key: nameKey(name), kind: KindNameHint, value: text[start:end]}
+			s.uncommon(name)
 			s.addName(e)
 			if g := givenName(name); g != "" {
 				e.name = g
+				s.uncommon(g)
 				s.addName(e)
 			}
 		}
 	}
 }
 
-// Names returns every name the session redacts: the private names and the
-// self-introduced names (and given names) learned so far. The output
-// guard blocks them (NAME-1).
+// uncommon makes a listed common part that the user introduced
+// themselves with ("namaku Kasih" when "Kasih Ramadhani" is private) a
+// name matched in any case, as it is for a session without private names;
+// the entry keeps its key and value (the private name's placeholder).
+func (s *Session) uncommon(name string) {
+	f := textnorm.Fold(strings.Join(strings.Fields(name), " "))
+	e, ok := s.listed[f]
+	if !ok || !e.common {
+		return
+	}
+	e.common = false
+	s.listed[f] = e
+	for i := range s.names {
+		if textnorm.Fold(strings.Join(strings.Fields(s.names[i].name), " ")) == f {
+			s.names[i].common = false
+		}
+	}
+}
+
+// Names returns every name the session redacts wherever it appears: the
+// private names, their parts and the self-introduced names (and given
+// names) learned so far, without the common-word parts (CommonNameParts).
+// The output guard blocks them (NAME-1).
 func (s *Session) Names() []string {
 	out := make([]string, 0, len(s.names))
 	for _, e := range s.names {
-		out = append(out, e.name)
+		if !e.common {
+			out = append(out, e.name)
+		}
+	}
+	return out
+}
+
+// CommonNameParts returns the parts of private names that are also
+// everyday words; the session redacts them, and the output guard blocks
+// them (NAME-1), only where FindCommonPart finds them.
+func (s *Session) CommonNameParts() []string {
+	var out []string
+	for _, e := range s.names {
+		if e.common {
+			out = append(out, e.name)
+		}
 	}
 	return out
 }
@@ -538,7 +855,11 @@ func (s *Session) Redact(text string) string {
 		add(v, f)
 	}
 	for _, e := range s.names {
-		for _, sp := range textnorm.FindName(nv.Text, e.name) {
+		find := textnorm.FindName
+		if e.common {
+			find = FindCommonPart
+		}
+		for _, sp := range find(nv.Text, e.name) {
 			add(nv, finding{kind: e.kind, start: sp.Start, end: sp.End, key: e.key, value: e.value})
 		}
 	}

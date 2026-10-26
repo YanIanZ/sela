@@ -61,6 +61,11 @@ type GenerateRequest struct {
 	// AttemptTimeout bounds each attempt (DeepSeek; zero keeps the client
 	// default).
 	AttemptTimeout time.Duration
+	// NoColdStartWait: the RR-14 circuit breaker is open. Meta is still
+	// called first (§17 O-12), but a Modal 503 before content (no
+	// container ready) ends the call at once instead of waiting for the
+	// cold start.
+	NoColdStartWait bool
 	// BeforeAttempt runs right before every attempt that may start after
 	// a wait: Meta runs it before every attempt, the first included (an
 	// admission-queue wait can last the whole first-content window), and
@@ -82,21 +87,42 @@ type GenerateResult struct {
 	Attempts       int
 }
 
-// Fallback reasons (ADR-0003 §10).
+// Fallback reasons (ADR-0003 §10 fallback_reason): the upstream Meta
+// availability failures that may trigger the DeepSeek fallback (§4 note,
+// RR-4 a, §17 O-1, SPEC V19). Nothing else is a fallback reason: Sela's own
+// admission queue (capacity), a credential problem on Sela's side (auth), a
+// billing or balance error, a Sela spend ceiling and a certificate failure
+// end in the no-AI path with an operator alert.
 const (
 	FallbackColdStart   = "cold_start_budget"
 	FallbackUnavailable = "unavailable"
 	FallbackTimeout     = "timeout"
-	FallbackCapacity    = "capacity"
-	FallbackAuth        = "auth"
+	FallbackRateLimited = "rate_limited"
+)
+
+// FallbackReasons lists every fallback_reason value (null aside).
+func FallbackReasons() []string {
+	return []string{FallbackColdStart, FallbackUnavailable, FallbackTimeout, FallbackRateLimited}
+}
+
+// Causes of an availability failure that is not eligible for the fallback
+// (GenerateError.Cause; content-free).
+const (
+	CauseCapacity = "capacity"  // Sela's admission queue for Meta stayed full
+	CauseAuth     = "auth"      // 401/403: a credential problem on Sela's side
+	CauseSpendCap = "spend_cap" // a Sela daily ceiling, billing or balance error
+	CauseTLS      = "tls"       // a certificate failure: not transient
 )
 
 // GenerateError classifies a failed generation (ADR-0003 §4).
 type GenerateError struct {
 	Class  transport.Class
 	Reason transport.Reason
-	// FallbackReason is set for availability failures.
+	// FallbackReason is set only for an upstream Meta availability failure
+	// that may trigger the fallback (one of FallbackReasons).
 	FallbackReason string
+	// Cause names an availability failure that may not (Cause* values).
+	Cause string
 	// ContentStarted: content had been received; nothing after it may fall
 	// back.
 	ContentStarted bool
@@ -331,8 +357,9 @@ func (m *metaGenerator) Generate(ctx context.Context, req GenerateRequest) (Gene
 		release, err := m.adm.Acquire(wctx)
 		if err != nil {
 			if state.Load() == expired {
+				// Sela's own queue, not a Meta outage (§17 O-1): no fallback.
 				return GenerateResult{Latency: time.Since(start)}, &GenerateError{Class: transport.ClassAvailability,
-					Reason: transport.ReasonUnavailable, FallbackReason: FallbackCapacity}
+					Reason: transport.ReasonUnavailable, Cause: CauseCapacity}
 			}
 			return GenerateResult{Latency: time.Since(start)}, ctxGenerateError(ctx)
 		}
@@ -405,6 +432,11 @@ func (m *metaGenerator) Generate(ctx context.Context, req GenerateRequest) (Gene
 		}
 		var delay time.Duration
 		switch {
+		case modal && req.NoColdStartWait && llm.KindOf(err) == llm.KindUnavailable && status == http.StatusServiceUnavailable:
+			// RR-14, §17 O-12: the circuit breaker is open. Meta was still
+			// called first; its immediate 503 (no container ready) is the
+			// availability failure at once, without the cold-start wait.
+			return meta, ge
 		case modal && bounded && llm.KindOf(err) == llm.KindUnavailable && status == http.StatusServiceUnavailable:
 			// Modal: no container ready yet. Wait for the cold start
 			// while the window lasts (v2 journey.generate); not a retry.
@@ -439,6 +471,12 @@ func (m *metaGenerator) Generate(ctx context.Context, req GenerateRequest) (Gene
 	}
 }
 
+// certError reports a TLS certificate verification failure.
+func certError(err error) bool {
+	var certErr *tls.CertificateVerificationError
+	return errors.As(err, &certErr)
+}
+
 // retryableMeta mirrors internal/llm's retry rule before content: a
 // connection failure or attempt timeout (never a certificate failure),
 // 429, 502, 503, 504, and 500 once.
@@ -451,8 +489,7 @@ func retryableMeta(err error, status int, retried500 *bool) bool {
 	case llm.KindUnavailable:
 		switch status {
 		case 0:
-			var certErr *tls.CertificateVerificationError
-			return !errors.As(err, &certErr)
+			return !certError(err)
 		case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
 			return true
 		case http.StatusInternalServerError:
@@ -497,10 +534,15 @@ func classifyMeta(ctx context.Context, err error, state int32) *GenerateError {
 	switch kind {
 	case llm.KindUnavailable:
 		ge.Class, ge.Reason, ge.FallbackReason = transport.ClassAvailability, transport.ReasonUnavailable, FallbackUnavailable
+		if certError(err) {
+			// Not clearly transient (owner contract): no fallback.
+			ge.FallbackReason, ge.Cause = "", CauseTLS
+		}
 	case llm.KindRateLimited:
-		ge.Class, ge.Reason, ge.FallbackReason = transport.ClassAvailability, transport.ReasonRateLimited, FallbackUnavailable
+		ge.Class, ge.Reason, ge.FallbackReason = transport.ClassAvailability, transport.ReasonRateLimited, FallbackRateLimited
 	case llm.KindAuth:
-		ge.Class, ge.Reason, ge.FallbackReason = transport.ClassAvailability, transport.ReasonAuth, FallbackAuth
+		// A credential problem on Sela's side, not a Meta outage (O-1).
+		ge.Class, ge.Reason, ge.Cause = transport.ClassAvailability, transport.ReasonAuth, CauseAuth
 	case llm.KindTimeout:
 		ge.Class, ge.Reason, ge.FallbackReason = transport.ClassAvailability, transport.ReasonTimeout, FallbackTimeout
 	case llm.KindDisabled:
@@ -548,12 +590,10 @@ func (g *deepseekGenerator) Generate(ctx context.Context, req GenerateRequest) (
 	res := GenerateResult{Latency: comp.Latency, InputTokens: comp.InputTokens, OutputTokens: comp.OutputTokens,
 		Attempts: comp.Attempts, ServedModel: comp.ServedModel}
 	if err != nil {
+		// DeepSeek is the last generator of an operation (RR-6): its
+		// failures carry no fallback reason.
 		reason := transport.ReasonOf(err)
-		ge := &GenerateError{Class: reason.Class(), Reason: reason, Status: comp.Status}
-		if ge.Class == transport.ClassAvailability {
-			ge.FallbackReason = FallbackUnavailable
-		}
-		return res, ge
+		return res, &GenerateError{Class: reason.Class(), Reason: reason, Status: comp.Status}
 	}
 	res.Text = comp.Text
 	res.FirstContent = comp.Latency

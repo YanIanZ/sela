@@ -10,7 +10,7 @@ import (
 
 func okFallback() fallbackFacts {
 	return fallbackFacts{Failure: transport.ClassAvailability, TaskAllows: true, FlagOn: true, Profile: ProfileFull,
-		Configured: true, Remaining: time.Minute, Reserve: 20 * time.Second}
+		Configured: true, Remaining: time.Minute, Reserve: 20 * time.Second, Eligible: true, DataAllowed: true, VersionCheck: true}
 }
 
 // TestRR4FallbackDecision: DeepSeek replaces the generator only when every
@@ -23,16 +23,19 @@ func TestRR4FallbackDecision(t *testing.T) {
 		mod  func(*fallbackFacts)
 		want string
 	}{
-		"(a) content failure (RR-5)":    {func(f *fallbackFacts) { f.Failure = transport.ClassContent }, ReasonNotAvailability},
-		"(a) integrity failure":         {func(f *fallbackFacts) { f.Failure = transport.ClassIntegrity }, ReasonNotAvailability},
-		"(a) policy (user limit, kill)": {func(f *fallbackFacts) { f.Failure = transport.ClassPolicy }, ReasonNotAvailability},
-		"(a) after content started":     {func(f *fallbackFacts) { f.ContentStarted = true }, ReasonContentStarted},
-		"(b) task disallows":            {func(f *fallbackFacts) { f.TaskAllows = false }, ReasonTaskDisallows},
-		"(e) flag off":                  {func(f *fallbackFacts) { f.FlagOn = false }, ReasonFlagOff},
-		"(f) budget below reserve":      {func(f *fallbackFacts) { f.Remaining = 19 * time.Second }, ReasonBudget},
-		"(g) not configured":            {func(f *fallbackFacts) { f.Configured = false }, ReasonNotConfigured},
-		"RR-6 one switch":               {func(f *fallbackFacts) { f.Switched = true }, ReasonOneSwitch},
-		"RR-15 meta_only":               {func(f *fallbackFacts) { f.Profile = ProfileMetaOnly }, ReasonProfileMetaOnly},
+		"(a) content failure (RR-5)":            {func(f *fallbackFacts) { f.Failure = transport.ClassContent }, ReasonNotAvailability},
+		"(a) integrity failure":                 {func(f *fallbackFacts) { f.Failure = transport.ClassIntegrity }, ReasonNotAvailability},
+		"(a) policy (user limit, kill)":         {func(f *fallbackFacts) { f.Failure = transport.ClassPolicy }, ReasonNotAvailability},
+		"(a) after content started":             {func(f *fallbackFacts) { f.ContentStarted = true }, ReasonContentStarted},
+		"(b) task disallows":                    {func(f *fallbackFacts) { f.TaskAllows = false }, ReasonTaskDisallows},
+		"(e) flag off":                          {func(f *fallbackFacts) { f.FlagOn = false }, ReasonFlagOff},
+		"(f) budget below reserve":              {func(f *fallbackFacts) { f.Remaining = 19 * time.Second }, ReasonBudget},
+		"(g) not configured":                    {func(f *fallbackFacts) { f.Configured = false }, ReasonNotConfigured},
+		"RR-6 one switch":                       {func(f *fallbackFacts) { f.Switched = true }, ReasonOneSwitch},
+		"RR-15 meta_only":                       {func(f *fallbackFacts) { f.Profile = ProfileMetaOnly }, ReasonProfileMetaOnly},
+		"(a) not an upstream Meta outage (O-1)": {func(f *fallbackFacts) { f.Eligible = false }, ReasonFallbackNotEligible},
+		"V21 synthetic data only (O-3)":         {func(f *fallbackFacts) { f.DataAllowed = false }, ReasonSyntheticOnly},
+		"V21 no version re-check":               {func(f *fallbackFacts) { f.VersionCheck = false }, ReasonNoVersionCheck},
 	}
 	for name, tc := range cases {
 		f := okFallback()
@@ -45,7 +48,7 @@ func TestRR4FallbackDecision(t *testing.T) {
 
 func okAlt() altFacts {
 	return altFacts{ClaudeFailure: transport.ReasonUnavailable, Generator: ProviderMeta, FlagOn: true, Profile: ProfileFull,
-		Configured: true, Remaining: time.Minute, Attempt: 15 * time.Second}
+		Configured: true, Remaining: time.Minute, Attempt: 15 * time.Second, DataAllowed: true}
 }
 
 // TestRR9AltVerifierDecision and RR-10: only a Claude availability failure
@@ -77,6 +80,7 @@ func TestRR9AltVerifierDecision(t *testing.T) {
 		"(f) budget":                                 {func(f *altFacts) { f.Remaining = time.Second }, ReasonBudget},
 		"not configured":                             {func(f *altFacts) { f.Configured = false }, ReasonNotConfigured},
 		"meta_only":                                  {func(f *altFacts) { f.Profile = ProfileMetaOnly }, ReasonProfileMetaOnly},
+		"V21 synthetic data only (O-3)":              {func(f *altFacts) { f.DataAllowed = false }, ReasonSyntheticOnly},
 	}
 	for name, tc := range cases {
 		f := okAlt()
@@ -167,11 +171,17 @@ func TestRR8NeedsVerification(t *testing.T) {
 			TaskMemoryProposal: {true, true}, TaskSummaryDraft: {true, true}, TaskOpeningLines: {false, true},
 			TaskReadingVerification: {true, true},
 		}[task]
-		if got := needsVerification(pol, clean); got != want[0] {
+		if got := needsVerification(pol, clean, RoutePrimary); got != want[0] {
 			t.Errorf("%s clean: %v", task, got)
 		}
-		if got := needsVerification(pol, flagged); got != want[1] {
+		if got := needsVerification(pol, flagged, RoutePrimary); got != want[1] {
 			t.Errorf("%s flagged: %v", task, got)
+		}
+		// §17 O-6: a DeepSeek AT-1 reply is always verified; the fallback
+		// output of the other tasks follows their own rule.
+		fb := want[0] || task == TaskListeningReply
+		if got := needsVerification(pol, clean, RouteFallback); got != fb {
+			t.Errorf("%s clean fallback: %v", task, got)
 		}
 	}
 }
@@ -206,7 +216,8 @@ func TestTaxonomy(t *testing.T) {
 		t.Fatal("seven tasks")
 	}
 	if p, _ := PolicyFor(TaskListeningReply); p.Budget != 60*time.Second || p.FirstContentWait != 20*time.Second ||
-		p.FallbackReserve != 20*time.Second || p.VerifierAttempt != 15*time.Second || p.MaxRetryAfter != 3*time.Second {
+		p.FallbackReserve != 20*time.Second || p.VerifierAttempt != 15*time.Second || p.MaxRetryAfter != 3*time.Second ||
+		!p.VerifyFallback || p.FallbackVerifierReserve != 15*time.Second || p.reserves() != 35*time.Second {
 		t.Fatalf("AT-1 budgets %+v", p)
 	}
 	if p, _ := PolicyFor(TaskSummaryDraft); p.MaxVerifierCalls != 3 || p.Budget != 0 || p.VerificationReserve != 90*time.Second {

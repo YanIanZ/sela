@@ -140,6 +140,11 @@ type Options struct {
 	// PrivateNames are names the user marked private; any occurrence in a
 	// generated text is a leak.
 	PrivateNames []string
+	// CommonNameParts are parts of private names that are also everyday
+	// words (minimize.Session.CommonNameParts); they are a leak only where
+	// minimize.FindCommonPart finds them (capitalised, outside a fixed
+	// phrase: "Kasih bilang", not "Terima kasih").
+	CommonNameParts []string
 }
 
 // rule is one pattern. A match that contains a word of unless (a
@@ -447,7 +452,8 @@ func Check(text string, o Options) Result {
 	}
 	// Names run on the view that keeps apostrophes, with the redactor's
 	// matcher (possessives, enclitics, repeated letters).
-	if containsName(placeholRe.ReplaceAllString(textnorm.NewNameView(text).Text, " "), o.PrivateNames) {
+	names := placeholRe.ReplaceAllString(textnorm.NewNameView(text).Text, " ")
+	if containsName(names, o.PrivateNames) || containsCommonPart(names, o.CommonNameParts) {
 		add(PrivateName, "NAME-1")
 	}
 
@@ -518,6 +524,15 @@ func runRules(text string, rules []rule, g Guard, add func(Guard, string)) {
 func containsName(view string, names []string) bool {
 	for _, n := range names {
 		if len(textnorm.FindName(view, n)) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func containsCommonPart(view string, parts []string) bool {
+	for _, p := range parts {
+		if len(minimize.FindCommonPart(view, p)) > 0 {
 			return true
 		}
 	}

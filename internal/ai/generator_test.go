@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"net/http/httptest"
 	"testing"
@@ -36,31 +37,77 @@ func failWith(kind llm.Kind) func(context.Context, llm.Request, func(string) err
 }
 
 // TestMetaClassification maps every llm error kind to its ADR-0003 §4
-// failure class.
+// failure class and, for the upstream Meta availability failures only, to
+// a fallback_reason (§10, §17 O-1): a credential problem on Sela's side is
+// an availability failure with no fallback reason.
 func TestMetaClassification(t *testing.T) {
 	cases := []struct {
 		kind     llm.Kind
 		class    transport.Class
 		fallback string
+		cause    string
 	}{
-		{llm.KindUnavailable, transport.ClassAvailability, FallbackUnavailable},
-		{llm.KindRateLimited, transport.ClassAvailability, FallbackUnavailable},
-		{llm.KindAuth, transport.ClassAvailability, FallbackAuth},
-		{llm.KindTimeout, transport.ClassAvailability, FallbackTimeout},
-		{llm.KindModelMismatch, transport.ClassIntegrity, ""},
-		{llm.KindProtocol, transport.ClassContent, ""},
-		{llm.KindOutputTooLong, transport.ClassContent, ""},
-		{llm.KindRejected, transport.ClassPolicy, ""},
-		{llm.KindDisabled, transport.ClassPolicy, ""},
-		{llm.KindCanceled, transport.ClassPolicy, ""},
+		{llm.KindUnavailable, transport.ClassAvailability, FallbackUnavailable, ""},
+		{llm.KindRateLimited, transport.ClassAvailability, FallbackRateLimited, ""},
+		{llm.KindAuth, transport.ClassAvailability, "", CauseAuth},
+		{llm.KindTimeout, transport.ClassAvailability, FallbackTimeout, ""},
+		{llm.KindModelMismatch, transport.ClassIntegrity, "", ""},
+		{llm.KindProtocol, transport.ClassContent, "", ""},
+		{llm.KindOutputTooLong, transport.ClassContent, "", ""},
+		{llm.KindRejected, transport.ClassPolicy, "", ""},
+		{llm.KindDisabled, transport.ClassPolicy, "", ""},
+		{llm.KindCanceled, transport.ClassPolicy, "", ""},
 	}
 	for _, tc := range cases {
 		g := newMetaGenerator(&llmStub{mode: llm.ModeModal, fn: failWith(tc.kind)}, nil, 10*time.Millisecond)
 		_, err := g.Generate(context.Background(), GenerateRequest{Task: TaskListeningReply, System: "s", User: "u"})
 		var ge *GenerateError
-		if !errors.As(err, &ge) || ge.Class != tc.class || ge.FallbackReason != tc.fallback || ge.ContentStarted {
+		if !errors.As(err, &ge) || ge.Class != tc.class || ge.FallbackReason != tc.fallback || ge.Cause != tc.cause || ge.ContentStarted {
 			t.Errorf("%s: %+v", tc.kind, ge)
 		}
+	}
+	// A certificate failure is not clearly transient: no fallback reason.
+	g := newMetaGenerator(&llmStub{mode: llm.ModeModal, fn: func(context.Context, llm.Request, func(string) error) (llm.Result, error) {
+		return llm.Result{Attempts: 1}, &llm.Error{Kind: llm.KindUnavailable, Err: &tls.CertificateVerificationError{Err: errors.New("x509")}}
+	}}, nil, 10*time.Millisecond)
+	_, err := g.Generate(context.Background(), GenerateRequest{Task: TaskListeningReply, System: "s", User: "u"})
+	var ge *GenerateError
+	if !errors.As(err, &ge) || ge.Class != transport.ClassAvailability || ge.FallbackReason != "" || ge.Cause != CauseTLS {
+		t.Errorf("certificate failure: %+v", ge)
+	}
+	for _, fr := range FallbackReasons() {
+		switch fr {
+		case "cold_start_budget", "unavailable", "timeout", "rate_limited":
+		default:
+			t.Errorf("fallback_reason %q is not in ADR-0003 §10", fr)
+		}
+	}
+	if len(FallbackReasons()) != 4 {
+		t.Errorf("fallback reasons %v", FallbackReasons())
+	}
+}
+
+// TestMetaBreakerOpenNoColdStartWait: with the RR-14 breaker open, Meta is
+// still called, and Modal's 503 (no container ready) ends the call at once
+// instead of a cold-start wait (§17 O-12).
+func TestMetaBreakerOpenNoColdStartWait(t *testing.T) {
+	var calls int
+	stub := &llmStub{mode: llm.ModeModal, fn: func(context.Context, llm.Request, func(string) error) (llm.Result, error) {
+		calls++
+		return llm.Result{Attempts: 1}, &llm.Error{Kind: llm.KindUnavailable, Status: 503}
+	}}
+	g := newMetaGenerator(stub, nil, 10*time.Millisecond)
+	_, err := g.Generate(context.Background(), GenerateRequest{Task: TaskListeningReply, System: "s", User: "u",
+		FirstContentWait: time.Second, NoColdStartWait: true})
+	var ge *GenerateError
+	if !errors.As(err, &ge) || ge.FallbackReason != FallbackUnavailable || calls != 1 {
+		t.Fatalf("calls %d %+v", calls, ge)
+	}
+	// Without it, the 503 is polled while the window lasts.
+	calls = 0
+	_, _ = g.Generate(context.Background(), GenerateRequest{Task: TaskListeningReply, System: "s", User: "u", FirstContentWait: 100 * time.Millisecond})
+	if calls < 2 {
+		t.Fatalf("cold start not polled: %d calls", calls)
 	}
 }
 
@@ -131,8 +178,9 @@ func TestMetaRequest(t *testing.T) {
 	}
 }
 
-// TestMetaCapacity: a full admission queue past the wait is a capacity
-// availability failure.
+// TestMetaCapacity: a full admission queue past the wait is an
+// availability failure on Sela's side (capacity), never a fallback reason
+// (§17 O-1).
 func TestMetaCapacity(t *testing.T) {
 	adm := llm.NewAdmission(1)
 	release, _ := adm.Acquire(context.Background())
@@ -140,7 +188,7 @@ func TestMetaCapacity(t *testing.T) {
 	g := newMetaGenerator(&llmStub{mode: llm.ModeModal, fn: failWith(llm.KindUnavailable)}, adm, 10*time.Millisecond)
 	_, err := g.Generate(context.Background(), GenerateRequest{FirstContentWait: 30 * time.Millisecond})
 	var ge *GenerateError
-	if !errors.As(err, &ge) || ge.FallbackReason != FallbackCapacity || ge.Class != transport.ClassAvailability {
+	if !errors.As(err, &ge) || ge.FallbackReason != "" || ge.Cause != CauseCapacity || ge.Class != transport.ClassAvailability {
 		t.Fatalf("%+v", ge)
 	}
 }

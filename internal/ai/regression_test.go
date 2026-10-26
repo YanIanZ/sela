@@ -184,11 +184,15 @@ func TestShortBudgetNeverSkipsMeta(t *testing.T) {
 		}
 	})
 	t.Run("budget that holds the reserves but not the window", func(t *testing.T) {
+		// The caller's own deadline leaves 21 s: less than the 20 s window
+		// and the 2 s margin. (A caller budget below AT-1's 35 s reserve,
+		// 20 s DeepSeek and 15 s Claude, is invalid input.)
 		h := newHarness(t)
 		h.meta.steps = []genStep{unavailableErr()}
-		in := inReply()
-		in.Budget = 21 * time.Second // AT-1: 20 s reserve, 20 s window, 2 s margin
-		_, re := h.run(TaskListeningReply, in)
+		ctx, cancel := context.WithTimeout(context.Background(), 21*time.Second)
+		defer cancel()
+		_, err := h.router().Run(ctx, TaskListeningReply, inReply())
+		re, _ := err.(*RunError)
 		expect(t, re, OutcomeNoAI, ReasonBudget)
 		if h.meta.count() != 0 || h.ds.count() != 0 || re.Provenance.FallbackReason != "" || re.Provenance.Route != RouteNone {
 			t.Fatalf("meta %d deepseek %d provenance %+v", h.meta.count(), h.ds.count(), re.Provenance)
@@ -355,7 +359,7 @@ func TestMetaHonoursTaskRetryRule(t *testing.T) {
 			FirstContentWait: 20 * time.Second, MaxRetryAfter: 3 * time.Second, MaxRetries: 1})
 		srv.Close()
 		var ge *GenerateError
-		if !errors.As(err, &ge) || ge.Reason != transport.ReasonRateLimited || ge.FallbackReason != FallbackUnavailable ||
+		if !errors.As(err, &ge) || ge.Reason != transport.ReasonRateLimited || ge.FallbackReason != FallbackRateLimited ||
 			n.Load() != tc.attempts || time.Since(start) > 2500*time.Millisecond {
 			t.Fatalf("Retry-After %s: %+v attempts %d after %s", tc.retryAfter, ge, n.Load(), time.Since(start))
 		}
@@ -528,7 +532,7 @@ func TestConsentRecheckedBeforeEveryRetry(t *testing.T) {
 		h := newHarness(t)
 		h.meta.consent = nil
 		h.meta.steps = []genStep{unavailableErr()}
-		r, err := NewRouter(h.cfg, Deps{Meta: h.meta, DeepSeek: NewDeepSeekGenerator(ds), Consent: c, Screener: screenFake{}})
+		r, err := NewRouter(h.cfg, Deps{Meta: h.meta, DeepSeek: NewDeepSeekGenerator(ds), Claude: h.claude, Consent: c, Screener: screenFake{}})
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -3,6 +3,7 @@ package ai
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -62,6 +63,27 @@ type AnthropicConfig struct {
 	AttemptTimeout time.Duration
 }
 
+// DeepSeekData says which data DeepSeek may receive (SPEC V21, ADR-0003
+// §17 O-3).
+type DeepSeekData string
+
+// DeepSeek data settings.
+const (
+	// DeepSeekSyntheticOnly is the default in every environment: DeepSeek
+	// (fallback generator and alternative verifier) receives only an
+	// operation the caller marked as synthetic, versioned demo or test
+	// data (Input.Synthetic), and never in production, which has no demo
+	// data (C21, C24). Real-user text waits for the legal review of PRC
+	// processing (B-10) and the owner's confirmation that V21's limit is
+	// lifted (O-3).
+	DeepSeekSyntheticOnly DeepSeekData = "synthetic_only"
+	// DeepSeekRealUser lets DeepSeek receive minimised real-user text under
+	// the user's ai_provider_deepseek consent (owner brief v3, V41). It is
+	// an explicit operator decision: production refuses it unless
+	// DeepSeekRealUserCleared is also set (SELA_DEEPSEEK_REAL_USER_B10).
+	DeepSeekRealUser DeepSeekData = "real_user"
+)
+
 // DeepSeekConfig configures DeepSeek. The key is a Secret.
 type DeepSeekConfig struct {
 	Mode             ProviderMode
@@ -87,7 +109,11 @@ type Config struct {
 	TestDoubleAPIKey transport.Secret
 	Profile          Profile
 	// Fallback enables DeepSeek as fallback generator (SELA_AI_FALLBACK,
-	// default off; RR-4 e).
+	// RR-4 e). It is off by default in every environment, hackathon mode
+	// and the demo included (C13, V19, RR-15): only an explicit server
+	// setting turns it on, and even then DeepSeek is called only for a
+	// user whose stored ai_provider_deepseek consent is current (RR-4 c,
+	// h); no request field can enable it.
 	Fallback bool
 	// AltVerifier enables DeepSeek as alternative verifier
 	// (SELA_AI_ALT_VERIFIER, default off; RR-9 e).
@@ -101,8 +127,24 @@ type Config struct {
 	// OpTimeout is the AT-3/AT-4 operation budget (SELA_LLM_OP_TIMEOUT),
 	// at least MinOpTimeout.
 	OpTimeout time.Duration
-	Anthropic AnthropicConfig
-	DeepSeek  DeepSeekConfig
+	// DeepSeekData is the data DeepSeek may receive (SELA_DEEPSEEK_DATA;
+	// empty means DeepSeekSyntheticOnly). It is recorded in the provenance
+	// of every operation for which DeepSeek is configured.
+	DeepSeekData DeepSeekData
+	// DeepSeekRealUserCleared records that the legal review (B-10) and the
+	// owner's confirmation allow real-user text to reach DeepSeek
+	// (SELA_DEEPSEEK_REAL_USER_B10=cleared). Production refuses
+	// DeepSeekRealUser without it.
+	DeepSeekRealUserCleared bool
+	// VerifierDailyUSD is Sela's daily spend ceiling for Claude
+	// (SELA_VERIFIER_DAILY_USD, ADR-0003 §11), estimated from tokens per
+	// UTC day by this router; zero sets no ceiling here (a Limiter may
+	// still enforce one). Reaching it is an availability failure of the
+	// Claude route (spend_cap), and DeepSeek is then not called for a
+	// reply that Claude would have to check (RR-4 i).
+	VerifierDailyUSD float64
+	Anthropic        AnthropicConfig
+	DeepSeek         DeepSeekConfig
 }
 
 // Production reports whether c is the production environment. It fails
@@ -130,6 +172,15 @@ func (c Config) DeepSeekEnabled() bool {
 	return (c.Profile == ProfileFull || c.Profile == "") && c.DeepSeek.Mode.on()
 }
 
+// deepseekData is the effective DeepSeek data setting (empty means
+// synthetic only: fail closed).
+func (c Config) deepseekData() DeepSeekData {
+	if c.DeepSeekData == DeepSeekRealUser {
+		return DeepSeekRealUser
+	}
+	return DeepSeekSyntheticOnly
+}
+
 // bandAllowed reports whether band may reach any AI provider.
 func (c Config) bandAllowed(b AgeBand) bool {
 	if c.AllowedBands == nil {
@@ -146,6 +197,9 @@ func Bands(bands ...AgeBand) map[AgeBand]bool {
 	}
 	return m
 }
+
+// MaxVerifierDailyUSD bounds SELA_VERIFIER_DAILY_USD (a typo guard).
+const MaxVerifierDailyUSD = 10000
 
 // Timeouts.
 const (
@@ -182,6 +236,9 @@ func MinOpTimeout() time.Duration {
 //	SELA_AI_ALT_VERIFIER_EV6       pass: required to turn the alternative verifier on in production
 //	SELA_ALLOWED_AGE_BANDS         comma list of 15_17, 18_plus, unknown (production: 18_plus only)
 //	SELA_LLM_OP_TIMEOUT            AT-3/AT-4 budget (default 6m, MinOpTimeout..15m)
+//	SELA_DEEPSEEK_DATA             synthetic_only (default, every environment) | real_user
+//	SELA_DEEPSEEK_REAL_USER_B10    cleared: required for real_user in production (B-10, O-3)
+//	SELA_VERIFIER_DAILY_USD        Claude daily spend ceiling in USD (optional, e.g. 5 or 2.50)
 //	SELA_TEST_DOUBLE_API_KEY       optional key sent to test doubles only (never a live key)
 //	SELA_VERIFIER_MODE             anthropic | test_double | disabled (default anthropic with a key, else disabled)
 //	SELA_ANTHROPIC_API_KEY         workspace-scoped server key
@@ -253,6 +310,29 @@ func LoadFromEnv(getenv func(string) string) (Config, error) {
 	}
 	c.OpTimeout, err = durationVar(get, "SELA_LLM_OP_TIMEOUT", DefaultOpTimeout, MinOpTimeout(), MaxOpTimeout)
 	add(err)
+	switch v := get("SELA_DEEPSEEK_DATA"); v {
+	case "", string(DeepSeekSyntheticOnly):
+		c.DeepSeekData = DeepSeekSyntheticOnly
+	case string(DeepSeekRealUser):
+		c.DeepSeekData = DeepSeekRealUser
+	default:
+		add(errors.New("SELA_DEEPSEEK_DATA: must be synthetic_only or real_user"))
+	}
+	switch v := get("SELA_DEEPSEEK_REAL_USER_B10"); v {
+	case "":
+	case "cleared":
+		c.DeepSeekRealUserCleared = true
+	default:
+		add(errors.New("SELA_DEEPSEEK_REAL_USER_B10: must be cleared or unset"))
+	}
+	if v := get("SELA_VERIFIER_DAILY_USD"); v != "" {
+		usd, perr := strconv.ParseFloat(v, 64)
+		if perr != nil || !(usd > 0 && usd <= MaxVerifierDailyUSD) {
+			add(fmt.Errorf("SELA_VERIFIER_DAILY_USD: must be a positive amount up to %g", float64(MaxVerifierDailyUSD)))
+		} else {
+			c.VerifierDailyUSD = usd
+		}
+	}
 	c.TestDoubleAPIKey = transport.NewSecret(getenv("SELA_TEST_DOUBLE_API_KEY"))
 
 	a := &c.Anthropic
@@ -365,6 +445,20 @@ func (c Config) validateCore() error {
 			errs = append(errs, errors.New("SELA_ALLOWED_AGE_BANDS: production allows only 18_plus for AI providers until the legal review (B-10)"))
 		}
 	}
+	switch c.DeepSeekData {
+	case "", DeepSeekSyntheticOnly:
+	case DeepSeekRealUser:
+		if c.Production() && !c.DeepSeekRealUserCleared {
+			// O-3, V21: real-user text reaches DeepSeek only after the legal
+			// review (B-10) and the owner's confirmation, set explicitly.
+			errs = append(errs, errors.New("SELA_DEEPSEEK_DATA=real_user: production requires SELA_DEEPSEEK_REAL_USER_B10=cleared (legal review B-10 and the owner's confirmation, ADR-0003 §17 O-3)"))
+		}
+	default:
+		errs = append(errs, errors.New("SELA_DEEPSEEK_DATA: must be synthetic_only or real_user"))
+	}
+	if c.VerifierDailyUSD < 0 || c.VerifierDailyUSD > MaxVerifierDailyUSD || math.IsNaN(c.VerifierDailyUSD) {
+		errs = append(errs, fmt.Errorf("SELA_VERIFIER_DAILY_USD: must be a positive amount up to %g", float64(MaxVerifierDailyUSD)))
+	}
 	if c.Production() && c.Anthropic.InferenceGeo != "" && c.Anthropic.InferenceGeo != anthropic.DefaultInferenceGeo {
 		// ai_provider_anthropic is "Anthropic, US (inference_geo: us)"; a
 		// region change is a new policy version (ADR-0003 §8, §8.1).
@@ -454,10 +548,10 @@ func (c Config) String() string {
 	if c.AllowedBands == nil {
 		bands = []string{string(Band18Plus)}
 	}
-	return fmt.Sprintf("env=%s profile=%s verifier=%s(key=%s workspace=%s model=%s version=%s geo=%s) deepseek=%s(key=%s model=%s) fallback=%s alt_verifier=%s bands=%s",
+	return fmt.Sprintf("env=%s profile=%s verifier=%s(key=%s workspace=%s model=%s version=%s geo=%s) deepseek=%s(key=%s model=%s data=%s) fallback=%s alt_verifier=%s bands=%s",
 		c.Env, c.Profile, c.Anthropic.Mode, set(c.Anthropic.APIKey), set(c.Anthropic.WorkspaceID), orDefault(c.Anthropic.Model, claudeModel),
 		orDefault(c.Anthropic.Version, anthropic.DefaultVersion), orDefault(c.Anthropic.InferenceGeo, anthropic.DefaultInferenceGeo),
-		c.DeepSeek.Mode, set(c.DeepSeek.APIKey), orDefault(c.DeepSeek.Model, dsModel),
+		c.DeepSeek.Mode, set(c.DeepSeek.APIKey), orDefault(c.DeepSeek.Model, dsModel), c.deepseekData(),
 		onOff(c.Fallback), onOff(c.AltVerifier), strings.Join(bands, ","))
 }
 

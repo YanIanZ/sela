@@ -168,6 +168,16 @@ func (l *limitAfter) Allow(_ context.Context, _ Subject, p ProviderName, _ Task)
 	return nil
 }
 
+// Check reports what Allow would return, without counting.
+func (l *limitAfter) Check(_ context.Context, _ Subject, p ProviderName, _ Task) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if p == l.provider && l.n == 0 {
+		return ErrUserLimit
+	}
+	return nil
+}
+
 // VC-8 ("safety_signal raises the route"), D-035, CK-9: an output-level
 // issue in one chunk withholds the output but does not stop CK-9 on the
 // other chunks. They go to the same verifier only; a failure there keeps
@@ -717,7 +727,7 @@ func TestR3MetaModalNeverAtTestDoubleHost(t *testing.T) {
 // personal_memory, checked before and after every call and at commit
 // (probe TestProbeR3PersonalMemoryNotChecked).
 func TestR3PersonalMemoryConsent(t *testing.T) {
-	withMemory := Input{Subject: subject, Language: "id", Spans: []Span{
+	withMemory := Input{Subject: subject, Language: "id", Synthetic: true, Commit: okCommit, Spans: []Span{
 		{Key: "mem-1", Role: RoleMemory, Text: "Aku kerja shift malam di rumah sakit."},
 		{Key: "u-1", Role: RoleUser, Text: "Aku capek banget minggu ini."},
 	}}
@@ -758,7 +768,10 @@ func TestR3PersonalMemoryConsent(t *testing.T) {
 		for _, u := range out.Provenance.Consent {
 			purposes = append(purposes, string(u.Purpose))
 		}
-		if got := strings.Join(purposes, ","); got != "ai_processing,personal_memory,ai_provider_deepseek" {
+		// The Claude route is checked before DeepSeek writes the reply (RR-4
+		// i), and Claude then checks it (§17 O-6): every call needed
+		// personal_memory beside its own consents.
+		if got := strings.Join(purposes, ","); got != "ai_processing,personal_memory,ai_provider_anthropic,ai_provider_deepseek" {
 			t.Fatalf("consents used %s", got)
 		}
 	})

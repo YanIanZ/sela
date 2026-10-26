@@ -19,13 +19,23 @@ const (
 	StatusNotRequested            = "not_requested"
 )
 
-// V33 draft and verification provenance values. "test_double" for a
-// verifier report is the value proposed in ADR-0003 §10.1 (pending SPEC).
+// V35 draft and verification provenance values (ADR-0003 §10). A draft
+// that DeepSeek wrote as the fallback generator is the owner's
+// live_deepseek_fallback (SPEC V20, ADR-0003 §17 O-4); verdicts of DeepSeek
+// as the alternative verifier keep their own, distinct value
+// live_deepseek_alternative (O-5). "test_double" for a verifier report is
+// the value proposed in ADR-0003 §10.1 (pending SPEC). A run that produced
+// no AI draft (the no-AI path, or an abstention, stop or stale discard
+// before any draft passed the guards) carries the owner's "unavailable"
+// (docs/DEEPSEEK_FALLBACK.md: AI drafting unavailable); there is no other
+// "no draft" value.
 const (
-	DraftLiveMeta     = "live_meta"
-	DraftLiveDeepSeek = "live_deepseek"
-	DraftTestDouble   = "test_double"
-	DraftNone         = "none"
+	DraftLiveMeta             = "live_meta"
+	DraftLiveDeepSeekFallback = "live_deepseek_fallback"
+	DraftTestDouble           = "test_double"
+	DraftManual               = "manual"
+	DraftRecordedDemo         = "recorded_demo"
+	DraftUnavailable          = "unavailable"
 
 	VerifiedLiveAnthropic   = "live_anthropic"
 	VerifiedLiveDeepSeekAlt = "live_deepseek_alternative"
@@ -46,10 +56,19 @@ type Provenance struct {
 	PromptVersion   string `json:"promptVersion,omitempty"`
 	SchemaVersion   string `json:"schemaVersion,omitempty"`
 	// Route is the generator route of the released output.
-	Route          Route  `json:"route"`
+	Route Route `json:"route"`
+	// FallbackReason is the upstream Meta availability failure that led to
+	// the DeepSeek fallback: one of FallbackReasons (ADR-0003 §10, §17
+	// O-1), or empty when no fallback was attempted.
 	FallbackReason string `json:"fallbackReason,omitempty"`
 	CircuitOpen    bool   `json:"circuitOpen,omitempty"`
-	// DraftProvenance is the V33 draft value.
+	// DeepSeekData is the server's DeepSeek data setting when DeepSeek is
+	// configured ("synthetic_only" or "real_user", V21, §17 O-3), and
+	// Synthetic whether the caller marked this operation's data as
+	// synthetic demo or test data.
+	DeepSeekData DeepSeekData `json:"deepseekData,omitempty"`
+	Synthetic    bool         `json:"synthetic,omitempty"`
+	// DraftProvenance is the V35 draft value.
 	DraftProvenance string `json:"draftProvenance"`
 	// Generator is the generator whose output is used (nil when none).
 	Generator *GeneratorRecord `json:"generator,omitempty"`

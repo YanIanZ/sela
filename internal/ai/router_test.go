@@ -112,12 +112,15 @@ func TestRR2Preflight(t *testing.T) {
 		expect(t, re, OutcomeNoAI, ReasonUserLimit)
 		noCalls(t, h)
 	})
-	t.Run("daily spend ceiling is an availability failure", func(t *testing.T) {
+	t.Run("Sela's daily spend ceiling is not a Meta outage", func(t *testing.T) {
+		// §17 O-1: a Sela spend ceiling ends in the no-AI path with an
+		// operator alert, never in the fallback.
 		h := newHarness(t)
 		h.lim = limiter{provider: ProviderMeta, err: ErrSpendCap}
-		out, re := h.run(TaskListeningReply, inReply())
-		if re != nil || out.Provenance.Route != RouteFallback || h.meta.count() != 0 || h.ds.count() != 1 {
-			t.Fatalf("route %s err %v", out.Provenance.Route, re)
+		_, re := h.run(TaskListeningReply, inReply())
+		expect(t, re, OutcomeNoAI, ReasonFallbackNotEligible)
+		if h.meta.count() != 0 || h.ds.count() != 0 || re.Provenance.FallbackReason != "" || !h.ev.has(StageOperatorAlert) {
+			t.Fatalf("meta %d deepseek %d provenance %+v", h.meta.count(), h.ds.count(), re.Provenance)
 		}
 	})
 	t.Run("invalid input is never sent", func(t *testing.T) {
@@ -157,7 +160,7 @@ func TestRR3MetaPrimary(t *testing.T) {
 // RR-4: DeepSeek replaces the generator for an availability failure
 // before content when every condition holds.
 func TestRR4Fallback(t *testing.T) {
-	for _, fr := range []string{FallbackUnavailable, FallbackTimeout, FallbackAuth, FallbackCapacity, FallbackColdStart} {
+	for _, fr := range FallbackReasons() {
 		h := newHarness(t)
 		h.meta.steps = []genStep{{err: &GenerateError{Class: transport.ClassAvailability, Reason: transport.ReasonUnavailable, FallbackReason: fr}}}
 		out, re := h.run(TaskReflection, inReply("Aku capek banget sama skripsi."))
@@ -165,7 +168,7 @@ func TestRR4Fallback(t *testing.T) {
 			t.Fatalf("%s: %v", fr, re)
 		}
 		p := out.Provenance
-		if p.Route != RouteFallback || p.FallbackReason != fr || p.DraftProvenance != DraftLiveDeepSeek ||
+		if p.Route != RouteFallback || p.FallbackReason != fr || p.DraftProvenance != DraftLiveDeepSeekFallback ||
 			p.Generator.Provider != ProviderDeepSeek || p.Generator.ServedModel != "DeepSeek-V4.1-Flash-1017" || len(p.Calls) != 2 {
 			t.Fatalf("%s: provenance %+v", fr, p)
 		}
@@ -355,10 +358,12 @@ func TestRR5Regeneration(t *testing.T) {
 	t.Run("not enough time left", func(t *testing.T) {
 		h := newHarness(t)
 		h.meta.steps = []genStep{{text: reply("Cuma aku yang ngerti kamu.")}}
-		in := inReply()
-		in.Budget = 25 * time.Second // a regeneration needs 30 s
 		h.cfg.Fallback = false
-		_, re := h.run(TaskListeningReply, in)
+		// The caller's deadline leaves 25 s; a regeneration needs 30 s.
+		ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+		defer cancel()
+		_, err := h.router().Run(ctx, TaskListeningReply, inReply())
+		re, _ := err.(*RunError)
 		expect(t, re, OutcomeAbstain, ReasonGuardRejected)
 		if h.meta.count() != 1 {
 			t.Fatalf("calls %d", h.meta.count())
@@ -708,7 +713,8 @@ func TestRR13CommitRecheck(t *testing.T) {
 	})
 }
 
-// RR-14: after three Meta availability failures AT-1 skips the Meta wait.
+// RR-14, §17 O-12: after three Meta availability failures AT-1 stops
+// waiting for a Meta cold start, but Meta is still called first.
 func TestRR14CircuitBreaker(t *testing.T) {
 	h := newHarness(t)
 	h.meta.steps = []genStep{unavailableErr()}
@@ -718,16 +724,35 @@ func TestRR14CircuitBreaker(t *testing.T) {
 		if _, err := r.Run(context.Background(), TaskListeningReply, inReply()); OutcomeOf(err) != OutcomeNoAI {
 			t.Fatal(err)
 		}
+		if h.meta.req(i).NoColdStartWait {
+			t.Fatalf("call %d skipped the cold-start wait before the breaker opened", i)
+		}
 	}
 	_, err := r.Run(context.Background(), TaskListeningReply, inReply())
 	var re *RunError
-	if !errors.As(err, &re) || !re.Provenance.CircuitOpen || h.meta.count() != 3 {
-		t.Fatalf("breaker not open: meta %d %v", h.meta.count(), err)
+	if !errors.As(err, &re) || !re.Provenance.CircuitOpen || h.meta.count() != 4 || !h.meta.req(3).NoColdStartWait {
+		t.Fatalf("breaker: meta %d %v", h.meta.count(), err)
 	}
-	// Background tasks still wait for Meta.
+	// Background tasks still wait for the cold start.
 	_, _ = r.Run(context.Background(), TaskReflection, inReply())
-	if h.meta.count() != 4 {
-		t.Fatal("background task skipped Meta")
+	if h.meta.count() != 5 || h.meta.req(4).NoColdStartWait {
+		t.Fatal("background task skipped the cold-start wait")
+	}
+	// With the fallback on, DeepSeek runs only after Meta's own failure in
+	// that request: the breaker never routes straight to DeepSeek.
+	h2 := newHarness(t)
+	h2.meta.steps = []genStep{unavailableErr()}
+	r2 := h2.router()
+	for i := 0; i < 4; i++ {
+		_, _ = r2.Run(context.Background(), TaskListeningReply, inReply())
+		if h2.meta.count() != i+1 || h2.ds.count() != i+1 {
+			t.Fatalf("run %d: meta %d deepseek %d", i, h2.meta.count(), h2.ds.count())
+		}
+	}
+	h2.meta.steps = []genStep{{text: reply("Terima kasih sudah cerita.")}}
+	out, err := r2.Run(context.Background(), TaskListeningReply, inReply())
+	if err != nil || out.Provenance.Route != RoutePrimary || !out.Provenance.CircuitOpen || h2.ds.count() != 4 {
+		t.Fatalf("breaker open, Meta answered: err %v route %s deepseek %d", err, out.Provenance.Route, h2.ds.count())
 	}
 }
 
@@ -888,7 +913,7 @@ func TestAT6Authoring(t *testing.T) {
 		t.Fatal(re)
 	}
 	if h.c.calls != 0 || h.meta.count() != 0 || out.Items[0].Source != SourceAuthoredClaim || out.Items[0].Verdict != verifier.Supported ||
-		out.Items[0].SpanKeys[0] != "R-012#p3" || out.Provenance.DraftProvenance != "manual" {
+		out.Items[0].SpanKeys[0] != "R-012#p3" || out.Provenance.DraftProvenance != DraftManual {
 		t.Fatalf("out %+v consent calls %d", out, h.c.calls)
 	}
 	h2 := newHarness(t)

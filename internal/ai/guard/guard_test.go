@@ -439,3 +439,110 @@ func TestPlaceholderShapedNumberIsAContact(t *testing.T) {
 		}
 	}
 }
+
+// TestPrivateNamePartsAndPhoneSeparators: the output guard blocks a part
+// of a multi-word private name that appears alone (it checks the names the
+// redaction session lists), and it shares the redactor's phone matcher, so
+// "·", "/" and "_" separators are blocked exactly where they are redacted.
+func TestPrivateNamePartsAndPhoneSeparators(t *testing.T) {
+	names := minimize.NewSession([]string{"Budi Santoso"}).Names()
+	for _, text := range []string{"Mungkin Santoso bisa membantumu.", "Coba cerita ke budi.", "Budi Santoso bisa membantumu."} {
+		if r := Check(text, Options{PrivateNames: names}); !hasGuard(r, PrivateName) || !r.Blocked() {
+			t.Errorf("%q not blocked: %v", text, r.Hits)
+		}
+	}
+	if hasGuard(Check("Kata budiman itu bagus.", Options{PrivateNames: names}), PrivateName) {
+		t.Fatal("part matched inside another word")
+	}
+	for _, text := range []string{"WA 0812·3456·7890", "WA 0812/3456/7890", "WA 0812_3456_7890", "WA 0812 • 3456 • 7890",
+		"WA 021/7654321", "Tanggal 08/10/2026 aku ujian.", "Dari 01/02/2026 10/11/2026 aku libur.", "Jam 08/09 pagi."} {
+		redacted := minimize.NewSession(nil).Redact(text) != text
+		if blocked := hasGuard(Check(text, Options{}), ContactDetail); blocked != redacted {
+			t.Errorf("%q: guard blocks %v, redaction replaces %v", text, blocked, redacted)
+		}
+	}
+	if !hasGuard(Check("Hubungi 0812·3456·7890 ya.", Options{}), ContactDetail) {
+		t.Fatal("middle-dot phone number not blocked")
+	}
+}
+
+// TestPhoneAfterDateParity (review round 4): CON-1 blocks a number right
+// after a short date and a "+62" number with slashes, exactly where the
+// redactor replaces them; dates alone pass both.
+func TestPhoneAfterDateParity(t *testing.T) {
+	for _, text := range []string{"Jadwal kontrol 05/11 08123456789 ya.", "kontrol 05/11 0812-3456-7890 ya",
+		"08/10/2026 0812 3456 7890", "Hubungi +62 812 3456/7890 ya.", "Hubungi +62 812/3456/7890 ya.", "WA 08/12/3456 7890",
+		// Review round 5: dates with dots, dashes or spaces before the
+		// number; the redactor replaces the whole number, not its first
+		// group.
+		"Jadwal kontrol 05.11.2026 0812 3456 789 ya.", "Kontrol 05-11-2026 0812-3456-789 ya.", "Kontrol 05.11.2026 0812 3456 345 ya.",
+		"Kontrol 05 11 2026 0812 3456 789 ya.", "Kontrol 05.11.26.0812 3456 789 ya.", "WA 0812.3456.7890", "WA 08-12-3456-7890"} {
+		r := Check(text, Options{})
+		if !hasGuard(r, ContactDetail) || !r.Blocked() {
+			t.Errorf("%q not blocked (hits %v)", text, r.Hits)
+		}
+		if red := minimize.NewSession(nil).Redact(text); red == text || strings.Contains(red, "3456") {
+			t.Errorf("%q redacted to %q, want the whole number replaced", text, red)
+		}
+	}
+	for _, text := range []string{"Kontrol 05/11/2026 10.30 ya.", "Jadwal 05/11 dan 12/11, tensi 120/80 ya.", "Tanggal 08/10/2026 aku ujian.",
+		"Kontrol 05.11.2026 jam 10.30 ya.", "Tanggal 05-11-2026 aku ujian.", "Tanggal 05 11 2026 aku ujian."} {
+		redacted := minimize.NewSession(nil).Redact(text) != text
+		if blocked := hasGuard(Check(text, Options{}), ContactDetail); blocked || redacted {
+			t.Errorf("%q: guard blocks %v, redaction replaces %v, want neither", text, blocked, redacted)
+		}
+	}
+}
+
+// TestCommonWordNamePartParity (review round 4): a part of a private name
+// that is also an everyday word blocks NAME-1 only where the redactor
+// replaces it (capitalised, outside a fixed phrase), so "Terima kasih
+// sudah cerita." passes while "Kasih bilang apa?" is blocked.
+func TestCommonWordNamePartParity(t *testing.T) {
+	for _, tc := range []struct {
+		name, text string
+		want       bool
+	}{
+		{"Kasih Ramadhani", "Terima kasih sudah cerita.", false},
+		{"Kasih Ramadhani", "Terima Kasih sudah cerita.", false},
+		{"Kasih Ramadhani", "Kasih sayang itu penting.", false},
+		{"Kasih Ramadhani", "Aku cinta kamu, terima kasih ya.", false},
+		{"Kasih Ramadhani", "Kasih bilang apa?", true},
+		{"Kasih Ramadhani", "Terima kasih, Kasih.", true},
+		{"Kasih Ramadhani", "Mungkin ramadhani bisa membantu.", true},
+		{"Kasih Ramadhani", "kasih ramadhani bisa membantu.", true},
+		// Review round 5: a capitalised part after a lowercase word in the
+		// middle of a sentence is the name, also inside a fixed phrase; a
+		// part whose everyday meaning is rare is the name in any case.
+		{"Kasih Ramadhani", "Kamu mau bilang Terima Kasih ke dia.", false},
+		{"Kasih Ramadhani", "Kamu rindu Kasih sayang banget ya.", true},
+		{"Indah Permata", "Kamu kangen Indah banget ya.", true},
+		{"Indah Permata", "Indah banget ya pemandangannya.", false},
+		{"Indah Permata", "Pemandangannya indah banget.", false},
+		{"Bagus Pratama", "Kamu cerita ke Bagus ya?", true},
+		{"Bagus Pratama", "Kamu sudah ngomong sama Bagus kok.", true},
+		{"Bagus Pratama", "Bagus banget kamu mau cerita.", false},
+		{"Bagus Pratama", "Itu bagus banget.", false},
+		{"Putri Ayu", "Kamu ketemu Putri kami di sekolah?", true},
+		{"Putri Ayu", "Putri saya sudah sekolah.", false},
+		{"Bayu Pratama", "Kamu berantem sama bayu ya.", true},
+		{"Intan Lestari", "kamu kangen intan ya", true},
+		{"Agung Wibowo", "agung belum balas chat kamu?", true},
+		{"Agung Wibowo", "Kamu ke masjid agung kemarin?", false},
+	} {
+		s := minimize.NewSession([]string{tc.name})
+		r := Check(tc.text, Options{PrivateNames: s.Names(), CommonNameParts: s.CommonNameParts()})
+		if got := hasGuard(r, PrivateName); got != tc.want || (tc.want && !r.Blocked()) {
+			t.Errorf("%v %q: NAME-1 %v, want %v (hits %v)", tc.name, tc.text, got, tc.want, r.Hits)
+		}
+		if redacted := s.Redact(tc.text) != tc.text; redacted != tc.want {
+			t.Errorf("%v %q: redaction replaces %v, guard parity wants %v", tc.name, tc.text, redacted, tc.want)
+		}
+	}
+	// A self-introduced name that is a common part is blocked in any case.
+	s := minimize.NewSession([]string{"Kasih Ramadhani"})
+	s.Redact("Namaku Kasih.")
+	if r := Check("Semoga kasih cepat pulih.", Options{PrivateNames: s.Names(), CommonNameParts: s.CommonNameParts()}); !hasGuard(r, PrivateName) {
+		t.Errorf("learned common part not blocked lowercase (hits %v)", r.Hits)
+	}
+}

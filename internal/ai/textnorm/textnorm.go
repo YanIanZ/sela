@@ -6,8 +6,9 @@
 // Normalisation maps fullwidth ASCII to ASCII, folds accented letters and
 // Cyrillic and Greek homoglyphs to ASCII, drops zero-width and other
 // format characters and combining marks, and removes apostrophes. A View
-// additionally maps Unicode spaces to ' ' and Unicode dashes to '-' and
-// keeps a byte-offset map back to the original text, so a match found in
+// additionally maps Unicode spaces to ' ', Unicode dashes to '-' and middle
+// dots and bullets to '.', and keeps a byte-offset map back to the
+// original text, so a match found in
 // the normalised view replaces the original bytes. A NameView keeps
 // apostrophes (as ASCII '), so a name followed by a possessive ("Raka's",
 // "Raka’s") still ends at a word boundary; FindName runs on it.
@@ -50,6 +51,16 @@ func IsApostrophe(r rune) bool {
 func IsDash(r rune) bool {
 	switch r {
 	case '‐', '‑', '‒', '–', '—', '―', '−', '﹘', '﹣', '⁃':
+		return true
+	}
+	return false
+}
+
+// IsMiddleDot reports a middle dot or bullet used as a separator (mapped
+// to '.' in a View): "0812·3456·7890" is one phone number.
+func IsMiddleDot(r rune) bool {
+	switch r {
+	case '·', '•', '∙', '・', '･', '‧', '⋅':
 		return true
 	}
 	return false
@@ -101,8 +112,9 @@ func Fold(s string) string {
 }
 
 // View is a normalised view of a text: Fold's mapping without
-// lowercasing, plus Unicode spaces mapped to ' ' and Unicode dashes to
-// '-'. It maps byte offsets of the view back to the original text.
+// lowercasing, plus Unicode spaces mapped to ' ', Unicode dashes to '-'
+// and middle dots to '.'. It maps byte offsets of the view back to the
+// original text.
 type View struct {
 	// Text is the normalised text with the original case.
 	Text string
@@ -133,6 +145,8 @@ func newView(s string, keepApostrophes bool) View {
 			m = ' '
 		case IsDash(r):
 			m = '-'
+		case IsMiddleDot(r):
+			m = '.'
 		case keepApostrophes && IsApostrophe(r):
 			m = '\''
 		default:

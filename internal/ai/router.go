@@ -7,6 +7,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -66,6 +67,42 @@ type Router struct {
 	obs     Observer
 	now     func() time.Time
 	brk     *breaker
+	// spend is Claude's estimated spend today, for SELA_VERIFIER_DAILY_USD.
+	spend *spendMeter
+}
+
+// spendMeter sums a provider's estimated API cost per UTC day (ADR-0003
+// §11). It counts this router's calls only; a Limiter can enforce a
+// ceiling shared between instances.
+type spendMeter struct {
+	mu  sync.Mutex
+	day string
+	usd float64
+}
+
+func (m *spendMeter) add(usd float64, now time.Time) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if d := now.UTC().Format(time.DateOnly); d != m.day {
+		m.day, m.usd = d, 0
+	}
+	m.usd += usd
+}
+
+func (m *spendMeter) total(now time.Time) float64 {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if now.UTC().Format(time.DateOnly) != m.day {
+		return 0
+	}
+	return m.usd
+}
+
+// verifierSpendReached reports whether Sela's Claude daily spend ceiling
+// (SELA_VERIFIER_DAILY_USD) is reached: an availability failure of the
+// Claude route (spend_cap, §4, §10.1).
+func (r *Router) verifierSpendReached() bool {
+	return r.cfg.VerifierDailyUSD > 0 && r.spend.total(r.now()) >= r.cfg.VerifierDailyUSD
 }
 
 // NewRouter returns a router. It checks the configuration (a known
@@ -125,7 +162,7 @@ func NewRouter(cfg Config, d Deps) (*Router, error) {
 		}
 	}
 	r := &Router{cfg: cfg, meta: d.Meta, ds: d.DeepSeek, claude: d.Claude, alt: d.AltVerifier, consent: d.Consent,
-		limits: d.Limits, screen: d.Screener, obs: d.Observer, now: d.Now, brk: &breaker{}}
+		limits: d.Limits, screen: d.Screener, obs: d.Observer, now: d.Now, brk: &breaker{}, spend: &spendMeter{}}
 	if r.screen == nil {
 		r.screen = SafetyScreener{}
 	}
@@ -275,8 +312,11 @@ type run struct {
 	genID    GeneratorIdentity
 	payload  minimize.Payload
 	// names are the names the output guard blocks: the private names and
-	// the self-introduced names of this request (minimize.Session.Names).
-	names []string
+	// the self-introduced names of this request (minimize.Session.Names),
+	// and parts the parts of private names that are everyday words, which
+	// it blocks only capitalised outside a fixed phrase
+	// (minimize.Session.CommonNameParts).
+	names, parts []string
 	// band is the age band read before the first provider call and aud
 	// its audience class, which goes into every prompt and VC-1 request.
 	// The band is rechecked before and after every call and at commit:
@@ -305,9 +345,14 @@ func (r *Router) Run(ctx context.Context, task Task, in Input) (Output, error) {
 	st := &run{r: r, task: task, pol: pol, in: in, start: r.now(), uses: map[Purpose]string{}, roles: map[ProviderName]bool{},
 		parent: ctx}
 	st.prov = Provenance{Task: task, TaskID: pol.ID, ProvenanceClass: pol.ProvenanceClass, ReviewStatus: "unreviewed",
-		Route: RouteNone, DraftProvenance: DraftNone, PriceTable: PriceTableVersion, CreatedAt: st.start.UTC(),
+		Route: RouteNone, DraftProvenance: DraftUnavailable, PriceTable: PriceTableVersion, CreatedAt: st.start.UTC(),
 		Guards:       GuardRecord{Version: guard.Version, Risk: RiskNone},
 		Verification: VerificationRecord{Status: StatusNotRequested, Provenance: VerifiedNotRequested, Route: NoVerifierRoute}}
+	st.prov.Synthetic = in.Synthetic
+	if r.ds != nil || r.alt != nil {
+		// V21, §17 O-3: the DeepSeek data setting this operation ran under.
+		st.prov.DeepSeekData = r.cfg.deepseekData()
+	}
 	if !ok {
 		return Output{}, st.fail(OutcomeInvalidInput, "unknown_task")
 	}
@@ -385,7 +430,7 @@ func (r *Router) Run(ctx context.Context, task Task, in Input) (Output, error) {
 	}
 	// NAME-1 blocks the private names and the names the user introduced
 	// themselves with in this request (learned by Build).
-	st.names = sess.Names()
+	st.names, st.parts = sess.Names(), sess.CommonNameParts()
 	st.prov.SpansSent, st.prov.SpansDropped = len(payload.Spans), payload.Dropped
 	for k, n := range sess.Counts() {
 		if st.prov.Redactions == nil {
@@ -427,7 +472,7 @@ func (r *Router) Run(ctx context.Context, task Task, in Input) (Output, error) {
 	var decisions []verifier.Decision
 	var reqs []verifier.Request
 	var refs []claimRef
-	if needsVerification(pol, st.guards) && len(draft.Items) > 0 {
+	if needsVerification(pol, st.guards, st.prov.Route) && len(draft.Items) > 0 {
 		reqs, refs, err = st.claims(draft)
 		if err != nil {
 			code := ReasonInputTooLarge
@@ -557,6 +602,11 @@ func (st *run) preflight(ctx context.Context, role ProviderName, withLimits bool
 	if ctx.Err() != nil {
 		return st.storeError(ctx)
 	}
+	if role == ProviderDeepSeek && !st.deepseekDataAllowed() {
+		// V21, §17 O-3: nothing that is not synthetic reaches DeepSeek
+		// until the operator enables real-user processing.
+		return ReasonSyntheticOnly
+	}
 	r := st.r
 	for _, p := range st.purposes(role) {
 		c, err := r.consent.Consent(ctx, st.in.Subject, p)
@@ -577,6 +627,9 @@ func (st *run) preflight(ctx context.Context, role ProviderName, withLimits bool
 	}
 	if reason := st.checkBand(ctx, role); reason != "" {
 		return reason
+	}
+	if withLimits && role == ProviderAnthropic && r.verifierSpendReached() {
+		return ReasonSpendCap
 	}
 	if withLimits && r.limits != nil {
 		if err := r.limits.Allow(ctx, st.in.Subject, role, st.task); err != nil {
@@ -700,6 +753,86 @@ func (st *run) verifierRoute(ctx context.Context) string {
 	return st.preflight(ctx, ProviderAnthropic, false)
 }
 
+// fallbackVerifierRoute is RR-4 (i): before DeepSeek writes an output
+// that only Claude may verify (an AT-1 reply, §17 O-6; AT-3 and AT-4,
+// RR-9 b), the Claude route must be permitted now: consent, age band and
+// configuration (verifierRoute), Sela's verifier daily spend ceiling
+// (SELA_VERIFIER_DAILY_USD) and the per-user verifier limit, asked without
+// counting a call (Limiter.Check). Sela knows each of these states before
+// it calls DeepSeek, so no text is sent to DeepSeek only for the output to
+// abstain. The size of the AT-1 verifier input is such a state too: claims
+// cites the current user turn whole, so a turn that needs more than
+// MaxCitedSpans VC-1 pieces can never be verified (verification_input_too_large,
+// see currentTurnFits). It returns "" when the route is permitted.
+func (st *run) fallbackVerifierRoute(ctx context.Context) string {
+	if !st.currentTurnFits() {
+		return ReasonInputTooLarge
+	}
+	if reason := st.verifierRoute(ctx); reason != "" {
+		return reason
+	}
+	r := st.r
+	if r.verifierSpendReached() {
+		return ReasonSpendCap
+	}
+	if r.limits != nil {
+		if err := r.limits.Check(ctx, st.in.Subject, ProviderAnthropic, st.task); err != nil {
+			if errors.Is(err, ErrSpendCap) {
+				return ReasonSpendCap
+			}
+			return ReasonUserLimit
+		}
+	}
+	return ""
+}
+
+// currentTurnFits reports whether the AT-1 verifier request can cite the
+// current (latest) user turn whole: claims splits it into VC-1 pieces
+// (splitSpan, MaxSpanBytes) and abstains when it needs more than
+// MaxCitedSpans. Other tasks cite the spans the draft names, which are not
+// known before the call, so they always fit here.
+func (st *run) currentTurnFits() bool {
+	if st.task != TaskListeningReply {
+		return true
+	}
+	for i := len(st.payload.Spans) - 1; i >= 0; i-- {
+		if s := st.payload.Spans[i]; s.Role == RoleUser {
+			return len(splitSpan(s.Text, verifier.MaxSpanBytes)) <= verifier.MaxCitedSpans
+		}
+	}
+	return true // no user turn: claims rejects it after the call (no user spans)
+}
+
+// deepseekDataAllowed reports whether DeepSeek may receive this
+// operation's data (V21, §17 O-3): any data once the operator set
+// real_user (production also needs the B-10 clearance, Config.Validate),
+// otherwise only data the caller marked synthetic, and never in production,
+// which holds no demo data (C21, C24).
+func (st *run) deepseekDataAllowed() bool {
+	cfg := st.r.cfg
+	if cfg.deepseekData() == DeepSeekRealUser {
+		return true
+	}
+	return st.in.Synthetic && !cfg.Production()
+}
+
+// fallbackVersionCheck is V21: after every fallback request, before the
+// result is used, the caller's session, record and fixture versions and
+// crisis state are rechecked (Input.Commit; the consents are rechecked by
+// afterCall). A change discards the result as stale.
+func (st *run) fallbackVersionCheck(ctx context.Context) error {
+	if st.in.Commit == nil {
+		return st.fail(OutcomeStale, ReasonNoVersionCheck) // unreachable: RR-4 requires it
+	}
+	if err := st.in.Commit(ctx); err != nil {
+		if st.parent != nil && st.parent.Err() != nil {
+			return st.fail(OutcomeCanceled, ReasonCanceled)
+		}
+		return st.fail(OutcomeStale, ReasonStale)
+	}
+	return nil
+}
+
 // claudeGeo is where the Claude client processes requests: what the
 // client reports, else the configured value, else "us".
 func (st *run) claudeGeo() string {
@@ -720,8 +853,8 @@ func (st *run) claudeGeo() string {
 // on the no-AI path. A short budget is never a Meta failure.
 func (st *run) metaWindow(withFallback bool) (wait time.Duration, ok bool) {
 	avail := st.remaining() - reserveMargin - st.pol.VerificationReserve
-	if withFallback && st.fallbackConfigured() && avail-st.pol.FallbackReserve >= MinMetaWindow {
-		avail -= st.pol.FallbackReserve
+	if withFallback && st.fallbackConfigured() && avail-st.pol.fallbackReserve() >= MinMetaWindow {
+		avail -= st.pol.fallbackReserve()
 	}
 	wait = avail
 	if st.pol.FirstContentWait > 0 && st.pol.FirstContentWait < wait {
@@ -731,14 +864,19 @@ func (st *run) metaWindow(withFallback bool) (wait time.Duration, ok bool) {
 }
 
 // fallbackBound bounds a DeepSeek generation: the fallback reserve, and
-// never the time the verification reserve keeps.
+// never the time the verification reserve keeps (with, for AT-1, the
+// verifier attempt every DeepSeek reply needs, §3.2, §17 O-6).
 func (st *run) fallbackBound() time.Duration {
-	return min(st.pol.FallbackReserve, st.remaining()-st.pol.VerificationReserve)
+	return min(st.pol.FallbackReserve, st.remaining()-st.pol.VerificationReserve-st.pol.FallbackVerifierReserve)
 }
 
+// fallbackConfigured reports whether a fallback is possible for this run
+// at all (the configuration, the data setting and the version re-check),
+// so Meta's window keeps the fallback reserve only then.
 func (st *run) fallbackConfigured() bool {
 	r := st.r
-	return st.pol.FallbackAllowed && r.cfg.Fallback && r.cfg.Profile == ProfileFull && r.ds != nil
+	return st.pol.FallbackAllowed && r.cfg.Fallback && r.cfg.Profile == ProfileFull && r.ds != nil &&
+		st.deepseekDataAllowed() && st.in.Commit != nil
 }
 
 // genCall bounds one generator call.
@@ -749,6 +887,8 @@ type genCall struct {
 	maxRetries int
 	// timeout bounds a DeepSeek call as a whole and per attempt.
 	timeout time.Duration
+	// noColdStartWait: the RR-14 breaker is open (Meta).
+	noColdStartWait bool
 }
 
 // slotRole is the provider of a generator route: the slot the generator
@@ -784,7 +924,7 @@ func (st *run) callGen(ctx context.Context, g Generator, route Route, regen bool
 	}
 	res, gerr := g.Generate(ctx, GenerateRequest{Task: st.task, System: system, User: user, Schema: GenerationSchemaJSON,
 		MaxTokens: st.pol.MaxOutputTokens, FirstContentWait: c.wait, MaxRetries: c.maxRetries, MaxRetryAfter: st.pol.MaxRetryAfter,
-		AttemptTimeout: c.timeout, BeforeAttempt: check})
+		AttemptTimeout: c.timeout, NoColdStartWait: c.noColdStartWait, BeforeAttempt: check})
 	rec := GeneratorRecord{Provider: id.Label(), ModelID: id.ModelID, ServedModel: res.ServedModel,
 		ServedRevision: res.ServedRevision, TestDouble: id.TestDouble, Route: route, Regeneration: regen, Outcome: "ok",
 		FirstContentMS: res.FirstContent.Milliseconds(), LatencyMS: res.Latency.Milliseconds(),
@@ -815,41 +955,44 @@ func (st *run) callGen(ctx context.Context, g Generator, route Route, regen bool
 func (st *run) generate(ctx context.Context) (Draft, error) {
 	r := st.r
 	var failure *GenerateError
-	if st.pol.Interactive && r.brk.isOpen(r.now()) {
-		// RR-14: skip the Meta wait and go straight to the RR-4 check.
+	// RR-14, §17 O-12: an open breaker never skips Meta. Meta is still
+	// called first; only the cold-start wait is dropped, so Modal's
+	// immediate 503 is the availability failure RR-4 needs.
+	circuitOpen := st.pol.Interactive && r.brk.isOpen(r.now())
+	if circuitOpen {
 		st.prov.CircuitOpen = true
 		st.prov.Reasons = append(st.prov.Reasons, ReasonCircuitOpen)
-		failure = &GenerateError{Class: transport.ClassAvailability, Reason: transport.ReasonUnavailable, FallbackReason: FallbackUnavailable}
-	} else {
-		wait, ok := st.metaWindow(true)
-		if !ok {
-			// The budget cannot hold Meta's window and the reserves: the
-			// honest no-AI path. Meta is not called, so this is not a Meta
-			// failure and never a reason to fall back (RR-3, RR-4 a).
-			return Draft{}, st.fail(OutcomeNoAI, ReasonBudget)
+	}
+	wait, ok := st.metaWindow(true)
+	if !ok {
+		// The budget cannot hold Meta's window and the reserves: the
+		// honest no-AI path. Meta is not called, so this is not a Meta
+		// failure and never a reason to fall back (RR-3, RR-4 a).
+		return Draft{}, st.fail(OutcomeNoAI, ReasonBudget)
+	}
+	switch reason := st.preflight(ctx, ProviderMeta, true); reason {
+	case "":
+		res, ge, stopped := st.callGen(ctx, r.meta, RoutePrimary, false, nil,
+			genCall{wait: wait, maxRetries: st.pol.MetaMaxRetries, noColdStartWait: circuitOpen})
+		if err := st.afterCall(ctx, ProviderMeta, stopped, OutcomeNoAI); err != nil {
+			return Draft{}, err
 		}
-		switch reason := st.preflight(ctx, ProviderMeta, true); reason {
-		case "":
-			res, ge, stopped := st.callGen(ctx, r.meta, RoutePrimary, false, nil, genCall{wait: wait, maxRetries: st.pol.MetaMaxRetries})
-			if err := st.afterCall(ctx, ProviderMeta, stopped, OutcomeNoAI); err != nil {
-				return Draft{}, err
-			}
-			if ge == nil {
-				r.brk.success()
-				return st.accept(ctx, res, r.meta, RoutePrimary)
-			}
-			if ge.Class == transport.ClassAvailability {
-				r.brk.failure(r.now())
-			} else {
-				r.brk.success()
-			}
-			failure = ge
-		case ReasonSpendCap:
-			// A Sela daily ceiling is an availability failure (§4).
-			failure = &GenerateError{Class: transport.ClassAvailability, Reason: transport.ReasonSpendCap, FallbackReason: FallbackUnavailable}
-		default:
-			return Draft{}, st.halt(reason, OutcomeNoAI)
+		if ge == nil {
+			r.brk.success()
+			return st.accept(ctx, res, r.meta, RoutePrimary)
 		}
+		if ge.Class == transport.ClassAvailability && ge.FallbackReason != "" {
+			r.brk.failure(r.now()) // an upstream Meta outage
+		} else {
+			r.brk.success()
+		}
+		failure = ge
+	case ReasonSpendCap:
+		// A Sela daily ceiling is an availability failure (§4), but not an
+		// upstream Meta outage: no fallback (§17 O-1).
+		failure = &GenerateError{Class: transport.ClassAvailability, Reason: transport.ReasonSpendCap, Cause: CauseSpendCap}
+	default:
+		return Draft{}, st.halt(reason, OutcomeNoAI)
 	}
 	switch failure.Class {
 	case transport.ClassIntegrity:
@@ -866,15 +1009,32 @@ func (st *run) generate(ctx context.Context) (Draft, error) {
 		// RR-5: content failures are terminal for the provider chain.
 		return Draft{}, st.fail(OutcomeAbstain, string(failure.Reason))
 	}
-	// Availability before content: RR-4.
+	// Availability before content: RR-4. Only an upstream Meta outage is
+	// eligible (§4 note, §17 O-1, V19); anything else ends here with an
+	// operator alert.
+	primary := failure.FallbackReason
+	if primary == "" {
+		primary = orDefault(failure.Cause, string(failure.Reason))
+	}
+	primaryReason := "primary_" + primary
 	// (f): the fallback reserve, and the verification reserve its output
 	// still needs (RR-9: only Claude may verify DeepSeek output).
 	facts := fallbackFacts{Failure: failure.Class, ContentStarted: failure.ContentStarted, TaskAllows: st.pol.FallbackAllowed,
 		FlagOn: r.cfg.Fallback, Profile: r.cfg.Profile, Configured: r.ds != nil, Remaining: st.remaining(),
-		Reserve: st.pol.reserves()}
-	primaryReason := "primary_" + failure.FallbackReason
+		Reserve: st.pol.reserves(), Eligible: failure.FallbackReason != "", DataAllowed: st.deepseekDataAllowed(),
+		VersionCheck: st.in.Commit != nil}
 	if reason := fallbackDecision(facts); reason != "" {
+		if reason == ReasonFallbackNotEligible {
+			st.observe(Event{Stage: StageOperatorAlert, Provider: ProviderMeta, Outcome: primary, Reason: reason})
+		}
 		return Draft{}, st.fail(OutcomeNoAI, primaryReason, reason)
+	}
+	// RR-4 (i), §17 O-6: an output only Claude may verify is written by
+	// DeepSeek only while the Claude route is permitted.
+	if st.pol.fallbackNeedsClaude() {
+		if reason := st.fallbackVerifierRoute(ctx); reason != "" {
+			return Draft{}, st.halt(reason, OutcomeNoAI, primaryReason, ReasonFallbackNeedsVerifier)
+		}
 	}
 	if reason := st.preflight(ctx, ProviderDeepSeek, true); reason != "" {
 		return Draft{}, st.halt(reason, OutcomeNoAI, primaryReason)
@@ -890,6 +1050,10 @@ func (st *run) generate(ctx context.Context) (Draft, error) {
 			return Draft{}, st.fail(OutcomeNoAI, primaryReason, ReasonIntegrity, "fallback_"+string(ge.Reason))
 		}
 		return Draft{}, st.fail(OutcomeNoAI, primaryReason, "fallback_"+string(ge.Reason))
+	}
+	// V21: the versions are rechecked after every fallback request.
+	if err := st.fallbackVersionCheck(ctx); err != nil {
+		return Draft{}, err
 	}
 	return st.accept(ctx, res, r.ds, RouteFallback)
 }
@@ -921,7 +1085,7 @@ func (st *run) accept(ctx context.Context, res GenerateResult, g Generator, rout
 		}
 		var gr guard.Result
 		for _, it := range draft.Items {
-			gr = gr.Merge(guard.Check(it.Text, guard.Options{PrivateNames: st.names}))
+			gr = gr.Merge(guard.Check(it.Text, guard.Options{PrivateNames: st.names, CommonNameParts: st.parts}))
 		}
 		st.recordGuards(gr)
 		ml := ""
@@ -977,6 +1141,12 @@ func (st *run) accept(ctx context.Context, res GenerateResult, g Generator, rout
 		} else if call.timeout <= 0 {
 			return Draft{}, st.fail(OutcomeAbstain, reason, ReasonBudget)
 		}
+		if route == RouteFallback && st.pol.fallbackNeedsClaude() {
+			// RR-4 (i) holds for every DeepSeek request of the operation.
+			if pre := st.fallbackVerifierRoute(ctx); pre != "" {
+				return Draft{}, st.halt(pre, OutcomeAbstain, reason, ReasonFallbackNeedsVerifier)
+			}
+		}
 		if pre := st.preflight(ctx, id.Role, true); pre != "" {
 			return Draft{}, st.halt(pre, OutcomeAbstain, reason)
 		}
@@ -987,6 +1157,12 @@ func (st *run) accept(ctx context.Context, res GenerateResult, g Generator, rout
 		}
 		if ge != nil {
 			return Draft{}, st.fail(OutcomeAbstain, reason, "regeneration_"+string(ge.Reason))
+		}
+		if route == RouteFallback {
+			// V21: after every fallback request.
+			if err := st.fallbackVersionCheck(ctx); err != nil {
+				return Draft{}, err
+			}
 		}
 		res = next
 	}
@@ -1042,9 +1218,9 @@ func draftProvenance(id GeneratorIdentity) string {
 	case id.Role == ProviderMeta:
 		return DraftLiveMeta
 	case id.Role == ProviderDeepSeek:
-		return DraftLiveDeepSeek
+		return DraftLiveDeepSeekFallback
 	}
-	return DraftNone
+	return DraftUnavailable
 }
 
 // claimRef maps a claim to the draft item it checks.
@@ -1322,7 +1498,8 @@ func (st *run) verify(ctx context.Context, reqs []verifier.Request) ([]verifier.
 	// RR-9 / RR-10: only an availability failure may reach the
 	// alternative verifier, and only for Meta output.
 	alt := altDecision(altFacts{ClaudeFailure: claudeReason, Generator: st.genID.Role, FlagOn: r.cfg.AltVerifier,
-		Profile: r.cfg.Profile, Configured: r.alt != nil, Remaining: st.remaining(), Attempt: st.pol.VerifierAttempt})
+		Profile: r.cfg.Profile, Configured: r.alt != nil, Remaining: st.remaining(), Attempt: st.pol.VerifierAttempt,
+		DataAllowed: st.deepseekDataAllowed()})
 	if alt == ReasonNotAvailability {
 		return nil, unavailable()
 	}
@@ -1524,7 +1701,11 @@ func (st *run) runVerifier(ctx context.Context, v verifier.Verifier, route Verif
 		att.OutputTokens += res.OutputTokens
 		st.prov.InputTokens += res.InputTokens
 		st.prov.OutputTokens += res.OutputTokens
-		st.prov.EstimatedCostUSD += estimateCost(role, id.TestDouble, att.InferenceGeo, res.InputTokens, res.OutputTokens, st.r.now())
+		cost := estimateCost(role, id.TestDouble, att.InferenceGeo, res.InputTokens, res.OutputTokens, st.r.now())
+		st.prov.EstimatedCostUSD += cost
+		if role == ProviderAnthropic {
+			st.r.spend.add(cost, st.r.now()) // SELA_VERIFIER_DAILY_USD
+		}
 		outcome := "ok"
 		if err != nil {
 			outcome = string(verifierReason(err))
@@ -1922,7 +2103,7 @@ func (st *run) authoring(ctx context.Context, sess *minimize.Session) (Output, e
 	if reason := st.commit(ctx); reason != "" {
 		return Output{}, st.commitFailed(reason)
 	}
-	st.prov.DraftProvenance = "manual"
+	st.prov.DraftProvenance = DraftManual
 	st.finish(OutcomeReleased)
 	out.Provenance = st.prov
 	return out, nil

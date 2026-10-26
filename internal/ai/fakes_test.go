@@ -341,6 +341,10 @@ func (l limiter) Allow(_ context.Context, _ Subject, p ProviderName, _ Task) err
 	return nil
 }
 
+func (l limiter) Check(ctx context.Context, s Subject, p ProviderName, t Task) error {
+	return l.Allow(ctx, s, p, t)
+}
+
 func testConfig() Config {
 	return Config{Env: EnvTest, AllowTestDouble: true, Profile: ProfileFull, Fallback: true, AltVerifier: true,
 		AllowedBands: Bands(Band18Plus, Band15To17, BandUnknown),
@@ -404,11 +408,17 @@ func (h *harness) run(task Task, in Input) (Output, *RunError) {
 
 const subject = Subject("acct-7f3a-SUBJECT-CANARY")
 
+// okCommit is a commit re-check that finds nothing changed.
+func okCommit(context.Context) error { return nil }
+
+// inReply and inItems build synthetic test inputs (the data DeepSeek may
+// receive while it is limited to synthetic data, V21) with a version
+// re-check that finds nothing changed (every fallback needs one, V21).
 func inReply(texts ...string) Input {
 	if len(texts) == 0 {
 		texts = []string{"Aku capek banget sama skripsi."}
 	}
-	in := Input{Subject: subject, Language: "id"}
+	in := Input{Subject: subject, Language: "id", Synthetic: true, Commit: okCommit}
 	for i, t := range texts {
 		in.Spans = append(in.Spans, Span{Key: "turn-db-" + string(rune('a'+i)), Role: RoleUser, Text: t})
 	}
@@ -416,7 +426,7 @@ func inReply(texts ...string) Input {
 }
 
 func inItems(texts ...string) Input {
-	in := Input{Subject: subject, Language: "id", Purpose: "first_consultation"}
+	in := Input{Subject: subject, Language: "id", Purpose: "first_consultation", Synthetic: true, Commit: okCommit}
 	for i, t := range texts {
 		in.Spans = append(in.Spans, Span{Key: "item-db-" + string(rune('a'+i)), Role: RoleItem, Text: t})
 	}

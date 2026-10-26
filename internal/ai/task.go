@@ -8,9 +8,16 @@
 //     generative task, through the existing internal/llm client.
 //   - Claude Sonnet 5.5 verifies; it never generates.
 //   - DeepSeek (deepseek-flash) replaces the generator only for an
-//     availability failure before any content, with its own consent, for
-//     adults, behind SELA_AI_FALLBACK; behind SELA_AI_ALT_VERIFIER (off by
-//     default) it may verify Meta output while Claude is unavailable.
+//     upstream Meta availability failure before any content (cold start
+//     beyond budget, unavailable, timeout, rate_limited; never Sela's own
+//     queue, credentials or spend ceilings), with its own consent, for
+//     adults, behind SELA_AI_FALLBACK (off by default everywhere), on
+//     synthetic data only until the operator enables real-user processing
+//     (SELA_DEEPSEEK_DATA), and for a listening reply only while the
+//     Claude check every DeepSeek reply gets is permitted (the owner's
+//     C13, V19-V21; ADR-0003 RR-4, §17). Its draft is labelled
+//     live_deepseek_fallback. Behind SELA_AI_ALT_VERIFIER (off by default)
+//     it may verify Meta output while Claude is unavailable.
 //
 // Crisis support (AT-0) never calls a model. The package never logs or
 // stores user content, prompts, model output, keys or chain-of-thought:
@@ -62,6 +69,15 @@ type Policy struct {
 	Verification Verification
 	// FallbackAllowed: DeepSeek may replace Meta (RR-4 b).
 	FallbackAllowed bool
+	// VerifyFallback: an output the fallback generator wrote is always
+	// verified by Claude before release, whatever the health-claim
+	// detector says (AT-1: RR-8, §17 O-6). DeepSeek is then called only
+	// when the Claude route is permitted (RR-4 i).
+	VerifyFallback bool
+	// FallbackVerifierReserve is kept beside the fallback reserve for that
+	// check (AT-1: the 15 s verifier attempt every DeepSeek reply needs,
+	// §3.2).
+	FallbackVerifierReserve time.Duration
 	// Regenerate: one same-provider regeneration after a Meaning Lock or
 	// output-guard rejection (RR-5), if RegenerateMinRemaining remains.
 	Regenerate             bool
@@ -136,7 +152,8 @@ var policies = map[Task]Policy{
 	TaskCrisisSupport: {ID: "AT-0", Task: TaskCrisisSupport, ModelFree: true, Verification: VerifyNever,
 		ProvenanceClass: ClassStaticHelp},
 	TaskListeningReply: {ID: "AT-1", Task: TaskListeningReply, Generative: true, Verification: VerifyWhenFlagged,
-		FallbackAllowed: true, Regenerate: true, RegenerateMinRemaining: 30 * time.Second, Interactive: true,
+		FallbackAllowed: true, VerifyFallback: true, FallbackVerifierReserve: 15 * time.Second,
+		Regenerate: true, RegenerateMinRemaining: 30 * time.Second, Interactive: true,
 		Budget: 60 * time.Second, FirstContentWait: 20 * time.Second, FallbackReserve: 20 * time.Second,
 		VerifierAttempt: 15 * time.Second, MaxRetryAfter: 3 * time.Second, MetaMaxRetries: 1, MaxVerifierCalls: 1,
 		Roles:    []Role{RoleUser, RoleEarlierReply, RoleMemory},
@@ -195,8 +212,18 @@ const MinMetaWindow = 20 * time.Second
 const reserveMargin = 2 * time.Second
 
 // reserves is the time the steps after generation need: the fallback
-// reserve and the verification reserve.
-func (p Policy) reserves() time.Duration { return p.FallbackReserve + p.VerificationReserve }
+// reserve (with the check a fallback output needs, AT-1) and the
+// verification reserve.
+func (p Policy) reserves() time.Duration { return p.fallbackReserve() + p.VerificationReserve }
+
+// fallbackReserve is the time a fallback needs: the DeepSeek attempt and,
+// where every fallback output is verified (AT-1), the verifier attempt.
+func (p Policy) fallbackReserve() time.Duration { return p.FallbackReserve + p.FallbackVerifierReserve }
+
+// fallbackNeedsClaude reports whether every fallback output of the task is
+// verified, and only Claude may verify DeepSeek output (RR-9 b): AT-1
+// (§17 O-6) and the always-verified AT-3 and AT-4.
+func (p Policy) fallbackNeedsClaude() bool { return p.VerifyFallback || p.Verification == VerifyAlways }
 
 // allowsRole reports whether the task accepts a span of role r.
 func (p Policy) allowsRole(r Role) bool {
