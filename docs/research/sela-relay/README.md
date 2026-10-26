@@ -19,6 +19,10 @@ Dokumen ini menambah rancangan dan bahan keputusan. Ia tidak mengubah SPEC.md re
 7. [Peta bukti ke fitur](07_EVIDENCE_TO_FEATURE.md)
 8. [Roadmap dan validasi owner](08_ROADMAP_AND_VALIDATION.md)
 9. [100 publikasi beranotasi](09_RESEARCH_REGISTER.md)
+10. [Evidence appraisal, integritas register, dan batas klaim](10_EVIDENCE_APPRAISAL_AND_CLAIMS.md)
+11. [Sela Relay end-to-end, Meaning Lock dan Return Bridge](11_PRODUCT_VERTICAL_SLICE.md)
+12. [Kontrak implementasi Go + Meta dan migrasi](12_GO_META_IMPLEMENTATION_CONTRACT.md)
+13. [Runbook penjurian, evaluasi dan demo](13_JUDGING_AND_DEMO_PACKAGE.md)
 
 Data sitasi tersedia dalam [JSON](research_100.json) dan [BibTeX](research_100.bib). Teks lengkap artikel tidak disalin ke paket ini. Buka DOI atau tautan indeks untuk membaca sumber.
 
@@ -50,3 +54,7 @@ This research/proposal package is non-normative. [SPEC.md](../../../SPEC.md) rem
 | Meta and judging | C4,C10,I.meta,V7,V9,V10,V15 |
 | Research method, register and evidence map | C10,I.docs,V15 |
 | Roadmap and owner validation | I.ops,V1–V15,T2–T9 |
+| Evidence appraisal and 100-study claim gates | C10,I.docs,V7,V15 |
+| Relay vertical slice and feature proposals | C2,C3,C8,C9,I.web,V1–V8,V13 |
+| Go + Meta implementation contract | C1,C4,C6,C7,I.api,I.meta,V3–V15 |
+| Judging, experiment and demo runbook | C10,I.ops,V1–V15,T2–T9 |
