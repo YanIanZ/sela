@@ -126,24 +126,43 @@ func tokenize(text string) []token {
 	return toks
 }
 
-// hasNegator reports whether text contains a negator.
+// knowWords and fusedHedgeTails mirror internal/ledger: a negator before a
+// knowing word ("not sure", "belum tahu"), or fused with one ("gatau"), is a
+// hedge. It expresses uncertainty, not a negated fact, so it does not make a
+// claim negated (D-023).
+var (
+	knowWords       = wordSet("sure", "yakin", "tahu", "tau", "know", "paham", "understand", "ngerti", "mengerti")
+	fusedHedgeTails = wordSet("tau", "tahu", "yakin", "paham", "ngerti")
+)
+
+// isHedge reports whether the negator toks[i] only hedges.
+func isHedge(toks []token, i int) bool {
+	if tail, fused := fusedNegators[toks[i].word]; fused {
+		return fusedHedgeTails[tail]
+	}
+	return i+1 < len(toks) && knowWords[toks[i+1].word]
+}
+
+// hasNegator reports whether text contains a negator that negates a fact.
 func hasNegator(text string) bool {
-	for _, t := range tokenize(text) {
-		if isNegator(t.word) {
+	toks := tokenize(text)
+	for i, t := range toks {
+		if isNegator(t.word) && !isHedge(toks, i) {
 			return true
 		}
 	}
 	return false
 }
 
-// dropNegators removes every negator from text, keeping the negated word
-// of a fused negator ("Aku gabisa tidur" becomes "Aku bisa tidur"), and
-// reports whether it removed any.
+// dropNegators removes every fact negator from text (hedges stay),
+// keeping the negated word of a fused negator ("Aku gabisa tidur" becomes
+// "Aku bisa tidur"), and reports whether it removed any.
 func dropNegators(text string) (string, bool) {
 	var b strings.Builder
 	last, dropped := 0, false
-	for _, t := range tokenize(text) {
-		if !isNegator(t.word) {
+	toks := tokenize(text)
+	for i, t := range toks {
+		if !isNegator(t.word) || isHedge(toks, i) {
 			continue
 		}
 		dropped = true
@@ -202,8 +221,8 @@ func addNegator(text, language string) string {
 	return text[:toks[0].end] + " " + neg + text[toks[0].end:]
 }
 
-// flipNegation reverses the polarity of text: it drops every negator or,
-// when text has none, adds one. The result always reads differently from
+// flipNegation reverses the polarity of text: it drops every fact negator
+// or, when text has none (only hedges or no negator), adds one. The result always reads differently from
 // text, so FaultNegationFlip is never a silent no-op.
 func flipNegation(text, language string) string {
 	if out, dropped := dropNegators(text); dropped {
