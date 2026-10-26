@@ -211,6 +211,29 @@ func TestAttribution(t *testing.T) {
 		{"kata dia, dia baca buku tentang bunuh diri", "bunuh diri", true},
 		// Reported content runs to the next frame, not past it.
 		{"temanku bilang dia mau mati, dia bilang aku harus nolong", "mau mati", true},
+		// A closed report ends the content, past manner words and chat
+		// spellings of "gitu" (review findings).
+		{`mama bilang sambil marah "sabar ya" pengen bunuh diri`, "bunuh diri", false},
+		{`mama bilang lagi "sabar ya" pengen bunuh diri`, "bunuh diri", false},
+		{"nyokap ngomong gt pengen mati aja", "pengen mati", false},
+		{"nyokap ngomong gitu2 pengen mati aja", "pengen mati", false},
+		{"nyokap ngomong itu pengen mati aja", "pengen mati", false},
+		// Colon speech ends where the speaker's own words start.
+		{"mama bilang: makan dulu rasanya pengen mati", "pengen mati", false},
+		{"mama bilang: makan dulu pengen mati aja", "pengen mati", false},
+		{"my mom told me: stop crying wanna die", "wanna die", false},
+		{"temanku bilang: rasanya pengen mati", "pengen mati", true},
+		{"temanku bilang: aku capek terus pengen mati", "pengen mati", true},
+		{"temanku bilang: capek pengen mati", "pengen mati", true},
+		// Lyrics frame only before a colon or a quotation.
+		{"lirik lagunya sedih banget pengen mati", "pengen mati", false},
+		{"lirik lagunya: aku ingin mati", "ingin mati", true},
+		{`the lyrics say "i want to die"`, "want to die", true},
+		// A media report ends at the speaker's subjectless reaction.
+		{"aku baca berita ada mahasiswa bunuh diri pengen nyusul", "bunuh diri", true},
+		{"aku baca berita ada mahasiswa mau bunuh diri", "bunuh diri", true},
+		{"di film itu tokohnya bunuh diri karena pengen mati", "pengen mati", true},
+		{"di film itu tokohnya bunuh diri pengen mati juga", "pengen mati", false},
 	}
 	for _, c := range cases {
 		sh := analyse(c.in)
@@ -235,10 +258,20 @@ func TestAdoption(t *testing.T) {
 		"my friend said she wants to die. same here", "she wants to die. i relate",
 		"dia bilang mau mati, sama aku juga", "my friend said she wants to die too",
 		"the character died. relatable", "she said she wants to die and i said same",
+		// Review findings: more adoption and imitation forms.
+		"my friend said she wants to die. me to", "my friend said she wants to die. omg same",
+		"my friend said she wants to die. same tho", "my friend said she wants to die. literally me",
+		"my friend said she wants to die. that's me", "temanku bilang dia mau mati. aku sama",
+		"temanku bilang dia mau mati. sama kayak aku", "aku baca berita ada mahasiswa bunuh diri, pengen nyusul",
+		"temanku bilang dia mau bunuh diri, aku mau ikut", "aku liat berita ada orang loncat, aku pengen kayak dia",
+		"aku baca berita ada anak bunuh diri, kok aku iri ya", "kepikiran buat ngelakuin hal yang sama",
+		"i watched a video of a guy jumping off a bridge, i want to try it",
 	}
 	no := []string{
 		"temanku bilang dia mau mati. aku khawatir.", "my friend said she wants to die. what do i do",
 		"temanku bilang dia mau mati. aku juga nonton beritanya.", "the same thing happened",
+		"temanku bilang dia mau mati. besok aku mau ikut nemenin dia", "temanku bilang dia mau mati. aku sama dia sahabatan",
+		"she gave it to me to keep",
 	}
 	for _, s := range yes {
 		if !analyse(s).adopted() {
@@ -265,7 +298,7 @@ func TestHedgedDenial(t *testing.T) {
 	} {
 		sh := analyse(in)
 		i := indexOf(t, sh.text, "bunuh diri")
-		if got := sh.dispose(r, span{i, i + len("bunuh diri")}); got != want {
+		if got := sh.dispose(r, span{i, i + len("bunuh diri")}, false); got != want {
 			t.Errorf("%q: got state %d, want %d", in, got, want)
 		}
 	}

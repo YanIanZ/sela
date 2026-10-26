@@ -1,7 +1,6 @@
 package safety
 
 import (
-	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -17,7 +16,9 @@ import (
 //  2. Text is lowercased and folded with a small explicit table, because
 //     golang.org/x/text is not available: precomposed Latin letters lose their
 //     accents (é→e, ñ→n), ligatures expand (ﬁ→fi, æ→ae), fullwidth ASCII,
-//     mathematical alphanumerics and circled letters map to plain ASCII, and a
+//     mathematical alphanumerics (with the Letterlike Symbols that fill their
+//     holes, ℂ ℍ ℕ ℙ ℝ ℐ ℰ), Roman-numeral letters (ⅰ ⅴ ⅼ ⅾ ⅿ), circled
+//     letters, small capitals and modifier letters map to plain ASCII, and a
 //     handful of Cyrillic/Greek look-alikes map to their Latin twins.
 //  3. Curly apostrophes become "'" (v1), curly and angle double quotes
 //     become '"', typographic dashes become '-', and every Unicode space
@@ -26,16 +27,20 @@ import (
 //     ("b4yg0n"→"baygon", "k1ll"→"kill"). v1 replaced every digit; Sela
 //     leaves free-standing numbers alone, so "jam 1" is not read as the
 //     pronoun "i" and "5 kms" stays a distance.
-//  5. Runs of three or more identical characters collapse to one (v1:
-//     "matiiiii"→"mati"), then runs of spaces collapse to one.
+//  5. Runs of three or more identical characters other than spaces collapse
+//     to one (v1: "matiiiii"→"mati").
 //  6. "bunuh diri" written with spaces, dots, dashes or underscores between
 //     its letters is rejoined (v1: "b u n u h d i r i", "bu-nuh di-ri").
-//  7. Runs of three or more single letters separated by one space, dot,
-//     dash or underscore are joined ("k i l l"→"kill", "m.a.t.i"→"mati").
+//  7. Spaced-out words are joined: runs of three or more single letters
+//     separated by spaces, dots, dashes or underscores ("k i l l"→"kill",
+//     "m.a.t.i"→"mati"). When a run uses two kinds of separator, the more
+//     frequent one joins letters and the other separates words ("a k u  m a
+//     u  m a t i"→"aku mau mati", "a.k.u p.e.n.g.e.n"→"aku pengen").
+//  8. Runs of spaces collapse to one.
 //
 // The result is trimmed. Normalize is pure and safe for concurrent use.
-// Assess additionally matches two derived variants (see variants), so
-// Normalize alone does not describe everything Assess can see.
+// Assess additionally matches derived variants (see variants), so Normalize
+// alone does not describe everything Assess can see.
 func Normalize(text string) string {
 	return finish(prepare(text), 1)
 }
@@ -48,99 +53,16 @@ func prepare(text string) string {
 	return leetWords(mapRunes(text))
 }
 
-// finish applies steps 5–7, collapsing runs of three or more identical runes
+// finish applies steps 5–8, collapsing runs of three or more identical runes
 // down to keep runes (1 for the canonical form, 2 for the variant that
 // preserves genuine double letters such as "kill" in "killll").
 func finish(s string, keep int) string {
 	s = collapseRuns(s, keep)
-	s = collapseSpaces(s)
 	s = rejoinBunuhDiri(s)
 	s = joinLetterRuns(s)
+	s = collapseSpaces(s)
 	return strings.TrimSpace(s)
 }
-
-// variants returns the distinct strings Assess evaluates for text. The first
-// is always Normalize(text). The others only ever add matches:
-//   - compact: hyphens, underscores and dots between two letters removed, so
-//     "gan-tung di-ri" and "mau-mati" are seen as "gantung diri" and
-//     "maumati" (patterns already allow optional spaces between words);
-//   - doubled: elongation collapsed to two runes instead of one, so
-//     "killll myself" is seen as "kill myself" rather than "kil myself";
-//   - pronoun: a free-standing "1" read as the pronoun "i" (v1 mapped every
-//     1 to i), so "1 hate my life" is seen as "i hate my life" while the
-//     canonical form keeps numbers such as "jam 1" and "5 kms".
-func variants(text string) []string {
-	base := prepare(text)
-	primary := finish(base, 1)
-	out := []string{primary}
-	add := func(v string) {
-		if !slices.Contains(out, v) {
-			out = append(out, v)
-		}
-	}
-	if c := compactJoin(primary); c != primary {
-		add(c)
-	}
-	if hasRun3(base) {
-		if d := finish(base, 2); d != primary {
-			add(d)
-		}
-	}
-	if p := oneAsPronoun(primary); p != primary {
-		add(p)
-	}
-	return out
-}
-
-// oneAsPronoun replaces every free-standing "1" (no letter, digit or number
-// punctuation next to it) with "i", unless a unit follows ("1 kms", "1 jam").
-func oneAsPronoun(s string) string {
-	if !strings.Contains(s, "1") {
-		return s
-	}
-	var b []byte
-	for i := 0; i < len(s); i++ {
-		if s[i] != '1' {
-			continue
-		}
-		if i > 0 && (isAlnum(s[i-1]) || strings.IndexByte(".,:/+-", s[i-1]) >= 0) {
-			continue
-		}
-		if i+1 < len(s) && (isAlnum(s[i+1]) || ((s[i+1] == '.' || s[i+1] == ',') && i+2 < len(s) && isDigit(s[i+2]))) {
-			continue
-		}
-		if numberUnits[nextWord(s, i+1)] {
-			continue
-		}
-		if b == nil {
-			b = []byte(s)
-		}
-		b[i] = 'i'
-	}
-	if b == nil {
-		return s
-	}
-	return string(b)
-}
-
-// nextWord returns the letters of the word that starts after the spaces at
-// s[i:].
-func nextWord(s string, i int) string {
-	for i < len(s) && s[i] == ' ' {
-		i++
-	}
-	j := i
-	for j < len(s) && (isLetter(s[j]) || s[j] == '%') {
-		j++
-	}
-	return s[i:j]
-}
-
-// numberUnits are words that mark a preceding "1" as a number.
-var numberUnits = setOf("km kms kg gr g m cm mm l ml jam menit mnt detik hari hr minggu mgg bulan bln tahun thn " +
-	"x kali orang org buah biji lembar botol butir tablet pil hour hours hrs min mins minute minutes sec secs " +
-	"second seconds day days week weeks month months year years yr yrs time times pm am k rb ribu juta jt % " +
-	"st nd rd th of out")
 
 // rejoinBunuhDiri is the v1 rejoin of "bunuh diri" written with separators
 // between its letters, v1's
@@ -188,16 +110,28 @@ func isRejoinSep(c byte) bool {
 }
 
 // mapRunes applies steps 1–3 of Normalize rune by rune.
-func mapRunes(text string) string {
+func mapRunes(text string) string { return mapRunesMode(text, false) }
+
+// mapRunesMode is mapRunes; with capitalL, a capital I inside a lowercase word
+// is read as the l it imitates ("kiII", "suicidaI"), which lowercasing
+// would otherwise turn into an i. It is used by the alternative leetspeak
+// variant only (see prepareAlt).
+func mapRunesMode(text string, capitalL bool) string {
 	var b strings.Builder
 	b.Grow(len(text))
+	lowerBefore := false // the previous ASCII byte was a lowercase letter or a capital I read as l
 	for i := 0; i < len(text); {
 		if c := text[i]; c < utf8.RuneSelf {
+			l := lowerBefore
+			lowerBefore = 'a' <= c && c <= 'z'
 			switch {
 			case c == '\n' || c == '\r' || c == '\v' || c == '\f':
 				b.WriteByte('\n')
 			case c < 0x20 || c == 0x7f:
 				b.WriteByte(' ') // includes \t
+			case c == 'I' && capitalL && l:
+				b.WriteByte('l')
+				lowerBefore = true
 			case 'A' <= c && c <= 'Z':
 				b.WriteByte(c + 'a' - 'A')
 			case c == '`':
@@ -210,6 +144,7 @@ func mapRunes(text string) string {
 		}
 		r, size := utf8.DecodeRuneInString(text[i:])
 		i += size
+		lowerBefore = false
 		switch {
 		case r == '\n' || r == '\r' || r == '\v' || r == '\f' || r == 0x85 || r == 0x2028 || r == 0x2029:
 			b.WriteByte('\n')
@@ -389,12 +324,45 @@ func buildFoldTable() map[rune]string {
 	m['ﬄ'] = "ffl"
 	m['ﬅ'] = "st"
 	m['ﬆ'] = "st"
-	// Letterlike symbols that fill holes in the mathematical alphabets.
-	m['ℎ'] = "h"
-	m['ℓ'] = "l"
-	m['ℯ'] = "e"
-	m['ℊ'] = "g"
-	m['ℴ'] = "o"
+	// Letterlike Symbols (U+2100–U+214F) that fill the holes of the
+	// mathematical alphabets: the double-struck, script and fraktur capitals
+	// and a few small letters. They have no lowercase forms, so they are
+	// mapped as they are.
+	add("b", "ℬ")
+	add("c", "ℂℭ")
+	add("d", "ⅅⅆ")
+	add("e", "ℯℰℇⅇ")
+	add("f", "ℱ")
+	add("g", "ℊ")
+	add("h", "ℋℌℍℎℏ")
+	add("i", "ℐℑℹⅈ")
+	add("j", "ⅉ")
+	add("l", "ℒℓ")
+	add("m", "ℳ")
+	add("n", "ℕ")
+	add("o", "ℴ")
+	add("p", "ℙ")
+	add("q", "ℚ")
+	add("r", "ℛℜℝ")
+	add("z", "ℤℨ")
+	// Roman-numeral letters (U+2160–U+217F; the capitals lowercase to the
+	// small forms first), read as the letters they are written with.
+	m['ⅰ'] = "i"
+	m['ⅱ'] = "ii"
+	m['ⅲ'] = "iii"
+	m['ⅳ'] = "iv"
+	m['ⅴ'] = "v"
+	m['ⅵ'] = "vi"
+	m['ⅶ'] = "vii"
+	m['ⅷ'] = "viii"
+	m['ⅸ'] = "ix"
+	m['ⅹ'] = "x"
+	m['ⅺ'] = "xi"
+	m['ⅻ'] = "xii"
+	m['ⅼ'] = "l"
+	m['ⅽ'] = "c"
+	m['ⅾ'] = "d"
+	m['ⅿ'] = "m"
 	// Cyrillic and Greek look-alikes (lowercase forms; input is lowercased).
 	// в, н, м and т look like small capitals, so their capitals В Н М Т,
 	// which look like Latin B H M T, fold the same way.
@@ -502,8 +470,9 @@ func buildFoldTable() map[rune]string {
 	return m
 }
 
-// collapseRuns shortens every run of three or more identical runes to keep
-// runes (v1: /(.)\1{2,}/g → "$1").
+// collapseRuns shortens every run of three or more identical runes other
+// than spaces to keep runes (v1: /(.)\1{2,}/g → "$1"). Space runs are left to
+// collapseSpaces, after joinLetterRuns has read them as word breaks.
 func collapseRuns(s string, keep int) string {
 	if !hasRun3(s) {
 		return s
@@ -521,7 +490,7 @@ func collapseRuns(s string, keep int) string {
 			j += size2
 			n++
 		}
-		if n >= 3 {
+		if n >= 3 && r != ' ' {
 			n = keep
 		}
 		for k := 0; k < n; k++ {
@@ -532,11 +501,12 @@ func collapseRuns(s string, keep int) string {
 	return b.String()
 }
 
-// hasRun3 reports whether s contains three identical runes in a row.
+// hasRun3 reports whether s contains three identical runes other than
+// spaces in a row.
 func hasRun3(s string) bool {
 	var p1, p2 rune = -1, -1
 	for _, r := range s {
-		if r == p1 && r == p2 {
+		if r == p1 && r == p2 && r != ' ' {
 			return true
 		}
 		p2, p1 = p1, r
@@ -586,40 +556,105 @@ func isSingleLetter(s string, i int) bool {
 	return i+1 == len(s) || !isAlnum(s[i+1])
 }
 
-// joinLetterRuns joins runs of three or more single letters separated by
-// exactly one space, dot, dash or underscore ("k i l l" → "kill").
-func joinLetterRuns(s string) string {
+// joinLetterRuns joins spaced-out words (step 7 of Normalize).
+func joinLetterRuns(s string) string { return joinLetters(s, nil) }
+
+// maxLetterSep is the longest separator between two letters of a spaced-out
+// run ("a k u   m a u" uses three spaces between words).
+const maxLetterSep = 4
+
+// joinLetters joins runs of single letters separated by short runs of
+// spaces, dots, dashes or underscores. A run with one kind of separator is
+// one word when it has three or more letters ("k i l l"); a run with two or
+// more kinds is a phrase whose most frequent separator joins letters and
+// whose other separators break words ("i  w a n t  t o"→"i want to",
+// "a.k.u p.e.n"→"aku pen"). When seg is set, each joined word is passed
+// through it (the lexical variant splits fused words with it).
+func joinLetters(s string, seg func(string) string) string {
 	var b strings.Builder
 	changed := false
+	var letters []int
+	var seps []string
 	for i := 0; i < len(s); {
-		if isSingleLetter(s, i) {
-			j, n := i+1, 1
-			for j+1 < len(s) && isLetterSep(s[j]) && isSingleLetter(s, j+1) {
-				j += 2
-				n++
+		if !isSingleLetter(s, i) {
+			if changed {
+				b.WriteByte(s[i])
 			}
-			if n >= 3 {
-				if !changed {
-					b.Grow(len(s))
-					b.WriteString(s[:i])
-					changed = true
-				}
-				for k := i; k < j; k += 2 {
-					b.WriteByte(s[k])
-				}
-				i = j
-				continue
+			i++
+			continue
+		}
+		letters = append(letters[:0], i)
+		seps = seps[:0]
+		j := i + 1
+		for {
+			k := j
+			for k < len(s) && k-j < maxLetterSep && isLetterSep(s[k]) {
+				k++
 			}
+			if k == j || !isSingleLetter(s, k) {
+				break
+			}
+			seps = append(seps, s[j:k])
+			letters = append(letters, k)
+			j = k + 1
 		}
-		if changed {
-			b.WriteByte(s[i])
+		words := groupLetters(s, letters, seps)
+		if words == nil {
+			if changed {
+				b.WriteString(s[i:j])
+			}
+			i = j
+			continue
 		}
-		i++
+		if !changed {
+			b.Grow(len(s))
+			b.WriteString(s[:i])
+			changed = true
+		}
+		for k, w := range words {
+			if k > 0 {
+				b.WriteByte(' ')
+			}
+			if seg != nil {
+				w = seg(w)
+			}
+			b.WriteString(w)
+		}
+		i = j
 	}
 	if !changed {
 		return s
 	}
 	return b.String()
+}
+
+// groupLetters returns the words of a run of single letters at the given
+// positions with the given separators between them, or nil when the run is
+// left as it is (fewer than three letters).
+func groupLetters(s string, letters []int, seps []string) []string {
+	if len(letters) < 3 {
+		return nil
+	}
+	count := map[string]int{}
+	for _, sep := range seps {
+		count[sep]++
+	}
+	intra := seps[0]
+	for sep, n := range count {
+		if n > count[intra] || (n == count[intra] && (len(sep) < len(intra) || (len(sep) == len(intra) && sep < intra))) {
+			intra = sep
+		}
+	}
+	var words []string
+	word := []byte{s[letters[0]]}
+	for k, sep := range seps {
+		if sep != intra {
+			words = append(words, string(word))
+			word = word[:0:0]
+		}
+		word = append(word, s[letters[k+1]])
+	}
+	return append(words, string(word))
 }
 
 // compactJoin removes '-', '_' and '.' when they sit between two letters.

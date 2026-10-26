@@ -142,3 +142,43 @@ func TestNormalizeHelpers(t *testing.T) {
 		t.Errorf("compactJoin = %q", got)
 	}
 }
+
+// TestLexicalVariant covers the readings only the derived variants make
+// (review findings): two-letter elongation inside a word, a pause that an
+// emoji follows, spaced dots and dashes, and mixed leetspeak.
+func TestLexicalVariant(t *testing.T) {
+	lex := map[string]string{
+		"aku pengeen mati":       "aku pengen mati",
+		"pengen bunuuh diri":     "pengen bunuh diri",
+		"i want to kiill myself": "i want to kill myself",
+		"i want to diieee":       "i want to die",
+		"aku pengen... 😭 mati":   "aku pengen mati",
+		"aku pengen…😭mati":       "aku pengen mati",
+		"i want to . . . die":    "i want to die",
+		"i want to — die":        "i want to die",
+		"aku pengen - mati":      "aku pengen mati",
+		"hp-ku mati":             "hp-ku mati",
+		"i wana die":             "i want to die",
+		"pngen mati":             "pengen mati",
+		"good coffee":            "good coffee",
+	}
+	for in, want := range lex {
+		if got := lexical(prepare(in)); got != want {
+			t.Errorf("lexical(%q) = %q, want %q", in, got, want)
+		}
+	}
+	alt := map[string]string{
+		"$u1c1d3":       "suicide",
+		"$u1c1d@l":      "suicidal",
+		"k1ll my$3lf":   "kill myself",
+		"pengen m@t1":   "pengen mati",
+		"bunuh d!r1":    "bunuh diri",
+		"ki11 myself":   "kill myself",
+		"i w@nt t0 d1e": "i want to die",
+	}
+	for in, want := range alt {
+		if got := lexical(prepareAlt(in)); got != want {
+			t.Errorf("lexical(prepareAlt(%q)) = %q, want %q", in, got, want)
+		}
+	}
+}

@@ -134,6 +134,11 @@ func (c *shape) analyseClause(cl *clause) {
 	quoted := c.attributedQuotes(cl)
 	cl.scopes = append(cl.scopes, quoted...)
 	cl.hidden = append(cl.hidden, quoted...)
+	// Every quotation in the clause is masked when reported content is
+	// checked for the speaker's words and breakers: a quotation inside a
+	// frame ("di lagu itu penyanyinya bilang \"aku ingin mati\"") is part of
+	// the report even when no reporting frame sits right before it.
+	allQuotes := c.quotesIn(cl)
 
 	// A frame starts at the beginning of a comma segment and may run past a
 	// comma ("in the book, the character ...", "kata dia, ..."). Its reported
@@ -141,13 +146,18 @@ func (c *shape) analyseClause(cl *clause) {
 	// when it ends exactly at one), plus each following segment that opens
 	// with a third-person pronoun, up to the next frame. Within each part the
 	// content ends at a breaker that starts the speaker's own reaction
-	// ("Nyokap bilang harus nikah rasanya pengen mati"). Each segment belongs
+	// ("Nyokap bilang harus nikah rasanya pengen mati"). Content that opens
+	// with a closed report, a quotation or an anaphoric "gitu" ("bilang
+	// \"semangat ya\" pengen mati", "ngomong gitu pengen mati"), ends there
+	// unless a third-person pronoun opens what follows. Each segment belongs
 	// to at most a few frames, so the work is linear in the clause length.
 	segs := cl.segments
 	frameEnd := make([]int, len(segs)) // 0: the segment opens no frame
+	media := make([]bool, len(segs))   // the frame is a media frame
 	for k, seg := range segs {
-		if end, ok := matchFrame(t, seg.start, cl.end); ok {
+		if end, branch, ok := matchFrameBranch(t, seg.start, cl.end); ok {
 			frameEnd[k] = end
+			media[k] = mediaBranches[branch]
 		}
 	}
 	for k, fEnd := range frameEnd {
@@ -165,12 +175,23 @@ func (c *shape) analyseClause(cl *clause) {
 		if t[fEnd-1] == ':' {
 			// Direct speech after a colon ("temanku bilang: aku mau mati")
 			// is treated like a quotation, but only up to the end of its
-			// segment or a first-person reply ("aku jawab ..."): an unquoted
-			// quotation has no visible end, so what follows takes the safer
-			// path.
+			// segment, the end of a quotation that opens it, a first-person
+			// reply ("aku jawab ...") or the start of the speaker's own words
+			// after its opening words (see colonSpeechEnd: "mama bilang:
+			// makan dulu aku mau mati", "makan dulu rasanya pengen mati",
+			// "stop crying wanna die"): an unquoted quotation has no visible
+			// end, so what follows takes the safer path.
 			sc := span{fEnd, segs[j].end}
-			if loc := ownFrameRe.FindStringIndex(maskSpans(t, sc, quoted)); loc != nil {
+			if end, ok := c.quotedReport(allQuotes, fEnd, sc.end); ok {
+				sc.end = end
+			}
+			masked := maskSpans(t, sc, allQuotes)
+			if loc := ownFrameRe.FindStringIndex(masked); loc != nil {
 				sc.end = sc.start + loc[0]
+				masked = masked[:loc[0]]
+			}
+			if k := colonSpeechEnd(masked); k >= 0 {
+				sc.end = sc.start + k
 			}
 			if sc = trimSpan(t, sc); sc.start < sc.end {
 				cl.scopes = append(cl.scopes, sc)
@@ -178,13 +199,25 @@ func (c *shape) analyseClause(cl *clause) {
 			}
 			continue
 		}
-		parts := []span{cutAtBreaker(t, span{fEnd, segs[j].end}, quoted)}
+		var parts []span
+		if end, ok := c.closedReport(allQuotes, fEnd, segs[j].end); ok {
+			parts = append(parts, span{fEnd, end})
+			if rest := trimSpan(t, span{end, segs[j].end}); rest.start < rest.end && thirdContinuationRe.MatchString(t[rest.start:rest.end]) {
+				parts = append(parts, cutAtBreaker(t, rest, allQuotes))
+			}
+		} else {
+			p := cutAtBreaker(t, span{fEnd, segs[j].end}, allQuotes)
+			if media[k] {
+				p = cutAtOwnWish(t, p, allQuotes)
+			}
+			parts = append(parts, p)
+		}
 		for n := j + 1; n < len(segs) && frameEnd[n] == 0 && thirdPronounRe.MatchString(t[segs[n].start:segs[n].end]); n++ {
-			parts = append(parts, cutAtBreaker(t, segs[n], quoted))
+			parts = append(parts, cutAtBreaker(t, segs[n], allQuotes))
 		}
 		void, shared := false, false
 		for _, p := range parts {
-			masked := maskSpans(t, p, quoted)
+			masked := maskSpans(t, p, allQuotes)
 			if firstPerson(masked) {
 				void = true // the speaker is part of the reported content
 				break
@@ -242,17 +275,194 @@ func (c *shape) attributedQuotes(cl *clause) []span {
 	return quoted
 }
 
+// closedReport reports where reported content that opens with a closed
+// report ends: a quotation, optionally after the reporting verb ("bilang
+// \"semangat ya\"", the content of a media frame such as "tokohnya bilang
+// \"...\""), or an anaphoric "gitu"/"begitu" ("ngomong gitu", "bilang gitu
+// doang"). Content that is not closed this way runs on (see analyseClause).
+func (c *shape) closedReport(quotes []span, from, limit int) (int, bool) {
+	if end, ok := c.quotedReport(quotes, from, limit); ok {
+		return end, true
+	}
+	if loc := anaphorRe.FindStringIndex(c.text[from:min(limit, from+frameWindow)]); loc != nil {
+		return from + loc[1], true
+	}
+	return 0, false
+}
+
+// quotedReport reports the end (past the closing mark) of a quotation that
+// opens t[from:limit], optionally after a reporting verb and up to three
+// words of manner or aspect ("bilang sambil marah \"...\"", "bilang lagi
+// \"...\"").
+func (c *shape) quotedReport(quotes []span, from, limit int) (int, bool) {
+	t := c.text
+	i := from
+	for i < limit && (t[i] == ' ' || t[i] == ':') {
+		i++
+	}
+	if loc := quoteVerbRe.FindStringIndex(t[i:min(limit, i+frameWindow)]); loc != nil {
+		i += loc[1]
+	}
+	for n := 0; ; n++ {
+		k := sort.Search(len(quotes), func(n int) bool { return quotes[n].start > i })
+		if k < len(quotes) && quotes[k].start == i+1 && quotes[k].end < limit {
+			return quotes[k].end + 1, true
+		}
+		if n == 3 {
+			return 0, false
+		}
+		// Skip one word and the spaces after it.
+		j := i
+		for j < limit && (isLetter(t[j]) || t[j] == '-' || t[j] == '\'') {
+			j++
+		}
+		if j == i {
+			return 0, false
+		}
+		for j < limit && t[j] == ' ' {
+			j++
+		}
+		i = j
+	}
+}
+
+// laterOwnSubject returns the offset in colon speech s of a first-person
+// subject pronoun that does not open it, or -1. The speech may open with the
+// pronoun after a few discourse words ("aku capek", "kadang aku ..."): that
+// one is the quoted person's "I". A later one ("aku capek aku mau mati",
+// "makan dulu aku mau mati", "stop crying I want to die") starts the
+// speaker's own words.
+func laterOwnSubject(s string) int {
+	opening := true
+	for i := 0; i < len(s); {
+		if !isLetter(s[i]) || (i > 0 && (isAlnum(s[i-1]) || s[i-1] == '\'')) {
+			i++
+			continue
+		}
+		j := i
+		for j < len(s) && (isLetter(s[j]) || s[j] == '\'') {
+			j++
+		}
+		w := s[i:j]
+		switch {
+		case ownPronouns[w]:
+			if !opening {
+				return i
+			}
+			opening = false
+		case !speechLeads[w]:
+			opening = false
+		}
+		i = j
+	}
+	return -1
+}
+
+// colonSpeechEnd returns the offset in colon speech s where the speaker's own
+// words start, or -1: a later first-person subject (see laterOwnSubject),
+// or, when the speech does not open with a first-person pronoun and no
+// third-person pronoun comes first, a breaker word (see cutAtBreaker) or a
+// subjectless wish after at least two words ("makan dulu rasanya pengen
+// mati", "makan dulu pengen mati aja", "stop crying wanna die"). Speech that
+// opens with the quoted person's "aku" keeps its subjectless continuation
+// ("temanku bilang: aku capek terus pengen mati").
+func colonSpeechEnd(s string) int {
+	end := laterOwnSubject(s)
+	cut := func(k int) {
+		if end < 0 || k < end {
+			end = k
+		}
+	}
+	n := 0
+	for i := 0; i < len(s) && (end < 0 || i < end); {
+		if !isLetter(s[i]) || (i > 0 && (isAlnum(s[i-1]) || s[i-1] == '\'')) {
+			i++
+			continue
+		}
+		j := i
+		for j < len(s) && (isLetter(s[j]) || s[j] == '\'' || s[j] == '-') {
+			j++
+		}
+		w := s[i:j]
+		switch {
+		case n == 0 && ownPronouns[w], thirdPronouns[w]:
+			return end
+		case n >= 1 && breakerRe.MatchString(w) && !thirdPronouns[nextWord(s, j)]:
+			cut(i)
+		case n >= 2 && speechWishes[w]:
+			cut(i)
+		}
+		n++
+		i = j
+	}
+	return end
+}
+
+// speechWishes are the wish words that start a subjectless clause.
+var speechWishes = setOf("pengen pgn pingin pengin kepengen kepingin mau mw ingin wanna")
+
+// cutAtOwnWish shortens the reported content of a media frame at a
+// subjectless wish that follows a complete risk phrase ("aku baca berita ada
+// mahasiswa bunuh diri pengen nyusul"): the wish is the speaker's reaction.
+// A wish before the risk phrase ("ada mahasiswa mau bunuh diri") or tied to
+// the reported person ("yang pengen", "dia pengen", "karena pengen") stays
+// in the report.
+func cutAtOwnWish(t string, sp span, quoted []span) span {
+	masked := maskSpans(t, sp, quoted)
+	risk := false
+	prev := ""
+	for i := 0; i < len(masked); {
+		if !isLetter(masked[i]) || (i > 0 && isAlnum(masked[i-1])) {
+			i++
+			continue
+		}
+		j := i
+		for j < len(masked) && (isLetter(masked[j]) || masked[j] == '-') {
+			j++
+		}
+		w := masked[i:j]
+		if risk && speechWishes[w] && !wishOwners[prev] {
+			return trimSpan(t, span{sp.start, sp.start + i})
+		}
+		risk = risk || riskEnds[w]
+		prev = w
+		i = j
+	}
+	return sp
+}
+
+var (
+	riskEnds   = setOf("diri mati meninggal tewas hidupnya gedung jembatan atap lantai himself herself themselves life dead")
+	wishOwners = setOf("yang dia ia mereka beliau doi who that he she they karena soalnya because since biar supaya untuk buat")
+)
+
+// ownPronouns are first-person subject pronouns.
+var ownPronouns = setOf("aku saya gue gua gw ane i i'm im i've i'd i'll")
+
+// speechLeads may come before the quoted person's own "I" at the start of
+// colon speech.
+var speechLeads = setOf("kadang kadang-kadang sebenernya sebenarnya jujur aduh duh ya sih kayaknya mungkin kalau kalo " +
+	"klo pas waktu honestly sometimes maybe actually really well so oh ugh if when and dan hmm um eh")
+
 // cutAtBreaker shortens reported content at the first breaker word that is
 // not attached to a third-person pronoun: "bikin", "rasanya", "sekarang",
 // "terus", "jadi" and the like start the speaker's own reaction in
 // subjectless Indonesian ("Pacarku bilang putus rasanya pengen mati"), while
-// "dia terus ..." and "terus dia ..." keep the third-party subject. Breakers
-// inside quotations are ignored.
+// "dia terus ...", "terus dia ..." and "gitu terus dia ..." keep the
+// third-party subject. Breakers inside quotations are ignored.
 func cutAtBreaker(t string, sp span, quoted []span) span {
 	masked := maskSpans(t, sp, quoted)
 	for _, loc := range breakerRe.FindAllStringIndex(masked, -1) {
 		before, _ := tokenBefore(masked, loc[0])
-		if thirdPronouns[before] || thirdPronouns[nextWord(masked, loc[1])] {
+		after := loc[1]
+		for {
+			next := breakerRe.FindStringIndex(masked[after:])
+			if next == nil || strings.TrimSpace(masked[after:after+next[0]]) != "" {
+				break
+			}
+			after += next[1]
+		}
+		if thirdPronouns[before] || thirdPronouns[nextWord(masked, after)] {
 			continue
 		}
 		return trimSpan(t, span{sp.start, sp.start + loc[0]})
@@ -265,7 +475,7 @@ func cutAtBreaker(t string, sp span, quoted []span) span {
 // "terakhirku"), except relatives and roles that name a third party
 // ("temanku", "ibuku") and words that merely end in "ku" ("buku").
 func firstPerson(s string) bool {
-	if firstPersonRe.MatchString(s) {
+	if hasFirstPersonWord(s) {
 		return true
 	}
 	for i := 0; i < len(s); {
@@ -287,6 +497,34 @@ func firstPerson(s string) bool {
 		if len(stem) >= 2 && !kuRelatives[stem] {
 			return true
 		}
+	}
+	return false
+}
+
+// firstPersonList holds the words of firstPersonRe. The contractions ("i'm",
+// "i've") are matched through their "i", as \b allows.
+const firstPersonList = "aku saya gue gua gw ane daku ku diriku hidupku nyawaku jiwaku tanganku lenganku nadiku " +
+	"leherku pahaku tubuhku badanku kita kami i i'm im i've ive i'd i'll me my myself mine we us our ours ourselves"
+
+var firstPersonWords = setOf(firstPersonList)
+
+// hasFirstPersonWord reports whether firstPersonRe matches s, by looking up
+// each \w word of s (a scan is much faster than the alternation on the many
+// short windows the post-checks look at).
+func hasFirstPersonWord(s string) bool {
+	for i := 0; i < len(s); {
+		if !isWordByte(s[i]) {
+			i++
+			continue
+		}
+		j := i
+		for j < len(s) && isWordByte(s[j]) {
+			j++
+		}
+		if firstPersonWords[s[i:j]] {
+			return true
+		}
+		i = j
 	}
 	return false
 }
@@ -345,36 +583,60 @@ func tailWindow(t string, start, end int) string {
 // to three lead-in words ("jadi, kemarin temanku bilang ..."), reading no
 // further than limit. It returns the end of the frame.
 func matchFrame(t string, start, limit int) (int, bool) {
+	end, _, ok := matchFrameBranch(t, start, limit)
+	return end, ok
+}
+
+// matchFrameBranch is matchFrame that also returns the frameRe branch that
+// matched.
+func matchFrameBranch(t string, start, limit int) (int, int, bool) {
 	off, ok := frameStart(t[start:limit])
 	if !ok {
-		return 0, false
+		return 0, 0, false
 	}
 	from := start + off
 	end := min(limit, from+frameWindow)
-	loc := frameFind(t[from:end])
+	loc, branch := frameFindBranch(t[from:end])
 	if loc != nil && from+loc[1] == end && end < limit {
-		loc = frameFind(t[from:limit]) // the match reached the window edge
+		loc, branch = frameFindBranch(t[from:limit]) // the match reached the window edge
 	}
 	if loc == nil {
-		return 0, false
+		return 0, 0, false
 	}
-	return from + loc[1], true
+	// Trailing spaces are not part of the frame, so a frame that ends in a
+	// colon ends at it ("lirik lagunya: ...").
+	end = from + loc[1]
+	for end > from && t[end-1] == ' ' {
+		end--
+	}
+	return end, branch, true
 }
 
 // frameFind is frameRe.FindStringIndex restricted to the branches that can
 // begin with the first word of s. A frame is tried on every comma segment,
 // and trying all eight branches there dominated the cost of long texts.
 func frameFind(s string) []int {
+	loc, _ := frameFindBranch(s)
+	return loc
+}
+
+// frameFindBranch is frameFind that also returns the index of the branch.
+func frameFindBranch(s string) ([]int, int) {
 	w := firstWord(s)
 	for i, g := range frameRe.alts {
 		if frameOpens[i](w) {
 			if loc := g.FindStringIndex(s); loc != nil {
-				return loc
+				return loc, i
 			}
 		}
 	}
-	return nil
+	return nil, -1
 }
+
+// mediaBranches are the frameRe branches of media frames: "dalam film itu
+// tokoh ...", "in the movie, the character ..." and the speaker reading or
+// watching a report about someone else.
+var mediaBranches = map[int]bool{0: true, 1: true, 8: true}
 
 // frameOpens[i] reports whether branch i of frameRe can begin with word w.
 // TestFrameDispatch checks it against trying every branch.
@@ -389,18 +651,27 @@ var frameOpens = []func(w string) bool{
 	func(w string) bool { return w == "according" },
 	func(w string) bool { return idSubjectStarts[w] || hasFrameStem(w) },
 	func(w string) bool { return enSubjectStarts[w] },
+	func(w string) bool { return ownSubjects[w] },
+	func(w string) bool { return lyricStarts[w] },
 }
+
+var lyricStarts = setOf("the this that song lyrics lyric lirik liriknya")
 
 var (
 	idSubjectStarts = setOf("dia ia mereka beliau seseorang orang")
 	enSubjectStarts = setOf("he she they someone somebody this the my a our his her their")
 )
 
-// frameStart skips up to three lead-in words and reports where the frame
-// proper would begin, if the next word can begin one. It keeps the lead-in
-// out of the expressions and frameRe off segments that cannot match.
+// frameStart skips opening brackets and emphasis marks, up to three lead-in
+// words ("honestly", "jadi", "kemarin") or one-word labels with a colon
+// ("Curhat: my friend said ..."), and reports where the frame proper would
+// begin, if the next word can begin one. It keeps the lead-in out of the
+// expressions and frameRe off segments that cannot match.
 func frameStart(seg string) (int, bool) {
 	off := 0
+	for off < len(seg) && strings.IndexByte("([{*~>- ", seg[off]) >= 0 {
+		off++
+	}
 	for n := 0; n <= 3; n++ {
 		w := firstWord(seg[off:])
 		if w == "" {
@@ -409,11 +680,12 @@ func frameStart(seg string) (int, bool) {
 		if frameStarts[w] || hasFrameStem(w) {
 			return off, true
 		}
-		if !leadInWords[w] {
+		label := off+len(w) < len(seg) && seg[off+len(w)] == ':'
+		if !leadInWords[w] && !label {
 			return 0, false
 		}
 		off += len(w)
-		for off < len(seg) && strings.IndexByte(" ,\t\n", seg[off]) >= 0 {
+		for off < len(seg) && strings.IndexByte(" ,:\t\n", seg[off]) >= 0 {
 			off++
 		}
 	}
@@ -447,10 +719,12 @@ var frameStems = []string{
 }
 
 var frameStarts = setOf("dalam di in kata katanya menurut according dia ia mereka beliau seseorang orang " +
-	"he she they someone somebody this the my a our his her their")
+	"he she they someone somebody this the my a our his her their " +
+	"aku saya gue gua gw ane ku i i'm im that song lyrics lyric lirik liriknya")
 
 var leadInWords = setOf("jadi terus trus lalu kemarin kemaren tadi barusan semalam btw eh oh hmm so well " +
-	"yesterday today earlier recently anyway anyways and dan also guys")
+	"yesterday today earlier recently anyway anyways and dan also guys honestly tbh idk ngl fyi lol omg ok okay " +
+	"oke um uh like basically literally jujur pokoknya sebenernya sebenarnya intinya nah ya yah duh aduh wkwk")
 
 func setOf(words string) map[string]bool {
 	m := make(map[string]bool)
@@ -482,9 +756,11 @@ func maskSpans(text string, within span, hide []span) string {
 // position. Double quotes pair in order; single quotes count only when they
 // open after a space or punctuation and close before one, so apostrophes
 // ("don't") never do. A quotation never spans a newline or a sentence
-// boundary (see oneSentence): such a pair is taken to start at a stray quote
-// mark, and the closing mark is tried as a new opening one. Otherwise one
-// stray mark could turn the speaker's own sentences into a quotation.
+// boundary (see oneSentence), and a double-quoted one never ends with a
+// third-party reporting frame after a comma (see endsInReport): such a pair
+// is taken to start at a stray quote mark, and the closing mark is tried as
+// a new opening one. Otherwise one stray mark could turn the speaker's own
+// sentences or clauses into a quotation.
 func findQuotes(s string) []span {
 	if strings.IndexAny(s, "\"'") < 0 {
 		return nil
@@ -498,7 +774,7 @@ func findQuotes(s string) []span {
 		switch {
 		case open < 0:
 			open = i
-		case oneSentence(s[open+1 : i]):
+		case oneSentence(s[open+1:i]) && !endsInReport(s[open+1:i]):
 			out = append(out, span{open + 1, i})
 			open = -1
 		default:
@@ -506,6 +782,7 @@ func findQuotes(s string) []span {
 		}
 	}
 	doubles := len(out)
+	d := 0 // first double-quoted pair that may overlap the next candidate
 	open = -1
 	for i := 0; i < len(s); i++ {
 		if s[i] != '\'' {
@@ -516,11 +793,14 @@ func findQuotes(s string) []span {
 		canOpen := prevOK && i+1 < len(s) && isLetter(s[i+1])
 		if open >= 0 && nextOK && i > 0 && s[i-1] != ' ' {
 			if oneSentence(s[open+1 : i]) {
+				// The double-quoted pairs are in order and so are the
+				// single-quoted candidates, so one moving index finds the
+				// pairs that could overlap this one.
 				whole := span{open, i + 1}
-				inside := false
-				for _, d := range out[:doubles] {
-					inside = inside || d.overlaps(whole)
+				for d < doubles && out[d].end <= whole.start {
+					d++
 				}
+				inside := d < doubles && out[d].start < whole.end
 				if !inside {
 					out = append(out, span{open + 1, i})
 				}
@@ -535,6 +815,17 @@ func findQuotes(s string) []span {
 	}
 	sort.Slice(out, func(a, b int) bool { return out[a].start < out[b].start })
 	return out
+}
+
+// endsInReport reports whether quoted content q ends with a third-party
+// reporting frame ("semangat ya, aku mau bunuh diri malam ini, dia bilang "):
+// the closing mark then opens the next quotation, and the opening mark was
+// stray, as when a quotation would span a sentence boundary.
+func endsInReport(q string) bool {
+	if !strings.Contains(q, ",") {
+		return false // a one-clause quotation cannot hold a report and more
+	}
+	return reportingTailRe.leftmost(tailWindow(q, 0, len(q))) >= 0
 }
 
 // oneSentence reports whether quoted content q is a single line holding at
@@ -790,9 +1081,10 @@ func (f tailFrame) leftmost(s string) int {
 }
 
 // opensReport reports whether w can open a third-party reporting frame: a
-// frame start word, a relative or role noun, or a bare reporting verb.
+// frame start word, a relative or role noun, a bare reporting verb or a word
+// that opens a lyrics frame.
 func opensReport(w string) bool {
-	return frameStarts[w] || hasFrameStem(w) || reportVerbs[w]
+	return frameStarts[w] || hasFrameStem(w) || reportVerbs[w] || lyricStarts[w]
 }
 
 var reportVerbs = setOf("katanya tulisnya ujarnya ucapnya kata tulis ujar ucap")
@@ -841,7 +1133,15 @@ const (
 	// mom", "lewat chat", "in my diary").
 	ownReceiver = `(?:\s+(?:(?:ke|sama|kepada|pada|ama|buat|lewat|via|di|dalam|to|at|on|in|with|into)\s+)?(?:(?:my|our|the|a|this|that|his|her|their|si|sang)\s+)?[a-z']+){0,2}`
 	enMedia     = `(?:movie|film|news|article|book|show|story|class|series|novel|song|video|game|episode|documentary|podcast|lecture|post|thread|comic|anime|manga|play|lesson|report|chapter|scene)`
-	enMediaWho  = `(?:(?:the|a|an|this|that|one|some)\s+)?(?:(?:main|lead)\s+)?(?:characters?|he|she|they|someone|somebody|man|woman|girl|boy|guy|kid|teen|teenager|student|person|people|hero|heroine|protagonist|author|singer|victim|narrator|teacher|speaker|actor|actress|celebrity|influencer|host|youtuber|reporter|lecturer)`
+	enMediaWho  = `(?:(?:the|a|an|this|that|one|some)\s+)?(?:(?:main|lead|young|local|famous)\s+)?(?:characters?|he|she|they|someone|somebody|man|woman|girl|boy|guy|kid|teen|teenager|student|person|people|hero|heroine|protagonist|author|singer|victim|narrator|teacher|speaker|actor|actress|celebrity|influencer|host|youtuber|reporter|lecturer|mother|father|soldier|officer|worker|patient|rapper|musician|athlete|player)`
+	// mediaReport is the speaker reading, watching or hearing a report
+	// about a third party.
+	mediaReport = `(?:aku|saya|gue|gua|gw|i)\s+(?:(?:baru|tadi|barusan|sempat|just|recently|once)\s+)?(?:baca|membaca|nonton|menonton|denger|dengar|mendengar|lihat|liat|melihat|read|watched|saw|heard)\s+(?:(?:a|an|the|this|that|sebuah|satu)\s+)?(?:` +
+		idMedia + `|` + enMedia + `|news\s+(?:article|story|report|piece))(?:\s+(?:itu|ini|tadi|kemarin|kemaren|today|yesterday|online))?` +
+		`(?:\s+(?:tentang|soal|kalau|bahwa|about|that|where|of|on|in\s+which))?\s*,?\s*(?:` + idMediaWho + `|` + enMediaWho + `)`
+	// lyricsFrame introduces song lyrics ("the lyrics say", "lirik
+	// lagunya:"); with a colon or a quotation it attributes them.
+	lyricsFrame = `(?:(?:the|this|that)\s+)?(?:song\s+)?lyrics?(?:\s+(?:say|says|go|goes|read|reads|are|is))?|lirik(?:\s+lagu)?(?:nya)?(?:\s+(?:itu|ini))?(?:\s+(?:bilang|bunyinya|berbunyi))?`
 )
 
 var (
@@ -872,11 +1172,21 @@ var (
 		`according\s+to\s+(?:him|her|them|`+enSubject+`)\b`,
 		idSubject+`\s+(?:`+anyAdverb+`\s+)*`+anyVerb+anyReceiver+`\b`,
 		enSubject+`\s+(?:`+anyAdverb+`\s+)*`+anyVerb+anyReceiver+`\b`,
+		// The speaker reading or watching a report about someone else ("aku
+		// baca berita ada mahasiswa ...", "I read a news article about a
+		// student ..."): the frame needs the third party, so "aku baca
+		// berita, pengen mati" stays the speaker's own.
+		mediaReport+`\b`,
+		// Song lyrics frame only before a colon ("lirik lagunya: ..."); as a
+		// plain frame "lirik lagunya sedih banget pengen mati" would hide the
+		// speaker's own reaction. Before a quotation see reportingTailRe.
+		`(?:`+lyricsFrame+`)\s*:`,
 	)
 
 	// reportingTailRe recognises a reporting frame that ends just before a
 	// quotation ("temanku nulis", "my friend texted me this:").
 	reportingTailRe = newTailFrame(opensReport,
+		`(?:`+lyricsFrame+`)`,
 		`(?:katanya|tulisnya|ujarnya|ucapnya|(?:kata|tulis|ujar|ucap)\s+`+kataSubject+`)`,
 		idSubject+`\s+(?:`+anyAdverb+`\s+)*`+anyVerb+anyReceiver,
 		enSubject+`\s+(?:`+anyAdverb+`\s+)*`+anyVerb+anyReceiver,
@@ -909,6 +1219,19 @@ var (
 	// cutAtBreaker).
 	breakerRe = regexp.MustCompile(`\b(?:bikin|bikinin|membuat|rasanya|rasa|sekarang|skrg|skrang|jadi|jadinya|makanya|akhirnya|sampai|sampe|sehingga|terus|trus|lalu|(?:abis|habis|setelah|sesudah)\s+itu)\b`)
 
+	// anaphorRe: an anaphoric complement right after a reporting verb, which
+	// closes the report ("nyokap ngomong gitu", "bilang begitu doang").
+	anaphorRe = regexp.MustCompile(`^\s*(?:(?:kayak|kaya|kek|kyk|seperti)\s+)?(?:gitu(?:2|-gitu|an)?|begitu|gtu|gt|bgitu|(?:hal\s+)?itu)(?:\s+(?:doang|aja|deh|sih|lho|loh))?\b`)
+
+	// quoteVerbRe: a reporting verb at the start of a media frame's content,
+	// before its quotation ("tokohnya bilang \"...\"").
+	quoteVerbRe = regexp.MustCompile(`^(?:` + anyVerb + `|sings|sang|singing|nyanyi|menyanyi|bernyanyi|screams|screamed|says|said)` + anyReceiver + `\s*:?\s*`)
+
+	// thirdContinuationRe: text after a closed report that continues it,
+	// a third-person pronoun after an optional connective ("\"aku capek\"
+	// dan dia mau mati", "gitu terus dia ...").
+	thirdContinuationRe = regexp.MustCompile(`^(?:(?:dan|terus|trus|lalu|abis\s+itu|habis\s+itu|and|then|so|jadi)\s+)?(?:dia|ia|mereka|beliau|he|she|they|he's|she's|they're|hes|shes|theyre)\b`)
+
 	// thirdPronounRe: a segment that continues the reported content.
 	thirdPronounRe = regexp.MustCompile(`^(?:dia|ia|mereka|beliau|he|she|they|he's|she's|they're|hes|shes|theyre|his|her|their)\b`)
 
@@ -917,7 +1240,7 @@ var (
 	// scope (outside quotations) any of them makes the attribution void: the
 	// speaker is part of it ("dalam film itu tokoh bunuh diri aku mau bunuh
 	// diri").
-	firstPersonRe = regexp.MustCompile(`\b(?:aku|saya|gue|gua|gw|ane|daku|ku|diriku|hidupku|nyawaku|jiwaku|tanganku|lenganku|nadiku|leherku|pahaku|tubuhku|badanku|kita|kami|i|i'm|im|i've|ive|i'd|i'll|me|my|myself|mine|we|us|our|ours|ourselves)\b`)
+	firstPersonRe = regexp.MustCompile(`\b(?:` + strings.Join(strings.Fields(firstPersonList), "|") + `)\b`)
 
 	// sharedRe: "juga"/"too" inside reported content is read as the speaker
 	// sharing it ("tokohnya bunuh diri, jadi pengen mati juga").
@@ -925,16 +1248,30 @@ var (
 
 	// adoptionRe: the speaker takes up the reported risk ("aku juga", "me too").
 	adoptionRe = mustGuarded(`` +
-		`\b(?:aku|saya|gue|gua|gw|ane|ku)\s+(?:juga|jg|jga)\b(?:\s*$|\s+(?:mau|mw|pengen|pgn|pingin|ingin|kepengen|kepikiran|mikir|merasa|ngerasa|rasa|gitu|gtu|begitu|sama|sih|kok|lho|loh|deh|nih|banget|bgt|kadang|sering|pernah|lagi|udah|sudah|ya|kayaknya)\b)` +
+		`\b(?:aku|saya|gue|gua|gw|ane|ku)\s+(?:juga|jg|jga)\b(?:\s*$|\s+(?:mau|mw|pengen|pgn|pingin|ingin|kepengen|kepikiran|mikir|merasa|ngerasa|rasa|rasanya|gitu|gtu|begitu|gini|begini|sama|sih|kok|lho|loh|deh|nih|banget|bgt|kadang|sering|pernah|lagi|udah|sudah|ya|kayaknya|kayak|kaya|kek|capek|cape|lelah|masih|suka|bahkan|tiap|setiap)\b)` +
 		`|\bsama\s+(?:aku|gue|saya|gw)\s+(?:juga|jg)\b` +
 		`|\b(?:aku|gue|saya|gw)\s+(?:juga\s+)?(?:ngerasa|merasa|ngerasain|merasakan|ngalamin|mengalami)\s+(?:hal\s+yang\s+sama|yang\s+sama|gitu|begitu|hal\s+serupa|sama)\b` +
-		`|\bme\s+(?:too|as\s+well|neither|also)\b` +
-		`|\bso\s+do\s+i\b` +
-		`|\bsame\s+(?:here|for\s+me|tbh|honestly)\b` +
+		`|\b(?:aku|saya|gue|gua|gw|ane|ku)\s*pun\b(?:\s*$|\s+(?:mau|mw|pengen|pgn|pingin|ingin|kepengen|kepikiran|mikir|merasa|ngerasa|rasa|rasanya|gitu|gtu|begitu|gini|begini|sama|sih|kok|lho|loh|deh|nih|banget|bgt|kadang|sering|pernah|lagi|udah|sudah|ya|kayaknya|kayak|kaya|kek|capek|cape|lelah|masih|suka|bahkan|tiap|setiap)\b)` +
+		`|\bme\s+(?:too|as\s+well|neither|also)\b|\bme\s+to(?:\s*$|\s+(?:lol|lmao|tbh|honestly|fr|ngl|haha|bro|sis)\b)` +
+		`|\bso\s+(?:do|am|did|have|would)\s+i(?:\s*$|\s+(?:lol|tbh|honestly|too|fr|ngl|sometimes|lately)\b)` +
+		`|\bsame\s+(?:here|for\s+me|tbh|honestly|lol|lmao|lmfao|fr|ngl|bro|sis|tho|though)\b` +
+		`|\b(?:i'?m|i\s+am)\s+the\s+same(?:\s*$|\s+(?:way|lol|tbh|honestly|too|fr)\b)` +
 		`|\bi\s+(?:do|did|feel|felt|want|wanted|think|am|have)\s+(?:(?:the\s+)?same\s+|that\s+|it\s+|so\s+)?(?:too|as\s+well)\b` +
 		`|\bi\s+(?:feel|felt)\s+(?:the\s+same|that\s+way|like\s+that)\b` +
 		`|\bi\s+(?:can\s+|totally\s+|really\s+)?relate\b|\brelat(?:able|e\s+(?:banget|bgt|sih|deh|parah))\b` +
-		`|\b(?:i\s+(?:said|say|replied|answered|was\s+like)|lol|honestly|tbh|ngl|literally|fr)\s+"?\s*(?:same|me\s+too)\b` +
+		`|\b(?:i\s+(?:said|say|replied|answered|was\s+like)|lol|honestly|tbh|ngl|literally|fr|omg|ugh|so|lmao|damn|oh|yeah|yes|ya|bruh)\s+"?\s*(?:same|me\s+too)\b` +
+		`|\bliterally\s+me\b|\bthat'?s\s+(?:so\s+|literally\s+|exactly\s+|just\s+)?(?:me|how\s+i\s+feel)\b` +
+		`|\b(?:aku|gue|gw|gua|saya)\s+(?:juga\s+)?sama(?:\s*$|\s+(?:aja|kok|sih|deh|banget|bgt|persis|kayak\s+dia|kaya\s+dia|kek\s+dia)\b)` +
+		`|\bsama\s+(?:kayak|kaya|kek|kyk|seperti|dengan|dgn|ama)\s+(?:aku|gue|gw|gua|saya)\b` +
+		// Imitation of the reported act ("pengen nyusul", "aku pengen kayak
+		// dia", "kok aku iri", "I want to try it").
+		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin)\s+(?:nyusul|ikutan|nyoba(?:in)?|mencoba(?:nya)?|ngikutin)\b` +
+		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin)\s+(?:ikut|ngikut)(?:\s*$|\s+(?:aja|juga|jg|deh|sih|ya|lho|loh|kok|dia|mereka|nih|lah|dong|rasanya|mati|bunuh|banget|bgt|kayaknya)\b)` +
+		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin)\s+(?:jadi\s+)?(?:kayak|kaya|kek|kyk|seperti)\s+(?:dia|gitu|mereka|itu)\b` +
+		`|\b(?:aku|gue|gw|gua|saya)\s+(?:jadi\s+|kok\s+|agak\s+|sedikit\s+)?iri\b` +
+		`|\b(?:ngelakuin|melakukan|lakuin|ngelakukan|lakukan)\s+(?:hal\s+)?yang\s+sama\b` +
+		`|\b(?:want|wanna|wanted)\s+(?:to\s+)?(?:try\s+(?:it|that)|do\s+(?:the\s+same|that|it)|join\s+(?:him|her|them)|follow\s+(?:him|her|them)|be\s+(?:next|like\s+(?:him|her|them)))\b` +
+		`|\bi(?:'m|\s+am|m)\s+(?:so\s+|kinda\s+|a\s+bit\s+)?jealous\b|\bi\s+envy\s+(?:him|her|them)\b` +
 		`|\b(?:aku|gue|saya|gw)\s+(?:bilang|jawab|balas)\s+"?\s*(?:sama|aku\s+juga|gue\s+juga)\b` +
 		`|^(?:same|relate|relatable|sama|me|aku\s+banget|gue\s+banget)$`)
 )

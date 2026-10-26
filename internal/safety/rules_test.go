@@ -31,6 +31,9 @@ var goldenRuleIDs = []string{
 	"en-third-person-self-harm",
 	// added in sela-safety-2026.10.26-2
 	"en-inner-death-wish",
+	// added in sela-safety-2026.10.26-3
+	"id-suicide-colloquial", "id-hanging-colloquial", "id-jumping-colloquial", "id-sleep-forever",
+	"id-death-wish-formal", "mixed-death-wish", "en-tired-of-living", "en-sleep-forever",
 }
 
 func TestRuleIDsStableAndUnique(t *testing.T) {
@@ -136,7 +139,7 @@ func loadV1Rules(t *testing.T) []v1RuleSource {
 var v1SplitRules = map[string]bool{
 	"passive-ideation":      true, // two (?!...) lookaheads → placeNotWorld
 	"en-end-everything":     true, // (?!\s*admin) → followedByAdmin
-	"en-explicit-suicide":   true, // \bkms branch → precededByNumber
+	"en-explicit-suicide":   true, // \bkms branch → kmsNotSlang
 	"en-ambiguous-distress": true, // ^kill me$ branch is anchored
 }
 
@@ -411,23 +414,269 @@ func TestPostChecks(t *testing.T) {
 		{"duh hp aku mau mati", "mau mati", true},
 		{"baterai hp aku mau mati", "mau mati", true},
 		{"mati lampu, hp gue mau mati", "mau mati", true},
+		// An idiom noun after "mati", wishes included (review finding).
+		{"besok mau mati listrik seharian", "mau mati", true},
+		{"pengen mati lampu aja biar libur", "pengen mati", true},
+		{"lucu banget aku mau mati ketawa", "mau mati", true},
+		{"harusnya aku mati rasa", "harusnya aku mati", true},
+		{"seharusnya aku mati rasa aja sama dia", "seharusnya aku mati", true},
+		{"aku mau mati rasanya", "mau mati", false},
+		// "rasa" that opens a new noun phrase is not numbness, and "kata" is
+		// not an idiom noun (review finding).
+		{"aku mau mati rasa ini terlalu berat", "mau mati", false},
+		{"pengen mati rasa sakitnya ga hilang", "pengen mati", false},
+		{"pengen mati kata orang itu dosa", "pengen mati", false},
+		{"aku mau mati, lampu mati", "mau mati", false},
+		// A device after "mati aja", past a particle.
+		{"tiba-tiba mati aja tv-nya", "mati aja", true},
+		{"yaudah mati aja lah hp-ku", "mati aja", true},
+		{"mati aja lah aku", "mati aja", false},
+		// Animals and plants are things; a species after its kind too.
+		{"kucingku mau mati, sakit parah", "mau mati", true},
+		{"ikan cupangku mau mati", "mau mati", true},
+		{"kucing tetangga mau mati", "mau mati", true},
+		{"bunga mawarnya mau mati", "mau mati", true},
+		{"gara-gara kucing aku mau mati", "mau mati", false},
+		// A swear word is a thing only with a possessive suffix.
+		{"anjing aku mau mati aja", "mau mati", false},
+		{"anjingku udah mau mati", "mau mati", true},
 	})
-	run("selfOrThing", selfOrThing, []tc{
+	selfCases := []tc{
 		{"part of me wants to die", "wants to die", true},
+		{"every inch of me wants to die", "wants to die", true},
+		{"the darkness inside me wants to die", "wants to die", true},
+		{"you and me wants to die", "wants to die", true},
+		{"me wants to die", "wants to die", true},
+		{"god, me wants to die", "wants to die", true},
+		{"the depressed me wants to die", "wants to die", true},
+		{"the guy who hates me wants to die", "wants to die", false},
+		// An object "me" is not the speaker's inner self (review finding).
+		{"someone close to me wants to die", "wants to die", false},
+		{"the girl next to me wants to die", "wants to die", false},
+		{"my friend who lives with me wants to die", "wants to die", false},
+		{"the guy who bullied me wants to die", "wants to die", false},
+		{"everyone around me wants to die", "wants to die", false},
+		{"the girl in front of me wants to die", "wants to die", false},
 		{"everything in me still wants to die", "wants to die", true},
 		{"my soul wants to die", "wants to die", true},
 		{"my whole body wants to die", "wants to die", true},
-		{"my laptop wants to die", "wants to die", true},
-		{"my phone battery literally wants to die", "wants to die", true},
+		{"something inside me wants to die", "wants to die", true},
+		{"a piece of me wants to die", "wants to die", true},
+		{"the real me wants to die", "wants to die", true},
+		{"my inner child wants to die", "wants to die", true},
+		{"my inner self wants to die", "wants to die", true},
 		{"my friend wants to die", "wants to die", false},
 		{"she wants to die", "wants to die", false},
 		{"his body wants to die", "wants to die", false},
+		{"his whole body wants to die", "wants to die", false},
+		{"his inner child wants to die", "wants to die", false},
+		{"my child wants to die", "wants to die", false},
 		{"wants to die", "wants to die", false},
-	})
-	run("precededByNumber", precededByNumber, []tc{
+	}
+	run("selfOrThing", selfOrThing, append(selfCases,
+		tc{"my laptop wants to die", "wants to die", true},
+		tc{"my phone battery literally wants to die", "wants to die", true},
+		tc{"the plant next to me wants to die", "wants to die", true},
+		tc{"she wants to die her hair", "wants to die", true}))
+	// en-inner-death-wish counts exactly the inner-self subjects selfOrThing
+	// takes away from en-third-person-suicide.
+	for i := range selfCases {
+		selfCases[i].reject = !selfCases[i].reject
+	}
+	run("notInnerSubject", notInnerSubject, selfCases)
+	run("kmsNotSlang", kmsNotSlang, []tc{
 		{"i am 5 kms from home", "kms", true},
 		{"kms", "kms", false},
 		{"honestly kms", "kms", false},
+		{"i want to kms", "kms", false},
+		{"it's a few kms away", "kms", true},
+		{"we drove hundreds of kms", "kms", true},
+		{"berapa kms dari sini", "kms", true},
+		{"aku lupa bawa kms ke posyandu", "kms", true},
+		{"kms anakku hilang", "kms", true},
+		{"bawa buku kms anakku", "kms", true},
+		{"jadi anak sulung, kms", "kms", false},
+		// A distance needs a number or a quantity word, the card a card or
+		// health-post word, and an intent word keeps the slang (review
+		// finding).
+		{"i want to kms to be honest", "kms", false},
+		{"im gonna kms from stress", "kms", false},
+		{"kms to escape this", "kms", false},
+		{"pengen kms dari kemarin", "kms", false},
+		{"capek jadi anak sulung kms", "kms", false},
+		{"waiting at the clinic kms", "kms", false},
+		{"honestly kms anak-anak", "kms", false},
+		{"kms anak saya hilang", "kms", true},
+		{"how many kms is it", "kms", true},
+	})
+	run("suicideCompound", suicideCompound, []tc{
+		{"gol bunuh diri bikin kalah", "bunuh diri", true},
+		{"itu misi bunuh diri", "bunuh diri", true},
+		{"ini bunuh diri karier", "bunuh diri", true},
+		{"nonton suicide squad", "suicide", true},
+		{"that would be career suicide", "suicide", true},
+		{"run suicide sprints", "suicide", true},
+		{"aku mau bunuh diri", "bunuh diri", false},
+		{"bom bunuh diri", "bunuh diri", false},
+		{"i am suicidal", "suicidal", false},
+		{"thinking about suicide", "suicide", false},
+		// A pronoun after the compound noun, or an intent word that governs
+		// the match, keeps it (review finding).
+		{"aku mau bunuh diri karier aku hancur", "bunuh diri", false},
+		{"aku mau bunuh diri karier", "bunuh diri", false},
+		{"i want to watch suicide squad", "suicide", true},
+	})
+	run("suicideNews", suicideNews, []tc{
+		{"bom bunuh diri di gereja", "bunuh diri", true},
+		{"pelaku bom bunuh diri", "bunuh diri", true},
+		{"the suicide bomber", "suicide", true},
+		{"aku mau bunuh diri", "bunuh diri", false},
+		{"suicide is not the answer", "suicide", false},
+	})
+	run("legalWill", legalWill, []tc{
+		{"gimana cara bikin surat wasiat yang sah", "surat wasiat", true},
+		{"kakek bikin surat wasiat untuk pembagian warisan", "surat wasiat", true},
+		{"nenek ninggalin surat wasiat", "surat wasiat", true},
+		{"ini surat wasiat terakhirku", "surat wasiat", false},
+		{"surat wasiat terakhirku tolong bagi harta ke adik", "surat wasiat", false},
+		{"aku nulis surat wasiat buat keluargaku", "surat wasiat", false},
+		{"aku udah nulis surat wasiat yang sah buat keluargaku", "surat wasiat", false},
+		{"selamat tinggal semuanya", "selamat tinggal semuanya", false},
+	})
+	run("selfHarmIdiom", selfHarmIdiom, []tc{
+		{"i'm burning myself out", "burning myself", true},
+		{"cut myself off from them", "cut myself", true},
+		{"cutting myself some slack", "cutting myself", true},
+		{"i cut myself a break", "cut myself", true},
+		{"i cut myself shaving", "cut myself", true},
+		{"i accidentally cut myself", "cut myself", true},
+		{"i hurt myself at the gym", "hurt myself", true},
+		{"i cut myself", "cut myself", false},
+		{"i hurt myself out of anger", "hurt myself", false},
+		{"i cut myself on purpose", "cut myself", false},
+		{"i cut myself by accident, and i cut myself again", "cut myself again", false},
+		// Only "cut myself off" is the idiom (review finding).
+		{"i want to hurt myself off and on", "hurt myself", false},
+		{"i've been cutting myself off and on", "cutting myself", false},
+	})
+	run("accidental", accidental, []tc{
+		{"nggak sengaja ngiris tangan pas potong bawang", "ngiris tangan", true},
+		{"i accidentally cut myself while cooking", "cut myself", true},
+		{"i hurt myself playing football", "hurt myself", true},
+		{"aku sengaja nyayat tanganku", "nyayat tangan", false},
+		// The review regressions: an intent, modal or habit word, a
+		// self-directed method, a deliberate or negating word, or a marker
+		// that is not next to the injury keeps the match.
+		{"i want to hurt myself at the gym", "hurt myself", false},
+		{"after working out i want to hurt myself", "hurt myself", false},
+		{"i keep hurting myself when things aren't working out", "hurting myself", false},
+		{"i want to cut myself with my shaving razor", "cut myself", false},
+		{"i cut myself with my shaving razor", "cut myself", false},
+		{"i didn't cut myself accidentally", "cut myself", false},
+		{"i cut myself not accidentally", "cut myself", false},
+		{"i'm going to slit my wrists with a shaving blade tonight", "slit my wrists", false},
+		{"accidentally cut my wrists", "cut my wrists", false},
+		{"pengen sayat nadi pas lagi masak", "sayat nadi", false},
+		{"nggak sengaja nyayat pergelangan tangan", "nyayat pergelangan tangan", false},
+		{"aku sering iris tangan pas lagi main hp sendirian", "iris tangan", false},
+		{"aku iris tangan pas lagi main hp", "iris tangan", false},
+		{"at the gym today i want to hurt myself", "hurt myself", false},
+	})
+	run("lethalIdiom", lethalIdiom, []tc{
+		{"shooting myself in the foot", "shooting myself", true},
+		{"i drown myself in work", "drown myself", true},
+		{"i want to drown myself in the river", "drown myself", false},
+		{"i want to shoot myself in the head", "shoot myself", false},
+		{"i want to drown myself", "drown myself", false},
+		{"i'd be shooting myself in the foot if i quit", "shooting myself", true},
+		{"i drown myself in my sorrows", "drown myself", true},
+		// Water of any kind, or an intent word, keeps the match (review
+		// finding).
+		{"i want to drown myself in the nearest river", "drown myself", false},
+		{"i'm going to drown myself in cold water", "drown myself", false},
+		{"i want to drown myself in work", "drown myself", false},
+	})
+	run("cuttingObject", cuttingObject, []tc{
+		{"i've been cutting carbs", "been cutting", true},
+		{"started cutting back on coffee", "started cutting", true},
+		{"been cutting down on sugar", "been cutting", true},
+		{"keep cutting corners", "keep cutting", true},
+		{"been cutting class", "been cutting", true},
+		{"been cutting my hair", "been cutting", true},
+		{"keep cutting it close", "keep cutting", true},
+		{"i've been cutting", "been cutting", false},
+		{"been cutting my arms", "been cutting", false},
+		{"been cutting again", "been cutting again", false},
+		// Particles are idioms only in fixed phrases (review finding).
+		{"started cutting back", "started cutting", false},
+		{"i started cutting in high school", "started cutting", false},
+		{"i've been cutting in secret", "been cutting", false},
+		{"i started cutting up again", "started cutting", false},
+		{"i've been cutting off and on for years", "been cutting", false},
+	})
+	run("asPrescribed", asPrescribed, []tc{
+		{"i took all my pills like the doctor said", "took all my pills", true},
+		{"i took all my meds as prescribed", "took all my meds", true},
+		{"i took all my pills", "took all my pills", false},
+		{"i took all my meds this morning", "took all my meds", false},
+	})
+	run("dyeObject", dyeObject, []tc{
+		{"i need to die my hair black", "i need to die", true},
+		{"want to die it red", "want to die", true},
+		{"i want to die my life is over", "want to die", false},
+		{"i want to die", "want to die", false},
+		{"she wants to die her hair", "wants to die", true},
+		// A verb after the hair noun starts a new clause (review finding).
+		{"i want to die my hair is falling out", "want to die", false},
+		{"i want to die my hair looks so bad", "want to die", false},
+	})
+	run("vanishPlace", vanishPlace, []tc{
+		{"pengen ngilang selamanya dari sosmed", "pengen ngilang selamanya", true},
+		{"mau hilang selamanya dari hidupnya", "mau hilang selamanya", true},
+		{"pengen ngilang selamanya dari dunia ini", "pengen ngilang selamanya", false},
+		{"pengen ngilang selamanya dari hidup ini", "pengen ngilang selamanya", false},
+		{"pengen ngilang selamanya", "pengen ngilang selamanya", false},
+		// A time or people is not a place (review finding).
+		{"pengen ngilang selamanya dari kemarin", "pengen ngilang selamanya", false},
+		{"pengen ngilang selamanya dari kalian", "pengen ngilang selamanya", false},
+	})
+	run("ownEuphemism", ownEuphemism, []tc{
+		{"aku pengen tidur selamanya", "pengen tidur selamanya", true},
+		{"gua pengen tidur selamanya", "pengen tidur selamanya", false},
+		{"pengen tidur selamanya", "pengen tidur selamanya", false},
+		{"aku pgn tidur selamanya", "pgn tidur selamanya", false},
+	})
+	run("thingSubject", thingSubject, []tc{
+		{"kucingku loncat dari atap", "loncat dari atap", true},
+		{"kucingku mau loncat dari atap", "loncat dari atap", true},
+		{"aku pengen loncat dari gedung", "loncat dari gedung", false},
+		{"pengen lompat dari gedung", "lompat dari gedung", false},
+	})
+	run("circumstantialLifeEn", circumstantialLifeEn, []tc{
+		{"tired of living like this", "tired of living", true},
+		{"sick of life in the city", "sick of life", true},
+		{"tired of life's drama", "tired of life", true},
+		{"tired of living", "tired of living", false},
+		{"so tired of life, i want to die", "tired of life", false},
+		// Pain is not a circumstance (review finding).
+		{"tired of living in pain", "tired of living", false},
+		{"tired of living with this depression", "tired of living", false},
+	})
+	run("asPrescribed", asPrescribed, []tc{
+		{"i took all my pills on purpose like the doctor said", "took all my pills", false},
+	})
+	run("leisureJump", leisureJump, []tc{
+		{"kami terjun dari tebing di bali seru banget", "terjun dari tebing", true},
+		{"anak-anak lompat dari atap rumah ke kolam", "lompat dari atap", true},
+		{"anak2 lompat dari atap ke kolam", "lompat dari atap", true},
+		{"kami mau terjun dari tebing seru", "terjun dari tebing", false},
+		{"aku lompat dari atap ke kolam", "lompat dari atap", false},
+		{"terjun dari tebing seru", "terjun dari tebing", false},
+	})
+	run("mixedIdiom", mixedIdiom, []tc{
+		{"mau die cast mobil mainan", "mau die", true},
+		{"pengen die hard fans", "pengen die", true},
+		{"pengen die aja", "pengen die", false},
 	})
 	run("circumstantialLife", circumstantialLife, []tc{
 		{"capek hidup kayak gini terus", "capek hidup", true},
