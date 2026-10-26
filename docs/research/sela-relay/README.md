@@ -19,6 +19,10 @@ Dokumen ini menambah rancangan dan bahan keputusan. Ia tidak mengubah SPEC.md re
 7. [Peta bukti ke fitur](07_EVIDENCE_TO_FEATURE.md)
 8. [Roadmap dan validasi owner](08_ROADMAP_AND_VALIDATION.md)
 9. [100 publikasi beranotasi](09_RESEARCH_REGISTER.md)
+10. [Evidence appraisal, integritas register, dan batas klaim](10_EVIDENCE_APPRAISAL_AND_CLAIMS.md)
+11. [Sela Relay end-to-end, Meaning Lock dan Return Bridge](11_PRODUCT_VERTICAL_SLICE.md)
+12. [Kontrak implementasi Go + Meta dan migrasi](12_GO_META_IMPLEMENTATION_CONTRACT.md)
+13. [Runbook penjurian, evaluasi dan demo](13_JUDGING_AND_DEMO_PACKAGE.md)
 
 Data sitasi tersedia dalam [JSON](research_100.json) dan [BibTeX](research_100.bib). Teks lengkap artikel tidak disalin ke paket ini. Buka DOI atau tautan indeks untuk membaca sumber.
 
