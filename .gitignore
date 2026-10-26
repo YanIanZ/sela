@@ -76,3 +76,9 @@ supabase/.branches/
 # Machine-local agent instructions and isolated workspaces
 AGENTS.md
 .worktrees/
+
+# Generated research candidate downloads (metadata only)
+/data/research/sela_candidates.jsonl
+/data/research/sela_candidates_manifest.json
+/data/research/sela_pre2026_candidates.jsonl
+/data/research/sela_pre2026_manifest.json
