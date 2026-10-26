@@ -46,6 +46,11 @@ jobs:
           assert len(selected)==m["queue_count"]<=400
           assert all(r["screening"]["priority"] in {"high","medium"} for r in selected)
           assert m["abstracts_used"] is False and m["full_text_used"] is False and m["llm_used"] is False
+          with (d/"sela_human_review_worksheet.csv").open(encoding="utf-8",newline="") as f:
+              worksheet=list(csv.DictReader(f))
+          assert len(worksheet)==m["review_worksheet_count"]==len(selected)
+          assert all(r["abstract_screening"]=="NOT_REVIEWED" and r["rag_ready"]=="NO" for r in worksheet)
+          assert hashlib.sha256((d/"sela_human_review_worksheet.csv").read_bytes()).hexdigest()==m["review_worksheet_sha256"]
           print("Screened",len(rows),"records; prioritized",len(selected))
           PY
       - name: Commit validated metadata-screening outputs
@@ -54,6 +59,7 @@ jobs:
           git config user.email "194694347+YanIanZ@users.noreply.github.com"
           git add data/research/sela_screening_index.csv \
             data/research/sela_priority_review_queue.jsonl \
+            data/research/sela_human_review_worksheet.csv \
             data/research/sela_screening_manifest.json
           if git diff --cached --quiet; then
             echo "Unchanged screening output"
