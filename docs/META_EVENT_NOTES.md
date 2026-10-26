@@ -25,3 +25,7 @@ Distinguish inherited Dengar.in/AMD work from new Go/Meta features using [proven
 ## Optional non-Meta verifier (26 October 2026)
 
 Sela's primary generative model is Muse Spark (Meta); an optional Sonnet 5.5 source-fidelity review is planned with separate consent. The public event page emphasizes demonstrable Meta model use but does not conclusively address whether external second-pass verifiers are permitted in submitted projects. The final organizer Official Rules and any third-party service/data terms must be checked before relying on this component for eligibility. Never attribute Claude-generated/reviewed content to Meta or suggest Meta paid for Anthropic calls. See [verifier contract](CLAUDE_VERIFIER.md).
+
+## DeepSeek availability fallback (26 October 2026)
+
+DeepSeek-V4.1-Flash-1017 (`deepseek-flash`) is an optional, explicitly disclosed secondary *generator* for recognized Meta upstream outages. It defaults OFF in the competitive Meta demo and cannot be counted as Meta AI tooling. Confirm final hackathon/third-party model rules with the organizer before enabling it in a submission. See [fallback documentation](DEEPSEEK_FALLBACK.md).
