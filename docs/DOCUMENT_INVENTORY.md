@@ -1,6 +1,6 @@
 # Documentation inventory
 
-Updated: 26 October 2026. Authority: [SPEC.md](../SPEC.md). Every repository Markdown document is classified below. Supporting v1 SQL/JSON assets are in the relocation map. Node dependencies and generated build output are excluded.
+Updated: 26 October 2026 (v3 planning documents added). Authority: [SPEC.md](../SPEC.md). Every repository Markdown document is classified below. Supporting v1 SQL/JSON assets are in the relocation map. Node dependencies and generated build output are excluded. "v3 and v2" marks a current document that now describes the v3 plan as well as the implemented v2; a v3 planning document describes planned work only and marks nothing implemented.
 
 ## Current files
 
@@ -9,36 +9,41 @@ Updated: 26 October 2026. Authority: [SPEC.md](../SPEC.md). Every repository Mar
 | [.github/PULL_REQUEST_TEMPLATE.md](../.github/PULL_REQUEST_TEMPLATE.md) | Current project / v2 supporting documentation |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Current project / v2 supporting documentation |
 | [FORMAT.md](../FORMAT.md) | Specification maintenance rules |
-| [README.md](../README.md) | Current project / v2 supporting documentation |
+| [README.md](../README.md) | Current project / v3 and v2 supporting documentation |
 | [SECURITY.md](../SECURITY.md) | Current project / v2 supporting documentation |
-| [SPEC.md](../SPEC.md) | Normative v2 source of truth |
+| [SPEC.md](../SPEC.md) | Normative source of truth (v3; keeps the v2 requirements and tasks as history) |
 | [apps/web/src/app/fonts/README.md](../apps/web/src/app/fonts/README.md) | Attached font source/license provenance; retained |
 | [data/research/README.md](../data/research/README.md) | Supporting research data documentation |
 | [deploy/vps/README.md](../deploy/vps/README.md) | Attached v1 implementation reference; not v2 requirement |
-| [docs/AI_POLICY.md](AI_POLICY.md) | Current project / v2 supporting documentation |
+| [docs/AI_POLICY.md](AI_POLICY.md) | Current project / v3 and v2 supporting documentation |
 | [docs/API_SPEC.md](API_SPEC.md) | Current project / v2 supporting documentation |
-| [docs/ARCHITECTURE.md](ARCHITECTURE.md) | Current project / v2 supporting documentation |
-| [docs/BLOCKERS.md](BLOCKERS.md) | Current project / v2 supporting documentation |
-| [docs/CLAUDE_VERIFIER.md](CLAUDE_VERIFIER.md) | Current project / optional verifier contract (owner decision C12) |
-| [docs/CONFLICT_MATRIX.md](CONFLICT_MATRIX.md) | Current project / v2 supporting documentation |
-| [docs/DECISIONS.md](DECISIONS.md) | Current project / v2 supporting documentation |
-| [docs/DECISION_LOG.md](DECISION_LOG.md) | Current project / v2 supporting documentation |
+| [docs/API_SPEC_V3.md](API_SPEC_V3.md) | Current project / v3 API contract (foundation specified; implementation in progress) |
+| [docs/ARCHITECTURE.md](ARCHITECTURE.md) | Current project / v3 and v2 supporting documentation |
+| [docs/BACKLOG.md](BACKLOG.md) | Current project / v3 planning document (backlog and milestones) |
+| [docs/BLOCKERS.md](BLOCKERS.md) | Current project / v3 and v2 supporting documentation |
+| [docs/CLAUDE_VERIFIER.md](CLAUDE_VERIFIER.md) | Current project / verifier contract (owner decision C12; v3 role per D-029) |
+| [docs/CONFLICT_MATRIX.md](CONFLICT_MATRIX.md) | Current project / v3 and v2 supporting documentation |
+| [docs/DECISIONS.md](DECISIONS.md) | Current project / v3 and v2 supporting documentation |
+| [docs/DECISION_LOG.md](DECISION_LOG.md) | Current project / v3 and v2 supporting documentation |
 | [docs/DEMO_DATA.md](DEMO_DATA.md) | Current project / v2 supporting documentation |
+| [docs/DENGARIN_FEATURE_MATRIX.md](DENGARIN_FEATURE_MATRIX.md) | Current project / v3 planning document (Dengar.in feature and content inventory with decisions) |
 | [docs/DEVELOPMENT.md](DEVELOPMENT.md) | Current project / v2 supporting documentation |
-| [docs/DOCUMENT_INVENTORY.md](DOCUMENT_INVENTORY.md) | Current project / v2 supporting documentation |
+| [docs/DOCUMENT_INVENTORY.md](DOCUMENT_INVENTORY.md) | Current project / v3 and v2 supporting documentation |
 | [docs/EVALUATION.md](EVALUATION.md) | Current project / v2 supporting documentation |
-| [docs/IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | Current project / v2 supporting documentation |
+| [docs/IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | Current project / v3 and v2 supporting documentation |
 | [docs/META_EVENT_NOTES.md](META_EVENT_NOTES.md) | Current project / v2 supporting documentation |
-| [docs/META_INTEGRATION.md](META_INTEGRATION.md) | Current project / v2 supporting documentation |
-| [docs/PRODUCT.md](PRODUCT.md) | Current project / v2 supporting documentation |
-| [docs/README.md](README.md) | Current project / v2 supporting documentation |
-| [docs/REQUIREMENTS_TRACEABILITY.md](REQUIREMENTS_TRACEABILITY.md) | Current project / v2 supporting documentation |
-| [docs/ROADMAP.md](ROADMAP.md) | Current project / v2 supporting documentation |
-| [docs/RUNBOOK.md](RUNBOOK.md) | Current project / v2 supporting documentation |
-| [docs/SAFETY.md](SAFETY.md) | Current project / v2 supporting documentation |
-| [docs/SELA_PROVENANCE.md](SELA_PROVENANCE.md) | Current project / v2 supporting documentation |
+| [docs/META_INTEGRATION.md](META_INTEGRATION.md) | Current project / v3 and v2 supporting documentation |
+| [docs/PRODUCT.md](PRODUCT.md) | Current project / v3 and v2 supporting documentation |
+| [docs/README.md](README.md) | Current project / v3 and v2 supporting documentation |
+| [docs/REQUIREMENTS_TRACEABILITY.md](REQUIREMENTS_TRACEABILITY.md) | Current project / v3 and v2 supporting documentation |
+| [docs/ROADMAP.md](ROADMAP.md) | Current project / v3 and v2 supporting documentation |
+| [docs/RUNBOOK.md](RUNBOOK.md) | Current project / v3 and v2 supporting documentation |
+| [docs/SAFETY.md](SAFETY.md) | Current project / v3 and v2 supporting documentation |
+| [docs/SELA_PROVENANCE.md](SELA_PROVENANCE.md) | Current project / v3 and v2 supporting documentation |
 | [docs/VALIDATION.md](VALIDATION.md) | Current project / v2 supporting documentation |
 | [docs/adr/ADR-0001-meta-open-weight-model-on-modal.md](adr/ADR-0001-meta-open-weight-model-on-modal.md) | Current project / v2 architecture decision record |
+| [docs/adr/ADR-0002-persistence-accounts-and-encryption.md](adr/ADR-0002-persistence-accounts-and-encryption.md) | Current project / v3 architecture decision record (accepted for implementation; not yet implemented) |
+| [docs/adr/ADR-0003-ai-routing-verifier-fallback.md](adr/ADR-0003-ai-routing-verifier-fallback.md) | Current project / v3 architecture decision record (accepted as design; implementation planned) |
 | [docs/archive/v1/AI_POLICY.md](archive/v1/AI_POLICY.md) | Archived v1 / superseded draft |
 | [docs/archive/v1/AMD_01_SCOPE_DAN_SYARAT.md](archive/v1/AMD_01_SCOPE_DAN_SYARAT.md) | Archived v1 / superseded draft |
 | [docs/archive/v1/AMD_SETUP.md](archive/v1/AMD_SETUP.md) | Archived v1 / superseded draft |
@@ -107,6 +112,11 @@ Updated: 26 October 2026. Authority: [SPEC.md](../SPEC.md). Every repository Mar
 | [docs/archive/v1/eval/A11Y_AUDIT_REPORT_2026-10-16.md](archive/v1/eval/A11Y_AUDIT_REPORT_2026-10-16.md) | Archived v1 / superseded draft |
 | [docs/archive/v1/eval/EVAL_REPORT.md](archive/v1/eval/EVAL_REPORT.md) | Archived v1 / superseded draft |
 | [docs/archive/v1/research/RISET_FITUR_DAN_GAP_2026-10-13.md](archive/v1/research/RISET_FITUR_DAN_GAP_2026-10-13.md) | Archived v1 / superseded draft |
+| [docs/design/ACCESSIBILITY_CRITERIA.md](design/ACCESSIBILITY_CRITERIA.md) | Current project / v3 design document (design lead; design decision, not implemented) |
+| [docs/design/CONTENT_STYLE.md](design/CONTENT_STYLE.md) | Current project / v3 design document (design lead; design decision, not implemented) |
+| [docs/design/DESIGN_DIRECTION.md](design/DESIGN_DIRECTION.md) | Current project / v3 design document (design lead; design decision, not implemented) |
+| [docs/design/INFORMATION_ARCHITECTURE.md](design/INFORMATION_ARCHITECTURE.md) | Current project / v3 design document (design lead; design decision, not implemented) |
+| [docs/design/SCREENS.md](design/SCREENS.md) | Current project / v3 design document (design lead; design decision, not implemented) |
 | [docs/research/CORPUS_PIPELINE.md](research/CORPUS_PIPELINE.md) | Current project / v2 research pipeline documentation |
 | [modal/MODEL_NOTES.md](../modal/MODEL_NOTES.md) | Current project / v2 verified model and serving facts |
 | [modal/README.md](../modal/README.md) | Current project / v2 Modal serving runbook |
@@ -223,5 +233,7 @@ Every pre-refactor document/asset under `docs/` other than the maintained index,
 Source comments, script messages and fixture-read paths that referenced moved material now point to `docs/archive/v1/`. This relocation does not change application rules. Runtime migration is pending.
 
 `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, current docs and attached v1 READMEs were rewritten or status-scoped. Exact pre-edit revisions remain available at `d5da323` in Git. Archive headers override old words such as “active”, “done”, or “deployed” inside historical records.
+
+Supporting design assets that are not Markdown live next to the design documents: [docs/design/tokens.css](design/tokens.css) (token reference sheet) and the scripts in `docs/design/tools/` (`contrast.py` computes the WCAG contrast pairs; `sync_docs.py`). They are owned by the design lead and are not implemented in `web/` yet.
 
 Test fixtures under `tests/research/fixtures/corpus/repo/` are trimmed synthetic copies used only by the corpus pipeline tests; they are not documentation. Add a classification here when adding/removing/moving a Markdown file. Update the archive index and reference paths when relocating historical assets.
