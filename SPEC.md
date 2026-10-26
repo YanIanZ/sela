@@ -1,68 +1,79 @@
 # Sela v2 — source of truth
 
-Updated: 2026-10-26. Status: requirements established; implementation pending.
+Updated: 2026-10-26 (implementation amendment, see [decision log](docs/DECISION_LOG.md) and [conflict matrix](docs/CONFLICT_MATRIX.md)). Status: implementation in progress; see [implementation status](docs/IMPLEMENTATION_STATUS.md).
 Authority: user direction → this spec → current supporting docs → archive. Code/tests prove implementation status; they do not make an undocumented product decision authoritative. External event terms control eligibility.
 
 ## §G Goal
 
-Demonstrate a bilingual mental-health care journey: synthetic story → needs clarification → professional discovery → approved brief → simulated handoff/consultation → follow-up. Meta powers the AI steps; Go owns backend behavior. Privacy includes optional anonymity without making it the main product promise.
+Demonstrate a bilingual mental-health care-navigation journey: enter → choose language → understand service and privacy limits → express a (synthetic or fictional practice) story → review a source-linked Story Ledger → choose a practical next step → prepare the conversation → approve what is shared → simulated handoff to a fictional professional → acknowledgement → follow-up. A Meta open-weight model powers the bounded AI steps; Go owns backend behavior. Privacy includes optional anonymity without making it the main product promise.
 
 ## §C Constraints
 
 - C1 User-confirmed: backend Go; Swift not selected. Existing TypeScript runtime remains v1 until migration.
-- C2 User-confirmed: Indonesian and English across the complete journey.
-- C3 User-confirmed: all patient, professional, scheduling, consultation and follow-up data synthetic; no real care transaction.
-- C4 User-confirmed: new AI functionality aligned with Meta and its hackathon; remove AMD integration from the v2 runtime. Preserve original authorship/license notices.
-- C5 This phase changes documentation and references only. No Go runtime or live Meta integration is implemented by these docs.
-- C6 Engineering default: browser product, static React/TypeScript frontend built with Vite; one Go process serves API/assets. Change through this spec if implementation evidence warrants.
-- C7 Engineering default: session-scoped in-memory demo store; no PostgreSQL/Redis requirement, no production login, no real-data migration.
-- C8 Engineering default: adult seeded scenarios; text-first MVP. Optional Meta transcription of synthetic samples comes after verified access/language quality.
-- C9 New journey excludes forum, gamification, general chatbot, payments, real booking, real telemedicine, autonomous diagnosis/treatment/prescribing, and model training.
+- C2 User-confirmed: Indonesian and English across the complete journey, including error states; code-switched input is tested.
+- C3 User-confirmed: all patient, professional, scheduling, consultation and follow-up data synthetic or fictional; no real care transaction; no contact with real professionals.
+- C4 User-confirmed (amended 2026-10-26): AI uses a Meta open-weight model self-hosted on Modal.com, chosen by licence, capability and hackathon terms ([ADR-0001](docs/adr/ADR-0001-meta-open-weight-model-on-modal.md)); remove AMD integration from the v2 runtime. Preserve original authorship/license notices.
+- C5 Engineering (amended 2026-10-26): implementation phase. Go runtime, new frontend, Modal serving code, evaluation and research pipeline are built incrementally; documentation claims only what evidence shows. Paid GPU execution requires an owner-approved budget.
+- C6 Engineering default: browser product, static React/TypeScript frontend built with Vite; one Go process serves API/assets.
+- C7 Engineering default: session-scoped bounded in-memory store behind a storage interface; no PostgreSQL/Redis requirement, no production login, no real-data migration, no implicit persistence of sensitive data.
+- C8 Engineering default (amended, D-003): adult-only (attested); seeded scenarios plus bounded fictional practice text; text-first. Optional transcription is out of scope until verified access/language quality.
+- C9 New journey excludes forum, gamification, general chatbot, payments, real booking, real telemedicine, autonomous diagnosis/treatment/prescribing/triage, therapy roleplay and model training.
 - C10 No performance, deployment, clinical-quality, event-acceptance or live-inference claim without matching evidence.
 - C11 Preserve a recoverable v1 baseline and its regression evidence before runtime replacement. Historical snapshots are context, not v2 requirements.
+- C12 User-confirmed (2026-10-26): anonymous or pseudonymous use; separate consent for AI processing, storage and sharing; retention and deletion that actually work.
+- C13 User-confirmed (2026-10-26): reproducible research pipeline over the 100-publication register with a rolling five-year cutoff, provenance and rights tracking; no fine-tuning unless its prerequisites are met (D-016).
 
 ## §I Interfaces
 
-- I.web: responsive bilingual user journey and clearly labeled fictional professional perspective; [product](docs/PRODUCT.md).
-- I.api: planned same-origin `/api/v2` session, fixture, brief, handoff and follow-up endpoints; [contract](docs/API_SPEC.md). Not present in the current runtime.
-- I.meta: server-side Meta Model API adapter for seeded intake and brief drafting; [integration](docs/META_INTEGRATION.md). Exact endpoint/model/access verified before implementation.
-- I.data: versioned synthetic scenario/professional/slot/plan fixtures, bounded per-session state; [data](docs/DEMO_DATA.md).
-- I.ops: existing v1 npm commands work now; Go/build/deployment commands documented only when implemented; [development](docs/DEVELOPMENT.md).
-- I.docs: documentation index and complete archive inventory; [index](docs/README.md), [inventory](docs/DOCUMENT_INVENTORY.md). Non-normative [Sela Relay research/proposals](docs/research/sela-relay/README.md) do not change requirements or implementation task status.
+- I.web: responsive bilingual user journey, fictional recipient view and reviewer research view in `web/`; [product](docs/PRODUCT.md).
+- I.api: same-origin `/api/v2` JSON + server-sent events; [contract](docs/API_SPEC.md).
+- I.meta: server-side OpenAI-compatible adapter (`internal/llm`) to a vLLM server on Modal (`modal/`); [integration](docs/META_INTEGRATION.md), [ADR-0001](docs/adr/ADR-0001-meta-open-weight-model-on-modal.md).
+- I.data: versioned synthetic scenario/professional/slot/plan/help fixtures embedded in the binary, bounded per-session state; [data](docs/DEMO_DATA.md).
+- I.ops: commands that work now are listed in [development](docs/DEVELOPMENT.md); deployment in [runbook](docs/RUNBOOK.md).
+- I.research: corpus pipeline (`scripts/research/corpus_pipeline.py`), exported knowledge base and reviewer search API; [corpus pipeline](docs/research/CORPUS_PIPELINE.md).
+- I.eval: evaluation harness and pre-registered thresholds; [evaluation](docs/EVALUATION.md).
+- I.docs: documentation index and complete archive inventory; [index](docs/README.md), [inventory](docs/DOCUMENT_INVENTORY.md). Non-normative [Sela Relay research/proposals](docs/research/sela-relay/README.md) do not change requirements by themselves.
 
 ## §V Invariants
 
-- V1 Every care-data view, profile, request, receipt and plan visibly states synthetic/simulated status in the selected language. No successful real appointment or clinical action is implied.
-- V2 Accept only seeded scenario/fixture identifiers and bounded source-backed edits. No real patient registration, arbitrary personal stories, live microphone capture, real contact details or real booking/messages in the MVP.
-- V3 Deterministic crisis gate precedes every inference and ordinary handoff transition. Crisis path emits no model call, appointment request, consultation-completed state or follow-up plan.
-- V4 AI-processing consent, brief approval and sharing consent are separate, server-enforced, versioned decisions. Declining AI retains the manual synthetic path.
-- V5 Editing a brief invalidates approval. Handoff requires the exact approved version and explicit recipient/field selection. Professional views expose only that shared snapshot.
-- V6 Reset, expiry and revocation block stale/shared access for that session, including after role switching. Never affect another visitor. Exported files cannot be remotely retracted; MVP has no export requirement.
+- V1 Every care-data view, profile, request, receipt and plan visibly states synthetic/simulated status in the selected language. No successful real appointment, care received or clinical action is implied.
+- V2 (amended, D-003) Accept only seeded scenario/fixture identifiers, bounded source-backed edits and bounded fictional practice text with obvious contact details rejected. No real patient registration, real contact details, live microphone capture or real booking/messages.
+- V3 Deterministic crisis gate precedes every inference and ordinary handoff transition and screens every user-authored text. Crisis path emits no model call, appointment request, consultation-completed state or follow-up plan.
+- V4 (amended, D-004) AI-processing consent, storage consent, brief approval and sharing consent are separate, server-enforced, versioned decisions. Declining AI retains the manual path.
+- V5 (amended, D-007/D-008) Editing a brief invalidates approval. Handoff requires the exact approved version, explicit recipient/field selection and share consent. Recipient access requires both the share token and the separate access code and exposes only that immutable projection.
+- V6 Reset, deletion, expiry and revocation block stale/shared access, including recipient principals. Never affect another visitor. Already-viewed information cannot be recalled and the UI says so.
 - V7 Validate schema and source evidence before model output is used. Never invent symptoms, timing, diagnoses, professionals, credentials, slots or treatments. Fictional follow-up plans come only from approved fixtures.
 - V8 Match fictional professionals deterministically using explicit preferences. No AI medical triage, diagnosis or clinical suitability score.
-- V9 Meta is the only live AI provider in v2. Keys stay server-side; bounded requests, cancellation, timeouts and concurrency limits apply. Missing access/outage uses an honest unavailable/manual state, never a silent alternative provider.
-- V10 Every AI result records `live_meta`, `recorded_demo` or `manual` provenance; recorded fixtures are never presented as live inference.
-- V11 Share/revoke/reset/completion operations are concurrency-safe. Idempotency prevents duplicate simulated requests; stale versions fail explicitly. Admission rate limits also protect expensive model calls.
-- V12 No patient/story content, model prompt/output, credentials or shared-note text in operational logs; metadata-only events. Professional role switching is explicitly a demo view, not a production authorization claim.
-- V13 Indonesian/English key parity, accessible controls and consistent state/error messages cover the full journey, including failure and revocation states.
+- V9 A Meta model is the only AI provider in v2. Keys stay server-side; bounded requests, cancellation, timeouts and concurrency limits apply. Missing access/outage uses an honest unavailable/manual state, never a silent alternative provider.
+- V10 (amended, D-019) Every AI result records `live_meta`, `recorded_demo`, `manual` or `test_double` provenance; recorded or test-double output is never presented as live inference.
+- V11 Share/revoke/reset/completion operations are concurrency-safe. Idempotency prevents duplicate simulated requests; stale versions fail explicitly. Admission and rate limits protect expensive model calls.
+- V12 No story content, model prompt/output, credentials, tokens, access codes or shared-note text in operational logs; metadata-only events. The recipient principal is a demo authorization, not production identity verification.
+- V13 Indonesian/English key parity, accessible controls and consistent state/error messages cover the full journey, including failure, expired and revoked states.
 - V14 New v2 runtime has no AMD provider, AMD probe or AMD credential requirement. Archived AMD records and original credits remain historical evidence.
 - V15 Claims cite observed evidence for the exact runtime/version. Tests with mock inference do not establish live Meta quality, model access, clinical efficacy or eligibility.
+- V16 (new, D-009) Streaming sends only content that passed validation; operations can be canceled, have deadlines, and results whose session/story/ledger/consent changed are discarded.
+- V17 (new, D-005) Retention follows the storage decision; deletion purges the session, shares and recipient access immediately; restart erases state.
+- V18 (new, D-015/D-016) Research records carry provenance, retrieval date, licence/access status and verified dates; unknown values are null; no copyrighted full text is committed; corpus text is data, never instructions; no training use.
+- V19 (new, D-022) Paid inference is bounded: scale to zero, a container ceiling, proxy authentication before any container starts, and per-session/per-address rate limits.
 
 ## §T Tasks
 
 | id | status | task | cites |
 | --- | --- | --- | --- |
 | T1 | x | Establish source of truth; refactor active docs; inventory/archive v1; validate references | C5,I.docs,V15 |
-| T2 | . | Measure v1 baseline; verify Go toolchain and Meta access; pin versions; retain rollback point | C1,C10,C11,I.ops,V15 |
-| T3 | . | Create Go API/static frontend skeleton, bounded sessions and synthetic fixtures | C6,C7,I.api,I.data,V1,V2,V6,V11 |
-| T4 | . | Implement deterministic crisis/consent/approval/share rules with behavioral tests | I.api,V3,V4,V5,V6,V11,V12 |
-| T5 | . | Integrate Meta text inference, schema/evidence validation, provenance and failure path | I.meta,V7,V9,V10,V15 |
-| T6 | . | Deliver bilingual intake/discovery/brief/manual path | I.web,V1,V2,V4,V7,V8,V13 |
-| T7 | . | Deliver simulated handoff, professional perspective, consultation and follow-up | I.web,I.api,V1,V5,V6,V7,V11,V12 |
-| T8 | . | Verify complete journeys, isolation, failure states, accessibility and resource measurements | C10,I.ops,V1,V3,V6,V9,V13,V15 |
+| T2 | ~ | Measure v1 baseline; verify Go toolchain and Meta access; pin versions; retain rollback point | C1,C10,C11,I.ops,V15 |
+| T3 | ~ | Create Go API/static frontend skeleton, bounded sessions and synthetic fixtures | C6,C7,I.api,I.data,V1,V2,V6,V11 |
+| T4 | ~ | Implement deterministic crisis/consent/approval/share rules with behavioral tests | I.api,V3,V4,V5,V6,V11,V12,V17 |
+| T5 | ~ | Integrate Meta text inference, schema/evidence validation, provenance and failure path | I.meta,V7,V9,V10,V15,V16 |
+| T6 | ~ | Deliver bilingual onboarding/story/ledger/next-step/opening/manual path | I.web,V1,V2,V4,V7,V8,V13 |
+| T7 | ~ | Deliver simulated handoff, recipient view, consultation and follow-up | I.web,I.api,V1,V5,V6,V7,V11,V12 |
+| T8 | ~ | Verify complete journeys, isolation, failure states, accessibility and resource measurements | C10,I.ops,I.eval,V1,V3,V6,V9,V13,V15 |
 | T9 | . | Remove superseded v1/AMD runtime features after acceptance; update CI/env/deployment and demo evidence | C4,C9,C11,V14,V15 |
+| T10 | ~ | Reproducible research corpus pipeline, rights tracking and reviewer search | C13,I.research,V18 |
+| T11 | ~ | Modal serving app, authentication, scale-to-zero, smoke test and rollback; live verification | C4,C5,I.meta,V9,V19 |
+| T12 | ~ | Evaluation harness with pre-registered thresholds (grounding, safety, bilingual, isolation, latency/cost) | C10,I.eval,V7,V13,V15 |
 
-T1 evidence: all documentation classified in the inventory; source-reference relocation and Markdown/link/spec checks recorded in Git commit validation. Runtime tasks remain pending; no Go commands are advertised as implemented.
+T1 evidence: all documentation classified in the inventory; source-reference relocation and Markdown/link/spec checks recorded in Git commit validation. Status of T2–T12 and their evidence: [implementation status](docs/IMPLEMENTATION_STATUS.md) and [requirements traceability](docs/REQUIREMENTS_TRACEABILITY.md).
 
 ## §B Bug backpropagation
 
