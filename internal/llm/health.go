@@ -35,8 +35,10 @@ type healthBody struct {
 // {"status":"ok","model_id":...,"revision":...,"served_model":...} matching
 // Config, or, when /health answers 200 without that document (vLLM's own
 // /health has an empty body), with a /v1/models entry whose id is
-// ServedModel and whose root names ModelID and Revision (vLLM reports the
-// local snapshot path, .../models--<org>--<name>/snapshots/<revision>).
+// ServedModel and whose root is exactly the pinned snapshot (vLLM reports
+// the local path, .../models--<org>--<name>/snapshots/<revision>; see
+// pinnedRoot). Revision must be the full commit the snapshot is named
+// after; a short form does not match.
 func (c *client) Health(ctx context.Context) Health {
 	start := time.Now()
 	hctx, cancel := context.WithTimeout(ctx, healthTimeout)
@@ -79,15 +81,38 @@ func (c *client) checkModels(ctx context.Context) bool {
 	if json.Unmarshal(body, &list) != nil || c.cfg.Revision == "" || c.cfg.ModelID == "" {
 		return false
 	}
-	hubDir := "models--" + strings.ReplaceAll(c.cfg.ModelID, "/", "--")
 	for _, m := range list.Data {
-		if m.ID != c.cfg.ServedModel {
-			continue
+		if m.ID == c.cfg.ServedModel {
+			return pinnedRoot(m.Root, c.cfg.ModelID, c.cfg.Revision)
 		}
-		hasModel := m.Root == c.cfg.ModelID || strings.Contains(m.Root, hubDir) || strings.HasPrefix(m.Root, c.cfg.ModelID+"@")
-		return hasModel && strings.Contains(m.Root, c.cfg.Revision)
 	}
 	return false
+}
+
+// pinnedRoot reports whether root, the "root" of a /v1/models entry, names
+// exactly repository modelID at revision: either "<modelID>@<revision>" or
+// a Hugging Face cache snapshot directory whose last three path segments
+// are "models--<org>--<name>", "snapshots" and "<revision>" (vLLM reports
+// the local path it serves). Matching is exact, never by substring or
+// prefix: a repository whose name merely starts with modelID, a path that
+// merely contains revision, or a short revision for a full one does not
+// match.
+func pinnedRoot(root, modelID, revision string) bool {
+	if modelID == "" || revision == "" {
+		return false
+	}
+	if root == modelID+"@"+revision {
+		return true
+	}
+	var segs []string
+	for _, s := range strings.Split(root, "/") {
+		if s != "" {
+			segs = append(segs, s)
+		}
+	}
+	n := len(segs)
+	hubDir := "models--" + strings.ReplaceAll(modelID, "/", "--")
+	return n >= 3 && segs[n-3] == hubDir && segs[n-2] == "snapshots" && segs[n-1] == revision
 }
 
 // get performs an authenticated GET and returns a bounded body for 200.

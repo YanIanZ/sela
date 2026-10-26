@@ -590,6 +590,54 @@ func TestErrorsNeverContainServerBody(t *testing.T) {
 			t.Fatalf("err = %v", err)
 		}
 	})
+	t.Run("finish reason without content", func(t *testing.T) {
+		// The finish_reason is a server string; with no content it ends in
+		// a protocol error whose message must not quote it.
+		srv := server(t, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/event-stream")
+			fmt.Fprint(w, sseChunk(servedModel, nil, "sk-live-SECRET-9f8e7d user said aku ingin menyerah", false))
+			fmt.Fprint(w, "data: [DONE]\n\n")
+		})
+		_, err := newTestDouble(t, srv.URL, nil).Complete(context.Background(), testRequest(), nil)
+		if llm.KindOf(err) != llm.KindProtocol {
+			t.Fatalf("want a protocol error, got %v", err)
+		}
+		for _, leak := range []string{"SECRET", "user said", "menyerah"} {
+			if strings.Contains(err.Error(), leak) {
+				t.Fatalf("error %q leaks %q", err, leak)
+			}
+		}
+		if !strings.Contains(err.Error(), "finish reason other") {
+			t.Fatalf("error %q does not name the normalized reason", err)
+		}
+	})
+}
+
+func TestFinishReasonIsNormalized(t *testing.T) {
+	cases := map[string]string{
+		"stop":           "stop",
+		"length":         "length",
+		"abort":          "abort",
+		"content_filter": "content_filter",
+		"tool_calls":     "tool_calls",
+		"STOP":           "other",
+		"sk-live-SECRET-9f8e7d user said aku ingin menyerah": "other",
+	}
+	for sent, want := range cases {
+		t.Run(want+"/"+sent[:min(len(sent), 8)], func(t *testing.T) {
+			srv := server(t, func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/event-stream")
+				ok := "ok"
+				fmt.Fprint(w, sseChunk(servedModel, &ok, "", false))
+				fmt.Fprint(w, sseChunk(servedModel, nil, sent, false))
+				fmt.Fprint(w, "data: [DONE]\n\n")
+			})
+			res, err := newTestDouble(t, srv.URL, nil).Complete(context.Background(), testRequest(), nil)
+			if err != nil || res.Text != "ok" || res.FinishReason != want {
+				t.Fatalf("res %+v err %v, want finish reason %q", res, err, want)
+			}
+		})
+	}
 }
 
 func TestConnectionFailure(t *testing.T) {
@@ -923,6 +971,16 @@ func TestHealth(t *testing.T) {
 		{"vllm empty health, wrong model", "", 200, models("other", vllmRoot), "unavailable"},
 		{"vllm empty health, wrong repo", "", 200, models(served, "/root/hub/models--meta-llama--Other/snapshots/"+rev), "unavailable"},
 		{"vllm empty health, models fail", "", 200, "", "unavailable"},
+		{"vllm empty health, trailing slash", "", 200, models(served, vllmRoot+"/"), "ok"},
+		{"vllm empty health, model@revision", "", 200, models(served, model+"@"+rev), "ok"},
+		{"vllm empty health, repo name extends model id", "", 200,
+			models(served, "/root/.cache/huggingface/hub/models--meta-models--Muse-Glimmer-30B-Uncensored/snapshots/"+rev), "unavailable"},
+		{"vllm empty health, revision nested in another snapshot", "", 200,
+			models(served, "/root/.cache/huggingface/hub/models--meta-models--Muse-Glimmer-30B/snapshots/deadbeef/"+rev), "unavailable"},
+		{"vllm empty health, revision only a substring", "", 200, models(served, vllmRoot+"0"), "unavailable"},
+		{"vllm empty health, short revision in path", "", 200, models(served, strings.Replace(vllmRoot, rev, rev[:7], 1)), "unavailable"},
+		{"vllm empty health, model@ with revision inside", "", 200, models(served, model+"@zz"+rev+"zz"), "unavailable"},
+		{"vllm empty health, bare model id", "", 200, models(served, model), "unavailable"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

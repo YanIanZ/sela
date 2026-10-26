@@ -3,7 +3,6 @@ package fakellm
 import (
 	"encoding/json"
 	"strings"
-	"unicode"
 	"unicode/utf8"
 )
 
@@ -37,14 +36,6 @@ var kindRules = []struct {
 	{"impact", []string{"tidur", "kuliah", "kerja", "skripsi", "sekolah", "sleep", "work", "study", "school"}},
 	{"duration", []string{"sejak", "since", "bulan", "minggu", "tahun", "weeks", "months", "years"}},
 	{"goal", []string{"ingin", "pengen", "berharap", "want", "hope", "would like"}},
-}
-
-// negators are single-word negations (Indonesian and English).
-var negators = map[string]bool{
-	"tidak": true, "tak": true, "nggak": true, "ngga": true, "gak": true, "ga": true, "enggak": true,
-	"engga": true, "ndak": true, "kagak": true, "tdk": true, "gk": true, "bukan": true, "belum": true,
-	"blm": true, "tanpa": true, "jangan": true, "not": true, "no": true, "never": true, "without": true,
-	"nobody": true, "nothing": true, "none": true, "cannot": true,
 }
 
 type segment struct {
@@ -158,7 +149,7 @@ func ledgerDraft(in input, fault Fault) draft {
 		d.Claims[0].SegmentID = fabricatedID
 	case FaultNegationFlip:
 		for i := range d.Claims {
-			d.Claims[i].Text = dropNegators(d.Claims[i].Text)
+			d.Claims[i].Text = flipNegation(d.Claims[i].Text, in.Language)
 		}
 	case FaultDiagnosis, FaultInventedNumber, FaultPromptInjectionEcho:
 		if len(d.Claims) > 0 {
@@ -225,7 +216,7 @@ func openingDraft(in input, fault Fault) opening {
 		o.Lines = append(o.Lines, fabricated)
 	case FaultNegationFlip:
 		for i := range o.Lines {
-			o.Lines[i] = dropNegators(o.Lines[i])
+			o.Lines[i] = flipNegation(o.Lines[i], in.Language)
 		}
 	case FaultDiagnosis, FaultInventedNumber, FaultPromptInjectionEcho:
 		o.Lines[0] = mutate(o.Lines[0], fault)
@@ -257,39 +248,6 @@ func kindOf(text string) string {
 		}
 	}
 	return "experience"
-}
-
-// words splits text into lowercase word tokens (letters, digits and
-// apostrophes).
-func words(text string) []string {
-	return strings.FieldsFunc(strings.ToLower(strings.ReplaceAll(text, "’", "'")), func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '\''
-	})
-}
-
-func isNegator(w string) bool { return negators[w] || strings.HasSuffix(w, "n't") }
-
-func hasNegator(text string) bool {
-	for _, w := range words(text) {
-		if isNegator(w) {
-			return true
-		}
-	}
-	return false
-}
-
-// dropNegators removes whitespace-separated words that are negators.
-func dropNegators(text string) string {
-	fields := strings.Fields(text)
-	kept := fields[:0]
-	for _, f := range fields {
-		ws := words(f)
-		if len(ws) == 1 && isNegator(ws[0]) {
-			continue
-		}
-		kept = append(kept, f)
-	}
-	return strings.Join(kept, " ")
 }
 
 // clipWords returns the longest prefix of text with at most n runes,

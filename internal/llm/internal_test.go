@@ -77,3 +77,43 @@ func TestStatusErrorKinds(t *testing.T) {
 		}
 	}
 }
+
+func TestPinnedRoot(t *testing.T) {
+	const (
+		model = "meta-models/Muse-Glimmer-30B"
+		full  = "cec94fcfd6512f2cfe708138c32533b346ea4f69"
+		hub   = "/root/.cache/huggingface/hub/"
+	)
+	cases := []struct {
+		root, model, rev string
+		want             bool
+	}{
+		{hub + "models--meta-models--Muse-Glimmer-30B/snapshots/" + full, model, full, true},
+		{hub + "models--meta-models--Muse-Glimmer-30B/snapshots/" + full + "/", model, full, true},
+		{"models--meta-models--Muse-Glimmer-30B/snapshots/" + full, model, full, true},
+		{model + "@" + full, model, full, true},
+		{hub + "models--gpt2/snapshots/abc", "gpt2", "abc", true},
+		// The reviewer's probes: a longer repository name, a revision under
+		// another snapshot, and a revision found inside a larger string.
+		{hub + "models--meta-models--Muse-Glimmer-30B-Uncensored/snapshots/cec94fc0123456789", model, "cec94fc", false},
+		{hub + "models--meta-models--Muse-Glimmer-30B/snapshots/deadbeef/" + full, model, full, false},
+		{model + "@zzabczz", model, "abc", false},
+		{hub + "models--meta-models--Muse-Glimmer-30B-Uncensored/snapshots/" + full, model, full, false},
+		{hub + "models--meta-models--Muse-Glimmer-30B/snapshots/" + full[:7], model, full, false},
+		{hub + "models--meta-models--Muse-Glimmer-30B/snapshots/" + full, model, full[:7], false},
+		{hub + "models--meta-models--Muse-Glimmer-30B/snapshots/" + full + "/..", model, full, false},
+		{hub + "models--meta-models--Muse-Glimmer-30B/blobs/" + full, model, full, false},
+		{hub + "x-models--meta-models--Muse-Glimmer-30B/snapshots/" + full, model, full, false},
+		{hub + "models--other--Muse-Glimmer-30B/snapshots/" + full, model, full, false},
+		{model, model, full, false},
+		{model + "@" + full + "x", model, full, false},
+		{"", model, full, false},
+		{hub + "models--/snapshots/", "", "", false},
+		{"@", "", "", false},
+	}
+	for _, tc := range cases {
+		if got := pinnedRoot(tc.root, tc.model, tc.rev); got != tc.want {
+			t.Errorf("pinnedRoot(%q, %q, %q) = %v, want %v", tc.root, tc.model, tc.rev, got, tc.want)
+		}
+	}
+}

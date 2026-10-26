@@ -84,7 +84,10 @@ const (
 
 // Result is a completed generation.
 type Result struct {
-	Text         string
+	Text string
+	// FinishReason is the server's finish_reason when it is a known value
+	// ("stop", "length", "abort", "content_filter", "tool_calls" or
+	// "function_call"), otherwise "other".
 	FinishReason string
 	// Model is the model name reported by the server; checked against the
 	// configured served-model name.

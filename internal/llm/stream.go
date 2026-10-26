@@ -15,6 +15,25 @@ import (
 // longer than that is a protocol error.
 const maxLineSlack = 64 << 10
 
+// finishOther replaces a finish_reason outside knownFinishReasons.
+const finishOther = "other"
+
+// knownFinishReasons are the finish_reason values of OpenAI-compatible
+// servers (vLLM adds "abort"). Only these are kept verbatim, so a server
+// string never reaches a Result, an error message or a log.
+var knownFinishReasons = map[string]bool{
+	"stop": true, "length": true, "abort": true, "content_filter": true, "tool_calls": true, "function_call": true,
+}
+
+// normalizeFinishReason returns reason when it is a known value and
+// finishOther otherwise.
+func normalizeFinishReason(reason string) string {
+	if knownFinishReasons[reason] {
+		return reason
+	}
+	return finishOther
+}
+
 // streamChunk is one OpenAI-compatible chat.completion.chunk. Fields other
 // than delta.content (for example delta.reasoning from vLLM's reasoning
 // parser) are ignored.
@@ -127,7 +146,7 @@ func (sr *streamReader) dispatch(data []byte) error {
 			continue
 		}
 		if choice.FinishReason != nil && *choice.FinishReason != "" {
-			sr.res.FinishReason = *choice.FinishReason
+			sr.res.FinishReason = normalizeFinishReason(*choice.FinishReason)
 		}
 		if choice.Delta.Content == nil || *choice.Delta.Content == "" {
 			continue
@@ -163,6 +182,8 @@ func (sr *streamReader) finish() (Result, error) {
 	if strings.TrimSpace(sr.res.Text) == "" {
 		// A reasoning model that runs out of tokens while thinking returns
 		// no content with finish_reason "length" (or sometimes "stop").
+		// FinishReason is normalized, so the message names a known value
+		// or "other", never the server's string.
 		return Result{}, protocolError("model returned no content (finish reason " + sr.res.FinishReason + ")")
 	}
 	sr.res.Model = sr.c.cfg.ServedModel

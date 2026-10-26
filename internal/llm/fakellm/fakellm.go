@@ -74,7 +74,11 @@ const (
 	// FaultFabricatedSource cites segment "s999", which does not exist
 	// (opening: adds a line with facts from no item).
 	FaultFabricatedSource Fault = "fabricated_source"
-	// FaultNegationFlip drops negators from the claim texts (opening lines).
+	// FaultNegationFlip reverses the polarity of every claim text (opening
+	// line): it drops each negator, keeping the negated word of a fused one
+	// ("gabisa" becomes "bisa"), or, in a text without a negator, inserts
+	// "tidak" ("not" for English) after the first word. The text therefore
+	// always changes; the negated flag still describes the quote.
 	FaultNegationFlip Fault = "negation_flip"
 	// FaultDiagnosis appends a diagnosis label to the first claim text.
 	FaultDiagnosis Fault = "diagnosis"

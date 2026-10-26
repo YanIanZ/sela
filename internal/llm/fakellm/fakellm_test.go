@@ -502,6 +502,89 @@ func TestContentFaults(t *testing.T) {
 	}
 }
 
+// negationCorpus mixes formal, informal and chat-style negations with
+// texts that have none (including "ga-" words that are not negators).
+var negationCorpus = []struct{ lang, text string }{
+	{"id", "Aku tidak bisa tidur."},
+	{"id", "Aku gabisa tidur nyenyak."},
+	{"id", "Aku gamau ketemu siapa-siapa."},
+	{"id", "Aku gaada tenaga buat apa-apa."},
+	{"id", "Aku ngak bisa fokus kuliah."},
+	{"id", "Aku nda kuat lagi."},
+	{"id", "Aku kaga ngerti kenapa."},
+	{"id", "Aku gatau harus gimana."},
+	{"id", "Aku belum cerita ke siapa pun."},
+	{"id", "Bukannya aku malas, cuma capek."},
+	{"id", "Aku capek banget dan kewalahan."},
+	{"id", "Aku gagal ujian lagi minggu ini."},
+	{"id", "Aku galau terus akhir-akhir ini."},
+	{"en", "I dont sleep well anymore."},
+	{"en", "I cant focus on my thesis."},
+	{"en", "I don’t feel like going to class."},
+	{"en", "Neither my friends nor family understand."},
+	{"en", "No-one at home gets it."},
+	{"en", "I feel overwhelmed by everything."},
+	{"en", "I want to talk to someone."},
+}
+
+type corpusClaim struct {
+	Text    string `json:"text"`
+	Quote   string `json:"quote"`
+	Negated bool   `json:"negated"`
+}
+
+// corpusDraft drafts one segment and returns its only claim and the raw
+// content.
+func corpusDraft(t *testing.T, srv *httptest.Server, lang, text string) (corpusClaim, string) {
+	t.Helper()
+	user := wrap(t, map[string]any{"task": "ledger_draft", "language": lang, "segments": []map[string]string{{"id": "s1", "text": text}}})
+	content := streamContent(t, srv, user, nil).content
+	var d struct{ Claims []corpusClaim }
+	if err := json.Unmarshal([]byte(content), &d); err != nil || len(d.Claims) != 1 {
+		t.Fatalf("draft for %q: %v (%d claims)", text, err, len(d.Claims))
+	}
+	return d.Claims[0], content
+}
+
+// TestNegatedMatchesLedger guards against drift between the fake's negation
+// lexicon and internal/ledger's: on the happy path the ledger accepts every
+// claim with the fake's own negated flag.
+func TestNegatedMatchesLedger(t *testing.T) {
+	srv := newServer(t, fakellm.Config{})
+	for _, tc := range negationCorpus {
+		c, content := corpusDraft(t, srv, tc.lang, tc.text)
+		d, err := ledger.ParseDraft([]byte(content))
+		if err != nil {
+			t.Fatalf("%q: ledger.ParseDraft: %v", tc.text, err)
+		}
+		res := ledger.ValidateDraft(d, []ledger.Segment{{ID: "s1", Text: tc.text, Origin: "story"}})
+		if len(res.Accepted) != 1 {
+			t.Fatalf("%q: not accepted: %+v", tc.text, res.Rejected)
+		}
+		if got := res.Accepted[0].Qualifiers.Negated; got != c.Negated {
+			t.Errorf("%q: fake negated=%v, ledger negated=%v (notes %v)", tc.text, c.Negated, got, res.Accepted[0].Notes)
+		}
+	}
+}
+
+// TestNegationFlipAlwaysFlips checks that negation_flip changes the polarity
+// of every claim, as the ledger reads it, so a fault run never counts a
+// fault that was not injected.
+func TestNegationFlipAlwaysFlips(t *testing.T) {
+	srv := newServer(t, fakellm.Config{Fault: fakellm.FaultNegationFlip})
+	for _, tc := range negationCorpus {
+		c, _ := corpusDraft(t, srv, tc.lang, tc.text)
+		quote := ledger.Analyze(ledger.Segment{ID: "q", Text: c.Quote}, 0, len(c.Quote))
+		text := ledger.Analyze(ledger.Segment{ID: "w", Text: c.Text}, 0, len(c.Text))
+		if c.Quote != tc.text || c.Negated != quote.Negated {
+			t.Fatalf("%q: quote or negated flag changed: %+v", tc.text, c)
+		}
+		if c.Text == c.Quote || text.Negated == quote.Negated {
+			t.Errorf("%q: negation_flip left polarity unchanged: text %q (negated %v)", tc.text, c.Text, text.Negated)
+		}
+	}
+}
+
 func TestOpeningContentFaults(t *testing.T) {
 	items := []map[string]string{{"id": "c1", "kind": "impact", "text": "Aku tidak bisa tidur."}, {"id": "c2", "kind": "goal", "text": "Aku ingin bercerita."}}
 	user := wrap(t, map[string]any{"task": "opening_draft", "language": "id", "items": items})
@@ -519,7 +602,8 @@ func TestOpeningContentFaults(t *testing.T) {
 	if l := lines(t, fakellm.FaultInventedNumber); !strings.Contains(l[0], "3 minggu") {
 		t.Fatalf("invented_number: %q", l)
 	}
-	if l := lines(t, fakellm.FaultNegationFlip); strings.Contains(l[0], "tidak") {
+	// The first line loses its negator; the second has none, so one is added.
+	if l := lines(t, fakellm.FaultNegationFlip); strings.Contains(l[0], "tidak") || !strings.Contains(l[1], "tidak") {
 		t.Fatalf("negation_flip: %q", l)
 	}
 	if l := lines(t, fakellm.FaultFabricatedSource); len(l) != 3 {
