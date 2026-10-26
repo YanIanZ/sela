@@ -18,7 +18,10 @@ Every mutable record has a version. Mutations send `expectedVersion`; mismatch r
 | `GET /api/v2/session` | Cookie | User-visible current state and version; no credentials |
 | `DELETE /api/v2/session` | Mutation guard | Revoke all session shares, cancel operations, clear only this session |
 | `GET /api/v2/catalog` | Language and fixed preference filters | Fictional scenarios/professionals/slots; no session content |
-| `PUT /api/v2/ai-consent` | `granted`, `expectedVersion` | Explicit decision; withdrawal cancels/discards inference |
+| `PUT /api/v2/ai-consent` | `granted`, `expectedVersion` | Explicit Meta processing decision; withdrawal cancels/discards inference |
+| `PUT /api/v2/verification-consent` | `granted`, `expectedVersion` | Independent Anthropic consent for synthetic source excerpts; withdrawal cancels/invalidates verification; **planned only** |
+| `POST /api/v2/brief/verify` | `expectedVersion` (no free-text from client) | Optional Claude source-fidelity report on current fixture/brief; never advances approval/handoff; **planned only** |
+| `GET /api/v2/brief/verification` | Cookie | Read current session + brief version's report with provider/status; expired/stale reports omitted; **planned only** |
 | `POST /api/v2/brief/draft` | `expectedVersion` | Crisis gate first; consent then Meta; validated draft or unavailable state |
 | `PUT /api/v2/brief` | Allowed fixture/evidence/question selections, `expectedVersion` | Manual edit/create; increment version and clear approval; no arbitrary patient input |
 | `POST /api/v2/brief/approval` | `expectedVersion` | Exact-version approval; unsupported content rejected |
@@ -40,3 +43,7 @@ Handoff: `simulated_requested → simulated_acknowledged → simulated_completed
 A snapshot records session generation, scenario/fixture version, brief version, selected recipient/slot, selected synthetic identity fields, consent timestamp, provenance and request version. No full private conversation or unrelated journal is included. The professional view never broadens the snapshot through lookup endpoints.
 
 AI provenance: `live_meta` includes verified model ID and operation ID; `recorded_demo` includes recording fixture version; `manual` has no provider claim. No secret, prompt, raw story or clinical note enters logs. See [validation](VALIDATION.md) for edge-case checks. Endpoint names are the initial contract; changes require an explicit spec/doc update before clients depend on them.
+
+## Second provider contract (planned only)
+
+The optional Anthropic verifier is **not** a fallback generator. A provider-specific verification consent must be granted **after the deterministic crisis gate**, distinct from Meta AI processing, user approval and share consent. Its own report is version-bound. Successful JSON/schema/model review is not a clinical safety verdict or an authorization to share. An unavailable/contradictory result displays an explicit review state and a user-controlled manual path. See [Claude verifier](CLAUDE_VERIFIER.md). No v2 route currently exists.
