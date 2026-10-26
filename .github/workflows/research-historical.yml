@@ -1,0 +1,37 @@
+name: Sela historical research metadata collection
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/research-historical.yml'
+permissions:
+  contents: read
+jobs:
+  collect-history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify research collector unit tests
+        run: python -m unittest discover -s tests/research -p 'test_*.py'
+      - name: Collect up to 3000 pre-2026 metadata candidates
+        run: |
+          python scripts/research/collect_europepmc.py \
+            --target 3000 \
+            --from-date 2022-01-01 \
+            --to-date 2025-12-31 \
+            --output data/research/sela_pre2026_candidates.jsonl \
+            --manifest data/research/sela_pre2026_manifest.json
+      - name: Upload historical metadata artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sela-research-historical-candidates
+          path: |
+            data/research/sela_pre2026_candidates.jsonl
+            data/research/sela_pre2026_manifest.json
+          if-no-files-found: warn
+          retention-days: 14
