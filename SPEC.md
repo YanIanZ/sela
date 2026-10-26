@@ -66,20 +66,20 @@ Demonstrate a bilingual mental-health care-navigation journey: enter → choose 
 | id | status | task | cites |
 | --- | --- | --- | --- |
 | T1 | x | Establish source of truth; refactor active docs; inventory/archive v1; validate references | C5,I.docs,V15 |
-| T2 | ~ | Measure v1 baseline; verify Go toolchain and Meta access; pin versions; retain rollback point | C1,C10,C11,I.ops,V15 |
-| T3 | ~ | Create Go API/static frontend skeleton, bounded sessions and synthetic fixtures | C6,C7,I.api,I.data,V1,V2,V6,V11 |
-| T4 | ~ | Implement deterministic crisis/consent/approval/share rules with behavioral tests | I.api,V3,V4,V5,V6,V11,V12,V21 |
-| T5 | ~ | Integrate Meta text inference, schema/evidence validation, provenance and failure path | I.meta,V7,V9,V10,V15,V20 |
+| T2 | ! | Measure v1 baseline; verify Go toolchain and Meta access; pin versions; retain rollback point. Toolchain and versions pinned; Meta access blocked (B-1) | C1,C10,C11,I.ops,V15 |
+| T3 | x | Create Go API/static frontend skeleton, bounded sessions and synthetic fixtures | C6,C7,I.api,I.data,V1,V2,V6,V11 |
+| T4 | x | Implement deterministic crisis/consent/approval/share rules with behavioral tests | I.api,V3,V4,V5,V6,V11,V12,V21 |
+| T5 | ! | Integrate Meta text inference, schema/evidence validation, provenance and failure path. Implemented and tested against the labelled test double; live inference blocked (B-1) | I.meta,V7,V9,V10,V15,V20 |
 | T5a | . | Integrate optional Claude verifier with distinct consent, version safety, evidence reference validation and mock/live evidence. Standalone Go adapter prototype exists but no product integration | C12,I.verifier,V3,V4,V7,V9,V10,V16–V18 |
-| T6 | ~ | Deliver bilingual onboarding/story/ledger/next-step/opening/manual path | I.web,V1,V2,V4,V7,V8,V13 |
-| T7 | ~ | Deliver simulated handoff, recipient view, consultation and follow-up | I.web,I.api,V1,V5,V6,V7,V11,V12 |
-| T8 | ~ | Verify complete journeys, isolation, failure states, accessibility and resource measurements | C10,I.ops,I.eval,V1,V3,V6,V9,V13,V15 |
+| T6 | x | Deliver bilingual onboarding/story/ledger/next-step/opening/manual path | I.web,V1,V2,V4,V7,V8,V13 |
+| T7 | x | Deliver simulated handoff, recipient view, consultation and follow-up | I.web,I.api,V1,V5,V6,V7,V11,V12 |
+| T8 | ! | Verify complete journeys, isolation, failure states, accessibility and resource measurements. Journeys, isolation, failure states and accessibility verified locally; live latency/cost measurement blocked (B-1) | C10,I.ops,I.eval,V1,V3,V6,V9,V13,V15 |
 | T9 | . | Remove superseded v1/AMD runtime features after acceptance; update CI/env/deployment and demo evidence | C4,C9,C11,V14,V15 |
-| T10 | ~ | Reproducible research corpus pipeline, rights tracking and reviewer search | C14,I.research,V22 |
-| T11 | ~ | Modal serving app, authentication, scale-to-zero, smoke test and rollback; live verification | C4,C5,I.meta,V9,V23 |
-| T12 | ~ | Evaluation harness with pre-registered thresholds (grounding, safety, bilingual, isolation, latency/cost) | C10,I.eval,V7,V13,V15 |
+| T10 | x | Reproducible research corpus pipeline, rights tracking and reviewer search | C14,I.research,V22 |
+| T11 | ! | Modal serving app, authentication, scale-to-zero, smoke test and rollback; live verification. Implemented and tested offline; deployment blocked (B-1) | C4,C5,I.meta,V9,V23 |
+| T12 | ! | Evaluation harness with pre-registered thresholds (grounding, safety, bilingual, isolation, latency/cost). Offline and test-double suites pass; live-model metrics blocked (B-1) | C10,I.eval,V7,V13,V15 |
 
-T1 evidence: all documentation classified in the inventory; source-reference relocation and Markdown/link/spec checks recorded in Git commit validation. Status of T2–T12 and their evidence: [implementation status](docs/IMPLEMENTATION_STATUS.md) and [requirements traceability](docs/REQUIREMENTS_TRACEABILITY.md).
+T1 evidence: all documentation classified in the inventory; source-reference relocation and Markdown/link/spec checks recorded in Git commit validation. T3, T4, T6, T7 and T10 evidence: the Go, web, Python and browser (e2e) suites on branch `feat/v2-go-meta-runtime`, run locally and in CI (`v2.yml`). `x` means tested locally, not deployed. Blocked tasks name their blocker in [blockers](docs/BLOCKERS.md). Status of T2–T12 and their evidence: [implementation status](docs/IMPLEMENTATION_STATUS.md) and [requirements traceability](docs/REQUIREMENTS_TRACEABILITY.md).
 
 ## §B Bug backpropagation
 

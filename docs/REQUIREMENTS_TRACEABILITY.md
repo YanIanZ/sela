@@ -82,7 +82,7 @@ Lineage: the opening-lines pipeline comes from Dengar.in v1 (`services/validator
 | G3 | Classifier is never the sole safeguard | Lexicon + interruption + human review of every item + no model in routing (D-017) | `internal/safety` tests | tested locally |
 | G4 | No diagnosis or safety promises | Meaning Lock clinical checks; copy | ledger clinical tests; web: `claims.test.ts` | tested locally |
 | G5 | Verified, maintained local references; no invented numbers | `fixtures/data/help.json` (verified_official only, dates, re-verify by) | `fixtures` tests; re-verification due 2027-01-14 ([B-5](BLOCKERS.md)) | tested locally |
-| G6 | Negation, quotes, slang, code-switching, ambiguity tested | `internal/safety/testdata/vectors.json` (317 vectors) | `TestVectors*`, `TestV1Parity`; eval `safety.*` | tested locally |
+| G6 | Negation, quotes, slang, code-switching, ambiguity tested | `internal/safety/testdata/vectors.json` (420 vectors, ruleset `sela-safety-2026.10.26-2`) | `TestVectors*`, `TestV1Parity`; eval `safety.*` | tested locally |
 | G7 | No sensitive content in operational logs | request log fields only; `llm.Observer` metadata; counters instead of safety logs | log canary in `TestFullJourneyOverHTTP` and e2e | tested locally |
 
 ## Backend (Go)
@@ -96,11 +96,12 @@ Lineage: the opening-lines pipeline comes from Dengar.in v1 (`services/validator
 | BE5 | Idempotency | handoff idempotency keys | `TestIdempotentHandoffUnderConcurrency` | tested locally |
 | BE6 | Authentication and authorization | session cookie (HttpOnly, SameSite=Strict, Path), recipient principal, same-origin guard | `TestMutationGuardRejectsCrossSite`, `TestSessionCookieAttributesAndStrictJSON`, eval authorization battery | tested locally |
 | BE7 | Consent versioning, revocation and deletion | `Consent.PolicyVersion`, `Revision`, withdrawal cancels ops | `TestConsentsAreIndependentAndRetentionWorks`, `TestStaleAIResultIsDiscarded` | tested locally |
-| BE8 | Storage abstraction with memory store; no implicit sensitive persistence | `journey.Store`, `store.Memory` (bounded, LRU idle eviction) | store tests, `TestStoreCapacityNeverEvictsActiveSessions` | tested locally |
+| BE8 | Storage abstraction with memory store; no implicit sensitive persistence | `journey.Store`, `store.Memory` (bounded, LRU idle eviction) | store tests, `TestStoreCapacityNeverEvictsActiveSessions`, `TestLiveSessionsArePerClientBounded` (store) and `TestLiveSessionsPerClientAreBounded` (HTTP, 429 `rate_limited`) | tested locally |
 | BE9 | Meta/Modal provider abstraction, no silent non-Meta fallback | `llm.Provider`; only `modal`, `test_double` (non-production only), `disabled` | `internal/llm` tests; config tests (`TestTestDoubleIsRefusedInProductionAndWithoutOptIn`) | tested locally |
 | BE10 | Sanitised logging | `httpapi/server.go` request log, `cmd/sela` observer | log canary tests | tested locally |
 | BE11 | Health and readiness | `/api/v2/health`, `/api/v2/ready` | `TestFullJourneyOverHTTP`; CI container job | tested locally |
 | BE12 | Concurrency and race tests | per-session locks, admission | `go test -race ./...`, `TestIdempotentHandoffUnderConcurrency`, store race tests | tested locally |
+| BE13 | Static frontend cannot serve files outside its directory | `httpapi/static.go` (`os.Root`, `fs.ValidPath`, SPA fallback) | `TestStaticServingAndSPAFallback`, `TestStaticServingRefusesSymlinkEscape` | tested locally |
 
 ## Frontend
 
@@ -117,7 +118,7 @@ Lineage: the opening-lines pipeline comes from Dengar.in v1 (`services/validator
 | ID | Requirement | Code | Evidence | Status |
 | --- | --- | --- | --- | --- |
 | M1 | ADR with pinned model ID and revision, licence, capability, cost, hackathon fit | [ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md), [model notes](../modal/MODEL_NOTES.md) | Sources cited; hackathon tooling eligibility unverified ([B-2](BLOCKERS.md)) | implemented |
-| M2 | Reproducible Modal image | `modal/sela_llm.py` (pinned vLLM image digest, pinned client) | py: `tests/modal` (42) | tested locally (build blocked externally, [B-1](BLOCKERS.md)) |
+| M2 | Reproducible Modal image | `modal/sela_llm.py` (pinned vLLM image digest, pinned client) | py: `tests/modal` (72) | tested locally (build blocked externally, [B-1](BLOCKERS.md)) |
 | M3 | Safe model download and cache | `download_weights` with per-file digests and a verified marker | py: `tests/modal` | tested locally (run blocked externally) |
 | M4 | Secrets via a secret manager | Modal Secret `sela-llm-api`; Go reads env only; no secrets committed | py: `tests/modal`; config tests | tested locally |
 | M5 | Authenticated endpoint | Modal proxy auth + vLLM key | `modal/smoke_test.py` checks; live layered-auth unverified | blocked externally |
@@ -135,7 +136,7 @@ Lineage: the opening-lines pipeline comes from Dengar.in v1 (`services/validator
 
 | ID | Requirement | Code | Evidence | Status |
 | --- | --- | --- | --- | --- |
-| R1 | Reproducible pipeline, steps 1–10 | `scripts/research/corpus_pipeline.py`, `scripts/research/corpus/` | py: `tests/research` (64); offline build byte-identical twice; `verify` 0 violations | tested locally |
+| R1 | Reproducible pipeline, steps 1–10 | `scripts/research/corpus_pipeline.py`, `scripts/research/corpus/` | py: `tests/research` (74); offline build byte-identical twice; `verify` 0 violations | tested locally |
 | R2 | Rolling cutoff = freeze date − 5 years; snapshots kept | `manifest.json` (`freeze_date`, `cutoff_date`), `snapshots/2026-10-26/` | py tests (snapshot conflict refuses overwrite) | tested locally |
 | R3 | Minimal schema, null when unknown, no guessed results | `records.jsonl` | `verify` schema/invariant checks | tested locally |
 | R4 | Licence and access status; no paywall bypass | `rights.py`; only open-access full text from Europe PMC | `records.jsonl` fields; py tests | tested locally |
