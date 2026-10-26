@@ -10,30 +10,35 @@
 
 Sela is becoming a bilingual (Indonesian/English) listening and continuity app for people aged 15 to 50 and over (owner brief v3, 2026-10-26). A person can talk without filling in a form, keep personal notes under their control, see their own history, correct what Sela remembers, and — only if they want to — prepare a "Ringkasan untuk konsultasi" (summary for a consultation) to share with someone they invite. Sela does not diagnose, treat, triage or replace a professional, and it never contacts anyone on the user's behalf.
 
-**That is the plan, not the current code.** What runs today is the **v2 demo**: synthetic adults, fictional professionals and simulated care. It books nothing real, contacts no one, and gives no diagnosis, prescription, triage or therapy. Crisis language stops the ordinary journey before any AI runs and shows verified Indonesian help services.
+**That is the plan, not yet the product.** The v3 backend foundation (accounts, guest mode, encrypted storage, export, deletion) is built and verified locally, and its CI run on draft PR #9 passed ([foundation status note](SPEC.md#foundation-status-note-2026-10-26)), but no v3 screen exists yet. What a person can use today is the **v2 demo**: synthetic adults, fictional professionals and simulated care. It books nothing real, contacts no one, and gives no diagnosis, prescription, triage or therapy. Crisis language stops the ordinary journey before any AI runs and shows verified Indonesian help services.
 
 ## Status (26 October 2026)
 
 [SPEC.md](SPEC.md) is the source of truth. Status words: planned → in progress → implemented → verified locally → verified live → ready for controlled pilot → public release, or blocked externally; [SPEC §G](SPEC.md#g-goal) defines them. Detailed status: [implementation status](docs/IMPLEMENTATION_STATUS.md) · [requirements traceability](docs/REQUIREMENTS_TRACEABILITY.md) · [backlog](docs/BACKLOG.md) · [blockers](docs/BLOCKERS.md).
 
-### Sela v3 (branch `feat/sela-v3-pilot`, first stacked on PR #6, which is now merged into main)
+### Sela v3 (branch `feat/sela-v3-pilot`)
+
+The branch was first stacked on PR #6, which was merged into main on 2026-10-26 (`7fc6678`). It is now open as draft PR #9 against main; safety ruleset `-5` is a WIP snapshot in draft PR #8 to main. Status words are those of [SPEC §G](SPEC.md#g-goal).
 
 | Area | Status |
 | --- | --- |
-| Spec realignment, decisions D-026 to D-052, blockers, backlog, [Dengar.in feature matrix](docs/DENGARIN_FEATURE_MATRIX.md), ADR-0002, ADR-0003, API v3 foundation contract (P1) | In progress: documents written on the branch, under review |
-| Foundation: PostgreSQL storage, per-user encryption, accounts, guest mode, recovery codes, consents, export, deletion (`/api/v3`, P2) | In progress: code being written, uncommitted and not yet verified |
-| Design direction, information architecture, screens, content style, accessibility criteria (P2) | In progress: documents written ([design](docs/design/DESIGN_DIRECTION.md)), uncommitted, PM review not recorded; no v3 UI code |
-| Conversation room, journal, check-in, memory, timeline, home (P3) | Planned |
+| Spec realignment, decisions D-026 to D-056, blockers, backlog, [Dengar.in feature matrix](docs/DENGARIN_FEATURE_MATRIX.md), ADR-0002, ADR-0003, API v3 foundation contract (P1) | In progress: documents written and committed, under review |
+| Foundation: PostgreSQL storage, per-user encryption, accounts, guest mode, recovery codes, consents, audit, export, deletion, backup and restore (`/api/v3`, P2) | **Verified locally, CI passed** (commit `0ff3341`, in draft PR #9 against main; [foundation status note](SPEC.md#foundation-status-note-2026-10-26)): every local suite passes on the commit — formatting, vet and the race tests against PostgreSQL 16, the migration round trip, the restore drill, and the web, e2e, Python and `sela-eval` suites — and `.github/workflows/v2.yml` run 40405475962 passed all five jobs on PR #9 (it has no `sela-eval` step; [implementation status](docs/IMPLEMENTATION_STATUS.md#1-where-v3-stands)); the restore announcement in the app and on a status page (backlog S-262) is planned; the hosted database, secret manager and backups are **blocked externally** (B-3, B-15) |
+| Design direction, information architecture, screens, content style, accessibility criteria (P2) | In progress: documents written and committed ([design](docs/design/DESIGN_DIRECTION.md)), PM review not recorded |
+| Frontend shell: design system, app shell with help and Quick Exit, sign-in, settings (P2) | In progress: uncommitted in the working tree of `feat/sela-v3-pilot`; no v3 screen is implemented |
+| Conversation room, journal, check-in, memory, timeline, home (P3) | In progress: the backend is being written on a separate branch, not merged; the screens are planned |
 | Consultation summary, sharing with purpose, invited recipient, follow-up (P4) | Planned |
-| AI routing: Meta on Modal primary, Claude Sonnet 5.5 verifier, DeepSeek fallback (P5) | Planned; live use **blocked externally** (B-1, B-8, B-9) |
-| Ages 15–17 | In progress (age band and guardian consent record backend, uncommitted); the rest planned; production use **blocked externally** until a legal review (B-10) |
-| Controlled pilot with real users | **Not ready**: needs live providers, the legal review (B-10), hosting and region (B-3, B-15), re-verified help lines (B-5) and owner testing |
+| AI routing: Meta on Modal primary, Claude Sonnet 5.5 verifier, DeepSeek fallback (P5) | In progress: committed on branch `feat/sela-v3-ai` and open as draft PR #10 against `feat/sela-v3-pilot`, not merged; nothing verified; live use **blocked externally** (B-1, B-8, B-9) |
+| Research and reading content (P6) | In progress: committed on branch `feat/sela-v3-research` and open as draft PR #11 against main, not merged; human appraisal **blocked externally** (B-4) |
+| Operations and compliance documents (P7) | In progress on a separate branch, not merged; deployment **blocked externally** (B-3, B-15) |
+| Ages 15–17 | The age band and the guardian consent record backend are verified locally (with the foundation); the rest is planned; production use **blocked externally** until a legal review (B-10) |
+| Controlled pilot with real users | **Not ready**: needs live providers, the legal review (B-10), hosting and region (B-3, B-15), re-verified help lines (B-5), owner testing and the restore announcement that the privacy text promises (S-262 criterion 3, S-263) |
 
-### Sela v2 (PR #6, branch `feat/v2-go-meta-runtime`; the demo configuration)
+### Sela v2 (PR #6, merged into main as `7fc6678`; the demo configuration)
 
 | Area | Status |
 | --- | --- |
-| v2 runtime: Go 1.24 API + React/TypeScript/Vite frontend in one binary | Implemented, tested locally (Go race tests, Vitest, Playwright journeys) |
+| v2 runtime: Go API + React/TypeScript/Vite frontend in one binary (built with Go 1.24 until the v3 foundation moved the module to Go 1.26, D-054) | Implemented, tested locally (Go race tests, Vitest, Playwright journeys) |
 | Full journey in ID and EN, crisis routing, consents, retention/deletion, Story Ledger with Meaning Lock, Next Step, Opening Practice, handoff with token + access code, recipient view, follow-up, revoke | Implemented, tested locally |
 | Safety lexicon | Ruleset `-4` committed (1329 test vectors); ruleset `-5` in progress |
 | AI: Meta **Muse Glimmer 30B** (open weights, Apache-2.0) on **Modal** via vLLM | Adapter and Modal app implemented and tested offline; **not deployed** — no Modal credentials or GPU budget yet ([B-1](docs/BLOCKERS.md)). Local runs use AI off or a clearly labelled **test double**, never presented as Meta |
@@ -46,9 +51,9 @@ Sela is becoming a bilingual (Indonesian/English) listening and continuity app f
 
 ## Run v2 locally
 
-These commands run the v2 demo and stay valid until the v3 foundation lands; that change adds PostgreSQL for `/api/v3` and moves the Go toolchain ([ADR-0002](docs/adr/ADR-0002-persistence-accounts-and-encryption.md) §1), and this section will be updated with it.
+These commands run the v2 demo. The `/api/v3` foundation also needs PostgreSQL 16; without `SELA_DATABASE_URL`, its routes answer `503 store_unavailable` in development ([runbook](docs/RUNBOOK.md) §1 and §7).
 
-Go 1.24 and Node.js 22.
+Go 1.26.10 (the `toolchain` line of `go.mod`; with `GOTOOLCHAIN=auto` the go command fetches it; [D-054](docs/DECISION_LOG.md#d-054)) and Node.js 22.
 
 ```sh
 git clone https://github.com/YanIanZ/sela.git && cd sela
@@ -64,7 +69,7 @@ SELA_ENV=development SELA_SECURE_COOKIES=false SELA_LLM_MODE=test_double SELA_AL
   SELA_LLM_BASE_URL=http://127.0.0.1:8090 go run ./cmd/sela
 ```
 
-Checks: `go vet ./... && go test -race ./...`, `cd web && npm run typecheck && npm test`, `node e2e/journey.e2e.mjs` (after building `build/sela` and `build/fakellm`), `go run ./cmd/sela-eval -mode offline`. Configuration, the Modal deployment, cost controls, rollback and a three-minute demo script are in the [runbook](docs/RUNBOOK.md) and [modal/README.md](modal/README.md).
+Checks: `go vet ./... && go test -race ./...` (the PostgreSQL tests run when `SELA_TEST_DATABASE_URL` is set; see the [runbook](docs/RUNBOOK.md) §2), `cd web && npm run typecheck && npm test`, `node e2e/journey.e2e.mjs` (after building `build/sela` and `build/fakellm`), `go run ./cmd/sela-eval -mode offline`. Configuration, the Modal deployment, cost controls, rollback and a three-minute demo script are in the [runbook](docs/RUNBOOK.md) and [modal/README.md](modal/README.md).
 
 ## Documentation
 

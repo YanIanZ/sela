@@ -1,6 +1,6 @@
 # Sela v3 API contract — foundation
 
-Status: **specified, not implemented.** Owner packages: `internal/httpapi` (routes, cookies, guards), `internal/account` (rules), `internal/vault`, `internal/db`. Design and rationale: [ADR-0002](adr/ADR-0002-persistence-accounts-and-encryption.md). The v2 contract ([API_SPEC](API_SPEC.md)) stays valid for `/api/v2`; v2 journey routes are served only in development, test and demo (ADR-0002 §12).
+Status: **the foundation routes (§4–§6) are implemented and verified locally, and their CI run on draft PR #9 passed** (commit `0ff3341`; ADR-0002 F-01 to F-47, [implementation status](IMPLEMENTATION_STATUS.md#1-where-v3-stands); [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26)); the feature sections (§9) are reserved and not implemented. Owner packages: `internal/httpapi` (routes, cookies, guards), `internal/account` (rules), `internal/vault`, `internal/db`. Design and rationale: [ADR-0002](adr/ADR-0002-persistence-accounts-and-encryption.md). The v2 contract ([API_SPEC](API_SPEC.md)) stays valid for `/api/v2`; v2 journey routes are served only in development, test and demo (ADR-0002 §12).
 
 This document covers the **foundation** only: authentication, guest mode, recovery, the signed-in user (`/me`), sessions, consents, guardian consent, audit, export and account deletion. **Feature endpoints are added by later milestones in this same document**, in the reserved sections at the end: conversation, journal, check-in, timeline, memory, consultation summary, sharing (owner and recipient), and reading.
 
@@ -133,8 +133,8 @@ New v3 codes (messages to add to `internal/httpapi/errors.go`; every code needs 
 **Consent** (current decision per purpose):
 
 ```json
-{ "purpose": "terms_privacy", "required": true, "granted": true, "policyVersion": "terms-privacy-2026-11-01.1",
-  "currentPolicyVersion": "terms-privacy-2026-11-01.1", "outdated": false, "decidedAt": "2026-10-26T13:05:00Z", "revision": 1 }
+{ "purpose": "terms_privacy", "required": true, "granted": true, "policyVersion": "terms-privacy-2026-11-01.2",
+  "currentPolicyVersion": "terms-privacy-2026-11-01.2", "outdated": false, "decidedAt": "2026-10-26T13:05:00Z", "revision": 1 }
 ```
 
 A purpose never decided appears with `granted: false`, `policyVersion: null`, `decidedAt: null`, `revision: 0`.
@@ -175,7 +175,7 @@ Without a configured database (development only), every `/api/v3` route except t
 
 ```json
 { "username": "pelangi.senja", "password": "tiga kata panjang untuk diingat", "locale": "id",
-  "ageBand": "18_plus", "termsPolicyVersion": "terms-privacy-2026-11-01.1", "rememberDevice": false }
+  "ageBand": "18_plus", "termsPolicyVersion": "terms-privacy-2026-11-01.2", "rememberDevice": false }
 ```
 
 **201** sets the cookie:
@@ -205,7 +205,7 @@ No body (or `{}`). **200** `{"signedOut": true}`; revokes the current session (`
 ### `POST /api/v3/auth/guest`
 
 ```json
-{ "locale": "id", "ageBand": "15_17", "termsPolicyVersion": "terms-privacy-2026-11-01.1", "guestNoticeVersion": "guest-storage-2026-11-01.1" }
+{ "locale": "id", "ageBand": "15_17", "termsPolicyVersion": "terms-privacy-2026-11-01.2", "guestNoticeVersion": "guest-storage-2026-11-01.2" }
 ```
 
 **201** `{"user": {…kind guest, guest {…}}, "session"}`, cookie with `Max-Age` to the guest maximum age. Records `terms_privacy` and `guest_storage` consents. The UI must have shown the guest storage notice (location, 7-day inactivity deletion, 30-day maximum, cookie dependency, no absolute anonymity) before this call.

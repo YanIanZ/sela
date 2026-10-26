@@ -1,6 +1,6 @@
 # Sela product
 
-Status: **Sela v3 is planned.** No v3 surface is implemented yet; the foundation (accounts, guest mode, storage, export, deletion) is in progress ([SPEC](../SPEC.md) T14). **The v2 demo journey is implemented and verified locally** in `web/` and `/api/v2` ([below](#v2-demo-journey-implemented-verified-locally)); see [implementation status](IMPLEMENTATION_STATUS.md). Authority: [SPEC](../SPEC.md) §G, C1–C26, I.web, V26–V42. Feature lineage from Dengar.in: [feature matrix](DENGARIN_FEATURE_MATRIX.md). Screen names below follow the [information architecture](design/INFORMATION_ARCHITECTURE.md) (design decision; the design lead may rename screens).
+Status: **Sela v3 is planned.** No v3 surface is implemented yet; the backend foundation behind them (accounts, guest mode, encrypted storage, consents, export, deletion, backup and restore) is verified locally, and its CI run on draft PR #9 passed, with no screen yet ([SPEC](../SPEC.md) T14, [foundation status note](../SPEC.md#foundation-status-note-2026-10-26)). **The v2 demo journey is implemented and verified locally** in `web/` and `/api/v2` ([below](#v2-demo-journey-implemented-verified-locally)); see [implementation status](IMPLEMENTATION_STATUS.md). Authority: [SPEC](../SPEC.md) §G, C1–C26, I.web, V26–V42. Feature lineage from Dengar.in: [feature matrix](DENGARIN_FEATURE_MATRIX.md). Screen names below follow the [information architecture](design/INFORMATION_ARCHITECTURE.md) (design decision; the design lead may rename screens).
 
 ## What Sela is
 
@@ -156,7 +156,7 @@ Purpose: control my data. Primary action: change a consent, export or delete. In
 - Every consent is shown separately with provider, location, purpose and policy version, and can be changed; withdrawal stops future processing at once and explains that data already sent to a provider cannot be recalled (C18).
 - Consent history, active sessions with revoke and "sign out everywhere", and the access audit (V32).
 - Export in readable (HTML, Markdown) and structured (JSON) form (V40).
-- Delete single items with their derivatives, or the whole account; the backup windows are stated: no usable key after 7 days, ciphertext gone after 30 days (V34).
+- Delete single items with their derivatives, or the whole account; the delete screen states the backup windows (no usable key after 7 days, ciphertext gone after 30 days), and the privacy text states the restore window: after a total loss of the database, an account deleted in the hour before it may come back with a restore and need deleting again; a restore also ends every guest's access (the guest purge then removes that guest data), which the guest notice states; every restore is announced in the app and on a status page (planned, backlog S-262; V34, D-055).
 - A guest can upgrade to an account and keep everything.
 - Display and accessibility settings (text size, contrast, spacing, motion) are reachable before sign-in too.
 
@@ -179,7 +179,7 @@ Readiness is separate from implementation (owner brief §1, §6). The gates are 
 | Ages | All bands, synthetic | `18_plus` only until B-10 clears minors; 15-year-olds blocked until the low-risk assessment | As decided after B-10 |
 | AI | Live providers on synthetic data, or labelled test doubles (D-046); every output names its source and a test double is never shown as live (V35). D-046 governs; ADR-0002 §12 and the config guard currently allow only live providers or an honest "unavailable", which is narrower, and are being aligned ([conflict matrix](CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 52). The DeepSeek fallback is off by default here, as in hackathon mode (C13, V19) | Meta and the Claude verifier verified live; DeepSeek only after EV-5, B-9 and B-10 | As in the pilot |
 | Content | WHO cards with notices | Non-commercial use with notices | Commercial use needs B-14 |
-| Gates | Every shown feature really works | B-1, B-3, B-5, B-8, B-9 (if DeepSeek is used), B-10, B-15 and owner testing (`OWNER_TESTER.md`, T21) | The pilot completed with its findings addressed; consented, ethics-reviewed user research (B-6); independent security and accessibility audits; the minors decision and PP 33/2026 obligations (B-10); more than one instance (S-268); B-13 resolved; B-14 for commercial use ([gates](BLOCKERS.md#gates)) |
+| Gates | Every shown feature really works | B-1, B-3, B-5, B-8, B-9 (if DeepSeek is used), B-10, B-15, owner testing (`OWNER_TESTER.md`, T21) and the restore announcement that `terms-privacy-2026-11-01.2` promises, as the in-app notice and the status-page post ([backlog](BACKLOG.md) S-262 criterion 3, S-263; D-056) | The pilot completed with its findings addressed; consented, ethics-reviewed user research (B-6); independent security and accessibility audits; the minors decision and PP 33/2026 obligations (B-10); more than one instance (S-268); the residual risks accepted for the pilot revisited (D-055); B-13 resolved; B-14 for commercial use ([gates](BLOCKERS.md#gates)) |
 | Status today | v2 demo implemented and verified locally; v3 demo planned | Not ready | Not ready |
 
 ## v2 demo journey (implemented, verified locally)

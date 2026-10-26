@@ -1,8 +1,8 @@
 # Meta integration
 
-Status: **adapter and Modal serving app implemented; live deployment not verified** ([B-1](BLOCKERS.md)). The v3 role of Meta as primary generator inside a routed system (DeepSeek fallback, Claude verifier) is **planned** ([ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md), PM decision D-030). Authority: [SPEC](../SPEC.md) I.meta, I.ai, I.fallback, C4, C13, C18, V7, V15, V19–V21, V22, V25, V35 (supersedes V9 and V10), V41 and V42; the owner's [DeepSeek fallback contract](DEEPSEEK_FALLBACK.md). Decision record: [ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md).
+Status: **adapter and Modal serving app implemented; live deployment not verified** ([B-1](BLOCKERS.md)). The v3 role of Meta as primary generator inside a routed system (DeepSeek fallback, Claude verifier; [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md), PM decision D-030) is **in progress**: committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified, and nothing of it is wired into the delivery branch; live use **blocked externally** (B-1, B-8, B-9). Authority: [SPEC](../SPEC.md) I.meta, I.ai, I.fallback, C4, C13, C18, V7, V15, V19–V21, V22, V25, V35 (supersedes V9 and V10), V41 and V42; the owner's [DeepSeek fallback contract](DEEPSEEK_FALLBACK.md). Decision record: [ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md).
 
-## Role in v3 (PM decision D-030; planned)
+## Role in v3 (PM decision D-030; in progress on branch `feat/sela-v3-ai`, not merged)
 
 - **Primary generator for every generative task:**
   - listening replies
@@ -61,7 +61,7 @@ The first three columns are implemented (v2). The last column is the planned v3 
 | Malformed, empty or ungrounded output | Discarded or reduced to validated claims; counts shown | — | Content failure: never a fallback. One same-provider regeneration is allowed for listening replies, reflections and opening lines (RR-5) |
 | Model declines, or raises the risk flag | — (no such signal in v2) | — | Safe stop: support shown; never a fallback (RR-5, RR-7) |
 | Consent withdrawn / story changed / session deleted / crisis during the call | Operation canceled or result discarded | — | Same, for every provider used (RR-13) |
-| Test double (development and CI only) | Banner "TEST DOUBLE — not Meta" on every item | `test_double` | Production refuses it (implemented). D-046 governs the demo: the generator and the verifier may each be a live provider on synthetic data or a labelled test double, and no demo output is shown as live unless a live provider produced it. ADR-0002 §12 ("`demo` refuses `SELA_LLM_MODE=test_double`") and the uncommitted `internal/config` guard (development and test only) are narrower, tracked in [conflict matrix](CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 52 for the backend foundation agent. Until then the stricter guard runs |
+| Test double (development and CI only) | Banner "TEST DOUBLE — not Meta" on every item | `test_double` | Production refuses it (implemented). D-046 governs the demo: the generator and the verifier may each be a live provider on synthetic data or a labelled test double, and no demo output is shown as live unless a live provider produced it. ADR-0002 §12 ("`demo` refuses `SELA_LLM_MODE=test_double`") and the `internal/config` guard (development and test only; committed with the foundation, `0ff3341`) are narrower, tracked in [conflict matrix](CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 52 for the backend foundation agent. Until then the stricter guard runs |
 
 Retries happen only before the first token, and the operation deadline bounds everything (implemented).
 
