@@ -70,6 +70,7 @@ func lexical(base string) string {
 	s = joinLetters(s, segmentWord)
 	s = strings.TrimSpace(collapseSpaces(s))
 	s = spelling(s)
+	s = chatPronoun(s)
 	s = twoAsTo(s)
 	return oneAsPronoun(s)
 }
@@ -426,6 +427,16 @@ var spellingWords = map[string]string{
 	"sucide": "suicide", "suiside": "suicide", "suicde": "suicide", "sucicide": "suicide",
 	"wana": "want to", "wantto": "want to", "myslf": "myself", "meself": "myself", "mysel": "myself",
 	"pngen": "pengen", "pengn": "pengen", "pegen": "pengen",
+	"kut": "cut", "kutting": "cutting",
+	// Chat spellings (review finding: "semoga aq nggak bangun lagi", "semoga
+	// aj aku mati", "semoga bsk aku ...", "... tdk bangun lagi", "I hope
+	// tonite I ..."). "w" for "gw" is read only next to an Indonesian word
+	// (see chatPronoun).
+	"aq": "aku", "ak": "aku", "sy": "saya", "aj": "aja", "ajah": "aja", "bsk": "besok", "besuk": "besok",
+	"tdk": "tidak", "ngk": "nggak", "pngn": "pengen", "mti": "mati", "sm": "sama", "smoga": "semoga",
+	"mlm": "malam", "bngt": "banget", "bs": "bisa", "bwt": "buat", "dah": "udah",
+	"tonite": "tonight", "tnite": "tonight", "tmrw": "tomorrow", "tmr": "tomorrow", "wnt": "want",
+	"jst": "just", "goin": "going", "kno": "know", "idup": "hidup", "idupku": "hidupku",
 }
 
 var (
@@ -474,6 +485,60 @@ func spelling(s string) string {
 	}
 	return b.String()
 }
+
+// chatPronoun reads the chat spellings "2nite" as "tonight" and a
+// free-standing "w" as "gw" when an Indonesian word follows or precedes it
+// ("w pantas mati", "semoga w ...": review finding), or as "with" before an
+// English object ("done w life"). Any other "w" is left alone, so an English
+// report cannot gain a first-person word.
+func chatPronoun(s string) string {
+	if strings.Contains(s, "2nite") {
+		s = nite2Re.ReplaceAllString(s, "tonight")
+	}
+	if !strings.Contains(s, "w") {
+		return s
+	}
+	var b strings.Builder
+	last := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] != 'w' || (i > 0 && isWordByte(s[i-1])) || (i+1 < len(s) && isWordByte(s[i+1])) {
+			continue
+		}
+		next := nextWord(s, i+1)
+		prev, _ := tokenBefore(s, i)
+		repl := "gw"
+		switch {
+		case wNext[next] || wPrev[prev]:
+		case wWith[next]:
+			repl = "with" // "done w life"
+		default:
+			continue
+		}
+		b.WriteString(s[last:i])
+		b.WriteString(repl)
+		last = i + 1
+	}
+	if last == 0 {
+		return s
+	}
+	b.WriteString(s[last:])
+	return b.String()
+}
+
+var (
+	nite2Re = regexp.MustCompile(`\b2nite\b`)
+	// wNext and wPrev are the Indonesian words around a "w" read as "gw".
+	wNext = setOf("mau mw pengen pgn pngn pingin pengin kepengen ingin pantas layak harus harusnya mending udah udh sudah " +
+		"gak ga gk nggak ngga enggak tidak tdk tak bakal akan lagi lg juga jg jga sih tuh mah rasanya kayaknya mati capek " +
+		"cape siap rela berharap pengennya cuma cuman emang memang beneran bener sendiri tadi abis habis pernah sering " +
+		"kadang masih belum blm bisa nyesel benci nyerah males sama cepet cpt cepat selanjutnya berikutnya dalam " +
+		"pelaku bunuh ketabrak ditabrak aja tau tahu meninggal tidur minum nelen yang yg banget bgt")
+	wPrev = setOf("semoga moga smoga moga2 mudah2an mudah-mudahan biar kalo kalau klo baik mending mendingan harusnya " +
+		"tuhan allah ambil cabut matiin bunuh kenapa knp kok sama ama buat untuk kayak kaya kek kyk bukan kata " +
+		"berharap doain besok diri aja itu")
+	// wWith after a "w" make it "with" ("done w life").
+	wWith = setOf("life living me my him her them it this that the a an you u everything everyone people")
+)
 
 // twoAsTo reads a free-standing "2" between two words as "to" ("i want 2
 // die").
@@ -722,6 +787,14 @@ func buildVocabulary() (map[string]bool, int) {
 	}
 	for _, g := range frameRe.alts {
 		addExpr(g.re.String())
+	}
+	// The words that qualify a denial after "just"/"cuma" (see
+	// justQualifier), so that "cumaa bercandaa" resolves too.
+	addExpr(justLeadRe.String())
+	for _, set := range []map[string]bool{justVoidWords, justHedgeWords, justDeferStart, justCondition} {
+		for w := range set {
+			addText(w)
+		}
 	}
 	addText(extraVocabulary)
 	return v, longest

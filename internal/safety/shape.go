@@ -61,20 +61,6 @@ type shape struct {
 
 	adoptionKnown bool
 	adoption      bool
-	// markers caches markersApply: 0 unknown, 1 no, 2 yes.
-	markers uint8
-}
-
-// markersApply reports whether context markers may discard matches in this
-// text (see the package function markersApply).
-func (c *shape) markersApply() bool {
-	if c.markers == 0 {
-		c.markers = 1
-		if markersApply(c.text) {
-			c.markers = 2
-		}
-	}
-	return c.markers == 2
 }
 
 func analyse(text string) *shape {
@@ -155,8 +141,10 @@ func (c *shape) adopted() bool {
 //
 // Each tail scan stops at the first content word, so the work is linear.
 func adopts(s string) bool {
-	if adoptionRe.MatchString(s) {
-		return true
+	for _, g := range adoptionAlts {
+		if g.MatchString(s) {
+			return true
+		}
 	}
 	for _, loc := range adoptionCoreRe.FindAllStringIndex(s, -1) {
 		m := s[loc[0]:loc[1]]
@@ -168,9 +156,11 @@ func adopts(s string) bool {
 			return true
 		}
 	}
-	for _, loc := range adoptionTrailRe.FindAllStringIndex(s, -1) {
-		if adoptionTail(s[loc[1]:], coreTrail) {
-			return true
+	for _, g := range adoptionTrailAlts {
+		for _, loc := range g.FindAllStringIndex(s, -1) {
+			if adoptionTail(s[loc[1]:], coreTrail) {
+				return true
+			}
 		}
 	}
 	return false
@@ -199,12 +189,15 @@ func adoptionStart(s string) int {
 			break
 		}
 	}
-	for _, loc := range adoptionTrailRe.FindAllStringIndex(s, -1) {
-		if best >= 0 && loc[0] >= best {
-			break
-		}
-		if loc[0] > 0 && adoptionTail(s[loc[1]:], coreTrail) {
-			return loc[0]
+	for _, g := range adoptionTrailAlts {
+		for _, loc := range g.FindAllStringIndex(s, -1) {
+			if best >= 0 && loc[0] >= best {
+				break
+			}
+			if loc[0] > 0 && adoptionTail(s[loc[1]:], coreTrail) {
+				best = loc[0]
+				break
+			}
 		}
 	}
 	return best
@@ -443,8 +436,28 @@ var (
 		"bener serius sumpah jujur sebenernya sebenarnya emang memang lagi udah tbh honestly fr ngl too also " +
 		"sometimes kadang kadang-kadang actually literally really so bro sis guys lately rn now right today " +
 		"tonight kemarin kemaren tadi tho though lowkey lol lmao lmfao rofl haha hehe huhu hiks hix xixi " +
-		"wkwk wkwkwk hmm huft hufft")
+		"wkwk wkwkwk hmm huft hufft " +
+		// Chat fillers and swear interjections (review finding).
+		"idk idc ugh omg omfg af asf fr frfr srsly smh ikr ong fml much bad badly anjir njir anjay anjrit anjrot " +
+		"jir bjir anjim asli cuy coy buset")
 )
+
+// splitAlternation returns one guarded expression per top-level branch of
+// expr (expr itself when it is not an alternation).
+func splitAlternation(expr string) []guarded {
+	re, err := syntax.Parse(expr, syntax.Perl)
+	if err != nil {
+		panic("safety: invalid expression " + expr + ": " + err.Error())
+	}
+	if re.Op != syntax.OpAlternate {
+		return []guarded{mustGuarded(expr)}
+	}
+	out := make([]guarded, 0, len(re.Sub))
+	for _, sub := range re.Sub {
+		out = append(out, mustGuarded(sub.String()))
+	}
+	return out
+}
 
 // quotesIn returns the quotations inside cl, in order.
 func (c *shape) quotesIn(cl *clause) []span {
@@ -458,11 +471,54 @@ func (c *shape) quotesIn(cl *clause) []span {
 
 func (c *shape) analyseClause(cl *clause) {
 	t := c.text
-	for i, seg := range cl.segments {
-		if denialRe.MatchString(t[seg.start:seg.end]) {
-			last := i == len(cl.segments)-1
-			cl.denials = append(cl.denials, denialSpan{span: seg, hedged: last && cl.contrastNext})
+	segs := cl.segments
+	for i, seg := range segs {
+		last := i == len(segs)-1
+		d := denialSpan{span: seg}
+		if !denialRe.MatchString(t[seg.start:seg.end]) {
+			// "I'm not suicidal just tired of living": the denial ends
+			// before "just", and what follows counts (review finding). Only
+			// a listed tiredness or passive-ideation phrase continues a
+			// denial this way; any other continuation ("just yet", "just
+			// kidding", "cuma belum berani") leaves the segment the
+			// speaker's own words, as in v1.
+			loc := denialJustRe.FindStringSubmatchIndex(t[seg.start:seg.end])
+			if loc == nil {
+				continue
+			}
+			if rest := t[seg.start+loc[1] : seg.end]; !endsDenial(rest) {
+				continue
+			}
+			d.end = seg.start + loc[3]
 		}
+		d.hedged = last && cl.contrastNext
+		// A comma segment, or the next clause, that "just"/"cuma" opens
+		// qualifies the denial before it ("I don't want to kill myself,
+		// just yet", "I'm not suicidal. just kidding"; see justQualifier),
+		// and so does a retraction or a deferral that opens it without
+		// "just", after laughter or a filler ("I'm not suicidal, jk", "...,
+		// haha just kidding", "aku gak mau bunuh diri, boong deng", "...,
+		// yet"; see retraction).
+		next := ""
+		if !last {
+			next = t[segs[i+1].start:segs[i+1].end]
+		} else if !cl.contrastNext {
+			next = c.nextClauseText(cl)
+		}
+		next = stripFillers(next)
+		if rest, ok := justRest(next); ok {
+			switch continuationKind(rest) {
+			case qualVoid:
+				continue
+			case qualHedge:
+				d.hedged = true
+			default:
+				d.hedged = d.hedged || (i+1 == len(segs)-1 && cl.contrastNext)
+			}
+		} else if retraction(next) {
+			continue
+		}
+		cl.denials = append(cl.denials, d)
 	}
 
 	quoted := c.attributedQuotes(cl)
@@ -485,7 +541,6 @@ func (c *shape) analyseClause(cl *clause) {
 	// \"semangat ya\" pengen mati", "ngomong gitu pengen mati"), ends there
 	// unless a third-person pronoun opens what follows. Each segment belongs
 	// to at most a few frames, so the work is linear in the clause length.
-	segs := cl.segments
 	frameEnd := make([]int, len(segs)) // 0: the segment opens no frame
 	media := make([]bool, len(segs))   // the frame is a media frame
 	for k, seg := range segs {
@@ -586,6 +641,262 @@ func (c *shape) analyseClause(cl *clause) {
 	}
 	cl.hidden = mergeSpans(cl.hidden)
 }
+
+// nextClauseText returns the text of the clause after cl, or "" when cl is
+// the last one. The first segment is enough for justRest.
+func (c *shape) nextClauseText(cl *clause) string {
+	k := sort.Search(len(c.clauses), func(i int) bool { return c.clauses[i].start >= cl.end })
+	if k == len(c.clauses) || len(c.clauses[k].segments) == 0 {
+		return ""
+	}
+	seg := c.clauses[k].segments[0]
+	return c.text[seg.start:seg.end]
+}
+
+// qualifierLead reports whether s opens with words that may qualify a
+// denial before it: "just"/"cuma" or a retraction, after fillers (see
+// analyseClause and contextUnits).
+func qualifierLead(s string) bool {
+	s = stripFillers(s)
+	return justLeadRe.MatchString(s) || retraction(s)
+}
+
+// justRest returns the words after a "just"/"cuma" that opens seg.
+func justRest(seg string) (string, bool) {
+	loc := justLeadRe.FindStringIndex(seg)
+	if loc == nil {
+		return "", false
+	}
+	return seg[loc[1]:], true
+}
+
+// Kinds of qualification a "just"/"cuma" continuation gives a denial (see
+// justQualifier).
+const (
+	qualNone  = iota // an ordinary continuation ("just tired", "cuma capek")
+	qualHedge        // thinking, fear or a bare negation: the denial is hedged
+	qualVoid         // a retraction, deferral, condition or lack of courage
+)
+
+// justQualifier reads the words after "just"/"cuma" that continue a denial.
+// A retraction ("just kidding", "cuma bercanda"), a deferral ("just yet",
+// "just not today", "only for now", "cuma belum berani", "untuk sekarang"),
+// a condition ("only because of my mom", "hanya karena ibu") or a lack of
+// courage ("just not brave enough", "merely because I'm a coward") takes
+// the denial back: it does not count, and the risk phrase is the
+// speaker's own. Thinking about it, fear or a negation ("cuma kadang
+// kepikiran", "just scared", "just not okay") hedges it (review finding).
+func justQualifier(rest string) int {
+	words := strings.Fields(strings.ToLower(rest))
+	if len(words) == 0 {
+		return qualNone
+	}
+	if lim := rest[:min(len(rest), 2*checkWindow)]; justMeansRe.MatchString(lim) || justScaredRe.MatchString(lim) {
+		return qualVoid
+	}
+	first := strings.Trim(words[0], ",.!?;:")
+	if justDeferStart[first] || justCondition[first] {
+		return qualVoid
+	}
+	if len(words) > 1 {
+		pair := first + "_" + strings.Trim(words[1], ",.!?;:")
+		if justDeferPairs[pair] {
+			return qualVoid
+		}
+	}
+	kind := qualNone
+	if idNegators[first] || first == "not" || first == "no" || first == "never" {
+		kind = qualHedge
+	}
+	for _, w := range words {
+		w = strings.Trim(w, ",.!?;:'\"()")
+		switch {
+		case justVoidWords[w]:
+			return qualVoid
+		case justHedgeWords[w]:
+			kind = qualHedge
+		}
+	}
+	return kind
+}
+
+// continuationKind is the qualification the words after "just"/"cuma" give a
+// denial: the stronger of justQualifier and wishQualifier.
+func continuationKind(rest string) int {
+	return max(justQualifier(rest), wishQualifier(rest))
+}
+
+// endsDenial reports whether the words after a "just"/"cuma" that continues
+// a denial without a comma end the denial before them: a listed tiredness,
+// sadness or venting phrase (see tiredRe), or a wish for a listed benign
+// thing ("just need a break", "cuma pengen istirahat", "just want someone to
+// talk to"; see benignWantRe), that nothing in the continuation qualifies
+// (see continuationKind). A wish for anything else ("just want to not
+// exist", "cuma pengen nggak ada", "just want to be left alone") leaves the
+// whole segment the speaker's own words, as in v1 (review finding: a
+// generic "want"/"pengen" ended the denial, so a passive death wish that no
+// rule lists routed none).
+func endsDenial(rest string) bool {
+	return (tiredRe.MatchString(rest) || benignWantRe.MatchString(strings.TrimLeft(rest, " "))) && continuationKind(rest) == qualNone
+}
+
+// wishQualifier reads a wish in the continuation of a denial. A wish for an
+// absence or an ending ("just want to be gone", "just need everything to
+// stop", "cuma pengen nggak ada", "cuma mau udahan aja", "just want to rest
+// forever"; see absenceRe) takes the denial back. Any other wish that is not
+// for a listed benign thing ("just want the pain to stop", "cuma pengen
+// pergi") hedges it. A wish for a listed benign thing ("just need a break",
+// "cuma pengen curhat") leaves it (review finding).
+func wishQualifier(rest string) int {
+	if len(rest) > 2*checkWindow {
+		rest = rest[:2*checkWindow]
+	}
+	any, other := false, false
+	for _, loc := range desireRe.FindAllStringIndex(rest, -1) {
+		any = true
+		if !benignWantRe.MatchString(rest[loc[0]:]) {
+			other = true
+		}
+	}
+	switch {
+	case any && absenceRe.MatchString(rest):
+		return qualVoid
+	case other:
+		return qualHedge
+	}
+	return qualNone
+}
+
+// stripFillers drops up to three leading laughter or filler words ("haha",
+// "lol", "eh", "ok") from the words that follow a denial, so "..., haha just
+// kidding" reads like "..., just kidding".
+func stripFillers(s string) string {
+	for n := 0; n < 3; n++ {
+		i := 0
+		for i < len(s) && (s[i] == ' ' || s[i] == '\t' || s[i] == ',') {
+			i++
+		}
+		j := i
+		for j < len(s) && isLetter(s[j]) {
+			j++
+		}
+		if j == i || (j < len(s) && s[j] != ' ' && s[j] != ',' && s[j] != '\t') {
+			return s[i:]
+		}
+		if w := s[i:j]; !laughter(w) && !laughterWords[w] && !fillerWords[w] {
+			return s[i:]
+		}
+		s = s[j:]
+	}
+	return strings.TrimLeft(s, " \t,")
+}
+
+// retraction reports whether the words that open the segment or clause
+// right after a denial, without "just"/"cuma", take it back: a retraction
+// ("jk", "kidding", "not really", "that's a lie", "bercanda", "boong deng",
+// "gak deng", "or do i") or a deferral ("yet", "not yet", "for now",
+// "belum", "untuk sekarang"; review finding: only a "just"/"cuma"
+// continuation was read, so "I'm not suicidal, jk" routed none). "yet" with
+// words after it is the conjunction and does not retract.
+func retraction(s string) bool {
+	if len(s) > 64 {
+		s = s[:64]
+	}
+	w := strings.Fields(s)
+	for i := range w {
+		w[i] = strings.Trim(w[i], ",.!?;:'\"()")
+	}
+	if len(w) == 0 {
+		return false
+	}
+	if w[0] == "yet" {
+		return len(w) == 1
+	}
+	if retractStart[w[0]] {
+		return true
+	}
+	if len(w) > 1 {
+		if retractPairs[w[0]+"_"+w[1]] {
+			return true
+		}
+		if len(w) > 2 && retractTriples[w[0]+"_"+w[1]+"_"+w[2]] {
+			return true
+		}
+	}
+	return false
+}
+
+var (
+	// fillerWords may open the words after a denial (see stripFillers).
+	fillerWords = setOf("ok okay oke okey well um uh umm uhh hmm hm eh ah oh nah ya yah yaa sih deh lho loh tbh honestly ngl")
+	// retractStart, retractPairs and retractTriples open a retraction or a
+	// deferral (see retraction). Pairs and triples are written with "_".
+	retractStart = setOf("jk jking jkjk kidding kiddin joking bercanda becanda bcanda canda guyon gurau boong bohong bo'ong " +
+		"ngibul dusta deng belum blm prank lies lie lying psych psyche")
+	retractPairs = setOf("not_really not_true a_lie i_lied i'm_lying im_lying i_lie or_am or_do or_will just_kidding " +
+		"gak_deng ga_deng nggak_deng ngga_deng enggak_deng engga_deng gk_deng g_deng tidak_deng boong_ding bohong_ding " +
+		"not_yet for_now untuk_sekarang buat_sekarang utk_sekarang not_today not_tonight no_wait wait_no")
+	retractTriples = setOf("that's_a_lie thats_a_lie that's_not_true thats_not_true who_am_i at_least_not at_least_for " +
+		"that_was_a it's_a_lie its_a_lie")
+)
+
+var (
+	// desireRe finds a wish in the continuation of a denial (see
+	// wishQualifier).
+	desireRe = regexp.MustCompile(`\b(?:want|wants|wanting|wanna|need|needs|needing|wish|wishing|hope|hoping|ready|` +
+		`pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|mau|mw|ingin|butuh|perlu|siap|rela|berharap|semoga)\b`)
+	// benignWantRe is a wish for a listed benign thing: rest, sleep, a break,
+	// someone to talk to, time alone (see endsDenial).
+	benignWantRe = regexp.MustCompile(`^(?:want|wants|wanting|wanna|need|needs|needing|` +
+		`pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|mau|mw|ingin|butuh|perlu)\s+` +
+		`(?:(?:to|for|a|an|some|more|my|the|little|bit|of|good|long|quick|real|proper|nice|hot|warm|big|someone|somebody|` +
+		`be|get|go|take|have|aja|saja|banget|bgt|sih|deh|dulu|sebentar|bentar|buat|untuk|teman|temen|orang|yang|bisa)\s+){0,4}` +
+		`(?:break|breather|rest|nap|sleep|vacation|holiday|hug|hugs|vent|talk|talking|space|time|quiet|peace|help|support|` +
+		`advice|food|coffee|tea|friend|friends|mom|mum|dad|cry|scream|relax|chill|unwind|breathe|heard|alone|listen|` +
+		`listened|weekend|shower|bath|walk|cuddle|therapy|therapist|counselor|counsellor|` +
+		`istirahat|rehat|tidur|libur|liburan|cuti|healing|refreshing|jalan-jalan|curhat|cerita|ngobrol|didengerin|` +
+		`didengar|didengarkan|dipeluk|pelukan|ditemenin|ditemani|sendiri|sendirian|nangis|menangis|teriak|makan|` +
+		`waktu|ruang|bantuan|dukungan|psikolog|konseling)\b`)
+	// absenceRe is an absence or an ending (see wishQualifier).
+	absenceRe = regexp.MustCompile(`\b(?:exist|existing|existence|alive|gone|vanish|vanishing|disappear|disappearing|` +
+		`fade\s+away|fading\s+away|forever|for\s+good|permanently|eternally|dead|die|dying|death|never\s+wake|not\s+wake|` +
+		`(?:not|never|no\s+longer)\s+(?:be\s+)?(?:here|around)|(?:be|being)\s+(?:here|around)\s+any\s*more|` +
+		`(?:it|it\s+all|everything|all\s+of\s+(?:it|this)|my\s+life|this\s+life|life|things)\s+(?:to\s+)?(?:(?:just|finally|all)\s+)?(?:end|ends|stop|stops|be\s+over|is\s+over)|` +
+		`hilang|ngilang|menghilang|lenyap|selamanya|abadi|udahan|tiada|mati|meninggal|` +
+		`(?:nggak|ngga|gak|ga|gk|tidak|tdk|tak|enggak|engga)\s+(?:(?:usah|perlu)\s+)?(?:bangun|hidup|idup|bernapas|bernafas)|` +
+		`(?:nggak|ngga|gak|ga|gk|tidak|tdk|tak|enggak|engga)\s+ada(?:\s+lagi)?(?:\s*$|\s+(?:lagi|lg|aja|saja|di\s+dunia|dari\s+dunia|selamanya|deh|ya))|` +
+		`(?:semua(?:nya)?(?:\s+ini)?|segalanya|hidup(?:ku)?)\s+(?:(?:cepet|cepat|segera)\s+)?(?:berakhir|selesai|tamat|usai))`)
+
+	// justVoidWords anywhere in the continuation take the denial back: a
+	// retraction, a deferral, a plan or a lack of courage.
+	justVoidWords = setOf("kidding kiddin jk jking joking joke jokes bercanda becanda bcanda canda candain guyon gurau bohong boong prank " +
+		"yet belum blm blom blum lom brave courage courageous guts coward cowardly berani nyali pengecut cemen " +
+		// waiting and planning (review finding: "just waiting for the right
+		// moment", "just planning")
+		"waiting wait nunggu nungguin menunggu tunggu planning plan plans planned rencana berencana ngerencanain merencanakan")
+	// justMeansRe: preparing a means ("cuma udah siapin obat", "just got the
+	// pills ready") takes the denial back (review finding).
+	justMeansRe = regexp.MustCompile(`\b(?:siapin|nyiapin|nyiapain|menyiapkan|disiapin|siapkan|ngumpulin|kumpulin|mengumpulkan|nimbun|beli|` +
+		`prepared|preparing|prepping|ready|got|bought|stockpiling|stockpiled|saving|saved|collecting|collected|hoarding)\b.*\b(?:obat|pil|tali|pisau|silet|racun|` +
+		`pills|meds|medication|rope|noose|knife|blade|razor|poison|gun|note|letter)\b`)
+	// justScaredRe: fear of the act itself is a lack of courage ("just too
+	// scared to do it", "cuma terlalu takut"; review finding).
+	justScaredRe = regexp.MustCompile(`\b(?:too|terlalu|masih|still)\s+(?:(?:much\s+of\s+a\s+)?(?:scared|afraid|takut|chicken|cowardly|weak)|of\s+a\s+(?:coward|chicken))\b|` +
+		`\b(?:scared|afraid|takut)\s+(?:to\s+(?:do\s+it|do\s+that|try|actually|go\s+through)|(?:buat|untuk|utk)\s+(?:ngelakuin|melakukan|nyoba|mencoba)|ngelakuin|nyoba)\b`)
+	// justDeferStart and justDeferPairs open a deferral ("just now", "just
+	// not today", "cuma untuk sekarang").
+	justDeferStart = setOf("now rn today tonight tomorrow sekarang skrg skrng sekarng saat hari malam besok")
+	// Pairs are written with "_" for the space.
+	justDeferPairs = setOf("not_now not_today not_tonight not_tomorrow not_rn not_yet for_now for_today for_tonight right_now " +
+		"this_time this_week this_year untuk_sekarang buat_sekarang utk_sekarang untuk_saat buat_saat untuk_hari buat_hari " +
+		"nggak_sekarang gak_sekarang ga_sekarang bukan_sekarang ngga_sekarang tidak_sekarang")
+	// justCondition opens a condition for staying alive ("only because of
+	// my mom", "hanya karena ibu", "cuma demi anakku").
+	justCondition = setOf("because cause cuz coz bc since karena krn karna gara gara-gara garagara demi soalnya sebab")
+	// justHedgeWords hedge the denial: thinking about it, sometimes, fear.
+	justHedgeWords = setOf("think thinking thought thoughts kepikiran kpikiran mikir mikirin pikiran sometimes kadang kadang-kadang " +
+		"scared afraid terrified frightened fear takut")
+)
 
 // attributedQuotes returns the quotations in cl that a third party said:
 // those with a third-party reporting frame right before them ("temanku
@@ -1458,6 +1769,21 @@ func opensOwnReport(w string) bool { return ownSubjects[w] }
 
 var ownSubjects = setOf("aku saya gue gua gw ane ku i i'm im")
 
+// The parts of the denial expressions (see denialRe).
+const (
+	justWord   = `(?:just|only|merely|simply|cuma|cuman|cma|hanya)`
+	denialLead = `(?:(?:honestly|tbh|ngl|jujur(?:\s+aja)?|sebenernya|sebenarnya|serius|seriously|actually|well|no|nah|nope|ok|okay|oke|` +
+		`i\s+mean|to\s+be\s+honest|frankly|tenang(?:\s+aja)?|santai(?:\s+aja)?|beneran|sumpah)\s+)?`
+	denialCore = `(?:` +
+		`(?:aku|saya|gue|gua|gw|ku)\s+(?:tidak|ga|gak|gk|nggak|ngga|enggak|engga|tak|ndak)\s+(?:mau|ingin|akan|pengen|pingin|berniat|berencana|kepikiran\s+(?:buat|untuk))\s+` +
+		`(?:bunuh\s*diri|bundir|mati|mengakhiri\s+hidup(?:ku)?|menyakiti\s+diri(?:ku|\s+sendiri)?|melukai\s+diri(?:ku|\s+sendiri)?)` +
+		`(?:\s+(?:kok|sih|ya|kan|lho|loh|deh))?` +
+		`|(?:i|i'm|im|i\s*am)\s+(?:do\s*not|don't|dont|am\s*not|not|won't|wont|will\s*not|would\s*never|will\s*never|never|would\s*not|wouldn't|wouldnt)\s+(?:ever\s+)?(?:going\s*to\s*|gonna\s*)?(?:want(?:ing)?\s*to\s*|wanna\s*|try(?:ing)?\s*to\s*|plan(?:ning)?\s*to\s*)?` +
+		`(?:kill\s*myself|die|commit\s*suicide|hurt\s*myself|harm\s*myself|end\s*my\s*(?:own\s*)?life|take\s*my\s*(?:own\s*)?life)` +
+		`|(?:i'm|im|i\s*am)\s+not\s+suicidal` +
+		`)`
+)
+
 // Vocabulary shared by the frame expressions.
 const (
 	idSubject = `(?:dia|ia|mereka|beliau|seseorang|orang\s+itu|orang\s+lain|tokoh(?:nya)?|karakter(?:nya)?|` +
@@ -1510,17 +1836,32 @@ const (
 var (
 	// denialRe is the v1 contextualDiscussion denial, applied to one comma
 	// segment. Sela accepts the colloquial pronouns and negators, the same
-	// verbs plus "pengen"/"berniat", the self-harm objects, and trailing
-	// discourse particles ("kok", "sih"). Any other content makes it a normal
-	// segment ("aku tidak mau bunuh diri lagi" is not a denial).
-	denialRe = mustGuarded(`^(?:` +
-		`(?:aku|saya|gue|gua|gw|ku)\s+(?:tidak|ga|gak|gk|nggak|ngga|enggak|engga|tak|ndak)\s+(?:mau|ingin|akan|pengen|pingin|berniat|berencana|kepikiran\s+(?:buat|untuk))\s+` +
-		`(?:bunuh\s*diri|bundir|mati|mengakhiri\s+hidup(?:ku)?|menyakiti\s+diri(?:ku|\s+sendiri)?|melukai\s+diri(?:ku|\s+sendiri)?)` +
-		`(?:\s+(?:kok|sih|ya|kan|lho|loh|deh))?` +
-		`|(?:i|i'm|im|i\s*am)\s+(?:do\s*not|don't|dont|am\s*not|not|won't|wont|will\s*not|would\s*never|will\s*never|never|would\s*not|wouldn't|wouldnt)\s+(?:ever\s+)?(?:going\s*to\s*|gonna\s*)?(?:want(?:ing)?\s*to\s*|wanna\s*|try(?:ing)?\s*to\s*|plan(?:ning)?\s*to\s*)?` +
-		`(?:kill\s*myself|die|commit\s*suicide|hurt\s*myself|harm\s*myself|end\s*my\s*(?:own\s*)?life|take\s*my\s*(?:own\s*)?life)` +
-		`|(?:i'm|im|i\s*am)\s+not\s+suicidal` +
-		`)\s*[.!]?$`)
+	// verbs plus "pengen"/"berniat", the self-harm objects, trailing
+	// discourse particles ("kok", "sih") and a lead-in word ("honestly",
+	// "jujur"; review finding). Any other content makes it a normal segment
+	// ("aku tidak mau bunuh diri lagi" is not a denial).
+	denialRe = mustGuarded(`^` + denialLead + denialCore + `\s*[.!]?$`)
+
+	// denialJustRe is a denial that "just"/"cuma" continues without a comma
+	// ("I'm not suicidal just tired of living"): its first group is the
+	// denial, and the continuation counts as the speaker's words.
+	denialJustRe = regexp.MustCompile(`^(` + denialLead + denialCore + `)\s+` + justWord + `\b`)
+
+	// justLeadRe is "just"/"cuma" opening a comma segment after a denial.
+	justLeadRe = regexp.MustCompile(`^` + justWord + `\b`)
+
+	// tiredRe is a tiredness, sadness or passive-ideation phrase after
+	// "just"/"cuma" ("tired of living", "capek banget", "need a break",
+	// "pengen istirahat"): the only continuation that ends a denial without
+	// a comma (see analyseClause).
+	//
+	// A wish ("want", "need", "pengen", "butuh") is not listed: only a wish
+	// for a listed benign thing ends a denial (see benignWantRe and
+	// endsDenial; review finding).
+	tiredRe = regexp.MustCompile(`^\s*(?:(?:so|really|very|kinda|kind\s+of|a\s+bit|a\s+little|pretty|super|extremely|feeling|feel|i'?m|im|am|lagi|lg|agak|rada|sangat|terlalu|udah|sudah|udh|bener|bgt|banget|aja|aj|sih|ngerasa|merasa)\s+)*` +
+		`(?:tired|exhausted|sad|drained|burnt|burned|burnout|worn|stressed|stress|overwhelmed|lonely|numb|empty|depressed|down|low|upset|frustrated|hurt|hurting|broken|struggling|sick|venting|` +
+		`having\s+(?:a|an|such\s+a|one\s+of\s+those)\s+(?:[a-z]+\s+){0,2}(?:day|days|time|week|night|month|year|moment|morning)|` +
+		`capek|cape|capai|cpk|cpek|lelah|letih|sedih|stres|setres|pusing|jenuh|bosen|bosan|kesepian|hampa|kosong|berat|galau|bete|kesel|kecewa|hancur|rapuh|putus|curhat|cerita)\b`)
 
 	// frameRe recognises a third-party frame at the start of a segment: the
 	// v1 media frames ("dalam film itu tokoh ...", "in the movie, the
@@ -1641,7 +1982,10 @@ var (
 		`|\b(?:ngelakuin|nglakuin|lakuin|ngelakukan|melakukan|lakukan)\s+(?:(?:hal\s+)?itu\s+)?(?:juga|jg)\b` +
 		`|\bi\s+(?:did|do|have\s+done|will\s+do|did\s+it|do\s+it)\s+(?:the\s+same|it\s+too|that\s+too|too)\b` +
 		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin)\s+(?:ikut|ngikut)(?:\s*$|\s+(?:aja|juga|jg|deh|sih|ya|lho|loh|kok|dia|mereka|nih|lah|dong|rasanya|mati|bunuh|banget|bgt|kayaknya)\b)` +
-		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin)\s+(?:jadi\s+)?(?:kayak|kaya|kek|kyk|seperti)\s+(?:dia|gitu|mereka|itu)\b` +
+		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin)\s+(?:(?:banget|bgt|bngt|juga|jg|sih|deh|aja)\s+)?(?:jadi\s+)?(?:kayak|kaya|kek|kyk|seperti)\s+(?:dia|gitu|mereka|itu|begitu)\b` +
+		// "pengen ngelakuin itu", "pengen banget ngelakuin itu" (review
+		// finding): a wish that refers back to the reported act.
+		`|\b(?:pengen|pgn|pingin|pengin|kepengen|kepingin|mau|mw|ingin|kepikiran|mikir)\s+(?:(?:banget|bgt|bngt|juga|jg|sih|deh|aja|buat|untuk)\s+){0,2}(?:ngelakuin|nglakuin|lakuin|ngelakukan|melakukan|lakukan)(?:nya)?\s*(?:(?:hal\s+)?(?:itu|gitu|begitu)|kayak\s+(?:gitu|dia|itu)|kaya\s+(?:gitu|dia|itu))?\b` +
 		`|\b(?:aku|gue|gw|gua|saya)\s+(?:jadi\s+|kok\s+|agak\s+|sedikit\s+)?iri\b` +
 		`|\b(?:ngelakuin|nglakuin|melakukan|lakuin|ngelakukan|lakukan)\s+(?:hal\s+)?y(?:an)?g\s+sama\b` +
 		`|\b(?:want|wanna|wanted)\s+(?:to\s+)?(?:try\s+(?:it|that)|do\s+(?:the\s+same|that|it)|join\s+(?:him|her|them)|follow\s+(?:him|her|them)|be\s+(?:next|like\s+(?:him|her|them)))\b` +
@@ -1678,7 +2022,30 @@ var (
 		`|^(?:big\s+|such\s+a\s+|huge\s+|a\s+)?mood\b|^felt\b(?:\s+(?:that|this|it))?` +
 		`|\bthis\s+(?:is|was)\s+(?:so\s+|literally\s+|exactly\s+|just\s+)?me\b` +
 		`|\bi\s+(?:(?:really|totally|so|kinda|lowkey|honestly|deeply)\s+)*feel\s+(?:that|this|it|u|you|her|him|them)\b` +
-		`|\b(?:i'?m|i\s+am|im)\s+(?:the\s+)?next\b|\b(?:aku|gue|gw|gua|saya|aq)\s+(?:yang\s+|yg\s+)?(?:berikutnya|selanjutnya)\b`)
+		`|\b(?:i'?m|i\s+am|im)\s+(?:the\s+)?next\b|\b(?:aku|gue|gw|gua|saya|aq)\s+(?:yang\s+|yg\s+)?(?:berikutnya|selanjutnya)\b` +
+		// Adoption idioms (review finding): "i know the feeling", "i know
+		// how she feels", "been there", "same boat", "join the club",
+		// "ditto", "it me", "I want that", "aku tau rasanya", "senasib",
+		// all ordinary before a content word ("i know the feeling of
+		// losing someone", "been there last summer", "I want that dress").
+		`|\bi\s+(?:(?:really|totally|so|kinda|honestly|definitely)\s+)*know\s+(?:the|that|this)\s+feeling\b` +
+		`|\bi\s+(?:(?:really|totally|so|kinda|honestly|definitely)\s+)*know\s+(?:how|what)\s+(?:she|he|they|you|it|that)\s+(?:feels?|means?|feels\s+like|is\s+like)\b` +
+		`|\b(?:i'?ve\s+|ive\s+|i\s+have\s+)?been\s+there(?:\s+(?:before|too|done\s+that))?\b` +
+		`|\b(?:(?:we'?re|we\s+are|i'?m|im|i\s+am)\s+)?(?:in\s+)?(?:the\s+)?same\s+boat\b|\bjoin\s+the\s+club\b|\bditto\b|^it'?s?\s+me\b` +
+		`|\bi\s+(?:(?:really|just|also|kinda|lowkey|honestly|so)\s+)*(?:want|wanted|need)\s+(?:that|it|this)\b` +
+		`|\b(?:aku|gue|gw|gua|saya|aq)\s+(?:juga\s+|jg\s+)?(?:tau|tahu|ngerti|paham)\s+(?:banget\s+|bgt\s+)?(?:rasanya|perasaannya|perasaan\s+itu|gimana\s+rasanya)\b` +
+		`|\b(?:(?:aku|gue|gw|gua|saya|kita|kami)\s+)?(?:juga\s+)?senasib(?:\s+(?:sama|dengan|dgn|ama)\s+(?:dia|kamu|mereka|lo|lu))?\b`)
+
+	// adoptionTrailAlts are the branches of adoptionTrailRe, each with its
+	// own prefilter, so that a segment is only searched for the branches
+	// whose literals it contains (one alternation of all the forms
+	// dominated the cost of long texts of attributed reports).
+	adoptionTrailAlts = splitAlternation(adoptionTrailRe.re.String())
+
+	// adoptionAlts are the branches of adoptionRe, each with its own
+	// prefilter (see adoptionTrailAlts): one search of the whole alternation
+	// dominated long texts of attributed compounds (review finding).
+	adoptionAlts = splitAlternation(adoptionRe.re.String())
 
 	// commaAdoptionRe: adoption forms with a comma inside ("i do, too",
 	// "me, too"), matched on the whole clause (see shape.adopted).
@@ -1688,7 +2055,7 @@ var (
 	// ("aku juga", "so am I", an elliptical "aku pengen"); see adopts.
 	adoptionCoreRe = mustGuarded(`` +
 		`\b(?:aku|saya|gue|gua|gw|ane|ku|aq|ak|w|sy|gwe)\s*(?:(?:sih|tuh|mah|sendiri|pribadi)\s+)?(?:juga|jg|jga|pun)\b` +
-		`|\b(?:aku|gue|gw|gua|saya|aq|ak|sy)\s+(?:juga\s+)?sama\b|^sama\b` +
+		`|\b(?:aku|gue|gw|gua|saya|aq|ak|sy|kita|kami)\s+(?:juga\s+)?sama\b|^sama\b` +
 		`|\bso\s+(?:am|did|have|would)\s+i\b|\bme\s+to\b|\b(?:i'?m|i\s+am)\s+the\s+same\b` +
 		`|^(?:(?:omg|ugh|lol|honestly|tbh|ngl|literally|fr|so|lmao|damn|oh|yeah|yes|ya|bruh|same|lowkey|highkey|kinda|also|big)\s+)*same\b` +
 		`|\b(?:pengen|pgn|pingin|pengin|kepengen|kepingin|ingin|want\s+to|wanna)\b`)

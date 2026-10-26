@@ -340,8 +340,31 @@ func adversarialInputs() map[string]string {
 		"trail-forms":  repeat("gw banget metoo big mood i'm next "),
 		"hit-myself":   repeat("I hit myself "),
 		"vehicle-wish": repeat("i hope a car hits me "),
+		// Round 4: the bounded runs of the hope, wish and overdose-plan
+		// forms, the wide wake-routine check reading the next sentence, and
+		// emoticons in the marker gate.
+		"hope-fill":   repeat("i hope tonight i just really "),
+		"id-hope":     repeat("semoga besok aku udah cepet "),
+		"id-adverb":   repeat("pengen banget cepet "),
+		"od-plan":     repeat("i'm going to take all my "),
+		"wake-next":   repeat("i hope i don't wake up late. or "),
+		"wink":        repeat("I accidentally cut myself ;) "),
+		"adopt-idiom": repeat("my friend said she wants to die. been there idk "),
+		// Round 6: one long unpunctuated sentence of benign idioms (a voice
+		// transcript) ran every pattern over its whole length, and many
+		// bare "sh" ran a regexp window per match (review finding).
+		"benign-run": repeat(benignRunUnit),
+		"sh-run":     repeat("sh "),
 	}
 }
+
+// benignRunUnit is a long unpunctuated sentence of benign idioms with risk
+// words in them (see adversarialInputs and TestLinearTime).
+const benignRunUnit = "I hope the traffic doesn't kill me I'd be shooting myself in the foot if I quit now tidur siang dulu " +
+	"keiris pisau pas masak I bumped into the door yesterday lagu ini enak I hope I'm dead asleep by 10 mati kutu " +
+	"ditanya pertanyaan sulit sama dosen penguji I hope my heart stops racing baterai hp-ku mau mati I hope I don't " +
+	"make it to the meeting kucingku mau mati gol bunuh diri di menit terakhir I need to die my hair black cutting " +
+	"carbs this month I hope I die of old age my laptop wants to die "
 
 // TestPerformance checks that 8000-character inputs, realistic and
 // adversarial, are assessed within perfBudget in a normal build. Under the
@@ -404,7 +427,17 @@ func TestLinearTime(t *testing.T) {
 		"news-intent": "aku mau bom bunuh diri ", "wish-tail": "my friend said she wants to die. pengen ",
 		"wake-routine": "i hope i don't wake up late ", "juga-tails": "aku juga udah aku pun lagi ",
 		"trail-forms": "gw banget metoo big mood i'm next ", "hit-myself": "I hit myself ",
-		"vehicle-wish": "i hope a car hits me ",
+		"vehicle-wish": "i hope a car hits me ", "hope-fill": "i hope tonight i just really ",
+		"id-hope": "semoga besok aku udah cepet ", "id-adverb": "pengen banget cepet ", "od-plan": "i'm going to take all my ",
+		"wake-next": "i hope i don't wake up late. or ", "wink": "I accidentally cut myself ;) ",
+		"adopt-idiom": "my friend said she wants to die. been there idk ",
+		"denial-just": "I'm not suicidal just tired ", "denial-comma": "aku nggak mau bunuh diri, cuma bercanda ",
+		"denial-next": "I'm not suicidal. just kidding ", "ready-third": "dia siap jadi pelaku bom bunuh diri ",
+		"hope-object": "aku kangen ibu berharap aku mati ", "hope-victim": "semoga cepet mati semuanya beres ",
+		"game-hope": "I hope I die first in the game ", "hope-see": "i hope i'm not alive to see it, ",
+		"od-next": "I don't want to take all my pills. but ", "take-me": "god take me to the mall ",
+		"benign-run": benignRunUnit, "sh-run": "sh ", "denial-retract": "I'm not suicidal, haha jk ",
+		"passive-wish": "I just want to be gone by the time the party starts ",
 	}
 	fastest := func(in string) time.Duration {
 		best := time.Duration(1<<63 - 1)
@@ -511,7 +544,10 @@ func TestSkipEquivalence(t *testing.T) {
 		"because I wanted to", "I liked it", "biar lega", "like the doctor said", "surat wasiat yang sah",
 		"aku juga wkwk", "so do i haha", "aku pengen", "I want to", "pengen ngelakuin juga", "aku mau bom bunuh diri",
 		"I want to be a suicide bomber", "misi bunuh diri", "nggak sengaja ngiris tangan pas potong bawang",
-		"aku juga panik", "wanna", "aku baca berita ada mahasiswa bunuh diri", "jadi pengen ngelakuin juga")
+		"aku juga panik", "wanna", "aku baca berita ada mahasiswa bunuh diri", "jadi pengen ngelakuin juga",
+		// Round 4: a wide check reads the next unit, which a variant may
+		// spell differently ("a11" is "all" only in the leetspeak reading).
+		"i hope i don't wake up late", "or at a11", "or ev3r", "I accidentally cut my self ;)", "same idk")
 	seps := []string{". ", ".\n", "! ", "? ", ", ", " ", "... ", "\n", " tapi ", "; "}
 	rng := rand.New(rand.NewSource(5))
 	n := 8000
@@ -578,6 +614,13 @@ func TestContextUnits(t *testing.T) {
 	b := contextUnits(analyse("aku tidak mau bunuh diri. ok"))[0].key
 	if a == b {
 		t.Error("a following conjunction must change the unit key")
+	}
+	// A unit that may hold a wide match is keyed with the text after it
+	// (see pattern.wide).
+	e := contextUnits(analyse("i hope i don't wake up late. or at all"))[0].key
+	f := contextUnits(analyse("i hope i don't wake up late. or at aii"))[0].key
+	if e == f {
+		t.Error("the text after a wide unit must change its key")
 	}
 	c := contextUnits(analyse(`x "a b" y`))[0].key
 	d := contextUnits(analyse(`x "a b y`))[0].key

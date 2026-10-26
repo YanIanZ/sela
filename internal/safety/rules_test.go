@@ -36,6 +36,9 @@ var goldenRuleIDs = []string{
 	"id-death-wish-formal", "mixed-death-wish", "en-tired-of-living", "en-sleep-forever",
 	"en-self-harm-verbs", "en-lethal-means-forms", "id-self-harm-colloquial", "id-vehicle-death-wish",
 	"en-vehicle-death-wish",
+	// added in sela-safety-2026.10.26-5
+	"en-hope-to-die", "en-death-wish-forms", "id-hope-to-die", "id-death-wish-adverb", "en-overdose-plan",
+	"id-overdose-plan", "self-harm-slang", "en-passive-death-wish", "id-passive-death-wish",
 }
 
 func TestRuleIDsStableAndUnique(t *testing.T) {
@@ -525,6 +528,15 @@ func TestPostChecks(t *testing.T) {
 		{"exam at 8 kms", "kms", false},
 		{"meeting jam 9 kms", "kms", false},
 		{"i ran 5 kms today", "kms", true},
+		// "until" measures a distance, and a speed is not a time (round-4
+		// review finding).
+		{"i'll run until 10 kms", "kms", true},
+		{"at 5 kms per hour it takes forever", "kms", true},
+		// "by" a number is a deadline, and "until" a time unless a motion
+		// verb comes before it (round-5 review finding).
+		{"done by 9 kms", "kms", false},
+		{"gonna wait until 10 kms", "kms", false},
+		{"keep cycling until 40 kms", "kms", true},
 	})
 	run("suicideCompound", suicideCompound, []tc{
 		{"gol bunuh diri bikin kalah", "bunuh diri", true},
@@ -570,6 +582,19 @@ func TestPostChecks(t *testing.T) {
 		{"i want to be a suicide bomber", "suicide", false},
 		{"i'm going to wear a suicide vest tomorrow", "suicide", false},
 		{"i am a suicide bomber", "suicide", false},
+		// A third party's readiness is their act; a third party joined to
+		// the speaker or after a preposition is not the subject (round-5
+		// review finding).
+		{"teroris itu siap jadi pelaku bom bunuh diri", "bunuh diri", true},
+		{"teroris itu siap jalanin misi bunuh diri", "bunuh diri", true},
+		{"aku dan temanku siap jadi pelaku bom bunuh diri", "bunuh diri", false},
+		{"demi mereka siap jadi pelaku bom bunuh diri", "bunuh diri", false},
+		{"aku ikut mereka siap jadi pelaku bom bunuh diri", "bunuh diri", false},
+	})
+	run("suicideCompoundReady", suicideCompound, []tc{
+		{"untuk dia rela jalanin misi bunuh diri", "bunuh diri", false},
+		{"teroris itu siap jalanin misi bunuh diri", "bunuh diri", false},
+		{"aku lagi ngerjain misi bunuh diri di kantor", "bunuh diri", true},
 	})
 	// A context marker discards a match only in a short text with no risk
 	// signal (see markersApply); the test text stands for the whole text.
@@ -625,6 +650,13 @@ func TestPostChecks(t *testing.T) {
 		{"i cut myself when i was cooking", "cut myself", true},
 		{"i burned myself on the stove", "burned myself", true},
 		{"i injured myself at practice", "injured myself", true},
+		// Hitting oneself: furniture or a door, or an instrument with an
+		// accident word (round-5 review finding).
+		{"i hit myself on the cabinet door", "hit myself", true},
+		{"i hit myself with a hammer by accident", "hit myself", true},
+		{"i hit myself with a hammer", "hit myself", false},
+		{"i hit myself on the edge", "hit myself", false},
+		{"i hit myself on my bed", "hit myself", false},
 		// Round-2 review regressions: a purpose, motive, feeling or habit
 		// word anywhere in the text, after a comma, a clause word or a full
 		// stop, keeps the match; so does a habitual verb form, a bare
@@ -797,6 +829,161 @@ func TestPostChecks(t *testing.T) {
 		{"i hope i don't wake up during the night, i want it to be over", "hope i don't wake up", false},
 		{"i hope i never wake up before my alarm so i can die in my sleep", "hope i never wake up", false},
 		{"i hope i don't wake up late lol bye forever", "hope i don't wake up", false},
+		// The pattern is wide: the text after the sentence is read for a
+		// risk or death word; "by" a time is a deadline and a year is not a
+		// time (round-4 review finding).
+		{"i hope i don't wake up late. or ever", "hope i don't wake up", false},
+		{"i hope i don't wake up early. or at all", "hope i don't wake up", false},
+		{"i hope i don't wake up during the night. i want it to be over", "hope i don't wake up", false},
+		{"i hope i don't wake up early. anyway work was fine", "hope i don't wake up", true},
+		{"i hope i don't wake up by morning", "hope i don't wake up", false},
+		{"i hope i don't wake up until 2030", "hope i don't wake up", false},
+		{"i hope i don't wake up until 7", "hope i don't wake up", true},
+		{"i hope i never wake up before noon on weekends", "hope i never wake up", true},
+	})
+	// Ruleset -5 checks.
+	run("hopeDeathIdiom", hopeDeathIdiom, []tc{
+		{"i hope i die of old age", "hope i die", true},
+		{"i wish i could die my hair blue", "wish i could die", true},
+		{"i hope i die soon", "hope i die", false},
+		{"i hope i'll die of old age soon", "hope i'll die", false},
+		// Round-5 review findings: "the"/"this" or a time after "see" is
+		// not the idiom, a risk word anywhere in the sentence keeps the
+		// match, and the game, sleep-in, old-age and happiness idioms.
+		{"i hope i'm not alive to see it", "hope i'm not alive", true},
+		{"i hope i'm not alive to see the morning", "hope i'm not alive", false},
+		{"i hope i'm not alive to see this", "hope i'm not alive", false},
+		{"i hope i'm not alive to see it, i can't keep going", "hope i'm not alive", false},
+		{"i hope i die first in the game so i can spectate", "hope i die", true},
+		{"i hope i die in the next round of chemo", "hope i die", false},
+		{"i hope i don't see the sunrise, i'm sleeping in all weekend", "hope i don't see the sunrise", true},
+		{"i hope i'm dead asleep by 10", "hope i'm dead", true},
+		{"i hope i get old and die peacefully", "hope i get old and die", true},
+		{"i hope i get the job and die of happiness", "hope i get the job and die", true},
+		{"i hope i don't make it to the meeting", "hope i don't make it", true},
+		{"i hope i don't make it", "hope i don't make it", false},
+		{"i hope i'm not around when you wake up", "hope i'm not around", false},
+		{"i hope i don't make it home", "hope i don't make it", false},
+	})
+	run("lifeEndsHappy", lifeEndsHappy, []tc{
+		{"semoga hidupku berakhir bahagia", "semoga hidupku berakhir", true},
+		{"semoga hidupku cepet berakhir", "semoga hidupku cepet berakhir", false},
+		{"i hope my life ends happily, i want to be old", "hope my life ends", false},
+	})
+	run("deathFormIdiom", deathFormIdiom, []tc{
+		{"i'd love to be dead honest with you", "i'd love to be dead", true},
+		{"i'd love to be dead", "i'd love to be dead", false},
+	})
+	run("hopeOfOthers", hopeOfOthers, []tc{
+		{"they wish i would die", "wish i would die", true},
+		{"mereka berharap aku mati", "berharap aku mati", true},
+		{"ibuku berharap aku mati", "berharap aku mati", true},
+		{"ibu aku berharap aku mati", "berharap aku mati", true},
+		{"aku berharap mati", "berharap mati", false},
+		{"i really hope i die", "hope i die", false},
+		// A third party after a verb or a preposition is an object
+		// (round-5 review finding).
+		{"terus mereka berharap aku mati", "berharap aku mati", true},
+		{"aku kangen ibu berharap aku meninggal", "berharap aku meninggal", false},
+		{"aku capek sama mereka berharap aku mati", "berharap aku mati", false},
+		{"i hate you wish i would die", "wish i would die", false},
+		{"i can't stand my mom hoping i die", "hoping i die", false},
+	})
+	run("hopeTarget", hopeTarget, []tc{
+		{"semoga cepet mati tuh orang", "semoga cepet mati", true},
+		{"semoga besok mati lampu", "semoga besok mati", true},
+		{"semoga aku cepet mati", "semoga aku cepet mati", false},
+		{"semoga cepet mati aja", "semoga cepet mati", false},
+		// The victim must end the clause (round-5 review finding).
+		{"moga mampus si koruptor", "moga mampus", true},
+		{"semoga cepet mati semuanya beres", "semoga cepet mati", false},
+		{"semoga cepet meninggal dia pasti seneng", "semoga cepet meninggal", false},
+		{"semoga cepet meninggal si aku yang nggak berguna ini", "semoga cepet meninggal", false},
+		{"doain cepet meninggal ya kalian", "doain cepet meninggal", false},
+		// A bare "itu" needs a person after it (round-6 review finding).
+		{"semoga cepet mati itu aja", "semoga cepet mati", false},
+		{"semoga cepet mati itu orang", "semoga cepet mati", true},
+	})
+	run("notAliveObject", notAliveObject, []tc{
+		{"semoga aku nggak ada kelas besok", "semoga aku nggak ada", true},
+		{"semoga aku nggak ada di kelas", "semoga aku nggak ada", true},
+		// Only a listed everyday place, and not before "lagi" (round-6
+		// review finding).
+		{"semoga aku nggak ada di sini", "semoga aku nggak ada", false},
+		{"semoga aku nggak ada di muka bumi ini lagi", "semoga aku nggak ada", false},
+		{"semoga aku nggak ada di kelas lagi", "semoga aku nggak ada", false},
+		{"semoga aku nggak hidup di tahun depan", "semoga aku nggak hidup", false},
+		{"semoga besok aku udah nggak ada", "semoga besok aku udah nggak ada", false},
+		{"semoga aku nggak ada lagi di dunia ini", "semoga aku nggak ada", false},
+		{"semoga aku nggak ada di dunia ini", "semoga aku nggak ada", false},
+		// Only a listed object or place rejects (round-5 review finding).
+		{"semoga aku nggak hidup susah", "semoga aku nggak hidup", true},
+		{"semoga besok aku udah nggak ada tapi ya gitu deh", "semoga besok aku udah nggak ada", false},
+		{"semoga aku udah nggak ada soalnya capek", "semoga aku udah nggak ada", false},
+		{"semoga aku udah gak ada idk", "semoga aku udah gak ada", false},
+	})
+	run("adverbDeathIdiom", adverbDeathIdiom, []tc{
+		{"nenekku mau cepet meninggal", "mau cepet meninggal", true},
+		{"baterai hp ku mau cepet mati", "mau cepet mati", true},
+		{"aku mau cepet meninggal", "mau cepet meninggal", false},
+		{"aku pengen banget mati", "pengen banget mati", false},
+	})
+	run("negatedIntent", negatedIntent, []tc{
+		{"i don't want to take all my pills", "want to take all my pills", true},
+		{"i'm not going to take all my meds", "going to take all my meds", true},
+		{"aku nggak mau minum semua obatku", "mau minum semua obatku", true},
+		{"i want to take all my pills", "want to take all my pills", false},
+		// A contrastive conjunction that opens the next sentence hedges
+		// the refusal (round-5 review finding; the pattern is wide).
+		{"i don't want to take all my pills. but sometimes", "want to take all my pills", false},
+		{"i don't want to take all my pills. my doctor says so. but", "want to take all my pills", true},
+	})
+	run("odQuestion", odQuestion, []tc{
+		{"boleh minum obat sekaligus dengan vitamin", "minum obat sekaligus", true},
+		{"boleh nggak minum obatnya sekaligus pagi aja", "minum obatnya sekaligus", true},
+		{"boleh minum obat tidur sekaligus 10", "minum obat tidur sekaligus", false},
+		{"aku minum obat sekaligus", "minum obat sekaligus", false},
+	})
+	run("bottleObject", bottleObject, []tc{
+		{"i took the whole bottle of water", "took the whole bottle", true},
+		{"i took the whole bottle", "took the whole bottle", false},
+		{"i took the whole bottle of tylenol", "took the whole bottle", false},
+		{"i'm going to take the whole bottle with me", "take the whole bottle", false},
+	})
+	run("shNotSlang", shNotSlang, []tc{
+		{"pengen sh*t", "pengen sh", true},
+		{"pengen sh t", "pengen sh", true},
+		{"pengen sh lagi", "pengen sh", false},
+	})
+	run("dieOnHill", dieOnHill, []tc{
+		{"please let me die on this hill", "please let me die", true},
+		{"please let me die", "please let me die", false},
+	})
+	run("heartGerund", heartGerund, []tc{
+		{"i hope my heart stops racing", "hope my heart stops", true},
+		{"i hope my heart stops beating", "hope my heart stops", false},
+		{"i hope my heart stops", "hope my heart stops", false},
+	})
+	run("takeMePlace", takeMePlace, []tc{
+		{"god take me back to school", "god take me", true},
+		{"god take me to heaven", "god take me", false},
+		{"lord take me home", "lord take me", false},
+		// Round-5 review finding: only an everyday destination rejects.
+		{"god take me out to dinner", "god take me", true},
+		{"lord take me higher", "lord take me", true},
+		{"god take me out of this world", "god take me", false},
+		{"lord take me there now", "lord take me", false},
+		{"god take me to my family", "god take me", false},
+		{"god take me somewhere i can rest", "god take me", false},
+	})
+	run("drownIdiomID", drownIdiomID, []tc{
+		{"menenggelamkan diri dalam pekerjaan", "menenggelamkan diri", true},
+		{"aku mau menenggelamkan diri dalam pekerjaan", "menenggelamkan diri", false},
+		{"aku mau nenggelamin diri", "nenggelamin diri", false},
+	})
+	run("burnNews", burnNews, []tc{
+		{"aksi bakar diri di depan gedung", "bakar diri", true},
+		{"aku pengen bakar diri", "bakar diri", false},
 	})
 	// The context-marker gate is closed by default: every word outside the
 	// marker patterns' matches must be benign (round-3 review finding).
@@ -817,6 +1004,11 @@ func TestPostChecks(t *testing.T) {
 		"i took all my pills like the doctor said lol bye":                    false,
 		"lagi bikin surat wasiat yang sah, udah waktunya":                     false,
 		"nggak sengaja ngiris tangan pas potong bawang, sebenernya disengaja": false,
+		// A bracket or an emoticon reads as sarcasm (round-4 review finding).
+		"i accidentally cut myself ;)":                 false,
+		"i accidentally cut myself :-)":                false,
+		"i (accidentally) cut myself while cooking":    false,
+		"i hit myself on the cabinet door by accident": true,
 	}
 	for in, want := range gate {
 		if got := markersApply(in); got != want {
