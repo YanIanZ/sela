@@ -1,0 +1,9 @@
+{
+  "name": "sela-e2e",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end journeys for Sela v2 (CI installs Playwright; locally the preinstalled Playwright is used)",
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
