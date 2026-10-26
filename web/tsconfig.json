@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
     "noEmit": true
   },
   "include": ["src", "vite.config.ts"]
