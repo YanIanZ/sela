@@ -1,0 +1,108 @@
+[
+  {
+    "id": "pro-rani",
+    "name": "Rani Maheswari, M.Psi. (fiktif)",
+    "role": {"id": "Psikolog klinis (profil fiktif)", "en": "Clinical psychologist (fictional profile)"},
+    "category": "psychologist",
+    "languages": ["id"],
+    "formats": ["online", "in_person"],
+    "costTier": "low",
+    "costLabel": {"id": "Biaya demo: rendah (simulasi, tidak ada pembayaran)", "en": "Demo cost: low (simulated, no payment)"},
+    "availability": ["weekday_evening", "weekend"],
+    "area": {"id": "Kota Contoh (wilayah fiktif)", "en": "Example City (fictional area)"},
+    "bio": {"id": "Profil fiktif untuk demo. Menerima konsultasi pertama secara online pada malam hari kerja.", "en": "Fictional demo profile. Accepts first consultations online on weekday evenings."},
+    "slots": [
+      {"id": "slot-rani-1", "start": "2026-11-10T19:00:00+07:00", "format": "online", "available": true},
+      {"id": "slot-rani-2", "start": "2026-11-12T19:30:00+07:00", "format": "online", "available": true},
+      {"id": "slot-rani-3", "start": "2026-11-14T10:00:00+07:00", "format": "in_person", "available": true}
+    ],
+    "plans": ["plan-psychologist-followup"]
+  },
+  {
+    "id": "pro-campus",
+    "name": "Layanan Konseling Kampus Contoh (fiktif)",
+    "role": {"id": "Konselor kampus (layanan fiktif)", "en": "Campus counselling (fictional service)"},
+    "category": "counselor",
+    "languages": ["id", "en"],
+    "formats": ["online", "in_person"],
+    "costTier": "free",
+    "costLabel": {"id": "Biaya demo: gratis untuk mahasiswa (simulasi)", "en": "Demo cost: free for students (simulated)"},
+    "availability": ["weekday_daytime"],
+    "area": {"id": "Kampus Contoh (fiktif)", "en": "Example Campus (fictional)"},
+    "bio": {"id": "Layanan fiktif. Jadwal hanya pada jam kerja siang hari.", "en": "Fictional service. Daytime weekday appointments only."},
+    "slots": [
+      {"id": "slot-campus-1", "start": "2026-11-10T10:00:00+07:00", "format": "in_person", "available": true},
+      {"id": "slot-campus-2", "start": "2026-11-11T13:00:00+07:00", "format": "online", "available": true}
+    ],
+    "plans": ["plan-counselor-followup"]
+  },
+  {
+    "id": "pro-arif",
+    "name": "dr. Arif Santoso, Sp.KJ (fiktif)",
+    "role": {"id": "Psikiater (profil fiktif)", "en": "Psychiatrist (fictional profile)"},
+    "category": "psychiatrist",
+    "languages": ["id"],
+    "formats": ["in_person"],
+    "costTier": "standard",
+    "costLabel": {"id": "Biaya demo: standar (simulasi, tidak ada pembayaran)", "en": "Demo cost: standard (simulated, no payment)"},
+    "availability": ["weekday_daytime"],
+    "area": {"id": "Kota Contoh (wilayah fiktif)", "en": "Example City (fictional area)"},
+    "bio": {"id": "Profil fiktif. Sela tidak memilihkan psikolog atau psikiater berdasarkan kondisimu; pilihan ini hanya mengikuti preferensi yang kamu tetapkan.", "en": "Fictional profile. Sela does not choose between psychologists and psychiatrists based on your condition; this option only reflects the preferences you set."},
+    "slots": [
+      {"id": "slot-arif-1", "start": "2026-11-11T09:00:00+07:00", "format": "in_person", "available": true}
+    ],
+    "plans": ["plan-psychiatrist-followup"]
+  },
+  {
+    "id": "pro-maya",
+    "name": "Maya Lestari, M.Psi. (fiktif)",
+    "role": {"id": "Psikolog klinis (profil fiktif)", "en": "Clinical psychologist (fictional profile)"},
+    "category": "psychologist",
+    "languages": ["id", "en"],
+    "formats": ["online"],
+    "costTier": "standard",
+    "costLabel": {"id": "Biaya demo: standar (simulasi, tidak ada pembayaran)", "en": "Demo cost: standard (simulated, no payment)"},
+    "availability": ["weekday_morning", "weekend"],
+    "area": {"id": "Online (fiktif)", "en": "Online (fictional)"},
+    "bio": {"id": "Profil fiktif. Sesi online pagi hari dan akhir pekan, bahasa Indonesia atau Inggris.", "en": "Fictional profile. Early-morning and weekend online sessions in Indonesian or English."},
+    "slots": [
+      {"id": "slot-maya-1", "start": "2026-11-11T06:30:00+07:00", "format": "online", "available": true},
+      {"id": "slot-maya-2", "start": "2026-11-14T08:00:00+07:00", "format": "online", "available": true}
+    ],
+    "plans": ["plan-psychologist-followup"]
+  },
+  {
+    "id": "pro-jordan",
+    "name": "Jordan Lee, MA (fictional)",
+    "role": {"id": "Konselor (profil fiktif, berbahasa Inggris)", "en": "Counsellor (fictional profile, English-speaking)"},
+    "category": "counselor",
+    "languages": ["en"],
+    "formats": ["online"],
+    "costTier": "low",
+    "costLabel": {"id": "Biaya demo: rendah (simulasi, tidak ada pembayaran)", "en": "Demo cost: low (simulated, no payment)"},
+    "availability": ["weekday_morning", "weekend"],
+    "area": {"id": "Online (fiktif)", "en": "Online (fictional)"},
+    "bio": {"id": "Profil fiktif untuk skenario berbahasa Inggris.", "en": "Fictional profile for the English-language scenario."},
+    "slots": [
+      {"id": "slot-jordan-1", "start": "2026-11-15T07:00:00+07:00", "format": "online", "available": true}
+    ],
+    "plans": ["plan-counselor-followup"]
+  },
+  {
+    "id": "pro-community",
+    "name": "Ruang Dengar Komunitas (fiktif)",
+    "role": {"id": "Layanan dukungan komunitas (fiktif)", "en": "Community support service (fictional)"},
+    "category": "community",
+    "languages": ["id"],
+    "formats": ["online"],
+    "costTier": "free",
+    "costLabel": {"id": "Biaya demo: gratis (simulasi)", "en": "Demo cost: free (simulated)"},
+    "availability": ["weekday_evening"],
+    "area": {"id": "Online (fiktif)", "en": "Online (fictional)"},
+    "bio": {"id": "Layanan fiktif. Semua jadwal sedang penuh, untuk menunjukkan keadaan kosong yang jujur.", "en": "Fictional service. Every slot is currently full, to show an honest empty state."},
+    "slots": [
+      {"id": "slot-community-1", "start": "2026-11-10T19:00:00+07:00", "format": "online", "available": false}
+    ],
+    "plans": ["plan-counselor-followup"]
+  }
+]

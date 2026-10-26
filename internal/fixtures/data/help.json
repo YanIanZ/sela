@@ -1,0 +1,60 @@
+{
+  "helpNotice": {
+    "id": "Jika kamu dalam bahaya saat ini, hubungi layanan darurat setempat atau orang terdekat yang bisa menemanimu. Daftar di bawah hanya berlaku untuk Indonesia. Bahasa yang kamu pilih tidak menentukan negara atau layanan yang tersedia untukmu. Sela tidak memantau percakapan dan tidak dapat menghubungi siapa pun atas namamu.",
+    "en": "If you are in danger right now, contact local emergency services or someone nearby who can stay with you. The list below applies to Indonesia only. Your chosen language does not determine your country or which services are available to you. Sela does not monitor conversations and cannot contact anyone on your behalf."
+  },
+  "help": [
+    {
+      "id": "healing119-kemenkes",
+      "name": "Healing119 (Kementerian Kesehatan RI)",
+      "region": "ID",
+      "regionName": {"id": "Indonesia", "en": "Indonesia"},
+      "channels": [{"kind": "phone", "value": "119 ext 8"}, {"kind": "web", "value": "https://www.healing119.id/"}],
+      "hours": {"id": "Pagi hingga malam (menurut Kemenkes; tidak ada klaim 24 jam)", "en": "Morning to night (per the Ministry of Health; no 24-hour claim)"},
+      "cost": {"id": "Gratis", "en": "Free"},
+      "description": {"id": "Layanan kesehatan mental dan pencegahan bunuh diri Kementerian Kesehatan. Dukungan psikologis awal tanpa perlu menyebut nama, dan dapat merujuk ke layanan profesional.", "en": "Ministry of Health mental-health and suicide-prevention line. Initial psychological support without giving your name; can refer you to professional services."},
+      "sources": [
+        {"label": "healing119.id (situs resmi)", "url": "https://www.healing119.id/", "accessedOn": "2026-10-14"},
+        {"label": "Kemenkes Ditjen Kesmas, 7 Agustus 2025", "url": "https://kesprimkom.kemkes.go.id/konten/127/151/0/cegah-bunuh-diri-dukung-kesehatan-jiwa-kenali-layanan-healing119-id", "accessedOn": "2026-10-14"}
+      ],
+      "verificationStatus": "verified_official",
+      "lastVerified": "2026-10-14",
+      "verifiedBy": "Dengar.in v1 contributors (packages/config/src/index.ts)",
+      "reverifyBy": "2027-01-14"
+    },
+    {
+      "id": "lisa-helpline",
+      "name": "LISA Helpline (Bali Bersama Bisa Foundation)",
+      "region": "ID",
+      "regionName": {"id": "Indonesia", "en": "Indonesia"},
+      "channels": [{"kind": "whatsapp", "value": "+62 811-3855-472"}, {"kind": "web", "value": "https://bisahelpline.org/"}],
+      "hours": {"id": "Sesi online terjadwal; bisa masuk daftar tunggu", "en": "Scheduled online sessions; there may be a waiting list"},
+      "cost": {"id": "Gratis", "en": "Free"},
+      "description": {"id": "Dukungan emosional dan pencegahan bunuh diri lewat WhatsApp oleh pendengar terlatih, dalam bahasa Indonesia atau Inggris.", "en": "Emotional support and suicide prevention over WhatsApp by trained listeners, in Indonesian or English."},
+      "sources": [
+        {"label": "bisahelpline.org (operator LISA)", "url": "https://bisahelpline.org/", "accessedOn": "2026-10-14"}
+      ],
+      "verificationStatus": "verified_official",
+      "lastVerified": "2026-10-14",
+      "verifiedBy": "Dengar.in v1 contributors (packages/config/src/index.ts)",
+      "reverifyBy": "2027-01-14"
+    },
+    {
+      "id": "yayasan-pulih",
+      "name": "Yayasan Pulih",
+      "region": "ID",
+      "regionName": {"id": "Indonesia", "en": "Indonesia"},
+      "channels": [{"kind": "phone", "value": "021-7884-2580"}, {"kind": "whatsapp", "value": "0811-843-6633"}, {"kind": "web", "value": "https://yayasanpulih.or.id/"}],
+      "hours": {"id": "Kantor Senin–Jumat 09.00–17.00; layanan psikologi Selasa–Sabtu 09.00–16.00", "en": "Office Mon–Fri 09:00–17:00; psychological services Tue–Sat 09:00–16:00"},
+      "cost": {"id": "Tarif standar", "en": "Standard rates"},
+      "description": {"id": "Konseling trauma dan pemulihan psikologis.", "en": "Trauma counselling and psychological recovery."},
+      "sources": [
+        {"label": "yayasanpulih.or.id (situs resmi)", "url": "https://yayasanpulih.or.id/", "accessedOn": "2026-10-15"}
+      ],
+      "verificationStatus": "verified_official",
+      "lastVerified": "2026-10-15",
+      "verifiedBy": "Dengar.in v1 contributors (packages/config/src/index.ts)",
+      "reverifyBy": "2027-01-15"
+    }
+  ]
+}
