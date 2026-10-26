@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useI18n, type MessageKey } from '../i18n';
 import { Link, useRouter } from '../lib/router';
 import { useSession } from '../lib/session';
@@ -56,9 +56,11 @@ export function SharePage() {
   }, [previewKey, previewAttempt]);
   // Sharing needs a preview of the current selection: after a failed
   // request it is asked again when the connection comes back or the visitor
-  // returns to the tab (and from the retry button).
+  // returns to the tab (and from the retry button). A layout effect attaches
+  // the listeners in the same commit that shows the error, so a reconnect
+  // right after the failure is not missed.
   const failed = previewError !== null;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!failed) return;
     const again = () => setPreviewAttempt((n) => n + 1);
     window.addEventListener('online', again);
