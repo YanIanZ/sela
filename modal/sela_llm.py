@@ -46,6 +46,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import time
 import urllib.error
@@ -109,9 +110,11 @@ MAX_NUM_SEQS = 8
 # Confirm the "KV cache" and "Maximum concurrency" lines in the startup log.
 GPU_MEMORY_UTILIZATION = 0.90
 
-# Meta: reasoning cannot be turned off; "low" spends the fewest thinking
-# tokens. This is only the server default (vLLM --default-chat-template-kwargs);
-# requests override it with chat_template_kwargs.reasoning_strength.
+# Reasoning cannot be turned off (the template has no "off" level; Meta's
+# deploy guide says so in its llama.cpp section); "low" is the lowest of the
+# four documented levels. This is only the server default (vLLM
+# --default-chat-template-kwargs); requests override it with
+# chat_template_kwargs.reasoning_strength (MODEL_NOTES.md section 4a).
 DEFAULT_REASONING_STRENGTH = "low"
 
 VLLM_PORT = 8000
@@ -275,6 +278,89 @@ def verify_snapshot(directory: str, deep: bool, expected: dict | None = None) ->
             if actual != digest:
                 problems.append(f"{algorithm} mismatch: {rel_path}")
     return problems
+
+
+def fetch_verified_snapshot(
+    snapshot_download,
+    deep_verify: bool = False,
+    cache_dir: str = HF_CACHE_DIR,
+    commit=lambda: None,
+    log=print,
+    expected: dict | None = None,
+) -> dict:
+    """Download the pinned revision into cache_dir, repairing it if needed,
+    and write the verified marker only after a full digest check.
+
+    snapshot_download is huggingface_hub's (a stub in tests) and commit
+    persists Volume changes. huggingface_hub never re-fetches a file whose
+    snapshot entry (or blob) already exists, however wrong its content
+    (hf_hub_download in huggingface_hub 2.3.0), so a plain snapshot_download
+    cannot repair a corrupted snapshot. When verification
+    finds problems, this removes the verified marker and the revision's
+    snapshot entries (the links into blobs/), commits that (the GPU server
+    then refuses to start), re-downloads every file of the revision with
+    force_download=True (which overwrites the blobs) and verifies again.
+    """
+    expected = expected or EXPECTED_FILES
+    target = snapshot_dir(cache_dir)
+    marker = verified_marker_path(cache_dir)
+    hub_dir = f"{cache_dir}/hub"
+    started = time.monotonic()
+
+    def download(force: bool) -> None:
+        path = snapshot_download(MODEL_ID, revision=MODEL_REVISION, cache_dir=hub_dir, force_download=force)
+        if os.path.realpath(path) != os.path.realpath(target):
+            raise RuntimeError(f"unexpected snapshot path {path!r}; expected {target!r}")
+
+    problems: list[str] = []
+    if os.path.isfile(marker) and not deep_verify:
+        problems = verify_snapshot(target, deep=False, expected=expected)
+        if not problems:
+            log(f"Already verified: {MODEL_ID}@{MODEL_REVISION}")
+            return {"model_id": MODEL_ID, "revision": MODEL_REVISION, "downloaded": False}
+        log(f"Verified marker present, but {len(problems)} file(s) no longer match: {problems[:5]}")
+    else:
+        download(force=False)
+        log(f"Download step finished in {time.monotonic() - started:.0f}s; verifying digests (reads ~60 GB)")
+        problems = verify_snapshot(target, deep=True, expected=expected)
+        if problems:
+            log(f"{len(problems)} file(s) failed verification: {problems[:5]}")
+
+    if problems:
+        log(
+            f"Removing the verified marker and the snapshot entries of {MODEL_REVISION}, then re-downloading "
+            "every file of that revision with force_download=True (~60 GB)"
+        )
+        if os.path.isfile(marker):
+            os.remove(marker)
+        if os.path.isdir(target):
+            shutil.rmtree(target)
+        commit()
+        download(force=True)
+        log(f"Forced re-download finished in {time.monotonic() - started:.0f}s; verifying digests (reads ~60 GB)")
+        problems = verify_snapshot(target, deep=True, expected=expected)
+        if problems:
+            raise RuntimeError(
+                "snapshot verification failed after a forced re-download: "
+                + "; ".join(problems)
+                + " (manual recovery: modal/README.md step 5)"
+            )
+
+    os.makedirs(os.path.dirname(marker), exist_ok=True)
+    record = {
+        "model_id": MODEL_ID,
+        "revision": MODEL_REVISION,
+        "files": len(expected),
+        "total_bytes": sum(size for size, _, _ in expected.values()),
+        "verified_at_unix": int(time.time()),
+    }
+    tmp_marker = marker + ".tmp"
+    with open(tmp_marker, "w", encoding="utf-8") as handle:
+        json.dump(record, handle)
+    os.replace(tmp_marker, marker)
+    commit()
+    log(f"Verified {MODEL_ID}@{MODEL_REVISION} ({record['total_bytes']} bytes)")
+    return {"model_id": MODEL_ID, "revision": MODEL_REVISION, "downloaded": True}
 
 
 def build_vllm_command(model_path: str) -> list[str]:
@@ -443,45 +529,13 @@ def download_weights(deep_verify: bool = False) -> dict:
     """Download the pinned revision into the HF cache Volume and verify it.
 
     Idempotent: if a verified marker exists and sizes still match, it returns
-    without downloading (pass --deep-verify to re-hash everything). Runs on
-    CPU only. `modal run -e <env> modal/sela_llm.py::download_weights`
+    without downloading (pass --deep-verify to re-hash everything). A failed
+    check triggers one forced re-download (see fetch_verified_snapshot).
+    Runs on CPU only. `modal run -e <env> modal/sela_llm.py::download_weights`
     """
     from huggingface_hub import snapshot_download
 
-    target = snapshot_dir()
-    marker = verified_marker_path()
-    if os.path.isfile(marker) and not deep_verify:
-        problems = verify_snapshot(target, deep=False)
-        if not problems:
-            print(f"Already verified: {MODEL_ID}@{MODEL_REVISION}")
-            return {"model_id": MODEL_ID, "revision": MODEL_REVISION, "downloaded": False}
-        print("Verified marker present but files changed; re-downloading:", problems)
-
-    started = time.monotonic()
-    path = snapshot_download(MODEL_ID, revision=MODEL_REVISION, cache_dir=f"{HF_CACHE_DIR}/hub")
-    if os.path.realpath(path) != os.path.realpath(target):
-        raise RuntimeError(f"unexpected snapshot path {path!r}; expected {target!r}")
-    print(f"Downloaded in {time.monotonic() - started:.0f}s; verifying digests (reads ~60 GB)")
-
-    problems = verify_snapshot(target, deep=True)
-    if problems:
-        raise RuntimeError("snapshot verification failed: " + "; ".join(problems))
-
-    os.makedirs(os.path.dirname(marker), exist_ok=True)
-    record = {
-        "model_id": MODEL_ID,
-        "revision": MODEL_REVISION,
-        "files": len(EXPECTED_FILES),
-        "total_bytes": sum(size for size, _, _ in EXPECTED_FILES.values()),
-        "verified_at_unix": int(time.time()),
-    }
-    tmp_marker = marker + ".tmp"
-    with open(tmp_marker, "w", encoding="utf-8") as handle:
-        json.dump(record, handle)
-    os.replace(tmp_marker, marker)
-    hf_cache_volume.commit()
-    print(f"Verified {MODEL_ID}@{MODEL_REVISION} ({record['total_bytes']} bytes)")
-    return {"model_id": MODEL_ID, "revision": MODEL_REVISION, "downloaded": True}
+    return fetch_verified_snapshot(snapshot_download, deep_verify=deep_verify, commit=hf_cache_volume.commit)
 
 
 @app.server(

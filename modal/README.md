@@ -75,6 +75,16 @@ modal run -e dev modal/sela_llm.py::download_weights
 
 This downloads about 59.6 GB at the pinned revision into Volume `sela-hf-cache`, which it creates if it is missing. It verifies all 14 files (SHA-256 for LFS files, git blob SHA-1 for the rest) and writes a "verified" marker. It runs on CPU (4–8 cores, 8–32 GiB); expect tens of minutes. Running it again is cheap, because it only re-checks sizes. To re-hash everything, run `modal run -e dev modal/sela_llm.py::download_weights --deep-verify`. Check the result with `modal volume ls -e dev sela-hf-cache sela-verified`.
 
+If a size or digest check fails, the job deletes the verified marker and the revision's snapshot entries, then re-downloads every file of the revision once with `force_download=True` (about 59.6 GB again) and re-verifies. A plain re-download would not help: `huggingface_hub` reuses any file already in the cache, however corrupted. If the job still reports `snapshot verification failed after a forced re-download`, delete the model's cache folder (blobs included) and the marker, then run the job again:
+
+```bash
+modal volume rm -e dev sela-hf-cache sela-verified/cec94fcfd6512f2cfe708138c32533b346ea4f69.json
+modal volume rm -e dev -r sela-hf-cache hub/models--meta-models--Muse-Glimmer-30B
+modal run -e dev modal/sela_llm.py::download_weights
+```
+
+Deleting only `hub/models--meta-models--Muse-Glimmer-30B/snapshots/<revision>` is not enough, because the next download would link the snapshot to the same corrupted blobs.
+
 The GPU server never downloads anything. It runs with `HF_HUB_OFFLINE=1`, mounts the weights read-only, and **refuses to start** if the marker or any file is missing. That makes a missing step cost seconds of GPU time, not a 60 GB download billed at GPU rates.
 
 `modal run` registers an ephemeral copy of the whole app, so the Secret `sela-llm-api` must already exist (step 4). The ephemeral server is never called and starts no GPU.
@@ -113,7 +123,7 @@ modal workspace proxy-tokens create --name sela-dev     # prints the token id an
 modal workspace proxy-tokens list
 ```
 
-Store both values in your secret manager immediately. The token id (prefix `wk-`) is `SELA_MODAL_KEY` and the secret (prefix `ws-`) is `SELA_MODAL_SECRET`. On RBAC-enabled workspaces, scope each token to one environment with `modal workspace proxy-tokens allow <token-id> dev`; tokens outside the app's environment get 403 (https://modal.com/docs/guide/webhook-proxy-auth). Use one token per environment and per consumer, so you can revoke one with `modal workspace proxy-tokens delete`.
+Store both values in your secret manager immediately. The token id (prefix `wk-`) is `SELA_MODAL_KEY` and the secret (prefix `ws-`) is `SELA_MODAL_SECRET`. On RBAC-enabled workspaces, tokens are scoped to environments (https://modal.com/docs/guide/webhook-proxy-auth): allow each token in one environment with `modal workspace proxy-tokens allow <token-id> dev`. A valid token that is not scoped to the app's environment gets 403 (https://modal.com/docs/guide/servers). Use one token per environment and per consumer, so you can revoke one with `modal workspace proxy-tokens delete`.
 
 ### Configure the Go app
 
@@ -128,7 +138,9 @@ Store both values in your secret manager immediately. The token id (prefix `wk-`
 | `SELA_LLM_MODEL_ID` | `meta-models/Muse-Glimmer-30B` |
 | `SELA_LLM_MODEL_REVISION` | `cec94fcfd6512f2cfe708138c32533b346ea4f69` |
 
-Also keep `SELA_LLM_CONCURRENCY` at 8 or below (Modal's `max_concurrency`). Keep `SELA_LLM_OP_TIMEOUT` above the cold-start time if requests may hit a cold server. `SELA_LLM_WARM_WINDOW` (default 5m) matches the 5-minute scale-down. Request parameters the adapter must send are listed in [MODEL_NOTES.md §4](MODEL_NOTES.md#4-request-parameters-sela-must-use): `chat_template_kwargs.reasoning_strength` (not `reasoning_effort`), no `temperature: 0`, reasoning arriving in `delta.reasoning`, empty content treated as a failure, and model identity read from `/v1/models` (not `/health`).
+Also keep `SELA_LLM_CONCURRENCY` at 8 or below (Modal's `max_concurrency`). `SELA_LLM_WARM_WINDOW` (default 5m) matches the 5-minute scale-down.
+
+Cold starts and `SELA_LLM_OP_TIMEOUT`: one AI operation, including any cold start, must finish within `SELA_LLM_OP_TIMEOUT` (default 6m). The Go config accepts at most 15 minutes for it (`internal/config/config.go`), while the server's `startup_timeout` is 20 minutes, so a slow cold start can outlast any allowed operation timeout. While Modal answers its immediate 503 (no container ready yet), the Go service retries the call for up to twice `SELA_LLM_COLD_START_ESTIMATE` (default 4m, so up to 8 minutes), but never beyond the operation timeout. Before a demo, warm the server first: run the smoke test (step 9), which tolerates a cold start, and start the demo within the 5-minute warm window. Request parameters the adapter must send are listed in [MODEL_NOTES.md §4](MODEL_NOTES.md#4-request-parameters-sela-must-use): `chat_template_kwargs.reasoning_strength` (not `reasoning_effort`), no `temperature: 0`, reasoning arriving in `delta.reasoning`, empty content treated as a failure, and model identity read from `/v1/models` (not `/health`).
 
 ## 9. Run the smoke test
 
@@ -140,12 +152,12 @@ read -rs SELA_MODAL_SECRET && export SELA_MODAL_SECRET
 python3 modal/smoke_test.py --cold-start-budget 1200 > smoke-report.json; echo "exit $?"
 ```
 
-**This starts a GPU container** (about $0.80–$1.00 including the idle scale-down; see [Cost](#cost)). The report on stdout contains no secrets and no generated text; add `--show-output` to see the JSON content the model produced. Progress goes to stderr. The checks:
+**This starts a GPU container** (about $0.72 of GPU time including the 5-minute idle scale-down, at most about $0.98 with the CPU and memory caps; see [Cost](#cost)). The report on stdout contains no secrets, no generated text and no response-body text: HTTP errors appear as the status plus a fixed description (for example `HTTP 401, Modal proxy error body (modal-http)`), and schema errors name only the schema's own fields (unexpected fields are counted). Add `--show-output` to see the JSON content the model produced. Progress goes to stderr. The checks:
 
 | Check | Pass condition |
 | --- | --- |
 | `unauthenticated_rejected` | `GET /health` without credentials gets 401/403. vLLM never guards `/health`, so only Modal's proxy can reject it. If this is 200 or 503, the endpoint is public: stop the app |
-| `cold_start` | `/v1/models` reaches 200 within the budget, retrying 503/429 with capped exponential backoff. Reports `cold_start_seconds` |
+| `cold_start` | `/v1/models` reaches 200 within the budget, retrying 503/429 with capped exponential backoff. Reports `cold_start_seconds`. The budget bounds wall time: no retry starts after it, and each request's timeout is capped at the time left (at least 5 s), so a failing check ends within the budget plus a few seconds (`reason: budget exhausted`, `waited_seconds`) |
 | `models` | `sela-glimmer-cec94fc` is listed (`root_contains_revision` should be `true`) |
 | `vllm_key_enforced` | proxy token plus a wrong vLLM key gets 401. Together with `cold_start`, this proves both auth layers work through Modal's proxy (an open question, see MODEL_NOTES §4e) |
 | `chat_stream` | one streamed completion on a synthetic Indonesian sentence returns schema-valid JSON. Reports `ttfb_seconds`, `total_seconds`, `completion_tokens`, `reasoning_present`/`reasoning_fields`, `finish_reason` and `quality_signals` |
@@ -225,9 +237,9 @@ Because of `max_containers=1`, the burn rate can never exceed one GPU, whatever 
 | Image build fails at the `python --version` step | The vLLM image changed its Python layout; see the setup command in `sela_llm.py` |
 | 503 for the whole budget | Container failing to start. Read `modal app logs`. "pinned weights are missing or unverified" means run step 5. "VLLM_API_KEY … refusing to start" means fix the Secret. "vLLM exited with code …" means a flag or out-of-memory problem |
 | CUDA out of memory at startup | Lower `MAX_MODEL_LEN` or `GPU_MEMORY_UTILIZATION`, or use `--enforce-eager` (Meta's tight-memory variant). Change these in code, then redeploy |
-| 401 with body `modal-http: …` | Missing or wrong proxy token |
+| 401, error `HTTP 401, Modal proxy error body (modal-http)` | Missing or wrong proxy token |
 | 403 | RBAC: the token is not allowed in this environment |
-| 401 with JSON `{"error": "Unauthorized"}` | vLLM key mismatch, or Modal's proxy did not forward `Authorization` (MODEL_NOTES §4e) |
+| 401, error `HTTP 401, JSON error body` | vLLM key mismatch, or Modal's proxy did not forward `Authorization` (MODEL_NOTES §4e) |
 | 429 | More than 8 concurrent requests |
 | `chat_stream` has `schema_valid: false` | Possibly no grammar enforcement under the reasoning parser (MODEL_NOTES §4d); the Go-side validation must reject such output |
 | Empty content, `finish_reason` `length` or `stop` | Reasoning used up `max_tokens`; raise `--max-tokens` or keep `reasoning_strength` at `low` |

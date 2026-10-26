@@ -13,6 +13,10 @@ Checks, in order:
      proxy auth on, this never starts a GPU container.
   2. cold_start: GET /v1/models with full credentials, retrying 503/429 with
      capped exponential backoff until the budget runs out; reports seconds.
+     The budget bounds wall time, not just sleep: no retry starts after it,
+     and each request's timeout is capped at the time left (at least
+     MIN_REQUEST_TIMEOUT_S), so the check ends within the budget plus one
+     such short request.
      NOTE: this request starts a paid GPU container if none is running.
   3. models: /v1/models lists the expected served name; reports whether the
      reported "root" path contains the pinned revision.
@@ -24,8 +28,12 @@ Checks, in order:
      completion tokens, reasoning deltas, and schema validity of the content.
 
 Prints one JSON report on stdout (progress lines go to stderr). Generated
-text is included only with --show-output; reasoning text never is. Exit code
-0 when every check passed, 1 when a check failed, 2 on configuration errors.
+text is included only with --show-output; reasoning text never is. Response
+bodies are never copied into the report either: HTTP errors are reported as
+the status plus a fixed description of the body, stream error events as a
+fixed string, and schema errors name only schema-declared paths (unexpected
+properties are counted, not named). Exit code 0 when every check passed, 1
+when a check failed, 2 on configuration errors.
 
 Redirects are never followed: any 3xx fails the check that got it, so the
 credentials above can only reach SELA_LLM_BASE_URL's host (see SmokeClient).
@@ -38,6 +46,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import http.client
 import ipaddress
 import json
 import os
@@ -65,6 +74,9 @@ REQUIRED_ENV = (ENV_BASE_URL, ENV_API_KEY, ENV_MODAL_KEY, ENV_MODAL_SECRET)
 # Modal answers 503 while no container is ready (requests do not queue) and
 # 429 when a container is at max_concurrency (modal.com/docs/guide/servers).
 RETRYABLE_STATUSES = frozenset({429, 503})
+# Floor for a request whose timeout is capped at the remaining budget: a
+# request with a near-zero timeout could not succeed even on a warm server.
+MIN_REQUEST_TIMEOUT_S = 5.0
 REASONING_STRENGTHS = ("low", "medium", "high", "xhigh")
 
 # Synthetic test input: invented for this test, describes no real person.
@@ -117,6 +129,12 @@ def backoff_delays(budget_s: float, initial_s: float = 2.0, factor: float = 2.0,
         delay = min(delay * factor, max_delay_s)
 
 
+def bounded_timeout(request_timeout_s: float, remaining_s: float, floor_s: float = MIN_REQUEST_TIMEOUT_S) -> float:
+    """Request timeout capped at the remaining budget, but at least floor_s
+    (and never above request_timeout_s)."""
+    return min(request_timeout_s, max(floor_s, remaining_s))
+
+
 def _type_matches(value, expected: str) -> bool:
     if expected == "object":
         return isinstance(value, dict)
@@ -136,7 +154,11 @@ def _type_matches(value, expected: str) -> bool:
 
 
 def validate_json_schema(instance, schema: dict, path: str = "$") -> list[str]:
-    """Validate a subset of JSON Schema. Errors name paths, never values.
+    """Validate a subset of JSON Schema. Errors never contain values, and
+    paths are built only from schema-declared property names: properties the
+    schema does not declare are model-chosen, so they are counted, not named,
+    and values checked against an additionalProperties schema appear under
+    the path "<parent>.*".
 
     Supports: type (string or list), enum, const, properties, required,
     additionalProperties (bool or schema), minLength, maxLength, minimum,
@@ -168,14 +190,16 @@ def validate_json_schema(instance, schema: dict, path: str = "$") -> list[str]:
             if key not in instance:
                 errors.append(f"{path}: missing required property {key!r}")
         additional = schema.get("additionalProperties", True)
+        unexpected = 0
         for key, value in instance.items():
-            child = f"{path}.{key}"
             if key in properties:
-                errors.extend(validate_json_schema(value, properties[key], child))
+                errors.extend(validate_json_schema(value, properties[key], f"{path}.{key}"))
             elif additional is False:
-                errors.append(f"{path}: unexpected property {key!r}")
+                unexpected += 1
             elif isinstance(additional, dict):
-                errors.extend(validate_json_schema(value, additional, child))
+                errors.extend(validate_json_schema(value, additional, f"{path}.*"))
+        if unexpected:
+            errors.append(f"{path}: {unexpected} unexpected propert{'y' if unexpected == 1 else 'ies'}")
     if isinstance(instance, list):
         if "minItems" in schema and len(instance) < schema["minItems"]:
             errors.append(f"{path}: fewer than minItems")
@@ -193,6 +217,11 @@ class StreamAccumulator:
     vLLM 0.32 puts reasoning in delta.reasoning; SGLang/llama.cpp (and older
     vLLM) use delta.reasoning_content. Both are counted and the field names
     seen are reported. Reasoning text is counted, never kept.
+
+    An event that is not valid JSON, or whose choices/delta/finish_reason do
+    not have the OpenAI chunk types, counts as one malformed event (the Go
+    client rejects such a stream). An error event is recorded as a fixed
+    string with its numeric code; the provider's message is never kept.
     """
 
     def __init__(self, clock=time.monotonic, started: float | None = None):
@@ -244,23 +273,34 @@ class StreamAccumulator:
             return
         try:
             chunk = json.loads(data)
-        except ValueError:
+        except (ValueError, RecursionError):
             self.malformed_events += 1
             return
         if not isinstance(chunk, dict):
             self.malformed_events += 1
             return
         self.events += 1
-        if "error" in chunk:
-            error = chunk["error"]
-            message = error.get("message") if isinstance(error, dict) else error
-            self.errors.append(str(message)[:300])
+        if chunk.get("error") is not None or chunk.get("object") == "error":
+            self.errors.append(_stream_error_summary(chunk))
         if isinstance(chunk.get("model"), str):
             self.models.add(chunk["model"])
         if isinstance(chunk.get("usage"), dict):
             self.usage = chunk["usage"]
-        for choice in chunk.get("choices") or []:
-            delta = choice.get("delta") or {}
+        malformed = False
+        choices = chunk.get("choices")
+        if choices is None:
+            choices = []
+        elif not isinstance(choices, list):
+            choices, malformed = [], True
+        for choice in choices:
+            if not isinstance(choice, dict):
+                malformed = True
+                continue
+            delta = choice.get("delta")
+            if delta is None:
+                delta = {}
+            elif not isinstance(delta, dict):
+                delta, malformed = {}, True
             for name in ("reasoning", "reasoning_content"):
                 text = delta.get(name)
                 if isinstance(text, str) and text:
@@ -275,8 +315,23 @@ class StreamAccumulator:
                 self.content_parts.append(text)
                 if self.first_content_s is None:
                     self.first_content_s = self._clock() - self.started
-            if choice.get("finish_reason"):
-                self.finish_reason = choice["finish_reason"]
+            finish_reason = choice.get("finish_reason")
+            if isinstance(finish_reason, str):
+                if finish_reason:
+                    self.finish_reason = finish_reason
+            elif finish_reason is not None:
+                malformed = True
+        if malformed:
+            self.malformed_events += 1
+
+
+def _stream_error_summary(chunk: dict) -> str:
+    """Fixed description of an error event: its numeric code, never text."""
+    error = chunk.get("error")
+    code = error.get("code") if isinstance(error, dict) else chunk.get("code")
+    if isinstance(code, int) and not isinstance(code, bool) and 100 <= code <= 599:
+        return f"error event in stream (code {code})"
+    return "error event in stream"
 
 
 def redact(value, secret_values):
@@ -426,24 +481,31 @@ class SmokeClient:
             request.add_unredirected_header(name, value)
         return request
 
-    def get(self, path: str, auth: str) -> HttpResult:
+    def get(self, path: str, auth: str, timeout_s: float | None = None) -> HttpResult:
+        """timeout_s (default: the client's) is the socket timeout, which
+        bounds the connect and each blocking read."""
         request = self._request("GET", path, auth)
+        timeout_s = self.timeout_s if timeout_s is None else timeout_s
         try:
-            with self._opener.open(request, timeout=self.timeout_s) as response:
+            with self._opener.open(request, timeout=timeout_s) as response:
                 return HttpResult(response.status, response.read(1 << 20))
         except urllib.error.HTTPError as exc:
             return _http_error_result(exc)
-        except (urllib.error.URLError, OSError) as exc:
+        except (urllib.error.URLError, OSError, http.client.HTTPException) as exc:
             return _network_failure(exc)
 
-    def open_stream(self, path: str, payload: dict):
-        """Returns (response, None) or (None, HttpResult) on HTTP/network error."""
+    def open_stream(self, path: str, payload: dict, timeout_s: float | None = None):
+        """Returns (response, None) or (None, HttpResult) on HTTP/network error.
+
+        timeout_s (default: the client's) stays the socket timeout for every
+        read of the returned stream."""
         request = self._request("POST", path, "full", payload, streaming=True)
+        timeout_s = self.timeout_s if timeout_s is None else timeout_s
         try:
-            return self._opener.open(request, timeout=self.timeout_s), None
+            return self._opener.open(request, timeout=timeout_s), None
         except urllib.error.HTTPError as exc:
             return None, _http_error_result(exc)
-        except (urllib.error.URLError, OSError) as exc:
+        except (urllib.error.URLError, OSError, http.client.HTTPException) as exc:
             return None, _network_failure(exc)
 
 
@@ -463,9 +525,13 @@ def _http_error_result(exc: urllib.error.HTTPError) -> HttpResult:
 
 
 def _network_failure(exc: Exception) -> HttpResult:
+    """A failure without an HTTP status. OS-level errors (refused, timed out,
+    DNS, TLS) keep their local message; http.client errors (e.g. a bad status
+    line) would quote server bytes, so only their type is reported."""
     reason = getattr(exc, "reason", exc)
     fatal = isinstance(reason, (socket.gaierror, ssl.SSLError))
-    return HttpResult(None, error=f"{type(reason).__name__}: {str(reason)[:200]}", fatal=fatal)
+    error = f"{type(reason).__name__}: {str(reason)[:200]}" if isinstance(reason, OSError) else type(reason).__name__
+    return HttpResult(None, error=error, fatal=fatal)
 
 
 def _read_limited(exc: urllib.error.HTTPError) -> bytes:
@@ -478,17 +544,33 @@ def _read_limited(exc: urllib.error.HTTPError) -> bytes:
 
 
 def _error_summary(result: HttpResult) -> str | None:
+    """Status plus a fixed description of the body; never body text.
+
+    result.error, when set, was composed here (network failure or redirect
+    note) and is returned as is.
+    """
     if result.error:
         return result.error
-    payload = result.json()
-    if isinstance(payload, dict):
-        error = payload.get("error", payload.get("message"))
-        if isinstance(error, dict):
-            error = error.get("message") or error.get("type")
-        if error is not None:
-            return str(error)[:300]
-    text = result.body.decode("utf-8", "replace").strip()
-    return text[:300] or None
+    if result.status is None:
+        return None
+    return f"HTTP {result.status}, {_body_kind(result.body)}"
+
+
+def _body_kind(body: bytes) -> str:
+    """One of a fixed set of body descriptions. "modal-http:" is how Modal's
+    proxy prefixes its plain-text errors (e.g. a missing proxy token)."""
+    text = body.strip()
+    if not text:
+        return "empty body"
+    if text.startswith(b"modal-http:"):
+        return "Modal proxy error body (modal-http)"
+    try:
+        payload = json.loads(text.decode("utf-8"))
+    except (ValueError, RecursionError):
+        return "non-JSON body"
+    if isinstance(payload, dict) and ("error" in payload or "message" in payload):
+        return "JSON error body"
+    return "JSON body"
 
 
 # ---------------------------------------------------------------------------
@@ -513,14 +595,22 @@ def check_unauthenticated(client: SmokeClient) -> dict:
 
 
 def wait_for_ready(client: SmokeClient, budget_s: float, sleep=time.sleep, clock=time.monotonic) -> tuple[dict, HttpResult]:
-    """Poll /v1/models (full auth) until 200, retrying 503/429 and network errors."""
+    """Poll /v1/models (full auth) until 200, retrying 503/429 and network errors.
+
+    budget_s bounds wall time from the first attempt: a retry whose delay
+    would end past the deadline is not started, and each request's timeout
+    is capped at the time left (see bounded_timeout). The check therefore
+    ends within budget_s plus one request of at most MIN_REQUEST_TIMEOUT_S.
+    """
     started = clock()
+    deadline = started + budget_s
     status_counts: dict[str, int] = {}
     attempts = 0
     delays = backoff_delays(budget_s)
     while True:
         attempts += 1
-        result = client.get("/v1/models", auth="full")
+        timeout_s = bounded_timeout(client.timeout_s, deadline - clock())
+        result = client.get("/v1/models", auth="full", timeout_s=timeout_s)
         key = str(result.status) if result.status is not None else "network_error"
         status_counts[key] = status_counts.get(key, 0) + 1
         elapsed = clock() - started
@@ -534,6 +624,8 @@ def wait_for_ready(client: SmokeClient, budget_s: float, sleep=time.sleep, clock
             }, result
         retryable = result.status in RETRYABLE_STATUSES or (result.status is None and not result.fatal)
         delay = next(delays, None) if retryable else None
+        if delay is not None and clock() + delay > deadline:
+            delay = None  # the next attempt would start after the deadline
         if delay is None:
             summary = {
                 "ok": False,
@@ -589,8 +681,9 @@ def build_chat_payload(expected_model: str, max_tokens: int, reasoning_strength:
             "type": "json_schema",
             "json_schema": {"name": "sela_smoke", "schema": SMOKE_SCHEMA, "strict": True},
         },
-        # Muse Glimmer's chat template reads reasoning_strength (not
-        # reasoning_effort, which this template ignores).
+        # Muse Glimmer's chat template reads reasoning_strength. It does not
+        # declare reasoning_effort, so vLLM 0.32 drops that kwarg before
+        # rendering (MODEL_NOTES.md section 4a).
         "chat_template_kwargs": {"reasoning_strength": reasoning_strength},
     }
     if extra_body:
@@ -607,22 +700,34 @@ def check_chat_stream(
     sleep=time.sleep,
     clock=time.monotonic,
 ) -> tuple[dict, str]:
-    """Run one streamed completion. Returns (check, content)."""
+    """Run one streamed completion. Returns (check, content).
+
+    A 503/429 is retried until retry_budget_s of wall time has passed since
+    the first attempt: a retry whose delay would end past that deadline is
+    not started, and each retry's timeout is capped at the time left (see
+    bounded_timeout). The first attempt keeps the client's timeout, because
+    the socket timeout also governs every read of the stream it opens.
+    """
     delays = backoff_delays(retry_budget_s)
+    retry_deadline = clock() + retry_budget_s
     attempts = 0
     while True:
         attempts += 1
         started = clock()
-        response, failure = client.open_stream("/v1/chat/completions", payload)
+        timeout_s = client.timeout_s if attempts == 1 else bounded_timeout(client.timeout_s, retry_deadline - started)
+        response, failure = client.open_stream("/v1/chat/completions", payload, timeout_s=timeout_s)
         if response is not None:
             break
         retryable = failure.status in RETRYABLE_STATUSES
         delay = next(delays, None) if retryable else None
+        if delay is not None and clock() + delay > retry_deadline:
+            delay = None  # the next attempt would start after the deadline
         if delay is None:
             return {
                 "ok": False,
                 "status": failure.status,
                 "attempts": attempts,
+                "reason": "retry budget exhausted" if retryable else "non-retryable status",
                 "error": _error_summary(failure),
             }, ""
         _log(f"chat request got {failure.status}; retrying in {delay:.0f}s")
@@ -643,9 +748,14 @@ def check_chat_stream(
                 if clock() - started > deadline_s:
                     timed_out = True
                     break
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, http.client.HTTPException) as exc:
         accumulator.errors.append(f"stream read failed: {type(exc).__name__}")
-    accumulator.close()
+    except Exception as exc:  # noqa: BLE001 - any stream must still yield a report
+        accumulator.errors.append(f"stream processing failed: {type(exc).__name__}")
+    try:
+        accumulator.close()
+    except Exception as exc:  # noqa: BLE001
+        accumulator.errors.append(f"stream processing failed: {type(exc).__name__}")
     total_s = clock() - started
 
     content = accumulator.content
@@ -654,7 +764,7 @@ def check_chat_stream(
     try:
         parsed = json.loads(content)
         json_ok = True
-    except ValueError:
+    except (ValueError, RecursionError):  # RecursionError: absurdly nested JSON
         pass
     schema_errors = validate_json_schema(parsed, SMOKE_SCHEMA) if json_ok else ["content is not valid JSON"]
     usage = accumulator.usage or {}
@@ -676,6 +786,7 @@ def check_chat_stream(
             and json_ok
             and not schema_errors
             and model_matches
+            and accumulator.malformed_events == 0
         ),
         "status": status,
         "attempts": attempts,

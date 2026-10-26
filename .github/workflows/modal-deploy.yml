@@ -109,7 +109,17 @@ jobs:
             echo "::error::Could not resolve the URL of sela-llm/serve in this environment."
             exit 1
           fi
+          # The URL is not a credential (Modal proxy auth stays on), but it
+          # names the workspace. Mask the URL and its bare host, which the
+          # smoke report prints as target.host. Masking hides only output
+          # that follows; the Deploy step's own log may already show the URL.
+          deployed_host="${deployed_url#*://}"
+          deployed_host="${deployed_host%%/*}"
+          deployed_host="${deployed_host%%:*}"
           echo "::add-mask::$deployed_url"
+          if [ -n "$deployed_host" ]; then
+            echo "::add-mask::$deployed_host"
+          fi
           if [ -n "$CONFIGURED_BASE_URL" ] && [ "${CONFIGURED_BASE_URL%/}" != "${deployed_url%/}" ]; then
             echo "::error::Secret SELA_LLM_BASE_URL does not match the server deployed in this environment. Unset it or point it at this environment."
             exit 1

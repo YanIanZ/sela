@@ -56,6 +56,11 @@ TOKEN_PATTERNS = [
 ]
 EMAIL_PATTERN = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
 
+# Canaries for the report-privacy tests: they must never appear in a report.
+CANARY_KEY = "canary-model-key-q7x"
+CANARY_TEXT = "canary-generated-text-z9w"
+CANARY_ERROR_BODY = "canary-error-body-k4v"
+
 
 # ---------------------------------------------------------------------------
 # AST helpers for modal/sela_llm.py
@@ -345,6 +350,92 @@ class SelaLLMAppConfigTest(unittest.TestCase):
             missing = dict(expected, **{"absent.txt": (1, "git-sha1", "0" * 40)})
             self.assertEqual(verify(tmp, deep=False, expected=missing), ["missing: absent.txt"])
 
+    def _download_stub(self, cache_dir, contents_per_call):
+        """Stub of huggingface_hub.snapshot_download. Like the real one, it
+        keeps a file that already exists unless force_download=True."""
+        calls = []
+        target = self.ns["snapshot_dir"](cache_dir)
+
+        def snapshot_download(repo_id, revision, cache_dir, force_download=False):
+            calls.append({"repo_id": repo_id, "revision": revision, "cache_dir": cache_dir, "force": force_download})
+            for rel, data in contents_per_call[len(calls) - 1].items():
+                path = os.path.join(target, rel)
+                if os.path.exists(path) and not force_download:
+                    continue
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "wb") as handle:
+                    handle.write(data)
+            return target
+
+        return snapshot_download, calls
+
+    def _download_fixture(self):
+        good = {"config.json": b'{"a": 1}\n', "shard.safetensors": b"\x01" * 64}
+        corrupt = dict(good, **{"shard.safetensors": b"\x02" * 64})  # same size, wrong digest
+        expected = {
+            "config.json": (len(good["config.json"]), "git-sha1", hashlib.sha1(b"blob %d\0" % len(good["config.json"]) + good["config.json"]).hexdigest()),
+            "shard.safetensors": (64, "sha256", hashlib.sha256(good["shard.safetensors"]).hexdigest()),
+        }
+        return good, corrupt, expected
+
+    def test_download_repairs_a_corrupted_snapshot_with_a_forced_download(self):
+        fetch = self.ns["fetch_verified_snapshot"]
+        good, corrupt, expected = self._download_fixture()
+        with tempfile.TemporaryDirectory() as root:
+            marker = self.ns["verified_marker_path"](root)
+            stub, calls = self._download_stub(root, [corrupt, good])
+            commits, logs = [], []
+            result = fetch(stub, cache_dir=root, commit=lambda: commits.append(1), log=logs.append, expected=expected)
+            self.assertEqual(result["downloaded"], True)
+            self.assertEqual([call["force"] for call in calls], [False, True])
+            self.assertEqual({call["revision"] for call in calls}, {PINNED_REVISION})
+            self.assertEqual({call["cache_dir"] for call in calls}, {f"{root}/hub"})
+            self.assertEqual(self.ns["verify_snapshot"](self.ns["snapshot_dir"](root), deep=True, expected=expected), [])
+            with open(marker, encoding="utf-8") as handle:
+                self.assertEqual(json.load(handle)["files"], 2)
+            self.assertEqual(len(commits), 2, "one commit after discarding the bad snapshot, one after verifying")
+            self.assertTrue(any("sha256 mismatch: shard.safetensors" in line for line in logs))
+            self.assertTrue(any("force_download=True" in line for line in logs))
+
+            # Marker present but a file changed on the Volume: one forced
+            # download (a plain one would keep the truncated file).
+            with open(os.path.join(self.ns["snapshot_dir"](root), "shard.safetensors"), "wb") as handle:
+                handle.write(b"\x01" * 10)
+            stub, calls = self._download_stub(root, [good])
+            result = fetch(stub, cache_dir=root, log=lambda line: None, expected=expected)
+            self.assertEqual([call["force"] for call in calls], [True])
+            self.assertEqual(result["downloaded"], True)
+            self.assertEqual(self.ns["verify_snapshot"](self.ns["snapshot_dir"](root), deep=True, expected=expected), [])
+
+            # Verified and unchanged: nothing is downloaded.
+            stub, calls = self._download_stub(root, [])
+            result = fetch(stub, cache_dir=root, log=lambda line: None, expected=expected)
+            self.assertEqual((calls, result["downloaded"]), ([], False))
+
+    def test_download_gives_up_after_one_forced_attempt_and_drops_the_marker(self):
+        fetch = self.ns["fetch_verified_snapshot"]
+        good, corrupt, expected = self._download_fixture()
+        with tempfile.TemporaryDirectory() as root:
+            stub, _ = self._download_stub(root, [good])
+            fetch(stub, cache_dir=root, log=lambda line: None, expected=expected)
+            marker = self.ns["verified_marker_path"](root)
+            self.assertTrue(os.path.isfile(marker))
+            stub, calls = self._download_stub(root, [corrupt, corrupt])
+            commits = []
+            with self.assertRaisesRegex(RuntimeError, "after a forced re-download: sha256 mismatch: shard.safetensors"):
+                fetch(stub, deep_verify=True, cache_dir=root, commit=lambda: commits.append(1), log=lambda line: None, expected=expected)
+            self.assertEqual([call["force"] for call in calls], [False, True])
+            self.assertFalse(os.path.exists(marker), "a snapshot that failed verification must not stay marked verified")
+            self.assertEqual(len(commits), 1)
+
+    def test_download_weights_delegates_to_the_tested_flow(self):
+        node = next(n for n in self.tree.body if isinstance(n, ast.FunctionDef) and n.name == "download_weights")
+        calls = [c for c in ast.walk(node) if isinstance(c, ast.Call) and ast.unparse(c.func) == "fetch_verified_snapshot"]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(ast.unparse(calls[0].args[0]), "snapshot_download")
+        self.assertEqual(ast.unparse(_kwargs(calls[0])["commit"]), "hf_cache_volume.commit")
+        self.assertEqual(ast.unparse(_kwargs(calls[0])["deep_verify"]), "deep_verify")
+
     def test_wait_until_healthy_fails_fast_when_vllm_exits(self):
         class Exited:
             def poll(self):
@@ -439,11 +530,65 @@ class ModalDeployWorkflowTest(unittest.TestCase):
         self.assertNotRegex(self.text, r"(?m)^\s*set -[a-z]*x")
         self.assertRegex(self.text, r"(?m)^permissions:\n  contents: read$")
 
+    def test_masks_deployed_url_and_bare_host(self):
+        # The smoke report prints target.host, which masking the full URL
+        # alone would not hide.
+        self.assertIn('echo "::add-mask::$deployed_url"', self.text)
+        self.assertIn('echo "::add-mask::$deployed_host"', self.text)
+        self.assertIn('deployed_host="${deployed_url#*://}"', self.text)
+        mask_host = self.text.index('"::add-mask::$deployed_host"')
+        self.assertLess(mask_host, self.text.index("python modal/smoke_test.py"))
+
     def test_deploys_selected_environment_with_recreate(self):
         self.assertIn("MODAL_ENVIRONMENT: ${{ inputs.environment }}", self.text)
         self.assertIn('modal deploy --env "$MODAL_ENVIRONMENT" --strategy recreate modal/sela_llm.py', self.text)
         self.assertIn("python modal/smoke_test.py", self.text)
         self.assertRegex(self.text, r"if: \$\{\{ inputs\.run_smoke \}\}")
+
+
+# ---------------------------------------------------------------------------
+# Runbook and notes accuracy
+# ---------------------------------------------------------------------------
+
+
+class ModalDocsAccuracyTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.readme = README_PATH.read_text(encoding="utf-8")
+        cls.notes = NOTES_PATH.read_text(encoding="utf-8")
+
+    def test_rbac_403_cites_the_servers_guide(self):
+        paragraph = next(p for p in self.readme.split("\n\n") if "403" in p and "proxy-tokens allow" in p)
+        self.assertRegex(paragraph, r"403 \(https://modal\.com/docs/guide/servers\)")
+        self.assertNotIn("403 (https://modal.com/docs/guide/webhook-proxy-auth)", self.readme)
+
+    def test_smoke_cost_matches_the_cost_table(self):
+        row = re.search(r"\| Smoke test:[^|]*\| (\$[0-9.]+) \| (\$[0-9.]+) \|", self.readme)
+        self.assertIsNotNone(row)
+        section = self.readme.split("## 9. Run the smoke test", 1)[1].split("## 10.", 1)[0]
+        self.assertIn(row.group(1), section)
+        self.assertIn(row.group(2), section)
+        self.assertNotIn("$0.80", self.readme)
+
+    def test_op_timeout_cap_and_warm_up_documented(self):
+        config = (ROOT / "internal" / "config" / "config.go").read_text(encoding="utf-8")
+        cap = re.search(r'envDuration\("SELA_LLM_OP_TIMEOUT", [^)]*, (\d+)\*time\.Minute\)', config)
+        self.assertIsNotNone(cap, "SELA_LLM_OP_TIMEOUT cap not found in internal/config/config.go")
+        self.assertIn(f"at most {cap.group(1)} minutes", self.readme)
+        self.assertIn("SELA_LLM_COLD_START_ESTIMATE", self.readme)
+        self.assertIn("warm the server first", self.readme)
+        self.assertNotIn("above the cold-start time", self.readme)
+
+    def test_manual_snapshot_recovery_documented(self):
+        self.assertIn("modal volume rm -e dev -r sela-hf-cache hub/models--meta-models--Muse-Glimmer-30B", self.readme)
+        self.assertIn(f"modal volume rm -e dev sela-hf-cache sela-verified/{PINNED_REVISION}.json", self.readme)
+
+    def test_meta_reasoning_callouts_attributed_to_llama_cpp(self):
+        section = self.notes.split("### (a)", 1)[1].split("### (b)", 1)[0]
+        self.assertNotIn("Meta's deploy guide shows exactly this JSON", section)
+        for evidence in ("resolve_chat_template_kwargs", "find_undeclared_variables", "vllm/renderers/hf.py", PINNED_REVISION):
+            self.assertIn(evidence, section)
+        self.assertGreaterEqual(section.count("llama.cpp section"), 2)
 
 
 # ---------------------------------------------------------------------------
@@ -483,8 +628,9 @@ class SmokePureFunctionTest(unittest.TestCase):
         self.assertIn("$.language: value not in enum", errors)
         self.assertIn("$.main_concern: shorter than minLength 1", errors)
         self.assertIn("$.mentions_sleep: expected type boolean", errors)
-        self.assertIn("$: unexpected property 'extra'", errors)
+        self.assertIn("$: 1 unexpected property", errors)
         self.assertFalse(any("fr" in error or "yes" in error for error in errors), "errors must not echo values")
+        self.assertFalse(any("extra" in error for error in errors), "errors must not name model-chosen keys")
         nested = {"type": "array", "items": {"type": "integer", "maximum": 3}, "maxItems": 2}
         self.assertEqual(
             smoke_test.validate_json_schema([1, 5, True], nested),
@@ -566,12 +712,195 @@ class SmokePureFunctionTest(unittest.TestCase):
         self.assertEqual(payload["model"], "served")
 
     def test_network_failure_classification(self):
+        import http.client
         import socket
         import urllib.error
 
         self.assertTrue(smoke_test._network_failure(urllib.error.URLError(socket.gaierror(-2, "Name or service not known"))).fatal)
         self.assertFalse(smoke_test._network_failure(urllib.error.URLError(ConnectionRefusedError(111, "refused"))).fatal)
         self.assertFalse(smoke_test._network_failure(TimeoutError("timed out")).fatal)
+        self.assertEqual(smoke_test._network_failure(TimeoutError("timed out")).error, "TimeoutError: timed out")
+        # http.client errors quote server bytes; only the type is kept.
+        bad = smoke_test._network_failure(http.client.BadStatusLine(CANARY_ERROR_BODY))
+        self.assertEqual(bad.error, "BadStatusLine")
+        self.assertFalse(bad.fatal)
+
+    def test_bounded_timeout(self):
+        floor = smoke_test.MIN_REQUEST_TIMEOUT_S
+        self.assertEqual(smoke_test.bounded_timeout(120, 1000), 120)
+        self.assertEqual(smoke_test.bounded_timeout(120, 37.5), 37.5)
+        self.assertEqual(smoke_test.bounded_timeout(120, 0.2), floor)
+        self.assertEqual(smoke_test.bounded_timeout(120, -50), floor)
+        self.assertEqual(smoke_test.bounded_timeout(2, -50), 2, "never above the configured request timeout")
+
+    def test_schema_errors_never_name_model_chosen_keys(self):
+        schema = smoke_test.SMOKE_SCHEMA
+        instance = {
+            "language": "id",
+            "main_concern": "x",
+            "exact_quote": "x",
+            "mentions_sleep": True,
+            CANARY_KEY: CANARY_TEXT,
+            CANARY_KEY + "-2": {"nested": CANARY_TEXT},
+        }
+        errors = smoke_test.validate_json_schema(instance, schema)
+        self.assertEqual(errors, ["$: 2 unexpected properties"])
+        open_schema = {
+            "type": "object",
+            "properties": {"known": {"type": "object", "additionalProperties": {"type": "integer"}}},
+        }
+        errors = smoke_test.validate_json_schema({"known": {CANARY_KEY: CANARY_TEXT}, CANARY_KEY: 1}, open_schema)
+        self.assertEqual(errors, ["$.known.*: expected type integer"])
+        self.assertNotIn(CANARY_KEY, json.dumps(errors))
+        self.assertNotIn(CANARY_TEXT, json.dumps(errors))
+
+    def test_stream_accumulator_counts_bad_shapes_as_malformed(self):
+        acc = smoke_test.StreamAccumulator(clock=lambda: 0.0)
+        bad_events = [
+            {"choices": ["x"]},
+            {"choices": {"a": 1}},
+            {"choices": [{"delta": "oops"}]},
+            {"choices": [{"delta": {}, "finish_reason": {"text": CANARY_TEXT}}]},
+            {"choices": "also not a list"},
+        ]
+        good = {"model": "m", "choices": [{"delta": {"content": "ok"}, "finish_reason": "stop"}]}
+        for event in bad_events + [good]:
+            acc.feed_line("data: " + json.dumps(event))
+            acc.feed_line("")
+        acc.feed_line("data: " + "[" * 100000)  # valid prefix, absurd nesting
+        acc.feed_line("")
+        acc.close()
+        self.assertEqual(acc.malformed_events, len(bad_events) + 1)
+        self.assertEqual(acc.content, "ok")
+        self.assertEqual(acc.finish_reason, "stop")
+        self.assertEqual(acc.errors, [])
+
+    def test_stream_error_events_keep_no_message(self):
+        acc = smoke_test.StreamAccumulator(clock=lambda: 0.0)
+        for event in (
+            {"error": {"message": CANARY_TEXT, "type": "BadRequestError", "code": 400}},
+            {"object": "error", "message": CANARY_TEXT, "code": 503},
+            {"error": CANARY_TEXT},
+            {"error": None, "model": "m", "choices": []},
+        ):
+            acc.feed_line("data: " + json.dumps(event))
+            acc.feed_line("")
+        self.assertEqual(
+            acc.errors, ["error event in stream (code 400)", "error event in stream (code 503)", "error event in stream"]
+        )
+
+    def test_error_summary_never_copies_body_text(self):
+        cases = [
+            (401, b"modal-http: " + CANARY_ERROR_BODY.encode(), "HTTP 401, Modal proxy error body (modal-http)"),
+            (401, json.dumps({"error": CANARY_ERROR_BODY}).encode(), "HTTP 401, JSON error body"),
+            (500, json.dumps({"error": {"message": CANARY_ERROR_BODY, "type": CANARY_ERROR_BODY}}).encode(), "HTTP 500, JSON error body"),
+            (502, json.dumps([CANARY_ERROR_BODY]).encode(), "HTTP 502, JSON body"),
+            (503, CANARY_ERROR_BODY.encode(), "HTTP 503, non-JSON body"),
+            (404, b"", "HTTP 404, empty body"),
+        ]
+        for status, body, expected in cases:
+            with self.subTest(status=status, expected=expected):
+                self.assertEqual(smoke_test._error_summary(smoke_test.HttpResult(status, body)), expected)
+        local = smoke_test.HttpResult(None, error="ConnectionRefusedError: [Errno 111] refused")
+        self.assertEqual(smoke_test._error_summary(local), local.error)
+        self.assertIsNone(smoke_test._error_summary(smoke_test.HttpResult(None)))
+
+
+# ---------------------------------------------------------------------------
+# smoke_test.py: the cold-start budget bounds wall time (fake clock)
+# ---------------------------------------------------------------------------
+
+
+class _FakeClock:
+    def __init__(self):
+        self.now = 1000.0
+
+    def __call__(self):
+        return self.now
+
+    def sleep(self, seconds):
+        self.now += seconds
+
+
+class _SlowClient:
+    """Every request blocks for its whole timeout before it fails."""
+
+    def __init__(self, clock, timeout_s=120.0, status=None):
+        self.clock = clock
+        self.timeout_s = timeout_s
+        self.status = status  # None: socket timeout; else an HTTP status
+        self.calls = []  # (start time, timeout used)
+
+    def _block(self, timeout_s):
+        timeout_s = self.timeout_s if timeout_s is None else timeout_s
+        self.calls.append((self.clock(), timeout_s))
+        self.clock.now += timeout_s
+        if self.status is None:
+            return smoke_test.HttpResult(None, error="TimeoutError: timed out")
+        return smoke_test.HttpResult(self.status, b"no containers ready")
+
+    def get(self, path, auth, timeout_s=None):
+        return self._block(timeout_s)
+
+    def open_stream(self, path, payload, timeout_s=None):
+        return None, self._block(timeout_s)
+
+
+class SmokeWallTimeBudgetTest(unittest.TestCase):
+    """A reviewer's fake-clock run showed a 1200 s budget lasting 6480 s
+    (every attempt hung for the 120 s request timeout and was retried)."""
+
+    def assert_timeouts_capped(self, client, deadline, skip_first=False):
+        for index, (started, timeout_s) in enumerate(client.calls):
+            if skip_first and index == 0:
+                self.assertEqual(timeout_s, client.timeout_s)
+                continue
+            self.assertLessEqual(timeout_s, client.timeout_s)
+            self.assertLessEqual(timeout_s, max(smoke_test.MIN_REQUEST_TIMEOUT_S, deadline - started))
+            self.assertLessEqual(started, deadline, "no attempt may start after the deadline")
+
+    def test_cold_start_budget_bounds_wall_time(self):
+        for status in (None, 503, 429):
+            with self.subTest(status=status):
+                clock = _FakeClock()
+                client = _SlowClient(clock, timeout_s=120.0, status=status)
+                started = clock()
+                with contextlib.redirect_stderr(io.StringIO()):
+                    summary, _ = smoke_test.wait_for_ready(client, 1200.0, sleep=clock.sleep, clock=clock)
+                elapsed = clock() - started
+                self.assertFalse(summary["ok"])
+                self.assertEqual(summary["reason"], "budget exhausted")
+                self.assertLessEqual(elapsed, 1200.0 + smoke_test.MIN_REQUEST_TIMEOUT_S)
+                self.assertEqual(summary["waited_seconds"], round(elapsed, 2))
+                self.assertEqual(summary["budget_seconds"], 1200.0)
+                self.assertGreater(len(client.calls), 5, "it still retries within the budget")
+                self.assert_timeouts_capped(client, started + 1200.0)
+
+    def test_short_budget_still_allows_one_bounded_request(self):
+        clock = _FakeClock()
+        client = _SlowClient(clock, timeout_s=120.0)
+        started = clock()
+        summary, _ = smoke_test.wait_for_ready(client, 0.0, sleep=clock.sleep, clock=clock)
+        self.assertEqual(client.calls, [(started, smoke_test.MIN_REQUEST_TIMEOUT_S)])
+        self.assertEqual(summary["reason"], "budget exhausted")
+        self.assertEqual(clock() - started, smoke_test.MIN_REQUEST_TIMEOUT_S)
+
+    def test_chat_retry_budget_bounds_wall_time(self):
+        clock = _FakeClock()
+        client = _SlowClient(clock, timeout_s=30.0, status=503)
+        payload = smoke_test.build_chat_payload(PINNED_SERVED_NAME, 64, "low", None)
+        started = clock()
+        with contextlib.redirect_stderr(io.StringIO()):
+            check, content = smoke_test.check_chat_stream(
+                client, payload, PINNED_SERVED_NAME, deadline_s=600.0, retry_budget_s=120.0, sleep=clock.sleep, clock=clock
+            )
+        elapsed = clock() - started
+        self.assertEqual(content, "")
+        self.assertEqual((check["ok"], check["status"], check["reason"]), (False, 503, "retry budget exhausted"))
+        self.assertEqual(check["error"], "HTTP 503, non-JSON body")
+        self.assertGreater(check["attempts"], 2)
+        self.assertLessEqual(elapsed, 120.0 + smoke_test.MIN_REQUEST_TIMEOUT_S)
+        self.assert_timeouts_capped(client, started + 120.0, skip_first=True)
 
 
 # ---------------------------------------------------------------------------
@@ -587,18 +916,31 @@ GOOD_CONTENT = json.dumps(
         "mentions_sleep": True,
     }
 )
+# Model output whose keys and values must never reach the report.
+CANARY_CONTENT = json.dumps(
+    {
+        "language": "id",
+        "main_concern": CANARY_TEXT,
+        "exact_quote": CANARY_TEXT,
+        "mentions_sleep": True,
+        CANARY_KEY: CANARY_TEXT,
+    }
+)
 
 
 class FakeModalVLLM:
     """Imitates Modal proxy auth, cold start (503) and vLLM's API."""
 
-    def __init__(self, cold_503=0, public=False, chat_mode="ok", redirect=None):
+    def __init__(self, cold_503=0, public=False, chat_mode="ok", redirect=None, fail_paths=None):
         self.cold_503 = cold_503
         self.public = public
         self.chat_mode = chat_mode
         # redirect: {"code": 3xx, "location": url, "methods": {"GET", "POST"}}
         # answers matching requests with a redirect before any auth check.
         self.redirect = redirect
+        # fail_paths: {path: (status, content_type, body)} answered after the
+        # auth gate instead of the normal response.
+        self.fail_paths = fail_paths or {}
         self.requests = []
         self.lock = threading.Lock()
 
@@ -656,6 +998,10 @@ class FakeModalVLLM:
                 if self.path.startswith("/v1") and self.headers.get("Authorization") != f"Bearer {FAKE_API_KEY}":
                     self._send(401, {"error": "Unauthorized"})
                     return False
+                if self.path in fake.fail_paths:
+                    status, content_type, body = fake.fail_paths[self.path]
+                    self._send(status, body, content_type)
+                    return False
                 return True
 
             def do_GET(self):
@@ -683,6 +1029,8 @@ class FakeModalVLLM:
                 if self._redirected() or not self._gate():
                     return
                 content = GOOD_CONTENT if fake.chat_mode != "invalid_json" else "Tentu! " + GOOD_CONTENT
+                if fake.chat_mode == "canary":
+                    content = CANARY_CONTENT
                 reasoning_field = "reasoning_content" if fake.chat_mode == "reasoning_content" else "reasoning"
 
                 def chunk(delta, finish=None):
@@ -695,6 +1043,10 @@ class FakeModalVLLM:
                     }
 
                 events = [chunk({"role": "assistant", "content": ""})]
+                if fake.chat_mode == "bad_shapes":
+                    events += [{"choices": ["x"]}, {"choices": {"a": 1}}, {"choices": [{"delta": "oops"}]}]
+                if fake.chat_mode == "error_event":
+                    events.append({"error": {"message": CANARY_ERROR_BODY, "type": "InternalServerError", "code": 500}})
                 events += [chunk({reasoning_field: f"step {i}. "}) for i in range(3)]
                 events += [chunk({"content": content[i : i + 40]}) for i in range(0, len(content), 40)]
                 events.append(chunk({}, finish="stop"))
@@ -847,7 +1199,117 @@ class SmokeAgainstFakeServerTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertEqual(report["checks"]["cold_start"]["reason"], "non-retryable status")
         self.assertEqual(report["checks"]["cold_start"]["last_status"], 401)
+        self.assertEqual(report["checks"]["cold_start"]["error"], "HTTP 401, JSON error body")
         self.assertEqual(sleeps, [])
+
+    def test_wrong_proxy_token_reports_fixed_description(self):
+        with FakeModalVLLM() as fake:
+            report, code, _ = self.run_quietly(fake, modal_secret="test-proxy-secret-" + "c" * 16)
+        self.assertEqual(code, 1)
+        self.assertEqual(report["checks"]["cold_start"]["error"], "HTTP 401, Modal proxy error body (modal-http)")
+        self.assertNotIn("missing credentials", json.dumps(report), "proxy body text is not copied")
+
+    def run_main(self, fake, argv=()):
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            code = smoke_test.main(["--cold-start-budget", "5", *argv], environ=fake.environ(), stdout=stdout)
+        return code, stdout.getvalue(), stderr.getvalue()
+
+    def test_malformed_chunk_shapes_fail_the_check_but_the_report_is_printed(self):
+        with FakeModalVLLM(chat_mode="bad_shapes") as fake:
+            code, stdout, stderr = self.run_main(fake)
+        self.assertEqual(code, 1)
+        report = json.loads(stdout)
+        chat = report["checks"]["chat_stream"]
+        self.assertEqual(chat["malformed_events"], 3)
+        self.assertFalse(chat["ok"], "the Go client rejects such a stream, so the smoke test does too")
+        self.assertTrue(chat["schema_valid"])
+        self.assertEqual(chat["stream_errors"], [])
+        self.assert_no_secrets(stdout, stderr)
+
+    def test_unexpected_stream_exception_is_reported_without_payload(self):
+        from unittest import mock
+
+        with FakeModalVLLM() as fake:
+            with mock.patch.object(smoke_test.StreamAccumulator, "_dispatch", side_effect=KeyError(CANARY_TEXT)):
+                code, stdout, stderr = self.run_main(fake)
+        self.assertEqual(code, 1)
+        report = json.loads(stdout)
+        chat = report["checks"]["chat_stream"]
+        self.assertFalse(chat["ok"])
+        self.assertTrue(chat["stream_errors"])
+        self.assertEqual(set(chat["stream_errors"]), {"stream processing failed: KeyError"})
+        self.assertNotIn(CANARY_TEXT, stdout + stderr)
+        for name in ("unauthenticated_rejected", "cold_start", "models", "vllm_key_enforced"):
+            self.assertTrue(report["checks"][name]["ok"], name)
+
+    def test_stream_error_event_message_never_in_report(self):
+        with FakeModalVLLM(chat_mode="error_event") as fake:
+            code, stdout, stderr = self.run_main(fake)
+        self.assertEqual(code, 1)
+        chat = json.loads(stdout)["checks"]["chat_stream"]
+        self.assertEqual(chat["stream_errors"], ["error event in stream (code 500)"])
+        self.assertNotIn(CANARY_ERROR_BODY, stdout + stderr)
+
+    def test_model_output_canary_never_in_report(self):
+        with FakeModalVLLM(chat_mode="canary") as fake:
+            code, stdout, stderr = self.run_main(fake)
+        self.assertEqual(code, 1)
+        chat = json.loads(stdout)["checks"]["chat_stream"]
+        self.assertTrue(chat["json_parse_ok"])
+        self.assertEqual(chat["schema_errors"], ["$: 1 unexpected property"])
+        self.assertFalse(chat["quality_signals"]["quote_is_verbatim"])
+        for canary in (CANARY_KEY, CANARY_TEXT):
+            self.assertNotIn(canary, stdout + stderr)
+        # Control: --show-output is the only way to see the generated text.
+        with FakeModalVLLM(chat_mode="canary") as fake:
+            _, shown, _ = self.run_main(fake, ["--show-output"])
+        self.assertIn(CANARY_TEXT, shown)
+
+    def test_error_body_canary_never_in_report(self):
+        body = json.dumps({"error": {"message": CANARY_ERROR_BODY, "type": CANARY_ERROR_BODY}}).encode()
+        for path, check_name in (("/v1/models", "cold_start"), ("/v1/chat/completions", "chat_stream")):
+            with self.subTest(path=path):
+                with FakeModalVLLM(fail_paths={path: (500, "application/json", body)}) as fake:
+                    code, stdout, stderr = self.run_main(fake)
+                self.assertEqual(code, 1)
+                check = json.loads(stdout)["checks"][check_name]
+                self.assertFalse(check["ok"])
+                self.assertEqual(check["error"], "HTTP 500, JSON error body")
+                self.assertNotIn(CANARY_ERROR_BODY, stdout + stderr)
+        text_body = ("upstream said: " + CANARY_ERROR_BODY).encode()
+        with FakeModalVLLM(fail_paths={"/v1/models": (502, "text/plain", text_body)}) as fake:
+            code, stdout, stderr = self.run_main(fake)
+        self.assertEqual(json.loads(stdout)["checks"]["cold_start"]["error"], "HTTP 502, non-JSON body")
+        self.assertNotIn(CANARY_ERROR_BODY, stdout + stderr)
+
+    def test_bad_status_line_is_reported_without_server_bytes(self):
+        class Garbage(BaseHTTPRequestHandler):
+            def handle_one_request(self):
+                self.rfile.readline()
+                self.wfile.write(f"NOT-HTTP {CANARY_ERROR_BODY}\r\n\r\n".encode())
+                self.close_connection = True
+
+        httpd = ThreadingHTTPServer(("127.0.0.1", 0), Garbage)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        try:
+            environ = {
+                "SELA_LLM_BASE_URL": f"http://127.0.0.1:{httpd.server_address[1]}",
+                "SELA_LLM_API_KEY": FAKE_API_KEY,
+                "SELA_MODAL_KEY": FAKE_MODAL_KEY,
+                "SELA_MODAL_SECRET": FAKE_MODAL_SECRET,
+            }
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                code = smoke_test.main(["--cold-start-budget", "0"], environ=environ, stdout=stdout)
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+        self.assertEqual(code, 1)
+        report = json.loads(stdout.getvalue())
+        self.assertEqual(report["checks"]["unauthenticated_rejected"]["error"], "BadStatusLine")
+        self.assertEqual(report["checks"]["cold_start"]["error"], "BadStatusLine")
+        self.assertNotIn(CANARY_ERROR_BODY, stdout.getvalue() + stderr.getvalue())
 
     def test_public_endpoint_fails_auth_check(self):
         # Proxy auth off: vLLM still answers 401 on /v1 without its key, which
