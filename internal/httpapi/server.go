@@ -7,6 +7,7 @@ package httpapi
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -22,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/YanIanZ/sela/internal/account"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/research"
 )
@@ -53,6 +55,30 @@ type Options struct {
 	// MetricsToken guards GET /api/v2/metrics ("Authorization: Bearer
 	// <token>"). Empty disables the route (404).
 	MetricsToken string
+
+	// Accounts is the /api/v3 store. Nil (no database configured, a
+	// development setup) makes every /api/v3 route except the policies and
+	// auth options answer 503 store_unavailable.
+	Accounts *account.Store
+	// AccountConfig drives GET /api/v3/auth/options, the policy texts and
+	// the cookie lifetimes; it is the store's configuration when Accounts
+	// is set.
+	AccountConfig account.Config
+	// Database reports readiness for /api/v2/ready: database is ok,
+	// unavailable or not_configured; schema is current, pending, mismatch
+	// or not_configured. Nil means not configured.
+	Database func(ctx context.Context) (database, schema string)
+	// DatabaseRequired makes /api/v2/ready answer 503 unless the database
+	// is ok and its schema current (demo, staging, production).
+	DatabaseRequired bool
+	// DisableV2Journey stops serving the v2 in-memory journey routes
+	// (staging and production, ADR-0002 §12).
+	DisableV2Journey bool
+	// Clock drives the rate limiter; nil is the wall clock (tests freeze it).
+	Clock func() time.Time
+	// HSTS adds Strict-Transport-Security (max-age one year); production
+	// sets it (ADR-0002 §5).
+	HSTS bool
 }
 
 // Server is the HTTP handler.
@@ -62,10 +88,15 @@ type Server struct {
 	log    *slog.Logger
 	mux    *http.ServeMux
 	limits *limiter
-	start  time.Time
+	// authLimits holds the /api/v3 auth buckets, apart from the v2 LRU
+	// (v3_ratelimit.go).
+	authLimits *specLimiter
+	start      time.Time
 
 	closing   chan struct{} // closed by CloseStreams
 	closeOnce sync.Once
+
+	v3 v3State
 }
 
 // New builds the handler.
@@ -73,7 +104,13 @@ func New(svc *journey.Service, opt Options) *Server {
 	if opt.Logger == nil {
 		opt.Logger = slog.New(slog.DiscardHandler)
 	}
-	s := &Server{svc: svc, opt: opt, log: opt.Logger, mux: http.NewServeMux(), limits: newLimiter(), start: time.Now(), closing: make(chan struct{})}
+	s := &Server{svc: svc, opt: opt, log: opt.Logger, mux: http.NewServeMux(), limits: newLimiter(), authLimits: newSpecLimiter(),
+		start: time.Now(), closing: make(chan struct{})}
+	if opt.Clock != nil {
+		s.limits.now = opt.Clock
+		s.authLimits.now = opt.Clock
+	}
+	s.initV3()
 	s.routes()
 	return s
 }
@@ -98,6 +135,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()")
 	h.Set("Cross-Origin-Opener-Policy", "same-origin")
 	h.Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+	if s.opt.HSTS {
+		h.Set("Strict-Transport-Security", "max-age=31536000")
+	}
 	defer func() {
 		if p := recover(); p != nil {
 			s.log.Error("http.panic", "request_id", rid)

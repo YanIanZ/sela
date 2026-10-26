@@ -1,5 +1,15 @@
-// Command sela runs the Sela v2 demo: one Go process serving the /api/v2 API
-// and the static bilingual frontend, with bounded in-memory sessions.
+// Command sela runs Sela: one Go process serving /api/v3 (accounts, guests
+// and personal records in PostgreSQL), the /api/v2 demo journey (bounded
+// in-memory sessions, development, test and demo only) and the static
+// bilingual frontend. Operator subcommands live in the same binary so the
+// distroless image needs nothing else:
+//
+//	sela                       serve
+//	sela migrate status|up|dry-run|down-last
+//	sela keys generate-kek|status|rewrap
+//	sela restore reconcile [--dry-run]
+//	sela backup check --content FILE --keys FILE
+//	sela ops canary write|check
 package main
 
 import (
@@ -14,7 +24,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/YanIanZ/sela/internal/account"
 	"github.com/YanIanZ/sela/internal/config"
+	"github.com/YanIanZ/sela/internal/db"
 	"github.com/YanIanZ/sela/internal/fixtures"
 	"github.com/YanIanZ/sela/internal/httpapi"
 	"github.com/YanIanZ/sela/internal/journey"
@@ -27,10 +39,14 @@ import (
 var version = "dev"
 
 func main() {
-	if err := run(); err != nil {
+	code, err := dispatch(os.Args[1:], os.Stdout, os.Stderr)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, "sela:", err)
-		os.Exit(1)
+		if code == 0 {
+			code = 1
+		}
 	}
+	os.Exit(code)
 }
 
 func run() error {
@@ -71,6 +87,39 @@ func run() error {
 		logger.Warn("research.unavailable", "reason", err.Error())
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// Sela v3 store: PostgreSQL, checked before anything is served.
+	acctCfg := accountConfig(cfg, logger)
+	var accounts *account.Store
+	var dbStatus func(context.Context) (string, string)
+	if cfg.DatabaseURL != "" {
+		pool, err := openDatabase(ctx, cfg)
+		if err != nil {
+			return err
+		}
+		defer pool.Close()
+		migs := db.MustEmbedded()
+		if err := prepareDatabase(ctx, pool, cfg, migs, logger); err != nil {
+			return err
+		}
+		v, err := newVault(cfg)
+		if err != nil {
+			return err
+		}
+		if accounts, err = account.New(pool, v, acctCfg); err != nil {
+			return err
+		}
+		// Unknown usernames are verified with the stored argon2id
+		// parameter distribution from the first request on (ADR-0002 §6).
+		if err := accounts.RefreshHashDistribution(ctx); err != nil {
+			return fmt.Errorf("database: cannot read the password hash parameters (%s)", db.Classify(err))
+		}
+		dbStatus = readiness(pool, migs)
+		go runJobs(ctx, accounts, logger)
+	}
+
 	st := store.NewMemory(store.Options{MaxSessions: cfg.MaxSessions, MaxSessionsPerClient: cfg.MaxSessionsPerClient})
 	svc := journey.New(journey.Config{
 		OpTimeout: cfg.OpTimeout, MaxOpsPerWindow: cfg.MaxOpsPerHour, WarmWindow: cfg.WarmWindow, ColdStartEstimate: cfg.ColdStart, Logger: logger,
@@ -78,6 +127,8 @@ func run() error {
 	handler := httpapi.New(svc, httpapi.Options{
 		PublicOrigin: cfg.PublicOrigin, SecureCookies: cfg.SecureCookies, TrustProxy: cfg.TrustProxy,
 		WebDir: cfg.WebDir, Research: index, Logger: logger, Version: version, MetricsToken: cfg.MetricsToken,
+		Accounts: accounts, AccountConfig: acctCfg, Database: dbStatus, DatabaseRequired: cfg.RequiresDatabase(),
+		DisableV2Journey: cfg.Store != "memory", HSTS: cfg.Env == config.EnvProduction,
 	})
 
 	srv := &http.Server{
@@ -86,8 +137,6 @@ func run() error {
 		// No WriteTimeout: SSE streams outlive it; each operation has its own deadline.
 		IdleTimeout: 120 * time.Second, MaxHeaderBytes: 32 << 10,
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 	go func() {
 		t := time.NewTicker(time.Minute)
 		defer t.Stop()
@@ -107,7 +156,8 @@ func run() error {
 	info := provider.Info()
 	logger.Info("sela.start", "version", version, "env", cfg.Env, "addr", cfg.Addr, "llm_mode", string(info.Mode),
 		"model_id", info.ModelID, "model_revision", info.Revision, "secure_cookies", cfg.SecureCookies,
-		"max_sessions", cfg.MaxSessions, "metrics", cfg.MetricsToken != "", "fixtures", catalog.Version)
+		"max_sessions", cfg.MaxSessions, "metrics", cfg.MetricsToken != "", "fixtures", catalog.Version,
+		"store", cfg.Store, "database", cfg.DatabaseURL != "", "kek_id", cfg.KEK.ID)
 	ln, err := net.Listen("tcp", cfg.Addr)
 	if err != nil {
 		return err

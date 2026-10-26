@@ -14,7 +14,7 @@ const (
 	MaxPracticeRunes = 3000
 )
 
-// Per-session bounds on what reaches the model (SPEC V9, V23): the story with
+// Per-session bounds on what reaches the model (SPEC V9, V25): the story with
 // its clarification answers, and the ledger items (CodeLimitReached).
 const (
 	MaxStoryRunes    = MaxPracticeRunes + 5*ledger.MaxEditRunes // one answer per core field
