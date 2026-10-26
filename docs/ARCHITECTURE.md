@@ -10,16 +10,19 @@ flowchart LR
     API --> RULES[Consent / crisis / approval rules]
     RULES --> STORE[Session-scoped in-memory demo state]
     RULES --> FIX[Versioned synthetic fixtures]
-    RULES --> META[Meta adapter]
-    META --> CLOUD[Meta Model API]
+    RULES --> META[Meta generator adapter]
+    META --> CLOUD[Meta model via approved endpoint]
+    RULES --> VERIFY[Optional Claude verifier, separately consented]
+    VERIFY --> ANTHROPIC[Anthropic Sonnet 5.5 API]
 ```
 
-Go is user-confirmed. React/TypeScript + Vite and single-process static serving are engineering defaults. The target uses Node only to build frontend assets; no Node server, PostgreSQL or Redis is required for the new demo runtime. Do not claim lower memory until equivalent workloads are measured.
+The optional verifier is described in [EvidenceGuard](CLAUDE_VERIFIER.md) and has a standalone Go prototype; it is not integrated into a runnable v2 app. Go is user-confirmed. React/TypeScript + Vite and single-process static serving are engineering defaults. The target uses Node only to build frontend assets; no Node server, PostgreSQL or Redis is required for the new demo runtime. Do not claim lower memory until equivalent workloads are measured.
 
 ## Boundaries
 
 - HTTP layer validates bounds/content type/session/origin/version/idempotency before invoking application operations.
 - Application layer owns crisis gates, consent, matching, approval, sharing and transition rules. These rules are not delegated to the model.
+- The verifier uses only allowed synthetic evidence/claim IDs, after independent Anthropic consent; an LLM verdict never grants domain permissions, or substitutes for missing Meta output.
 - Provider adapter accepts a bounded seeded request and returns untrusted structured content plus provenance. Application validators decide what may be stored/displayed.
 - Store holds immutable fixture references and versioned session records. It provides atomic updates and snapshot access; no shared global patient record.
 - Professional view reads a projection of the explicitly shared snapshot, never the original session's private story/history. Demo role switching conveys no clinical identity verification.
