@@ -140,59 +140,62 @@ def run(args):
     counts = {}
     errors = {}
     date_filter = f'FIRST_PDATE:[{args.from_date} TO {args.to_date}] AND HAS_ABSTRACT:Y AND SRC:MED'
-    for theme, phrase in QUERIES.items():
-        if len(by_id) >= args.target:
-            break
-        query = f'({phrase}) AND {date_filter}'
-        cursor = '*'
-        seen_cursors = set()
-        accepted_this_theme = 0
-        pages = 0
-        while pages < args.pages_per_theme and accepted_this_theme < args.per_theme and len(by_id) < args.target:
-            if cursor in seen_cursors:
+    # Pass one gives each search theme a minimum representation; pass two
+    # backfills toward the target without excluding later regional topics.
+    for quota in (min(200, args.per_theme), args.per_theme):
+        for theme, phrase in QUERIES.items():
+            if len(by_id) >= args.target:
                 break
-            seen_cursors.add(cursor)
-            try:
-                payload = fetch(query, cursor, args.page_size, args.timeout)
-            except (HTTPError, URLError, TimeoutError, ValueError) as exc:
-                errors[theme] = str(exc)
-                print(f'ERROR [{theme}]: {exc}', file=sys.stderr)
-                break
-            items = payload.get('resultList', {}).get('result', [])
-            fetched += len(items)
-            pages += 1
-            if not items:
-                break
-            for item in items:
-                row = from_api(item, theme, args.from_date, args.to_date)
-                if row is None:
-                    continue
-                if row.get('doi') in known_doi:
-                    duplicate_hits += 1
-                    continue
-                key = primary_key(row)
-                title_fallback = (normalized_title(row['title']), row['first_publication_date'][:4])
-                if key in by_id or title_fallback in title_index:
-                    existing = by_id.get(key) or by_id[title_index[title_fallback]]
-                    if theme not in existing['themes']:
-                        existing['themes'].append(theme)
-                    duplicate_hits += 1
-                    continue
-                if not key:
-                    continue
-                by_id[key] = row
-                title_index[title_fallback] = key
-                accepted_this_theme += 1
-                if len(by_id) >= args.target or accepted_this_theme >= args.per_theme:
+            query = f'({phrase}) AND {date_filter}'
+            cursor = '*'
+            seen_cursors = set()
+            accepted_this_theme = counts.get(theme, {}).get('accepted', 0)
+            pages = 0
+            while pages < args.pages_per_theme and accepted_this_theme < quota and len(by_id) < args.target:
+                if cursor in seen_cursors:
                     break
-            new_cursor = payload.get('nextCursorMark')
-            if not new_cursor or new_cursor == cursor:
-                break
-            cursor = new_cursor
-            if args.pause:
-                time.sleep(args.pause)
-        counts[theme] = {'accepted': accepted_this_theme, 'pages': pages}
-        print(f'{theme}: {accepted_this_theme} new, {len(by_id)} total')
+                seen_cursors.add(cursor)
+                try:
+                    payload = fetch(query, cursor, args.page_size, args.timeout)
+                except (HTTPError, URLError, TimeoutError, ValueError) as exc:
+                    errors[theme] = str(exc)
+                    print(f'ERROR [{theme}]: {exc}', file=sys.stderr)
+                    break
+                items = payload.get('resultList', {}).get('result', [])
+                fetched += len(items)
+                pages += 1
+                if not items:
+                    break
+                for item in items:
+                    row = from_api(item, theme, args.from_date, args.to_date)
+                    if row is None:
+                        continue
+                    if row.get('doi') in known_doi:
+                        duplicate_hits += 1
+                        continue
+                    key = primary_key(row)
+                    title_fallback = (normalized_title(row['title']), row['first_publication_date'][:4])
+                    if key in by_id or title_fallback in title_index:
+                        existing = by_id.get(key) or by_id[title_index[title_fallback]]
+                        if theme not in existing['themes']:
+                            existing['themes'].append(theme)
+                        duplicate_hits += 1
+                        continue
+                    if not key:
+                        continue
+                    by_id[key] = row
+                    title_index[title_fallback] = key
+                    accepted_this_theme += 1
+                    if len(by_id) >= args.target or accepted_this_theme >= quota:
+                        break
+                new_cursor = payload.get('nextCursorMark')
+                if not new_cursor or new_cursor == cursor:
+                    break
+                cursor = new_cursor
+                if args.pause:
+                    time.sleep(args.pause)
+            counts[theme] = {'accepted': accepted_this_theme, 'pages': counts.get(theme, {}).get('pages', 0) + pages}
+            print(f'pass={quota} {theme}: {accepted_this_theme} accepted cumulative, {len(by_id)} total')
     candidates = sorted(by_id.values(), key=lambda r: (r['first_publication_date'], r['title']), reverse=True)
     output = ''.join(json.dumps(r, ensure_ascii=False, sort_keys=True) + '\n' for r in candidates)
     manifest = {
