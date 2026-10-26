@@ -82,3 +82,16 @@ AGENTS.md
 /data/research/sela_candidates_manifest.json
 /data/research/sela_pre2026_candidates.jsonl
 /data/research/sela_pre2026_manifest.json
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# v2 build and e2e outputs
+/build/
+/e2e/results/
+/web/dist/
+
+# Research corpus pipeline: raw API cache and open-access full-text cache (never commit full text)
+/data/research/corpus/.cache/
+/data/research/corpus/.cache/fulltext/
