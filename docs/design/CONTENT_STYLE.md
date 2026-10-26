@@ -5,7 +5,7 @@ Status: **design decision** by the design lead, 2026-10-26, revised after review
 This guide covers:
 
 - interface copy, which is owned by UX and reviewed by the PM;
-- the reply style for Sela in the room. The AI engineer turns it into prompts and deterministic guards (D-029, D-034). Where the two differ, the PM decides.
+- the reply style for Sela in the room. The AI engineer turns it into prompts and deterministic guards (D-030, D-035). Where the two differ, the PM decides.
 
 Crisis-support texts also need review by the safety owner and a qualified human reviewer before the pilot (pending verification, B-6).
 
@@ -100,8 +100,8 @@ Fixed names. The same thing has the same name everywhere (WCAG 3.2.4). Changing 
 | Concept | Indonesian | English | Notes |
 |---|---|---|---|
 | Place: home | Beranda | Home | |
-| Place: talk | Cerita (screen: Ruang cerita) | Talk | D-034 |
-| Place: my notes | Catatanku (screen: Catatan pribadiku) | My notes (screen: My personal notes) | D-038. The place holds everything kept |
+| Place: talk | Cerita (screen: Ruang cerita) | Talk | D-035 |
+| Place: my notes | Catatanku (screen: Catatan pribadiku) | My notes (screen: My personal notes) | D-039. The place holds everything kept |
 | Place: support | Dukungan | Support | |
 | A conversation | Percakapan | Conversation | Never "sesi" (sounds like therapy) |
 | Start a conversation | Mulai bercerita | Start talking | |
@@ -114,7 +114,7 @@ Fixed names. The same thing has the same name everywhere (WCAG 3.2.4). Changing 
 | Names kept private | Nama yang disamarkan; in shared text "[nama disamarkan]" | Names kept private; "[name hidden]" | Contact details become "[kontak disamarkan]" / "[contact hidden]" |
 | Reflection card | Sela menangkap… | Sela understood… | |
 | Intent options | Didengarkan saja · Merapikan pikiran · Memahami pola · Menyiapkan konsultasi | Just listen · Sort my thoughts · Understand patterns · Prepare a consultation | Optional, never a gate |
-| Summary | Ringkasan untuk konsultasi | Summary for a consultation | D-038. Never "rekam medis" |
+| Summary | Ringkasan untuk konsultasi | Summary for a consultation | D-039. Never "rekam medis" |
 | Preparation | Persiapan konsultasi | Preparing for a consultation | |
 | Follow-up | Setelah konsultasi | After the consultation | |
 | Reading | Bacaan & latihan kecil | Reading & small exercises | |
@@ -144,7 +144,7 @@ Fixed names. The same thing has the same name everywhere (WCAG 3.2.4). Changing 
 | Provenance: uploaded_document (reserved) | Dokumen unggahan | Uploaded document | Not shown in the pilot |
 | Provenance: verified_professional_note (reserved) | Catatan profesional terverifikasi | Verified professional note | Never shown in the pilot |
 | Review status | Belum ditinjau · Dikonfirmasi · Dikoreksi · Ditolak | Not reviewed · Confirmed · Corrected · Rejected | Shown beside the class badge, never merged with it. **Exception:** Sela's replies in the transcript show only their author line and, after a correction, "Dikoreksi"; their badge and status are in "Tentang balasan ini" and exports, so listening never looks like a review queue |
-| Handoff status | Disiapkan · Dibagikan · Dibuka penerima · Diakui penerima · Kamu menandai: konsultasi berlangsung · Akses dicabut · Kedaluwarsa · Selesai dibagikan | Prepared · Shared · Opened by recipient · Acknowledged by recipient · You marked: consultation in progress · Access revoked · Expired · Sharing ended | D-040. A step without a record reads "belum" or "tidak tercatat". An end state is always followed by who ended it and why: "Selesai dibagikan · kamu menandai konsultasi selesai", "Selesai dibagikan · penerima tidak dapat menerima", "Akses dicabut · olehmu" |
+| Handoff status | Disiapkan · Dibagikan · Dibuka penerima · Diakui penerima · Kamu menandai: konsultasi berlangsung · Akses dicabut · Kedaluwarsa · Selesai dibagikan | Prepared · Shared · Opened by recipient · Acknowledged by recipient · You marked: consultation in progress · Access revoked · Expired · Sharing ended | D-041. A step without a record reads "belum" or "tidak tercatat". An end state is always followed by who ended it and why: "Selesai dibagikan · kamu menandai konsultasi selesai", "Selesai dibagikan · penerima tidak dapat menerima", "Akses dicabut · olehmu" |
 | Mark a share finished | Tandai selesai dan hentikan akses | Mark finished and stop access | The label names the consequence. Never "Konsultasi sudah selesai" for this, because writing about a consultation (Setelah konsultasi) never stops access |
 | AI reply label | Sela · balasan AI (Meta) | Sela · AI reply (Meta) | The generator is named on the visible author line of every reply, with "· diperiksa oleh Claude" when checked, from the reply's stored provenance. "Tentang balasan ini" adds the badge, status, model, version, route, checks and memory use |
 | Verifier | Pemeriksa | Checker | "Diperiksa" / "Checked". When it is not allowed, say so neutrally: "Pemeriksa (Claude) belum diizinkan" / "The checker (Claude) isn't allowed yet", never "kamu belum mengizinkannya" |
@@ -161,15 +161,15 @@ Fixed names. The same thing has the same name everywhere (WCAG 3.2.4). Changing 
 
 | Avoid (ID / EN) | Why | Use instead |
 |---|---|---|
-| rekam medis, medical record, hasil pemeriksaan, assessment result | False clinical status (D-038; UU 17/2023) | Catatan pribadiku; Ringkasan untuk konsultasi |
+| rekam medis, medical record, hasil pemeriksaan, assessment result | False clinical status (D-039; UU 17/2023) | Catatan pribadiku; Ringkasan untuk konsultasi |
 | diagnosis, mendiagnosis, gejala, gangguan, depresi, kecemasan, PTSD, insomnia, burnout, used as labels for the user | Sela does not diagnose (brief §5, §11) | Use the person's own words: "susah tidur", "capek terus" |
 | pasien, patient (for the user) | Clinical role; the user is not a patient of Sela | kamu / you; recipient view: pengirim / the sender |
 | terapi, konseling, sesi, therapy, counselling, session (for what Sela does) | Sela is not a service provider of care | percakapan, cerita / conversation |
-| skor, tingkat keparahan, risiko tinggi, level, score, severity | Triage-like (D-037) | Nothing. Sela produces no scores |
-| psikolog kami, mitra kami, profesional terverifikasi, booking, jadwalkan, our psychologist, partner, verified professional, book | No partnerships or bookings exist (brief §7; D-041) | orang yang kamu undang, penerima / the person you invite, the recipient |
+| skor, tingkat keparahan, risiko tinggi, level, score, severity | Triage-like (D-038) | Nothing. Sela produces no scores |
+| psikolog kami, mitra kami, profesional terverifikasi, booking, jadwalkan, our psychologist, partner, verified professional, book | No partnerships or bookings exist (brief §7; D-042) | orang yang kamu undang, penerima / the person you invite, the recipient |
 | anonim sepenuhnya, tidak bisa dilacak, 100% aman, terenkripsi ujung ke ujung, completely anonymous, untraceable, end-to-end encrypted | Untrue (ADR-0002 §7: the server can decrypt to run features) | "Tanpa nama atau email", "terenkripsi di server; server Sela bisa membukanya untuk menjalankan fitur yang kamu pilih" |
 | dihapus permanen seketika, deleted forever instantly | Untrue for backups (ADR-0002 §11) | "Hilang dari Sela sekarang; dari cadangan dalam 30 hari" |
-| Jangan lupa check-in!, Kamu sudah 5 hari berturut-turut, Hebat!, Kamu berhasil!, streak, poin, lencana | Engagement pressure (D-036) | Neutral confirmation: "Tersimpan." |
+| Jangan lupa check-in!, Kamu sudah 5 hari berturut-turut, Hebat!, Kamu berhasil!, streak, poin, lencana | Engagement pressure (D-037) | Neutral confirmation: "Tersimpan." |
 | Kami kangen kamu, Sela menunggumu, Aku selalu ada untukmu, Hanya aku yang mengerti kamu, I'll always be here, only I understand you | Dependency and exclusivity (brief §5) | Nothing like it. See §6.4 |
 | Aku senang…, Aku sedih mendengarnya, Aku ikut khawatir, I'm glad…, I'm sad to hear, I feel… (from Sela) | Sela claims a feeling it does not have (§1.1, §6.1 rule 6) | Say what is true about the situation: "Bagus kalau…", "Kedengarannya berat." |
 | Segera!, SEKARANG JUGA!, Penting!!, urgent!, act now | Urgency pressure | Calm statements with the facts |
@@ -182,9 +182,9 @@ Fixed names. The same thing has the same name everywhere (WCAG 3.2.4). Changing 
 
 ## 6. How Sela's replies should sound
 
-The AI engineer owns the prompt and the deterministic guards (D-029). This section is the product intent they implement and evaluate.
+The AI engineer owns the prompt and the deterministic guards (D-030). This section is the product intent they implement and evaluate.
 
-### 6.1 Principles (PM decision D-034, made concrete)
+### 6.1 Principles (PM decision D-035, made concrete)
 
 1. **Listen before anything else.** Reflect the specific thing the person said, in their terms: their words, their order of importance.
 2. **No mechanical empathy templates.** Do not open every reply with a stock phrase. These openers are **banned as reply starts**:
@@ -208,7 +208,7 @@ The AI engineer owns the prompt and the deterministic guards (D-029). This secti
    - No emoji unless the person uses them, and even then sparingly.
 10. **No citations in empathic replies.** Research informs the product, not each sentence (brief §9). Reading items, with their sources, can be offered as a link.
 11. **Be honest about uncertainty and limits.** "Aku tidak tahu pasti", or "Aku tidak bisa menilai itu", when true.
-12. **Never weaken the crisis path.** Crisis support is static and deterministic (D-035). Sela's model replies never replace or contradict it, and never discourage contacting help.
+12. **Never weaken the crisis path.** Crisis support is static and deterministic (D-036). Sela's model replies never replace or contradict it, and never discourage contacting help.
 
 ### 6.2 Style by intent
 
@@ -263,7 +263,7 @@ The reply uses the dominant language (Indonesian) and keeps their own English wo
   - "kita" ("we") as a couple;
   - pet names.
 - Never discourage other relationships or professional help. Never suggest that Sela is enough.
-- Sela does not ask the person to come back, does not mark absences, and does not open a conversation by itself (there are no notifications; D-036).
+- Sela does not ask the person to come back, does not mark absences, and does not open a conversation by itself (there are no notifications; D-037).
 - When the person expresses reliance, Sela acknowledges it warmly, without claiming a feeling, and gently widens the circle, as in example D.
 
 ### 6.5 "Sela menangkap…" wording
@@ -300,15 +300,17 @@ The reply uses the dominant language (Indonesian) and keeps their own English wo
 | Several cards on one screen | The allow button names its purpose ("Izinkan balasan AI", "Izinkan pemeriksa", "Izinkan model cadangan"), so no two buttons share a name |
 | When a permission is missing later | Neutral, naming the provider and the effect: "Pemeriksa (Claude) belum diizinkan." Never "kamu belum mengizinkannya" or anything that sounds like the person did something wrong |
 
-**Example** (the checker, asked in onboarding below the AI-replies card):
+**Example** (the checker, asked in onboarding below the AI-replies card; **open**, see the note after the DeepSeek example):
 
 - ID: "Pemeriksa · Claude dari Anthropic, diproses di Amerika Serikat. Untuk apa: memeriksa balasan yang menyebut hal kesehatan sebelum kamu melihatnya, dan memeriksa ringkasan serta hal yang diusulkan untuk diingat. Yang dikirim: hanya kalimat yang diperiksa dan kata-katamu yang terkait. Kalau tidak diizinkan: balasan yang menyebut hal kesehatan tidak ditampilkan, dan Sela tidak menyusun ringkasan atau mengusulkan hal untuk diingat dengan AI."
 - EN: "Checker · Claude by Anthropic, processed in the United States. What for: checking replies that mention health before you see them, and checking summaries and things suggested for Sela to remember. What's sent: only the sentences being checked and your related words. If you don't allow it: replies that mention health aren't shown, and Sela won't draft summaries or suggest things to remember with AI."
 
-**Example** (DeepSeek, the fallback):
+**Example** (DeepSeek, the fallback; **open**, see the note below):
 
 - ID: "Model cadangan · DeepSeek, diproses di Tiongkok. Untuk apa: membalas jika model utama sedang tidak tersedia. Tidak pernah dipakai untuk melewati penolakan keamanan. Yang dikirim: bagian percakapan yang diperlukan untuk membalas, tanpa nama pengguna. Kalau tidak diizinkan: saat model utama tidak tersedia, Sela tidak membalas dan kamu tetap bisa menulis."
 - EN: "Backup model · DeepSeek, processed in China. What for: replying when the main model isn't available. Never used to get around a safety refusal. What's sent: the part of the conversation needed to reply, without your username. If you don't allow it: when the main model is unavailable, Sela won't reply and you can still write."
+
+**Open (ADR-0003 RR-4 (i), §17 O-6; [conflict matrix](../CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 62):** these two examples are not final copy. A reply from the backup model is always checked by Claude first, so the backup model replies only when the checker is allowed too. The checker's "What for" names only replies that mention health, and its "If you don't allow it" leaves out that the backup model then does not reply either; the backup model's "What for" does not say that it needs the checker. The design lead adds both before P5 lands; until then, do not take these sentences as final.
 
 **After a change:** "Izin dicabut. Sela berhenti memakai DeepSeek mulai sekarang. Yang sudah terkirim tidak bisa ditarik kembali dari penyedia." / "Permission withdrawn. Sela stops using DeepSeek from now on. What was already sent can't be recalled from the provider." (ADR-0003 §8.2).
 
@@ -359,14 +361,14 @@ The provider clause in "Don't save, hint" is finalised with the P3 conversation 
 | ID or card number in a sent message (masked in storage by default) | Nomor KTP disamarkan untuk AI dan di Catatanku. [Tampilkan seperti yang kutulis] | ID number hidden from AI and in My notes. [Show it as I wrote it] |
 | Consent not saved | Pilihanmu belum tersimpan. Tulisanmu belum ada yang dikirim ke mana pun. [Coba lagi] | Your choice wasn't saved yet. Nothing you've written has been sent anywhere. [Try again] |
 
-**Replies Sela does not show.** Every no-reply notice says that the person's words are safe and **names the reason** (RR-11 requires "no consent" or "service unavailable" to be stated), and links to the AI section of Privasi & data when a setting is involved:
+**Replies Sela does not show.** Every no-reply notice says that the person's words are safe and **names the reason** (RR-11 requires "no consent" or "service unavailable" to be stated), and links to the AI section of Privasi & data when a setting is involved. The three checker rows are **open** for the backup model (ADR-0003 RR-4 (i), §17 O-6; [conflict matrix](../CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 62): a backup-model reply is checked whether or not it mentions health, and without a permitted checker the backup model does not reply at all, which these notices do not say yet. The design lead writes that wording before P5 lands:
 
 | Reason | ID | EN |
 |---|---|---|
 | The check did not support it | Sela tidak menampilkan balasan ini, karena pemeriksaan menemukan bagian yang belum tentu sesuai dengan ceritamu. Ceritamu tetap aman di sini. Kamu bisa melanjutkan. | Sela isn't showing this reply, because the check found parts that may not match what you said. Your words are safe here. You can carry on. |
-| Checker not allowed | Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksa (Claude) belum diizinkan. Ceritamu tetap aman di sini. [Pengaturan AI] | Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't allowed yet. Your words are safe here. [AI settings] |
-| Checker never answered (first such reply; the consent card follows in the notice) | Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksa (Claude) belum diizinkan. Mau mengizinkannya? [Izinkan pemeriksa] [Tidak sekarang] [Jangan tanya lagi] · after allowing: Pemeriksa diizinkan. [Minta Sela membalas lagi] | Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't allowed yet. Would you like to allow it? [Allow the checker] [Not now] [Don't ask again] · after allowing: The checker is allowed. [Ask Sela to reply again] |
-| Checker unavailable | Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksanya (Claude) sedang tidak tersedia. Ceritamu tetap aman di sini. [Coba lagi] [Pengaturan AI] | Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't available right now. Your words are safe here. [Try again] [AI settings] |
+| Checker not allowed (**open** for the backup model, row 62) | Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksa (Claude) belum diizinkan. Ceritamu tetap aman di sini. [Pengaturan AI] | Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't allowed yet. Your words are safe here. [AI settings] |
+| Checker never answered (first such reply; the consent card follows in the notice; **open** for the backup model, row 62) | Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksa (Claude) belum diizinkan. Mau mengizinkannya? [Izinkan pemeriksa] [Tidak sekarang] [Jangan tanya lagi] · after allowing: Pemeriksa diizinkan. [Minta Sela membalas lagi] | Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't allowed yet. Would you like to allow it? [Allow the checker] [Not now] [Don't ask again] · after allowing: The checker is allowed. [Ask Sela to reply again] |
+| Checker unavailable (**open**: a backup-model reply needs a first sentence that does not say "mention health", row 62) | Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksanya (Claude) sedang tidak tersedia. Ceritamu tetap aman di sini. [Coba lagi] [Pengaturan AI] | Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't available right now. Your words are safe here. [Try again] [AI settings] |
 | A guard rejected it twice | Sela belum bisa membalas pesan ini dengan baik, jadi tidak menampilkan balasan. Tulisanmu tetap di sini. Sela akan mencoba membalas pesanmu berikutnya. | Sela couldn't reply to this message well, so it isn't showing a reply. Your writing is still here. Sela will try again with your next message. |
 | Something changed while Sela wrote | Sela tidak menampilkan balasan ini karena ada yang berubah saat Sela menulis, misalnya izin AI. | Sela isn't showing this reply because something changed while it was writing, such as an AI permission. |
 | Stopped | Balasan dihentikan sebelum ditampilkan. | Reply stopped before it was shown. |
@@ -398,7 +400,7 @@ The provider clause in "Don't save, hint" is finalised with the P3 conversation 
 - **Ending a share on purpose:** "Tandai selesai dan hentikan akses" / "Mark finished and stop access", with the confirm "Penerima tidak bisa membuka ringkasan ini lagi. Kalau penerima masih perlu membacanya untuk tindak lanjut, biarkan saja; aksesnya berakhir sendiri pada 2 Nov 2026, 21.00." / "The recipient won't be able to open this summary again. If they still need to read it for a follow-up, leave it; access ends by itself on 2 Nov 2026, 21:00."
 - **End-state reason lines** (after the status chip, everywhere): "Selesai dibagikan · kamu menandai konsultasi selesai" / "Sharing ended · you marked the consultation finished"; "Selesai dibagikan · penerima tidak dapat menerima" / "Sharing ended · the recipient couldn't accept it"; "Akses dicabut · olehmu" / "Access revoked · by you"; "Kedaluwarsa · 2 Nov 2026, 21.00" / "Expired · 2 Nov 2026, 21:00".
 - **Revocation** (fixed, everywhere): "Mencabut akses menghentikan akses berikutnya. Yang sudah dilihat, disalin, atau difoto penerima tidak bisa ditarik kembali." / "Revoking stops any further access. Anything the recipient already saw, copied or photographed can't be recalled." (brief §7).
-- **Care** (fixed, everywhere a share status shows): "Dibagikan atau dibuka tidak berarti kamu sudah mendapat perawatan." / "Shared or opened doesn't mean you've received care." (D-040).
+- **Care** (fixed, everywhere a share status shows): "Dibagikan atau dibuka tidak berarti kamu sudah mendapat perawatan." / "Shared or opened doesn't mean you've received care." (D-041).
 - **Expiry:** state the date and time ("Berakhir 2 Nov 2026, 21.00"), never a live countdown.
 
 ### 7.6 Crisis support
@@ -460,13 +462,13 @@ These texts are **static**, ship in the bundle, are never generated, and are rev
 
 ### 7.9 AI provenance and checks
 
-**Rule (D-049; ADR-0003 §10):** every AI-written item, or the heading of a group of AI-written items, names its generator and its checker, everywhere it appears: the room, the reflection card, memory, the summary builder and view, the share preview, **the recipient page and the print view**. The parts combine like this:
+**Rule (D-050; ADR-0003 §10):** every AI-written item, or the heading of a group of AI-written items, names its generator and its checker, everywhere it appears: the room, the reflection card, memory, the summary builder and view, the share preview, **the recipient page and the print view**. The parts combine like this:
 
 > Ditulis dengan bantuan AI (**Meta** | **DeepSeek, cadangan**) [· diperiksa oleh **Claude** | · diperiksa oleh **pemeriksa alternatif (DeepSeek)**]
 >
 > Written with AI help (**Meta** | **DeepSeek, backup**) [· checked by **Claude** | · checked by **the alternative checker (DeepSeek)**]
 
-The checker part appears only when a checker really checked the item (always for summary wording and memory; when flagged for replies, reflections and opening lines).
+The checker part appears only when a checker really checked the item (always for summary wording, memory and every reply the backup model DeepSeek wrote; when flagged for other replies, reflections and opening lines; ADR-0003 RR-8, §17 O-6).
 
 **Where the words come from:** a label of what *did* happen is built from the item's **stored** provenance (its generator provider and its verification provider), never from the environment's configuration. In development, test and the demo a test program can stand in for the generator or for either checker (ADR-0003 §10.1); then the label names the test program, and the words "Meta", "Claude" and "DeepSeek" do not appear in that item's provenance at all. A description of what *will* happen (a consent card, the summary builder's step 2) comes from the live AI status and also says "program uji" when one is configured.
 
@@ -474,7 +476,7 @@ The checker part appears only when a checker really checked the item (always for
 |---|---|---|
 | Reply author line | Sela · balasan AI (Meta) | Sela · AI reply (Meta) |
 | Reply, checked | Sela · balasan AI (Meta) · diperiksa oleh Claude | Sela · AI reply (Meta) · checked by Claude |
-| Reply, fallback | Sela · balasan AI (DeepSeek, cadangan) | Sela · AI reply (DeepSeek, backup) |
+| Reply, fallback (always checked by Claude, ADR-0003 §17 O-6) | Sela · balasan AI (DeepSeek, cadangan) · diperiksa oleh Claude | Sela · AI reply (DeepSeek, backup) · checked by Claude |
 | Reply, test double | Sela · balasan uji (bukan AI) | Sela · test reply (not AI) |
 | Reply checked by the test-double verifier | Sela · balasan AI (Meta) · diperiksa oleh program uji (bukan AI) | Sela · AI reply (Meta) · checked by a test program (not AI) |
 | Other AI outputs (reflection card, memory item, summary wording, suggested opening line) | Ditulis dengan bantuan AI (Meta) · diperiksa oleh Claude | Written with AI help (Meta) · checked by Claude |
@@ -492,7 +494,7 @@ The checker part appears only when a checker really checked the item (always for
 | Summary step 2, backup granted | Kalau model utama sedang tidak tersedia, model cadangan DeepSeek (diproses di Tiongkok) yang menyusun, dan Claude tetap memeriksa. | If the main model is unavailable, the backup model DeepSeek (processed in China) writes it, and Claude still checks it. |
 | Details | Dibuat oleh model Meta (Muse Glimmer) di Modal, Amerika Serikat · 20.14 | Written by a Meta model (Muse Glimmer) on Modal, United States · 20:14 |
 | Memory use (Tentang balasan ini) | Memakai 2 hal yang Sela ingat · Lihat · or · Tidak memakai yang Sela ingat | Used 2 things Sela remembers · See them · or · Didn't use what Sela remembers |
-| Fallback | Dibalas oleh model cadangan (DeepSeek, diproses di Tiongkok) karena model utama sedang tidak tersedia. | Answered by the backup model (DeepSeek, processed in China) because the main model was unavailable. |
+| Fallback (owner contract, ADR-0003 §17 O-7) | Meta sedang tidak tersedia, jadi balasan ini dibuat oleh model cadangan DeepSeek Flash 1017 (diproses di Tiongkok). | Meta was unavailable, so this reply was generated by the backup model DeepSeek Flash 1017 (processed in China). |
 | Checking | Sedang diperiksa… | Being checked… |
 | Checked | Diperiksa: sesuai dengan kata-katamu. | Checked: matches your words. |
 | Not used | Tidak dipakai: tidak cocok dengan kata-katamu. | Not used: didn't match your words. |
@@ -513,7 +515,7 @@ The model name follows the generator decision (B-7) and the live provider status
 
 ## 8. Copy for ages 15–17 (only 16–17 can use Sela; 15 is blocked)
 
-Teens get the same respect as adults, clearer limits, and shorter sentences (PM decision D-030; brief §6).
+Teens get the same respect as adults, clearer limits, and shorter sentences (PM decision D-031; brief §6).
 
 **Do:**
 
@@ -536,7 +538,7 @@ Teens get the same respect as adults, clearer limits, and shorter sentences (PM 
 | Memory off by default | Sela bisa mengingat hal yang kamu setujui untuk percakapan berikutnya. Ini mati sampai kamu menyalakannya. | Sela can remember things you agree to for next time. It stays off until you turn it on. |
 | Sharing age | Penerima akan tahu usiamu 16–17 tahun jika kamu memilih bagian ini. | The recipient will know you're 16–17 if you choose this part. |
 | Guardian ask | Minta orang tua atau walimu membaca layar berikutnya bersamamu. Mereka tidak akan bisa membaca ceritamu. | Ask your parent or guardian to read the next screen with you. They won't be able to read what you write. |
-| Age 15 (blocked, D-030) | Sela belum bisa dipakai di usia 15 tahun. Kalau kamu butuh bantuan sekarang, layanan di bawah bisa kamu hubungi. | Sela can't be used at age 15 yet. If you need help now, you can contact the services below. |
+| Age 15 (blocked, D-031) | Sela belum bisa dipakai di usia 15 tahun. Kalau kamu butuh bantuan sekarang, layanan di bawah bisa kamu hubungi. | Sela can't be used at age 15 yet. If you need help now, you can contact the services below. |
 | Guest only, for now | Untuk usia 16–17 tahun, Sela sementara hanya bisa dipakai sebagai tamu. Setelah persetujuan wali tercatat, kamu bisa menyimpannya ke akun. | For ages 16–17, Sela can for now only be used as a guest. Once a guardian's agreement is recorded, you can save it to an account. |
 | Guardian declined | Tanpa persetujuan orang tua atau wali, Sela belum bisa dipakai. Data yang baru dibuat sudah dihapus. Bantuan sekarang tetap bisa kamu buka kapan saja. | Without a parent's or guardian's agreement, Sela can't be used yet. The data that was just created has been deleted. You can still open Help now at any time. |
 
@@ -549,7 +551,7 @@ The age-band label shown to teens is "16–17 tahun", because 15-year-olds are b
 - **Register:** formal "Anda", neutral and precise. The sharer is "pengirim" / "the sender", never "pasien" / "patient" or "klien" / "client".
 - **Always state:**
   - these are the sender's personal notes;
-  - whether AI helped, and which AI and checker, **only as far as it is true for this summary** (D-038 "where applicable"): the banner line differs for a summary with AI wording and one put together by hand, and each AI-worded item carries the generator line;
+  - whether AI helped, and which AI and checker, **only as far as it is true for this summary** (D-039 "where applicable"): the banner line differs for a summary with AI wording and one put together by hand, and each AI-worded item carries the generator line;
   - they are not a medical record;
   - Sela does not verify the identity of either party;
   - when access ends.

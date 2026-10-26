@@ -27,11 +27,11 @@ The model is four **places**, two **safety controls** on every screen and one **
 - **Beranda** (Home): a calm start.
   - Its job is to offer the next step: talk, write, or check in.
   - It shows what is active, such as shares and an unfinished conversation.
-  - It is not a dashboard. It shows no counts, scores or streaks (D-036).
-- **Cerita** (Talk): the listening room, *Ruang cerita* (D-034).
+  - It is not a dashboard. It shows no counts, scores or streaks (D-037).
+- **Cerita** (Talk): the listening room, *Ruang cerita* (D-035).
   - It lists the saved conversations.
   - It starts a new conversation and opens existing ones.
-- **Catatanku** (My notes): everything that is kept, *Catatan pribadiku* (D-038).
+- **Catatanku** (My notes): everything that is kept, *Catatan pribadiku* (D-039).
   - One timeline holds every kind of entry.
   - Writing a note and checking in start here.
   - *Yang Sela ingat* ("what Sela remembers") is a section of this place.
@@ -50,24 +50,24 @@ Why four places: an earlier hub model gave eight equal destinations. The v1 head
 
 ## 2. Names (ID and EN)
 
-The brief allows renaming (§4). PM decision D-034 fixes "Ruang cerita" / "Talk". D-038 fixes "Catatan pribadiku" and "Ringkasan untuk konsultasi".
+The brief allows renaming (§4). PM decision D-035 fixes "Ruang cerita" / "Talk". D-039 fixes "Catatan pribadiku" and "Ringkasan untuk konsultasi".
 
 | Brief surface (§4) | v3 name, Indonesian | v3 name, English | Where it lives | Why this name |
 |---|---|---|---|---|
 | Pengenalan dan onboarding | Pengenalan · Mulai | Introduction · Get started | `/`, `/start/*` | Plain verbs |
 | Beranda personal | Beranda | Home | Place 1 | Standard; no "dashboard" connotation |
-| Ruang percakapan | Cerita (screen title *Ruang cerita*) | Talk | Place 2 | D-034. "Cerita" is the everyday word for telling someone what's going on, without the clinical feel of "konseling" |
+| Ruang percakapan | Cerita (screen title *Ruang cerita*) | Talk | Place 2 | D-035. "Cerita" is the everyday word for telling someone what's going on, without the clinical feel of "konseling" |
 | Jurnal serta refleksi | Catatan (write: *Tulis catatan*) | Note (write: *Write a note*) | Catatanku | "Jurnal" sounds like homework to many readers, and "catatan" matches *Catatan pribadiku*. "Catatan" means a journal entry only; anything kept in general is "entri" or "yang tersimpan" ([CONTENT_STYLE.md §4](CONTENT_STYLE.md#4-product-glossary)) |
 | Check-in | Cek perasaan | Check-in | Catatanku, Home | Says what it is in Indonesian; "check-in" is not common Indonesian |
 | Timeline | Linimasa | Timeline | Catatanku (default section) | Standard Indonesian term |
 | Memory | Yang Sela ingat | What Sela remembers | Catatanku section | Describes it honestly; "memori" alone is vague |
-| Ringkasan konsultasi | Ringkasan untuk konsultasi | Summary for a consultation | Dukungan | D-038 |
+| Ringkasan konsultasi | Ringkasan untuk konsultasi | Summary for a consultation | Dukungan | D-039 |
 | Persiapan dan tindak lanjut | Persiapan · Setelah konsultasi | Preparation · After the consultation | Inside each summary | Attached to the summary they serve |
-| Bacaan dan dukungan | Bacaan & latihan kecil · Layanan bantuan | Reading & small exercises · Support services | Dukungan; `/reading` and `/help` are public | D-037 merges the daily missions into "latihan kecil" |
+| Bacaan dan dukungan | Bacaan & latihan kecil · Layanan bantuan | Reading & small exercises · Support services | Dukungan; `/reading` and `/help` are public | D-038 merges the daily missions into "latihan kecil" |
 | Pengaturan privasi serta data | Privasi & data | Privacy & data | Menu | Says both halves |
 | (display) | Tampilan & aksesibilitas | Display & accessibility | Menu; public too | Needed before sign-in, for example large text during onboarding |
-| Pengalaman penerima profesional | Halaman penerima | Recipient page | `/r` | Recipients are invited by the user and unverified (D-041). "Profesional" is not claimed |
-| (always) | Butuh bantuan sekarang (never shortened; wraps) | Need help now | Top bar | D-035 |
+| Pengalaman penerima profesional | Halaman penerima | Recipient page | `/r` | Recipients are invited by the user and unverified (D-042). "Profesional" is not claimed |
+| (always) | Butuh bantuan sekarang (never shortened; wraps) | Need help now | Top bar | D-036 |
 | (always) | Keluar cepat (never shortened; wraps) | Quick exit | Top bar | v1 Quick Exit. "Keluar" alone is never a label, because signing out is a different action |
 | (accounts) | Keluar dari akun | Sign out | Menu, Akun | Never shortened, so it is never confused with Quick exit (3.2.4) |
 
@@ -154,7 +154,7 @@ Every bar wraps **by available space**, never by the text-size setting, so the s
 - **Layout steps:** the shell's container queries are in em, so the layout steps down as text grows. At Sela's 150% text size, a 1366px laptop gets the medium layout.
 - **Short viewport mode:** a viewport less than 30 root em tall (480px at 100% text, 720px at 150%), measured by a script **without the soft keyboard** (the measurement is frozen while a text field has focus, so typing never changes the layout).
   - The bottom bar and the composer become part of the page flow, not sticky.
-  - "Butuh bantuan sekarang" moves into the fixed **help strip** at the top: a band with its own page background and 6px around the control, so its focus ring is never clipped; the control is `min-height: 44px` and grows with its text (about 56px, or about 73px when its label wraps). That keeps the D-035 "always visible" help control.
+  - "Butuh bantuan sekarang" moves into the fixed **help strip** at the top: a band with its own page background and 6px around the control, so its focus ring is never clipped; the control is `min-height: 44px` and grows with its text (about 56px, or about 73px when its label wraps). That keeps the D-036 "always visible" help control.
   - "Keluar cepat" and Menu join it only when all three fit in one row (landscape phones); otherwise they stay in the page flow directly below it. Esc twice works everywhere.
   - When the strip would take more than a third of the viewport height (for example 320×180 at 150% text), it returns to the page flow as the first control on the page, except while typing in the room (pending PM confirmation).
   - Focus is never hidden behind it: `scroll-padding-top` comes from its measured height (WCAG 2.4.11). The cases checked are 320×256 and 320×180 CSS px (1280×1024 and 1280×720 at 400%), at 100% and 150% text.
@@ -248,7 +248,7 @@ Every bar wraps **by available space**, never by the text-size setting, so the s
 
 ### 5.3 The recipient is separated
 
-The recipient experience is separate in every dimension: route, shell, principal, cookie, copy register and data. The parts that are PM decisions are D-041 and ADR-0002 §10. The rest are design decisions.
+The recipient experience is separate in every dimension: route, shell, principal, cookie, copy register and data. The parts that are PM decisions are D-042 and ADR-0002 §10. The rest are design decisions.
 
 - **Route:** `/r`. The token is in the URL fragment, which is never sent to the server, and it is scrubbed from the address bar on load (the v2 behaviour).
 - **Shell:** "Sela · Halaman penerima". It has no owner navigation, no Quick exit (the recipient is not the person at risk), no owner banners and no owner session data.
@@ -260,10 +260,10 @@ The recipient experience is separate in every dimension: route, shell, principal
 
 ### 5.4 Minors (15–17; only 16–17 can use Sela) in the IA
 
-PM decision D-030: implemented, but disabled in production until legal review.
+PM decision D-031: implemented, but disabled in production until legal review.
 
 - The places are the same. The differences are in onboarding (the 15 / 16–17 split, confidentiality limits, guardian consent that grants no access), defaults (memory and patterns are opt-in only) and copy.
-- 15-year-olds are blocked by the UI in every environment, and nothing is created (D-030). Until guardian consent can be sent together with account or guest creation, 16–17 may start only as a guest, and a declined consent deletes the guest at once.
+- 15-year-olds are blocked by the UI in every environment, and nothing is created (D-031). Until guardian consent can be sent together with account or guest creation, 16–17 may start only as a guest, and a declined consent deletes the guest at once.
 - When guardian consent is missing or withdrawn (`actionsRequired: guardian_consent`), every place shows an interstitial explaining what is needed. **These stay reachable throughout:** Privacy & data, Display, Account, Immediate help and the reading library.
 - Details are in [SCREENS.md S26](SCREENS.md#s26-minors-variants-15-17).
 
@@ -273,8 +273,8 @@ PM decision D-030: implemented, but disabled in production until legal review.
 |---|---|---|---|
 | Public pages (intro, onboarding, sign in, recovery, reading, display, about, policies) | Top bar, 2nd focusable element after the skip link (3rd if the mark is shown) | Top bar, immediately after help | Footer link; onboarding step "Tentang Sela" explains it |
 | Owner pages (four places, settings) | Top bar (compact and medium) or top strip (wide), same DOM position | Same, immediately after help | Footer link; Support hub section "Layanan bantuan" (links to `/help#layanan`) |
-| Conversation room | Top bar, unchanged; while typing on a phone, the only fixed control (the help strip) | Top bar; while typing on a phone, in the page flow at the top | **Crisis panel** inline after the matching message (D-035); **at the same moment, the pause line** directly above the composer, with "Ke bantuan" (it moves focus to the panel); a new-content button that says "Bantuan ditampilkan di bawah pesanmu" when the reader is scrolled up; the support line beside an `elevated` reply; the room's empty state names the help button; the Detail sheet starts with "Butuh bantuan sekarang" and "Keluar cepat" |
-| Journal and check-in after a crisis match | Top bar | Top bar | Crisis panel shown after saving (the entry is kept if storage allows; D-035) |
+| Conversation room | Top bar, unchanged; while typing on a phone, the only fixed control (the help strip) | Top bar; while typing on a phone, in the page flow at the top | **Crisis panel** inline after the matching message (D-036); **at the same moment, the pause line** directly above the composer, with "Ke bantuan" (it moves focus to the panel); a new-content button that says "Bantuan ditampilkan di bawah pesanmu" when the reader is scrolled up; the support line beside an `elevated` reply; the room's empty state names the help button; the Detail sheet starts with "Butuh bantuan sekarang" and "Keluar cepat" |
+| Journal and check-in after a crisis match | Top bar | Top bar | Crisis panel shown after saving (the entry is kept if storage allows; D-036) |
 | Short viewport mode | The fixed help strip at the top (`min-height: 44px` control, grows with its text, 6px of page background around it); in the page flow, as the first control, when the strip would take more than a third of the viewport height | In the fixed strip when help, Quick exit and Menu fit in one row; otherwise in the page flow just below it. Esc twice always works | — |
 | Full-height sheets (Menu, the room's Detail) | **The first item of the sheet**, same label and look as the header | **The second item of the sheet**; one activation leaves | — |
 | Small dialogs | Behind the modal (inert). Every dialog that could be reached while distressed (session warnings, the unsaved-conversation warning, storage change, delete) includes a "Butuh bantuan sekarang" link in its text | Esc closes the dialog first; the Esc that closes it never counts, and presses within 1.5 s after a dialog, menu or disclosure closes are ignored, so closing something never exits by accident | — |
@@ -282,13 +282,13 @@ PM decision D-030: implemented, but disabled in production until legal review.
 | Immediate help page itself | The top bar's help link shows `aria-current="page"` | Top bar | It *is* the help page and works offline from bundled data |
 | Recipient page | Not shown. The recipient is not the person at risk, and an owner's help button there would confuse | Not shown | A footer link "Tentang halaman ini" explains what the page is and who to contact (the sender) |
 
-Help resources ("Layanan bantuan") have a single source: the verified directory, with source, verification date and re-verify-by date (D-043). It is shown in three places:
+Help resources ("Layanan bantuan") have a single source: the verified directory, with source, verification date and re-verify-by date (D-044). It is shown in three places:
 
 - `/help`: urgent first, then the full list under `#layanan`;
 - the crisis panel: up to three entries, chosen by the rule "urgent and matching the age band", falling back to the static lead and the verified general entries when nothing verified matches;
 - the Support hub: a link.
 
-The same data is never copied into different texts. Teen entries appear only if verified (D-043), and the unverified KPAI WhatsApp entry from v1 is not shown.
+The same data is never copied into different texts. Teen entries appear only if verified (D-044), and the unverified KPAI WhatsApp entry from v1 is not shown.
 
 ## 7. How the v2 consultation flow is re-homed
 
@@ -314,20 +314,20 @@ v3:  Cerita & Catatanku (many conversations, notes, check-ins over time)
 | v2 step (route) | v3 home | What changes | Kept from v2 |
 |---|---|---|---|
 | Welcome `/` | Introduction `/` | Listening-first copy. Starting as guest or with an account. No "first step towards professional support" framing (`welcome.lead`) | Bilingual copy; honest "what Sela is / is not" lists |
-| Start `/start` (policy, pseudonym, adult checkbox) | Onboarding `/start/*` | An age band replaces the adult checkbox (D-030). Guest or account (D-028). The pseudonym is dropped: accounts have a username, guests need none | Versioned policy acceptance; safety screening of free-text fields such as the username |
-| Consent `/consent` (AI, storage) | Onboarding "Di mana datamu disimpan" (with the default for conversations) and "Balasan AI", the per-conversation storage and memory choices, Privacy & data | Consent per provider with its location (D-048), asked with buttons of equal weight. Storage is chosen per conversation (D-034), with a default set once | Independent, versioned consents with proof |
-| Story `/story` (one text area or a sample scenario) | The room `/talk/*` and "Tulis catatan" `/notes/write` | Many conversations and notes; listening replies released only after the guards; sample scenarios only in demo, labelled "Contoh cerita (sintetis)" | Safety gate before storage or inference. v2's **contact-detail refusal becomes a non-blocking notice**: the message is sent at once, AI never receives contact details, and a notice on the sent message offers to mask the stored copy too (ID and card numbers are masked in storage by default, with an undo) ([SCREENS.md S09](SCREENS.md#s09-conversation-room)). Names the person lists are masked before every model call (D-029) |
-| Ledger `/ledger` (review, approve) | Summary builder, Review step | Built from **chosen** entries across time, with provenance classes and separate review statuses (D-039), masked private names (the v1 Care Passport redaction preview, F23) and a verifier gate (D-029). Named "Ringkasan untuk konsultasi" (D-038) | Quote kept apart from wording; confirm / edit / use my words / remove; Meaning Lock; approval bound to version and hash; "not known yet" items |
-| Next step `/next` (fictional professionals, preferences) | Preparation: "Ke mana kamu akan membawanya?" | Destination **types** (Puskesmas/FKTP, psikolog, Healing119, campus service, someone I trust, not sure yet) with sourced checklists from v1 F25. No professional directory in production (D-041). The fixture professionals stay for the demo configuration only. Practical preferences become an optional summary section | Preference fields; deterministic, explainable rules in demo |
+| Start `/start` (policy, pseudonym, adult checkbox) | Onboarding `/start/*` | An age band replaces the adult checkbox (D-031). Guest or account (D-029). The pseudonym is dropped: accounts have a username, guests need none | Versioned policy acceptance; safety screening of free-text fields such as the username |
+| Consent `/consent` (AI, storage) | Onboarding "Di mana datamu disimpan" (with the default for conversations) and "Balasan AI", the per-conversation storage and memory choices, Privacy & data | Consent per provider with its location (D-049), asked with buttons of equal weight. Storage is chosen per conversation (D-035), with a default set once | Independent, versioned consents with proof |
+| Story `/story` (one text area or a sample scenario) | The room `/talk/*` and "Tulis catatan" `/notes/write` | Many conversations and notes; listening replies released only after the guards; sample scenarios only in demo, labelled "Contoh cerita (sintetis)" | Safety gate before storage or inference. v2's **contact-detail refusal becomes a non-blocking notice**: the message is sent at once, AI never receives contact details, and a notice on the sent message offers to mask the stored copy too (ID and card numbers are masked in storage by default, with an undo) ([SCREENS.md S09](SCREENS.md#s09-conversation-room)). Names the person lists are masked before every model call (D-030) |
+| Ledger `/ledger` (review, approve) | Summary builder, Review step | Built from **chosen** entries across time, with provenance classes and separate review statuses (D-040), masked private names (the v1 Care Passport redaction preview, F23) and a verifier gate (D-030). Named "Ringkasan untuk konsultasi" (D-039) | Quote kept apart from wording; confirm / edit / use my words / remove; Meaning Lock; approval bound to version and hash; "not known yet" items |
+| Next step `/next` (fictional professionals, preferences) | Preparation: "Ke mana kamu akan membawanya?" | Destination **types** (Puskesmas/FKTP, psikolog, Healing119, campus service, someone I trust, not sure yet) with sourced checklists from v1 F25. No professional directory in production (D-042). The fixture professionals stay for the demo configuration only. Practical preferences become an optional summary section | Preference fields; deterministic, explainable rules in demo |
 | Practice `/practice` | Preparation: opening lines and practice | Placed beside the checklist | Template, AI or own lines; coverage feedback; attempt not stored; no score |
-| Share `/share` | Sharing | Recipient is a label the user types and is marked unverified (D-041). **Purpose** is added. A per-name choice to show masked names. Longer expiry options, none under 20 hours (open point). A new link or a re-share starts pre-filled from the old share. Preview equals the stored projection | Field choice, preview, explicit consent with policy version, idempotency key, revoke |
-| Journey `/journey` | Share status page, plus events in the timeline | New status machine (D-040), shown as an event list built only from recorded events; the self-reported step says "Kamu menandai". Every recipient access and clarification request is in the audit list | Timeline event shape; "sent is not care" (`careReceived:false`) |
+| Share `/share` | Sharing | Recipient is a label the user types and is marked unverified (D-042). **Purpose** is added. A per-name choice to show masked names. Longer expiry options, none under 20 hours (open point). A new link or a re-share starts pre-filled from the old share. Preview equals the stored projection | Field choice, preview, explicit consent with policy version, idempotency key, revoke |
+| Journey `/journey` | Share status page, plus events in the timeline | New status machine (D-041), shown as an event list built only from recorded events; the self-reported step says "Kamu menandai". Every recipient access and clarification request is in the audit list | Timeline event shape; "sent is not care" (`careReceived:false`) |
 | Recipient `/r` | Recipient page `/r` | Unverified real recipient. Fixed actions: acknowledge, ask for clarification (four fixed reasons), cannot accept (with an inline confirm). Formal register. Generator and checker named on AI wording | Token in the fragment plus a separate code; the code format (8 characters without look-alike characters) and tolerant entry (case, spaces and hyphens ignored); uniform `access_ended`; lockout; link scrubbing |
 | Follow-up (fixture plan and check-ins in Journey) | "Setelah konsultasi" and the standalone check-in | Follow-up is written in the user's own words (provenance `user_original`, never a professional note). Check-in no longer depends on a handoff | Check-in record; no implication of care |
 | Settings `/settings` | Privacy & data, Display & accessibility, Account | Export, sessions, audit, provider consents, memory and deletion with the backup timeline added | Delete semantics, now cascading (ADR-0002 §10) |
 | Privacy `/privacy` | `/policies` | Policies rewritten: there is a database now, and guest storage is explained | Versioned policy rendering |
 | Help `/help` | `/help` | Teen entries (verified only), stale flags, the full directory on the same page | Verified schema; bundled fallback |
-| Research `/research` | Unchanged reviewer page, outside user navigation | The corpus stays separate from user data (D-032) | As is |
+| Research `/research` | Unchanged reviewer page, outside user navigation | The corpus stays separate from user data (D-033) | As is |
 
 **Transition** (design decision, pending the PM plan):
 
@@ -355,7 +355,7 @@ v3:  Cerita & Catatanku (many conversations, notes, check-ins over time)
 
 | State | What changes | What never changes |
 |---|---|---|
-| Crisis in a conversation (a lexicon match, generator risk `crisis` or a verifier `safety_signal`; D-035) | That conversation pauses AI replies until the person chooses "Lanjutkan bercerita dengan Sela". From that moment a persistent pause line above the composer says so (with "Ke bantuan" while the panel is shown); messages sent meanwhile are kept (per storage) and marked "tanpa balasan (dijeda)". A later match shows the panel again, condensed if it was shown recently. A dismissible crisis follow-up banner appears **on Home and in the room only**, for the rest of the browser session, and not at all when previews are hidden. **Nothing else is locked.** v2's session-wide interruption (`Safety.Interrupted`) is replaced by this per-conversation pause (gap-v2 §5) | Everything else stays usable. The user's text is never erased |
+| Crisis in a conversation (a lexicon match, generator risk `crisis` or a verifier `safety_signal`; D-036) | That conversation pauses AI replies until the person chooses "Lanjutkan bercerita dengan Sela". From that moment a persistent pause line above the composer says so (with "Ke bantuan" while the panel is shown); messages sent meanwhile are kept (per storage) and marked "tanpa balasan (dijeda)". A later match shows the panel again, condensed if it was shown recently. A dismissible crisis follow-up banner appears **on Home and in the room only**, for the rest of the browser session, and not at all when previews are hidden. **Nothing else is locked.** v2's session-wide interruption (`Safety.Interrupted`) is replaced by this per-conversation pause (gap-v2 §5) | Everything else stays usable. The user's text is never erased |
 | Unsaved conversation ended | The closing panel holds it in memory with "Lanjutkan percakapan" and "Simpan percakapan ini". The hold survives in-app navigation (Help, Privacy & data, any place; Home and Cerita offer "Lanjutkan percakapan"), and ends only on Quick exit, tab close, a new conversation, "Buang sekarang", or a hold timeout that warns first with "Tetap buka" | Help, the other places |
 | Conversation inactive for 12 hours (planned P3) | It ends automatically; Home stops offering "Lanjutkan percakapan" | It can still be reopened and continued |
 | Session about to end (accounts: 2 minutes before the idle limit; 10 minutes before the 12-hour or 30-day absolute limit) | A dialog: "Tetap masuk" for the idle limit; the password for the absolute limit. The page and drafts stay | Everything behind the dialog stays as it was |
@@ -366,18 +366,18 @@ v3:  Cerita & Catatanku (many conversations, notes, check-ins over time)
 | Age band confirmation due (`confirm_age_band`) | One question on Home ("Apakah usiamu masih 16–17 tahun?") | Everything else |
 | Guest close to its maximum age | Banner from 7 days before | Everything |
 | AI disabled or no AI consent (including before the `ai_processing` purpose is active) | No live provider is called. The room works as "write without replies". Summary drafting by AI is unavailable and the manual path stays. All of it is explained in place | All places |
-| Checker (Claude) not allowed, or never answered | Replies that mention health are not shown, with a neutral notice; a never-answered checker question is asked once, in context, at the first such reply. Summary drafting by AI and memory proposals are unavailable; the manual paths stay | All places |
+| Checker (Claude) not allowed, or never answered | Replies that mention health are not shown, with a neutral notice; a never-answered checker question is asked once, in context, at the first such reply. The backup model (DeepSeek) does not reply either, because Claude checks every backup reply (ADR-0003 RR-4 (i), §17 O-6). Summary drafting by AI and memory proposals are unavailable; the manual paths stay | All places |
 | Store unavailable (`503 store_unavailable`) | S27 "Penyimpanan sedang tidak tersedia", with retry | Immediate help (bundled), display, reading (if cached) |
 | Offline | Offline banner. Lists show the last loaded view with its time. Sending shows "Belum terkirim" | Immediate help (bundled) |
-| Demo environment | Demo banner on every screen. Seeded synthetic personas and "Contoh cerita (sintetis)" starters | All features really run (D-045) |
+| Demo environment | Demo banner on every screen. Seeded synthetic personas and "Contoh cerita (sintetis)" starters | All features really run (D-046) |
 
-## 10. Content separation in the IA (PM decision D-032)
+## 10. Content separation in the IA (PM decision D-033)
 
 | Content type | Where it appears | Never |
 |---|---|---|
 | Public content (reading, help directory, destination checklists) | `/reading`, `/help`, Preparation | Copied into a person's notes. A bookmark stores only a reference |
 | Personal data (conversations, notes, check-ins, memory, summaries, shares, audit) | The four places and settings, for its owner only | Shown to another user. Shown to a recipient beyond the consented projection |
-| Community content | None in the pilot (the forum is paused, D-037) | — |
+| Community content | None in the pilot (the forum is paused, D-038) | — |
 | Demo data | The demo environment only, labelled "sintetis" | Mixed into production |
 | Research corpus | The reviewer page `/research` | Linked to any user's history; shown as evidence in Sela's replies |
 

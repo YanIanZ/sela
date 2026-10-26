@@ -1,6 +1,6 @@
 # Sela v2 API contract
 
-Status: **implemented** in `internal/httpapi` and `internal/journey` (Go); behaviour tested by `go test ./...`. Authority: [SPEC](../SPEC.md) I.api, V1–V23. The inherited Next.js API is in the [v1 API archive](archive/v1/API_SPEC.md).
+Status: **implemented** in `internal/httpapi` and `internal/journey` (Go); behaviour tested by `go test ./...`. Authority: [SPEC](../SPEC.md) I.api, V1–V25. The inherited Next.js API is in the [v1 API archive](archive/v1/API_SPEC.md).
 
 ## Conventions
 
@@ -119,3 +119,18 @@ The optional Anthropic verifier is **not** a fallback generator. A provider-spec
 | `PUT /api/v2/verification-consent` | `granted`, `expectedVersion` | Independent Anthropic consent for synthetic source excerpts; withdrawal cancels/invalidates verification; **planned only** |
 | `POST /api/v2/brief/verify` | `expectedVersion` (no free-text from client) | Optional Claude source-fidelity report on current fixture/brief; never advances approval/handoff; **planned only** |
 | `GET /api/v2/brief/verification` | Cookie | Read current session + brief version's report with provider/status; expired/stale reports omitted; **planned only** |
+
+## Optional DeepSeek fallback contract (planned only)
+
+The existing `POST /api/v2/brief/draft` always first attempts Meta where authorized. Only recognized Meta availability errors can trigger a separately consented, default-OFF DeepSeek `deepseek-flash` request, using session-owned synthetic evidence IDs rather than arbitrary client input. Never switch for policy refusal, invalid claims, source mismatch, unsafe output, denied consent, crisis fixture or request cancellation. Responses distinguish `live_meta` vs `live_deepseek_fallback` with immutable provider/model metadata. Fallback result requires the same evidence validation, brief reapproval and later share consent, and must be discarded if versions/consents have changed. No v2 routes yet exist. See [DeepSeek fallback](DEEPSEEK_FALLBACK.md).
+
+Reconciliation with the implemented API: the Meta draft route is `POST /ledger/draft` (`POST /api/v2/brief/draft` is the earlier planned name). It calls only the configured Meta model; the v2 runtime has no DeepSeek path or fallback consent. The fallback exists only as the standalone, default-OFF prototype in [prototypes/generationfallback](../prototypes/generationfallback/README.md) (T5b open). The planned consent route from the [fallback contract](DEEPSEEK_FALLBACK.md) is not implemented:
+
+| Planned route | Body | Rule |
+| --- | --- | --- |
+| `PUT /api/v2/fallback-consent` | `granted`, `enabled`, `expectedVersion` | Independent DeepSeek consent and opt-in; stale or revoked results canceled; planned only |
+| `PUT /api/v2/fallback-consent` | `granted`, `enabled`, `expectedVersion` | Independent DeepSeek consent and opt-in; stale/revoked results canceled; **planned only** |
+
+## Optional DeepSeek fallback contract (planned only)
+
+The existing `POST /api/v2/brief/draft` attempts Meta first. Only explicit, recognized Meta availability errors may trigger separately consented DeepSeek `deepseek-flash` using session-owned synthetic evidence. Never switch for policy refusal, invalid claims, source mismatch, unsafe output, denied consent, crisis fixture or request cancellation. Responses distinguish `live_meta` vs `live_deepseek_fallback` with immutable provider/model metadata. Fallback requires identical source checks, human approval and recipient share consent; stale session/version/consent invalidates the response. No v2 routes yet exist. See [DeepSeek fallback](DEEPSEEK_FALLBACK.md).

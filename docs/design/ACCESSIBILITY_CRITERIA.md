@@ -39,7 +39,7 @@ Status: **design decision** by the design lead, 2026-10-26, revised after review
 | 1.2.1 Audio-only and Video-only (Prerecorded) | A | (cond.) The pilot has no prerecorded media. Any reading item that adds audio or video publishes a transcript or text description in both languages at the same time. Read-aloud is synthesised from text already on screen, which is its own alternative | Manual (content gate in P6) | S20 |
 | 1.2.2 Captions (Prerecorded) | A | (cond.) Prerecorded video with audio has accurate ID and EN captions before publication | Auto: `video-caption`. Manual | S20 |
 | 1.2.3 Audio Description or Media Alternative (Prerecorded) | A | (cond.) Video has audio description or a full text alternative | Manual | S20 |
-| 1.2.4 Captions (Live) | AA | (cond.) No live audio or video in the pilot; the voice room is paused (D-037). If added, live captions are required before release | Manual | — |
+| 1.2.4 Captions (Live) | AA | (cond.) No live audio or video in the pilot; the voice room is paused (D-038). If added, live captions are required before release | Manual | — |
 | 1.2.5 Audio Description (Prerecorded) | AA | (cond.) Prerecorded video has audio description | Manual | S20 |
 | 1.3.1 Info and Relationships | A | Landmarks: one `header`, a labelled main `nav`, one `main` named by the page h1 (`aria-labelledby`), a `footer` (none in the room) and the labelled notices `section`. One `h1` per view, with no skipped heading levels. The transcript is `role="log"` (with `aria-live="off"`) holding only message articles, the pending block, per-message notices, the crisis panel, the reflection card and the closing panel. Each message is an `article` with a visible author label ("Kamu" / "Sela · balasan AI (Meta)") and a `<time>`. Provenance class and review status are two separate text labels, not style. Radio and checkbox groups use `fieldset`/`legend`. Optional toggle chips sit in `role="group"` with `aria-labelledby`. The timeline is an `h2` per day plus an `ol`. The share event list is an `ol` with `aria-current="step"` on the latest recorded step, and each step states its time or "belum" / "tidak tercatat". Share facts use `dl`. The pattern table uses `th scope` | Auto: `list`, `listitem`, `definition-list`, `dlitem`, `aria-required-children`, `aria-required-parent`, `th-has-data-cells`, `td-headers-attr`, plus the best-practice rules `heading-order`, `page-has-heading-one`, `landmark-one-main`, `landmark-unique`, `region` (gating; §6.1). Manual: the heading and landmark list in a screen reader for each screen | All; S09, S12, S15, S18 |
 | 1.3.2 Meaningful Sequence | A | DOM order equals reading order: the transcript runs oldest to newest, the pending block comes after the last message, then the room end bar (the pause line and "Ke balasan terakhir"), then the composer. The crisis panel follows the message that triggered it; the reflection card follows its reply. Every bar that wraps (top bar, bottom bar, room toolbar, composer row) wraps in DOM order, with no CSS `order`. On wide layouts the header spans the window, so header, sidebar, notices and main read in visual order. The live regions are the last children of `<body>` and are cleared on route change and next input, so no stale announcement text sits in the reading order. Consent facts come before the consent button. The documented exception is that the bottom bar sits visually at the bottom but before `main` in the DOM, so screen-reader order is the same on every layout ([INFORMATION_ARCHITECTURE.md §3.1](INFORMATION_ARCHITECTURE.md#31-landmarks-and-dom-order-identical-on-every-layout)) | Manual: a linear screen-reader read; CSS disabled. Scripted (S-9): after a reply and a route change, reading `<body>` in order finds no reply text in the regions | S09, S17, S22 |
@@ -130,7 +130,7 @@ Totals: 9 + 11 = 20 Perceivable, 14 + 6 = 20 Operable, 7 + 6 = 13 Understandable
 
 ### 5.1 Screen-reader-friendly replies (room, S09)
 
-Replies are **released, not streamed** ([DESIGN_DIRECTION.md §6.5](DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer)): the browser receives a reply only after the server's guards, the one allowed regeneration and, when flagged, the verifier. The transcript is `role="log"` with `aria-live="off"`, and every announcement comes from the shell regions with fixed text. The criteria below assert **what is heard**, not only how often.
+Replies are **released, not streamed** ([DESIGN_DIRECTION.md §6.5](DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer)): the browser receives a reply only after the server's guards, the one allowed regeneration and, when flagged or the backup model DeepSeek wrote it (ADR-0003 RR-8, §17 O-6), the verifier. The transcript is `role="log"` with `aria-live="off"`, and every announcement comes from the shell regions with fixed text. The criteria below assert **what is heard**, not only how often.
 
 Every ST row is tested by hand on four pairings: **NVDA with Firefox, JAWS with Chrome (or NVDA with Chrome if no JAWS licence is available), VoiceOver with Safari on iOS, and TalkBack with Chrome on Android** (§7.1). The scripted check S-9 asserts the region text for each row.
 
@@ -174,7 +174,7 @@ Every ST row is tested by hand on four pairings: **NVDA with Firefox, JAWS with 
 | SD-6 | Every request has a timeout and a visible retry. No spinner runs forever: after 8 seconds the "masih memuat" text appears | Scripted |
 | SD-7 | The soft keyboard never hides the composer's text area or Send (`interactive-widget=resizes-content`; the bottom bar hides only while a text-entry field has focus), **opening it never switches the page into short-viewport mode** (the mode is measured without the keyboard), and in the room the typing layout keeps Sela's last reply readable above the keyboard (ST-11) | Manual on Android Chrome and iOS Safari; Scripted: S-14 |
 
-### 5.3 Voice (opt-in only; D-037)
+### 5.3 Voice (opt-in only; D-038)
 
 | ID | Acceptance criterion |
 |---|---|
@@ -185,7 +185,7 @@ Every ST row is tested by hand on four pairings: **NVDA with Firefox, JAWS with 
 | VO-5 | The transcript goes into the editable composer and is **never sent automatically** |
 | VO-6 | Nothing auto-plays. Read-aloud starts only on press, with Pause and Stop. Only local voices (`localService`) are offered |
 | VO-7 | Audio is never stored by Sela. The dictated text follows the conversation's storage choice like typed text |
-| VO-8 | The live voice room (Gemini) stays paused until it has its own design, consent and captions (D-037) |
+| VO-8 | The live voice room (Gemini) stays paused until it has its own design, consent and captions (D-038) |
 
 ## 6. Automation plan
 
@@ -337,7 +337,7 @@ A screen is done only when all of these hold:
 | Item | Status |
 |---|---|
 | The bottom bar sits visually at the bottom but before `main` in the DOM | Deliberate: one reading order on every layout, bypassed by the skip link (1.3.2 reviewed) |
-| The fixed help strip in short viewports and while typing in the room (`min-height: 44px` control with 6px around it, growing with its text; about 56–95px) | Deliberate safety exception (D-035), covered by `scroll-padding` from its measured height (2.4.11) and checked at 320×256 and 320×180. Above a third of the viewport height it returns to the page flow (outside the room's typing layout); this reading of "always visible" is pending PM confirmation |
+| The fixed help strip in short viewports and while typing in the room (`min-height: 44px` control with 6px around it, growing with its text; about 56–95px) | Deliberate safety exception (D-036), covered by `scroll-padding` from its measured height (2.4.11) and checked at 320×256 and 320×180. Above a third of the viewport height it returns to the page flow (outside the room's typing layout); this reading of "always visible" is pending PM confirmation |
 | Typing at 150% text with the keyboard open | Four large transcript lines, a two-line field, Kirim and the help strip do not fit on a 230–300px visual viewport; the composer joins the page flow and the person reads by scrolling with nothing covered (ST-11, S-14). Owner testing with people who use large text checks it |
 | The 12-hour absolute session limit and the recipient's share expiry | The 12-hour limit is treated under the 2.2.1 essential exception with a warning and loss-free renewal; the share expiry is at least 24 hours (20-hour exception) and has a static notice near its end; the recipient session and the unsaved-conversation hold warn and extend. Pending the auditor |
 | A reflection-card status line arriving while a reply is still being read | May be cut off on VoiceOver iOS or TalkBack; ST-14 measures it, and the card stays reachable by heading and in Detail |

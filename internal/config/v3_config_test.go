@@ -132,7 +132,7 @@ func TestLoadEnvironmentDefaults(t *testing.T) {
 			}
 		})
 	}
-	// Production may enable minors explicitly (D-030, after legal review).
+	// Production may enable minors explicitly (D-031, after legal review).
 	valid(t, "production")
 	t.Setenv("SELA_ALLOWED_AGE_BANDS", "15_17, 18_plus")
 	c, err := Load()

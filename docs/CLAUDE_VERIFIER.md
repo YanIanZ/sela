@@ -1,12 +1,12 @@
 # Sela verifier: Claude Sonnet 5.5 (EvidenceGuard → v3 integration)
 
 Status:
-- **Role accepted** (PM decision D-029). The contract is in [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md) §6–§7, and the stored verification status in §10.1.
+- **Role accepted** (PM decision D-030). The contract is in [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md) §6–§7, and the stored verification status in §10.1.
 - **Runtime integration planned** (milestone P5). No verifier route, consent purpose or persistence exists yet.
 - **What exists** is [prototypes/evidenceguard](../prototypes/evidenceguard/README.md), **implemented as a standalone v2 prototype**. Its 6 mocked tests pass locally (`go test -count=1 ./...` in `prototypes/evidenceguard`, 2026-10-26) and in its own CI workflow (`.github/workflows/evidenceguard-prototype.yml`, run 40284245346, 2026-10-26). It is not wired into any runtime, and it is not v3 evidence.
 - **No live Claude request** has been made: no Console organization or API key exists (**blocked externally**, B-8). There is no clinical validation.
 
-Governed by [SPEC](../SPEC.md) C17 (partly supersedes C12), I.ai, I.verifier, V17, V18, V33, V34 and V39 (V34 and V39 together supersede V16), and by ADR-0003. The prototype is the **starting point** of the integration (§3).
+Governed by [SPEC](../SPEC.md) C18 (partly supersedes C12), I.ai, I.verifier, V17, V18, V35, V36 and V41 (V36 and V41 together supersede V16), and by ADR-0003. The prototype is the **starting point** of the integration (§3).
 
 > Reconciliation note (D-024): the implemented generator is the Meta open-weight **Muse Glimmer 30B** on Modal ([ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md)). Older Muse Spark Open references await the owner's decision ([B-7](BLOCKERS.md)). This contract applies unchanged to whichever Meta model generates the draft, and to DeepSeek when it is the fallback generator.
 
@@ -55,11 +55,13 @@ Sources and the remaining facts (rate limits, Batch, caching) are in ADR-0003 §
 ## 2. Product decision: a second check, never a truth oracle
 
 - **Meta generates; Claude checks.** Meta (Muse Glimmer 30B on Modal) generates every draft, and DeepSeek may generate it only as the fallback (ADR-0003 RR-4). The Go application owns all version rules and data transitions.
+- **DeepSeek is a fallback generator, not a verifier replacement (owner contract, C13).** A consented DeepSeek `deepseek-flash` may generate a fallback draft only after an eligible Meta outage, **not** as an Anthropic verifier replacement; it does not replace the source-fidelity verifier. See [DeepSeek fallback](DEEPSEEK_FALLBACK.md). A DeepSeek fallback output is checked by Claude like any other output, and only Claude may check it (ADR-0003 RR-9). Owner brief v3 §8 separately adds DeepSeek as a default-off *alternative* verifier for Meta output during a Claude outage only, labelled as such and never replacing a missing Claude consent; ADR-0003 §17 records this difference from the owner contract.
 - **What Claude Sonnet 5.5 checks.** Whether each proposed claim preserves the supplied, versioned source spans: the user's own words, or for reading content the licensed source passage. It looks for changed negation, speaker, time, uncertainty or important context, and for the eight checks in ADR-0003 §7: consistency, unsupported claims, distortion or lost context, citation relevance and validity, inappropriate medical language, manipulation, age appropriateness and information leakage. It can also raise a missed safety signal.
-- **When verification is required (D-029).** Before release of:
+- **When verification is required (D-030).** Before release of:
   - consultation-summary wording;
   - memory proposals;
-  - any generated text that the deterministic health-claim detector flags.
+  - any generated text that the deterministic health-claim detector flags;
+  - every listening reply that DeepSeek wrote as the fallback (V20 applied to a brief-v3 task; this Claude check is ADR-0003's means, an engineering default under D-053, not owner direction or D-030; ADR-0003 RR-8, §17 O-6, O-8). DeepSeek is called for a reply only when this check is permitted (ADR-0003 RR-4 (i)).
   
   Reading content is verified at authoring time. Each user still decides by the separate `ai_provider_anthropic` consent. Without it, or when no permitted verifier is available, those outputs **abstain**: the user's own words are kept and the manual path is offered.
 - **What Claude cannot do.** It cannot:
@@ -68,7 +70,7 @@ Sources and the remaining facts (rate limits, Batch, caching) are in ADR-0003 §
   - select providers or replace a failed Meta request;
   - approve a share;
   - issue a diagnostic conclusion or create a safety certification.
-- **Verdicts, not rewrites.** The v1 OpenRouter "Second Brain" debiaser rewrote drafts. It is not migrated (D-037); its purpose is merged here as structured verdicts. Claude never silently rewrites.
+- **Verdicts, not rewrites.** The v1 OpenRouter "Second Brain" debiaser rewrote drafts. It is not migrated (D-038); its purpose is merged here as structured verdicts. Claude never silently rewrites.
 - **Agreement between two LLMs is not independent validation.** The hard constraints are explicit source mapping, deterministic rule checks and user review. Claude receives the source spans, not only the generator's answer.
 - **A citation identifier or DOI alone is not factual proof** of a study's finding. Research claims are checked only against verified, licensed abstract or text passages paired with source metadata, and they still need human critical appraisal (B-4). The 7,580-publication metadata candidate dataset is discovery material, not a verified knowledge base.
 
@@ -83,7 +85,7 @@ Sources and the remaining facts (rate limits, Batch, caching) are in ADR-0003 §
 | Enum matching | Case-sensitive. A casing change fails closed | Case-insensitive (casing not guaranteed) | Change |
 | Request | `claude-sonnet-5-5`, `Authorization: Bearer`, `thinking: between_tools`, `effort: low`, json_schema, `max_tokens` 1000, no workspace header | The same, plus `max_tokens` 2000 for ≤ 12 claims and `inference_geo: "us"`, with a workspace-scoped key (VC-4) | Keep the call shape; adjust |
 | API version | `anthropic-version: 2023-06-01` (accepted) | `2026-10-21` from configuration | Change |
-| Input gate | `Synthetic=true` and a `VerificationConsent` boolean in the input. Limits: 12 claims, 16 evidence spans, quote ≤ 1,600, claim ≤ 800, ≤ 5 evidence per claim, ids ≤ 48 | Server-built input from owned current records. The consent revision is read from the consent store and rechecked at commit. Span ids are per request (VC-1) | Replace the synthetic gate (D-025); keep the limits |
+| Input gate | `Synthetic=true` and a `VerificationConsent` boolean in the input. Limits: 12 claims, 16 evidence spans, quote ≤ 1,600, claim ≤ 800, ≤ 5 evidence per claim, ids ≤ 48 | Server-built input from owned current records. The consent revision is read from the consent store and rechecked at commit. Span ids are per request (VC-1) | Replace the synthetic gate (D-026); keep the limits |
 | Output checks | Response `model` equals the pin, `stop_reason == "end_turn"`, exactly one text block, ≤ 64 KiB, unknown fields rejected, exact claim set, evidence ids within the claim's own, reason non-empty and ≤ 500 | The same, plus span ids ⊆ supplied spans and reason ≤ 300 characters (VC-6) | Keep and extend |
 | Refusal and truncation | Rejected as `ErrInvalidResponse` because `stop_reason` is not `end_turn` (fails closed). **No test covers either case** | `verification_unavailable` with the reason `refused` or `truncated`. No alternative verifier is tried (RR-10) | Distinguish the reasons; add tests |
 | HTTP failures | `ErrUnavailable` with the status only; the provider body never leaks (`TestApiFailureDoesNotLeakProviderBody`); 12 s client timeout; no retry | Availability failure: 1 bounded retry, then the alternative verifier only if RR-9 holds, else abstain. Per-task attempt timeouts of 15–30 s | Extend |
@@ -108,7 +110,7 @@ Existing tests: `TestSupportedAndCorrectRequest`, `TestContradictedClaimNeedsHum
 
 ## 5. User-visible states
 
-Planned. These are **UI states**, derived for display and never stored. What is stored is the verification `status`, the V33 verification provenance, the per-claim verdicts and issues (ADR-0003 §10 and §10.1), plus the consent and version records the state is checked against.
+Planned. These are **UI states**, derived for display and never stored. What is stored is the verification `status`, the V35 verification provenance, the per-claim verdicts and issues (ADR-0003 §10 and §10.1), plus the consent and version records the state is checked against.
 
 | UI state | Shown when (stored values or live state) | Meaning (ID) | Meaning (EN) |
 | --- | --- | --- | --- |
@@ -121,9 +123,9 @@ Planned. These are **UI states**, derived for display and never stored. What is 
 | `verification_unavailable` | `status` `verification_unavailable` or `abstained` (provenance `unavailable`). The reason shown comes from `unavailable_reason`, for example "tanpa izin / no consent", "layanan tidak tersedia / service unavailable" (RR-11) | Pemeriksaan tidak tersedia; Sela memakai kata-katamu sendiri | The check is unavailable; Sela uses your own words |
 | `stale_or_revoked` | Derived at read time: the record's content version or a consent revision it used no longer matches the current one (RR-13, V18) | Hasil tidak berlaku karena isi atau izin berubah | The result no longer applies because the content or permission changed |
 
-- `status` `not_requested` (provenance `not_requested`) has no verification state: the item has no new AI wording and carries its own provenance label instead (D-039).
+- `status` `not_requested` (provenance `not_requested`) has no verification state: the item has no new AI wording and carries its own provenance label instead (D-040).
 - Provenance `manual_review` is reserved (ADR-0003 §10.1) and has no UI state yet.
-- A labelled test-double verifier report (development, test and the demo, D-045; ADR-0003 §10.1) uses the same states, with "TEST DOUBLE — not Claude" (or "not DeepSeek") in place of the verifier's name. It is never shown as a check by Claude or DeepSeek.
+- A labelled test-double verifier report (development, test and the demo, D-046; ADR-0003 §10.1) uses the same states, with "TEST DOUBLE — not Claude" (or "not DeepSeek") in place of the verifier's name. It is never shown as a check by Claude or DeepSeek.
 - When an output is withheld entirely, the task's own no-AI behaviour applies (ADR-0003 §3): a listening reply shows that Sela cannot reply right now, a reflection card is not shown, opening lines use the labelled template lines, and a summary uses the user's words with the `verification_unavailable` notice. A `safety_signal` issue shows the inline help card (VC-8).
 
 Per-claim explanations are Sela's own reviewed text, shown with the highlighted source span:
@@ -142,7 +144,7 @@ The verifier's own short reason appears only under "Detail pemeriksaan / Check d
 - **When verification runs:** inside the owning feature's operation (consultation summary, memory), using server-derived spans and claims only. There are no raw free-text verifier inputs from the browser.
 - **Results:** read through those features and the reserved `/api/v3/ai` prefix (provenance records, migration range 0500–0599). Access is owner-scoped only.
 
-Illustrative report shape (not an executable response; API_SPEC_V3 §9 will set the field names). `verificationStatus` and `verification` are stored values (ADR-0003 §10.1, V33). `uiState` is a UI state derived for display (§5) and is not stored.
+Illustrative report shape (not an executable response; API_SPEC_V3 §9 will set the field names). `verificationStatus` and `verification` are stored values (ADR-0003 §10.1, V35). `uiState` is a UI state derived for display (§5) and is not stored.
 
     {
       "draftOrigin": "live_meta",
@@ -162,12 +164,12 @@ Illustrative report shape (not an executable response; API_SPEC_V3 §9 will set 
 
 ## 7. Data handling
 
-- **Real use, minimised (D-025).** Only the spans and claims a check needs leave the Go backend, with contact details and private names redacted. No account, user, session or database ids are sent, and no `metadata.user_id`. This replaces the v2 "synthetic excerpts only" rule.
+- **Real use, minimised (D-026).** Only the spans and claims a check needs leave the Go backend, with contact details and private names redacted. No account, user, session or database ids are sent, and no `metadata.user_id`. This replaces the v2 "synthetic excerpts only" rule.
 - **Disclosure before consent:** processed by Anthropic in the US, deleted within 30 days by default, flagged content kept up to 2 years, no zero-retention agreement in place (ADR-0003 §8.1). [Anthropic data retention](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention): zero-data-retention eligibility is **not** the same as having a ZDR arrangement enabled.
 - **No personal data** in JSON schema names or enums.
 - **The Batch API** (not ZDR) is used only for reading-content checks, which hold no personal data.
 - **Logs and storage.** Operational logs never contain spans, claims, verdict reasons or model responses (V12). Verdict reasons are stored encrypted per user (ADR-0002 §5).
-- **Minors.** For the `15_17` and `unknown` bands (enabled only outside production today, D-030), the verifier also checks age appropriateness. Production use needs the minors-guidance safeguards confirmed (B-10).
+- **Minors.** For the `15_17` and `unknown` bands (enabled only outside production today, D-031), the verifier also checks age appropriateness. Production use needs the minors-guidance safeguards confirmed (B-10).
 
 ## 8. Fail-closed and adversarial behaviour
 
@@ -189,7 +191,7 @@ Illustrative report shape (not an executable response; API_SPEC_V3 §9 will set 
 The prototype uses Go standard-library HTTP and JSON with no SDK dependency, a fixed Anthropic production endpoint, a request timeout, strict input limits, an output size cap and mock-network tests. It does **not** persist or authorize anything; the P5 integration must supply atomic state checks.
 
 Estimated cost (ADR-0003 §11, US inference):
-- about $0.006 for a flagged reply;
+- about $0.006 for a flagged reply or a DeepSeek fallback reply;
 - $0.009 for a memory-proposal batch;
 - $0.014 per summary call of ≤ 12 claims.
 
@@ -201,7 +203,7 @@ Call Claude only for claims that survive deterministic checks. The source-ground
 
 The [Meta hackathon](https://dev.meta.ai/events/global-hackathon) prioritizes Meta models.
 - Show **the Meta model's actual generative contribution and its provenance** independently of the verifier.
-- Keep a runnable Meta-only profile (D-049). In it, summary and memory outputs abstain, because no verifier is permitted.
+- Keep a runnable Meta-only profile (D-050). In it, summary and memory outputs abstain, because no verifier is permitted.
 - The Official Rules neither allow nor forbid non-Meta models. **Ask the organizers** before relying on Anthropic in the competitive demo (B-12).
 - Label every check with its provider, and never count Claude calls as use of Meta tooling.
 
@@ -218,10 +220,10 @@ The [Meta hackathon](https://dev.meta.ai/events/global-hackathon) prioritizes Me
 
 | Earlier statement | Superseded by | Now |
 | --- | --- | --- |
-| "Claude Sonnet 5.5 is **optional**" (second-pass review) | D-029 | Required before release for summary wording, memory proposals and flagged text. Without the user's consent or a permitted verifier, those outputs abstain |
+| "Claude Sonnet 5.5 is **optional**" (second-pass review) | D-030 | Required before release for summary wording, memory proposals and flagged text. Without the user's consent or a permitted verifier, those outputs abstain |
 | "**Muse Spark Open on Modal remains Sela's primary generative AI**" | D-024 (reconciliation), B-7 | The implemented generator is Muse Glimmer 30B; the owner decides B-7 |
-| "Scenario selection: synthetic adult + chosen ID/EN language; reject arbitrary user histories in hackathon mode"; "Only synthetic fixture excerpts" | D-025, D-030 | Real use with minimised data. Synthetic data is for tests, evaluation and demo. Age bands replace the adult-only rule |
-| Status enum `supported/contradicted/insufficient_evidence`; aggregate `model_supported` / `needs_human_review` | ADR-0003 VC-2, VC-8; SPEC V34 | Four verdicts including `unsupported`, an issue list, per-claim release rules, the stored statuses of ADR-0003 §10.1 and the UI states in §5 |
-| "Timeout, 429, 5xx … mark verification unavailable; do not … switch providers" | D-029 (partly) | Still never after a refusal, truncation or invalid output. After an availability failure, the alternative verifier is allowed under RR-9 only, and labelled |
+| "Scenario selection: synthetic adult + chosen ID/EN language; reject arbitrary user histories in hackathon mode"; "Only synthetic fixture excerpts" | D-026, D-031 | Real use with minimised data. Synthetic data is for tests, evaluation and demo. Age bands replace the adult-only rule |
+| Status enum `supported/contradicted/insufficient_evidence`; aggregate `model_supported` / `needs_human_review` | ADR-0003 VC-2, VC-8; SPEC V36 | Four verdicts including `unsupported`, an issue list, per-claim release rules, the stored statuses of ADR-0003 §10.1 and the UI states in §5 |
+| "Timeout, 429, 5xx … mark verification unavailable; do not … switch providers" | D-030 (partly) | Still never after a refusal, truncation or invalid output. After an availability failure, the alternative verifier is allowed under RR-9 only, and labelled |
 | Planned `POST /api/v2/verification-consent`, `POST /api/v2/brief/verify`, `GET /api/v2/brief/verification` | API_SPEC_V3 consent purposes; `/api/v3/ai` | §6 |
-| UI states "Claude is reviewing the **fictional** note", "synthetic case / simulated care" labels | D-025 | Demo-environment banners stay (ADR-0002 §12); real-use copy in §5 |
+| UI states "Claude is reviewing the **fictional** note", "synthetic case / simulated care" labels | D-026 | Demo-environment banners stay (ADR-0002 §12); real-use copy in §5 |

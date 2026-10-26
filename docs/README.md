@@ -1,12 +1,12 @@
 # Sela documentation
 
-**Start with [SPEC.md](../SPEC.md), the source of truth.** Sela v3 — a real-use listening and continuity app in Indonesian and English for ages 15 to 50+ (owner brief v3, D-025) — is **planned**; its foundation and design are in progress on branch `feat/sela-v3-pilot`. Sela v2 (Go API + React/TypeScript frontend, Meta Muse Glimmer on Modal, synthetic demo) is implemented and verified locally on PR #6; live Meta inference and public deployment are blocked on owner credentials, budget and hosting ([blockers](BLOCKERS.md)). The inherited Next.js v1 stays runnable until the cutover.
+**Start with [SPEC.md](../SPEC.md), the source of truth.** Sela v3 — a real-use listening and continuity app in Indonesian and English for ages 15 to 50+ (owner brief v3, D-026) — is **planned**; its foundation and design are in progress on branch `feat/sela-v3-pilot`. Sela v2 (Go API + React/TypeScript frontend, Meta Muse Glimmer on Modal, synthetic demo) is implemented and verified locally on PR #6; live Meta inference and public deployment are blocked on owner credentials, budget and hosting ([blockers](BLOCKERS.md)). The inherited Next.js v1 stays runnable until the cutover.
 
 ## Authority and document ownership
 
 1. User decisions govern product scope (owner brief v3 of 2026-10-26 is the current one); record them in `SPEC.md`.
 2. `SPEC.md` governs requirements, invariants and task status.
-3. Active docs below elaborate those requirements; resolve conflicts in the spec first. PM decisions (D-025 onward) are recorded in the decision log and revisable by the owner.
+3. Active docs below elaborate those requirements; resolve conflicts in the spec first. PM decisions (D-026 onward) are recorded in the decision log and revisable by the owner.
 4. Source code and tests establish what runs; status claims cite them ([traceability](REQUIREMENTS_TRACEABILITY.md)).
 5. Archived documents preserve old decisions and evidence; none override the spec.
 
@@ -46,6 +46,7 @@ External terms (laws, provider terms, event rules) govern legality, eligibility 
 | [Synthetic demo data](DEMO_DATA.md) | Fixtures, practice text, isolation |
 | [AI policy](AI_POLICY.md) | Allowed model work, Meaning Lock, human control, provenance, v3 routing |
 | [Meta integration](META_INTEGRATION.md) | Provider boundary, request parameters, failure behaviour |
+| [DeepSeek fallback](DEEPSEEK_FALLBACK.md) | Optional transparent generator fallback, explicit opt-in, Go prototype and safety gates (owner contract; v3 routing follows it, ADR-0003 §17) |
 | [Claude verifier](CLAUDE_VERIFIER.md) | Verifier role and contract, the standalone EvidenceGuard prototype and its evidence limits |
 | [Modal serving](../modal/README.md) and [model notes](../modal/MODEL_NOTES.md) | Deploy, secrets, cost, smoke test, rollback; verified model/server facts |
 
@@ -65,7 +66,7 @@ External terms (laws, provider terms, event rules) govern legality, eligibility 
 
 ## Research
 
-[Sela Relay strategy and 100-publication evidence map](research/sela-relay/README.md) is the non-normative proposal and annotated register (title/abstract screened, not full-text appraisal or clinical validation). The [corpus pipeline](research/CORPUS_PIPELINE.md) rebuilds it reproducibly with verified dates, licence/access status, traceable machine extraction (unreviewed) and a reviewer search index. For v3, brief §9 asks for evidence on listening, journaling, help-seeking, consultation preparation, continuity, adolescents, adults, older adults, the Indonesian context, accessibility, safety and privacy. The known gaps are recorded in D-047 (a shorter list; brief §9 governs), and the gap searches and evidence map are planned (backlog S-243, S-244; [SPEC](../SPEC.md) T19).
+[Sela Relay strategy and 100-publication evidence map](research/sela-relay/README.md) is the non-normative proposal and annotated register (title/abstract screened, not full-text appraisal or clinical validation). The [corpus pipeline](research/CORPUS_PIPELINE.md) rebuilds it reproducibly with verified dates, licence/access status, traceable machine extraction (unreviewed) and a reviewer search index. For v3, brief §9 asks for evidence on listening, journaling, help-seeking, consultation preparation, continuity, adolescents, adults, older adults, the Indonesian context, accessibility, safety and privacy. The known gaps are recorded in D-048 (a shorter list; brief §9 governs), and the gap searches and evidence map are planned (backlog S-243, S-244; [SPEC](../SPEC.md) T19).
 
 ## Historical implementation
 

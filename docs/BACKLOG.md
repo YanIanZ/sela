@@ -1,7 +1,7 @@
 # Sela v3 backlog
 
 Updated: 2026-10-26 · branch `feat/sela-v3-pilot`. Status: **planning document. The backend foundation, the design documents and the planning documents are in progress; nothing in v3 is implemented or verified yet.**
-Authority: owner brief v3 (2026-10-26) → [SPEC.md](../SPEC.md) → the v3 decisions in the decision log: [D-025 to D-049](DECISION_LOG.md#d-025) (PM decisions of 2026-10-26) and [D-050](DECISION_LOG.md#d-050), [D-051](DECISION_LOG.md#d-051) (engineering defaults) → this backlog. The backlog orders and specifies work; it does not change requirements by itself. Related: [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) (what is kept, merged, retired or paused, and why), [ADR-0002](adr/ADR-0002-persistence-accounts-and-encryption.md) (persistence, accounts, encryption), [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md) (AI routing), [API v3](API_SPEC_V3.md), [implementation status](IMPLEMENTATION_STATUS.md), [requirements traceability](REQUIREMENTS_TRACEABILITY.md), [roadmap](ROADMAP.md), [blockers](BLOCKERS.md).
+Authority: owner brief v3 (2026-10-26) → [SPEC.md](../SPEC.md) → the v3 decisions in the decision log: [D-026 to D-050](DECISION_LOG.md#d-026) (PM decisions of 2026-10-26) and [D-051](DECISION_LOG.md#d-051), [D-052](DECISION_LOG.md#d-052) (engineering defaults) → this backlog. The backlog orders and specifies work; it does not change requirements by itself. Related: [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) (what is kept, merged, retired or paused, and why), [ADR-0002](adr/ADR-0002-persistence-accounts-and-encryption.md) (persistence, accounts, encryption), [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md) (AI routing), [API v3](API_SPEC_V3.md), [implementation status](IMPLEMENTATION_STATUS.md), [requirements traceability](REQUIREMENTS_TRACEABILITY.md), [roadmap](ROADMAP.md), [blockers](BLOCKERS.md).
 
 ## 1. How to read this
 
@@ -12,7 +12,7 @@ Authority: owner brief v3 (2026-10-26) → [SPEC.md](../SPEC.md) → the v3 deci
 - **Owner role** names the responsible role, not a person: Go backend engineer, frontend engineer, UX designer, AI engineer, research engineer, security/accessibility reviewer, PM, or the owner (YanIanZ) for external actions.
 - **Cross-references.** `FM-`, `CA-`, `DX-`: [feature matrix](DENGARIN_FEATURE_MATRIX.md). `F-`: ADR-0002 acceptance criteria. `AT-`, `RR-`, `VC-`, `CK-`, `DM-`, `EV-`: ADR-0003. `D-`: [decisions](DECISION_LOG.md). `B-`: [blockers](BLOCKERS.md) B-1 to B-15.
 - **Port rule.** Dengar.in behaviour is ported from the in-repo v1 code (the same tree as Dengar.in 2.0), never from the original web project, which lacks later fixes (DX-16). Credits stay in [provenance](SELA_PROVENANCE.md).
-- **Terms.** "Catatan pribadiku" (My personal notes) and "Ringkasan untuk konsultasi" (Summary for a consultation), never "rekam medis", "diagnosis", "hasil pemeriksaan" or "assessment result" (D-038). Provenance classes and review statuses follow D-039; handoff statuses follow D-040.
+- **Terms.** "Catatan pribadiku" (My personal notes) and "Ringkasan untuk konsultasi" (Summary for a consultation), never "rekam medis", "diagnosis", "hasil pemeriksaan" or "assessment result" (D-039). Provenance classes and review statuses follow D-040; handoff statuses follow D-041.
 
 ## 2. Shared acceptance criteria
 
@@ -27,10 +27,10 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 | BASE-5 | **Resize, reflow, spacing, targets**: nothing is lost at 200 % text zoom or at 320 CSS px width; a text-spacing override (line height 1.5, paragraph 2 em, letter 0.12 em, word 0.16 em) clips nothing; pointer targets are at least 24×24 CSS px and Sela's primary controls 44×44 (1.4.4, 1.4.10, 1.4.12, 2.5.8) | e2e overflow, spacing-injection and bounding-box checks (S-194) |
 | BASE-6 | **Perception and feedback**: no information by colour alone; text contrast ≥ 4.5:1 (≥ 3:1 for large text) and component contrast ≥ 3:1 in both themes; visible labels; errors in text next to the field with a suggested fix; status messages announced through `role="status"` without moving focus; custom controls expose name, role and state (1.4.1, 1.4.3, 1.4.11, 3.3.1, 3.3.2, 3.3.3, 4.1.2, 4.1.3) | axe; `docs/design/tools/contrast.py` on the tokens; manual screen-reader check |
 | BASE-7 | **Motion and sound**: no autoplay audio; nothing flashes more than three times a second; no animation under `prefers-reduced-motion: reduce` (1.4.2, 2.2.2, 2.3.1) | Code review; e2e with reduced motion emulated |
-| BASE-8 | **Honest, plain language**: the claim gates (`data/research/corpus/eval_fixtures/claim_gates.json`, extended for v3) find no forbidden term in the copy; no streak, points, level, badge, guilt or pressure copy; the pilot build asks for no notification or push permission (D-036, D-038; SPEC C19; PP 17/2025 Pasal 17) | `tests/research` claim-gate scan over the i18n files; a code scan finds no Notification or Push API use in `web/` |
-| BASE-9 | **Help always reachable**: "Butuh bantuan sekarang / Need help now" (the fixed wording of [content style](design/CONTENT_STYLE.md)) and Quick Exit appear in the same relative order on every screen (3.2.6; S-153; SPEC V36) | e2e checks every route |
-| BASE-10 | **Ownership and privacy**: every owned record is encrypted with AAD (S-173), cascades from `users` (F-08), is claimed by an exporter (F-39) and answers another user with `404` (F-34); every important record item carries exactly one provenance class and a review status, and the reserved classes `uploaded_document` and `verified_professional_note` are refused (SPEC V26; D-039); logs contain no content (the F-41 log canary) | Go tests per feature; a database constraint test for the reserved classes |
-| BASE-11 | **Slow connections and small devices**: usable on a throttled connection with a visible loading state and no lost input; a draft survives a failed request and session expiry within the tab. Drafts are kept in memory only, never in browser storage, and Quick Exit discards them ([design direction §6.5](design/DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer); [safety](SAFETY.md), v3 browser rule; feature matrix DX-04; SPEC C15) (S-196) | e2e with network throttling, a forced failed request and a forced session expiry; after each journey an e2e scan of `localStorage`, `sessionStorage`, IndexedDB and Cache Storage finds no marker content |
+| BASE-8 | **Honest, plain language**: the claim gates (`data/research/corpus/eval_fixtures/claim_gates.json`, extended for v3) find no forbidden term in the copy; no streak, points, level, badge, guilt or pressure copy; the pilot build asks for no notification or push permission (D-037, D-039; SPEC C20; PP 17/2025 Pasal 17) | `tests/research` claim-gate scan over the i18n files; a code scan finds no Notification or Push API use in `web/` |
+| BASE-9 | **Help always reachable**: "Butuh bantuan sekarang / Need help now" (the fixed wording of [content style](design/CONTENT_STYLE.md)) and Quick Exit appear in the same relative order on every screen (3.2.6; S-153; SPEC V38) | e2e checks every route |
+| BASE-10 | **Ownership and privacy**: every owned record is encrypted with AAD (S-173), cascades from `users` (F-08), is claimed by an exporter (F-39) and answers another user with `404` (F-34); every important record item carries exactly one provenance class and a review status, and the reserved classes `uploaded_document` and `verified_professional_note` are refused (SPEC V28; D-040); logs contain no content (the F-41 log canary) | Go tests per feature; a database constraint test for the reserved classes |
+| BASE-11 | **Slow connections and small devices**: usable on a throttled connection with a visible loading state and no lost input; a draft survives a failed request and session expiry within the tab. Drafts are kept in memory only, never in browser storage, and Quick Exit discards them ([design direction §6.5](design/DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer); [safety](SAFETY.md), v3 browser rule; feature matrix DX-04; SPEC C16) (S-196) | e2e with network throttling, a forced failed request and a forced session expiry; after each journey an e2e scan of `localStorage`, `sessionStorage`, IndexedDB and Cache Storage finds no marker content |
 | BASE-12 | **Semantic structure** (brief §6, "Semantic HTML"): landmarks (one `header`, a labelled main `nav`, one `main`); one `h1` per view and no skipped heading levels; lists, tables, definition lists and form groups (`fieldset`/`legend`) marked up as such; native elements before ARIA, with ARIA only where no element exists (1.3.1, 4.1.2; [accessibility criteria §4](design/ACCESSIBILITY_CRITERIA.md#4-the-briefs-own-list-6-mapped)) | axe structure rules and the best-practice gates `heading-order`, `page-has-heading-one`, `landmark-one-main`, `landmark-unique`, `region` ([accessibility criteria §6.1](design/ACCESSIBILITY_CRITERIA.md#61-axe-core)); the heading and landmark list read in a screen reader (S-195) |
 
 ## 3. Backlog by journey stage
@@ -49,13 +49,13 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. One primary action leads to the start flow (S-002 or S-003).
   3. Nothing is stored and no session is created until the visitor acts (DX-01); a test asserts zero rows after a page load.
   4. BASE.
-- **Risks:** Warm copy such as "selalu ada untukmu" invites dependency (D-034).
+- **Risks:** Warm copy such as "selalu ada untukmu" invites dependency (D-035).
 - **Owner:** UX designer; frontend engineer. **Milestone:** P2. **Status:** planned. **Evidence:** —
 
 #### S-002 Start as a guest with an honest storage notice
 - **Problem:** People want to try Sela without a name or email, but need to know where their words are kept and for how long.
 - **Outcome:** A guest starts in one step after a short notice that names the location, deletion after 7 days without activity and at most 30 days after creation, the dependence on the browser cookie, and that anonymity is not absolute.
-- **Priority:** pilot-critical. Guest mode is the no-profile entry (brief §5) and must state location and duration (brief §10; D-028).
+- **Priority:** pilot-critical. Guest mode is the no-profile entry (brief §5) and must state location and duration (brief §10; D-029).
 - **Scope:** `POST /api/v3/auth/guest` and the guest lifecycle (ADR-0002 §7); guest notice in ID and EN; purge dates in the profile; a warning from 7 days before the maximum age; the first-visit "do not share identifying details" note folded into the notice (FM-06); the purge job.
 - **Non-goals:** Absolute anonymity; device-only storage; email.
 - **Depends on:** S-005, S-171, S-173, S-177, S-260.
@@ -101,7 +101,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 
 #### S-005 Age band at the start
 - **Problem:** Wording, help and protections must fit the person's age, but asking for a birth date collects more than needed.
-- **Outcome:** One self-declared question (15–17, 18 or older, prefer not to say, under 15) with its reason. Under 15 sees age-appropriate help and nothing is stored. Production accepts 18+ only until the legal review clears minors (D-030).
+- **Outcome:** One self-declared question (15–17, 18 or older, prefer not to say, under 15) with its reason. Under 15 sees age-appropriate help and nothing is stored. Production accepts 18+ only until the legal review clears minors (D-031).
 - **Priority:** pilot-critical. Needed to apply the production age gate, the protective defaults for `unknown`, and the per-provider age rules (ADR-0003 §8.3).
 - **Scope:** ADR-0002 §3 age-band notes; `SELA_ALLOWED_AGE_BANDS`; a yearly re-confirmation for 15–17; correction in settings.
 - **Non-goals:** Age verification (S-212); storing a birth date.
@@ -111,13 +111,13 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. A band outside the allowed configuration is refused with a plain-language explanation and help links.
   3. No setting, text size or flow is chosen from the age band alone; people aged 50+ get the same defaults as everyone else (brief §6).
   4. BASE.
-- **Risks:** Self-declaration is not verification (PP 17/2025 Pasal 22); people may answer untruthfully. The four answers cannot tell 15 from 16–17, which D-030 needs before any minors band is enabled; S-212 criterion 3 closes this ([conflict matrix](CONFLICT_MATRIX.md) #49).
+- **Risks:** Self-declaration is not verification (PP 17/2025 Pasal 22); people may answer untruthfully. The four answers cannot tell 15 from 16–17, which D-031 needs before any minors band is enabled; S-212 criterion 3 closes this ([conflict matrix](CONFLICT_MATRIX.md) #49).
 - **Owner:** Go backend engineer; UX designer. **Milestone:** P2. **Status:** in progress (backend). **Evidence:** in progress — `internal/account`, `internal/httpapi/v3_*.go`, uncommitted, not verified.
 
 #### S-006 Choose consents during onboarding
 - **Problem:** People need to know which company processes their words, where and why, before they write, and must be able to say no and still use Sela.
 - **Outcome:** Separate, plain-language choices for storage, Sela's AI (Meta model on Modal, US), the Claude check (Anthropic, US) and the DeepSeek backup (PRC, default off). Declining AI keeps a private writing space.
-- **Priority:** pilot-critical. UU PDP Pasal 20–24 require separate, recorded consent per purpose; D-029, D-048. DX-09 (a false claim about who processes text) must not recur.
+- **Priority:** pilot-critical. UU PDP Pasal 20–24 require separate, recorded consent per purpose; D-030, D-049. DX-09 (a false claim about who processes text) must not recur.
 - **Scope:** The onboarding consent step on the consent API (S-171), with the ADR-0003 §8.1 disclosures; a "decide later" path; consent is never requested during an outage.
 - **Non-goals:** Bundled consent; pre-selected boxes; an unequal "No" button.
 - **Depends on:** S-171, S-177, S-190.
@@ -133,7 +133,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 
 #### S-007 Optional conversation intent
 - **Problem:** Some people want to be listened to, others want to sort their thoughts, see patterns or prepare a consultation; one style does not fit all.
-- **Outcome:** An optional picker (just listen / sort my thoughts / understand patterns / prepare a consultation) adjusts the reply style and is never a gate (D-034).
+- **Outcome:** An optional picker (just listen / sort my thoughts / understand patterns / prepare a consultation) adjusts the reply style and is never a gate (D-035).
 - **Priority:** pilot-important. Brief §5 asks for it "if it helps" and forbids making it mandatory; listening works without it.
 - **Scope:** Picker at the start of a conversation and changeable during it; the chosen intent sent to AT-1 (ADR-0003 §3.1); "prepare a consultation" offers a link to S-090. The context questions of the retired Dengar.in assessment merge here (FM-05).
 - **Non-goals:** Any score, severity band or "professional pathway" label (FM-05 retired).
@@ -165,13 +165,13 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-020 Conversation room: talk, choose whether to keep it, end it
 - **Problem:** The core of Sela, telling what is on your mind and being heard, does not exist in v2 (no conversation surface; C9 excluded a chatbot).
 - **Outcome:** A person writes, gets a contextual reply, decides whether this conversation is saved, and ends it with one action. Saved conversations can be listed, resumed and deleted.
-- **Priority:** pilot-critical. Listening is the core function (brief §1, §5; D-034) and DoD capability 1.
-- **Scope:** Conversation and message records (migration range 0100–0199, encrypted, exporter), `/api/v3/conversations` specified in API_SPEC_V3 §9 before implementation, composer and message log ("Ruang cerita / Talk"), the per-conversation storage choice (save or don't save, asked in plain language before the first message is stored, changeable), the bounded in-memory hold for "don't save" turns (D-050; SPEC V25), "Selesai / End", list, resume and delete.
+- **Priority:** pilot-critical. Listening is the core function (brief §1, §5; D-035) and DoD capability 1.
+- **Scope:** Conversation and message records (migration range 0100–0199, encrypted, exporter), `/api/v3/conversations` specified in API_SPEC_V3 §9 before implementation, composer and message log ("Ruang cerita / Talk"), the per-conversation storage choice (save or don't save, asked in plain language before the first message is stored, changeable), the bounded in-memory hold for "don't save" turns (D-051; SPEC V27), "Selesai / End", list, resume and delete.
 - **Non-goals:** Group chat, voice (S-025 to S-027), attachments, therapy role-play, a companion persona.
 - **Depends on:** S-002 or S-003, S-150, S-151, S-170, S-171, S-191, S-220, S-221, S-223.
 - **Acceptance criteria:**
   1. A new visitor reaches the composer with no profile field other than the age band and the required terms, in at most four screens from the welcome page (e2e counts them).
-  2. The storage question appears before the first message is stored. A "don't save" conversation never has a message row (DB test during and after the conversation). Its turns are held only in server memory, bounded in count and size, per owner and conversation, and never reach the database, backups, logs or browser storage. They are purged at End, at sign-out or session end, after 30 minutes without activity, after 2 hours in total and on a server restart (fake-clock and restart tests), and within that window the same session can reopen the conversation after a reload (e2e). It is never used for memory, later context, the timeline or export (DM-4) (D-050; SPEC V25).
+  2. The storage question appears before the first message is stored. A "don't save" conversation never has a message row (DB test during and after the conversation). Its turns are held only in server memory, bounded in count and size, per owner and conversation, and never reach the database, backups, logs or browser storage. They are purged at End, at sign-out or session end, after 30 minutes without activity, after 2 hours in total and on a server restart (fake-clock and restart tests), and within that window the same session can reopen the conversation after a reload (e2e). It is never used for memory, later context, the timeline or export (DM-4) (D-051; SPEC V27).
   3. "Selesai / End" is one action from the composer, asks nothing, and says what happens to the text under the current storage choice.
   4. Every message is screened (S-150) before storage and before any model call; crisis handling follows S-151.
   5. Deleting a conversation deletes its messages, its reflection cards, the memory items proposed from it and their AI provenance records, and marks summaries that quote it stale (S-090).
@@ -183,7 +183,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-021 Replies that listen: contextual, no judgement, no diagnosis, no dependency
 - **Problem:** Generic chatbots repeat empathy templates, push solutions, judge, diagnose, pretend to be professionals or invite dependence.
 - **Outcome:** Replies respond to what the person said, ask at most one question, offer suggestions without pushing them, and never diagnose, claim professional status, build an exclusive relationship or encourage dependence.
-- **Priority:** pilot-critical. Brief §5 lists these as hard rules; D-034.
+- **Priority:** pilot-critical. Brief §5 lists these as hard rules; D-035.
 - **Scope:** The versioned listening prompt (the Dengar.in reply rules merged, CA-19), the AT-1 data rules (ADR-0003 §3.1), the guards and flags of S-223, a template-repetition check, a kind off-topic redirect that distress always overrides (FM-12), and a synthetic conversation set (ID, EN, code-switched; adult, 50+ and, outside production, 15–17 personas).
 - **Non-goals:** Efficacy claims; persona customisation.
 - **Depends on:** S-221, S-223. The relevance metric is measured live under S-228 (P5).
@@ -193,7 +193,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   3. A reply whose first sentence matches a listed empathy formula, or repeats the first sentence of an earlier reply in the same conversation, is regenerated once or withheld.
   4. An off-topic request gets one bilingual redirect; distress language always overrides it (tests from FM-12 cases).
   5. A contextual-relevance metric on the synthetic set is pre-registered in `eval/thresholds.json` before the first live run (S-228) and reported as engineering evidence on synthetic data only.
-  6. No reply presents seeking a professional as required or urges it when the person has not asked about help; Sela's static help card (S-151) and help control (S-153) are unaffected (SPEC V24). Bilingual guard tests, plus a count on the synthetic set reported with S-228.
+  6. No reply presents seeking a professional as required or urges it when the person has not asked about help; Sela's static help card (S-151) and help control (S-153) are unaffected (SPEC V26). Bilingual guard tests, plus a count on the synthetic set reported with S-228.
 - **Risks:** Deterministic checks can flag legitimate text (the user's own quoted words); live quality is unknown until B-1.
 - **Owner:** AI engineer; UX designer (voice and tone). **Milestone:** P3. **Status:** planned. **Evidence:** —
 
@@ -220,7 +220,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-023 "Sela menangkap…" cards the person can confirm, correct or remove
 - **Problem:** When an AI misunderstands, the person cannot see or fix what it assumed.
 - **Outcome:** Sela's understanding is shown as short cards that the person confirms, corrects or removes; only confirmed or corrected cards are used later.
-- **Priority:** pilot-critical. Brief §5 ("bisa mengoreksi pemahaman AI"); D-034, D-039.
+- **Priority:** pilot-critical. Brief §5 ("bisa mengoreksi pemahaman AI"); D-035, D-040.
 - **Scope:** AT-2 reflection cards in the conversation; provenance `unconfirmed_interpretation` until reviewed; a correction stored as `user_correction` with the earlier version kept.
 - **Non-goals:** Cards that state facts about the person's health.
 - **Depends on:** S-020, S-221, S-223.
@@ -237,9 +237,9 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-024 When AI is off or unavailable
 - **Problem:** A person who declines AI, or meets an outage, must not lose their words or get a fake reply.
 - **Outcome:** Declined AI gives a labelled private writing space; an outage says honestly that Sela cannot reply now, with retry, keep writing and end.
-- **Priority:** pilot-critical. Brief §8 (fail safely); D-029 (honest no-AI path); the v2 manual-path principle (V4).
+- **Priority:** pilot-critical. Brief §8 (fail safely); D-030 (honest no-AI path); the v2 manual-path principle (V4).
 - **Scope:** Conversation states for `ai_processing` declined, provider disabled, kill switch, outage and abstention.
-- **Non-goals:** Substitute template empathy lines (D-034).
+- **Non-goals:** Substitute template empathy lines (D-035).
 - **Depends on:** S-020, S-220.
 - **Acceptance criteria:**
   1. With AI declined the room says so and stores messages per the storage choice; no provider call is made (test-double call count 0).
@@ -252,12 +252,12 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-025 Voice dictation (opt-in)
 - **Problem:** Typing is hard for some people (FM-15).
 - **Outcome:** Optional dictation into the composer with a disclosure and an editable transcript.
-- **Priority:** pilot-important. D-037 migrates voice dictation into the pilot as an opt-in, and SPEC C24 lists it in pilot scope; it serves people for whom typing is hard (brief §6). The pilot can start without it because the operating system's own keyboard dictation already works in any text field.
+- **Priority:** pilot-important. D-038 migrates voice dictation into the pilot as an opt-in, and SPEC C25 lists it in pilot scope; it serves people for whom typing is hard (brief §6). The pilot can start without it because the operating system's own keyboard dictation already works in any text field.
 - **Scope:** Browser speech recognition behind the "Dikte suara / Voice dictation" display setting (S-192) and the composer's mic button ([design direction §6.5](design/DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer)).
 - **Non-goals:** Audio storage; auto-submit; a cloud speech service run by Sela.
 - **Depends on:** S-020, S-171, S-192.
 - **Acceptance criteria:**
-  1. Off by default; turning it on shows, in ID and EN, that the browser's speech service may send audio to its vendor (D-037).
+  1. Off by default; turning it on shows, in ID and EN, that the browser's speech service may send audio to its vendor (D-038).
   2. Microphone permission is asked only on use; recording state is shown in text and announced through `role="status"`.
   3. The transcript goes into the editable composer and is never sent automatically (DX-08); text input stays available.
   4. The mic is a toggle, never press-and-hold (2.5.2).
@@ -268,7 +268,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-026 Read replies aloud (opt-in)
 - **Problem:** Some people prefer to listen.
 - **Outcome:** An opt-in read-aloud button using the browser's local speech synthesis.
-- **Priority:** pilot-important. D-037 keeps read-aloud through local speech synthesis as an opt-in in the pilot, and SPEC C24 lists it in pilot scope. The pilot can start without it because screen-reader users already have S-022; this serves preference, not access.
+- **Priority:** pilot-important. D-038 keeps read-aloud through local speech synthesis as an opt-in in the pilot, and SPEC C25 lists it in pilot scope. The pilot can start without it because screen-reader users already have S-022; this serves preference, not access.
 - **Scope:** The "Bacakan dengan suara / Read aloud" display setting (S-192), off by default; per-reply "Bacakan / Read aloud" with pause and stop ([design direction §6.5](design/DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer)). Separate from the screen-reader announcement setting of S-022.
 - **Non-goals:** Cloud text-to-speech; autoplay.
 - **Depends on:** S-022, S-192.
@@ -282,7 +282,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-027 Voice room "Ruang Ngobrol" (paused)
 - **Problem:** Talking out loud can be easier than typing (FM-16).
 - **Outcome:** Reopened only when its prerequisites are met.
-- **Priority:** post-pilot, paused (D-037): Gemini is outside the v3 provider plan, the Dengar.in version autoplays reply audio and auto-submits transcripts (DX-08).
+- **Priority:** post-pilot, paused (D-038): Gemini is outside the v3 provider plan, the Dengar.in version autoplays reply audio and auto-submits transcripts (DX-08).
 - **Scope (prerequisites to reopen):** a transcript review step before anything is sent; no autoplay; a provider inside the routing policy with its own consent; audio never stored; captions; an accessibility review.
 - **Non-goals:** Porting the Dengar.in room as it is.
 - **Depends on:** S-025, S-026, S-220.
@@ -297,7 +297,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Outcome:** A calm home that shows recent conversations and entries, what Sela remembers, active shares and the next actions the person chose.
 - **Priority:** pilot-important. Navigation reaches every surface without it, and no DoD capability depends on it, but it makes continuity visible.
 - **Scope:** Home after sign-in or guest start; empty state that leads to "Mulai bercerita"; links to the timeline, memory and shares.
-- **Non-goals:** Scores, streaks, points, levels, badges, "you have not written for N days" (D-036; FM-07, FM-21 retired).
+- **Non-goals:** Scores, streaks, points, levels, badges, "you have not written for N days" (D-037; FM-07, FM-21 retired).
 - **Depends on:** S-020, S-050, S-070, S-080, S-191. Active shares appear once S-101 lands (P4).
 - **Acceptance criteria:**
   1. Every block has empty, loading and error states; the empty home has one primary action.
@@ -310,7 +310,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-041 Optional neutral reminders
 - **Problem:** Some people want a gentle reminder to check in.
 - **Outcome:** Reminders only if the person turns them on, with neutral wording.
-- **Priority:** post-pilot. Not in the pilot (D-036).
+- **Priority:** post-pilot. Not in the pilot (D-037).
 - **Scope:** A reminder time and channel to be decided (no push notifications in the pilot).
 - **Non-goals:** Guilt messages, streaks, default-on reminders.
 - **Depends on:** S-060.
@@ -323,7 +323,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 ### 3.4 Journal and reflection (S-050 to S-059)
 
 #### S-050 Notes (journal, "Tulis catatan") inside Catatan pribadiku
-- **Problem:** People need a private place to write that keeps their notes across sessions. The design calls a journal entry a "Catatan" (write: "Tulis catatan") and the place that holds every kept record "Catatan pribadiku" ([information architecture](design/INFORMATION_ARCHITECTURE.md); D-038). Dengar.in kept the journal in plaintext browser storage (DX-04) and refused to save heavy entries (DX-02).
+- **Problem:** People need a private place to write that keeps their notes across sessions. The design calls a journal entry a "Catatan" (write: "Tulis catatan") and the place that holds every kept record "Catatan pribadiku" ([information architecture](design/INFORMATION_ARCHITECTURE.md); D-039). Dengar.in kept the journal in plaintext browser storage (DX-04) and refused to save heavy entries (DX-02).
 - **Outcome:** Journal entries that are created, edited and deleted, kept server-side and encrypted, with every edit kept as a version.
 - **Priority:** pilot-critical. DoD capabilities 3 and 9 (see and correct personal context; continue reflecting after a consultation) rest on saved entries.
 - **Scope:** Journal records (migration range 0200–0299), `/api/v3/journal` specified first; the original text (`user_original`) and each correction (`user_correction`) as versions; exporter section.
@@ -335,7 +335,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   3. Editing keeps the earlier version; the entry shows its created and updated times.
   4. Deleting an entry deletes the reflections and memory items derived from it and marks summaries that quote it stale.
   5. BASE.
-- **Risks:** People may treat the journal as a medical record; the copy says these are their own notes (D-038).
+- **Risks:** People may treat the journal as a medical record; the copy says these are their own notes (D-039).
 - **Owner:** Go backend engineer; frontend engineer. **Milestone:** P3. **Status:** planned. **Evidence:** —
 
 #### S-051 Optional reflection prompts
@@ -437,7 +437,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Non-goals:** Hidden profiles; inferred diagnoses; memory from unsaved conversations.
 - **Depends on:** S-020, S-023, S-050, S-171, S-260.
 - **Acceptance criteria:**
-  1. Every item shows its source (a link to the record), provenance class, created and updated time, version and review status (D-039).
+  1. Every item shows its source (a link to the record), provenance class, created and updated time, version and review status (D-040).
   2. Correcting keeps the previous version; forgetting deletes the item and the next reply request no longer contains it (test on the captured request).
   3. Without `personal_memory` nothing is stored as memory or sent; withdrawal stops use at once.
   4. Items from "don't save" conversations never appear (DM-4).
@@ -517,8 +517,8 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Problem:** People must see exactly what a professional will see and decide who gets it and why.
 - **Outcome:** A preview that equals what the recipient will see, and a consent that names the content, the recipient and the purpose.
 - **Priority:** pilot-critical. DoD capability 6; brief §7 (preview; consent by content, recipient and purpose).
-- **Scope:** Choose items or fields, type a recipient label (the person's own professional; identity not verified, D-041), pick a purpose from a fixed list and a duration; explicit consent with the policy version; v2 handoff code reused with a purpose added.
-- **Non-goals:** A professional directory, booking, partnership claims (D-041).
+- **Scope:** Choose items or fields, type a recipient label (the person's own professional; identity not verified, D-042), pick a purpose from a fixed list and a duration; explicit consent with the policy version; v2 handoff code reused with a purpose added.
+- **Non-goals:** A professional directory, booking, partnership claims (D-042).
 - **Depends on:** S-090, S-171.
 - **Acceptance criteria:**
   1. The preview equals the stored projection exactly (the v2 `TestFullJourneyOverHTTP` assertion ported).
@@ -531,7 +531,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 
 #### S-101 Share link, access code, expiry, revocation and status
 - **Problem:** Once shared, people need to stop further access and know what happened to the share, without mistaking a sent note for care received.
-- **Outcome:** A link plus a separate access code, an expiry, one-action revocation, and statuses prepared → shared → opened → acknowledged → consultation in progress, plus revoked, expired and ended (D-040).
+- **Outcome:** A link plus a separate access code, an expiry, one-action revocation, and statuses prepared → shared → opened → acknowledged → consultation in progress, plus revoked, expired and ended (D-041).
 - **Priority:** pilot-critical. DoD capability 7; brief §7 (expiry, revocation, access audit, handoff statuses).
 - **Scope:** Share records and recipient principals (migration range 0400–0499); token and 8-character code; lockout; durations; revocation; the status machine; an audit event for every recipient open (S-176).
 - **Non-goals:** Recalling copies already viewed or downloaded.
@@ -625,8 +625,8 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-122 Verified professionals, booking and professional notes (later)
 - **Problem:** People may want a verified professional or a note written by one.
 - **Outcome:** Only after the prerequisites exist.
-- **Priority:** post-pilot. No verified professionals, partnerships or booking exist, and claiming them is forbidden (brief §7; D-041).
-- **Scope (prerequisites):** a credential-verification process; a health-facility (Fasyankes) partner and PSE registration (UU 17/2023 Pasal 172); legal review; consent design for professional-written notes; activating the reserved `verified_professional_note` provenance class (D-039).
+- **Priority:** post-pilot. No verified professionals, partnerships or booking exist, and claiming them is forbidden (brief §7; D-042).
+- **Scope (prerequisites):** a credential-verification process; a health-facility (Fasyankes) partner and PSE registration (UU 17/2023 Pasal 172); legal review; consent design for professional-written notes; activating the reserved `verified_professional_note` provenance class (D-040).
 - **Non-goals:** Any of this in the pilot.
 - **Depends on:** S-178.
 - **Acceptance criteria:** Defined when opened.
@@ -669,8 +669,8 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Problem:** People want something useful to read or try, from trustworthy sources.
 - **Outcome:** A browsable ID/EN library built from the 30 self-help cards (FM-34), with sources and licence notices.
 - **Priority:** pilot-important. Support content helps, but the pilot's core is listening and continuity; urgent needs are covered by S-152 (pilot-critical).
-- **Scope:** `/api/v3/reading` (migration range 0600–0699); the 22 WHO cards with attribution and adaptation notice (CC BY-NC-SA 3.0 IGO), Kemenkes and CDC attribution, the safety-plan structure without reproduced text; the malformed WHO URL corrected; bookmarks by reference (D-032).
-- **Non-goals:** Commercial use (blocked until licensed or replaced, B-14, D-044); copying an article into a person's history; academic citations inside empathic replies (brief §9).
+- **Scope:** `/api/v3/reading` (migration range 0600–0699); the 22 WHO cards with attribution and adaptation notice (CC BY-NC-SA 3.0 IGO), Kemenkes and CDC attribution, the safety-plan structure without reproduced text; the malformed WHO URL corrected; bookmarks by reference (D-033).
+- **Non-goals:** Commercial use (blocked until licensed or replaced, B-14, D-045); copying an article into a person's history; academic citations inside empathic replies (brief §9).
 - **Depends on:** S-191, S-245.
 - **Acceptance criteria:**
   1. Every WHO card shows the attribution and adaptation notice; a test checks every card has licence fields.
@@ -683,9 +683,9 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-141 Small exercises ("latihan kecil")
 - **Problem:** Some people want a small, safe step to try (FM-19).
 - **Outcome:** Optional exercises inside Reading & support without day counters.
-- **Priority:** pilot-important. D-037 merges the Dengar.in daily micro-missions into Reading & support as optional "latihan kecil", and SPEC T19 places them in P6 with the reading library. The pilot can start without them; the Dengar.in templates have no cited source (CA-05), so each exercise is sourced or reviewed before it is shown.
+- **Priority:** pilot-important. D-038 merges the Dengar.in daily micro-missions into Reading & support as optional "latihan kecil", and SPEC T19 places them in P6 with the reading library. The pilot can start without them; the Dengar.in templates have no cited source (CA-05), so each exercise is sourced or reviewed before it is shown.
 - **Scope:** Exercises that are sourced or reviewed and labelled team-written, shown in Reading & support next to the library (S-140).
-- **Non-goals:** "Day N of 14", streaks, completion pressure (D-036).
+- **Non-goals:** "Day N of 14", streaks, completion pressure (D-037).
 - **Depends on:** S-140, S-245.
 - **Acceptance criteria:**
   1. Each exercise has a source or the team-written label, and is verified at authoring like a reading item (S-245) or stays unpublished.
@@ -698,8 +698,8 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-142 Community forum "Ruang Cerita" (paused)
 - **Problem:** Feeling less alone by reading others' experiences (FM-36, FM-37).
 - **Outcome:** Reopened only when its prerequisites are met.
-- **Priority:** post-pilot, paused (D-037): no moderation operations, authors cannot delete (DX-05), invented seed stories shown as real (DX-07), "100% anonim" copy (DX-10).
-- **Scope (prerequisites to reopen):** moderation operations and an operator UI with an audit trail; author deletion; a minors policy; examples labelled as examples; no link to any personal history (D-032); a crisis gate on every post; a name distinct from the private conversation room "Ruang cerita" (D-034), so a public community space is never confused with personal content (C20).
+- **Priority:** post-pilot, paused (D-038): no moderation operations, authors cannot delete (DX-05), invented seed stories shown as real (DX-07), "100% anonim" copy (DX-10).
+- **Scope (prerequisites to reopen):** moderation operations and an operator UI with an audit trail; author deletion; a minors policy; examples labelled as examples; no link to any personal history (D-033); a crisis gate on every post; a name distinct from the private conversation room "Ruang cerita" (D-035), so a public community space is never confused with personal content (C21).
 - **Non-goals:** Porting the Dengar.in forum as it is.
 - **Depends on:** S-150, S-178.
 - **Acceptance criteria:** Defined when reopened; at minimum each prerequisite above with a test.
@@ -711,8 +711,8 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-150 Screen every text for crisis language before storage and before AI
 - **Problem:** Urgent risk must never be missed or wait for a model.
 - **Outcome:** A deterministic screen runs on every text a person writes before it is stored and before any model call, in ID, EN and code-switched language.
-- **Priority:** pilot-critical. Brief §11; D-035; RR-1.
-- **Scope:** The v2 `internal/safety` lexicon (ported from Dengar.in, rule IDs kept) at ruleset -5, merged forward from PR #6 (D-033); applied to every v3 write route; new vectors for multi-turn context, teen slang (ID/EN), older-adult phrasing, quotes and lyrics, negation and code-switching, with each vector tagged by age register (discovery research audit of 2026-10-26, recommendation R-10).
+- **Priority:** pilot-critical. Brief §11; D-036; RR-1.
+- **Scope:** The v2 `internal/safety` lexicon (ported from Dengar.in, rule IDs kept) at ruleset -5, merged forward from PR #6 (D-034); applied to every v3 write route; new vectors for multi-turn context, teen slang (ID/EN), older-adult phrasing, quotes and lyrics, negation and code-switching, with each vector tagged by age register (discovery research audit of 2026-10-26, recommendation R-10).
 - **Non-goals:** A model-only classifier; contacting anyone automatically.
 - **Depends on:** —
 - **Acceptance criteria:**
@@ -720,14 +720,14 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. `safety.model_calls_on_crisis_path = 0` holds for all three providers (EV-7).
   3. The v1 vectors stay as regression tests (`TestV1Parity`, `TestVectorsCoverV1`); the open gaps recorded for ruleset -4 are closed or listed as known gaps with tests.
   4. Worst-case screening time stays linear in input length (benchmark).
-  5. Each stored assessment records the ruleset version that produced it (DB test; SPEC V36).
+  5. Each stored assessment records the ruleset version that produced it (DB test; SPEC V38).
 - **Risks:** False negatives on new phrasing; false positives that interrupt ordinary talk. Second safeguards are in S-151 and S-222.
 - **Owner:** AI engineer (safety); security/accessibility reviewer. **Milestone:** P2 (ruleset -5) and P3 (v3 routes). **Status:** in progress. **Evidence:** in progress — ruleset -5 fix loop on `feat/v2-go-meta-runtime` (`internal/safety/**`), not yet merged forward; v2 evidence for ruleset -4 (1,329 vectors) is v2 scope.
 
 #### S-151 Crisis support that keeps the person's words
 - **Problem:** Dengar.in redirected away from the chat on a crisis match and lost the conversation (DX-03), and refused to save heavy journal entries (DX-02); v2 deletes the story.
 - **Outcome:** On a crisis match Sela shows verified help inline, keeps the text if storage allows, pauses AI for that conversation until the person chooses to continue, and never contacts anyone.
-- **Priority:** pilot-critical. Brief §11; D-035.
+- **Priority:** pilot-critical. Brief §11; D-036.
 - **Scope:** Inline help card in the conversation, journal and check-in; crisis hold per conversation; continue-after-help action; the generator risk flag that can only raise the route (RR-7).
 - **Non-goals:** Automatic calls or messages; erasing the person's text; hard redirects.
 - **Depends on:** S-150, S-152, S-153.
@@ -744,7 +744,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-152 Immediate help page and verified help directory
 - **Problem:** People need correct contacts fast; Dengar.in showed an unverified KPAI contact as fact (DX-06) and kept two drifting catalogues (DX-14).
 - **Outcome:** One help page, reachable in one action from every screen, listing only services verified from official sources, with source, verification date and a re-verify-by date the server enforces.
-- **Priority:** pilot-critical. Brief §11 (verify local support sources; never invent numbers); D-043.
+- **Priority:** pilot-critical. Brief §11 (verify local support sources; never invent numbers); D-044.
 - **Scope:** One catalogue with audience tags (teen, adult, all); limits, cost and hours as the source states them; Puskesmas/FKTP; tap-to-call links named by service; the Stanley & Brown safety-plan structure with attribution (FM-30).
 - **Non-goals:** Unverified entries; the KPAI WhatsApp number; any model call on this page.
 - **Depends on:** S-191.
@@ -753,7 +753,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. Past its re-verify-by date an entry is never shown as current: the server flags it (fake-clock test); the current v2 check of the date format only (`internal/fixtures/fixtures.go`) is replaced.
   3. Facts the source does not state are labelled unconfirmed (for example LISA "free").
   4. Link text names the service (2.4.4).
-  5. Every surface that shows help (this page, the inline crisis card of S-151, the under-15 screen of S-005) reads the one catalogue; a bundled offline copy such as `web/src/data/help.fallback.json` is generated from it, and a test fails if the two differ (DX-14; SPEC V37).
+  5. Every surface that shows help (this page, the inline crisis card of S-151, the under-15 screen of S-005) reads the one catalogue; a bundled offline copy such as `web/src/data/help.fallback.json` is generated from it, and a test fails if the two differ (DX-14; SPEC V39).
   6. BASE.
 - **Risks:** Services change; S-154 re-verifies before real users.
 - **Owner:** Go backend engineer; frontend engineer; PM (content). **Milestone:** P2. **Status:** planned. **Evidence:** —
@@ -761,7 +761,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-153 "Butuh bantuan sekarang / Need help now" and Quick Exit on every screen
 - **Problem:** Help must be one action away, and someone may need to leave the screen fast.
 - **Outcome:** A help control labelled "Butuh bantuan sekarang / Need help now" (the fixed wording of [content style](design/CONTENT_STYLE.md), never shortened) and a Quick Exit on every screen, in the same place.
-- **Priority:** pilot-critical. D-035 (second safeguards); FM-35; WCAG 3.2.6.
+- **Priority:** pilot-critical. D-036 (second safeguards); FM-35; WCAG 3.2.6.
 - **Scope:** App-shell controls; Quick Exit to a neutral site via `location.replace`; an optional Esc shortcut.
 - **Non-goals:** Deleting data on exit unless the person asks.
 - **Depends on:** S-191.
@@ -776,7 +776,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-154 Re-verify every help line before real users
 - **Problem:** Help-line details checked on 2026-10-14/15 have changed: Healing119's site now says 24 hours and lists WhatsApp while the Kemenkes article of 2025-08-07 says morning to night; LISA does not state "free"; Yayasan Pulih contacts moved to `?page_id=201` with new chat lines.
 - **Outcome:** Every entry re-checked against its official source, with owner decisions on the conflicting wording.
-- **Priority:** pilot-critical. Wrong numbers in a crisis are a safety failure (D-043).
+- **Priority:** pilot-critical. Wrong numbers in a crisis are a safety failure (D-044).
 - **Scope:** Owner decisions on Healing119 hours and WhatsApp, LISA cost, Yayasan Pulih source URL, channel labels and "tarif standar"; teen resources verified the same way; `lastVerified` and `reverifyBy` updated.
 - **Non-goals:** Calling services from this environment.
 - **Depends on:** S-152.
@@ -806,7 +806,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-171 Consent records per purpose and per provider
 - **Problem:** Consent must be separate per purpose and provider, provable, and withdrawable at once.
 - **Outcome:** Versioned, server-enforced consent records for storage, sharing, `ai_processing` (Meta on Modal), `ai_provider_anthropic`, `ai_provider_deepseek` and `personal_memory`, with history.
-- **Priority:** pilot-critical. UU PDP Pasal 20–24, 9 (withdrawal); D-029, D-048.
+- **Priority:** pilot-critical. UU PDP Pasal 20–24, 9 (withdrawal); D-030, D-049.
 - **Scope:** `PUT /api/v3/me/consents/{purpose}` and history (API_SPEC_V3 §3, §6); purposes activated by their milestones with policy texts; withdrawal cancels in-flight work (RR-13).
 - **Non-goals:** Bundled consents; consent asked during an outage.
 - **Depends on:** S-260.
@@ -835,7 +835,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 
 #### S-173 Encryption at rest and crypto-shredding
 - **Problem:** A stolen database or backup must not expose people's notes, and deletion must reach backups.
-- **Outcome:** Per-user envelope encryption (AES-256-GCM data key wrapped by a key-encryption key from the secret manager), AAD binding every ciphertext to its place, and key destruction on deletion (D-027).
+- **Outcome:** Per-user envelope encryption (AES-256-GCM data key wrapped by a key-encryption key from the secret manager), AAD binding every ciphertext to its place, and key destruction on deletion (D-028).
 - **Priority:** pilot-critical. Brief §10 (encryption in transit and at rest); UU PDP specific data.
 - **Scope:** `internal/vault`; key rotation (`sela keys rewrap`); TLS `verify-full` to the database in staging and production; every feature migration lists its plaintext columns with a reason.
 - **Non-goals:** Client-side end-to-end encryption (FM-38 merged into this item).
@@ -908,7 +908,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-178 Legal readiness for a real-user pilot
 - **Problem:** Sela will process health and possibly children's data across borders; Indonesian law sets duties before users arrive.
 - **Outcome:** A DPIA, a DPO, processor agreements, a cross-border basis per provider, PSE registration, a breach runbook and a hosting-region decision, each done or decided by the owner.
-- **Priority:** pilot-critical. UU PDP Pasal 34 (DPIA), 46 (breach notice within 3×24 hours), 51 (processors), 53 (DPO), 56 (transfer); PP 71/2019 Pasal 6 and Permenkominfo 5/2020 (PSE registration before use); UU 17/2023 Pasal 346–348 (health-data localisation question); D-048.
+- **Priority:** pilot-critical. UU PDP Pasal 34 (DPIA), 46 (breach notice within 3×24 hours), 51 (processors), 53 (DPO), 56 (transfer); PP 71/2019 Pasal 6 and Permenkominfo 5/2020 (PSE registration before use); UU 17/2023 Pasal 346–348 (health-data localisation question); D-049.
 - **Scope:** The PM drafts the DPIA, the processing record, the processor list (Modal, Anthropic, DeepSeek, host), the breach runbook with an in-app notice channel (no email exists) and the registration checklist; the owner obtains legal review and registrations.
 - **Non-goals:** Legal advice from the team.
 - **Depends on:** S-177.
@@ -954,7 +954,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-182 Upload documents (later)
 - **Problem:** People may want to attach a letter or prior report.
 - **Outcome:** Uploads only after their own design.
-- **Priority:** post-pilot. Deferred (D-042): validation, malware scanning and storage need design; the `uploaded_document` provenance class is reserved.
+- **Priority:** post-pilot. Deferred (D-043): validation, malware scanning and storage need design; the `uploaded_document` provenance class is reserved.
 - **Scope (prerequisites):** file-type and size validation, malware scanning, encrypted storage, export and deletion, an ADR.
 - **Non-goals:** Uploads in the pilot.
 - **Depends on:** S-173, S-175.
@@ -980,7 +980,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 
 #### S-191 Design system and app shell
 - **Problem:** Features need consistent components, navigation and states.
-- **Outcome:** A React 19 + TypeScript + Vite component set with every state, and an app shell with navigation, skip link, page titles, help and Quick Exit (D-031).
+- **Outcome:** A React 19 + TypeScript + Vite component set with every state, and an app shell with navigation, skip link, page titles, help and Quick Exit (D-032).
 - **Priority:** pilot-critical. Every screen is built on it.
 - **Scope:** Components, layout, navigation, focus management, light and dark themes, a JavaScript size budget (set here, enforced by S-196).
 - **Non-goals:** A new framework.
@@ -1065,7 +1065,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 
 #### S-210 An experience that fits ages 15 to 17
 - **Problem:** Young people need wording, help and protections that fit their age, and must know the limits of confidentiality; Dengar.in refused them in one place and admitted them elsewhere without protections (DX-13).
-- **Outcome:** One minors policy across every surface, built and tested, and disabled in production until the legal review clears it (D-030).
+- **Outcome:** One minors policy across every surface, built and tested, and disabled in production until the legal review clears it (D-031).
 - **Priority:** pilot-important. The brief requires it to be built, but production use is blocked by law (B-10), so the pilot starts with adults.
 - **Scope:** Age-appropriate copy; a confidentiality explanation (what Sela keeps, that no guardian sees anything, when Sela shows help, that Sela contacts no one); verified teen help resources; memory and pattern features opt-in only (PP 17/2025 Pasal 19); high-privacy defaults (Pasal 7); audience class `young_person` sent to providers; no DeepSeek.
 - **Non-goals:** Guardian access, guardian reports, hidden monitoring.
@@ -1075,7 +1075,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. Production configuration refuses `15_17` (F-10).
   3. No guardian view, export, notification or report exists (route-table test).
   4. Memory and pattern features are off until the young person turns them on.
-  5. The age band `unknown` gets the protective defaults of `15_17` wherever it is allowed (test; SPEC V35).
+  5. The age band `unknown` gets the protective defaults of `15_17` wherever it is allowed (test; SPEC V37).
   6. BASE.
 - **Risks:** 15-year-olds need a low-risk profile from the Minister (PP 17/2025 Pasal 21(1)(b)); they stay blocked.
 - **Owner:** UX designer; frontend engineer; Go backend engineer. **Milestone:** P7. **Status:** planned. **Evidence:** —
@@ -1104,7 +1104,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Acceptance criteria:**
   1. Each question has a recorded decision with its source.
   2. `SELA_ALLOWED_AGE_BANDS` in production matches the decisions.
-  3. Before production enables any minors band, the age question tells 15 apart from 16–17 and a 15-year-old is refused with help information (D-030; [design direction §10](design/DESIGN_DIRECTION.md#10-open-points-for-the-pm-and-other-owners), item 4). Until then `15_17` stays disabled in production ([conflict matrix](CONFLICT_MATRIX.md) #49).
+  3. Before production enables any minors band, the age question tells 15 apart from 16–17 and a 15-year-old is refused with help information (D-031; [design direction §10](design/DESIGN_DIRECTION.md#10-open-points-for-the-pm-and-other-owners), item 4). Until then `15_17` stays disabled in production ([conflict matrix](CONFLICT_MATRIX.md) #49).
 - **Risks:** Rules change (PP 33/2026).
 - **Owner:** Owner; PM. **Milestone:** P7. **Status:** blocked externally (B-10). **Evidence:** —
 
@@ -1126,12 +1126,12 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-220 Routing core with labelled test doubles
 - **Problem:** Three providers with different roles need one predictable policy for when each is used and when Sela abstains.
 - **Outcome:** The ADR-0003 routing policy as a pure, table-tested Go state machine, with cost guards, kill switches and provenance records.
-- **Priority:** pilot-critical. Brief §8; D-029. Every AI feature calls it.
+- **Priority:** pilot-critical. Brief §8; D-030. Every AI feature calls it.
 - **Scope:** Failure classes and rules RR-1 to RR-16; preflight before every call; commit re-check; circuit breaker; profiles and kill switches; cost guards (per-user daily limits, `SELA_VERIFIER_DAILY_USD`, `SELA_DEEPSEEK_DAILY_USD`, Modal admission and container ceiling); labelled test doubles for all three providers; provenance records (migration range 0500–0599); `/api/v3/ai` specified in API_SPEC_V3 §9 first.
 - **Non-goals:** Live provider calls (S-221, S-222, S-224); any cache of replies to personal disclosures (DX-15, FM-44 retired).
 - **Depends on:** S-171, S-260.
 - **Acceptance criteria:**
-  1. EV-7 thresholds hold at zero: `routing.fallback_after_content_failure`, `routing.self_verification`, `routing.provider_calls_without_consent` (including withdrawal mid-operation), `routing.deepseek_calls_minor_bands`, `routing.verifier_gated_released_without_check`.
+  1. EV-7 thresholds hold at zero: `routing.fallback_after_content_failure`, `routing.self_verification`, `routing.provider_calls_without_consent` (including withdrawal mid-operation), `routing.deepseek_calls_minor_bands`, `routing.verifier_gated_released_without_check`, `routing.deepseek_listening_calls_without_claude_route` (ADR-0003 RR-4 (i)).
   2. Sela's own rate limit never triggers a fallback (test).
   3. Every output stores the ADR-0003 §10 fields (DB test).
   4. Production refuses test doubles (F-10).
@@ -1142,7 +1142,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-221 Meta open-weight model as the primary generator
 - **Problem:** The owner requires a Meta open-weight model on Modal for every generative task.
 - **Outcome:** Listening replies, reflections, memory proposals, summary wording and opening lines are generated by the pinned Meta model through the router, with honest provenance.
-- **Priority:** pilot-critical. Brief §8; D-029. A live provider is a pilot gate.
+- **Priority:** pilot-critical. Brief §8; D-030. A live provider is a pilot gate.
 - **Scope:** `internal/llm` Modal mode through S-220; the served-model pin checked on every chunk (existing); UI provider labels; latency and token records.
 - **Non-goals:** Changing the model (owner decision B-7).
 - **Depends on:** S-220. Live verification needs the Modal deployment (S-264, P7).
@@ -1187,21 +1187,23 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Problem:** When the Meta model is unavailable, people get no reply.
 - **Outcome:** DeepSeek replaces the generator only on an availability failure, only with its own consent, only for adults, and never after a refusal or safety block.
 - **Priority:** pilot-important. It improves availability; the honest no-AI path (S-024) is safe without it; it stays off until EV-5 passes and B-9 and the PRC-processing legal question (B-10) are cleared.
-- **Scope:** RR-4; `internal/llm` DeepSeek mode (`deepseek-flash`, `json_object`, thinking disabled, `reasoning_content` dropped); the response `model` field recorded; `SELA_AI_FALLBACK` default off.
-- **Non-goals:** DeepSeek as primary; fallback after any content failure.
+- **Scope:** RR-4 under the owner's contract (SPEC C13, V19–V21, [DeepSeek fallback](DEEPSEEK_FALLBACK.md); ADR-0003 §17), with the owner's `prototypes/generationfallback` as the reference implementation and its cases ported; `internal/llm` DeepSeek mode (`deepseek-flash`, `json_object`, thinking disabled, `reasoning_content` dropped); the response `model` field recorded; `SELA_AI_FALLBACK` off by default in every environment, hackathon mode included.
+- **Non-goals:** DeepSeek as primary; fallback after any content failure, or after Sela's own capacity limit or a credential failure on Sela's side (owner V19).
 - **Depends on:** S-171, S-220, S-221.
 - **Acceptance criteria:**
   1. `routing.fallback_after_content_failure = 0` and `routing.deepseek_calls_minor_bands = 0`.
   2. Without consent a Meta outage ends in the no-AI path (test).
-  3. Every DeepSeek output is labelled "cadangan / backup" with its provider.
+  3. Every DeepSeek output is labelled "cadangan / backup" with its provider, stores the provenance `live_deepseek_fallback`, and says that Meta was unavailable and DeepSeek Flash 1017 wrote it (owner contract).
   4. Live: EV-5 passes before the flag is turned on.
+  5. A DeepSeek listening reply is released only after a Claude check of it passes. If that check, permitted at preflight, then fails or becomes unavailable, the reply is withheld and DeepSeek never checks it (ADR-0003 RR-8, RR-9, RR-11). The Claude check is ADR-0003's means of meeting V20 for this brief-v3 task, not owner direction (§17 O-6, O-8).
+  6. When the Claude route is not permitted for the user or its daily spend ceiling is already reached (no current `ai_provider_anthropic` consent, an age band without Claude, the verifier disabled or the `meta_only` profile, the per-user verifier limit reached, or Sela's verifier daily spend ceiling `SELA_VERIFIER_DAILY_USD` already reached that day), a Meta outage on a listening reply makes zero DeepSeek calls and ends in the no-AI path: `routing.deepseek_listening_calls_without_claude_route = 0`, one test per reason (ADR-0003 RR-2, RR-4 (i)).
 - **Risks:** Processing in the PRC; empty `json_object` responses.
 - **Owner:** AI engineer. **Milestone:** P5. **Status:** planned; live use blocked externally (B-9). **Evidence:** —
 
 #### S-225 DeepSeek as alternative verifier (later)
 - **Problem:** A Claude outage makes verifier-gated features abstain.
 - **Outcome:** DeepSeek may verify Meta output during a Claude outage, labelled as the alternative verifier.
-- **Priority:** post-pilot. Abstaining is safe; the flag stays off until EV-6 passes (D-029).
+- **Priority:** post-pilot. Abstaining is safe; the flag stays off until EV-6 passes (D-030).
 - **Scope:** RR-9; VC-5.
 - **Non-goals:** Verifying DeepSeek's own output; replacing a missing Claude consent.
 - **Depends on:** S-222, S-224.
@@ -1214,7 +1216,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-226 Send providers as little as possible
 - **Problem:** Every provider call is a cross-border transfer of health data.
 - **Outcome:** Only the fields each task needs leave Sela, with contact details and private names replaced and no identifiers.
-- **Priority:** pilot-critical. Brief §8 ("minimalkan data"); UU PDP Pasal 56; D-029.
+- **Priority:** pilot-critical. Brief §8 ("minimalkan data"); UU PDP Pasal 56; D-030.
 - **Scope:** DM-1 to DM-5; the Go port of the Dengar.in PII redactor; per-request span ids; metadata-only logs.
 - **Non-goals:** Claiming anonymisation.
 - **Depends on:** S-220.
@@ -1226,7 +1228,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Owner:** AI engineer; Go backend engineer. **Milestone:** P3. **Status:** planned. **Evidence:** —
 
 #### S-227 Meta-only demo profile
-- **Problem:** The Meta hackathon submission (deadline 2026-11-04 21:00 ET) must not depend on, or hide, other providers (D-049).
+- **Problem:** The Meta hackathon submission (deadline 2026-11-04 21:00 ET) must not depend on, or hide, other providers (D-050).
 - **Outcome:** `SELA_AI_PROFILE=meta_only` runs every listening feature on Meta alone; verifier-gated features abstain; every output names its provider.
 - **Priority:** pilot-important. Needed for the hackathon, not for the pilot.
 - **Scope:** The profile flag; the demo environment banner; the organizers' answer on non-Meta providers recorded.
@@ -1255,9 +1257,9 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-229 Fine-tuning proposal gate (later)
 - **Problem:** Fine-tuning is sometimes proposed without a measured need.
 - **Outcome:** Fine-tuning only with a measured reason, a licensed dataset, a baseline and an evaluation plan, approved by the owner.
-- **Priority:** post-pilot. Not approved (D-047); brief §9.
+- **Priority:** post-pilot. Not approved (D-048); brief §9.
 - **Scope:** The gate only.
-- **Non-goals:** Training on user notes (never; D-047).
+- **Non-goals:** Training on user notes (never; D-048).
 - **Depends on:** S-228.
 - **Acceptance criteria:** A proposal document meets every prerequisite before any engineering starts.
 - **Risks:** Licence and consent of training data.
@@ -1265,7 +1267,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 
 ### 3.18 Research and evidence (S-240 to S-259)
 
-The 100-record corpus pipeline is kept: it is verified reproducible but title/abstract-screened, not appraised (D-047). The research corpus is a separate store and never linked to any person's history (D-032).
+The 100-record corpus pipeline is kept: it is verified reproducible but title/abstract-screened, not appraised (D-048). The research corpus is a separate store and never linked to any person's history (D-033).
 
 #### S-240 Corpus hygiene fixes
 - **Problem:** The 2026-10-26 research audit found screening-manifest hashes that fail after checkout (CRLF vs LF), screening outputs outside PR CI, design flags not shown in the reviewer page, and stale statements in docs 06 and 10.
@@ -1319,7 +1321,7 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 - **Problem:** The evidence map covers only v2 features; 75 of 100 records map to no feature. Brief §9 asks for evidence on listening, journaling, help-seeking, consultation preparation, continuity, adolescents, adults, older adults, the Indonesian context, accessibility, safety and privacy.
 - **Outcome:** One row per v3 feature and per brief §9 topic, with supporting records, counter-evidence, population match and claim boundary; gaps declared.
 - **Priority:** pilot-important. Research must inform product decisions and education (brief §9).
-- **Scope:** `data/research/corpus/evidence_map.json` new version. Feature rows: listening room, journal, check-in, timeline, memory correction, consultation summary, sharing and revocation, minors, accessibility. Topic rows: help-seeking, continuity after consultation, safety and crisis support, privacy and data control, Indonesian context. Population rows: adults (18–49), older adults (50+) and adolescents (15–17). The v2 rows stay as the previous version. SPEC T19 and D-047 name a shorter topic list; brief §9 governs, and D-047 stays as written.
+- **Scope:** `data/research/corpus/evidence_map.json` new version. Feature rows: listening room, journal, check-in, timeline, memory correction, consultation summary, sharing and revocation, minors, accessibility. Topic rows: help-seeking, continuity after consultation, safety and crisis support, privacy and data control, Indonesian context. Population rows: adults (18–49), older adults (50+) and adolescents (15–17). The v2 rows stay as the previous version. SPEC T19 and D-048 name a shorter topic list; brief §9 governs, and D-048 stays as written.
 - **Non-goals:** Generalising adult evidence to adolescents; presenting correlation as causation; citations inside empathic replies.
 - **Depends on:** S-243.
 - **Acceptance criteria:**
@@ -1390,7 +1392,7 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 
 #### S-260 PostgreSQL and migrations
 - **Problem:** v2 keeps everything in memory; real notes need durable, migratable storage.
-- **Outcome:** PostgreSQL 16 through pgx with an embedded migration runner that supports status, up, dry-run and down-last, with gates for data migrations (D-026).
+- **Outcome:** PostgreSQL 16 through pgx with an embedded migration runner that supports status, up, dry-run and down-last, with gates for data migrations (D-027).
 - **Priority:** pilot-critical. Every persistent feature depends on it; brief §10 (schema migrations; data migrations need backup, dry run, ownership validation and rollback).
 - **Scope:** `internal/db` (runner, `dbtest`, migrations 0001 and 0900), `sela migrate` commands, CI PostgreSQL service with `SELA_REQUIRE_DB_TESTS=1`, the Go toolchain move to 1.26 (ADR-0002 §1 option a).
 - **Non-goals:** An ORM; SQLite.
@@ -1402,16 +1404,16 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 
 #### S-261 Separate environments
 - **Problem:** Demo or staging data must never mix with real data, and production must refuse test shortcuts.
-- **Outcome:** development, test, demo, staging and production with startup guards; the demo uses synthetic data but every feature really works (D-045).
+- **Outcome:** development, test, demo, staging and production with startup guards; the demo uses synthetic data but every feature really works (D-046).
 - **Priority:** pilot-critical. Brief §10, §11.
-- **Scope:** `SELA_ENV`; `instance_meta` marker; key-id prefix per environment; production refuses the memory store, test doubles, demo fixtures, insecure cookies and missing secrets. Demo fixtures (the v2 fictional professionals and scenarios, the Dengar.in review-demo cases, FM-31) load only in the demo environment, labelled synthetic (D-041).
+- **Scope:** `SELA_ENV`; `instance_meta` marker; key-id prefix per environment; production refuses the memory store, test doubles, demo fixtures, insecure cookies and missing secrets. Demo fixtures (the v2 fictional professionals and scenarios, the Dengar.in review-demo cases, FM-31) load only in the demo environment, labelled synthetic (D-042).
 - **Non-goals:** A copy of production in staging.
 - **Depends on:** S-260.
 - **Acceptance criteria:**
-  1. ADR-0002 F-10 and F-11 pass. F-10 counts toward this item only once ADR-0002 §12 and the `internal/config` guard are aligned with D-045 ([conflict matrix](CONFLICT_MATRIX.md) row 52): today they refuse the test double in the demo, which is narrower than D-045, and the stricter guard applies until then.
+  1. ADR-0002 F-10 and F-11 pass. F-10 counts toward this item only once ADR-0002 §12 and the `internal/config` guard are aligned with D-046 ([conflict matrix](CONFLICT_MATRIX.md) row 52): today they refuse the test double in the demo, which is narrower than D-046, and the stricter guard applies until then.
   2. The demo runs accounts, guest mode, persistence, encryption, export and deletion for real, with a "Demo — data sintetis" banner.
-  3. In the demo, AI features run on live providers with synthetic data or on labelled test doubles (D-045); test-double output is labelled as such and never shown as live (SPEC V33, V40) (e2e on the demo configuration).
-  4. Demo fixtures load only in the demo environment; staging and production refuse to start with them (configuration test; SPEC V40).
+  3. In the demo, AI features run on live providers with synthetic data or on labelled test doubles (D-046); test-double output is labelled as such and never shown as live (SPEC V35, V42) (e2e on the demo configuration).
+  4. Demo fixtures load only in the demo environment; staging and production refuse to start with them (configuration test; SPEC V42).
 - **Risks:** Configuration drift between hosts; the guards fail closed.
 - **Owner:** Go backend engineer. **Milestone:** P2. **Status:** in progress. **Evidence:** in progress — `internal/config`, uncommitted, not verified.
 
@@ -1477,12 +1479,12 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 - **Acceptance criteria:**
   1. Every finding is fixed or has a recorded owner decision.
   2. The report says who reviewed and that it is not an independent audit.
-  3. An outbound-destination check shows that the server and the operator scripts contact only the database, the configured AI providers and the configured hosting services (secret manager, backup storage), so nothing contacts a person or another service automatically (SPEC C22).
+  3. An outbound-destination check shows that the server and the operator scripts contact only the database, the configured AI providers and the configured hosting services (secret manager, backup storage), so nothing contacts a person or another service automatically (SPEC C23).
 - **Risks:** Self-review blind spots.
 - **Owner:** Security/accessibility reviewer; PM. **Milestone:** P7. **Status:** planned. **Evidence:** —
 
 #### S-267 Legacy Dengar.in deployments and their data
-- **Problem:** Two Dengar.in deployments are live outside this repository and may process real people's text with DeepSeek, Gemini and a free OpenRouter model (D-046).
+- **Problem:** Two Dengar.in deployments are live outside this repository and may process real people's text with DeepSeek, Gemini and a free OpenRouter model (D-047).
 - **Outcome:** A notice or redirect, export and deletion for any real users, and key revocation.
 - **Priority:** pilot-important. A risk to people today, but outside the pilot's code.
 - **Scope:** Owner and team action; any data move needs backup, dry run, ownership validation and rollback.
@@ -1493,7 +1495,7 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 - **Owner:** Owner; PM. **Milestone:** P7. **Status:** blocked externally (B-13). **Evidence:** —
 
 #### S-268 More than one app instance and incident on-call (later)
-- **Problem:** The rate limiter, key cache, AI operation runtimes and the "don't save" hold (D-050) are per instance, and nobody is on call for incidents.
+- **Problem:** The rate limiter, key cache, AI operation runtimes and the "don't save" hold (D-051) are per instance, and nobody is on call for incidents.
 - **Outcome:** Shared limiting and an operation bus so Sela can scale out, and an incident on-call rota with an escalation path.
 - **Priority:** post-pilot. The pilot runs one instance (ADR-0002 consequences); readiness for more than one instance and incident on-call are a public-release gate ([blockers, Gates](BLOCKERS.md#gates); [roadmap §2](ROADMAP.md#2-release-ladder)). Incident handling during the pilot is part of the pilot plan (S-271).
 - **Scope:** Shared limiter; sticky routing or a shared event bus; the "don't save" hold across instances; an on-call rota, escalation path and incident runbook.
@@ -1555,19 +1557,19 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 - **Problem:** SPEC.md and the supporting docs still describe the v2 limits (synthetic-only, adults-only, memory-only, Meta-only).
 - **Outcome:** The spec, decision log, blockers, feature matrix, provenance, ADRs, API contract, backlog, status, traceability and roadmap state the v3 scope explicitly.
 - **Priority:** pilot-critical. Brief §1 asks for explicit spec updates; everything else depends on them.
-- **Scope:** SPEC amendments to C3, C7, C8, C9, C12 in part, V1, V2, V9, V10, V16, V21, I.data and I.meta, with superseded decisions marked (D-025); D-025 to D-049 (PM) and D-050, D-051 (engineering defaults) in the decision log; B-8 to B-15 in the blockers; attribution preserved ([provenance](SELA_PROVENANCE.md)); document inventory and index updated.
+- **Scope:** SPEC amendments to C3, C7, C8, C9, C12 in part, V1, V2, V9, V10, V16, V23, I.data and I.meta, with superseded decisions marked (D-026); D-026 to D-050 (PM) and D-051, D-052 (engineering defaults) in the decision log; B-8 to B-15 in the blockers; attribution preserved ([provenance](SELA_PROVENANCE.md)); document inventory and index updated.
 - **Non-goals:** Reopening PM decisions.
 - **Depends on:** —
 - **Acceptance criteria:**
   1. Every amended spec ID states its new text and status.
   2. Link and anchor checks pass; the document inventory lists every new document.
 - **Risks:** Docs drifting from code; status claims cite evidence only.
-- **Owner:** PM. **Milestone:** P1. **Status:** in progress. **Evidence:** in progress, all uncommitted — new: `docs/DENGARIN_FEATURE_MATRIX.md`, ADR-0002, ADR-0003, `docs/API_SPEC_V3.md`, this backlog, `docs/design/`; modified: `SPEC.md` (amendments), `docs/DECISION_LOG.md` (D-025 to D-049 and D-050, D-051), `docs/DECISIONS.md`, `docs/BLOCKERS.md` (B-8 to B-15), `docs/DOCUMENT_INVENTORY.md`, `docs/CONFLICT_MATRIX.md`, `docs/PRODUCT.md`, `docs/SAFETY.md`, provenance, AI policy, Claude verifier, Meta integration, `README.md` and `docs/README.md`. Link and anchor check run on the uncommitted tree on 2026-10-26: 0 broken links or anchors over 137 Markdown files ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands) has the command); criterion 2 needs it re-run on the commit.
+- **Owner:** PM. **Milestone:** P1. **Status:** in progress. **Evidence:** in progress, all uncommitted — new: `docs/DENGARIN_FEATURE_MATRIX.md`, ADR-0002, ADR-0003, `docs/API_SPEC_V3.md`, this backlog, `docs/design/`; modified: `SPEC.md` (amendments), `docs/DECISION_LOG.md` (D-026 to D-050 and D-051, D-052), `docs/DECISIONS.md`, `docs/BLOCKERS.md` (B-8 to B-15), `docs/DOCUMENT_INVENTORY.md`, `docs/CONFLICT_MATRIX.md`, `docs/PRODUCT.md`, `docs/SAFETY.md`, provenance, AI policy, Claude verifier, Meta integration, `README.md` and `docs/README.md`. Link and anchor check run on the uncommitted tree on 2026-10-26: 0 broken links or anchors over 137 Markdown files ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands) has the command); criterion 2 needs it re-run on the commit.
 
 #### S-274 Operator access audit
-- **Problem:** The access audit of S-176 covers what the owner sees. Operator commands that can reach personal data or keys, and operator changes to a person's record, would leave no trace (D-051; discovery gap analysis of 2026-10-26: operator access must be logged).
-- **Outcome:** Every such command and change writes an append-only, content-free operator audit record, and an operator change to one person's record also appears in that person's own audit (SPEC V30).
-- **Priority:** pilot-critical. SPEC V30 (D-051); Sela holds specific personal data (UU PDP Pasal 4(2)(a)), and operators run these commands before and during the pilot.
+- **Problem:** The access audit of S-176 covers what the owner sees. Operator commands that can reach personal data or keys, and operator changes to a person's record, would leave no trace (D-052; discovery gap analysis of 2026-10-26: operator access must be logged).
+- **Outcome:** Every such command and change writes an append-only, content-free operator audit record, and an operator change to one person's record also appears in that person's own audit (SPEC V32).
+- **Priority:** pilot-critical. SPEC V32 (D-052); Sela holds specific personal data (UU PDP Pasal 4(2)(a)), and operators run these commands before and during the pilot.
 - **Scope:** An operator audit record (command, environment, operator identity, time, outcome, counts) written by `sela keys` (for example `rewrap`), `sela restore` and `sela restore reconcile` (dry run and real), the restore drill's canary decryption (`sela ops canary check`) and every `sela migrate` run that applies or rolls back a data migration; operator changes to a person's record (such as withdrawing a guardian consent, `withdrawn_by = 'operator'`) mirrored into that person's `audit_events`; where the records are kept and who reviews them, described in ADR-0002 §13 and the runbook by their owner ([conflict matrix](CONFLICT_MATRIX.md) row 57); the database host's access log for direct sessions in staging and production (hosting choice, B-3).
 - **Non-goals:** Content, user ids, keys or IP addresses in any operator record; any route or tool that shows an operator decrypted content; per-person analytics (S-265).
 - **Depends on:** S-173, S-176, S-260, S-262.
@@ -1603,8 +1605,8 @@ The brief lists eight milestones. They are kept, with two changes driven by depe
 Exit means every listed pilot-critical item is at least `verified locally` (or `blocked externally` with everything not blocked verified locally), every listed pilot-important item is done or explicitly moved, and the criteria below hold. An item that spans milestones is listed in each, with the part that milestone delivers in brackets; the exit applies to that part. Status per milestone is tracked in [implementation status](IMPLEMENTATION_STATUS.md).
 
 **P1 Audit and spec alignment.** Items: S-273.
-1. SPEC.md states the amended text and status of C3, C7, C8, C9, C12, V1, V2, V9, V10, V16, V21, I.data and I.meta.
-2. D-025 to D-049 (PM) and D-050, D-051 (engineering defaults) are in the decision log and B-8 to B-15 in the blockers list.
+1. SPEC.md states the amended text and status of C3, C7, C8, C9, C12, V1, V2, V9, V10, V16, V23, I.data and I.meta.
+2. D-026 to D-050 (PM) and D-051, D-052 (engineering defaults) are in the decision log and B-8 to B-15 in the blockers list.
 3. The feature matrix, provenance, ADR-0002, ADR-0003, API v3 foundation, this backlog, status, traceability and roadmap are committed; link and anchor checks pass; the document inventory is updated.
 
 **P2 Foundation.** Items: S-001, S-002, S-003, S-004, S-005, S-006, S-150 (ruleset -5 merged forward), S-152, S-153, S-170, S-171 (foundation and the storage and sharing purposes), S-172, S-173, S-174 (account and guest deletion), S-175 (foundation sections), S-176 (foundation events), S-177, S-190, S-191, S-193, S-194, S-195 (P2 screens), S-211 (backend), S-260, S-261, S-262 (local), S-274 (record and foundation commands).
@@ -1763,7 +1765,7 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 
 ## 6. Feature matrix coverage
 
-Every row of the [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) lands in a backlog item or in a recorded retirement (D-036, D-037), so no Dengar.in capability is dropped silently.
+Every row of the [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) lands in a backlog item or in a recorded retirement (D-037, D-038), so no Dengar.in capability is dropped silently.
 
 | Feature matrix row | Decision there | Backlog |
 | --- | --- | --- |

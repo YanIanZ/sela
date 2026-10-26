@@ -16,11 +16,11 @@ Sela is becoming a bilingual (Indonesian/English) listening and continuity app f
 
 [SPEC.md](SPEC.md) is the source of truth. Status words: planned → in progress → implemented → verified locally → verified live → ready for controlled pilot → public release, or blocked externally; [SPEC §G](SPEC.md#g-goal) defines them. Detailed status: [implementation status](docs/IMPLEMENTATION_STATUS.md) · [requirements traceability](docs/REQUIREMENTS_TRACEABILITY.md) · [backlog](docs/BACKLOG.md) · [blockers](docs/BLOCKERS.md).
 
-### Sela v3 (branch `feat/sela-v3-pilot`, stacked on PR #6)
+### Sela v3 (branch `feat/sela-v3-pilot`, first stacked on PR #6, which is now merged into main)
 
 | Area | Status |
 | --- | --- |
-| Spec realignment, decisions D-025 to D-051, blockers, backlog, [Dengar.in feature matrix](docs/DENGARIN_FEATURE_MATRIX.md), ADR-0002, ADR-0003, API v3 foundation contract (P1) | In progress: documents written on the branch, under review |
+| Spec realignment, decisions D-026 to D-052, blockers, backlog, [Dengar.in feature matrix](docs/DENGARIN_FEATURE_MATRIX.md), ADR-0002, ADR-0003, API v3 foundation contract (P1) | In progress: documents written on the branch, under review |
 | Foundation: PostgreSQL storage, per-user encryption, accounts, guest mode, recovery codes, consents, export, deletion (`/api/v3`, P2) | In progress: code being written, uncommitted and not yet verified |
 | Design direction, information architecture, screens, content style, accessibility criteria (P2) | In progress: documents written ([design](docs/design/DESIGN_DIRECTION.md)), uncommitted, PM review not recorded; no v3 UI code |
 | Conversation room, journal, check-in, memory, timeline, home (P3) | Planned |
@@ -38,6 +38,7 @@ Sela is becoming a bilingual (Indonesian/English) listening and continuity app f
 | Safety lexicon | Ruleset `-4` committed (1329 test vectors); ruleset `-5` in progress |
 | AI: Meta **Muse Glimmer 30B** (open weights, Apache-2.0) on **Modal** via vLLM | Adapter and Modal app implemented and tested offline; **not deployed** — no Modal credentials or GPU budget yet ([B-1](docs/BLOCKERS.md)). Local runs use AI off or a clearly labelled **test double**, never presented as Meta |
 | Optional verifier: Claude Sonnet 5.5 **EvidenceGuard** (owner decision C12) | Standalone Go prototype in `prototypes/evidenceguard` (PR #5); not wired into the v2 runtime; would need its own consent (V16–V18) ([contract](docs/CLAUDE_VERIFIER.md)) |
+| Optional generation fallback: DeepSeek-V4.1-Flash-1017 `deepseek-flash` (owner decision C13) | Standalone Go prototype in `prototypes/generationfallback`, mock-tested only; not wired into the v2 runtime, which has no DeepSeek route; OFF by default in hackathon mode; would need its own consent and eligibility guards (V19–V21) ([contract](docs/DEEPSEEK_FALLBACK.md)) |
 | Research corpus (100 publications): reproducible pipeline, verified dates, licences, traceable extraction, reviewer search | Implemented, tested locally; human appraisal not done ([B-4](docs/BLOCKERS.md)) |
 | Evaluation with pre-registered thresholds | Offline and test-double suites run; live-model metrics blocked ([evaluation](docs/EVALUATION.md)) |
 | Public deployment | Not configured ([B-3](docs/BLOCKERS.md)) |
@@ -67,7 +68,7 @@ Checks: `go vet ./... && go test -race ./...`, `cd web && npm run typecheck && n
 
 ## Documentation
 
-[Documentation index](docs/README.md) · [product](docs/PRODUCT.md) · [safety](docs/SAFETY.md) · [backlog](docs/BACKLOG.md) · [design](docs/design/DESIGN_DIRECTION.md) · [architecture](docs/ARCHITECTURE.md) · [API v2](docs/API_SPEC.md) · [API v3](docs/API_SPEC_V3.md) · [AI policy](docs/AI_POLICY.md) · [Meta integration](docs/META_INTEGRATION.md) · [Claude verifier](docs/CLAUDE_VERIFIER.md) · [ADR-0001: model choice](docs/adr/ADR-0001-meta-open-weight-model-on-modal.md) · [ADR-0002: persistence and accounts](docs/adr/ADR-0002-persistence-accounts-and-encryption.md) · [ADR-0003: AI routing](docs/adr/ADR-0003-ai-routing-verifier-fallback.md) · [research corpus pipeline](docs/research/CORPUS_PIPELINE.md) · [decision log](docs/DECISION_LOG.md).
+[Documentation index](docs/README.md) · [product](docs/PRODUCT.md) · [safety](docs/SAFETY.md) · [backlog](docs/BACKLOG.md) · [design](docs/design/DESIGN_DIRECTION.md) · [architecture](docs/ARCHITECTURE.md) · [API v2](docs/API_SPEC.md) · [API v3](docs/API_SPEC_V3.md) · [AI policy](docs/AI_POLICY.md) · [Meta integration](docs/META_INTEGRATION.md) · [opt-in DeepSeek fallback](docs/DEEPSEEK_FALLBACK.md) · [Claude verifier](docs/CLAUDE_VERIFIER.md) · [ADR-0001: model choice](docs/adr/ADR-0001-meta-open-weight-model-on-modal.md) · [ADR-0002: persistence and accounts](docs/adr/ADR-0002-persistence-accounts-and-encryption.md) · [ADR-0003: AI routing](docs/adr/ADR-0003-ai-routing-verifier-fallback.md) · [research corpus pipeline](docs/research/CORPUS_PIPELINE.md) · [decision log](docs/DECISION_LOG.md).
 
 ## Contributing and security
 

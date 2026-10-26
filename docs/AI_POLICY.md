@@ -1,29 +1,33 @@
 # Sela AI policy
 
 Status:
-- The **v3 routing policy is planned** (milestone P5). It is defined in [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md), following PM decisions D-029 and D-048.
+- The **v3 routing policy is planned** (milestone P5). It is defined in [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md), following PM decisions D-030 and D-049.
 - The **v2 pipeline is implemented** in `internal/journey` (pipeline, prompts) and `internal/ledger` (validation). Live model behaviour is unverified ([B-1](BLOCKERS.md)).
-- The Claude verifier and the DeepSeek fallback have no runtime code yet, and their live access is blocked externally (B-8, B-9).
+- The Claude verifier and the DeepSeek fallback have no runtime code yet. Each exists only as a standalone, mock-tested prototype that is not wired into any runtime: `prototypes/evidenceguard` (C12) and the owner's `prototypes/generationfallback` (C13, OFF by default), which is the reference implementation of the fallback contract. Their live access is blocked externally (B-8, B-9).
 
-Authority: owner brief v3 §8; [SPEC](../SPEC.md) C4, C17 (partly supersedes C12), I.ai, V3, V4, V7, V8, V12, V15, V17, V18, V20, V33 (supersedes V9 and V10), V34 and V39 (together supersede V16), V40. The superseded IDs keep their v2 text in SPEC. The v1 multi-provider orchestration is [historical](archive/v1/AI_POLICY.md). Statements that v3 superseded are kept in the [history](#history-superseded-statements) at the end.
+Authority: owner brief v3 §8; [SPEC](../SPEC.md) C4, C13 (the owner's [DeepSeek fallback contract](DEEPSEEK_FALLBACK.md)), C18 (partly supersedes C12), I.ai, I.fallback, V3, V4, V7, V8, V12, V15, V17, V18, V19–V21, V22, V35 (supersedes V9 and V10), V36 and V41 (together supersede V16), V42. The superseded IDs keep their v2 text in SPEC. The v1 multi-provider orchestration is [historical](archive/v1/AI_POLICY.md). Statements that v3 superseded are kept in the [history](#history-superseded-statements) at the end.
 
-## Roles (PM decision D-029)
+## Roles (PM decision D-030)
 
 | Role | Provider and identifier | Used when | Status |
 | --- | --- | --- | --- |
 | Generator (primary) | Meta Muse Glimmer 30B on Modal, `meta-models/Muse-Glimmer-30B` @ `cec94fc…` ([ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md); B-7 open) | Every generative task | Adapter implemented and tested against the labelled test double; not deployed (B-1) |
-| Fallback generator | DeepSeek, API model `deepseek-flash`, currently served by `DeepSeek-V4.1-Flash-1017` | Only when Meta is unavailable before any content arrived, and only with the separate DeepSeek consent (ADR-0003 RR-4). Never after a refusal, a safety block, a Meaning Lock rejection or any other content-based failure | Planned; flag off by default; B-9 |
-| Verifier | Anthropic Claude Sonnet 5.5, `claude-sonnet-5-5` | Before release of consultation-summary wording, memory proposals and any text the health-claim detector flags. Reading content is verified at authoring time (ADR-0003 RR-8) | Standalone prototype only ([EvidenceGuard](CLAUDE_VERIFIER.md)); B-8 |
+| Fallback generator | DeepSeek, API model `deepseek-flash`, currently served by `DeepSeek-V4.1-Flash-1017` | Only when Meta is unavailable before any content arrived, and only with the separate DeepSeek consent (ADR-0003 RR-4) and the owner's guards (C13, V19–V21). Never after a refusal, a safety block, a Meaning Lock rejection or any other content-based failure | Planned; flag off by default; B-9. The owner's reference prototype `prototypes/generationfallback` is mock-tested and not wired in |
+| Verifier | Anthropic Claude Sonnet 5.5, `claude-sonnet-5-5` | Before release of consultation-summary wording, memory proposals, any text the health-claim detector flags and every listening reply DeepSeek wrote as the fallback (V20 applied to a brief-v3 task; the Claude check is ADR-0003's means, an engineering default, not owner direction; ADR-0003 §17 O-6, O-8). Reading content is verified at authoring time (ADR-0003 RR-8) | Standalone prototype only ([EvidenceGuard](CLAUDE_VERIFIER.md)); B-8 |
 | Alternative verifier | DeepSeek | Only when Claude is unavailable, the generator was Meta (never a model's own output), the user consented, and the feature flag is on after evaluation (RR-9) | Planned; off by default |
 | Rules, safety, consent | Go | Safety routing, consent, approval, sharing, release decisions, provenance | Implemented for v2 |
 
 A Claude Code subscription is a development tool, not application API access. The runtime verifier needs its own Console organization and API key (B-8).
 
+Owner direction on main (C12, C13): Meta/Muse Spark is the **primary** live draft generator. User-confirmed optional DeepSeek-V4.1-Flash-1017 is a **separately consented availability fallback** only for eligible provider outage. Optional Anthropic Claude Sonnet 5.5 is a **separate source-fidelity reviewer**, never a fallback generator. See [DeepSeek fallback](DEEPSEEK_FALLBACK.md) and [Claude verifier](CLAUDE_VERIFIER.md). The roles table above is the v3 form of that direction; the fallback is OFF by default, in hackathon mode too (C13, V19).
+
+Implementation status: in the v2 runtime the Meta model is the only generator that runs, and it is Muse Glimmer 30B on Modal, not Muse Spark; the Muse Spark naming above awaits the owner's decision (D-024, [B-7](BLOCKERS.md)). The DeepSeek fallback (C13) exists only as the standalone, default-OFF prototype `prototypes/generationfallback`, and the Claude verifier (C12) only as the standalone prototype `prototypes/evidenceguard`; neither is wired into the v2 runtime.
+
 ## What a model may do
 
 | Task | Model work | Verification before release |
 | --- | --- | --- |
-| AT-1 Listening reply | A contextual reply in the user's language | Only when flagged |
+| AT-1 Listening reply | A contextual reply in the user's language | Only when flagged; a DeepSeek fallback reply always, by Claude, so DeepSeek is called for a reply only when the Claude route is permitted (ADR-0003's means of meeting V20 for this task, not owner direction; RR-4 (i), RR-8, §17 O-6, O-8) |
 | AT-2 Reflection card "Sela menangkap…" | Statements quoting the user's words, editable, confirmable and removable by the user | Only when flagged |
 | AT-3 Memory proposal | Proposed items from saved entries the user allowed for memory | Always |
 | AT-4 Consultation-summary draft | Wording for the items the user selected; at most one clarification field from Sela's fixed list (the question text is Sela's own) | Always |
@@ -34,7 +38,7 @@ The v2 equivalents are implemented. The Meta model proposes Story Ledger claims,
 
 A model may not decide safety routing, consent, approval, sharing, recipients, slots, matching, plans or any transition. It never sees other users' data, the professional catalogue, account data or the research corpus. The exception is the licensed passages sent to the verifier in AT-6. No model output can grant a permission or trigger sharing.
 
-### Listening style (PM decision D-034)
+### Listening style (PM decision D-035)
 
 Prompts and deterministic output guards together enforce these rules:
 - Replies are contextual, with no mechanical empathy templates, no judgement and no diagnosis.
@@ -56,15 +60,17 @@ Hard guards reject a reply outright: a diagnosis addressed to the user, a medica
 
 Cancellation, timeout, withdrawal or staleness discards the result.
 
+**v2 target (owner, main; not in the v2 runtime yet):** Target pipeline once the optional providers are wired in (T5a, T5b; not in the v2 runtime yet): Validate fixture/session/version → deterministic crisis gate → explicit Meta AI consent → quota/concurrency admission → bounded Meta request → if eligible Meta service failure and separately consented, bounded DeepSeek fallback → schema/evidence validation → if separately opted in, bounded Claude source-fidelity review → recheck session/version/**every relevant provider** consent → store a draft and optional verifier report with separate provenance. Any failed verification is shown as unavailable/needs-review; do not turn it into a fake pass. Cancellation or staleness discards the result and releases admission slots.
+
 **v3 (planned, ADR-0003 §5):**
-1. Deterministic crisis screen of every user text before storage and before any call. A crisis match makes no model call to any provider and shows verified help at once (D-035).
+1. Deterministic crisis screen of every user text before storage and before any call. A crisis match makes no model call to any provider and shows verified help at once (D-036).
 2. A preflight check of each provider's consent, the age band, limits and kill switches. A verifier-gated task does not start unless a permitted verifier route exists.
 3. Meta generates.
-4. On an availability failure before content (cold start beyond budget, 5xx, timeout, capacity, our own auth failure), DeepSeek may generate if RR-4 holds; otherwise the honest no-AI path follows. At most one switch per operation.
+4. On an upstream availability failure before content (cold start beyond budget, 5xx, timeout, 429 after the bounded retries), DeepSeek may generate if RR-4 holds; otherwise the honest no-AI path follows. Sela's own admission limit and an authentication failure on Sela's side do not count: the owner contract allows only upstream availability errors (V19; ADR-0003 §17). For a listening reply DeepSeek is called only when the Claude route is permitted too, because Claude checks every DeepSeek reply before release (ADR-0003 RR-4 (i), §17 O-6). At most one switch per operation.
 5. The same deterministic guards apply to every generator: Meaning Lock, the output guards, the health-claim detector, and the generator's risk flag, which can only raise the route.
 6. Claude verifies where required. If Claude is unavailable, the alternative verifier may check (RR-9). A refusal, truncation or invalid output means `verification_unavailable`, with no alternative.
 7. If no permitted verifier is available, verifier-gated outputs abstain: the user's own words are kept, the manual path is offered, and the UI says why.
-8. The commit re-check runs again (V18, V20).
+8. The commit re-check runs again (V18, V22).
 
 Meaning Lock (implemented):
 - It rejects a claim when the segment is unknown, the quote is not in that segment, a governing negator was cut off, another person's statement is presented as the user's own experience, or the claim asserts a diagnosis or a medication/treatment directive.
@@ -82,12 +88,15 @@ Draft provenance (implemented, v2):
 - `test_double`: `cmd/fakellm` in development and CI, labelled "TEST DOUBLE — not Meta". It is refused in production (implemented, `internal/config`).
 - `manual`: the user's own sentences, no model.
 - `recorded_demo`: reserved for a labelled recording of a real live run. None exists, and none will be fabricated.
+- `live_deepseek_fallback` (owner contract, V10 and V20; planned): actual DeepSeek Flash generation following a qualifying Meta outage, explicitly labeled separately from Meta and followed by validation. Not emitted by the v2 runtime, which has no DeepSeek route (T5b open).
 
-**Demo environment (PM decision D-045; not reopened).** The demo uses synthetic data with every feature really working. Its generator and its verifier may each be a live provider on synthetic data or a labelled test double. No demo output is ever shown as live unless a live provider produced it (V33, V40). ADR-0002 §12 ("`demo` refuses `SELA_LLM_MODE=test_double`") and the uncommitted `internal/config/config.go` guard, which allows the test double only in development and test, are a narrower implementation of D-045. That is tracked in [conflict matrix](CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 52 for the backend foundation agent, who owns both. Until it is resolved, the stricter guard is what runs: a demo without configured live providers shows the honest unavailable state.
+No AMD, Gemini or OpenRouter fallback is used by the new journey. DeepSeek fallback exists ONLY if enabled and separately consented for an eligible Meta availability error. Claude is an optional verifier, never a fallback generator. A Meta bad/unsafe output must fail closed without another model. Missing keys, rejection or timeout without a valid fallback route produce a localized unavailable state and manual path. Never relabel a recorded fixture as live Meta output. Implementation status: the v2 runtime calls only the configured Meta model. The DeepSeek fallback is a standalone, default-OFF prototype (`prototypes/generationfallback`), not wired in, so today a Meta outage always yields the unavailable state and manual path.
+
+**Demo environment (PM decision D-046; not reopened).** The demo uses synthetic data with every feature really working. Its generator and its verifier may each be a live provider on synthetic data or a labelled test double. No demo output is ever shown as live unless a live provider produced it (V35, V42). ADR-0002 §12 ("`demo` refuses `SELA_LLM_MODE=test_double`") and the uncommitted `internal/config/config.go` guard, which allows the test double only in development and test, are a narrower implementation of D-046. That is tracked in [conflict matrix](CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 52 for the backend foundation agent, who owns both. Until it is resolved, the stricter guard is what runs: a demo without configured live providers shows the honest unavailable state.
 
 Planned additions (ADR-0003 §10):
-- Draft provenance gains `live_deepseek`. Verification records become `live_anthropic`, `live_deepseek_alternative`, `unavailable`, `not_requested`, `not_required` or `manual_review` (SPEC V33). Each also stores a verification status; ADR-0003 §10.1 maps the two.
-- A labelled test-double verifier report (development, test and the demo) is never stored as `live_anthropic` or `live_deepseek_alternative`. V33 has no value for it yet; ADR-0003 §10.1 uses the V33 value once SPEC adds one.
+- Draft provenance gains the owner's `live_deepseek_fallback` (V10, V20; this replaces the name `live_deepseek` that the v3 drafts used). Verification records become `live_anthropic`, `live_deepseek_alternative`, `unavailable`, `not_requested`, `not_required` or `manual_review` (SPEC V35). Each also stores a verification status; ADR-0003 §10.1 maps the two.
+- A labelled test-double verifier report (development, test and the demo) is never stored as `live_anthropic` or `live_deepseek_alternative`. V35 has no value for it yet; ADR-0003 §10.1 uses the V35 value once SPEC adds one.
 - Every AI output records provider, model id, served version, route (primary, fallback, verifier, alternative verifier), verifier verdicts and latency.
 - The UI names the generator and the verifier on every AI item.
 
@@ -95,12 +104,12 @@ Chain-of-thought and reasoning tokens are discarded and never requested from the
 
 ## Consent and data handling
 
-- **Separate consent per provider (D-029, D-048).** Each provider has its own versioned consent: `ai_processing` (Meta on Modal, US), `ai_provider_anthropic` (Claude, US) and `ai_provider_deepseek` (DeepSeek, PRC), the purpose names reserved in [API_SPEC_V3](API_SPEC_V3.md) §3. Consenting to one never authorizes another. As in v2, consenting to Meta does not authorize sending anything to Anthropic.
+- **Separate consent per provider (D-030, D-049).** Each provider has its own versioned consent: `ai_processing` (Meta on Modal, US), `ai_provider_anthropic` (Claude, US) and `ai_provider_deepseek` (DeepSeek, PRC), the purpose names reserved in [API_SPEC_V3](API_SPEC_V3.md) §3. Consenting to one never authorizes another. As in v2, consenting to Meta does not authorize sending anything to Anthropic.
 - **Disclosure before consent.** It names the provider, location, purpose, data sent, provider retention and withdrawal effect in plain Indonesian and English (ADR-0003 §8.1). Withdrawing a consent stops that provider's use at once and discards in-flight results. Data already sent cannot be recalled from the provider, and the UI says so.
 - **Minimisation (ADR-0003 §9).** Only the segments a task needs are sent. Contact details and names the user marked private are redacted. Nothing is sent from conversations the user chose not to save. No account identifiers are sent, and span ids are per request.
 - **Logs** keep no prompts, narratives, claims, verdict reasons or result text; metadata only (V12).
-- **Minors.** DeepSeek is not used for `15_17` or `unknown` age bands. Meta and Claude serve those bands only where they are enabled (non-production today, D-030).
-- **Research data.** The research registry of 7,580 Europe PMC candidates is bibliographic discovery data, not validated facts or free-to-train copyrighted text. User notes are never used for training (D-047).
+- **Minors.** DeepSeek is not used for `15_17` or `unknown` age bands. Meta and Claude serve those bands only where they are enabled (non-production today, D-031).
+- **Research data.** The research registry of 7,580 Europe PMC candidates is bibliographic discovery data, not validated facts or free-to-train copyrighted text. User notes are never used for training (D-048).
 - **Verification outcomes.** Every outcome shows the verification provider's name and an honest per-claim result. An unavailable verification never silently becomes a "checked" label.
 
 ## Usage policies and provider terms (observed 2026-10-26; details in ADR-0003 §2)
@@ -119,12 +128,20 @@ Chain-of-thought and reasoning tokens are discarded and never requested from the
   - Disclose processing rules and that output is AI-generated; outputs are not medical advice; Chinese law applies.
   - The DeepSeek Terms of Use require guardian consent for under-18s.
   - No API retention period was found, and whether API data is used for training is unverified. The DeepSeek consent text says both.
-- **Hackathon (D-049):**
-  - A Meta-only demo profile is kept beside the full demo (D-045). In it, AT-3 and AT-4 abstain, because no verifier is permitted (ADR-0003 RR-15).
+- **Hackathon (D-050):**
+  - A Meta-only demo profile is kept beside the full demo (D-046). In it, AT-3 and AT-4 abstain, because no verifier is permitted (ADR-0003 RR-15).
   - Every output is labelled with its provider.
   - Claude and DeepSeek are never counted as Meta tooling.
   - The organizers' answer on non-Meta providers is pending (B-12).
-- **Legacy deployments (D-046).** Two legacy Dengar.in deployments outside this repository may process real users' text with DeepSeek, Gemini and a free-tier OpenRouter model. That is an owner risk (B-13), not part of Sela's routing.
+- **Legacy deployments (D-047).** Two legacy Dengar.in deployments outside this repository may process real users' text with DeepSeek, Gemini and a free-tier OpenRouter model. That is an owner risk (B-13), not part of Sela's routing.
+
+## DeepSeek Flash 1017 (availability fallback)
+
+Owner contract (main, C13, I.fallback, V19–V21; kept as written):
+
+Use `deepseek-flash` against the verified official DeepSeek endpoint after explicit **DeepSeek-specific** consent (independent of Meta/Claude/sharing). Default OFF for competition demo; preserve a runnable Meta-only mode. The model may generate the same source-linked schema, but the deterministic crisis gate, source validator, briefing approval and recipient consent remain unchanged. Only eligible Meta availability errors allow switching. Expose `live_deepseek_fallback` distinctly in UI and sanitized logs, with no implicit authorization granted by either generator. Session version/consent must be rechecked after awaiting both providers. No model gets real patient data in this prototype. See [fallback contract](DEEPSEEK_FALLBACK.md).
+
+*v3 (planned, [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md)):* the same contract governs the fallback route of every generative task (AT-1 to AT-5). The owner's `prototypes/generationfallback` is the reference implementation; the production integration (`internal/ai`, P5) must satisfy C13 and V19–V21 as well as ADR-0003, and ADR-0003 §17 lists each point where the v3 design differs and which side governs. "No model gets real patient data" holds for the prototype and, for DeepSeek, in every environment until the legal review (B-10) and the owner confirm otherwise for a real-use pilot.
 
 ## History: superseded statements
 
@@ -132,8 +149,8 @@ These v2 statements were true for the v2 scope. They stay here as history and, w
 
 | v2 statement | Superseded by | Now |
 | --- | --- | --- |
-| "The Meta model is the only live draft generator." "No other AI provider exists in v2." (also SPEC C12, V9; D-001 "no fallback provider exists") | D-025, D-029 (SPEC C17, V33) | Meta stays primary. DeepSeek may replace it only under ADR-0003 RR-4. The current code still has only `modal`, `test_double` and `disabled` (`internal/llm/provider.go`) |
-| "Optional Anthropic Claude Sonnet 5.5 is a separate source-fidelity reviewer, never fallback generative AI" | D-029 (partly) | Still never a generator. It is no longer optional for the system: consultation-summary wording, memory proposals and flagged text must be verified before release, and without a permitted verifier they abstain. Each user still decides by consent |
-| "Both providers process synthetic demo content only" | D-025 (SPEC V16 → V34, V39) | Real use with minimised data, per-provider consent and a legal review before a real-user pilot (B-10). Synthetic data is for tests, evaluation and demo |
-| Usage-policy response "fictional/synthetic data, adult attestation" | D-025, D-030 | Age bands with protective defaults; minors disabled in production until legal review |
-| Verifier outcomes `model_supported` / `needs_human_review` / `verification_unavailable` | ADR-0003 VC-2, VC-8 (SPEC V34) | Per-claim verdicts `supported` / `unsupported` / `contradicted` / `insufficient_evidence`, plus issues and `verification_unavailable` |
+| "The Meta model is the only live draft generator." "No other AI provider exists in v2." (also SPEC C12, V9; D-001 "no fallback provider exists") | The owner's C13 on main ([D-025](DECISION_LOG.md#d-025)), then D-026, D-030 (SPEC C18, V35) | Meta stays primary. DeepSeek may replace it only under the owner's contract (C13, V19–V21) and ADR-0003 RR-4. The current code still has only `modal`, `test_double` and `disabled` (`internal/llm/provider.go`) |
+| "Optional Anthropic Claude Sonnet 5.5 is a separate source-fidelity reviewer, never fallback generative AI" | D-030 (partly) | Still never a generator. It is no longer optional for the system: consultation-summary wording, memory proposals and flagged text must be verified before release, and without a permitted verifier they abstain. Each user still decides by consent |
+| "Both providers process synthetic demo content only" | D-026 (SPEC V16 → V36, V41) | Real use with minimised data, per-provider consent and a legal review before a real-user pilot (B-10). Synthetic data is for tests, evaluation and demo |
+| Usage-policy response "fictional/synthetic data, adult attestation" | D-026, D-031 | Age bands with protective defaults; minors disabled in production until legal review |
+| Verifier outcomes `model_supported` / `needs_human_review` / `verification_unavailable` | ADR-0003 VC-2, VC-8 (SPEC V36) | Per-claim verdicts `supported` / `unsupported` / `contradicted` / `insufficient_evidence`, plus issues and `verification_unavailable` |

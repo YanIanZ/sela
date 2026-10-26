@@ -9,7 +9,7 @@ Every section has the same fields:
 - **Purpose:** why the screen exists.
 - **Primary action:** at most one per view.
 - **Secondary actions.**
-- **Content and data:** what is shown, and the provenance of each item. The classes are from D-039: `user_original`, `ai_summary`, `user_correction`, `unconfirmed_interpretation`, `uploaded_document` (reserved) and `verified_professional_note` (reserved). Class and review status are separate; the mapping for every record type is in [DESIGN_DIRECTION.md §6.7.1](DESIGN_DIRECTION.md#671-record-types-class-statuses-and-transitions).
+- **Content and data:** what is shown, and the provenance of each item. The classes are from D-040: `user_original`, `ai_summary`, `user_correction`, `unconfirmed_interpretation`, `uploaded_document` (reserved) and `verified_professional_note` (reserved). Class and review status are separate; the mapping for every record type is in [DESIGN_DIRECTION.md §6.7.1](DESIGN_DIRECTION.md#671-record-types-class-statuses-and-transitions).
 - **States:** empty, loading, error and success.
 - **Recovery:** how a person gets out of every failure without losing their words.
 - **Keyboard and focus order.**
@@ -60,7 +60,7 @@ These rules hold on every screen. They are not repeated in each section.
   - In demo, the demo banner.
 - **About page** (`/about`):
   - how the AI works;
-  - the providers and where they process data (D-048), using the live provider line from `GET /api/v2/ai/status` until v3 has its own;
+  - the providers and where they process data (D-049), using the live provider line from `GET /api/v2/ai/status` until v3 has its own;
   - what is never done (no diagnosis, no contacting anyone);
   - credits;
   - the link "Untuk peninjau" (for reviewers) to `/research`.
@@ -108,7 +108,7 @@ Onboarding is short:
 - every step its own URL, so Back works;
 - a progress line in text: "Langkah 1 dari 3" / "Step 1 of 3". The total is recomputed when a path adds steps (an account: "dari 5"), and when AI replies are off, so the AI step is skipped ("dari 2").
 
-**No live AI provider is ever called without a granted `ai_processing` consent** (D-029, D-048, RR-2; brief §8). The AI step (step 3) is therefore shown whenever AI replies are on, in every environment, the demo included, and skipped **only when AI replies are off**. Until the `ai_processing` purpose is active (it is reserved for P3/P5 in API_SPEC_V3 §3), AI replies count as off for the person: the room opens in its "AI off" state (write without replies), except in development and test, where the labelled test double may reply, because nothing leaves Sela. Journey J1 checks this.
+**No live AI provider is ever called without a granted `ai_processing` consent** (D-030, D-049, RR-2; brief §8). The AI step (step 3) is therefore shown whenever AI replies are on, in every environment, the demo included, and skipped **only when AI replies are off**. Until the `ai_processing` purpose is active (it is reserved for P3/P5 in API_SPEC_V3 §3), AI replies count as off for the person: the room opens in its "AI off" state (write without replies), except in development and test, where the labelled test double may reply, because nothing leaves Sela. Journey J1 checks this.
 
 **Nothing is sent to the server before the storage step** (the v1 defect F01 wrote a check-in before consent). Values chosen earlier (language and text size on S01, the age band) are kept in memory and carried forward, so they are never asked twice (WCAG 3.3.7).
 
@@ -125,7 +125,7 @@ Onboarding is short:
   - "Di bawah 15 tahun" / "Under 15";
   - "Aku tidak ingin menyebutkan" / "I'd rather not say". Offered only if `unknown` is allowed by configuration.
 
-  The 15 / 16–17 split is **mandatory now** (D-030: 15-year-olds stay blocked).
+  The 15 / 16–17 split is **mandatory now** (D-031: 15-year-olds stay blocked).
 - **Hint:** "Supaya Sela menunjukkan informasi dan perlindungan yang sesuai. Kami tidak menanyakan tanggal lahirmu." / "So Sela can show the right information and protections. We don't ask for your date of birth."
 - **Outcomes:**
   - "Di bawah 15 tahun": S27 "Under 15". Nothing is created;
@@ -138,7 +138,7 @@ Onboarding is short:
 
 ### Step 2: Di mana datamu disimpan (where your data is kept) · `/start/storage`
 
-- **Purpose:** an informed choice of where data lives (D-028; ADR-0002 §7), and the default for new conversations, so the room does not ask again.
+- **Purpose:** an informed choice of where data lives (D-029; ADR-0002 §7), and the default for new conversations, so the room does not ask again.
 - **Primary action:** depends on the choice.
   - "Mulai sebagai tamu" / "Start as a guest" calls `POST /api/v3/auth/guest`.
   - "Lanjut membuat akun" / "Continue to create an account" leads to S04.
@@ -177,7 +177,7 @@ Onboarding is short:
 
 Shown whenever AI replies are on (see the rule above the steps); skipped only when they are off.
 
-- **Purpose:** the `ai_processing` consent for listening replies and the `ai_provider_anthropic` consent for the checker (D-029, D-048), each disclosed with its provider, place and purpose before it is given. The checker is asked here, not later, because in a wellbeing conversation replies that mention health are common (RR-8 flags them), and without a checker decision those replies would silently not be shown.
+- **Purpose:** the `ai_processing` consent for listening replies and the `ai_provider_anthropic` consent for the checker (D-030, D-049), each disclosed with its provider, place and purpose before it is given. The checker is asked here, not later, because in a wellbeing conversation replies that mention health are common (RR-8 flags them), and without a checker decision those replies would silently not be shown.
 - **Controls:** two consent cards, one below the other, each with its own pair of equal-weight buttons (§6.9). Pressing a button records that card's answer at once and changes its status line; nothing is pre-selected.
   1. **"Balasan AI · Meta, diproses di Modal (Amerika Serikat)"** / "AI replies · Meta, processed on Modal (United States)". It lists:
      - what is sent ("hanya tulisan yang diperlukan untuk membalas; tanpa nama pengguna, dan dengan kontak serta nama yang kamu samarkan diganti"; "only the text needed to reply; no username, and with contact details and names you keep private replaced");
@@ -190,8 +190,10 @@ Shown whenever AI replies are on (see the rule above the steps); skipped only wh
 
      Buttons: [Izinkan pemeriksa] / [Allow the checker] · [Tidak sekarang] / [Not now]. While card 1 is unanswered or answered "Tidak sekarang", card 2 says "Hanya dipakai jika balasan AI diizinkan." / "Only used if AI replies are allowed." and needs no answer.
   3. **Optional third card, adults only:** "Model cadangan · DeepSeek, diproses di Tiongkok" / "Backup model · DeepSeek, processed in China", with the full disclosure (ADR-0003 §8.1) and its own equal-weight pair "Izinkan model cadangan" / "Tidak". It is **off unless the person presses it**, and pressing nothing is the expected path. It is not shown for 16–17 or "unknown" (ADR-0003 §8.3: minors get no fallback generator).
+
+     **Open (ADR-0003 RR-8, §17 O-6: an engineering default of the ADR, not owner direction):** a reply from the backup model is always checked by Claude first, so the backup model replies only when the checker (card 2) is allowed too (ADR-0003 RR-4 (i), §8.1). Card 2's "replies that mention health" and card 3's disclosure do not say so yet; the design lead adds it ([conflict matrix](../CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 62).
 - **Primary action:** "Mulai bercerita" / "Start talking" opens the room (`/talk/new`) with the defaults from step 2. It needs an answer on card 1 and, when card 1 is allowed, on card 2. A missing answer shows "Perlu diperbaiki: pilih Izinkan atau Tidak sekarang." in that card's status line (the alert icon, linked to its buttons by `aria-describedby`), and focus moves to the card's first button. A quiet link, "Lihat beranda dulu" / "See Home first", goes to Home without answering; an unanswered checker question is then asked in context later (S09).
-- **Test doubles** (development and test, and the demo where D-045 allows them): the cards keep their real text, so tests check the real copy, and add the line "Di lingkungan uji ini, program uji yang membalas dan memeriksa; tidak ada yang dikirim ke Meta atau Claude." / "In this test environment, a test program replies and checks; nothing is sent to Meta or Claude." The same consent rules apply (ADR-0003 §10.1).
+- **Test doubles** (development and test, and the demo where D-046 allows them): the cards keep their real text, so tests check the real copy, and add the line "Di lingkungan uji ini, program uji yang membalas dan memeriksa; tidak ada yang dikirim ke Meta atau Claude." / "In this test environment, a test program replies and checks; nothing is sent to Meta or Claude." The same consent rules apply (ADR-0003 §10.1).
 - **States:**
   - busy: "Menyimpan pilihanmu…" on the pressed button;
   - **error, the consent `PUT` fails:** the card's status line says "Pilihanmu belum tersimpan. Tulisanmu belum ada yang dikirim ke mana pun." / "Your choice wasn't saved yet. Nothing you've written has been sent anywhere." with [Coba lagi]; "Mulai bercerita" then offers [Lanjut tanpa balasan AI] (the room opens with AI off, and the choice can be made later in S22). `policy_outdated` reloads the card and asks again;
@@ -285,7 +287,7 @@ The intent picker is not a step: it sits, optional, in the room's conversation s
 
 **Routes** `/start/account`, `/start/codes` (also reached from S06 as `/settings/account/upgrade`) · **Access** public · **Title** "Buat akun – Sela"
 
-- **Purpose:** an account that works on any device, without email (D-028).
+- **Purpose:** an account that works on any device, without email (D-029).
 - **Primary action:** "Buat akun" / "Create account" sends `POST /api/v3/auth/register`. Then "Lanjut" after saving the codes.
 - **Secondary actions:**
   - "Kembali ke pilihan penyimpanan";
@@ -386,7 +388,7 @@ The intent picker is not a step: it sits, optional, in the room's conversation s
 
 **Route** `/home` · **Access** owner · **Title** "Beranda – Sela"
 
-- **Purpose:** a calm place to start. It answers "what can I do now?" and "is anything waiting for me?" It is **not** a dashboard: no counts of days, no scores, no charts, no "you haven't checked in today" (D-036).
+- **Purpose:** a calm place to start. It answers "what can I do now?" and "is anything waiting for me?" It is **not** a dashboard: no counts of days, no scores, no charts, no "you haven't checked in today" (D-037).
 - **Primary action:** "Mulai bercerita" / "Start talking" opens S09 (a new conversation) with the person's defaults; nothing is asked first.
 - **Secondary actions:**
   - "Tulis catatan" / "Write a note" opens S10;
@@ -462,9 +464,9 @@ The intent picker is not a step: it sits, optional, in the room's conversation s
 
 **Routes** `/talk/new`, `/talk/:id` · **Access** owner · **Title** "Percakapan – Sela" (with the date and the optional title for saved conversations; neutral when previews are hidden)
 
-The core of the product (brief §5; D-034). The component specifications are in [DESIGN_DIRECTION.md §6.5–6.6 and §6.15](DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer). Two rules shape every state below:
+The core of the product (brief §5; D-035). The component specifications are in [DESIGN_DIRECTION.md §6.5–6.6 and §6.15](DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer). Two rules shape every state below:
 
-- **A reply is shown only after release** (ADR-0003 §5): the server runs the guards, at most one same-provider regeneration and, when flagged, the verifier, before the browser receives any text. Nothing is shown and then taken back.
+- **A reply is shown only after release** (ADR-0003 §5): the server runs the guards, at most one same-provider regeneration and, when flagged or the backup model DeepSeek wrote it (ADR-0003 RR-8, §17 O-6), the verifier, before the browser receives any text. Nothing is shown and then taken back.
 - **The transcript log is silent** (`aria-live="off"`). Every state below has one fixed announcement, listed in [DESIGN_DIRECTION.md §6.5](DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer) and tested by ST-1 to ST-22.
 
 - **Purpose:** let a person tell what is going on and be listened to. Replies fit the context. Nothing is forced on them. They can correct what Sela understood, choose what is kept and whether memory is used, end at any time, and find help inline when it is needed.
@@ -500,7 +502,7 @@ The core of the product (brief §5; D-034). The component specifications are in 
 | **New, no storage default** (an account created before the default existed) | The storage question as two option rows, nothing selected. Kirim with nothing selected keeps the text and shows the **group error** in the legend, "Perlu diperbaiki: pilih dulu, simpan atau jangan simpan." / "Needs fixing: choose first, save or don't save."; the fieldset (`role="radiogroup"`) gets `aria-invalid="true"`, and focus moves to the first option ([DESIGN_DIRECTION.md §6.3](DESIGN_DIRECTION.md#63-inputs)). The answer becomes the default | Choose; send |
 | **Ongoing** | The transcript (§6.5). The strip collapsed to one line: "Didengarkan saja · Disimpan · Memori dipakai · Ubah" | Send, correct, end |
 | **Sending** | The person's message appears at once with "Mengirim…". It is not read back | — |
-| **Safety screening** (every message, deterministic, before storage and before any model, D-035) | Invisible when nothing matches | — |
+| **Safety screening** (every message, deterministic, before storage and before any model, D-036) | Invisible when nothing matches | — |
 | **Contact details in the message** | **Sending is not gated.** The message is sent at once; the server masks contact details for AI as always. On the sent message, a non-blocking notice names the kind, never the detail: "Nomor telepon disamarkan untuk AI." / "Phone number hidden from AI." For an ID (NIK) or card number, the stored copy is masked too: "Nomor KTP disamarkan untuk AI dan di Catatanku." Status: the notice's first sentence, once | [Samarkan juga di Catatanku] (saved conversations); for NIK and card numbers [Tampilkan seperti yang kutulis] |
 | **Crisis match** (lexicon, RR-1) | The message stays visible and is never erased. Right after it, the **crisis panel** (§6.15): "Kamu tidak sendirian", up to three verified services and "Lihat semua bantuan". `#sr-alert` says once: "Bantuan ditampilkan di bawah pesanmu." AI replies **pause for this conversation**, and **the pause line appears at once** directly above the composer, with [Ke bantuan]. If the reader is not at the bottom, the new-content button says "Bantuan ditampilkan di bawah pesanmu ↓". The rest of the app stays open. The message is stored only if this conversation is saved | [Lanjutkan bercerita dengan Sela] resumes replies; [Akhiri percakapan]; [Tutup bantuan ini]; the help links; [Ke bantuan] on the pause line moves focus to the panel heading |
 | **Generator risk `crisis`** (RR-7) | Exactly as a crisis match: the same panel after the person's message and the same pause. The generated output is **not shown and not stored**, and nothing suggests a reply existed | As above |
@@ -513,17 +515,17 @@ The core of the product (brief §5; D-034). The component specifications are in 
 | **Still waiting** (20 s after the request) | "Masih menulis. Kadang ini butuh lebih lama." | Hentikan balasan; it keeps waiting |
 | **Guard rejection, one regeneration** (RR-5) | **Nothing changes:** "Sela sedang menulis…" stays during the one same-provider regeneration | Hentikan balasan |
 | **Rejected again** | The no-reply notice: "Sela belum bisa membalas pesan ini dengan baik, jadi tidak menampilkan balasan. Tulisanmu tetap di sini. Sela akan mencoba membalas pesanmu berikutnya." / "Sela couldn't reply to this message well, so it isn't showing a reply. Your writing is still here. Sela will try again with your next message." No fallback provider is tried (RR-5) | Keep writing; [Akhiri percakapan] |
-| **Reply checked** (the deterministic health-claim detector flagged it; D-029) | "Sela sedang memeriksa balasan ini…" for up to the verifier timeout | Hentikan balasan |
+| **Reply checked** (the deterministic health-claim detector flagged it, D-030; or the backup model DeepSeek wrote it, which is always checked, ADR-0003 RR-8, §17 O-6) | "Sela sedang memeriksa balasan ini…" for up to the verifier timeout | Hentikan balasan |
 | **Released** | The reply article (§6.5), with the generator and any checker on its author line. Under full motion its sentences fade in over about 1.5 s; under reduced motion it appears whole | Kurang tepat?, Tentang balasan ini, Bacakan |
 | **Released with risk `elevated`** (RR-7) | The reply, then the static support line: "Kalau terasa berat, bantuan bisa kamu hubungi kapan saja." [Lihat semua bantuan]. Announced with the reply as one line | — |
 | **Withheld: the check did not support it** (VC-8) | "Sela tidak menampilkan balasan ini, karena pemeriksaan menemukan bagian yang belum tentu sesuai dengan ceritamu. Ceritamu tetap aman di sini. Kamu bisa melanjutkan." / "Sela isn't showing this reply, because the check found parts that may not match what you said. Your words are safe here. You can carry on." | Keep writing |
-| **Withheld: checker not allowed** (RR-11, "no consent"; the person answered "Tidak sekarang" or withdrew it) | Neutral wording, never "you haven't allowed it": "Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksa (Claude) belum diizinkan. Ceritamu tetap aman di sini." / "Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't allowed yet. Your words are safe here." | [Pengaturan AI] (a neutral link to S22 `#ai`); keep writing |
-| **Withheld: checker never answered** (a profile from before the onboarding card, or onboarding left through "Lihat beranda dulu") | The same first sentence, then the **checker consent card in context** inside the notice (§6.9): "Pemeriksa · Claude dari Anthropic, diproses di Amerika Serikat", what it checks, what is sent, and what happens without it. Asked once per conversation | [Izinkan pemeriksa] [Tidak sekarang] [Jangan tanya lagi], of equal weight. After "Izinkan pemeriksa": status "Pemeriksa diizinkan." and a quiet [Minta Sela membalas lagi] (a new reply; the withheld one is never shown). After "Tidak sekarang" or "Jangan tanya lagi": the neutral notice of the row above |
-| **Withheld: checker unavailable** (RR-11, "service unavailable") | "Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksanya (Claude) sedang tidak tersedia. Ceritamu tetap aman di sini." / "Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't available right now. Your words are safe here." | [Coba lagi]; [Pengaturan AI]; keep writing |
+| **Withheld: checker not allowed** (RR-11, "no consent"; the person answered "Tidak sekarang" or withdrew it). **Open:** the wording does not yet say that without the checker the backup model does not reply either (ADR-0003 RR-4 (i); [conflict matrix](../CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 62) | Neutral wording, never "you haven't allowed it": "Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksa (Claude) belum diizinkan. Ceritamu tetap aman di sini." / "Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't allowed yet. Your words are safe here." | [Pengaturan AI] (a neutral link to S22 `#ai`); keep writing |
+| **Withheld: checker never answered** (a profile from before the onboarding card, or onboarding left through "Lihat beranda dulu"). **Open** for the backup model, as the row above | The same first sentence, then the **checker consent card in context** inside the notice (§6.9): "Pemeriksa · Claude dari Anthropic, diproses di Amerika Serikat", what it checks, what is sent, and what happens without it. Asked once per conversation | [Izinkan pemeriksa] [Tidak sekarang] [Jangan tanya lagi], of equal weight. After "Izinkan pemeriksa": status "Pemeriksa diizinkan." and a quiet [Minta Sela membalas lagi] (a new reply; the withheld one is never shown). After "Tidak sekarang" or "Jangan tanya lagi": the neutral notice of the row above |
+| **Withheld: checker unavailable** (RR-11, "service unavailable"). For a reply from the backup model, which is checked whether or not it mentions health, the first sentence needs its own wording ([conflict matrix](../CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 62) | "Sela tidak menampilkan balasan ini. Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksanya (Claude) sedang tidak tersedia. Ceritamu tetap aman di sini." / "Sela isn't showing this reply. Replies that mention health need a check first, and the checker (Claude) isn't available right now. Your words are safe here." | [Coba lagi]; [Pengaturan AI]; keep writing |
 | **Discarded at commit** (RR-13: the conversation, a consent or the crisis state changed while Sela wrote) | "Sela tidak menampilkan balasan ini karena ada yang berubah saat Sela menulis, misalnya izin AI." | Keep writing |
 | **Stopped before release** | Nothing of the reply is shown or stored. The pending block becomes the meta line "Balasan dihentikan sebelum ditampilkan" / "Reply stopped before it was shown". Focus moves to the text area | Send another message |
-| **Fallback used** (Meta unavailable and DeepSeek consent granted) | The author line: "Sela · balasan AI (DeepSeek, cadangan)". "Tentang balasan ini" adds "diproses di Tiongkok" and why the main model was unavailable | — |
-| **AI unavailable, no fallback consent** | A notice in the transcript: "Sela belum bisa membalas sekarang. Tulisanmu tetap di sini (dan tersimpan, kalau kamu memilih menyimpan)." / "Sela can't reply right now. Your writing stays here (and is saved, if you chose to save it)." | [Coba lagi] [Lanjut menulis tanpa balasan] [Pengaturan AI] (a neutral link to S22 `#ai`). The backup model is never offered or promoted inside the outage (ADR-0003 §8) |
+| **Fallback used** (Meta unavailable, and both the DeepSeek consent and a permitted checker route; ADR-0003 RR-4 (i)) | The reply is checked by Claude first ("Reply checked" above; if the check fails or is unavailable, the matching "Withheld" row applies). The author line: "Sela · balasan AI (DeepSeek, cadangan) · diperiksa oleh Claude". "Tentang balasan ini" adds "diproses di Tiongkok" and why the main model was unavailable | — |
+| **AI unavailable, no fallback consent** (or no permitted checker route for a backup reply, ADR-0003 RR-4 (i): DeepSeek is then not called) | A notice in the transcript: "Sela belum bisa membalas sekarang. Tulisanmu tetap di sini (dan tersimpan, kalau kamu memilih menyimpan)." / "Sela can't reply right now. Your writing stays here (and is saved, if you chose to save it)." | [Coba lagi] [Lanjut menulis tanpa balasan] [Pengaturan AI] (a neutral link to S22 `#ai`). The backup model is never offered or promoted inside the outage (ADR-0003 §8) |
 | **No AI consent, or AI off on the server** (including any environment where `ai_processing` is not yet active, outside development and test) | The room intro says "Balasan AI sedang mati. Kamu tetap bisa menulis; Sela tidak membalas." **No live provider is called.** The button still reads "Kirim"; each message gets the meta line "tanpa balasan (balasan AI mati)", and the status says "Terkirim." | [Nyalakan balasan AI] (links to S22 `#ai`; absent when AI is off on the server) |
 | **Reflection offered** | The "Sela menangkap…" card (§6.6) after a reply, only for the intents that ask for it, or on request. Its line: "Ini tafsiran Sela, belum tentu benar. Kalau mau, periksa satu per satu." Status: "Sela menangkap 2 hal di bawah balasan." | Benar / Ubah / Bukan, hapus; add |
 | **Memory proposal** (a **saved** conversation, the `personal_memory` consent, after a verifier pass; adults, or 16–17 and "unknown" only after they turned memory on in S13) | Inside the card: "Boleh Sela mengingat ini untuk percakapan berikutnya?" with the generator line "Ditulis dengan bantuan AI (Meta) · diperiksa oleh Claude". Without the memory consent, the first time (adults only): the consent card with three equal buttons. **Unsaved conversation:** no proposal, and the card says "Sela tidak mengusulkan untuk mengingat apa pun dari percakapan yang tidak disimpan." No permitted checker: "… karena pemeriksa (Claude) belum diizinkan" or "… karena pemeriksanya sedang tidak tersedia" | [Ingat] [Ubah dulu] [Jangan]; consent: [Izinkan Sela mengingat] [Tidak sekarang] [Jangan tanya lagi]. After "Tidak sekarang", not asked again in this conversation |
@@ -617,7 +619,7 @@ Keys and focus rules:
 | Hold warning | Percakapan yang tidak disimpan ini akan dibuang dalam sekitar 2 menit karena tidak ada aktivitas. [Tetap buka] | This unsaved conversation will be discarded in about 2 minutes because of inactivity. [Keep it open] |
 | Contact detail, sent | Nomor telepon disamarkan untuk AI. [Samarkan juga di Catatanku] | Phone number hidden from AI. [Hide it in My notes too] |
 | Pause line, help still shown | Balasan Sela dijeda di percakapan ini. Kamu tetap bisa menulis. [Ke bantuan] | Sela's replies are paused in this conversation. You can still write. [Go to help] |
-| Checker not allowed | Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksa (Claude) belum diizinkan. | Replies that mention health need a check first, and the checker (Claude) isn't allowed yet. |
+| Checker not allowed (**open** for the backup model, [conflict matrix](../CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 62) | Balasan yang menyebut hal kesehatan perlu diperiksa dulu, dan pemeriksa (Claude) belum diizinkan. | Replies that mention health need a check first, and the checker (Claude) isn't allowed yet. |
 
 ### API (planned unless marked)
 
@@ -665,7 +667,7 @@ Keys and focus rules:
   - loading (detail): "Memuat catatan…";
   - error, on save: "Catatan belum tersimpan. Tulisanmu masih di sini." [Coba simpan lagi];
   - success: "Tersimpan · 20.14", and the URL becomes `/notes/:id`;
-  - **crisis match on save** (D-035): the note **is saved**, if the person is saving at all. The crisis panel appears below with: "Tersimpan. Karena ada kata-kata dalam catatanmu yang terdengar sangat berat, Sela menunjukkan bantuan di bawah ini. Kamu tidak harus memakainya." Nothing is refused. This fixes v1 finding 4, where heavy feelings could not be saved.
+  - **crisis match on save** (D-036): the note **is saved**, if the person is saving at all. The crisis panel appears below with: "Tersimpan. Karena ada kata-kata dalam catatanmu yang terdengar sangat berat, Sela menunjukkan bantuan di bawah ini. Kamu tidak harus memakainya." Nothing is refused. This fixes v1 finding 4, where heavy feelings could not be saved.
 - **Leaving with unsaved text:**
   - in-app navigation shows a dialog, "Catatan belum disimpan." [Simpan dulu] [Tinggalkan tanpa menyimpan] [Batal];
   - Quick exit skips the dialog by design.
@@ -703,7 +705,7 @@ Keys and focus rules:
 
 **Routes** `/notes/check-in` (new); `/notes/:id` for a saved check-in (the check-in detail, below) · **Access** owner · **Title** "Cek perasaan – Sela"; detail "Cek perasaan, {tanggal} – Sela" (neutral "Entri – Sela" when previews are hidden)
 
-- **Purpose:** a quick, private snapshot of how someone feels. There are no streaks, reminders, praise or scores (D-036).
+- **Purpose:** a quick, private snapshot of how someone feels. There are no streaks, reminders, praise or scores (D-037).
 - **Primary action:** "Simpan" / "Save".
 - **Secondary actions:**
   - "Batal";
@@ -793,7 +795,7 @@ Keys and focus rules:
   - a retention line for guests.
 - **Pattern view** (`/notes/patterns`, opt-in):
   - The first visit shows a consent card: "Pola dibuat dari cek perasaanmu sendiri dengan hitungan sederhana, tanpa AI. Kamu bisa mematikannya kapan saja." [Tampilkan pola] [Tidak sekarang].
-  - Opt-in only, for every age. For 16–17 this follows the profiling rule of PP 17/2025 Pasal 19 under D-030.
+  - Opt-in only, for every age. For 16–17 this follows the profiling rule of PP 17/2025 Pasal 19 under D-031.
   - It shows plain sentences and a table for the last 14 or 30 days: the counts per feeling, and the tags that appear most with "Berat".
   - There is no score, trend arrow or prediction. It is labelled "Ini hitungan sederhana, bukan penilaian." / "These are simple counts, not an assessment."
   - An optional bar chart has the table as its text equivalent (1.1.1).
@@ -847,7 +849,7 @@ Keys and focus rules:
 
   Each memory control states its scope in one line next to it ([DESIGN_DIRECTION.md §6.9](DESIGN_DIRECTION.md#69-consent-storage-memory-and-private-name-controls)): "Jeda memori" — "Berlaku untuk semua percakapan mulai sekarang, termasuk yang sedang terbuka. Yang Sela ingat tetap tersimpan."; the consent — "Izin supaya Sela boleh menyimpan dan memakai yang kamu setujui. Mencabutnya melupakan semuanya."; the link to the S22 default — "Berlaku untuk percakapan yang kamu mulai setelah ini."
 - **Content and data:**
-  - the explanation: "Sela hanya mengingat hal yang kamu setujui. Sela memakainya untuk menyesuaikan balasan. Catatanmu tidak dipakai untuk melatih model." / "Sela only remembers what you agree to. It uses it to fit its replies to you. Your notes are not used to train models." (D-047);
+  - the explanation: "Sela hanya mengingat hal yang kamu setujui. Sela memakainya untuk menyesuaikan balasan. Catatanmu tidak dipakai untuk melatih model." / "Sela only remembers what you agree to. It uses it to fit its replies to you. Your notes are not used to train models." (D-048);
   - memory status: on, paused or off;
   - items, each with ([DESIGN_DIRECTION.md §6.7.1](DESIGN_DIRECTION.md#671-record-types-class-statuses-and-transitions)):
     - the statement (with `lang` when the item's `lang` differs from the interface);
@@ -885,7 +887,7 @@ Keys and focus rules:
 - **Layout:**
   - 320px: item cards stacked, actions in one row (they wrap at large text).
   - Wide: within `--measure-wide`; the proposals in a side column from 75em.
-- **Minors and `unknown`:** memory is off by default and opt-in here only (D-030), with teen copy; it is never asked in context (S26).
+- **Minors and `unknown`:** memory is off by default and opt-in here only (D-031), with teen copy; it is never asked in context (S26).
 - **API (planned):**
   - `GET /api/v3/memory`;
   - `POST /api/v3/memory` `{text}`;
@@ -913,7 +915,7 @@ Keys and focus rules:
   1. **Ringkasan untuk konsultasi** (Summary for a consultation).
      - Explanation: "Kalau kamu ingin bicara dengan profesional, misalnya di Puskesmas atau dengan psikolog, Sela bisa membantumu menyiapkan ringkasan dari yang kamu pilih di Catatanku."
      - [Buat ringkasan].
-     - The list of summaries, each with its state: "Draf"; "Disiapkan · versi 3" for an approved version that has not been shared (D-040 `prepared`); once shared, the share's latest recorded status chip ("Dibagikan", "Dibuka penerima" …; an end state always with its reason line, such as "Selesai dibagikan · penerima tidak dapat menerima"), with the recipient label unless previews are hidden.
+     - The list of summaries, each with its state: "Draf"; "Disiapkan · versi 3" for an approved version that has not been shared (D-041 `prepared`); once shared, the share's latest recorded status chip ("Dibagikan", "Dibuka penerima" …; an end state always with its reason line, such as "Selesai dibagikan · penerima tidak dapat menerima"), with the recipient label unless previews are hidden.
      - Active shares.
   2. **Bacaan & latihan kecil** (Reading & small exercises).
      - Three items chosen by editors. They are not personalised and there is no "recommended for you".
@@ -942,9 +944,9 @@ Keys and focus rules:
 
 **Routes** `/support/summaries/new` (starts a draft) → `/support/summaries/:id/edit/choose` → `…/edit/compose` → `…/edit/review` → `…/edit/approve`; `/support/summaries/:id` (view) · **Access** owner · **Title** "Ringkasan untuk konsultasi – Sela"
 
-The summary is honest by construction. It contains only what the person chose (brief §7). Every item shows its source words. AI wording is checked before the person sees it (D-029). The approval is bound to an exact version and hash (v2). The summary is never called a medical record (D-038).
+The summary is honest by construction. It contains only what the person chose (brief §7). Every item shows its source words. AI wording is checked before the person sees it (D-030). The approval is bound to an exact version and hash (v2). The summary is never called a medical record (D-039).
 
-On every step and in the view, a header line reads "Ini catatan pribadimu. Bukan rekam medis atau hasil pemeriksaan." / "These are your own notes. Not a medical record or an assessment.", followed by **one** of these, depending on what the summary really contains (D-038: "where applicable"):
+On every step and in the view, a header line reads "Ini catatan pribadimu. Bukan rekam medis atau hasil pemeriksaan." / "These are your own notes. Not a medical record or an assessment.", followed by **one** of these, depending on what the summary really contains (D-039: "where applicable"):
 
 - it contains AI wording or a Sela interpretation: "Sebagian kalimatnya ditulis dengan bantuan AI (Meta) dan diperiksa oleh Claude." / "Some of the wording was written with AI help (Meta) and checked by Claude." (with DeepSeek, the alternative checker, or "program uji (bukan AI)" named when they were used);
 - it does not: "Disusun sendiri, tanpa AI." / "Put together by you, without AI."
@@ -970,13 +972,13 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
 - **Control:** a radio group.
   - "Bantu aku menyusun" / "Help me put it together", with the line: "Sela (Meta, diproses di Amerika Serikat) menyusun poin-poin dari kata-katamu, lalu pemeriksa (Claude, Amerika Serikat) mengecek bahwa setiap poin sesuai dengan kata-katamu. Nama yang kamu samarkan dan kontak diganti dulu sebelum dikirim." When the person has granted the backup model, it adds: "Kalau model utama sedang tidak tersedia, model cadangan DeepSeek (diproses di Tiongkok) yang menyusun, dan Claude tetap memeriksa." / "If the main model is unavailable, the backup model DeepSeek (processed in China) writes it, and Claude still checks it." (AT-4). This describes what *will* happen, so it comes from the live AI status; in a test environment it reads "program uji (bukan AI)" for whichever part a test program does. Only conversations, notes and check-ins are sent to AI drafting; memory items enter the summary as they are, with their own class.
   - "Susun sendiri" / "I'll put it together myself": pick quotes from the chosen notes and write the wording.
-- **Consents:** missing ones (`ai_processing`, `ai_provider_anthropic`) appear inline as consent cards (§6.9). Without the verifier consent, the AI option explains, in neutral words: "Pemeriksa (Claude) belum diizinkan, jadi Sela tidak menyusun dengan AI. Kamu tetap bisa menyusun sendiri." / "The checker (Claude) isn't allowed yet, so Sela won't draft with AI. You can still put it together yourself." D-029 makes the verifier mandatory for summary wording.
+- **Consents:** missing ones (`ai_processing`, `ai_provider_anthropic`) appear inline as consent cards (§6.9). Without the verifier consent, the AI option explains, in neutral words: "Pemeriksa (Claude) belum diizinkan, jadi Sela tidak menyusun dengan AI. Kamu tetap bisa menyusun sendiri." / "The checker (Claude) isn't allowed yet, so Sela won't draft with AI. You can still put it together yourself." D-030 makes the verifier mandatory for summary wording.
 - **AI running:**
   - The status reads "Sela sedang menyusun dari 3 catatan…", then "Sedang diperiksa…", with Stop.
   - **Result:**
     - items that passed;
     - "N kalimat tidak dipakai karena tidak cocok dengan kata-katamu" / "N sentences weren't used because they didn't match your words", with a disclosure listing them, labelled "Tidak dipakai".
-  - **Verifier unavailable:** "Pemeriksa sedang tidak tersedia, jadi Sela tidak memakai kalimat AI. Kata-katamu sudah disiapkan sebagai poin; kamu bisa menyusunnya sendiri." The system abstains and keeps the person's own words (D-029).
+  - **Verifier unavailable:** "Pemeriksa sedang tidak tersedia, jadi Sela tidak memakai kalimat AI. Kata-katamu sudah disiapkan sebagai poin; kamu bisa menyusunnya sendiri." The system abstains and keeps the person's own words (D-030).
 
 ### Step 3: Periksa (review)
 
@@ -1073,7 +1075,7 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
 
 **Route** `/support/summaries/:id/prepare` · **Access** owner · **Title** "Persiapan konsultasi – Sela"
 
-- **Purpose:** practical readiness: where to go, what to bring, how to begin. It claims no booking, partnership or verified professional (D-041).
+- **Purpose:** practical readiness: where to go, what to bring, how to begin. It claims no booking, partnership or verified professional (D-042).
 - **Primary action:** "Simpan persiapan" / "Save preparation".
 - **Secondary actions:**
   - choose a destination;
@@ -1158,7 +1160,7 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
      - "Nama yang boleh dilihat penerima (opsional)" / "A name the recipient may see (optional)", a text field screened for contact details.
      - **"Nama yang disamarkan"** / "Names kept private", shown when the chosen parts contain names from the person's list: "Di ringkasan ini ada nama yang kamu samarkan: 'Rina' (2 poin), 'Pak Budi' (1 poin). Penerima melihat [nama disamarkan]." Then one checkbox per name, unchecked: "Tampilkan 'Rina' kepada penerima" / "Show 'Rina' to the recipient". The choice is per name for this share, not per item, because showing a name in one item and hiding it in another would still reveal it. The masking also applies to "Kata-kata asliku".
   2. **Penerima & tujuan** (recipient and purpose).
-     - "Untuk siapa?" / "Who is it for?", up to 80 characters, with the hint "Contoh: 'Psikolog di Puskesmas Kecamatan'. Sela tidak memeriksa identitas penerima." / "For example 'Psychologist at the district Puskesmas'. Sela doesn't check who the recipient is." (D-041).
+     - "Untuk siapa?" / "Who is it for?", up to 80 characters, with the hint "Contoh: 'Psikolog di Puskesmas Kecamatan'. Sela tidak memeriksa identitas penerima." / "For example 'Psychologist at the district Puskesmas'. Sela doesn't check who the recipient is." (D-042).
      - "Untuk apa?" / "What for?", a radio group:
        - "Bahan untuk konsultasi pertama" (material for a first consultation);
        - "Bahan untuk konsultasi lanjutan" (material for a follow-up consultation);
@@ -1197,7 +1199,7 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
 
 **Route** `/support/shares/:id` · **Access** owner · **Title** "Status berbagi – Sela"
 
-- **Purpose:** know exactly what happened to a share, stop it at any time, and record that a consultation began or ended (D-040). Only recorded events are shown as having happened.
+- **Purpose:** know exactly what happened to a share, stop it at any time, and record that a consultation began or ended (D-041). Only recorded events are shown as having happened.
 - **Primary action:** depends on the state.
   - Active: "Cabut akses sekarang" / "Revoke access now" (Danger, inline confirm with the Confirm-destructive button).
   - Ended: none.
@@ -1299,7 +1301,7 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
 
 **Routes** `/reading`, `/reading/:slug` · **Access** public; bookmarks for owners · **Title** "Bacaan & latihan kecil – Sela"
 
-- **Purpose:** short, sourced reading and optional small exercises, with no day counters (D-037). The content is public; it is never copied into anyone's notes (D-032).
+- **Purpose:** short, sourced reading and optional small exercises, with no day counters (D-038). The content is public; it is never copied into anyone's notes (D-033).
 - **Primary action:** open an item.
 - **Secondary actions:**
   - the topic filter chips;
@@ -1315,8 +1317,8 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
     - a "Cocok untuk remaja" (suitable for teens) tag where reviewed.
   - **Item page:**
     - the text, at 18px within `--measure`;
-    - "Sumber & lisensi" (source and licence). For the WHO cards: attribution, "Diadaptasi dari …", the licence CC BY-NC-SA 3.0 IGO and the adaptation notice (D-044);
-    - "Ditinjau pada 20 Okt 2026" (reviewed on), with the verifier check done at authoring time (D-029);
+    - "Sumber & lisensi" (source and licence). For the WHO cards: attribution, "Diadaptasi dari …", the licence CC BY-NC-SA 3.0 IGO and the adaptation notice (D-045);
+    - "Ditinjau pada 20 Okt 2026" (reviewed on), with the verifier check done at authoring time (D-030);
     - the language (`lang` attribute if it differs from the interface).
   - **Exercises:** numbered steps.
     - An optional timer starts only on "Mulai latihan", with Pause and Stop. It never starts by itself.
@@ -1354,7 +1356,7 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
 
 **Route** `/help` (directory at `/help#layanan`) · **Access** public · **Title** "Bantuan sekarang – Sela"
 
-- **Purpose:** the fastest path to real, verified help. It never waits for a model, the account or the network (D-035, D-043).
+- **Purpose:** the fastest path to real, verified help. It never waits for a model, the account or the network (D-036, D-044).
 - **Primary action:** contact a service. Each channel is a real link: phone (`tel:`), WhatsApp, or the service's website.
 - **Secondary actions:**
   - "Kembali ke percakapan" (back to the conversation; shown when the person came from the room; an unsaved conversation is still held, S09);
@@ -1368,7 +1370,7 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
   5. "Layanan bantuan lainnya" (`#layanan`): the full verified directory.
   6. "Daftar ini hanya untuk Indonesia. Bahasa yang kamu pilih tidak menentukan negara atau layanan yang tersedia untukmu."
 
-  Every entry carries its source, verification date and re-verify-by date. Stale entries carry the warning chip (D-043). Teen entries appear only if verified, and the unverified KPAI WhatsApp entry from v1 is never shown. For age band 16–17 or "unknown", the teen services are listed first. When no verified teen entry exists, the list falls back to the static lead (item 1) and the verified general entries; it is never empty.
+  Every entry carries its source, verification date and re-verify-by date. Stale entries carry the warning chip (D-044). Teen entries appear only if verified, and the unverified KPAI WhatsApp entry from v1 is never shown. For age band 16–17 or "unknown", the teen services are listed first. When no verified teen entry exists, the list falls back to the static lead (item 1) and the verified general entries; it is never empty.
 - **States:**
   - **offline or API down:** rendered from the bundled data (as the v2 `help.fallback.json`), with "Data bawaan aplikasi, diperiksa 26 Okt 2026." / "Built-in data, checked 26 Oct 2026.";
   - loading: none, because the content renders from the bundle at once and refreshes silently;
@@ -1407,9 +1409,9 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
      - "Pakai yang Sela ingat di percakapan baru" / "Use what Sela remembers in new conversations", Ya / Tidak ("Berlaku untuk percakapan yang kamu mulai setelah ini. Kamu tetap bisa mengubahnya di setiap percakapan.");
      - a link to S13.
   3. **Nama yang disamarkan** (names kept private, `#nama`): the list of names and words the person keeps private, with [Tambahkan] and [Hapus dari daftar] per row, and the explanation of what masking does ([DESIGN_DIRECTION.md §6.9](DESIGN_DIRECTION.md#69-consent-storage-memory-and-private-name-controls)). Empty: "Belum ada nama di daftar ini. Nama yang kamu tambahkan diganti dengan [nama disamarkan] sebelum dikirim ke AI dan di ringkasan yang kamu bagikan." Contact details are always masked for AI and need no list.
-  4. **Pemrosesan AI** (AI processing, `#ai`): three consent cards (§6.9), each naming provider, place and purpose (D-048):
+  4. **Pemrosesan AI** (AI processing, `#ai`): three consent cards (§6.9), each naming provider, place and purpose (D-049):
      - "Balasan & penyusunan · Meta, di Modal (Amerika Serikat)";
-     - "Pemeriksa · Claude dari Anthropic (Amerika Serikat)", with the same plain line as onboarding: "memeriksa balasan yang menyebut hal kesehatan, ringkasan, dan hal yang diusulkan untuk diingat";
+     - "Pemeriksa · Claude dari Anthropic (Amerika Serikat)", with the same plain line as onboarding: "memeriksa balasan yang menyebut hal kesehatan, ringkasan, dan hal yang diusulkan untuk diingat" (**open**, as S02 card 2: it does not yet say that every backup-model reply is checked; [conflict matrix](../CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 62);
      - "Cadangan · DeepSeek (Tiongkok)". It explains: "Dipakai hanya jika model utama tidak tersedia, tidak pernah untuk melewati penolakan keamanan."
 
      And the fixed lines "Mencabut izin menghentikan pemakaian penyedia itu mulai sekarang. Yang sudah terkirim ke penyedia tidak bisa ditarik kembali; penyedia menyimpannya sesuai kebijakannya." / "Withdrawing stops that provider's use from now on. What was already sent can't be recalled from the provider, which keeps it under its own policy." (ADR-0003 §8.2).
@@ -1566,7 +1568,7 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
   - code step: "Buka ringkasan" / "Open the summary";
   - view: "Konfirmasi sudah diterima" / "Confirm receipt".
 - **Secondary actions:**
-  - "Minta klarifikasi" (ask for clarification): a radio group of fixed reasons, with no free text, so no recipient text ever looks like a professional note (D-039 reserves `verified_professional_note`). The reasons (pending P4):
+  - "Minta klarifikasi" (ask for clarification): a radio group of fixed reasons, with no free text, so no recipient text ever looks like a professional note (D-040 reserves `verified_professional_note`). The reasons (pending P4):
     1. "Ada bagian yang kurang jelas" / "Some parts are unclear";
     2. "Mohon dalam bahasa lain" / "Please share it in the other language";
     3. "Mohon sertakan pertanyaan yang ingin Anda bicarakan" / "Please include the questions you want to discuss";
@@ -1577,7 +1579,7 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
   - "Keluar dari halaman ini" (leave this page; ends the recipient session);
   - the language switch (local only).
 - **Content and data:**
-  - **Banner** (always), matching the summary's content (D-038 "where applicable"): "Anda membuka ringkasan yang dibagikan seseorang melalui Sela. Ini catatan pribadi pengirim. Bukan rekam medis. Sela tidak memverifikasi identitas Anda atau pengirim." / "You are viewing a summary someone shared through Sela. These are the sender's personal notes. Not a medical record. Sela does not verify your identity or the sender's." Then one of: "Sebagian kalimatnya ditulis dengan bantuan AI (Meta) dan diperiksa oleh Claude, lalu dikonfirmasi pengirim." / "Some of the wording was written with AI help (Meta) and checked by Claude, then confirmed by the sender." or "Disusun sendiri oleh pengirim, tanpa AI." / "Put together by the sender, without AI." The line is built from the frozen projection's stored provenance: a part checked by a test program reads "… diperiksa oleh program uji (bukan AI) …", never "Claude", and the "Mode uji" banner is shown above it.
+  - **Banner** (always), matching the summary's content (D-039 "where applicable"): "Anda membuka ringkasan yang dibagikan seseorang melalui Sela. Ini catatan pribadi pengirim. Bukan rekam medis. Sela tidak memverifikasi identitas Anda atau pengirim." / "You are viewing a summary someone shared through Sela. These are the sender's personal notes. Not a medical record. Sela does not verify your identity or the sender's." Then one of: "Sebagian kalimatnya ditulis dengan bantuan AI (Meta) dan diperiksa oleh Claude, lalu dikonfirmasi pengirim." / "Some of the wording was written with AI help (Meta) and checked by Claude, then confirmed by the sender." or "Disusun sendiri oleh pengirim, tanpa AI." / "Put together by the sender, without AI." The line is built from the frozen projection's stored provenance: a part checked by a test program reads "… diperiksa oleh program uji (bukan AI) …", never "Claude", and the "Mode uji" banner is shown above it.
   - **The projection:**
     - the summary points, each with its provenance as text and, for AI wording, the generator line: "Kata-kata pengirim"; "Tulisan AI · Ditulis dengan bantuan AI (Meta) · diperiksa oleh Claude · dikonfirmasi pengirim" (with DeepSeek, the alternative checker or the test program named when used); "Koreksi pengirim";
     - **a Sela interpretation the sender confirmed** (an item that came from "Yang Sela ingat") is never shown as the sender's words: "Tafsiran Sela · dikonfirmasi pengirim" / "Sela's interpretation · confirmed by the sender", with its generator line and no quote styling;
@@ -1616,7 +1618,7 @@ The progress line reads "Langkah 2 dari 4: Cara menyusun".
 
 ## S26 Minors variants (15-17)
 
-**PM decision D-030:** implemented, but disabled in production by configuration until a legal review (B-10). Enabled in development, demo and staging. **15-year-olds stay blocked** until Sela is assessed as low risk under PP 17/2025 Pasal 21(1)(b).
+**PM decision D-031:** implemented, but disabled in production by configuration until a legal review (B-10). Enabled in development, demo and staging. **15-year-olds stay blocked** until Sela is assessed as low risk under PP 17/2025 Pasal 21(1)(b).
 
 ### Age split (mandatory now)
 
@@ -1649,7 +1651,7 @@ The confidentiality step comes before the storage step, so nothing is stored bef
 
 **`/start/guardian`: Persetujuan orang tua atau wali (parent or guardian consent).**
 
-- **Purpose:** the guardian consent record. It **grants no access** (API_SPEC_V3 §6; D-030).
+- **Purpose:** the guardian consent record. It **grants no access** (API_SPEC_V3 §6; D-031).
 - **Flow:**
   1. The teen sees "Minta orang tua atau walimu membaca layar berikutnya bersamamu." / "Ask your parent or guardian to read the next screen with you." [Lanjut].
   2. **A screen addressed to the guardian**, in formal "Anda" register, from the `guardian_information` policy:
@@ -1711,7 +1713,7 @@ All of these use the normal shell, with help and exit, and an h1.
 | Storage unavailable | `503 store_unavailable` | Penyimpanan sedang tidak tersedia. Coba lagi sebentar lagi. Bantuan sekarang tetap bisa dibuka. | Storage is unavailable right now. Try again shortly. Help now still works. | [Coba lagi] |
 | Busy | `503 server_busy` | Server sedang sibuk. Coba lagi sebentar lagi. | The server is busy. Try again shortly. | [Coba lagi] |
 | Under 15 | Age band `under_15` | Sela belum bisa dipakai di usiamu. Kalau kamu butuh bantuan sekarang, layanan di bawah bisa kamu hubungi. | Sela can't be used at your age yet. If you need help now, you can contact the services below. | Help list: the verified teen entries; when none is verified, the static S21 lead ("Kalau kamu dalam bahaya sekarang, hubungi layanan darurat setempat atau orang terdekat yang bisa menemanimu.") plus the verified general entries. Nothing is stored |
-| 15 tahun | "15 tahun" chosen in S02 (D-030 block, every environment) | Sela belum bisa dipakai di usia 15 tahun. Kalau kamu butuh bantuan sekarang, layanan di bawah bisa kamu hubungi. | Sela can't be used at age 15 yet. If you need help now, you can contact the services below. | The same help list and fallback. Nothing is stored |
+| 15 tahun | "15 tahun" chosen in S02 (D-031 block, every environment) | Sela belum bisa dipakai di usia 15 tahun. Kalau kamu butuh bantuan sekarang, layanan di bawah bisa kamu hubungi. | Sela can't be used at age 15 yet. If you need help now, you can contact the services below. | The same help list and fallback. Nothing is stored |
 | Age band not enabled | `age_band_not_enabled` | Sela belum tersedia untuk kelompok usia ini. | Sela isn't available for this age group yet. | The same help list and fallback |
 | Policy updated | `actionsRequired: accept_policy:*` | Kebijakan privasi diperbarui. Yang berubah: … | The privacy policy was updated. What changed: … | [Setuju] [Baca lengkap] [Ekspor dan hapus data]. Never blocks privacy actions |
 | Data deleted | After `DELETE /api/v3/me` | Datamu sudah dihapus dari Sela. Dalam 7 hari tidak ada cadangan yang bisa membukanya, dan dalam 30 hari semua cadangan ikut terhapus. | Your data has been deleted from Sela. Within 7 days no backup can open it, and within 30 days it's gone from every backup. | [Ke pengenalan] |
@@ -1724,7 +1726,7 @@ All of these use the normal shell, with help and exit, and an h1.
 
 **Routes** `/policies` (index), `/policies/:purpose` (one policy; `?version=` for an earlier version) · **Access** public · **Title** "Kebijakan – Sela" / "Policies – Sela"; one policy: "{judul kebijakan} – Sela", for example "Ketentuan & Privasi – Sela"
 
-- **Purpose:** let anyone read each policy in plain language before and after agreeing to it, see which version applies, and see what changed (UU PDP Pasal 21 information; D-048 for the AI providers; [CONTENT_STYLE.md §3.2](CONTENT_STYLE.md#32-reading-level-guidance): a plain summary first).
+- **Purpose:** let anyone read each policy in plain language before and after agreeing to it, see which version applies, and see what changed (UU PDP Pasal 21 information; D-049 for the AI providers; [CONTENT_STYLE.md §3.2](CONTENT_STYLE.md#32-reading-level-guidance): a plain summary first).
 - **Primary action:** none; these are pages to read. When reached from a consent card or onboarding, a back link returns there ("← Kembali ke pilihanmu"), with the choice untouched.
 - **Secondary actions:** "Lihat versi sebelumnya" (earlier versions); "Yang berubah" (what changed); the language switch; "Cetak" (the browser's print, with a print stylesheet); for signed-in owners, "Kelola persetujuan" (S22 `#persetujuan`).
 - **Content and data:**

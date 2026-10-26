@@ -5,7 +5,7 @@ Status: **design decision** by the design lead, 2026-10-26, revised the same day
 Labels used in all design documents:
 
 - **user-confirmed**: stated in owner brief v3.
-- **PM decision**: D-025 to D-049 in the PM decision record (decided; this design does not reopen them).
+- **PM decision**: D-026 to D-050 in the PM decision record (decided; this design does not reopen them).
 - **design decision**: taken here; the design lead may revise it with a recorded reason.
 - **externally sourced**: from a cited external document (W3C and others).
 - **planned**: no code yet.
@@ -20,7 +20,7 @@ Companion documents:
 - [tokens.css](tokens.css): the reference token sheet.
 - [tools/contrast.py](tools/contrast.py) and [tools/sync_docs.py](tools/sync_docs.py): compute the contrast tables and refresh the generated sections of this file. Both run now with the Python standard library.
 
-Inputs read: owner brief v3 §4–§7 (user-confirmed); PM decisions D-025–D-049; the discovery reports (v2 gap analysis, v1 in-repo inventory, compliance and accessibility facts, research audit); [API_SPEC_V3](../API_SPEC_V3.md); [ADR-0002](../adr/ADR-0002-persistence-accounts-and-encryption.md); [ADR-0003](../adr/ADR-0003-ai-routing-verifier-fallback.md) (AI routing; it appeared during this pass and was read to align provider labels, consent timing and the minors rules); the v2 frontend (`web/src`: pages, components, `styles.css`, i18n); the v1 UI (`apps/web/src`: pages, Tailwind tokens in `app/globals.css`, `components/ui/AccessibilityMenu.tsx`, `components/ui/QuickExitButton.tsx`, `components/Navbar.tsx`).
+Inputs read: owner brief v3 §4–§7 (user-confirmed); PM decisions D-026–D-050; the discovery reports (v2 gap analysis, v1 in-repo inventory, compliance and accessibility facts, research audit); [API_SPEC_V3](../API_SPEC_V3.md); [ADR-0002](../adr/ADR-0002-persistence-accounts-and-encryption.md); [ADR-0003](../adr/ADR-0003-ai-routing-verifier-fallback.md) (AI routing; it appeared during this pass and was read to align provider labels, consent timing and the minors rules); the v2 frontend (`web/src`: pages, components, `styles.css`, i18n); the v1 UI (`apps/web/src`: pages, Tailwind tokens in `app/globals.css`, `components/ui/AccessibilityMenu.tsx`, `components/ui/QuickExitButton.tsx`, `components/Navbar.tsx`).
 
 ---
 
@@ -30,7 +30,7 @@ Inputs read: owner brief v3 §4–§7 (user-confirmed); PM decisions D-025–D-0
 
 Sela: "A little space to feel heard" / "Ruang sejenak untuk didengar" (user-confirmed). In Indonesian, *sela* is the gap between things: *di sela-sela kesibukan* means "in the gaps of a busy day". The product is that gap. It is a short, private pause in which a person is listened to. They can look back at what they said, and carry what they choose to someone who can help.
 
-Listening is the core function. Preparing for a professional is offered, never required (brief §1 and §5, user-confirmed; D-034).
+Listening is the core function. Preparing for a professional is offered, never required (brief §1 and §5, user-confirmed; D-035).
 
 ### 1.2 Situations, not age personas
 
@@ -45,24 +45,24 @@ The brief says not to assume that older users share the same limits or preferenc
 | A cheap Android phone, prepaid data, slow 3G | Fast first screen; nothing heavy to download; drafts never lost; the conversation stays readable while the keyboard is open | System fonts, no raster images, a JavaScript budget, help that renders without the network, drafts kept in memory on errors, and a typing layout that keeps only the help control fixed and caps the composer, so Sela's reply stays readable above the keyboard (§6.5) |
 | Visiting a Puskesmas next week | Gather what they said, check it, bring it in the form that works there | Summary built from chosen notes, show-on-screen and print views, sourced destination checklists |
 | After a consultation | Note what happened in their own words and carry on | "Setelah konsultasi" follow-up, linked to the same summary |
-| 15 to 17 years old | Respect; clear limits of confidentiality; a guardian who consents without getting access | Teen copy and confidentiality screens; memory opt-in only (D-030) |
+| 15 to 17 years old | Respect; clear limits of confidentiality; a guardian who consents without getting access | Teen copy and confidentiality screens; memory opt-in only (D-031) |
 | Unsure what the AI is | Honest labels and plain explanations | Provenance badges, reply details, consent cards that name provider, place and purpose |
 | Tremor or limited dexterity | Large targets; no drag, no hold, no time pressure | 44px targets, no gesture-only actions, no timed steps |
 | Code-switching between Indonesian and English | Replies in their language; switching the interface anywhere | Language on the Introduction and in the menu; `lang` set on each part that is mostly in the other language, from a `lang` field on the record that the server fills, including the spoken reply announcement (§6.5) |
 
 ### 1.3 Constraints
 
-- **Frontend stack (PM decision D-031):** React 19, TypeScript and Vite with plain CSS and custom properties. I add no UI framework (§9).
+- **Frontend stack (PM decision D-032):** React 19, TypeScript and Vite with plain CSS and custom properties. I add no UI framework (§9).
 - **Content Security Policy:** `default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'` (observed in the `Content-Security-Policy` header set in `internal/httpapi/server.go`). This rules out font CDNs and inline scripts. React `style` props are CSSOM writes, which the policy allows.
 - **Accessibility target:** WCAG 2.2 AA (user-confirmed, brief §6). See [ACCESSIBILITY_CRITERIA.md](ACCESSIBILITY_CRITERIA.md).
 - **Product rules (PM decisions):**
-  - no streaks, scores or guilt prompts (D-036);
-  - honest terms (D-038);
-  - six provenance classes with time, version and review status (D-039);
-  - handoff statuses (D-040);
-  - recipients are invited by the user and their identity is not verified (D-041);
-  - crisis handling that never erases the user's words (D-035);
-  - minors implemented but disabled in production (D-030).
+  - no streaks, scores or guilt prompts (D-037);
+  - honest terms (D-039);
+  - six provenance classes with time, version and review status (D-040);
+  - handoff statuses (D-041);
+  - recipients are invited by the user and their identity is not verified (D-042);
+  - crisis handling that never erases the user's words (D-036);
+  - minors implemented but disabled in production (D-031).
 
 ---
 
@@ -103,7 +103,7 @@ I walked each one through the same seven journeys:
   - Almost nothing to learn: WhatsApp is used across every age group in Indonesia.
   - Listening is literally at the centre.
 - **Weaknesses:**
-  - The messenger frame says "a person is here". That works against D-034 (no exclusive relationship, no dependency cues) and brief §5.
+  - The messenger frame says "a person is here". That works against D-035 (no exclusive relationship, no dependency cues) and brief §5.
   - Kept notes, memory and shares have no place of their own, so privacy controls are buried.
   - A long consultation review inside a chat is hard to do and harder to check.
   - Bubbles shorten lines to about 15 characters at 320px with large text, and they break under 1.4.12 text spacing.
@@ -143,8 +143,8 @@ I walked each one through the same seven journeys:
 
 Mood charts, weekly scores and a streak calendar on Home. I rejected it for three reasons:
 
-- It rewards frequency (D-036).
-- It turns feelings into a score that reads like an assessment. D-037 dropped severity scoring because it acts as triage, which brief §11 forbids.
+- It rewards frequency (D-037).
+- It turns feelings into a score that reads like an assessment. D-038 dropped severity scoring because it acts as triage, which brief §11 forbids.
 - Every chart would need a full text alternative.
 
 A calm, text-first pattern view survives as an opt-in inside Catatanku ([SCREENS.md](SCREENS.md#s12-timeline)).
@@ -197,18 +197,18 @@ Each principle is a design decision. It is also a review question: a screen that
 
 1. **Listening first, structure later.** Starting to talk takes one action. Structure (reflections, summaries) appears only when the person asks, or when they chose an intent that asks for it. *Review question: can someone type their first sentence within one tap of Home?*
 2. **The person's words are the source of truth.** The user's original words are shown first, marked by the *kunyit* rule and the label "Kata-katamu". AI text is always labelled, shown below or beside the user's words, and never replaces them silently. *Review question: on this screen, can I tell what I wrote from what an AI wrote, without colour?*
-3. **Everything kept says where it came from.** Every stored item shows its provenance class, time, version and review status (D-039). There are six classes, each with a distinct icon, label and border style (§6.7).
+3. **Everything kept says where it came from.** Every stored item shows its provenance class, time, version and review status (D-040). There are six classes, each with a distinct icon, label and border style (§6.7).
 4. **Control sits next to the content.** Storage, deletion, forgetting, sharing and revocation are offered where the item is shown, not only in Settings. Settings repeats them as an overview.
-5. **Nothing pushes.** No streaks, points, badges, counters of days, guilt prompts, push notifications or countdowns (D-036). The only countdown in the product is the expiry a person chose for a share. Each suggestion is offered once, in words like "kalau kamu mau" ("if you want"), and can be ignored without consequence.
-6. **Help is one step away, everywhere, in the same place.** "Butuh bantuan sekarang" and "Keluar cepat" keep the same position and order on every screen and as the first two items of every full-height sheet (WCAG 3.2.6), with full labels that wrap instead of shortening. The help control is calm in the top bar (the Help-quiet form) and loud only where help is the subject (§6.2). Crisis support never waits for a model (D-035).
+5. **Nothing pushes.** No streaks, points, badges, counters of days, guilt prompts, push notifications or countdowns (D-037). The only countdown in the product is the expiry a person chose for a share. Each suggestion is offered once, in words like "kalau kamu mau" ("if you want"), and can be ignored without consequence.
+6. **Help is one step away, everywhere, in the same place.** "Butuh bantuan sekarang" and "Keluar cepat" keep the same position and order on every screen and as the first two items of every full-height sheet (WCAG 3.2.6), with full labels that wrap instead of shortening. The help control is calm in the top bar (the Help-quiet form) and loud only where help is the subject (§6.2). Crisis support never waits for a model (D-036).
 7. **Calm, not clinical, not cute.**
    - No medical imagery, brains, hearts, robots, sparkles or stock photos of sad people.
    - No cartoon faces or mascots.
    - No "assessment results" or "patient" vocabulary.
 8. **One product for every age; preferences, not assumptions.** Nothing changes by adult age. People choose text size, contrast, spacing and motion directly. Teen differences are about consent and confidentiality, not a childish look.
 9. **Works on a cheap phone on a slow connection.** System fonts, no raster images, a script budget, help that renders without the network, and drafts that survive errors (§7).
-10. **Honest by construction.** Demo, test-double and guest states are always labelled. Every AI-written item names its generator and its checker, **taken from the item's stored provenance, never from configuration**; a test program is never named as Meta, Claude or DeepSeek (§6.7). No live AI provider is called without the person's consent for it. Sela never claims a partnership, booking, verified professional or medical record (D-038, D-041). Nothing is shown as recorded unless it was recorded. Revocation copy always says that copies already seen cannot be recalled.
-11. **Nothing reaches the screen before it is checked.** An AI reply is shown only after the server's guards (and the verifier, when the reply is flagged) have released it (ADR-0003 §5). The person never sees text that is later taken back.
+10. **Honest by construction.** Demo, test-double and guest states are always labelled. Every AI-written item names its generator and its checker, **taken from the item's stored provenance, never from configuration**; a test program is never named as Meta, Claude or DeepSeek (§6.7). No live AI provider is called without the person's consent for it. Sela never claims a partnership, booking, verified professional or medical record (D-039, D-042). Nothing is shown as recorded unless it was recorded. Revocation copy always says that copies already seen cannot be recalled.
+11. **Nothing reaches the screen before it is checked.** An AI reply is shown only after the server's guards (and the verifier, when the reply is flagged or the backup model DeepSeek wrote it) have released it (ADR-0003 §5, RR-8, §17 O-6). The person never sees text that is later taken back.
 
 ---
 
@@ -550,7 +550,7 @@ html {
   - **The soft keyboard never switches the mode.** With `interactive-widget=resizes-content`, opening the keyboard shrinks the layout viewport below 30em on most phones. If that switched modes on every keystroke-driven resize, layers would jump while the person types (SD-7). So the script measures only while no text-entry field has focus, keeps the last value while one does, and re-measures on `orientationchange` and on resizes that happen without a focused text field. What the room does while the keyboard is open is decided separately, once per focus, by the **typing layout** (§6.5): it is triggered by focus in the room, not by the viewport height, and it follows `visualViewport` (`--vvh`), so Kirim stays above the keyboard on Android and iOS alike.
   - **What changes:** the bottom bar and the composer become part of the page flow (not sticky). The header's help control moves into the **help strip**, which is `position: fixed` at the top.
   - **The help strip** (also used while typing in the room, §6.5): a full-width band with its own `--c-bg` background. The control (the Help-quiet form, §6.2) sits inside it, inset by the gutter on both sides and by `--strip-pad` (6px) above and below, so its offset focus ring is drawn on the strip: never clipped by the viewport edge and never inset on the control's fill. The control is `min-height: 44px` and **grows with its text** (two lines when "Butuh bantuan sekarang" wraps). "Keluar cepat" and Menu join it in the strip only when all three fit in one row (measured); otherwise they stay in the header in the page flow, directly below the strip, where they are also the next items in the DOM. Quick exit also always works with Esc twice.
-  - This is the one deliberate fixed element. D-035 requires an always-visible help control. `--top-bar-h` comes from the strip's measured height, and `scroll-padding-top` keeps focus visible below it (2.4.11).
+  - This is the one deliberate fixed element. D-036 requires an always-visible help control. `--top-bar-h` comes from the strip's measured height, and `scroll-padding-top` keeps focus visible below it (2.4.11).
   - **Estimated strip heights:** at 100% text, one line about 56px (44 + 2 × 6); with the label on two lines about 73px. At 150% text the label wraps on every phone width, about 95px.
 
     | Viewport | 100% text | 150% text |
@@ -558,7 +558,7 @@ html {
     | 320×256 (1280×1024 at 400%) | 56px, 22% · about 200px left | 95px, 37% · in the page flow (below) |
     | 320×180 (1280×720 at 400%) | 56px, 31% · about 124px left | 95px, 53% · in the page flow (below) |
 
-  - **When the strip would take more than one third of the viewport height** (design decision): it is not fixed. The header stays in the page flow, with "Butuh bantuan sekarang" as the first focusable element after the skip link, at the top of every page, and the help link inside every crisis panel, pause line and dialog that could be reached in distress is unchanged. A fixed band covering half the screen would leave too little room to read anything, the crisis panel included. **Exception:** while a text field in the room has focus on a phone, the strip stays fixed whatever its share (§6.5), because that is where a person in distress is writing. This reading of D-035's "always visible" at extreme zoom is pending PM confirmation ([§10](#10-open-points-for-the-pm-and-other-owners)). S-1 and S-5 check 320×256 and 320×180 at 100% and 150% text.
+  - **When the strip would take more than one third of the viewport height** (design decision): it is not fixed. The header stays in the page flow, with "Butuh bantuan sekarang" as the first focusable element after the skip link, at the top of every page, and the help link inside every crisis panel, pause line and dialog that could be reached in distress is unchanged. A fixed band covering half the screen would leave too little room to read anything, the crisis panel included. **Exception:** while a text field in the room has focus on a phone, the strip stays fixed whatever its share (§6.5), because that is where a person in distress is writing. This reading of D-036's "always visible" at extreme zoom is pending PM confirmation ([§10](#10-open-points-for-the-pm-and-other-owners)). S-1 and S-5 check 320×256 and 320×180 at 100% and 150% text.
 - **Safe areas:** `padding-inline: max(var(--gutter), env(safe-area-inset-left))` and the same for the right side; the bottom bar adds `env(safe-area-inset-bottom)`.
 - **Soft keyboard:** `<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">`. Zoom is never disabled. When a **text-entry** field has focus on compact and medium layouts, the bottom bar hides, as in v1, so the composer is not squeezed between the keyboard and the bar; in the room the same selector also switches the header to the help strip (§6.5). The selector is limited to fields that open the keyboard, so focusing a chip, a check-in tile or a radio never hides the navigation:
 
@@ -793,7 +793,7 @@ Width estimates in this section use Liberation Sans Bold at 16px as a proxy for 
 This is the most important component group. Two sources govern it:
 
 - the streaming guidance in the facts report §1.4 (externally sourced from WAI-ARIA 1.2: `role="log"` has an implicit `aria-live="polite"`, and `aria-busy` is only a "MAY" for assistive technology, so manual tests are mandatory);
-- ADR-0003 §5: an AI reply is **released** only after the hard guards and the risk flag have run, after at most one same-provider regeneration (RR-5), and after the verifier when the health-claim detector flags it (RR-8). Crisis-flagged output is never shown (RR-7).
+- ADR-0003 §5: an AI reply is **released** only after the hard guards and the risk flag have run, after at most one same-provider regeneration (RR-5), and after the verifier when the health-claim detector flags it or DeepSeek wrote it as the fallback (RR-8, §17 O-6). Crisis-flagged output is never shown (RR-7).
 
 **Room layout, compact:**
 1. top bar;
@@ -886,16 +886,16 @@ Ordering rule: after a reply announcement, nothing else about that reply is post
   - a 4px *kunyit* left rule and the quote icon (not colour alone);
   - meta line: time (`<time datetime>`); "Koreksi untuk Sela" when it is a correction; "tanpa balasan (dijeda)" when sent while replies are paused; "tanpa balasan (balasan AI mati)" when AI is off.
 - *Sela's reply:*
-  - author line "Sela · balasan AI (Meta)" / "Sela · AI reply (Meta)", with the AI monogram. The generator is always named on the visible line, and the verifier when one checked it: "· diperiksa oleh Claude" / "· checked by Claude", or "· diperiksa oleh pemeriksa alternatif (DeepSeek)". A fallback reply reads "Sela · balasan AI (DeepSeek, cadangan)". The test double reads "Sela · balasan uji (bukan AI)" / "Sela · test reply (not AI)", and a check by the test-double verifier reads "· diperiksa oleh program uji (bukan AI)" / "· checked by a test program (not AI)". **Every part comes from the reply's stored provenance** (generator provider and verification provider, ADR-0003 §10), never from the environment's configuration. This follows ADR-0003 §10 and §10.1, D-045 and D-049;
+  - author line "Sela · balasan AI (Meta)" / "Sela · AI reply (Meta)", with the AI monogram. The generator is always named on the visible line, and the verifier when one checked it: "· diperiksa oleh Claude" / "· checked by Claude", or "· diperiksa oleh pemeriksa alternatif (DeepSeek)". A fallback reply is always checked by Claude (ADR-0003 §17 O-6), so it reads "Sela · balasan AI (DeepSeek, cadangan) · diperiksa oleh Claude". The test double reads "Sela · balasan uji (bukan AI)" / "Sela · test reply (not AI)", and a check by the test-double verifier reads "· diperiksa oleh program uji (bukan AI)" / "· checked by a test program (not AI)". **Every part comes from the reply's stored provenance** (generator provider and verification provider, ADR-0003 §10), never from the environment's configuration. This follows ADR-0003 §10 and §10.1, D-046 and D-050;
   - no rule and no fill (calm reading);
   - **no provenance badge and no review-status chip in the transcript** (the exception in §6.7): the author line already says who wrote it, and a "Belum ditinjau" chip on every reply would turn listening into a review queue. The class and status are stored. The only status shown is "Dikoreksi" / "Corrected", on the meta line, after the person sent a correction for that reply. The full badge and chip appear in "Tentang balasan ini" and in exports;
-  - meta line: time; "Dikoreksi" when it applies; "Tentang balasan ini" (a disclosure: the badge "Tulisan AI" with its review status, provider, model and served version, route, checks, **whether memory items were used** ("Memakai 2 hal yang Sela ingat · Lihat" or "Tidak memakai yang Sela ingat"), and time; D-029 and D-049); "Kurang tepat?" / "Not quite right?"; "Bacakan" when read-aloud is on.
-- *Language of parts (3.1.2):* each message record carries a nullable BCP 47 `lang` field (planned in the P3 contract), **set by the server**, never by a client detector (which would not fit the JavaScript budget, §7). For a reply it is the language Sela was asked to reply in. For the person's text it is the result of the same server-side detection that chooses the reply language ([CONTENT_STYLE.md §6.1](CONTENT_STYLE.md#61-principles-pm-decision-d-034-made-concrete) rule 8), stored only when the detection is confident that most of the text is in one language; mixed text ("Honestly aku udah gak tau…") stays untagged under the 3.1.2 exception for words of indeterminate language. The article gets `lang` when it differs from the interface, and so does the **spoken announcement** of a reply (`#sr-reply`, §6.1). The same nullable `lang` is carried by reflection items, memory items and proposals, Sela-suggested opening lines and summary items, and travels with them into the card, Yang Sela ingat, Persiapan, summaries, the recipient view, the export and print.
+  - meta line: time; "Dikoreksi" when it applies; "Tentang balasan ini" (a disclosure: the badge "Tulisan AI" with its review status, provider, model and served version, route, checks, **whether memory items were used** ("Memakai 2 hal yang Sela ingat · Lihat" or "Tidak memakai yang Sela ingat"), and time; D-030 and D-050); "Kurang tepat?" / "Not quite right?"; "Bacakan" when read-aloud is on.
+- *Language of parts (3.1.2):* each message record carries a nullable BCP 47 `lang` field (planned in the P3 contract), **set by the server**, never by a client detector (which would not fit the JavaScript budget, §7). For a reply it is the language Sela was asked to reply in. For the person's text it is the result of the same server-side detection that chooses the reply language ([CONTENT_STYLE.md §6.1](CONTENT_STYLE.md#61-principles-pm-decision-d-035-made-concrete) rule 8), stored only when the detection is confident that most of the text is in one language; mixed text ("Honestly aku udah gak tau…") stays untagged under the 3.1.2 exception for words of indeterminate language. The article gets `lang` when it differs from the interface, and so does the **spoken announcement** of a reply (`#sr-reply`, §6.1). The same nullable `lang` is carried by reflection items, memory items and proposals, Sela-suggested opening lines and summary items, and travels with them into the card, Yang Sela ingat, Persiapan, summaries, the recipient view, the export and print.
 - *Sending states:* "Mengirim…" (sending); "Belum terkirim" (not sent) with "Kirim lagi" and "Hapus dari layar". The text is never lost.
 
 **How a reply reaches the screen (post-release):**
 1. The server screens the person's text (RR-1). A crisis match goes to the crisis path, with no model call.
-2. Otherwise the server generates the **whole** reply, runs the hard guards and the risk flag, regenerates once on the same provider if a guard rejects it (RR-5), and sends a flagged reply to the verifier (RR-8). The client receives only progress events on the operation's event stream: `writing`, `preparing` (cold start), `checking`, then exactly one of `released` (with the final text), `withheld` (with a reason code), `crisis`, `no_ai` or `stopped`. **Unreleased text never reaches the browser**, so it can never be shown, announced or stored by the client (planned in the P3/P5 operation contract).
+2. Otherwise the server generates the **whole** reply, runs the hard guards and the risk flag, regenerates once on the same provider if a guard rejects it (RR-5), and sends a flagged reply, and every reply DeepSeek wrote as the fallback, to the verifier (RR-8, §17 O-6). The client receives only progress events on the operation's event stream: `writing`, `preparing` (cold start), `checking`, then exactly one of `released` (with the final text), `withheld` (with a reason code), `crisis`, `no_ai` or `stopped`. **Unreleased text never reaches the browser**, so it can never be shown, announced or stored by the client (planned in the P3/P5 operation contract).
 3. On `released`, the pending block is replaced by the final article in one DOM insertion, with its complete text.
 4. **Reveal:** under full motion, the article's sentences fade in one after another (`opacity` only, `--reveal-step` apart, the whole reveal capped at about 1.5 s). The DOM holds the complete text from the first frame, so assistive technology gets it at once. Under reduced motion, or with "Tampilkan balasan sekaligus", there is no reveal.
 5. **Focus never moves.** It stays in the composer while Sela writes and after release.
@@ -947,7 +947,7 @@ Why not stream tokens or sentences (design decision, recorded): token or sentenc
 - *Drafts:* kept in memory only, never in `localStorage` (shared devices). They survive network errors and session expiry within the tab. Quick exit discards them.
 - *Offline:* Send stays available. Pressing it shows "Belum terkirim — tidak ada koneksi" with "Kirim lagi", and the draft stays. Sela never resends a message by itself.
 
-**Voice (all opt-in; D-037; brief §6):**
+**Voice (all opt-in; D-038; brief §6):**
 - *Dictation:*
   - The mic button appears only after dictation is turned on in Display settings with the button "Nyalakan dikte" / "Turn on dictation", shown under this disclosure: "Dikte memakai layanan suara dari browsermu. Di beberapa browser (misalnya Chrome), suaramu dikirim ke server penyedia browser untuk diubah menjadi teks." / "Dictation uses your browser's speech service. In some browsers (for example Chrome), your voice is sent to the browser vendor's servers to be turned into text."
   - Microphone permission is requested only when the person presses the mic.
@@ -983,9 +983,9 @@ Why not stream tokens or sentences (design decision, recorded): token or sentenc
 - *Insertion:* the card is inserted into the silent log and announced with one short line, "Sela menangkap 2 hal di bawah balasan." / "Sela understood 2 things, below the reply." (§6.5). Focus does not move. If the reader is not at the bottom, the new-content button names it.
 - *Card states:*
   - loading: "Sela sedang menyusun…", with Stop;
-  - verifier gate: memory proposals from this card always go through the verifier (D-029, AT-3). While checking, the card shows "Sedang diperiksa…". If no permitted verifier is available, no proposal is offered and the card says why, in neutral words: "Sela tidak mengusulkan untuk mengingat apa pun sekarang, karena pemeriksa (Claude) belum diizinkan." or "… karena pemeriksanya sedang tidak tersedia." ([CONTENT_STYLE.md](CONTENT_STYLE.md#79-ai-provenance-and-checks));
+  - verifier gate: memory proposals from this card always go through the verifier (D-030, AT-3). While checking, the card shows "Sedang diperiksa…". If no permitted verifier is available, no proposal is offered and the card says why, in neutral words: "Sela tidak mengusulkan untuk mengingat apa pun sekarang, karena pemeriksa (Claude) belum diizinkan." or "… karena pemeriksanya sedang tidak tersedia." ([CONTENT_STYLE.md](CONTENT_STYLE.md#79-ai-provenance-and-checks));
   - **storage off:** the card works but nothing is kept, and it says so: "Tidak disimpan, karena percakapan ini tidak disimpan." **A conversation that is not saved never produces memory proposals** (ADR-0003 AT-3 and DM-4), and the card says why: "Sela tidak mengusulkan untuk mengingat apa pun dari percakapan yang tidak disimpan." / "Sela doesn't suggest remembering anything from a conversation that isn't saved."
-- *Memory consent asked in context:* the first time a proposal could be offered without the `personal_memory` consent, the card shows the consent card (§6.9) with three buttons of equal weight: [Izinkan Sela mengingat] [Tidak sekarang] [Jangan tanya lagi]. After "Tidak sekarang", Sela does not ask again in this conversation. "Jangan tanya lagi" stops the question everywhere until the person changes it in S22. **Never for 16–17 or `unknown`:** for them memory is opt-in in Yang Sela ingat only (D-030). Until they turn it on there, the card offers no proposal and asks no consent question; afterwards proposals appear as for adults.
+- *Memory consent asked in context:* the first time a proposal could be offered without the `personal_memory` consent, the card shows the consent card (§6.9) with three buttons of equal weight: [Izinkan Sela mengingat] [Tidak sekarang] [Jangan tanya lagi]. After "Tidak sekarang", Sela does not ask again in this conversation. "Jangan tanya lagi" stops the question everywhere until the person changes it in S22. **Never for 16–17 or `unknown`:** for them memory is opt-in in Yang Sela ingat only (D-031). Until they turn it on there, the card offers no proposal and asks no consent question; afterwards proposals appear as for adults.
 - *Keyboard:* Tab moves through each statement's actions in reading order. After an action, focus stays on the same statement's next sensible control, or on Undo.
 - *Never:*
   - more than three statements;
@@ -994,9 +994,9 @@ Why not stream tokens or sentences (design decision, recorded): token or sentenc
 
 ### 6.7 Provenance badges and review status
 
-Six provenance classes (PM decision D-039). Each has a **distinct icon, label and border style**, so none relies on colour. The badge is a 4px-radius tag at `--font-size-2` (16px), semibold.
+Six provenance classes (PM decision D-040). Each has a **distinct icon, label and border style**, so none relies on colour. The badge is a 4px-radius tag at `--font-size-2` (16px), semibold.
 
-**The class and the review status are two separate things, shown side by side and never merged** (D-039). The class says *who wrote this content* and never changes when the person reviews it. The status says *what the person did with it*. A content edit creates a new version, which may have a different class (§6.7.1).
+**The class and the review status are two separate things, shown side by side and never merged** (D-040). The class says *who wrote this content* and never changes when the person reviews it. The status says *what the person did with it*. A content edit creates a new version, which may have a different class (§6.7.1).
 
 **One exception: Sela's replies in the transcript** (design decision, round 2). A reply carries only its author line ("Sela · balasan AI (Meta)", which already names the class in words) and, after a correction, "Dikoreksi" on its meta line. Its badge and its review status are stored and shown in "Tentang balasan ini", in exports and anywhere the reply is listed outside the room, but not on every reply in the conversation: "Tulisan AI · Belum ditinjau" under each reply would turn listening into a review queue, against brief §1 and §5. Everything else that is kept (reflection items, memory items, summary items, opening lines) shows badge and status side by side.
 
@@ -1006,12 +1006,12 @@ Six provenance classes (PM decision D-039). Each has a **distinct icon, label an
 | `ai_summary` | "Tulisan AI" / "AI wording" | "AI" monogram | 1px **dashed** outline, `--c-ai-bg` tint | ai |
 | `user_correction` | "Koreksimu" / "Your correction" | pencil | 4px solid left rule plus "dikoreksi dari: …" disclosure of the earlier text | user |
 | `unconfirmed_interpretation` | "Tafsiran Sela" / "Sela's interpretation" | circle-help | 2px **dotted** outline, `--c-ai-bg` tint | ai |
-| `uploaded_document` (reserved, D-042) | "Dokumen unggahan" / "Uploaded document" | paperclip | 1px solid outline | text |
-| `verified_professional_note` (reserved, D-041) | "Catatan profesional terverifikasi" / "Verified professional note" | badge-check | 2px solid outline | text |
+| `uploaded_document` (reserved, D-043) | "Dokumen unggahan" / "Uploaded document" | paperclip | 1px solid outline | text |
+| `verified_professional_note` (reserved, D-042) | "Catatan profesional terverifikasi" / "Verified professional note" | badge-check | 2px solid outline | text |
 
-- **Reserved classes are never rendered in the pilot.** The component refuses `verified_professional_note` unless the server marks the record as verified and the environment enables it. In development this throws, and in production it falls back to showing nothing plus a logged, content-free counter (planned). No verified professionals exist (D-041).
+- **Reserved classes are never rendered in the pilot.** The component refuses `verified_professional_note` unless the server marks the record as verified and the environment enables it. In development this throws, and in production it falls back to showing nothing plus a logged, content-free counter (planned). No verified professionals exist (D-042).
 - **Review status chip** (next to the badge; `--font-size-2`): "Belum ditinjau" / "Not reviewed" (circle), "Dikonfirmasi" / "Confirmed" (check), "Dikoreksi" / "Corrected" (pencil), "Ditolak" / "Rejected" (ban). The person's own words are `confirmed` by definition; their chip is recorded but not shown.
-- **Generator line** on AI-written content (D-049; ADR-0003 §10). Every AI-written item, or the heading of a group of AI-written items, carries one line that names who wrote it and who checked it ([CONTENT_STYLE.md §7.9](CONTENT_STYLE.md#79-ai-provenance-and-checks)):
+- **Generator line** on AI-written content (D-050; ADR-0003 §10). Every AI-written item, or the heading of a group of AI-written items, carries one line that names who wrote it and who checked it ([CONTENT_STYLE.md §7.9](CONTENT_STYLE.md#79-ai-provenance-and-checks)):
   - "Ditulis dengan bantuan AI (Meta)" / "Written with AI help (Meta)", or "(DeepSeek, cadangan)" / "(DeepSeek, backup)";
   - then "· diperiksa oleh Claude" / "· checked by Claude", or "· diperiksa oleh pemeriksa alternatif (DeepSeek)" / "· checked by the alternative checker (DeepSeek)", when a verifier checked it;
   - the test-double generator: "Ditulis oleh program uji (bukan AI)" / "Written by a test program (not AI)";
@@ -1027,9 +1027,9 @@ Six provenance classes (PM decision D-039). Each has a **distinct icon, label an
 
 #### 6.7.1 Record types: class, statuses and transitions
 
-One mapping for every record type, using only the six D-039 classes and the four review statuses, aligned with ADR-0003 §3 and §10. ADR-0003 §10 allows only `ai_summary` and `unconfirmed_interpretation` for AI output; `ai_summary` is therefore the class of all AI *wording* (replies, summary wording, suggested opening lines), and its badge reads "Tulisan AI", not "Ringkasan AI", so it is honest outside summaries too. **That replies are `ai_summary` is the design's reading, pending confirmation by the AI engineer and the PM** ([§10](#10-open-points-for-the-pm-and-other-owners)); if they choose otherwise, only the reply row changes. Generator values are ADR-0003's (`meta_modal`, `deepseek`, `test_double`, `none`; draft value `manual` for templates). Every row that holds text also carries the nullable `lang` of §6.5.
+One mapping for every record type, using only the six D-040 classes and the four review statuses, aligned with ADR-0003 §3 and §10. ADR-0003 §10 allows only `ai_summary` and `unconfirmed_interpretation` for AI output; `ai_summary` is therefore the class of all AI *wording* (replies, summary wording, suggested opening lines), and its badge reads "Tulisan AI", not "Ringkasan AI", so it is honest outside summaries too. **That replies are `ai_summary` is the design's reading, pending confirmation by the AI engineer and the PM** ([§10](#10-open-points-for-the-pm-and-other-owners)); if they choose otherwise, only the reply row changes. Generator values are ADR-0003's (`meta_modal`, `deepseek`, `test_double`, `none`; draft value `manual` for templates). Every row that holds text also carries the nullable `lang` of §6.5.
 
-**Only the person's own words are quoted.** A quote block ("Kata-katamu", the kunyit rule) is only ever `user_original` (or `user_correction`, labelled "Koreksimu"). Anything Sela wrote, even after the person confirmed it, is shown as an item with its own class and generator line, never inside a quote block, and the recipient sees it as Sela's interpretation, not the sender's words (brief §7, D-039).
+**Only the person's own words are quoted.** A quote block ("Kata-katamu", the kunyit rule) is only ever `user_original` (or `user_correction`, labelled "Koreksimu"). Anything Sela wrote, even after the person confirmed it, is shown as an item with its own class and generator line, never inside a quote block, and the recipient sees it as Sela's interpretation, not the sender's words (brief §7, D-040).
 
 | Record (screen) | Generator | Class at creation | Statuses | Transitions (who) |
 |---|---|---|---|---|
@@ -1054,7 +1054,7 @@ One mapping for every record type, using only the six D-039 classes and the four
 
 ### 6.8 Handoff status chips and the share's event list
 
-PM decision D-040:
+PM decision D-041:
 
 - **flow:** prepared → shared → opened → acknowledged → consultation_in_progress;
 - **end states:** revoked, expired, ended.
@@ -1070,7 +1070,7 @@ PM decision D-040:
 | `expired` | "Kedaluwarsa" / "Expired" | clock | System |
 | `ended` | "Selesai dibagikan" / "Sharing ended" | square-check | The person, with "Tandai selesai dan hentikan akses", or the recipient's "Tidak dapat menerima" (pending P4) |
 
-- **End states always say who ended them and why.** The D-040 value stays; the chip is always followed by a reason line, wherever it appears (S14, S15, S18, the timeline):
+- **End states always say who ended them and why.** The D-041 value stays; the chip is always followed by a reason line, wherever it appears (S14, S15, S18, the timeline):
   - "Selesai dibagikan · kamu menandai konsultasi selesai" / "Sharing ended · you marked the consultation finished";
   - "Selesai dibagikan · penerima tidak dapat menerima" / "Sharing ended · the recipient couldn't accept it";
   - "Akses dicabut · olehmu" / "Access revoked · by you" (or "· karena sumbernya dihapus" / "· because its source was deleted");
@@ -1079,13 +1079,13 @@ PM decision D-040:
   A recipient's decline therefore never reads as if the share had served its purpose.
 - **Where each label appears.** All five flow labels appear in one consistent place: the share status page (S18). `prepared` also appears in S14 and S15 as "Disiapkan · versi 3" for an approved version that has not been shared; once a version is shared, S14 shows the share's latest recorded status instead.
 - **Status chip:** a 4px-radius tag at `--font-size-2` with icon and label; neutral border by default; `--c-warning-border` for expired. Revoked is a person's own choice, not an error, so it uses neutral styling, not danger. The chip shows the **latest recorded** event.
-- **Event list (replaces a progress stepper).** An `<ol>` of the five flow steps in D-040 order, built **only from recorded events**:
+- **Event list (replaces a progress stepper).** An `<ol>` of the five flow steps in D-041 order, built **only from recorded events**:
   - each step shows its own recorded time: "Dibuka penerima · 26 Okt 2026, 21.03";
   - a step with no record shows "belum" / "not yet" when no later step is recorded, and "tidak tercatat" / "not recorded" when a later step is recorded but this one is not. For example, the summary was shown on screen in person, then the person marked the consultation: "Dibuka penerima · tidak tercatat";
   - **a step is never inferred from a later one.** No check mark appears without a recorded time;
   - the latest recorded step carries `aria-current="step"` and a 600-weight label;
   - in an end state, the list stays as history, headed by the end-state chip with its time.
-- **Fixed sentence under every status:** "Dibagikan atau dibuka tidak berarti kamu sudah mendapat perawatan." / "Shared or opened does not mean you have received care." (D-040).
+- **Fixed sentence under every status:** "Dibagikan atau dibuka tidak berarti kamu sudah mendapat perawatan." / "Shared or opened does not mean you have received care." (D-041).
 
 ### 6.9 Consent, storage, memory and private-name controls
 
@@ -1145,7 +1145,7 @@ PM decision D-040:
 - An unsaved conversation can *use* memory (nothing is stored), but never *produces* memory proposals (AT-3, DM-4).
 - **Withdrawing the consent forgets everything by default:** "Cabut izin mengingat? Sela akan melupakan semua yang Sela ingat (12 hal). Percakapan dan catatanmu tetap ada." [Cabut izin dan lupakan semuanya] [Batal], with the derived-items extension of §6.12 when summaries include memory items. Keeping the items paused after withdrawal is **not offered** unless the legal review (B-10) confirms a basis for storing them without the consent ([§10](#10-open-points-for-the-pm-and-other-owners)).
 
-**Names kept private ("Nama yang disamarkan" / "Names kept private")** (D-029 data minimisation; ADR-0003 DM-2; v1 F23 redaction preview):
+**Names kept private ("Nama yang disamarkan" / "Names kept private")** (D-030 data minimisation; ADR-0003 DM-2; v1 F23 redaction preview):
 - *Where:* a section of Privasi & data (S22), and inline where a suggestion appears.
 - *Anatomy:* a list of names or words the person added ("Rina", "Pak Budi", "SMA 3"), each with [Hapus dari daftar]; a field "Tambahkan nama atau kata" / "Add a name or word" with [Tambahkan]; the explanation "Sela mengganti nama ini dengan [nama disamarkan] sebelum mengirim apa pun ke AI, dan di ringkasan yang kamu bagikan, kecuali kamu memilih menampilkannya." / "Sela replaces these names with [name hidden] before sending anything to AI, and in summaries you share, unless you choose to show them."
 - *Effect:*
@@ -1253,14 +1253,14 @@ Order inside the notices region (highest first). At most three are expanded; mor
 ### 6.15 Help: crisis panel, pause line, support line and service card
 
 **Crisis panel (in the room, journal and check-in):**
-- *Content:* **static text from the bundle and verified directory data, never model output** (D-035). It never quotes the words that matched.
+- *Content:* **static text from the bundle and verified directory data, never model output** (D-036). It never quotes the words that matched.
 - *Triggers in the room:* a lexicon match on the person's text (RR-1, before any model call); the generator's risk flag `crisis` (RR-7; that output is **not shown**); a verifier `safety_signal` (VC-8; the output is withheld). All three show the same panel and pause replies the same way.
 - *Anatomy:*
   - `<section>` with `--c-help-bg` tint, a 2px `--c-help` top rule and an `<h3>`: "Kamu tidak sendirian" / "You're not alone";
   - two short sentences;
   - up to three service cards (below), then "Lihat semua bantuan" (a Help-variant link to `/help`);
   - the actions:
-    - "Lanjutkan bercerita dengan Sela" / "Keep talking with Sela". Resumes AI replies in this conversation (D-035);
+    - "Lanjutkan bercerita dengan Sela" / "Keep talking with Sela". Resumes AI replies in this conversation (D-036);
     - "Akhiri percakapan" / "End conversation". The same label and function as the room toolbar;
     - "Tutup bantuan ini" / "Close this help", for when it does not fit. No reason is asked.
 - *Insertion and announcement:* the panel is inserted into the silent log right after the message (1.3.2). Only `#sr-alert` speaks, with one line: "Bantuan ditampilkan di bawah pesanmu." / "Help is shown below your message." **Nothing from the panel is announced**, and focus does not move. The panel is reachable by heading navigation and by Tab. **Visible cue:** if the reader is not at the bottom (scrolled up, or a magnifier shows another part of the page), the new-content button above the composer says "Bantuan ditampilkan di bawah pesanmu ↓"; pressing it scrolls to the panel and moves focus to its h3 (with the ring).
@@ -1286,7 +1286,7 @@ Order inside the notices region (highest first). At most three are expanded; mor
 - hours and cost, **only if verified**, otherwise "belum diverifikasi" / "not verified";
 - source and verification: "Sumber: situs resmi · diverifikasi 15 Okt 2026 · periksa ulang sebelum 14 Jan 2027".
 
-A stale entry (past its re-verify-by date) shows a warning chip: "Lewat tanggal periksa ulang — cek situs resminya" / "Past its re-check date — check the official site" (D-043).
+A stale entry (past its re-verify-by date) shows a warning chip: "Lewat tanggal periksa ulang — cek situs resminya" / "Past its re-check date — check the official site" (D-044).
 
 **When no verified entry fits** (for example, teen help is requested but no teen entry is verified): the panel and S27 show the static S21 lead, "Kalau kamu dalam bahaya sekarang, hubungi layanan darurat setempat atau orang terdekat yang bisa menemanimu.", followed by the verified general entries. A list is never empty.
 
@@ -1428,7 +1428,7 @@ Each item names the owner who must decide or build it. The design works without 
 7. **Conversations end after inactivity (P3):** proposal: a conversation with no activity for 12 hours ends automatically, so Home stops offering "Lanjutkan" and the list never shows "unfinished" (S07, S08).
 8. **Share expiry options, secret display and the recipient session (P4):** propose 24 hours, 3 days, 7 days and 14 days, and **never an option under 20 hours** (v2's 1-hour option is dropped), so the share's own expiry falls under the 2.2.1 20-hour exception; show the link and code once. **The recipient session** (v2: `RecipientTTL` 2 hours absolute, `internal/journey/service.go`) is not carried over as is: proposal, an idle limit (2 hours) with a warning dialog at least 2 minutes before ("Tetap buka", any number of times) and no absolute limit shorter than the share itself; when it ends while the share may still be active, the page offers to re-enter the code with the link token still held in the tab (S25). This needs the P4 contract. The access code keeps the v2 alphabet and normalisation (§6.16).
 9. **Who sets `consultation_in_progress` and `ended` (P4):** the proposal is the person for both, and the recipient's "Tidak dapat menerima" ends the share after an inline confirm. The recipient may also ask for clarification from the fixed reasons in S25 (no free text, so nothing looks like a professional note).
-10. **Blocking 15-year-olds (D-030, decided).** The UI now asks "15 tahun" and "16–17 tahun" separately and blocks 15 in every environment, creating nothing (S02, S26). The open dependency is only the API: `ageBand` has `15_17` alone, so the server cannot enforce the block yet. Proposal: a hidden sub-band (`15` / `16_17`) or a separate `ageBand` value (API team).
+10. **Blocking 15-year-olds (D-031, decided).** The UI now asks "15 tahun" and "16–17 tahun" separately and blocks 15 in every environment, creating nothing (S02, S26). The open dependency is only the API: `ageBand` has `15_17` alone, so the server cannot enforce the block yet. Proposal: a hidden sub-band (`15` / `16_17`) or a separate `ageBand` value (API team).
 11. **Guardian consent before anything is created (API team, legal B-10):** proposal: `POST /api/v3/auth/guest` and `/auth/register` accept the guardian attestation in the same request, so a declined consent creates nothing. Until then, teens may start **only as a guest**, the guardian step runs right after the guest is created, and a decline calls `DELETE /api/v3/me` (no reauthentication for guests) and says "Data yang baru dibuat sudah dihapus." (PP 17/2025 Pasal 9(4)–(5)).
 12. **Signing in again before the absolute expiry (API team):** whether `POST /api/v3/auth/login` may be called with a live session to replace it without a reload, or a renewal route is added (§6.12).
 13. **Display preference sync to the account:** needs a `/api/v3/me` preference field (planned).
@@ -1440,7 +1440,7 @@ Each item names the owner who must decide or build it. The design works without 
 19. **The `ai_processing` purpose before P5:** no live provider is called without it (RR-2). Until the purpose is active, the room runs in the "AI off" state outside development and test, where the labelled test double may reply. The AI engineer and the API team confirm that the server enforces this (S02 step 3).
 20. **The `unknown` age band (legal review B-10, PM):** this design gives `unknown` every minor default (teen copy, teen help first, no in-context memory ask, no DeepSeek, the confidentiality step) except the guardian step, because the API records guardian consent for `15_17` only (S26). Open: whether `unknown` may skip guardian consent at all, and whether `unknown` must be disabled wherever `15_17` is enabled for real users (it is enabled with it in development, test, demo and staging by default, ADR-0002 §3), since otherwise it is a way around both the guardian step and the block on 15-year-olds.
 21. **Keeping memory paused after the consent is withdrawn (legal review B-10):** not offered unless the review confirms a basis for storing memory items without the `personal_memory` consent (§6.9). Until then withdrawal forgets everything.
-22. **The help strip at extreme zoom (PM):** when the fixed strip would take more than a third of the viewport height (about 400% zoom with large text), it returns to the page flow as the first control on every page, except while typing in the room (§5.8). This is the design's reading of D-035's "always-visible" control at that size; the PM confirms or asks for the strip to stay fixed regardless.
+22. **The help strip at extreme zoom (PM):** when the fixed strip would take more than a third of the viewport height (about 400% zoom with large text), it returns to the page flow as the first control on every page, except while typing in the room (§5.8). This is the design's reading of D-036's "always-visible" control at that size; the PM confirms or asks for the strip to stay fixed regardless.
 23. **Help-quiet or solid Help in the top bar (owner testing, P8):** the top bar now uses Help-quiet (§6.2). Owner-test sessions compare both forms with participants of different ages, for findability under stress and for whether the solid form reads as alarm; the result is recorded in §11.
 24. **Contact-detail patterns (P3, AI engineer):** the false-positive corpus of Indonesian and English times, money, dates and handles in prose (§6.5) is an acceptance test for the shared pattern set, and the server returns the detected kinds with the sent message so the notice can name them.
 25. **Typing at 150% text on phones:** with the keyboard open, four lines of large transcript, a two-line field, Kirim and the help control do not fit on a 230–300px visual viewport; the room switches to the flow mode and the person reads by scrolling (§6.5). Owner testing with people who use large text checks whether this is acceptable or whether a different control (for example a one-line field that expands on demand) works better.
