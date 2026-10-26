@@ -110,7 +110,7 @@ MAX_NUM_SEQS = 8
 # Confirm the "KV cache" and "Maximum concurrency" lines in the startup log.
 GPU_MEMORY_UTILIZATION = 0.90
 
-# Reasoning cannot be turned off (the template has no "off" level; Meta's
+# Reasoning cannot be turned off (the template has no "off" handling; Meta's
 # deploy guide says so in its llama.cpp section); "low" is the lowest of the
 # four documented levels. This is only the server default (vLLM
 # --default-chat-template-kwargs); requests override it with

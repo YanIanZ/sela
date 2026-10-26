@@ -2,8 +2,8 @@
 
 modal/sela_llm.py is checked by parsing it with ast; the `modal` package is
 never imported (CI runs these tests without it). Pure helpers from that file
-(command builder, snapshot verification, health wait) are executed from the
-AST after dropping every statement that touches `modal` or `app`.
+(command builder, snapshot verification and repair, health wait) are executed
+from the AST after dropping every statement that touches `modal` or `app`.
 
 modal/smoke_test.py is stdlib-only and is exercised against a local
 http.server fake that imitates Modal's proxy (401 without proxy credentials,
@@ -11,6 +11,9 @@ http.server fake that imitates Modal's proxy (401 without proxy credentials,
 reasoning deltas). SmokeRedirectTest adds a second local server on another
 host:port and checks that redirects (301/302/303/307/308) are never
 followed and that credentials never reach the redirect target.
+SmokeWallTimeBudgetTest uses a fake clock to check that the cold-start and
+chat retry budgets bound wall time, and the canary tests check that model
+output and response bodies never reach the report.
 """
 
 import ast
@@ -412,15 +415,31 @@ class SelaLLMAppConfigTest(unittest.TestCase):
             result = fetch(stub, cache_dir=root, log=lambda line: None, expected=expected)
             self.assertEqual((calls, result["downloaded"]), ([], False))
 
-    def test_download_gives_up_after_one_forced_attempt_and_drops_the_marker(self):
+    def test_deep_verify_repairs_same_size_corruption_then_gives_up_after_one_forced_attempt(self):
         fetch = self.ns["fetch_verified_snapshot"]
         good, corrupt, expected = self._download_fixture()
         with tempfile.TemporaryDirectory() as root:
+            shard = os.path.join(self.ns["snapshot_dir"](root), "shard.safetensors")
+            marker = self.ns["verified_marker_path"](root)
             stub, _ = self._download_stub(root, [good])
             fetch(stub, cache_dir=root, log=lambda line: None, expected=expected)
-            marker = self.ns["verified_marker_path"](root)
             self.assertTrue(os.path.isfile(marker))
-            stub, calls = self._download_stub(root, [corrupt, corrupt])
+
+            # Same-size corruption is invisible to the size check; --deep-verify
+            # finds it. The plain download keeps the bad file (as
+            # huggingface_hub does); the forced one replaces it.
+            with open(shard, "wb") as handle:
+                handle.write(corrupt["shard.safetensors"])
+            stub, calls = self._download_stub(root, [good, good])
+            result = fetch(stub, deep_verify=True, cache_dir=root, log=lambda line: None, expected=expected)
+            self.assertEqual([call["force"] for call in calls], [False, True])
+            self.assertEqual(result["downloaded"], True)
+            self.assertEqual(self.ns["verify_snapshot"](self.ns["snapshot_dir"](root), deep=True, expected=expected), [])
+
+            # A forced download that is still wrong ends the job.
+            with open(shard, "wb") as handle:
+                handle.write(corrupt["shard.safetensors"])
+            stub, calls = self._download_stub(root, [good, corrupt])
             commits = []
             with self.assertRaisesRegex(RuntimeError, "after a forced re-download: sha256 mismatch: shard.safetensors"):
                 fetch(stub, deep_verify=True, cache_dir=root, commit=lambda: commits.append(1), log=lambda line: None, expected=expected)
@@ -1064,12 +1083,15 @@ class FakeModalVLLM:
                 self.send_header("Content-Type", "text/event-stream")
                 self.send_header("Cache-Control", "no-cache")
                 self.end_headers()
-                self.wfile.write(b": keep-alive\n\n")
-                for event in events:
-                    self.wfile.write(b"data: " + json.dumps(event).encode() + b"\n\n")
+                try:
+                    self.wfile.write(b": keep-alive\n\n")
+                    for event in events:
+                        self.wfile.write(b"data: " + json.dumps(event).encode() + b"\n\n")
+                        self.wfile.flush()
+                    self.wfile.write(b"data: [DONE]\n\n")
                     self.wfile.flush()
-                self.wfile.write(b"data: [DONE]\n\n")
-                self.wfile.flush()
+                except (BrokenPipeError, ConnectionResetError):
+                    pass  # the client stopped reading (expected in some tests)
 
         self.httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self.base_url = f"http://127.0.0.1:{self.httpd.server_address[1]}"
