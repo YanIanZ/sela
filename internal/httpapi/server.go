@@ -6,6 +6,7 @@ package httpapi
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -14,8 +15,11 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
+	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/YanIanZ/sela/internal/journey"
@@ -35,8 +39,9 @@ type Options struct {
 	PublicOrigin string
 	// SecureCookies sets the Secure attribute (required behind HTTPS).
 	SecureCookies bool
-	// TrustProxy uses the last X-Forwarded-For hop as the client address
-	// for rate limiting. Enable only behind a proxy that sets it.
+	// TrustProxy uses the last X-Forwarded-For hop (across all header
+	// lines) as the client address for rate limiting. Enable only behind a
+	// proxy that appends it.
 	TrustProxy bool
 	// WebDir is the built frontend (web/dist). Empty disables static serving.
 	WebDir string
@@ -45,6 +50,9 @@ type Options struct {
 	Logger   *slog.Logger
 	// Version identifies the running build in /api/v2/health.
 	Version string
+	// MetricsToken guards GET /api/v2/metrics ("Authorization: Bearer
+	// <token>"). Empty disables the route (404).
+	MetricsToken string
 }
 
 // Server is the HTTP handler.
@@ -55,6 +63,9 @@ type Server struct {
 	mux    *http.ServeMux
 	limits *limiter
 	start  time.Time
+
+	closing   chan struct{} // closed by CloseStreams
+	closeOnce sync.Once
 }
 
 // New builds the handler.
@@ -62,10 +73,17 @@ func New(svc *journey.Service, opt Options) *Server {
 	if opt.Logger == nil {
 		opt.Logger = slog.New(slog.DiscardHandler)
 	}
-	s := &Server{svc: svc, opt: opt, log: opt.Logger, mux: http.NewServeMux(), limits: newLimiter(), start: time.Now()}
+	s := &Server{svc: svc, opt: opt, log: opt.Logger, mux: http.NewServeMux(), limits: newLimiter(), start: time.Now(), closing: make(chan struct{})}
 	s.routes()
 	return s
 }
+
+// CloseStreams ends every open server-sent event stream with a final
+// content-free error event, and makes later streams end at once. It is
+// idempotent. Register it with http.Server.RegisterOnShutdown: graceful
+// shutdown waits for handlers to return, and a stream otherwise only ends
+// when its operation does.
+func (s *Server) CloseStreams() { s.closeOnce.Do(func() { close(s.closing) }) }
 
 // ServeHTTP applies common middleware.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -141,9 +159,8 @@ func requestID() string {
 
 func (s *Server) clientIP(r *http.Request) string {
 	if s.opt.TrustProxy {
-		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-			parts := strings.Split(xff, ",")
-			return strings.TrimSpace(parts[len(parts)-1])
+		if hop := lastHop(r.Header.Values("X-Forwarded-For")); hop != "" {
+			return hop
 		}
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -151,6 +168,30 @@ func (s *Server) clientIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+// lastHop returns the right-most X-Forwarded-For element across every
+// header line, which is the address the trusted proxy saw. Earlier elements
+// and earlier lines are client-controlled. A last element that is not an
+// address yields "" so the caller falls back to the peer address.
+func lastHop(lines []string) string {
+	for i := len(lines) - 1; i >= 0; i-- {
+		parts := strings.Split(lines[i], ",")
+		for j := len(parts) - 1; j >= 0; j-- {
+			p := strings.TrimSpace(parts[j])
+			if p == "" {
+				continue
+			}
+			if a, err := netip.ParseAddr(p); err == nil {
+				return a.String()
+			}
+			if ap, err := netip.ParseAddrPort(p); err == nil {
+				return ap.Addr().String()
+			}
+			return ""
+		}
+	}
+	return ""
 }
 
 // sameOrigin enforces the mutation guard: a custom header that a cross-site
@@ -199,11 +240,22 @@ func (s *Server) mutation(bucket string, maxBody int64, h http.HandlerFunc) http
 	}
 }
 
-// decode reads a strict JSON body (unknown fields rejected).
+// decode reads a strict JSON body: one value, no trailing data, no unknown
+// fields, no duplicate keys and no key whose case differs from the field it
+// would fill (encoding/json alone accepts the last two silently).
 func decode(w http.ResponseWriter, r *http.Request, v any) bool {
-	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(v); err != nil {
+	return decodeBody(w, r, v, false)
+}
+
+// decodeOptional is decode for bodies that may be absent: an empty or
+// whitespace-only body leaves v unchanged.
+func decodeOptional(w http.ResponseWriter, r *http.Request, v any) bool {
+	return decodeBody(w, r, v, true)
+}
+
+func decodeBody(w http.ResponseWriter, r *http.Request, v any, optional bool) bool {
+	raw, err := io.ReadAll(r.Body)
+	if err != nil {
 		var tooBig *http.MaxBytesError
 		if errors.As(err, &tooBig) {
 			writeError(w, r, http.StatusRequestEntityTooLarge, "too_large", "")
@@ -212,7 +264,16 @@ func decode(w http.ResponseWriter, r *http.Request, v any) bool {
 		}
 		return false
 	}
-	if _, err := dec.Token(); err != io.EOF {
+	if optional && len(bytes.TrimSpace(raw)) == 0 {
+		return true
+	}
+	if err := strictJSON(raw, reflect.TypeOf(v)); err != nil {
+		writeError(w, r, http.StatusBadRequest, journey.CodeInvalid, "body")
+		return false
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(v); err != nil {
 		writeError(w, r, http.StatusBadRequest, journey.CodeInvalid, "body")
 		return false
 	}

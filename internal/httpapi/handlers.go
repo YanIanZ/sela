@@ -1,9 +1,13 @@
 package httpapi
 
 import (
+	"crypto/sha256"
+	"crypto/subtle"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/YanIanZ/sela/internal/journey"
 )
@@ -20,7 +24,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /api/v2/ready", s.ready)
 	m.HandleFunc("GET /api/v2/catalog", s.catalog)
 	m.HandleFunc("GET /api/v2/ai/status", s.aiStatus)
-	m.HandleFunc("GET /api/v2/metrics", s.metrics)
+	m.HandleFunc("GET /api/v2/metrics", s.limited("read", s.metrics))
 
 	// Owner session.
 	m.HandleFunc("POST /api/v2/sessions", s.mutation("session", smallBody, s.createSession))
@@ -58,10 +62,30 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /api/v2/research/search", s.limited("research", s.researchSearch))
 	m.HandleFunc("GET /api/v2/research/records/{id}", s.limited("research", s.researchRecord))
 
-	m.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		writeError(w, r, http.StatusNotFound, journey.CodeNotFound, "")
-	})
+	m.HandleFunc("/api/", s.apiFallback)
 	m.Handle("/", s.static())
+}
+
+// routeMethods are the methods probed for an Allow header.
+var routeMethods = []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
+
+// apiFallback answers API paths no route matched: 405 with Allow when the
+// path exists for other methods, otherwise a JSON 404.
+func (s *Server) apiFallback(w http.ResponseWriter, r *http.Request) {
+	var allow []string
+	for _, m := range routeMethods {
+		probe := r.Clone(r.Context())
+		probe.Method = m
+		if _, pattern := s.mux.Handler(probe); pattern != "" && pattern != "/api/" && pattern != "/" {
+			allow = append(allow, m)
+		}
+	}
+	if len(allow) > 0 {
+		w.Header().Set("Allow", strings.Join(allow, ", "))
+		writeError(w, r, http.StatusMethodNotAllowed, "method_not_allowed", "")
+		return
+	}
+	writeError(w, r, http.StatusNotFound, journey.CodeNotFound, "")
 }
 
 func (s *Server) read(h http.HandlerFunc) http.HandlerFunc { return s.limited("read", h) }
@@ -94,7 +118,22 @@ func (s *Server) ready(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// metrics is for the operator only: live counters include safety routing
+// and consent outcomes, which in a quiet demo can reveal what one visitor
+// just did. Without a configured token the route does not exist.
 func (s *Server) metrics(w http.ResponseWriter, r *http.Request) {
+	if s.opt.MetricsToken == "" {
+		writeError(w, r, http.StatusNotFound, journey.CodeNotFound, "")
+		return
+	}
+	got, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	// Hashing first makes the comparison constant-time in the length too.
+	gh, wh := sha256.Sum256([]byte(got)), sha256.Sum256([]byte(s.opt.MetricsToken))
+	if !ok || subtle.ConstantTimeCompare(gh[:], wh[:]) != 1 {
+		w.Header().Set("WWW-Authenticate", "Bearer")
+		writeError(w, r, http.StatusUnauthorized, journey.CodeForbidden, "")
+		return
+	}
 	writeData(w, http.StatusOK, map[string]any{"counters": s.svc.Metrics(), "store": s.svc.StoreStats()})
 }
 
@@ -349,9 +388,11 @@ func (s *Server) previewHandoff(w http.ResponseWriter, r *http.Request) {
 	s.respond(w, r, out, err)
 }
 
+// revokeShare is a privacy action: the body ({} or {"expectedVersion":n})
+// is optional, including when it arrives chunked and empty.
 func (s *Server) revokeShare(w http.ResponseWriter, r *http.Request) {
 	var in journey.RevokeInput
-	if r.ContentLength != 0 && !decode(w, r, &in) {
+	if !decodeOptional(w, r, &in) {
 		return
 	}
 	view, err := s.svc.RevokeShare(s.sessionID(r), r.PathValue("id"), in)
@@ -441,7 +482,9 @@ func (s *Server) researchSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	q := r.URL.Query()
 	limit, _ := strconv.Atoi(q.Get("limit"))
-	if len(q.Get("q")) > 200 {
+	// 200 characters, as the API spec and the input's maxLength say; a
+	// UTF-16 unit count is never below the rune count.
+	if utf8.RuneCountInString(q.Get("q")) > 200 {
 		writeError(w, r, http.StatusBadRequest, journey.CodeInvalid, "q")
 		return
 	}

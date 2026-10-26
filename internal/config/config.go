@@ -23,6 +23,9 @@ type Config struct {
 	ResearchKB    string
 	LogLevel      string
 	Env           string
+	// MetricsToken, when set, enables GET /api/v2/metrics for requests with
+	// "Authorization: Bearer <MetricsToken>". Never logged.
+	MetricsToken string
 
 	LLMMode        string // disabled | modal | test_double
 	LLMBaseURL     string
@@ -82,6 +85,9 @@ func envDuration(key string, def, min, max time.Duration) (time.Duration, error)
 	return d, nil
 }
 
+// minMetricsToken keeps the operator's metrics token out of guessing range.
+const minMetricsToken = 16
+
 // Load reads and validates the environment.
 func Load() (Config, error) {
 	var c Config
@@ -107,6 +113,10 @@ func Load() (Config, error) {
 	add(err)
 	c.MaxSessions, err = envInt("SELA_MAX_SESSIONS", 500, 1, 100000)
 	add(err)
+	c.MetricsToken = env("SELA_METRICS_TOKEN", "")
+	if c.MetricsToken != "" && (len(c.MetricsToken) < minMetricsToken || strings.ContainsAny(c.MetricsToken, " \t\r\n")) {
+		add(fmt.Errorf("SELA_METRICS_TOKEN: must be at least %d characters without whitespace", minMetricsToken))
+	}
 
 	c.LLMMode = env("SELA_LLM_MODE", "disabled")
 	c.LLMBaseURL = env("SELA_LLM_BASE_URL", "")
@@ -156,6 +166,6 @@ func Load() (Config, error) {
 
 // String describes the configuration without secrets.
 func (c Config) String() string {
-	return fmt.Sprintf("env=%s addr=%s web=%s llm=%s model=%s@%s secure_cookies=%t max_sessions=%d",
-		c.Env, c.Addr, c.WebDir, c.LLMMode, c.ModelID, c.ModelRevision, c.SecureCookies, c.MaxSessions)
+	return fmt.Sprintf("env=%s addr=%s web=%s llm=%s model=%s@%s secure_cookies=%t max_sessions=%d metrics=%t",
+		c.Env, c.Addr, c.WebDir, c.LLMMode, c.ModelID, c.ModelRevision, c.SecureCookies, c.MaxSessions, c.MetricsToken != "")
 }

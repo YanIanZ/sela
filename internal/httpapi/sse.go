@@ -54,6 +54,13 @@ func (s *Server) opEvents(w http.ResponseWriter, r *http.Request) {
 		select {
 		case <-r.Context().Done():
 			return
+		case <-s.closing:
+			// Server shutdown: in-memory sessions end with the process, so
+			// tell the client the step is over (no id, no content) rather
+			// than holding shutdown open or cutting the stream silently.
+			fmt.Fprint(w, "event: error\ndata: {\"code\":\"ai_unavailable\",\"reason\":\"server_stopping\"}\n\n")
+			flusher.Flush()
+			return
 		case <-wake:
 		case <-heartbeat.C:
 			fmt.Fprint(w, ": keep-alive\n\n")

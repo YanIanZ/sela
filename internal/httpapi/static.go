@@ -18,10 +18,17 @@ func (s *Server) frontendBuilt() bool {
 
 // static serves the built single-page app. Unknown paths fall back to
 // index.html for client-side routing; hashed assets are cached immutably.
+// Anything that looks like the API (/API/..., /api%2f..., /apifoo) gets a
+// JSON 404 instead of the app, so a client never mistakes HTML for data.
 func (s *Server) static() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(strings.ToLower(r.URL.Path), "/api") {
+			writeError(w, r, http.StatusNotFound, "not_found", "")
+			return
+		}
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
-			writeError(w, r, http.StatusMethodNotAllowed, "invalid_input", "method")
+			w.Header().Set("Allow", "GET, HEAD")
+			writeError(w, r, http.StatusMethodNotAllowed, "method_not_allowed", "")
 			return
 		}
 		if !s.frontendBuilt() {

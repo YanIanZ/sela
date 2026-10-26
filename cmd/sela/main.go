@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -76,7 +77,7 @@ func run() error {
 	}, st, catalog, provider, llm.NewAdmission(cfg.LLMConcurrency))
 	handler := httpapi.New(svc, httpapi.Options{
 		PublicOrigin: cfg.PublicOrigin, SecureCookies: cfg.SecureCookies, TrustProxy: cfg.TrustProxy,
-		WebDir: cfg.WebDir, Research: index, Logger: logger, Version: version,
+		WebDir: cfg.WebDir, Research: index, Logger: logger, Version: version, MetricsToken: cfg.MetricsToken,
 	})
 
 	srv := &http.Server{
@@ -102,8 +103,27 @@ func run() error {
 		}
 	}()
 	logger.Info("sela.start", "version", version, "config", cfg.String(), "fixtures", catalog.Version, "provider_mode", string(provider.Info().Mode))
+	ln, err := net.Listen("tcp", cfg.Addr)
+	if err != nil {
+		return err
+	}
+	// Open event streams only end with their operation; close them when
+	// shutdown starts so it is not held up for the whole grace period.
+	srv.RegisterOnShutdown(handler.CloseStreams)
+	return serve(ctx, stop, srv, ln, shutdownGrace, logger)
+}
+
+// shutdownGrace is how long in-flight requests get after a stop signal.
+const shutdownGrace = 10 * time.Second
+
+// serve runs srv on ln until ctx ends (the first SIGINT or SIGTERM), then
+// shuts down gracefully. stop is called first so that a second signal
+// terminates the process at once. Connections still busy after grace (for
+// example a stalled upload) are closed; that is still a clean stop, because
+// in-memory sessions are discarded either way.
+func serve(ctx context.Context, stop context.CancelFunc, srv *http.Server, ln net.Listener, grace time.Duration, logger *slog.Logger) error {
 	errc := make(chan error, 1)
-	go func() { errc <- srv.ListenAndServe() }()
+	go func() { errc <- srv.Serve(ln) }()
 	select {
 	case err := <-errc:
 		if !errors.Is(err, http.ErrServerClosed) {
@@ -111,9 +131,17 @@ func run() error {
 		}
 	case <-ctx.Done():
 	}
-	shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	stop()
+	shutdown, cancel := context.WithTimeout(context.Background(), grace)
 	defer cancel()
-	err = srv.Shutdown(shutdown)
+	err := srv.Shutdown(shutdown)
+	if errors.Is(err, context.DeadlineExceeded) {
+		logger.Warn("sela.stop_forced", "grace_ms", grace.Milliseconds())
+		// The listener is already closed; Close only drops the busy
+		// connections, and its error (a closed listener) is not a failure.
+		_ = srv.Close()
+		err = nil
+	}
 	logger.Info("sela.stop", "note", "in-memory sessions are discarded on shutdown")
 	return err
 }
