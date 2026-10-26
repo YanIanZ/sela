@@ -46,6 +46,7 @@ python3 scripts/research/screen_candidates.py \
 - `data/research/sela_screening_index.csv`: **all 7,580 candidates** with priority, score, title signals, potential study-type clues and audit reasons.
 - `data/research/sela_priority_review_queue.jsonl`: up to 400 high/medium candidates with full original bibliographic metadata and triage descriptors. Year caps (45% each for 2025 and 2026 when feasible) reduce, but do not remove, recency dominance.
 - `data/research/sela_screening_manifest.json`: counts per family, priority and year; file hashes; what was actually screened.
+- `data/research/sela_human_review_worksheet.csv`: the same review queue with 400 unfilled human appraisal decisions; every study starts at `NOT_REVIEWED`, and `rag_ready=NO` until a reviewer explicitly establishes suitability and reuse rights.
 
 Generated data is committed only after the script and tests pass and hash/count assertions succeed. Existing raw metadata and curated 100-register remain unchanged.
 
