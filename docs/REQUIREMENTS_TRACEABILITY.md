@@ -82,7 +82,7 @@ Lineage: the opening-lines pipeline comes from Dengar.in v1 (`services/validator
 | G3 | Classifier is never the sole safeguard | Lexicon + interruption + human review of every item + no model in routing (D-017) | `internal/safety` tests | tested locally |
 | G4 | No diagnosis or safety promises | Meaning Lock clinical checks; copy | ledger clinical tests; web: `claims.test.ts` | tested locally |
 | G5 | Verified, maintained local references; no invented numbers | `fixtures/data/help.json` (verified_official only, dates, re-verify by) | `fixtures` tests; re-verification due 2027-01-14 ([B-5](BLOCKERS.md)) | tested locally |
-| G6 | Negation, quotes, slang, code-switching, ambiguity tested | `internal/safety/testdata/vectors.json` (420 vectors, ruleset `sela-safety-2026.10.26-2`) | `TestVectors*`, `TestV1Parity`; eval `safety.*` | tested locally |
+| G6 | Negation, quotes, slang, code-switching, ambiguity tested | `internal/safety/testdata/vectors.json` (823 vectors, ruleset `sela-safety-2026.10.26-3`) | `TestVectors*`, `TestV1Parity`; eval `safety.*` | tested locally |
 | G7 | No sensitive content in operational logs | request log fields only; `llm.Observer` metadata; counters instead of safety logs | log canary in `TestFullJourneyOverHTTP` and e2e | tested locally |
 
 ## Backend (Go)
