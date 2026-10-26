@@ -1,0 +1,29 @@
+{
+  "as_of": "2026-10-26",
+  "database": "Europe PMC",
+  "endpoint": "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+  "queries": {
+    "ai_chatbots": "TITLE_ABS:\"mental health\" AND (chatbot OR \"conversational agent\")",
+    "help_seeking": "TITLE_ABS:\"mental health\" AND (\"help-seeking\" OR \"help seeking\") AND (digital OR barriers)",
+    "care_navigation": "(depression OR \"mental health\") AND (\"care navigation\" OR \"warm handoff\" OR \"stepped care\")",
+    "continuity": "\"mental health\" AND (\"measurement-based care\" OR \"continuity of care\" OR \"shared decision making\")",
+    "privacy": "\"mental health\" AND (privacy OR consent) AND (digital OR app)",
+    "indonesia": "(Indonesia OR Indonesian) AND \"mental health\" AND (stigma OR access OR digital)",
+    "language_equity": "\"mental health\" AND \"large language model\" AND (language OR bias OR cultural)",
+    "summarization": "clinical AND summarization AND \"large language model\"",
+    "safety": "\"mental health\" AND (chatbot OR \"large language model\") AND (safety OR risk)",
+    "digital_engagement": "\"digital mental health\" AND (engagement OR dropout)"
+  },
+  "filters": "FIRST_PDATE:[2021-10-27 TO 2026-10-26] AND HAS_ABSTRACT:Y AND SRC:MED",
+  "historical_pass_upper_bound": "2025-12-31",
+  "pageSize": 30,
+  "resultType": "core",
+  "selection": "purposive title/abstract screening; not exhaustive; newest-result bias",
+  "anchors": "EXT_ID:37469586 OR EXT_ID:38114588 OR EXT_ID:38413730 OR DOI:10.1056/AIoa2400802 OR DOI:10.2196/67891 OR DOI:10.1038/s41591-024-03097-1",
+  "additional_sources": [
+    "https://arxiv.org/abs/2504.18412",
+    "https://doi.org/10.1145/3715275.3732039",
+    "https://doi.org/10.1056/AIoa2400802",
+    "https://www.nicholasjacobson.com/publication/heinz-mackin-trudeau-bhattacharya-wang-et-al-2025/"
+  ]
+}

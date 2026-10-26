@@ -100,6 +100,26 @@ Updated: 26 October 2026. Authority: [SPEC.md](../SPEC.md). Every repository Mar
 | [services/persistence/migrations/README.md](../services/persistence/migrations/README.md) | Attached v1 implementation reference; not v2 requirement |
 | [supabase/migrations/README.md](../supabase/migrations/README.md) | Attached v1 implementation reference; not v2 requirement |
 
+## Research and proposal package
+
+These additions are non-normative, title/abstract-screened research and design proposals. They do not override SPEC.md or mark implementation complete.
+
+| Document / asset | Classification |
+| --- | --- |
+| [docs/research/sela-relay/01_REPO_AUDIT.md](research/sela-relay/01_REPO_AUDIT.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/02_PRODUCT_STRATEGY.md](research/sela-relay/02_PRODUCT_STRATEGY.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/03_JOURNEY_AND_UX.md](research/sela-relay/03_JOURNEY_AND_UX.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/04_GO_REFACTOR.md](research/sela-relay/04_GO_REFACTOR.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/05_META_AND_JUDGING.md](research/sela-relay/05_META_AND_JUDGING.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/06_RESEARCH_METHOD.md](research/sela-relay/06_RESEARCH_METHOD.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md](research/sela-relay/07_EVIDENCE_TO_FEATURE.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/08_ROADMAP_AND_VALIDATION.md](research/sela-relay/08_ROADMAP_AND_VALIDATION.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/09_RESEARCH_REGISTER.md](research/sela-relay/09_RESEARCH_REGISTER.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/README.md](research/sela-relay/README.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/research_100.bib](research/sela-relay/research_100.bib) | Supporting research metadata / citation export |
+| [docs/research/sela-relay/research_100.json](research/sela-relay/research_100.json) | Supporting research metadata / citation export |
+| [docs/research/sela-relay/search_queries.json](research/sela-relay/search_queries.json) | Supporting research metadata / citation export |
+
 ## Complete v1 relocation map
 
 Every pre-refactor document/asset under `docs/` other than the maintained index, provenance and event notes was moved. No historical artifact was silently deleted.

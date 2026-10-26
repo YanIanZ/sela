@@ -28,7 +28,7 @@ Demonstrate a bilingual mental-health care journey: synthetic story → needs cl
 - I.meta: server-side Meta Model API adapter for seeded intake and brief drafting; [integration](docs/META_INTEGRATION.md). Exact endpoint/model/access verified before implementation.
 - I.data: versioned synthetic scenario/professional/slot/plan fixtures, bounded per-session state; [data](docs/DEMO_DATA.md).
 - I.ops: existing v1 npm commands work now; Go/build/deployment commands documented only when implemented; [development](docs/DEVELOPMENT.md).
-- I.docs: documentation index and complete archive inventory; [index](docs/README.md), [inventory](docs/DOCUMENT_INVENTORY.md).
+- I.docs: documentation index and complete archive inventory; [index](docs/README.md), [inventory](docs/DOCUMENT_INVENTORY.md). Non-normative [Sela Relay research/proposals](docs/research/sela-relay/README.md) do not change requirements or implementation task status.
 
 ## §V Invariants
 
