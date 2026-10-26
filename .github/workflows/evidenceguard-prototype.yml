@@ -6,9 +6,13 @@ on:
     paths:
       - 'prototypes/evidenceguard/**'
       - '.github/workflows/evidenceguard-prototype.yml'
+  pull_request:
+    paths:
+      - 'prototypes/evidenceguard/**'
+      - '.github/workflows/evidenceguard-prototype.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   go-verifier:
@@ -24,16 +28,12 @@ jobs:
         with:
           go-version-file: prototypes/evidenceguard/go.mod
           cache: false
-      - name: Format Go prototype and commit
-        working-directory: .
+      - name: Format check
         run: |
-          gofmt -w prototypes/evidenceguard/*.go
-          git config user.name "YanIanZ"
-          git config user.email "194694347+YanIanZ@users.noreply.github.com"
-          git add prototypes/evidenceguard/*.go
-          if ! git diff --cached --quiet; then
-            git commit -m "style(evidenceguard): gofmt Go verifier and tests"
-            git push origin "HEAD:$GITHUB_REF_NAME"
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "$unformatted"
+            exit 1
           fi
       - name: Offline tests (race detector)
         run: go test -race -count=1 ./...
