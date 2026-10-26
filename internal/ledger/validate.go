@@ -55,21 +55,26 @@ func lowerTrim(s string) string { return strings.ToLower(strings.TrimSpace(s)) }
 // invalid, its segment does not exist, its quote is empty, shorter than
 // MinQuoteRunes or longer than MaxQuoteRunes, or not found in the segment
 // (case, width, quote style and whitespace are ignored); when the quote
-// starts after a negator that governs it (negation_dropped); when the source
-// is about someone else but the claim presents it as the user's own feeling,
-// experience, impact or duration (subject_mismatch); when the quote or the
-// model's wording carries a clinical label, except a clinician-attributed
-// context claim (diagnosis_label); when the model's wording contains a
-// medication or treatment directive (medical_instruction); when it repeats an
-// accepted (segment, quote) pair (duplicate); or beyond MaxClaims.
+// starts after a negator that governs it, even if it keeps another one
+// (negation_dropped); when the source is about someone else but the claim
+// presents it as the user's own feeling, experience, impact or duration
+// (subject_mismatch); when the quote carries a clinical label, except a
+// context claim whose every label is attributed to a clinician in its own
+// clause, or the model's wording adds one (diagnosis_label); when the model's
+// wording contains a medication or treatment directive the quote does not
+// (medical_instruction); when it repeats an accepted (segment, quote) pair
+// (duplicate); or beyond MaxClaims.
 //
 // Accepted claims always carry the deterministic source qualifiers. Their
 // quote is the verbatim segment span, widened to whole words. The model's
-// wording is kept only when it preserves negation, subject, time and
-// certainty, adds no number and no unsafe content, and fits MaxWordingRunes;
-// otherwise the quote is used and a note is recorded per failed check.
-// Unknowns are recomputed from the accepted claims; the model's unknowns are
-// ignored and its clarification pick survives only if it is still unknown.
+// wording is kept only when it fits MaxWordingRunes (longer wording is never
+// analysed) and passes every check of wordingNotes: negation word by word,
+// subject, every time and certainty marker, no new number, no added content,
+// and no unsafe content (a clinician-attributed label or a directive the user
+// reported is shown only in the user's words). Otherwise the quote is used
+// and a note is recorded per failed check. Unknowns are recomputed from the
+// accepted claims; the model's unknowns are ignored and its clarification
+// pick survives only if it is still unknown.
 func ValidateDraft(d Draft, segments []Segment) Result {
 	res := Result{Accepted: []Claim{}, Rejected: []Rejection{}}
 	byID := make(map[string]*segmentData, len(segments))

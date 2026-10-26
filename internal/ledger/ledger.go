@@ -2,8 +2,9 @@
 // Opening Practice checks.
 //
 // The model only proposes. Every claim it keeps must quote one story segment
-// verbatim, keep the segment's negation, subject, time and certainty, and
-// must not add a diagnosis, medication instruction or invented number. When
+// verbatim, keep the segment's negation (word by word), subject, time and
+// certainty, and must not add a diagnosis, medication instruction, invented
+// number or any other content the quote does not have. When
 // only the model's wording is wrong, the claim survives with the user's own
 // words and a note; when the quote itself is wrong, the claim is rejected.
 // Unknown facts stay unknown.
