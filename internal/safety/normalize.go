@@ -1,6 +1,7 @@
 package safety
 
 import (
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -64,21 +65,82 @@ func finish(s string, keep int) string {
 //     "gan-tung di-ri" and "mau-mati" are seen as "gantung diri" and
 //     "maumati" (patterns already allow optional spaces between words);
 //   - doubled: elongation collapsed to two runes instead of one, so
-//     "killll myself" is seen as "kill myself" rather than "kil myself".
+//     "killll myself" is seen as "kill myself" rather than "kil myself";
+//   - pronoun: a free-standing "1" read as the pronoun "i" (v1 mapped every
+//     1 to i), so "1 hate my life" is seen as "i hate my life" while the
+//     canonical form keeps numbers such as "jam 1" and "5 kms".
 func variants(text string) []string {
 	base := prepare(text)
 	primary := finish(base, 1)
 	out := []string{primary}
+	add := func(v string) {
+		if !slices.Contains(out, v) {
+			out = append(out, v)
+		}
+	}
 	if c := compactJoin(primary); c != primary {
-		out = append(out, c)
+		add(c)
 	}
 	if hasRun3(base) {
 		if d := finish(base, 2); d != primary {
-			out = append(out, d)
+			add(d)
 		}
+	}
+	if p := oneAsPronoun(primary); p != primary {
+		add(p)
 	}
 	return out
 }
+
+// oneAsPronoun replaces every free-standing "1" (no letter, digit or number
+// punctuation next to it) with "i", unless a unit follows ("1 kms", "1 jam").
+func oneAsPronoun(s string) string {
+	if !strings.Contains(s, "1") {
+		return s
+	}
+	var b []byte
+	for i := 0; i < len(s); i++ {
+		if s[i] != '1' {
+			continue
+		}
+		if i > 0 && (isAlnum(s[i-1]) || strings.IndexByte(".,:/+-", s[i-1]) >= 0) {
+			continue
+		}
+		if i+1 < len(s) && (isAlnum(s[i+1]) || ((s[i+1] == '.' || s[i+1] == ',') && i+2 < len(s) && isDigit(s[i+2]))) {
+			continue
+		}
+		if numberUnits[nextWord(s, i+1)] {
+			continue
+		}
+		if b == nil {
+			b = []byte(s)
+		}
+		b[i] = 'i'
+	}
+	if b == nil {
+		return s
+	}
+	return string(b)
+}
+
+// nextWord returns the letters of the word that starts after the spaces at
+// s[i:].
+func nextWord(s string, i int) string {
+	for i < len(s) && s[i] == ' ' {
+		i++
+	}
+	j := i
+	for j < len(s) && (isLetter(s[j]) || s[j] == '%') {
+		j++
+	}
+	return s[i:j]
+}
+
+// numberUnits are words that mark a preceding "1" as a number.
+var numberUnits = setOf("km kms kg gr g m cm mm l ml jam menit mnt detik hari hr minggu mgg bulan bln tahun thn " +
+	"x kali orang org buah biji lembar botol butir tablet pil hour hours hrs min mins minute minutes sec secs " +
+	"second seconds day days week weeks month months year years yr yrs time times pm am k rb ribu juta jt % " +
+	"st nd rd th of out")
 
 // rejoinBunuhDiri is the v1 rejoin of "bunuh diri" written with separators
 // between its letters, v1's
@@ -152,13 +214,17 @@ func mapRunes(text string) string {
 		case r == '\n' || r == '\r' || r == '\v' || r == '\f' || r == 0x85 || r == 0x2028 || r == 0x2029:
 			b.WriteByte('\n')
 			continue
-		case unicode.IsSpace(r):
+		case unicode.IsSpace(r) || isBlankFiller(r):
 			b.WriteByte(' ')
 			continue
 		case unicode.In(r, unicode.Mn, unicode.Me, unicode.Cf):
 			continue
 		case unicode.IsControl(r):
 			b.WriteByte(' ')
+			continue
+		}
+		if f, ok := upperFold[r]; ok {
+			b.WriteString(f)
 			continue
 		}
 		r = unicode.ToLower(r)
@@ -255,6 +321,20 @@ func foldRune(r rune) (string, bool) {
 	return f, ok
 }
 
+// isBlankFiller reports whether r renders as blank space although Unicode
+// does not class it as a space: the Hangul fillers and the blank Braille
+// pattern, all used to split words invisibly ("bunuhㅤdiri").
+func isBlankFiller(r rune) bool {
+	return r == 0x115F || r == 0x1160 || r == 0x3164 || r == 0xFFA0 || r == 0x2800
+}
+
+// upperFold maps capital Greek letters that look like a Latin capital whose
+// lowercase form looks like a different Latin letter (Ν is "N" but ν is "v",
+// Η is "H" but η is "n"). It is consulted before lowercasing.
+var upperFold = map[rune]string{
+	'Β': "b", 'Η': "h", 'Μ': "m", 'Ν': "n", 'Υ': "y", 'Ζ': "z",
+}
+
 // foldTable is the explicit replacement table used instead of NFKD.
 var foldTable = buildFoldTable()
 
@@ -316,25 +396,101 @@ func buildFoldTable() map[rune]string {
 	m['ℊ'] = "g"
 	m['ℴ'] = "o"
 	// Cyrillic and Greek look-alikes (lowercase forms; input is lowercased).
+	// в, н, м and т look like small capitals, so their capitals В Н М Т,
+	// which look like Latin B H M T, fold the same way.
 	add("a", "аα")
+	add("b", "вβ")
 	add("c", "сϲ")
 	add("d", "ԁ")
 	add("e", "еёε")
-	add("h", "һ")
+	add("h", "һн")
 	add("i", "іїι")
 	add("j", "ј")
 	add("k", "кκ")
 	add("l", "ӏ")
+	add("m", "м")
+	add("n", "η")
 	add("o", "оο")
 	add("p", "рρ")
 	add("q", "ԛ")
 	add("s", "ѕ")
-	add("t", "τ")
-	add("u", "υ")
+	add("t", "τт")
+	add("u", "υμ\u00b5")
 	add("v", "ν")
 	add("w", "ԝ")
 	add("x", "хχ")
 	add("y", "у")
+	// Small capitals (U+1D00–U+1D22 and the IPA ones), which NFKD leaves
+	// alone but which read as plain letters.
+	add("a", "ᴀ")
+	add("ae", "ᴁ")
+	add("b", "ʙᴃ")
+	add("c", "ᴄ")
+	add("d", "ᴅᴆ")
+	add("e", "ᴇ")
+	add("f", "ꜰ")
+	add("g", "ɢ")
+	add("h", "ʜ")
+	add("i", "ɪᴉ")
+	add("j", "ᴊ")
+	add("k", "ᴋ")
+	add("l", "ʟᴌ")
+	add("m", "ᴍ")
+	add("n", "ɴᴎ")
+	add("o", "ᴏᴐᴑ")
+	add("p", "ᴘ")
+	add("q", "ꞯ")
+	add("r", "ʀᴙᴚ")
+	add("s", "ꜱ")
+	add("t", "ᴛ")
+	add("u", "ᴜ")
+	add("v", "ᴠ")
+	add("w", "ᴡ")
+	add("y", "ʏ")
+	add("z", "ᴢ")
+	// Modifier, superscript and subscript letters (NFKD compatibility forms
+	// that v1 folded through normalize('NFKD'); "tiny text" generators use
+	// them): U+02B0–U+02B8, U+02E1–U+02E3, U+1D2C–U+1D6A, U+1D9B–U+1DBF,
+	// U+2071, U+207F, U+2090–U+209C and U+2C7C.
+	add("a", "ᴬᵃₐᵄᵅᶛ")
+	add("ae", "ᴭ")
+	add("b", "ᴮᴯᵇᵝᵦ")
+	add("c", "ᶜᶝ")
+	add("d", "ᴰᵈᶞᵟ")
+	add("e", "ᴱᵉₑᴲᵋᵌᶟ")
+	add("f", "ᶠ")
+	add("g", "ᴳᵍᶢᵞᵧ")
+	add("h", "ʰʱᴴₕᶣ")
+	add("i", "ᴵⁱᵢᵎᶤᶥᶦᶧ")
+	add("j", "ʲᴶⱼᶡᶨ")
+	add("k", "ᴷᵏₖ")
+	add("l", "ˡᴸₗᶩᶪᶫ")
+	add("m", "ᴹᵐₘᶬᶭᵚ")
+	add("n", "ᴺⁿₙᴻᵑᶮᶯᶰ")
+	add("o", "ᴼᵒₒᵓᵔᵕᶱ")
+	add("ou", "ᴽ")
+	add("p", "ᴾᵖₚᵨ")
+	add("r", "ʳʴʵʶᴿᵣ")
+	add("s", "ˢₛᶳ")
+	add("t", "ᵀᵗₜᶵ")
+	add("u", "ᵁᵘᵤᵙᶶᶷᶸ")
+	add("v", "ᵛᵥᶹᶺⱽ")
+	add("w", "ʷᵂ")
+	add("x", "ˣₓᵡᵪ")
+	add("y", "ʸ")
+	add("z", "ᶻᶼᶽ")
+	add("e", "ₔᵊ")
+	// Superscript and subscript digits (leetspeak then applies to them).
+	add("0", "⁰₀")
+	add("1", "¹₁")
+	add("2", "²₂")
+	add("3", "³₃")
+	add("4", "⁴₄")
+	add("5", "⁵₅")
+	add("6", "⁶₆")
+	add("7", "⁷₇")
+	add("8", "⁸₈")
+	add("9", "⁹₉")
 	// Punctuation.
 	add("'", "\u2018\u2019\u201bʼ\u2032`\u00b4")
 	add("\"", "\u201c\u201d\u201e\u201f\u00ab\u00bb\u2033\u2036\u301d\u301e\u300c\u300d")

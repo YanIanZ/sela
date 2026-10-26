@@ -49,6 +49,19 @@ func TestNormalize(t *testing.T) {
 		{"hp-ku mati", "hp-ku mati", "hyphens inside words stay in the canonical form"},
 		{"killll", "kil", "v1 collapses to one rune (see variants)"},
 		{"\xff", "\ufffd", "invalid UTF-8 becomes U+FFFD"},
+		// Review findings: NFKD compatibility forms v1 folded, and evasions.
+		{"\u1d43\u1d4f\u1d58 \u1d50\u1d43\u1d58 \u1d50\u1d43\u1d57\u2071", "aku mau mati", "modifier letters"},
+		{"\u1d47\u1d58\u207f\u1d58\u02b0 \u1d48\u2071\u02b3\u2071", "bunuh diri", "modifier and superscript letters"},
+		{"\u2090\u2096\u1d64", "aku", "subscript letters"},
+		{"\u0299\u1d1c\u0274\u1d1c\u029c \u1d05\u026a\u0280\u026a", "bunuh diri", "small capitals"},
+		{"kill \u1d0dyself", "kill myself", "small capital m"},
+		{"bunuh\u3164diri", "bunuh diri", "Hangul filler"},
+		{"mau\u2800mati", "mau mati", "blank Braille pattern"},
+		{"pengen\uffa0mati", "pengen mati", "halfwidth Hangul filler"},
+		{"\u115f\u1160", "", "Hangul choseong and jungseong fillers"},
+		{"\u0412UNU\u041d \u041c\u0410\u0422\u0406", "bunuh mati", "Cyrillic capitals VE, EN, EM, TE"},
+		{"\u039d\u0397\u039c\u0392\u03a5\u0396", "nhmbyz", "Greek capitals fold by shape before lowercasing"},
+		{"m\u2074t\u00b9 \u2074\u2083", "mati 43", "superscript and subscript digits fold to digits; leet applies inside words"},
 	}
 	for _, c := range cases {
 		if got := Normalize(c.in); got != c.want {
@@ -66,6 +79,8 @@ func TestVariants(t *testing.T) {
 		{"gan-tung di-ri", []string{"gan-tung di-ri", "gantung diri"}},
 		{"killll myself", []string{"kil myself", "kill myself"}},
 		{"mau-matiii", []string{"mau-mati", "maumati", "mau-matii"}},
+		{"1 hate my life", []string{"1 hate my life", "i hate my life"}},
+		{"1'm done", []string{"1'm done", "i'm done"}},
 		{"", []string{""}},
 	}
 	for _, c := range cases {
@@ -75,6 +90,31 @@ func TestVariants(t *testing.T) {
 		}
 		if got[0] != Normalize(c.in) {
 			t.Errorf("variants(%q)[0] is not Normalize", c.in)
+		}
+	}
+}
+
+func TestOneAsPronoun(t *testing.T) {
+	cases := map[string]string{
+		"1 hate my life":            "i hate my life",
+		"if 1 was gone":             "if i was gone",
+		"1 wish 1 could":            "i wish i could",
+		"\"1\" said":                "\"i\" said",
+		"5 kms":                     "5 kms",
+		"1 kms from home":           "1 kms from home",
+		"jam 1 pagi":                "jam i pagi",
+		"jam 1":                     "jam i",
+		"1 jam lagi":                "1 jam lagi",
+		"10 orang":                  "10 orang",
+		"1.5 km":                    "1.5 km",
+		"page-1":                    "page-1",
+		"a1":                        "a1",
+		"rp 1,000":                  "rp 1,000",
+		"no ones here, just 1 of 3": "no ones here, just 1 of 3",
+	}
+	for in, want := range cases {
+		if got := oneAsPronoun(in); got != want {
+			t.Errorf("oneAsPronoun(%q) = %q, want %q", in, got, want)
 		}
 	}
 }

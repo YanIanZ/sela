@@ -29,6 +29,8 @@ var goldenRuleIDs = []string{
 	"id-vanish-from-world", "id-tired-of-living", "id-cannot-bear-slang", "id-better-dead",
 	"en-death-wish-modal", "en-slang-suicide", "en-third-person-suicide",
 	"en-third-person-self-harm",
+	// added in sela-safety-2026.10.26-2
+	"en-inner-death-wish",
 }
 
 func TestRuleIDsStableAndUnique(t *testing.T) {
@@ -90,6 +92,9 @@ func TestCatalogueShape(t *testing.T) {
 			}
 			if p.anchored && p.reject != nil {
 				t.Errorf("%s: anchored patterns cannot have post-checks", r.id)
+			}
+			if p.maximal && (p.anchored || p.reject != nil) {
+				t.Errorf("%s: maximal patterns cannot be anchored or have post-checks", r.id)
 			}
 			// Normalised text is lowercase, so a literal capital never matches.
 			for i := 0; i < len(src); i++ {
@@ -239,7 +244,7 @@ func TestPrefilterSound(t *testing.T) {
 	}
 	// The context expressions are guarded the same way.
 	context := map[string]guarded{"denial": denialRe, "adoption": adoptionRe}
-	for name, a := range map[string]altGuarded{"frame": frameRe, "reportingTail": reportingTailRe, "reportingHead": reportingHeadRe} {
+	for name, a := range map[string]altGuarded{"frame": frameRe, "reportingHead": reportingHeadRe} {
 		for i, g := range a.alts {
 			context[name+strings.Repeat("'", i)] = g
 		}
@@ -250,6 +255,58 @@ func TestPrefilterSound(t *testing.T) {
 				t.Errorf("%s: prefilter rejects a match: %q", name, in)
 			}
 		}
+	}
+}
+
+// TestMaximalPatterns checks the property that lets a maximal pattern skip
+// its other matches: on every sentence, the first match contains every match
+// that starts at a later word.
+func TestMaximalPatterns(t *testing.T) {
+	inputs := []string{"hopeless hopeless i want to end it", "hopeless, want to end it and hopelessly wanna to end it",
+		"i feel hopeless. want to end it", "hopelesswant to end it", "so hopeless i want to end it, hopeless want to end it all"}
+	for _, v := range loadVectors(t) {
+		inputs = append(inputs, Normalize(v.Text))
+	}
+	words := []string{"hopeless", "hopelessly", "want to end it", "wanna to end it", "want to end it all", "i", "so",
+		"tired", ",", "and", "want", "to end", "it", "unhopeless"}
+	rng := rand.New(rand.NewSource(3))
+	for n := 0; n < 2000; n++ {
+		var b strings.Builder
+		for k := 1 + rng.Intn(12); k > 0; k-- {
+			b.WriteString(words[rng.Intn(len(words))])
+			b.WriteByte(' ')
+		}
+		inputs = append(inputs, b.String())
+	}
+	found := 0
+	for _, r := range catalogue {
+		for _, p := range r.patterns {
+			if !p.maximal {
+				continue
+			}
+			for _, in := range inputs {
+				for _, sp := range sentenceSpans(in) {
+					s := in[sp.start:sp.end]
+					first := p.re.FindStringIndex(s)
+					if first == nil {
+						continue
+					}
+					found++
+					for pos := nextWordStart(s, first[0]+1); pos <= len(s); pos = nextWordStart(s, pos+1) {
+						loc := p.re.FindStringIndex(s[pos:])
+						if loc == nil {
+							break
+						}
+						if pos+loc[0] < first[0] || pos+loc[1] > first[1] {
+							t.Errorf("%s: match %q is not inside the first match %q", r.id, s[pos+loc[0]:pos+loc[1]], s[first[0]:first[1]])
+						}
+					}
+				}
+			}
+		}
+	}
+	if found < 50 {
+		t.Errorf("only %d maximal matches exercised", found)
 	}
 }
 
@@ -335,6 +392,37 @@ func TestPostChecks(t *testing.T) {
 		{"aku mau mati", "mau mati", false},
 		{"hp aku rusak, aku mau mati", "mau mati", false},
 		{"rasanya mau mati aja", "mau mati", false},
+		// Aspect words between the device and the match are skipped.
+		{"hp-ku mau mati aja", "mati aja", true},
+		{"laptopku udah mau mati", "mau mati", true},
+		// A wish is never a device's: only "mau mati"/"mati aja" are checked.
+		{"mati lampu aku pengen mati", "pengen mati", false},
+		{"dari pagi di depan komputer pengen mati", "pengen mati", false},
+		{"nunggu motor lebih baik mati", "lebih baik mati", false},
+		{"lampu pengen mati", "pengen mati", false},
+		{"aku pengen mati-matian", "pengen mati", true},
+		// A governed device is an object or a place, not the subject.
+		{"di depan laptop mau mati", "mau mati", false},
+		{"nunggu wifi mau mati", "mau mati", false},
+		{"di kosan hp-ku mau mati", "mau mati", true},
+		// "<device> aku" is "my device" only at the start of a clause.
+		{"dari tadi nunggu wifi aku mau mati", "mau mati", false},
+		{"di kosan hp aku mau mati", "mau mati", false},
+		{"duh hp aku mau mati", "mau mati", true},
+		{"baterai hp aku mau mati", "mau mati", true},
+		{"mati lampu, hp gue mau mati", "mau mati", true},
+	})
+	run("selfOrThing", selfOrThing, []tc{
+		{"part of me wants to die", "wants to die", true},
+		{"everything in me still wants to die", "wants to die", true},
+		{"my soul wants to die", "wants to die", true},
+		{"my whole body wants to die", "wants to die", true},
+		{"my laptop wants to die", "wants to die", true},
+		{"my phone battery literally wants to die", "wants to die", true},
+		{"my friend wants to die", "wants to die", false},
+		{"she wants to die", "wants to die", false},
+		{"his body wants to die", "wants to die", false},
+		{"wants to die", "wants to die", false},
 	})
 	run("precededByNumber", precededByNumber, []tc{
 		{"i am 5 kms from home", "kms", true},

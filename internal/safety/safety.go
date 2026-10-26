@@ -13,15 +13,20 @@
 // # Matching
 //
 // Assess normalises the text (see Normalize) and matches the rule catalogue
-// against the canonical form and two derived variants (dash-joined and
-// double-letter, see variants), keeping the strongest outcome per rule. Every
-// v1 rule is ported with its v1 id; v1 severity 'crisis' maps to LevelCrisis
-// and 'high' to LevelElevated. Go's regexp is RE2 and has no lookarounds; the
-// two v1 negative lookaheads (passive-ideation and en-end-everything) and the
-// new idiom checks are written as post-match functions documented on each
-// rule. Rules run per sentence ('.', '!', '?'), which finds exactly what a
-// whole-text search finds, behind a literal prefilter derived from each
-// expression.
+// against the canonical form and three derived variants (dash-joined,
+// double-letter, and a free-standing "1" read as "i"; see variants), keeping
+// the strongest outcome per rule. Every v1 rule is ported with its v1 id; v1
+// severity 'crisis' maps to LevelCrisis and 'high' to LevelElevated. Go's
+// regexp is RE2 and has no lookarounds; the two v1 negative lookaheads
+// (passive-ideation and en-end-everything) and the new idiom checks are
+// written as post-match functions documented on each rule. Rules run per
+// sentence ('.', '!', '?'), which finds exactly what a whole-text search
+// finds, behind a literal prefilter derived from each expression.
+//
+// Assess runs in time linear in the length of the input: an adversarial
+// 8000-character text takes about 10ms and a realistic one about 3ms in a
+// normal build. It has no input cap of its own, because truncating would drop
+// risk language; callers bound request sizes.
 //
 // # Routing policy
 //
@@ -41,27 +46,20 @@
 //     particles such as "kok", and "I'm not suicidal") does not count, and
 //     Denial is set. Only that segment is exempt: "Aku tidak mau bunuh diri
 //     tapi aku ingin mengakhiri hidupku malam ini" is crisis. A denial that
-//     is immediately followed by a contrastive conjunction is hedged ("aku
-//     tidak mau bunuh diri, tapi kadang kepikiran") and counts as elevated.
+//     is followed by a contrastive conjunction is hedged and counts as
+//     elevated, whether or not anything follows the conjunction ("aku tidak
+//     mau bunuh diri, tapi kadang kepikiran", "I don't want to die, but...").
 //     As in v1 the whole text is also checked as one denial, so the words of
 //     a denial may be separated by newlines.
-//  3. Third party. Risk language attributed to someone else, with no
-//     first-person risk, routes to LevelElevated with ThirdParty set. v1
-//     returned none for its media frames; this is an intentional change, so
-//     concern about someone else still surfaces human-support information.
-//     Attribution comes from v1's media frames ("dalam film itu tokoh ...",
-//     "in the movie, the character ...", widened to more media and
-//     subjects), reporting frames at the start of a segment ("temanku bilang
-//     ...", "kata dia, ...", "my friend said ..."), quotations with a
-//     third-party reporting verb before or after them, direct speech after a
-//     colon ("temanku bilang: ..."), and third-person wording ("killed
-//     himself", "wants to die"). A frame is void when its reported words
-//     contain a first-person word outside quotation marks ("temanku bilang
-//     aku mau mati" is crisis). When the speaker adopts the language anywhere
-//     ("aku juga mau mati", "aku juga", "me too", "same here", "I relate", or
-//     "juga"/"too" inside the reported words) attributed matches count in
-//     full. A bare third-person subject without a frame ("temanku mau bunuh
-//     diri") is not attributed and stays crisis.
+//  3. Third party. Risk language clearly attributed to someone else, with no
+//     first-person risk, routes to LevelElevated with ThirdParty set (see
+//     Third-party attribution). v1 returned none for its media frames; this
+//     is an intentional change, so concern about someone else still surfaces
+//     human-support information. When the speaker adopts the language
+//     anywhere ("aku juga mau mati", "aku juga", "me too", "same here", "I
+//     relate", or "juga"/"too" inside the reported words) each attributed
+//     match counts in full. A bare third-person subject without a frame
+//     ("temanku mau bunuh diri") is not attributed and stays crisis.
 //  4. Study or prevention context is not recognised: "aku sedang belajar
 //     tentang pencegahan bunuh diri" stays crisis exactly as in v1. This is a
 //     known, deliberate conservative false positive.
@@ -69,9 +67,45 @@
 //     "this joke is killing me", "I'm dying to see that movie", "I could kill
 //     for a coffee"). Where a v1 rule matched an unambiguous idiom, a
 //     documented post-check rejects it: a device, power or plant subject
-//     before "mati" ("baterai hp-ku mau mati"), the adverb "mati-matian", and
-//     a number before "kms" ("5 kms"). Ambiguous hyperbole keeps its v1 level
+//     before "mau mati" or "mati aja" ("baterai hp-ku mau mati"; a wish such
+//     as "pengen mati" is never a device's), the adverb "mati-matian", and a
+//     number before "kms" ("5 kms"). Ambiguous hyperbole keeps its v1 level
 //     ("rasanya mau mati aja kalau disuruh presentasi" is crisis).
+//
+// # Third-party attribution
+//
+// Text is attributed to someone else by:
+//
+//   - Media frames for recorded or published content: v1's "dalam film itu
+//     tokoh ..." and "in the movie, the character ...", widened to more media
+//     and subjects. Classes and lectures are events the speaker attends and
+//     do not frame.
+//   - Reporting frames at the start of a segment: "temanku bilang ...", "kata
+//     dia, ...", "katanya ...", "my friend said ...". "kata" and "menurut"
+//     need a third-party subject, since "kata hatiku" and "kata terakhirku"
+//     are the speaker's own. The reported content runs to the end of the
+//     segment, and on through following segments that open with a
+//     third-person pronoun up to the next frame. It stops at a breaker word
+//     that starts the speaker's own reaction in subjectless Indonesian
+//     ("bikin", "rasanya", "sekarang", "terus", "jadi": "Pacarku bilang putus
+//     rasanya pengen mati" is crisis) unless a third-person pronoun is
+//     attached ("terus dia mau mati").
+//   - Quotations with a third-party reporting frame right before them, or an
+//     attribution right after them that no first-person word follows before
+//     the next comma ("\"...\", she said"). A first-person reporting frame
+//     before a quotation ("aku cerita \"...\"", "I told her \"...\"") makes
+//     it the speaker's own words whatever follows. A quotation never spans a
+//     newline or a sentence boundary, so a stray quote mark cannot turn the
+//     speaker's sentences into a quotation.
+//   - Direct speech after a colon ("temanku bilang: ..."), up to the end of
+//     its segment or a first-person reply ("aku jawab ...", "I replied ...").
+//   - Third-person wording ("killed himself", "she wants to die"). The
+//     speaker's inner self is not a third person ("part of me wants to die"
+//     is crisis) and a device is an idiom ("my laptop wants to die").
+//
+// Reported content is void when it contains a first-person word outside
+// quotation marks, including any -ku form other than a relative or role
+// ("temanku bilang aku mau mati" and "kata dia, hidupku ..." are crisis).
 //
 // # Known limitations
 //
@@ -80,13 +114,18 @@
 // personal names as third-party subjects, treats advice to others ("jangan
 // bunuh diri ya") and some reassurances outside the denial shape ("bukan
 // berarti aku mau bunuh diri") as the speaker's own words, and keeps v1's
-// conservative matches such as "goodbye everyone" and "i have a rope".
-// testdata/vectors.json records each of these decisions.
+// conservative matches such as "goodbye everyone" and "i have a rope". Some
+// third-party reports take the safer path because their extent is ambiguous:
+// unquoted direct speech past its first segment ("temanku bilang: aku capek,
+// aku mau mati"), quotations of more than one sentence, subjectless content
+// after a breaker word, and "<device> aku mau mati" in the middle of a clause
+// ("di kosan hp aku mau mati"). testdata/vectors.json records each of these
+// decisions.
 package safety
 
 // RulesetVersion identifies the lexicon and routing policy. Change it whenever
 // a rule, normalisation step or routing decision changes.
-const RulesetVersion = "sela-safety-2026.10.26-1"
+const RulesetVersion = "sela-safety-2026.10.26-2"
 
 // Level is the routing decision.
 type Level string

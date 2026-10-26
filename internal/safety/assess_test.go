@@ -294,6 +294,9 @@ func TestPerformance(t *testing.T) {
 	repeat := func(unit string) string {
 		return strings.Repeat(unit, 8000/len(unit)+1)[:8000]
 	}
+	ending := func(unit, end string) string {
+		return strings.Repeat(unit, (8000-len(end))/len(unit)) + end
+	}
 	for name, s := range map[string]string{
 		"dense-crisis":  repeat("aku mau mati i want to die "),
 		"quotes":        repeat(`temanku bilang "aku mau mati". `),
@@ -301,6 +304,15 @@ func TestPerformance(t *testing.T) {
 		"denials":       repeat("aku tidak mau bunuh diri tapi "),
 		"no-punct":      repeat("aku capek banget kerja terus dan semua orang bikin pusing "),
 		"letter-spaced": repeat("b u n u h d i r i "),
+		// Inputs that were quadratic before (review finding): one frame per
+		// segment, an unbounded "hopeless ... want to end it" gap, and many
+		// quotations in a single clause.
+		"she-said":     ending("she said, ", "i want to die"),
+		"dia-bilang":   ending("dia bilang, ", "aku mau mati"),
+		"hopeless":     ending("hopeless ", "i want to end it"),
+		"quote-clause": repeat(`temanku bilang "aku mau mati" `),
+		"own-quotes":   repeat(`aku bilang "aku mau mati", dia bilang `),
+		"hedges":       repeat("aku tidak mau bunuh diri, tapi "),
 	} {
 		d := medianDuration(func() { Assess(s) })
 		switch {
@@ -311,6 +323,78 @@ func TestPerformance(t *testing.T) {
 		default:
 			t.Logf("adversarial %s: %v", name, d)
 		}
+	}
+}
+
+// TestLinearTime checks that Assess stays linear in the input length on the
+// inputs that used to be quadratic: quadrupling the input must not take much
+// more than four times as long. Skipped under the race detector, whose
+// overhead makes timings unreliable.
+func TestLinearTime(t *testing.T) {
+	if raceEnabled || testing.Short() {
+		t.Skip("timing check skipped under -race and -short")
+	}
+	units := map[string]string{
+		"she-said": "she said, ", "dia-bilang": "dia bilang, ", "hopeless": "hopeless ",
+		"quote-clause": `temanku bilang "aku mau mati" `, "colons": "temanku bilang: kamu, ",
+		"breakers": "dia bilang dia capek terus dia ", "hedges": "aku tidak mau bunuh diri, tapi ",
+	}
+	fastest := func(in string) time.Duration {
+		best := time.Duration(1<<63 - 1)
+		for i := 0; i < 5; i++ {
+			start := time.Now()
+			Assess(in)
+			best = min(best, time.Since(start))
+		}
+		return best
+	}
+	for name, u := range units {
+		small := strings.Repeat(u, 8000/len(u)) + "i want to die"
+		large := strings.Repeat(u, 32000/len(u)) + "i want to die"
+		ds, dl := fastest(small), fastest(large)
+		// Linear is 4x; allow noise, and ignore sub-millisecond timings.
+		if dl > 10*ds && dl > 5*time.Millisecond {
+			t.Errorf("%s: 8000 chars %v, 32000 chars %v: not linear", name, ds, dl)
+		} else {
+			t.Logf("%s: 8000 chars %v, 32000 chars %v", name, ds, dl)
+		}
+	}
+}
+
+// TestAtomIndexSkipped covers sentencesWith when a derived variant skips
+// unchanged sentences: an atom that first occurs in a skipped sentence must
+// not hide the next kept sentence (review finding).
+func TestAtomIndexSkipped(t *testing.T) {
+	text := "digantung. a. b. c. d. e. f. gantung diri. digantung. gantung."
+	all := sentenceSpans(text)
+	var kept []span
+	for _, sp := range all {
+		if strings.Contains(text[sp.start:sp.end], "gantung diri") || text[sp.start:sp.end] == " gantung" {
+			kept = append(kept, sp)
+		}
+	}
+	if len(kept) != 2 {
+		t.Fatalf("setup: kept %d sentences", len(kept))
+	}
+	x := &atomIndex{text: text, sentences: kept}
+	if got := x.sentencesWith("gantung"); !slices.Equal(got, []int{0, 1}) {
+		t.Errorf("sentencesWith(gantung) = %v, want [0 1]", got)
+	}
+	if got := x.sentencesWith("diri"); !slices.Equal(got, []int{0}) {
+		t.Errorf("sentencesWith(diri) = %v, want [0]", got)
+	}
+	if got := x.sentencesWith("zzz"); len(got) != 0 {
+		t.Errorf("sentencesWith(zzz) = %v, want none", got)
+	}
+	// End to end: more sentences than directCheck, the atom in an earlier
+	// unchanged sentence, the match only in the dash-joined variant.
+	in := "Hari-hari berat. Kerja-kerja terus. Teman-teman sibuk. Rapat-rapat panjang. Tugas-tugas numpuk. " +
+		"Malam-malam begadang. Jemuran belum digantung. Pengen gan-tung di-ri."
+	if n := len(sentenceSpans(Normalize(in))); n <= directCheck {
+		t.Fatalf("setup: %d sentences, need more than %d", n, directCheck)
+	}
+	if a := Assess(in); a.Level != LevelCrisis {
+		t.Errorf("Assess(%q) = %s, want crisis", in, a.Level)
 	}
 }
 

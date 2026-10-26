@@ -34,6 +34,14 @@ type pattern struct {
 	// reject, when set, inspects an RE2 match s[start:end] and reports that it
 	// must be discarded. It re-expresses v1 lookarounds.
 	reject func(s string, start, end int) bool
+	// maximal patterns are evaluated on their first match per sentence only.
+	// The expression must be such that this match contains every other match
+	// in the sentence (TestMaximalPatterns) and that no match can lie inside
+	// a denial (the denial shape has none of its words). Every scope that
+	// contains the first match then contains the others, so dispose judges
+	// no other match more severely. It keeps a pattern with an unbounded gap
+	// linear in the sentence length.
+	maximal bool
 	// filter is the derived prefilter (nil: none) and atoms its strongest
 	// flat atom set, used to find candidate sentences (see prefilter.go).
 	filter *filter
@@ -54,6 +62,12 @@ func patReject(expr string, reject func(s string, start, end int) bool) *pattern
 func patAnchored(expr string) *pattern {
 	p := pat(expr)
 	p.anchored = true
+	return p
+}
+
+func patMaximal(expr string) *pattern {
+	p := pat(expr)
+	p.maximal = true
 	return p
 }
 
@@ -148,9 +162,14 @@ var catalogue = []rule{
 		pat(`\b(?:goodbye\s*(?:everyone|forever|world|all)|this\s*is\s*(?:my\s*)?(?:goodbye|last\s*message|final\s*message|suicide\s*note)|(?:writing|wrote|written)\s*(?:my\s*)?(?:suicide|goodbye)\s*(?:note|letter)|(?:world|everyone|everybody|they)\s*(?:is|are|would\s*be|will\s*be)\s*better\s*(?:off\s*)?without\s*me|(?:want|wanna|wish|hope|like)\s*to\s*(?:sleep\s*forever|disappear\s*forever|never\s*wake\s*up|not\s*wake\s*up))\b`)),
 	// v1 en-end-everything. The "done with life" branch carried the lookahead
 	// (?!\s*admin); it is a separate pattern whose match is rejected by
-	// followedByAdmin ("I am done with life admin today").
+	// followedByAdmin ("I am done with life admin today"). The
+	// "hopeless ... want to end it" branch has an unbounded gap; it is a
+	// separate maximal pattern (its first match runs from the first "hopeless"
+	// to the last "want to end it" of the sentence), so repeated "hopeless"
+	// does not make matching quadratic.
 	v1Rule("en-end-everything", CategorySuicide, LevelCrisis,
-		pat(`\b(?:end(?:ing)?\s*(?:it|everything|things|my\s*pain\s*for\s*good)\s*(?:all|tonight|today|now|for\s*good|soon)|(?:want|wanna|going\s*to|gonna|plan(?:ning)?\s*to|ready\s*to|about\s*to|decided\s*to)\s*end\s*everything|(?:want|wanna)\s*to\s*stop\s*(?:existing|living|being\s*alive)|(?:don'?t|do\s*not|can'?t)\s*see\s*(?:the|any)\s*point\s*(?:in|of)\s*(?:living|life|being\s*alive|going\s*on|staying\s*alive)|life\s*(?:is\s*)?not\s*worth\s*living|hopeless[^.!?]*\b(?:want|wanna)\s*to\s*end\s*it|(?:nobody|no\s*one|no-one)\s*would\s*(?:miss|care\s*about|notice)\s*(?:me\s*)?if\s*i\s*(?:was|were|died|disappeared|(?:was|were)\s*gone|killed\s*myself))\b`),
+		pat(`\b(?:end(?:ing)?\s*(?:it|everything|things|my\s*pain\s*for\s*good)\s*(?:all|tonight|today|now|for\s*good|soon)|(?:want|wanna|going\s*to|gonna|plan(?:ning)?\s*to|ready\s*to|about\s*to|decided\s*to)\s*end\s*everything|(?:want|wanna)\s*to\s*stop\s*(?:existing|living|being\s*alive)|(?:don'?t|do\s*not|can'?t)\s*see\s*(?:the|any)\s*point\s*(?:in|of)\s*(?:living|life|being\s*alive|going\s*on|staying\s*alive)|life\s*(?:is\s*)?not\s*worth\s*living|(?:nobody|no\s*one|no-one)\s*would\s*(?:miss|care\s*about|notice)\s*(?:me\s*)?if\s*i\s*(?:was|were|died|disappeared|(?:was|were)\s*gone|killed\s*myself))\b`),
+		patMaximal(`\bhopeless[^.!?]*\b(?:want|wanna)\s*to\s*end\s*it\b`),
 		patReject(`\b(?:i'?m|im|i\s*am)\s*(?:so\s*)?done\s*with\s*(?:life|living|being\s*alive)\b`, followedByAdmin)),
 	v1Rule("en-overdose-means", CategorySelfHarm, LevelCrisis,
 		pat(`\b(?:(?:plan(?:ning)?\s*to|going\s*to|gonna|want\s*to|wanna|will|about\s*to|ready\s*to|trying\s*to)\s*(?:overdose|od\b)|(?:took|taken|swallowed|just\s*took)\s*(?:a\s*lot\s*of|all\s*(?:of\s*)?(?:my|the)|too\s*many|a\s*bunch\s*of|so\s*many|a\s*whole\s*(?:bottle|pack)\s*of|handfuls?\s*of)\s*(?:pills|meds|tablets|medication|medicine|sleeping\s*pills|painkillers)|(?:bought|got|have|found|made|tied)\s*(?:a\s*)?(?:rope|noose)\b|\bnoose\b|(?:stockpil\w*|saving\s*up|hoarding)\s*(?:my\s*)?(?:pills|meds|tablets|medication))\b`)),
@@ -207,10 +226,21 @@ var catalogue = []rule{
 	// "my friend wants to kill herself", "the character killed himself". The
 	// level applies only if the speaker adopts it ("me too"); otherwise the
 	// match is third-party and routes to elevated.
+	// The "wants to die" branch has no subject in the match; selfOrThing
+	// rejects it when the subject is the speaker's inner self ("part of me",
+	// "my soul": counted by en-inner-death-wish instead) or a device ("my
+	// laptop wants to die": an idiom).
 	thirdPersonRule("en-third-person-suicide", CategorySuicide,
-		pat(`\b(?:kill(?:s|ed|ing)?\s*(?:him|her|them)\s*sel(?:f|ves)|(?:end|ends|ended|ending)\s*(?:his|her|their)\s*(?:own\s*)?li(?:fe|ves)|(?:take|takes|took|taken|taking)\s*(?:his|her|their)\s*own\s*li(?:fe|ves)|wants\s*to\s*(?:die|be\s*dead|end\s*it\s*all))\b`)),
+		pat(`\b(?:kill(?:s|ed|ing)?\s*(?:him|her|them)\s*sel(?:f|ves)|(?:end|ends|ended|ending)\s*(?:his|her|their)\s*(?:own\s*)?li(?:fe|ves)|(?:take|takes|took|taken|taking)\s*(?:his|her|their)\s*own\s*li(?:fe|ves))\b`),
+		patReject(`\bwants\s*to\s*(?:die|be\s*dead|end\s*it\s*all)\b`, selfOrThing)),
 	thirdPersonRule("en-third-person-self-harm", CategorySelfHarm,
 		pat(`\b(?:hurt|hurts|hurting|harm|harms|harmed|harming|cut|cuts|cutting|burn|burns|burned|burnt|burning|hang|hangs|hanged|hanging|drown|drowns|drowned|drowning|shoot|shoots|shooting|starve|starves|starving)\s*(?:him|her|them)\s*sel(?:f|ves)\b`)),
+
+	// ---- Sela additions, ruleset 2026.10.26-2 ----
+	// "part of me wants to die", "my soul wants to be dead": the speaker's
+	// own death wish phrased through an inner self (v1 none).
+	newRule("en-inner-death-wish", CategorySuicide, LevelCrisis,
+		pat(`\b(?:part\s*of\s*me|everything\s*in\s*me|something\s*in\s*me|all\s*of\s*me|(?:the\s*)?rest\s*of\s*me|my\s*(?:whole\s*)?(?:heart|soul|body|mind|brain|spirit|self|being))\s*(?:(?:just|really|still|kinda|sometimes|literally|honestly|also|actually|lowkey|always|truly|secretly|now|only)\s*)*(?:wants?|wanted)\s*to\s*(?:die|be\s*dead|end\s*it\s*all|stop\s*existing|stop\s*living)\b`)),
 }
 
 // ruleIndex maps rule ids to catalogue positions.
@@ -253,6 +283,34 @@ func followedByAdmin(s string, _, end int) bool {
 	return strings.HasPrefix(strings.TrimLeft(s[end:], " \t\n\r\f"), "admin")
 }
 
+// selfOrThing rejects a third-person "wants to die" whose subject is the
+// speaker's inner self ("part of me", "everything in me", "my soul") or a
+// device ("my laptop", "my phone battery"). Adverbs between the subject and
+// "wants" are skipped ("part of me still wants to die").
+func selfOrThing(s string, start, _ int) bool {
+	prev, ps := tokenBefore(s, start)
+	for n := 0; n < 3 && subjectAdverbs[prev]; n++ {
+		prev, ps = tokenBefore(s, ps)
+	}
+	switch {
+	case prev == "me":
+		return true
+	case innerSelf[prev]:
+		det, _ := tokenBefore(s, ps)
+		return det == "my" || det == "whole"
+	}
+	return enDevices[prev]
+}
+
+var subjectAdverbs = setOf("just really still kinda sometimes literally honestly also actually lowkey always truly " +
+	"secretly now only even")
+
+var innerSelf = setOf("heart soul body mind brain spirit self being")
+
+var enDevices = setOf("laptop phone battery computer pc mac macbook iphone android tablet ipad charger car engine " +
+	"wifi router modem internet tv fridge fan printer console ps5 xbox switch controller headphones earbuds " +
+	"airpods keyboard mouse camera server app game plant plants battery's")
+
 // circumstantialLife rejects "capek hidup" when a circumstance follows
 // ("capek hidup kayak gini terus", "capek hidup di jakarta").
 func circumstantialLife(s string, _, end int) bool {
@@ -262,31 +320,64 @@ func circumstantialLife(s string, _, end int) bool {
 var circumstanceAfter = regexp.MustCompile(`^\s*(?:kayak|kaya|kek|kyk|seperti|spt|gini|begini|begitu|gitu|di\s|dengan\s|dgn\s|bareng\s|sama\s|ngekos|merantau|sendiri\s+di)`)
 
 // idiomaticDeath rejects a "mati" match that is an everyday idiom:
-//   - the adverb "mati-matian" (all-out effort), and
-//   - a device, power or plant subject directly before the match, optionally
-//     with a possessive pronoun in between ("baterai hp-ku mau mati",
-//     "hp gue mau mati nih", "lampunya mati aja").
+//   - the adverb "mati-matian" (all-out effort), after any branch; and
+//   - a device, power or plant subject before "mau mati", "mw mati", "mau
+//     modar" or "mati aja", the only forms a device can take ("baterai hp-ku
+//     mau mati", "lampunya mati aja"). A wish ("pengen", "ingin", "mending",
+//     "lebih baik") is never a device's, so those branches are not checked.
 //
-// A pronoun with no device before it ("aku mau mati") is never rejected.
+// The subject is the word before the match, past aspect words such as
+// "udah" ("hp-ku udah mau mati"). It is a device when it is a device noun
+// ("hp-ku", "lampunya") that is not governed by a preposition or verb ("di
+// depan laptop mau mati", "nunggu wifi mau mati" stay counted), or a device
+// noun plus a separate possessive pronoun ("hp gue mau mati") at the start of
+// a clause or after another device noun ("baterai hp aku mau mati"). In run-on
+// text "<device> aku" is read as a new subject ("dari tadi nunggu wifi aku mau
+// mati" stays counted). A pronoun with no device ("aku mau mati") is never
+// rejected.
 func idiomaticDeath(s string, start, end int) bool {
 	if matianAfter.MatchString(s[end:]) {
 		return true
 	}
-	prev, prevStart := tokenBefore(s, start)
+	m := s[start:end]
+	if !strings.HasPrefix(m, "mau") && !strings.HasPrefix(m, "mw") && !strings.HasPrefix(m, "mati") {
+		return false
+	}
+	prev, ps := tokenBefore(s, start)
+	for n := 0; n < 2 && aspectWords[prev]; n++ {
+		prev, ps = tokenBefore(s, ps)
+	}
 	if prev == "" {
 		return false
 	}
 	if isDevice(prev) {
-		return true
+		gov, _ := tokenBefore(s, ps)
+		return !deviceGovernors[gov]
 	}
 	if possessive[prev] {
-		before, _ := tokenBefore(s, prevStart)
-		return isDevice(before)
+		dev, ds := tokenBefore(s, ps)
+		if !isDevice(dev) {
+			return false
+		}
+		before, _ := tokenBefore(s, ds)
+		return before == "" || isDevice(before) || deviceLeadIns[before]
 	}
 	return false
 }
 
 var matianAfter = regexp.MustCompile(`^[\s-]*matian\b`)
+
+// aspectWords may stand between a device and "mati aja"/"mau mati".
+var aspectWords = setOf("mau mw udah udh sudah hampir bakal akan lagi lg keburu juga jg malah sering suka tiba-tiba")
+
+// deviceGovernors before a device noun make it an object or a place, not the
+// subject of "mau mati" ("nunggu wifi mau mati", "di depan laptop").
+var deviceGovernors = setOf("di depan dari ke sama dengan dgn pake pakai make nunggu nungguin menunggu main maen " +
+	"mainin gara-gara garagara gegara karena karna krn liat lihat ngeliat ngeliatin natap natapin menatap scroll " +
+	"buka ngecek cek benerin ngurus ngurusin ngadep ngadepin")
+
+// deviceLeadIns may open a clause before "<device> <pronoun> mau mati".
+var deviceLeadIns = setOf("eh duh aduh waduh haduh yah yaah wah anjir njir anjay astaga btw mana terus trus lalu tapi tp dan")
 
 // tokenBefore returns the word that ends just before i, separated from it by
 // spaces only, and its start offset.

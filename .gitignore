@@ -95,3 +95,6 @@ __pycache__/
 # Research corpus pipeline: raw API cache and open-access full-text cache (never commit full text)
 /data/research/corpus/.cache/
 /data/research/corpus/.cache/fulltext/
+
+# Go test binaries (go test -c)
+*.test

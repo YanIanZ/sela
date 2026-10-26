@@ -99,7 +99,7 @@ func evaluate(text string, states []state, skip map[string]bool) (denial bool) {
 				}
 				p.each(chunk, func(start, end int) bool {
 					hits = append(hits, hit{i, span{sent.start + start, sent.start + end}})
-					return false
+					return p.maximal
 				})
 			}
 		}
@@ -108,29 +108,27 @@ func evaluate(text string, states []state, skip map[string]bool) (denial bool) {
 		return false
 	}
 	c := shapeOf()
-	local := make([]state, len(catalogue))
-	for _, h := range hits {
+	ds := make([]state, len(hits))
+	attributed := false
+	for k, h := range hits {
 		d := c.dispose(&catalogue[h.rule], h.span)
 		if d == stateDenied || d == stateHedged {
 			denial = true
 		}
-		if d > local[h.rule] {
-			local[h.rule] = d
-		}
+		attributed = attributed || d == stateAttributed
+		ds[k] = d
 	}
-	adopt := false
-	for _, st := range local {
-		if st == stateAttributed {
-			adopt = c.adopted()
-			break
+	// Adoption promotes each attributed hit before hits are folded per rule,
+	// so a hedged denial of the same rule cannot mask it ("aku tidak mau
+	// bunuh diri, tapi temanku bilang dia mau bunuh diri. aku juga.").
+	adopt := attributed && c.adopted()
+	for k, h := range hits {
+		d := ds[k]
+		if d == stateAttributed && adopt {
+			d = stateCounted
 		}
-	}
-	for i, st := range local {
-		if st == stateAttributed && adopt {
-			st = stateCounted
-		}
-		if st > states[i] {
-			states[i] = st
+		if d > states[h.rule] {
+			states[h.rule] = d
 		}
 	}
 	return denial
@@ -197,10 +195,14 @@ func (x *atomIndex) sentencesWith(atom string) []int {
 		if si == len(x.sentences) {
 			break
 		}
-		if x.sentences[si].start <= pos {
-			out = append(out, si)
+		if x.sentences[si].start > pos {
+			// pos lies between kept sentences (in a skipped sentence or in
+			// punctuation): search on from the next kept sentence's start.
+			off = x.sentences[si].start
+			continue
 		}
-		off = max(pos+1, x.sentences[si].end)
+		out = append(out, si)
+		off = x.sentences[si].end
 	}
 	if x.cache == nil {
 		x.cache = map[string][]int{}
