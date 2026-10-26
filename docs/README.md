@@ -25,6 +25,7 @@ External event terms govern event eligibility and third-party rights. The repo's
 | [AI policy](AI_POLICY.md) | Allowed model work, validation, human control, truthful provenance |
 | [Meta integration](META_INTEGRATION.md) | Primary generation boundary, access verification, failure behavior |
 | [DeepSeek fallback](DEEPSEEK_FALLBACK.md) | Optional transparent generator fallback, explicit opt-in, Go prototype and safety gates |
+| [DeepSeek fallback](DEEPSEEK_FALLBACK.md) | Opt-in DeepSeek 1017 generation fallback contract, source protection and isolated Go prototype |
 | [Claude verifier](CLAUDE_VERIFIER.md) | Optional second-pass source-fidelity verification, independent consent, Go prototype and evidence limitations |
 | [Development](DEVELOPMENT.md) | Commands that work now and the future Go cutover |
 | [Validation and demo](VALIDATION.md) | Acceptance matrix, demonstration script, evidence |
