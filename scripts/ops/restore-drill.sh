@@ -80,7 +80,9 @@ if [ -z "$content" ]; then
   SELA_DATA_KEK="$("$sela_bin" keys generate-kek --env test | sed -n 's/^SELA_DATA_KEK=//p')"
   export SELA_DATA_KEK
   psql "$admin" -XAtqc "CREATE DATABASE $src_db" >/dev/null
-  SELA_DATABASE_URL="$src" "$sela_bin" migrate up >/dev/null
+  # The synthetic source database is empty, so there is nothing to back up;
+  # the reference only satisfies the data-migration gate and is recorded.
+  SELA_DATABASE_URL="$src" "$sela_bin" migrate up --backup-ref "synthetic-drill-empty-$suffix" >/dev/null
   SELA_DATABASE_URL="$src" "$sela_bin" ops canary write >/dev/null
   # d001: deleted before the backup (its key row is already a tombstone).
   # d002: alive at backup time, deleted afterwards (key row live in the
