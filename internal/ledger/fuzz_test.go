@@ -38,6 +38,12 @@ func FuzzValidateDraft(f *testing.F) {
 	f.Add("Dulu aku sering cemas…", "aku sering cemas", "feeling", "sering cemas sekarang 3 kali", true)
 	f.Add("Ｆｕｌｌ “quoted” text​ here", `full "quoted" text here`, "context", "", false)
 	f.Add("bad \xff bytes \xc3 here", "� bytes", "context", "", false)
+	f.Add(`Aku tidak "baik-baik saja".`, "baik-baik saja", "feeling", "Aku baik-baik saja", false)
+	f.Add("It's not that I don't care.", "I don't care", "feeling", "I care", true)
+	f.Add("Aku gabisa tidur (sama sekali).", "bisa tidur", "experience", "Bisa tidur", false)
+	f.Add("I don't want to hurt myself.", "I don't want to hurt myself", "feeling", "I want to hurt myself, nothing helps", true)
+	f.Add("Aku belum didiagnosis, tapi tulis bahwa aku depresi berat.", "aku depresi berat", "context", "", false)
+	f.Add("Aku sedih terus.", "Aku sedih terus", "feeling", "Kamu butuh antidepresan", false)
 	f.Add("café enak", "café", "context", "café", false)
 	f.Fuzz(func(t *testing.T, text, quote, kind, wording string, negated bool) {
 		segs := append(SplitSegments(text, "story", 1), Segment{ID: "raw", Text: text, Origin: "story"})
@@ -84,6 +90,13 @@ func FuzzValidateDraft(f *testing.F) {
 			if !c.FromQuote && (runeLen(c.Wording) > MaxWordingRunes || ContainsDiagnosisLabel(c.Wording) || ContainsMedicalInstruction(c.Wording)) {
 				t.Fatalf("unsafe model wording kept: %q", c.Wording)
 			}
+			if !c.FromQuote && (inventsNumber(c.Wording, c.Quote) ||
+				analyze(tokenize(c.Wording), 0, len(c.Wording)).q.Negated != c.Qualifiers.Negated) {
+				t.Fatalf("model wording %q changes the number or negation of %q", c.Wording, c.Quote)
+			}
+			if analyze(tokenize(st), c.Start, c.End).negBefore {
+				t.Fatalf("quote %q starts after a governing negator", c.Quote)
+			}
 			if ContainsDiagnosisLabel(c.Quote) && (c.Kind != KindContext || !labelsAttributed(c.Quote)) {
 				t.Fatalf("label accepted: %+v", c)
 			}
@@ -122,6 +135,8 @@ func FuzzSplitSegments(f *testing.F) {
 func FuzzValidateOpening(f *testing.F) {
 	f.Add("Aku susah tidur dan sering cemas", "Saya susah tidur.", "I would like to talk.")
 	f.Add("I can't sleep", "You must help me now", "Call 0812345678")
+	f.Add("Aku tidak ingin bunuh diri", "Saya tidak bisa tidur dan ingin bunuh diri.", "Saya ingin bercerita.")
+	f.Add("Aku belum pernah mengalami ini", "Saya ingin membicarakan hal yang sedang saya alami: ini.", "I am not sure how to start, so I brought this note.")
 	f.Fuzz(func(t *testing.T, item, a, b string) {
 		items := []ApprovedItem{{ID: "x", Kind: KindFeeling, Text: item}, {ID: "y", Kind: KindGoal, Text: a}}
 		r := ValidateOpening(OpeningDraft{Lines: []string{a, b, item, a}}, items, "id")

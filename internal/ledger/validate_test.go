@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 func seg(id, text string) Segment { return Segment{ID: id, Text: text, Origin: "story"} }
@@ -518,6 +519,51 @@ func TestValidateDraftPicksOccurrenceThatKeepsMeaning(t *testing.T) {
 	}
 	if c.Qualifiers.Negated {
 		t.Errorf("second occurrence is not negated")
+	}
+}
+
+// TestValidateDraftBoundedWork guards against super-linear analysis of
+// adversarial input. The analysis cases took 8-10 s each before the fix
+// (without the race detector) and take well under a second now (with it);
+// the bound is generous so that slow CI machines do not flake.
+func TestValidateDraftBoundedWork(t *testing.T) {
+	timed := func(name string, bound time.Duration, f func()) {
+		t.Helper()
+		start := time.Now()
+		f()
+		if d := time.Since(start); d > bound {
+			t.Errorf("%s took %v (bound %v)", name, d, bound)
+		}
+	}
+	// Oversized wording is reverted without being analysed; what remains is
+	// linear-time pattern matching, so this bound is only a smoke check.
+	segs := []Segment{seg("s1", "Aku capek.")}
+	raw := `{"claims":[{"segment_id":"s1","quote":"Aku capek","kind":"feeling","text":"` + strings.Repeat("my ", 21000) +
+		`","subject":"self","time":"unspecified","certainty":"stated","negated":false}]}`
+	if len(raw) > MaxDraftBytes {
+		t.Fatalf("draft is %d bytes", len(raw))
+	}
+	timed("oversized wording", 20*time.Second, func() {
+		d, err := ParseDraft([]byte(raw))
+		if err != nil {
+			t.Fatal(err)
+		}
+		r := ValidateDraft(d, segs)
+		if len(r.Accepted) != 1 || !slices.Equal(r.Accepted[0].Notes, []string{NoteWordingTooLong}) {
+			t.Errorf("result = %+v", r)
+		}
+	})
+	// Analyze accepts any span of any segment.
+	for _, tc := range []struct{ name, text string }{
+		{"possessive run", strings.Repeat("my ", 20000) + "friend said I am tired"},
+		{"frame run", strings.Repeat("x ", 10000) + "aku " + strings.Repeat("katanya ", 5000)},
+		{"speaker run", strings.Repeat("x ", 6000) + "aku " + strings.Repeat("temanku bilang ", 6000)},
+	} {
+		s := seg("s1", tc.text)
+		timed(tc.name, 4*time.Second, func() {
+			Analyze(s, 0, len(tc.text))
+			Analyze(s, len(tc.text)-9, len(tc.text))
+		})
 	}
 }
 

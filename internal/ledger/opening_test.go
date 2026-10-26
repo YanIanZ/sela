@@ -24,6 +24,22 @@ var mixItems = []ApprovedItem{
 	{ID: "m2", Kind: KindImpact, Text: "Jadi nggak bisa fokus kerja"},
 }
 
+// negItems state two denials; a line may not keep one and drop the other.
+var negItems = []ApprovedItem{
+	{ID: "a", Kind: KindFeeling, Text: "Aku tidak ingin bunuh diri"},
+	{ID: "b", Kind: KindExperience, Text: "Aku tidak bisa tidur"},
+}
+
+var negItemsEN = []ApprovedItem{
+	{ID: "a", Kind: KindFeeling, Text: "I don't want to hurt myself"},
+	{ID: "b", Kind: KindExperience, Text: "I can't sleep"},
+}
+
+var mixedNegItems = []ApprovedItem{
+	{ID: "i1", Kind: KindFeeling, Text: "Aku susah tidur dan sering cemas sebelum ujian"},
+	{ID: "i2", Kind: KindImpact, Text: "Aku tidak bisa fokus"},
+}
+
 func TestValidateOpening(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -66,6 +82,25 @@ func TestValidateOpening(t *testing.T) {
 		{"code-switched impact", mixItems, "Jadi I nggak bisa fokus kerja.", "", []string{"m2"}},
 		{"code-switched spelling is not stemmed", mixItems, "I can't focus on kerja.", OpeningUngrounded, nil},
 		{"code-switched ungrounded", mixItems, "Skripsi saya ditolak dosen.", OpeningUngrounded, nil},
+		{"code-switched pressure", mixItems, "Saya overthinking terus soal skripsi, you must help me.", OpeningManipulative, nil},
+		{"code-switched guarantee", mixItems, "Kalau dibantu, I'm guaranteed to fokus kerja.", OpeningManipulative, nil},
+		{"code-switched number", mixItems, "Aku overthinking terus soal skripsi for 2 weeks.", OpeningNumber, nil},
+		{"code-switched number word", mixItems, "Jadi nggak bisa fokus kerja selama three days.", OpeningNumber, nil},
+		{"code-switched identifier", mixItems, "Jadi nggak bisa fokus kerja, DM aku di @nadia_demo.", OpeningIdentifier, nil},
+		{"code-switched phone", mixItems, "Aku overthinking terus, call me at 0812-3456-7890.", OpeningIdentifier, nil},
+		// Negation is compared word by word against the items.
+		{"ID keeps one item's negator, drops another's", negItems, "Saya tidak bisa tidur dan ingin bunuh diri.", OpeningUngrounded, nil},
+		{"ID keeps both negations", negItems, "Saya tidak bisa tidur dan tidak ingin bunuh diri.", "", []string{"a", "b"}},
+		{"EN keeps one item's negator, drops another's", negItemsEN, "I can't sleep and I want to hurt myself.", OpeningUngrounded, nil},
+		{"EN keeps both negations", negItemsEN, "I can't sleep and I don't want to hurt myself.", "", []string{"a", "b"}},
+		{"ID adds negation while another item has one", mixedNegItems, "Saya tidak cemas sebelum ujian.", OpeningUngrounded, nil},
+		{"ID other item's negation is not borrowed", mixedNegItems, "Saya susah tidur dan sering cemas sebelum ujian.", "", []string{"i1"}},
+		{"code-switched flip", mixItems, "Jadi I bisa fokus kerja.", OpeningUngrounded, nil},
+		{"request despite a negated item", []ApprovedItem{{ID: "c", Kind: KindContext, Text: "Aku belum pernah cerita ke siapa pun"}}, "Saya ingin bercerita.", "", []string{IntentBasis}},
+		{"flip of a negated item", []ApprovedItem{{ID: "c", Kind: KindContext, Text: "Aku belum pernah cerita ke siapa pun"}}, "Saya pernah cerita ke siapa pun.", OpeningUngrounded, nil},
+		{"hedged item as a request", []ApprovedItem{{ID: "h", Kind: KindGoal, Text: "Aku nggak tahu harus mulai dari mana"}}, "Saya ingin tahu harus mulai dari mana.", "", []string{"h"}},
+		{"hedged item flipped", []ApprovedItem{{ID: "h", Kind: KindGoal, Text: "Aku nggak tahu harus mulai dari mana"}}, "Saya tahu harus mulai dari mana.", OpeningUngrounded, nil},
+		{"hedge line", idItems, "Saya belum yakin bagaimana memulainya.", "", []string{IntentBasis}},
 		{"too long", idItems, strings.Repeat("susah tidur ", 30), OpeningTooLong, nil},
 		{"empty", idItems, "   ", OpeningEmpty, nil},
 	}
@@ -135,6 +170,20 @@ func TestTemplateOpening(t *testing.T) {
 			{ID: "u2", Kind: KindFeeling, Text: "Aku sering cemas"},
 		}, "id", 1, [][]string{{"u2"}}, "Saya ingin membicarakan hal yang sedang saya alami: Aku sering cemas."},
 		{"long value truncated", []ApprovedItem{long}, "id", 1, [][]string{{"l1"}}, "Saya ingin membicarakan"},
+		// Frame words ("alami", "talk") never count against another item's
+		// negation, so the concern line is not dropped.
+		{"ID frame words do not collide with items", []ApprovedItem{
+			{ID: "c", Kind: KindFeeling, Text: "Aku sering cemas sebelum kuliah"},
+			{ID: "x", Kind: KindContext, Text: "Aku belum pernah mengalami ini sebelumnya"},
+			{ID: "i", Kind: KindImpact, Text: "Kuliahku berantakan"},
+			{ID: "g", Kind: KindGoal, Text: "Aku ingin tahu pilihan konseling"},
+		}, "id", 3, [][]string{{"c"}, {"i"}, {"g"}}, "Saya ingin membicarakan hal yang sedang saya alami: Aku sering cemas sebelum kuliah."},
+		{"EN frame words do not collide with items", []ApprovedItem{
+			{ID: "c", Kind: KindFeeling, Text: "I feel anxious before class"},
+			{ID: "x", Kind: KindContext, Text: "I can't talk to my parents"},
+			{ID: "g", Kind: KindGoal, Text: "I want to know my options"},
+		}, "en", 2, [][]string{{"c"}, {"g"}}, "I would like to talk about what I have been going through: I feel anxious before class."},
+		{"negated items keep their negation", negItems, "id", 1, [][]string{{"a"}}, "Saya ingin membicarakan hal yang sedang saya alami: Aku tidak ingin bunuh diri."},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
