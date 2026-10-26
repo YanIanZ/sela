@@ -260,6 +260,30 @@ def screen(input_file: Path, output_dir: Path, limit: int = 400) -> dict:
     with queue_path.open("w", encoding="utf-8", newline="\n") as f:
         for r in shortlist:
             f.write(json.dumps(r, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
+    # Human-review worksheet: blank verdicts are deliberate and must be completed
+    # by a reader; the automatic title screen never grants RAG/training permission.
+    review_path = output_dir / "sela_human_review_worksheet.csv"
+    with review_path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=[
+            "candidate_id","doi","first_publication_date","title","automated_priority",
+            "abstract_screening","screening_reason","reviewer","review_date",
+            "full_text_appraised","study_design_verified","risk_of_bias",
+            "finding_direction","indonesia_transferability","license_reuse_verified",
+            "rag_ready","notes"
+        ])
+        writer.writeheader()
+        for r in shortlist:
+            writer.writerow({
+                "candidate_id":r["candidate_id"],"doi":r.get("doi",""),
+                "first_publication_date":r["first_publication_date"],"title":r["title"],
+                "automated_priority":r["screening"]["priority"],
+                "abstract_screening":"NOT_REVIEWED",
+                "screening_reason":"","reviewer":"","review_date":"",
+                "full_text_appraised":"NO","study_design_verified":"NO",
+                "risk_of_bias":"NOT_EVALUATED","finding_direction":"UNKNOWN",
+                "indonesia_transferability":"NOT_EVALUATED",
+                "license_reuse_verified":"NO","rag_ready":"NO","notes":"",
+            })
     manifest = {
         "screening_version": RULESET_VERSION,
         "source_file": input_file.name,
@@ -275,6 +299,8 @@ def screen(input_file: Path, output_dir: Path, limit: int = 400) -> dict:
         "queue_year_counts": dict(sorted(collections.Counter(r["first_publication_date"][:4] for r in shortlist).items())),
         "queue_priority_counts": dict(sorted(collections.Counter(r["screening"]["priority"] for r in shortlist).items())),
         "queue_family_counts": dict(sorted(collections.Counter(r["screening"]["family"] for r in shortlist).items())),
+        "review_worksheet_sha256": hashlib.sha256(review_path.read_bytes()).hexdigest(),
+        "review_worksheet_count": len(shortlist),
         "index_sha256": hashlib.sha256(index_path.read_bytes()).hexdigest(),
         "queue_sha256": hashlib.sha256(queue_path.read_bytes()).hexdigest(),
         "limitations": [
