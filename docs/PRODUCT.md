@@ -28,7 +28,7 @@ A crisis fixture interrupts the normal flow before AI or ordinary handoff. It do
 
 ## Feature decisions
 
-Required: text-first care journey, Meta text integration, manual path, fictional professional view, seeded follow-up, Indonesian and English, clear unavailable/revoked/expired states.
+Required: text-first care journey, Meta text integration, manual path, fictional professional view, seeded follow-up, Indonesian and English, clear unavailable/revoked/expired states. Optional, separately consented Anthropic Sonnet 5.5 source-fidelity review is proposed for the current Go migration; never a substitute for Meta generation or human approval ([contract](CLAUDE_VERIFIER.md)).
 
 Deferred: transcription of a synthetic sample with a verified Meta capability. No live microphone capture in the first demo.
 
