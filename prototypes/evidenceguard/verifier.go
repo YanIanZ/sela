@@ -163,7 +163,9 @@ func (c *Client) Verify(ctx context.Context, in Input) (Report, error) {
 		"max_tokens": 1000,
 		"system":     systemPrompt,
 		"messages":   []map[string]string{{"role": "user", "content": string(userJSON)}},
+		"thinking":   map[string]string{"type": "between_tools"},
 		"output_config": map[string]any{
+			"effort": "low",
 			"format": map[string]any{"type": "json_schema", "schema": responseSchema()},
 		},
 	}
