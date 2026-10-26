@@ -8,7 +8,7 @@ Checked 26 October 2026: [Meta cookbook](https://dev.meta.ai/docs/cookbook) docu
 
 ## MVP integration
 
-Use one server-side Meta text adapter for synthetic intake/consultation drafts. The Go application owns consent, crisis checks, matching, validation and transitions. Model output never grants application authority. Structured output is validated again locally; provider schema compliance alone is insufficient.
+Use one server-side Meta text adapter for synthetic intake/consultation drafts. [EvidenceGuard](CLAUDE_VERIFIER.md) may optionally review Meta-derived, source-bound claims with Claude after a separate user consent. Claude never drafts in place of an unavailable Meta call; Meta remains the demonstrable generation provider. The Go application owns consent, crisis checks, matching, validation and transitions. Model output never grants application authority. Structured output is validated again locally; provider schema compliance alone is insufficient.
 
 Do not invent a base URL, model ID, token format or SDK requirement. T2 verifies the account-supported endpoint/authentication/model and records non-sensitive probe evidence. Proposed configuration names are `META_API_KEY`, `META_MODEL` and optional verified endpoint configuration; they are design names only, not current `.env.example` variables. Provider credentials never enter the browser.
 
@@ -16,7 +16,7 @@ Bound payload, output, operation duration, retries and concurrent calls. Retry o
 
 ## Evidence and optional scope
 
-Record model ID, request/operation ID, latency and validation outcome, excluding story/prompt/output text. Keep mock contract tests separate from live synthetic probes. A live demo must show actual Meta provenance; unavailable access must remain visibly unavailable.
+Record model ID, request/operation ID, latency and validation outcome, excluding story/prompt/output text. Keep mock contract tests separate from live synthetic probes. A live demo must show actual Meta provenance; unavailable access must remain visibly unavailable. A separately labeled `live_anthropic` review must not be presented as Meta processing or clinical correctness. Verify final hackathon rules about third-party models.
 
 Synthetic-sample transcription is optional after the text journey works and access plus ID/EN quality are checked. No speech synthesis, image generation, segmentation or fine-tuning is required for the care-journey MVP. Add a capability only when it serves the journey and is documented/tested; using every advertised model is not a requirement.
 
