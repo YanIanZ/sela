@@ -10,6 +10,7 @@ Status authority: [SPEC.md §T](../SPEC.md#t-tasks). All runtime stages are pend
 | Rules before inference | T4 | Crisis, consent, brief version/approval and share isolation tests pass |
 | Meta text slice | T5 | Validated live synthetic output plus honest manual/unavailable paths |
 | Optional DeepSeek availability fallback | T5b | Default-OFF consented routing, fail-closed errors, source provenance and mock/live evidence separately recorded |
+| Optional DeepSeek availability fallback | T5b | Default-OFF consented routing, fail-closed errors, source provenance and separate mock/live evidence |
 | Optional verification layer | T5a | Separate Anthropic consent, allowed fixture evidence, version-bound report, honest unavailable/manual review; mock + live evidence clearly distinguished |
 | User journey | T6 | ID/EN intake, fixture discovery and review/approval |
 | Professional continuity | T7 | Simulated handoff/inbox/consultation/follow-up; revocation demonstrated |
