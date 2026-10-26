@@ -1,0 +1,38 @@
+name: Sela DeepSeek fallback prototype
+on:
+  push:
+    branches:
+      - feat/deepseek-flash-1017-fallback
+    paths:
+      - 'prototypes/generationfallback/**'
+      - '.github/workflows/generationfallback-prototype.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  go-fallback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: prototypes/generationfallback/go.mod
+          cache: false
+      - name: Format and persist Go prototype
+        run: |
+          gofmt -w prototypes/generationfallback/*.go
+          git config user.name "YanIanZ"
+          git config user.email "194694347+YanIanZ@users.noreply.github.com"
+          git add prototypes/generationfallback/*.go
+          if ! git diff --cached --quiet; then
+            git commit -m "style(fallback): gofmt source and offline tests"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+      - name: Run offline race-enabled unit tests
+        working-directory: prototypes/generationfallback
+        run: go test -race -count=1 ./...
