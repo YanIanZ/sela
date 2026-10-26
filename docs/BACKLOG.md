@@ -1,14 +1,14 @@
 # Sela v3 backlog
 
-Updated: 2026-10-26 · branch `feat/sela-v3-pilot`. Status: **planning document. The backend foundation, the design documents and the planning documents are in progress; nothing in v3 is implemented or verified yet.**
-Authority: owner brief v3 (2026-10-26) → [SPEC.md](../SPEC.md) → the v3 decisions in the decision log: [D-026 to D-050](DECISION_LOG.md#d-026) (PM decisions of 2026-10-26) and [D-051](DECISION_LOG.md#d-051), [D-052](DECISION_LOG.md#d-052) (engineering defaults) → this backlog. The backlog orders and specifies work; it does not change requirements by itself. Related: [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) (what is kept, merged, retired or paused, and why), [ADR-0002](adr/ADR-0002-persistence-accounts-and-encryption.md) (persistence, accounts, encryption), [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md) (AI routing), [API v3](API_SPEC_V3.md), [implementation status](IMPLEMENTATION_STATUS.md), [requirements traceability](REQUIREMENTS_TRACEABILITY.md), [roadmap](ROADMAP.md), [blockers](BLOCKERS.md).
+Updated: 2026-10-26 · branch `feat/sela-v3-pilot`. Status: **planning document.** The backend foundation is **verified locally, and its CI run on draft PR #9 passed** (commit `0ff3341`; [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26)): S-173 and S-260 are verified locally, and the other foundation items have their backend part verified locally (for S-262, criterion 1). The branch is open as draft PR #9 against main. The design and planning documents are in progress; ruleset `-5` is a WIP snapshot in draft PR #8 to main; the frontend shell (uncommitted in the working tree of `feat/sela-v3-pilot`), the AI provider layer (draft PR #10, stacked on `feat/sela-v3-pilot`), research and reading content (draft PR #11 to main), the P3 listening backend and operations (each on a separate branch, not merged) are in progress. Nothing in v3 is verified live.
+Authority: owner brief v3 (2026-10-26) → [SPEC.md](../SPEC.md) → the v3 decisions in the decision log: [D-026](DECISION_LOG.md#d-026) (owner direction), [D-027 to D-050](DECISION_LOG.md#d-027), [D-054](DECISION_LOG.md#d-054), [D-055](DECISION_LOG.md#d-055) and [D-056](DECISION_LOG.md#d-056) (PM decisions of 2026-10-26), [D-051](DECISION_LOG.md#d-051) and [D-052](DECISION_LOG.md#d-052) (engineering defaults) and [D-053](DECISION_LOG.md#d-053) (merge record) → this backlog. The backlog orders and specifies work; it does not change requirements by itself. Related: [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) (what is kept, merged, retired or paused, and why), [ADR-0002](adr/ADR-0002-persistence-accounts-and-encryption.md) (persistence, accounts, encryption), [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md) (AI routing), [API v3](API_SPEC_V3.md), [implementation status](IMPLEMENTATION_STATUS.md), [requirements traceability](REQUIREMENTS_TRACEABILITY.md), [roadmap](ROADMAP.md), [blockers](BLOCKERS.md).
 
 ## 1. How to read this
 
 - **IDs.** `S-NNN`, grouped in blocks by journey stage (S-001 onboarding, S-020 conversation, … S-260 operations). IDs are stable: a retired item keeps its ID and says so; numbers are never reused.
 - **Priority.** **pilot-critical**: the controlled pilot cannot start without it (a Definition-of-Done capability of brief §15, a safety control, or a legal or security precondition for holding real health data). **pilot-important**: the pilot can start without it, but it should land during or soon after. **post-pilot**: after the pilot, or paused with stated prerequisites. Every item gives its reason. Totals are in §5. These words replace the earlier labels P0, P1 and P2, which shared their prefix with the milestones; P1 to P8 and `later` always name milestones.
 - **Status.** The status words (planned, in progress, implemented, verified locally, verified live, blocked externally, and above them ready for controlled pilot and public release) are defined once in [SPEC §G](../SPEC.md#g-goal) and are not restated here. The checks each level needs are in the [roadmap](ROADMAP.md#2-release-ladder).
-- **Evidence** stays `—` until the item is done. Items whose code is being written now say "in progress" and name the code; that code is uncommitted and unverified.
+- **Evidence** stays `—` until work exists. An item in progress names its files and where they are: committed, uncommitted in the working tree of `feat/sela-v3-pilot`, or on a separate branch that is not merged yet; work in progress is never evidence. An item or part that is verified locally names its recorded run in [implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands).
 - **Owner role** names the responsible role, not a person: Go backend engineer, frontend engineer, UX designer, AI engineer, research engineer, security/accessibility reviewer, PM, or the owner (YanIanZ) for external actions.
 - **Cross-references.** `FM-`, `CA-`, `DX-`: [feature matrix](DENGARIN_FEATURE_MATRIX.md). `F-`: ADR-0002 acceptance criteria. `AT-`, `RR-`, `VC-`, `CK-`, `DM-`, `EV-`: ADR-0003. `D-`: [decisions](DECISION_LOG.md). `B-`: [blockers](BLOCKERS.md) B-1 to B-15.
 - **Port rule.** Dengar.in behaviour is ported from the in-repo v1 code (the same tree as Dengar.in 2.0), never from the original web project, which lacks later fixes (DX-16). Credits stay in [provenance](SELA_PROVENANCE.md).
@@ -62,11 +62,11 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Acceptance criteria:**
   1. ADR-0002 F-30, F-31 and F-33 pass.
   2. The notice shows both deletion dates and the hosting-region label once B-15 is decided, and contains none of "anonim sepenuhnya", "tidak bisa dilacak", "completely anonymous", "untraceable".
-  3. The notice explains before start that losing the cookie (private window, cleared data, another device) means the notes cannot be opened again.
+  3. The notice explains before start that losing the cookie (private window, cleared data, another device) means the notes cannot be opened again, and that a restore of Sela's database from a backup ends guest access in the same way (`guest-storage-2026-11-01.2`, written in the integration pass, confirmed by the PM, [D-056](DECISION_LOG.md#d-056); ADR-0002 §11).
   4. The notice is announced once, focus moves to its heading, and Esc or Back never loses the visitor's place (2.4.3).
   5. BASE.
 - **Risks:** Shared devices; the hosting region is unknown until B-15.
-- **Owner:** Go backend engineer (API, purge); UX designer and frontend engineer (notice). **Milestone:** P2. **Status:** in progress (backend). **Evidence:** in progress — `internal/account`, `internal/httpapi/v3_*.go`, uncommitted, not verified; frontend not started.
+- **Owner:** Go backend engineer (API, purge); UX designer and frontend engineer (notice). **Milestone:** P2. **Status:** in progress (backend verified locally; the notice and the other frontend parts are not done). **Evidence:** backend: ADR-0002 F-30, F-31 and F-33 pass (`internal/account`, `internal/httpapi`, `internal/fixtures`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); criteria 2 to 5 need the frontend.
 
 #### S-003 Create an account, sign in and recover without email
 - **Problem:** People who want to keep notes across devices need an account, Sela has no email provider, and a lost password must not silently mean lost access.
@@ -83,7 +83,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   5. The copy says plainly that losing both the password and every recovery code means the account cannot be recovered.
   6. BASE.
 - **Risks:** Lost credentials are unrecoverable by design; school and campus networks share one address and can hit rate limits (ADR-0002 §9).
-- **Owner:** Go backend engineer; frontend engineer; security/accessibility reviewer. **Milestone:** P2. **Status:** in progress (backend). **Evidence:** in progress — `internal/account`, `internal/httpapi/v3_*.go`, uncommitted, not verified.
+- **Owner:** Go backend engineer; frontend engineer; security/accessibility reviewer. **Milestone:** P2. **Status:** in progress (backend verified locally; the forms are not done). **Evidence:** backend: F-16 to F-29 pass (`internal/account`, `internal/httpapi`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); criteria 2 to 6 need the frontend.
 
 #### S-004 Upgrade a guest to an account without losing anything
 - **Problem:** A guest who wants to keep notes beyond 30 days must not have to start over.
@@ -97,7 +97,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. The language and age band already given are not asked again (3.3.7).
   3. BASE.
 - **Risks:** The user may not save the recovery codes; the acknowledgement step keeps offering them.
-- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2. **Status:** in progress (backend). **Evidence:** in progress — `internal/account`, uncommitted, not verified.
+- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2. **Status:** in progress (backend verified locally). **Evidence:** backend: F-32 passes (`internal/httpapi`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); criteria 2 and 3 need the frontend.
 
 #### S-005 Age band at the start
 - **Problem:** Wording, help and protections must fit the person's age, but asking for a birth date collects more than needed.
@@ -112,7 +112,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   3. No setting, text size or flow is chosen from the age band alone; people aged 50+ get the same defaults as everyone else (brief §6).
   4. BASE.
 - **Risks:** Self-declaration is not verification (PP 17/2025 Pasal 22); people may answer untruthfully. The four answers cannot tell 15 from 16–17, which D-031 needs before any minors band is enabled; S-212 criterion 3 closes this ([conflict matrix](CONFLICT_MATRIX.md) #49).
-- **Owner:** Go backend engineer; UX designer. **Milestone:** P2. **Status:** in progress (backend). **Evidence:** in progress — `internal/account`, `internal/httpapi/v3_*.go`, uncommitted, not verified.
+- **Owner:** Go backend engineer; UX designer. **Milestone:** P2. **Status:** in progress (backend verified locally). **Evidence:** backend: F-36 passes (`internal/httpapi`, `internal/account`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); criteria 2 to 4 need the frontend.
 
 #### S-006 Choose consents during onboarding
 - **Problem:** People need to know which company processes their words, where and why, before they write, and must be able to say no and still use Sela.
@@ -178,7 +178,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   6. Each reply is labelled with its generator, for example "Ditulis dengan bantuan AI (Meta Muse Glimmer)" (ADR-0003 §10).
   7. BASE.
 - **Risks:** The room drifts into an intake form; a cold start (B-1) makes the first reply slow, so writing must stay possible while waiting.
-- **Owner:** Go backend engineer; frontend engineer; UX designer. **Milestone:** P3. **Status:** planned. **Evidence:** —
+- **Owner:** Go backend engineer; frontend engineer; UX designer. **Milestone:** P3. **Status:** in progress (backend, on branch `feat/sela-v3-listening`, uncommitted, not merged). **Evidence:** in progress — `internal/listen`, migration 0100 and the contract draft `docs/api/V3_LISTENING_AND_NOTES.md` on that branch; nothing verified.
 
 #### S-021 Replies that listen: contextual, no judgement, no diagnosis, no dependency
 - **Problem:** Generic chatbots repeat empathy templates, push solutions, judge, diagnose, pretend to be professionals or invite dependence.
@@ -336,7 +336,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   4. Deleting an entry deletes the reflections and memory items derived from it and marks summaries that quote it stale.
   5. BASE.
 - **Risks:** People may treat the journal as a medical record; the copy says these are their own notes (D-039).
-- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P3. **Status:** planned. **Evidence:** —
+- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P3. **Status:** in progress (backend, on branch `feat/sela-v3-listening`, uncommitted, not merged). **Evidence:** in progress — `internal/notes` and migration 0200 on that branch; nothing verified.
 
 #### S-051 Optional reflection prompts
 - **Problem:** A blank page is hard to start.
@@ -394,7 +394,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   4. Edit and delete work; deleted check-ins leave the timeline at once.
   5. BASE.
 - **Risks:** Mood charts read as a diagnosis; show history as a list first, any chart with a text equivalent (1.1.1).
-- **Owner:** Frontend engineer; Go backend engineer. **Milestone:** P3. **Status:** planned. **Evidence:** —
+- **Owner:** Frontend engineer; Go backend engineer. **Milestone:** P3. **Status:** in progress (backend, on branch `feat/sela-v3-listening`, uncommitted, not merged). **Evidence:** in progress — migration 0200 (journal and check-in) and `internal/notes` on that branch; nothing verified.
 
 ### 3.6 Timeline (S-070 to S-079)
 
@@ -412,7 +412,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   4. Paginated; keyboard navigable; reachable from the home and the navigation (2.4.5).
   5. BASE.
 - **Risks:** Long histories on slow connections; paginate (BASE-11).
-- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P3. **Status:** planned. **Evidence:** —
+- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P3. **Status:** in progress (backend, on branch `feat/sela-v3-listening`, uncommitted, not merged). **Evidence:** in progress — `internal/timeline` on that branch; nothing verified.
 
 #### S-071 Find things in my timeline
 - **Problem:** Long histories are hard to scan.
@@ -444,7 +444,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   5. For ages 15–17 memory is opt-in only (S-210).
   6. BASE.
 - **Risks:** People feel watched; the screen explains what memory is for and that it is off unless chosen.
-- **Owner:** Go backend engineer; frontend engineer; UX designer. **Milestone:** P3. **Status:** planned. **Evidence:** —
+- **Owner:** Go backend engineer; frontend engineer; UX designer. **Milestone:** P3. **Status:** in progress (backend, on branch `feat/sela-v3-listening`, uncommitted, not merged). **Evidence:** in progress — `internal/memory` and migration 0300 on that branch; nothing verified.
 
 #### S-081 Memory suggestions from Sela
 - **Problem:** Adding memory by hand is effort.
@@ -678,7 +678,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   3. Each item is verified at authoring time (S-245) or stays unpublished.
   4. BASE.
 - **Risks:** The non-commercial licence limits later business models.
-- **Owner:** Research engineer; UX designer; frontend engineer. **Milestone:** P6. **Status:** planned. **Evidence:** —
+- **Owner:** Research engineer; UX designer; frontend engineer. **Milestone:** P6. **Status:** in progress (content, committed on branch `feat/sela-v3-research` as `64aa3f6`, draft PR #11 to main, not merged). **Evidence:** in progress — `data/content/reading`, `docs/content/READING_LIBRARY.md` and `tests/content` on that branch; its 79 content tests passed locally on 2026-10-26 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); nothing verified while the work is not on the delivery branch.
 
 #### S-141 Small exercises ("latihan kecil")
 - **Problem:** Some people want a small, safe step to try (FM-19).
@@ -712,7 +712,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Problem:** Urgent risk must never be missed or wait for a model.
 - **Outcome:** A deterministic screen runs on every text a person writes before it is stored and before any model call, in ID, EN and code-switched language.
 - **Priority:** pilot-critical. Brief §11; D-036; RR-1.
-- **Scope:** The v2 `internal/safety` lexicon (ported from Dengar.in, rule IDs kept) at ruleset -5, merged forward from PR #6 (D-034); applied to every v3 write route; new vectors for multi-turn context, teen slang (ID/EN), older-adult phrasing, quotes and lyrics, negation and code-switching, with each vector tagged by age register (discovery research audit of 2026-10-26, recommendation R-10).
+- **Scope:** The v2 `internal/safety` lexicon (ported from Dengar.in, rule IDs kept) at ruleset -5, merged forward from main once its PR is merged (draft PR #8; D-034 status); applied to every v3 write route; new vectors for multi-turn context, teen slang (ID/EN), older-adult phrasing, quotes and lyrics, negation and code-switching, with each vector tagged by age register (discovery research audit of 2026-10-26, recommendation R-10).
 - **Non-goals:** A model-only classifier; contacting anyone automatically.
 - **Depends on:** —
 - **Acceptance criteria:**
@@ -722,7 +722,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   4. Worst-case screening time stays linear in input length (benchmark).
   5. Each stored assessment records the ruleset version that produced it (DB test; SPEC V38).
 - **Risks:** False negatives on new phrasing; false positives that interrupt ordinary talk. Second safeguards are in S-151 and S-222.
-- **Owner:** AI engineer (safety); security/accessibility reviewer. **Milestone:** P2 (ruleset -5) and P3 (v3 routes). **Status:** in progress. **Evidence:** in progress — ruleset -5 fix loop on `feat/v2-go-meta-runtime` (`internal/safety/**`), not yet merged forward; v2 evidence for ruleset -4 (1,329 vectors) is v2 scope.
+- **Owner:** AI engineer (safety); security/accessibility reviewer. **Milestone:** P2 (ruleset -5) and P3 (v3 routes). **Status:** in progress. **Evidence:** in progress — ruleset -5: a WIP snapshot committed on `fix/safety-ruleset-5` (`f619677`, `internal/safety/**`, based on main `7fc6678`) as draft PR #8 to main ("WIP — DO NOT MERGE"), re-verification pending; the fix loop continues in the working tree of that branch (D-034 status: the PM's route is a new PR against main); its CI runs passed, which does not verify the ruleset; v2 evidence for ruleset -4 (1,329 vectors) is v2 scope.
 
 #### S-151 Crisis support that keeps the person's words
 - **Problem:** Dengar.in redirected away from the chat on a crisis match and lost the conversation (DX-03), and refused to save heavy journal entries (DX-02); v2 deletes the story.
@@ -771,7 +771,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   3. Both stay visible at 320 CSS px and never hide the focused element (2.4.11).
   4. BASE.
 - **Risks:** Browser history on shared devices still shows Sela; the help text says how to clear it.
-- **Owner:** Frontend engineer; UX designer. **Milestone:** P2. **Status:** planned. **Evidence:** —
+- **Owner:** Frontend engineer; UX designer. **Milestone:** P2. **Status:** in progress (uncommitted in the working tree of `feat/sela-v3-pilot`). **Evidence:** in progress — `web/src/components/shell/`, `web/src/lib/quickExit.ts` and `e2e/v3-shell.e2e.mjs`, uncommitted; nothing verified.
 
 #### S-154 Re-verify every help line before real users
 - **Problem:** Help-line details checked on 2026-10-14/15 have changed: Healing119's site now says 24 hours and lists WhatsApp while the Kemenkes article of 2025-08-07 says morning to night; LISA does not state "free"; Yayasan Pulih contacts moved to `?page_id=201` with new chat lines.
@@ -817,7 +817,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   4. The person sees their consent history in plain language.
   5. BASE.
 - **Risks:** Withdrawal cannot recall data already sent to a provider; the screen says so (ADR-0003 §8.2).
-- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2 (foundation), P3 and P5 (provider purposes). **Status:** in progress (foundation). **Evidence:** in progress — `internal/account`, `internal/httpapi/v3_*.go`, uncommitted, not verified.
+- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2 (foundation), P3 and P5 (provider purposes). **Status:** in progress (foundation backend verified locally; the provider purposes come with P3 and P5). **Evidence:** foundation: F-35 passes (`internal/account`, `internal/httpapi`, `internal/db`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); criterion 2 needs the P3 and P5 operations, criteria 4 and 5 the frontend.
 
 #### S-172 See and end my sessions
 - **Problem:** People on shared devices need to see where they are signed in and sign out remotely.
@@ -831,7 +831,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. Revoking another device is confirmed and its effect stated.
   3. BASE.
 - **Risks:** Device labels are coarse; that is intended (minimisation).
-- **Owner:** Frontend engineer; Go backend engineer. **Milestone:** P2. **Status:** in progress (backend). **Evidence:** in progress — `internal/account`, uncommitted, not verified.
+- **Owner:** Frontend engineer; Go backend engineer. **Milestone:** P2. **Status:** in progress (backend verified locally). **Evidence:** backend: F-28 passes (`internal/httpapi`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); criteria 2 and 3 need the frontend.
 
 #### S-173 Encryption at rest and crypto-shredding
 - **Problem:** A stolen database or backup must not expose people's notes, and deletion must reach backups.
@@ -844,7 +844,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   1. ADR-0002 F-12 to F-15 pass.
   2. Each feature migration's plaintext-column list is reviewed in its PR; a scan finds no marker plaintext in any column (F-15 extended to every feature).
 - **Risks:** A lost key-encryption key makes all content unreadable; custody is an owner duty (runbook).
-- **Owner:** Go backend engineer; security/accessibility reviewer. **Milestone:** P2. **Status:** in progress. **Evidence:** in progress — `internal/vault`, uncommitted, not verified.
+- **Owner:** Go backend engineer; security/accessibility reviewer. **Milestone:** P2. **Status:** verified locally (foundation; criterion 2 is repeated by every feature migration). **Evidence:** F-12 to F-15 pass (`internal/vault`, `internal/account`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)).
 
 #### S-174 Delete my account, my guest data, or one record and what came from it
 - **Problem:** Deletion that leaves readable copies (DX-05) breaks trust and the law.
@@ -860,7 +860,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   4. Each feature has a test that deleting its records removes their derivatives.
   5. BASE.
 - **Risks:** People delete by mistake; the confirm step says it cannot be undone.
-- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2 (account) and P3/P4 (per-record rules). **Status:** in progress (backend, account deletion). **Evidence:** in progress — `internal/account`, `internal/httpapi/v3_*.go`, uncommitted, not verified.
+- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2 (account) and P3/P4 (per-record rules). **Status:** in progress (account and guest deletion backend verified locally; the per-record rules come with P3 and P4). **Evidence:** backend: F-08, F-14 and F-40 pass (`internal/db`, `internal/account`, `internal/httpapi`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); criteria 2 and 3 need the frontend, criterion 4 the feature records.
 
 #### S-175 Export my data
 - **Problem:** People need their own copy, readable and machine-readable (UU PDP Pasal 7, 13).
@@ -875,7 +875,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   3. The export says in ID and EN that a downloaded copy cannot be recalled by Sela.
   4. BASE.
 - **Risks:** Exports left on shared devices.
-- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2 (foundation sections), P3/P4 (feature sections). **Status:** in progress (foundation). **Evidence:** in progress — `internal/account`, `internal/httpapi/v3_*.go`, uncommitted, not verified.
+- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2 (foundation sections), P3/P4 (feature sections). **Status:** in progress (foundation sections verified locally; the feature sections come with P3 and P4). **Evidence:** foundation: F-39 passes, HTML escaping of user text is tested (`internal/httpapi/v3_me_test.go`) and the export carries the ID/EN sentence that downloaded copies cannot be recalled (`internal/account/export.go`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); criterion 4 needs the export screen.
 
 #### S-176 Access audit I can read
 - **Problem:** People cannot see who opened their shared summary or what happened to their account.
@@ -889,7 +889,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. The list is paginated, in plain language, and included in the export.
   3. BASE.
 - **Risks:** Event wording that alarms; review copy with the UX designer.
-- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2 (foundation), P4 (recipient events). **Status:** in progress (backend). **Evidence:** in progress — `internal/account`, uncommitted, not verified.
+- **Owner:** Go backend engineer; frontend engineer. **Milestone:** P2 (foundation), P4 (recipient events). **Status:** in progress (foundation events verified locally; recipient events come with P4). **Evidence:** foundation: F-38 passes (`internal/httpapi`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); the list screen needs the frontend.
 
 #### S-177 Privacy policy, terms and per-provider disclosures
 - **Problem:** v2's texts say "there is no database" and cover a demo; real use needs complete, honest texts.
@@ -900,10 +900,10 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Depends on:** S-171.
 - **Acceptance criteria:**
   1. A test checks each text has every Pasal 21 element and no forbidden phrase (F-33 pattern).
-  2. Backup and retention statements equal ADR-0002 §11 and the configuration.
+  2. Backup and retention statements equal ADR-0002 §11 and the configuration. While `terms-privacy-2026-11-01.2` is current, the key-dump interval (an operator cron, [runbook §8](RUNBOOK.md#8-backup-and-restore)) stays at one hour or shorter, because the text states a one-hour restore window; a longer interval needs a new policy version first.
   3. BASE.
-- **Risks:** Texts drift from code; the equality tests above guard it.
-- **Owner:** PM; UX designer; Go backend engineer. **Milestone:** P2. **Status:** in progress (foundation texts). **Evidence:** in progress — `internal/fixtures/v3/policies.json`, `internal/fixtures/policies_v3.go`, uncommitted, not verified; legal review blocked externally (B-10).
+- **Risks:** Texts drift from code; the equality tests above guard it. The key-dump interval is operator configuration that no test sees, so criterion 2 relies on the runbook rule.
+- **Owner:** PM; UX designer; Go backend engineer. **Milestone:** P2. **Status:** in progress (foundation texts implemented and verified locally; the `terms_privacy` text is now `terms-privacy-2026-11-01.2`, with the restore window of D-055, and the `guest_storage` text `guest-storage-2026-11-01.2`, with the guest case of a restore; both versions come with the integration pass, committed on `feat/sela-v3-pilot` (draft PR #9), and the PM confirms the restore sentence of the privacy text as written, including its second clause, and that `guest_storage` text, [D-056](DECISION_LOG.md#d-056)). **Evidence:** `internal/fixtures/v3/policies.json` and `internal/fixtures/policies_v3.go` in the foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); `TestGuestStoragePolicyText` (F-33, which now also checks the restore sentence) and `TestTermsPrivacyStatesBackupWindows` (added with D-055) pass; criterion 1 (a Pasal 21 element test for every text) and the per-provider texts are not done; legal review blocked externally (B-10).
 
 #### S-178 Legal readiness for a real-user pilot
 - **Problem:** Sela will process health and possibly children's data across borders; Indonesian law sets duties before users arrive.
@@ -916,7 +916,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   1. Each item has a document or a recorded owner decision.
   2. The pilot gate in the [roadmap](ROADMAP.md#2-release-ladder) checks every item.
 - **Risks:** PP 33/2026 (reported in force from 2027-01-16; official text unverified) may add duties.
-- **Owner:** PM (drafts); owner (review, registration). **Milestone:** P7. **Status:** blocked externally (B-10, B-15). **Evidence:** —
+- **Owner:** PM (drafts); owner (review, registration). **Milestone:** P7. **Status:** blocked externally (B-10, B-15). **Evidence:** drafts in progress on branch `feat/sela-v3-ops`, uncommitted, not merged (`docs/compliance/`); nothing verified.
 
 #### S-179 Email verification and recovery (later)
 - **Problem:** Some people prefer email recovery.
@@ -976,7 +976,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. Token contrast passes `docs/design/tools/contrast.py` (4.5:1 text, 3:1 components) in both themes.
   3. The PM's review against brief §4 (clarity, consistency, readability, task completion, privacy control, accessibility) is recorded.
 - **Risks:** A cosmetic redesign accepted as a redesign; the PM review checks structure and interaction.
-- **Owner:** UX designer (design lead); PM (review). **Milestone:** P2. **Status:** in progress. **Evidence:** in progress — `docs/design/DESIGN_DIRECTION.md`, `INFORMATION_ARCHITECTURE.md`, `SCREENS.md`, `CONTENT_STYLE.md`, `ACCESSIBILITY_CRITERIA.md`, `tokens.css` and `tools/` (`contrast.py`, `sync_docs.py`), uncommitted; no contrast run and no PM review (criterion 3) recorded yet.
+- **Owner:** UX designer (design lead); PM (review). **Milestone:** P2. **Status:** in progress. **Evidence:** in progress — `docs/design/DESIGN_DIRECTION.md`, `INFORMATION_ARCHITECTURE.md`, `SCREENS.md`, `CONTENT_STYLE.md`, `ACCESSIBILITY_CRITERIA.md`, `tokens.css` and `tools/` (`contrast.py`, `sync_docs.py`), committed with the planning documents (`4cadbfd`); no contrast run and no PM review (criterion 3) recorded yet.
 
 #### S-191 Design system and app shell
 - **Problem:** Features need consistent components, navigation and states.
@@ -991,7 +991,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   3. Every route sets a unique title in the active language (2.4.2).
   4. BASE.
 - **Risks:** Rebuilding while v2 pages still exist; the v2 routes stay only in development, test and demo (ADR-0002 §12).
-- **Owner:** Frontend engineer; UX designer. **Milestone:** P2. **Status:** planned. **Evidence:** —
+- **Owner:** Frontend engineer; UX designer. **Milestone:** P2. **Status:** in progress (uncommitted in the working tree of `feat/sela-v3-pilot`). **Evidence:** in progress — `web/src/components/shell/`, `web/src/components/ui/` and `e2e/v3-shell.e2e.mjs`, uncommitted; nothing verified.
 
 #### S-192 Display settings ("Akses cepat")
 - **Problem:** People read differently; some need bigger text, more contrast or no motion (FM-40).
@@ -1019,7 +1019,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. A reply's language matches the person's language or their message's language and is marked with `lang` (3.1.2).
   3. Copy is reviewed by a fluent speaker of each language on the team.
 - **Risks:** Live bilingual quality is unmeasured until B-1.
-- **Owner:** Frontend engineer; UX designer; AI engineer. **Milestone:** P2 onward. **Status:** planned. **Evidence:** —
+- **Owner:** Frontend engineer; UX designer; AI engineer. **Milestone:** P2 onward. **Status:** in progress (uncommitted in the working tree of `feat/sela-v3-pilot`). **Evidence:** in progress — `web/src/i18n/id/`, `web/src/i18n/en/` and `web/src/i18n/namespaces.ts`, uncommitted; nothing verified.
 
 #### S-194 Automated WCAG 2.2 AA gate in CI
 - **Problem:** The e2e scan uses WCAG 2.0/2.1 tags only, fails only on serious findings, checks 390 px instead of 320 px, and every page has the same title.
@@ -1046,7 +1046,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. Every finding is fixed or recorded with severity; no open finding blocks a task.
   3. The report states who reviewed, with which tools, and that it is not user research.
 - **Risks:** The team lacks some assistive technologies; record what could not be tested.
-- **Owner:** Security/accessibility reviewer; UX designer; PM. **Milestone:** each of P2 (its screens), P3, P4, P5; final in P7 and P8. **Status:** planned. **Evidence:** —
+- **Owner:** Security/accessibility reviewer; UX designer; PM. **Milestone:** each of P2 to P6 (that milestone's screens); final in P7 and P8. **Status:** planned. **Evidence:** —
 
 #### S-196 Slow connections and small devices
 - **Problem:** Many people use low-end phones and slow mobile data.
@@ -1092,7 +1092,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. The UI explains that consent is not access; withdrawal works.
   3. BASE.
 - **Risks:** The attestation method may not satisfy the law (S-212).
-- **Owner:** Go backend engineer; UX designer. **Milestone:** P2 (backend), P7 (UI). **Status:** in progress (backend). **Evidence:** in progress — `internal/account`, uncommitted, not verified.
+- **Owner:** Go backend engineer; UX designer. **Milestone:** P2 (backend), P7 (UI). **Status:** in progress (backend verified locally; the screens are P7). **Evidence:** backend: F-37 passes (`internal/httpapi`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)).
 
 #### S-212 Legal and provider gate for minors
 - **Problem:** Whether and how Sela may serve 15–17-year-olds depends on rules and provider terms the team cannot settle alone.
@@ -1137,7 +1137,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   4. Production refuses test doubles (F-10).
   5. Provider outage, timeout, malformed output and database failure each have a test (the Dengar.in fault-injection scenarios, FM-49).
 - **Risks:** The state machine grows untestable; keep it pure and table-driven.
-- **Owner:** AI engineer; Go backend engineer. **Milestone:** P3 (Meta-only path), P5 (complete). **Status:** planned. **Evidence:** —
+- **Owner:** AI engineer; Go backend engineer. **Milestone:** P3 (Meta-only path), P5 (complete). **Status:** in progress (committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified). **Evidence:** in progress — `internal/ai` (router, rules, provenance) on that branch; nothing verified.
 
 #### S-221 Meta open-weight model as the primary generator
 - **Problem:** The owner requires a Meta open-weight model on Modal for every generative task.
@@ -1151,7 +1151,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. Every AI output in the UI names its generator.
   3. Live: smoke test, EV-1 and EV-4 recorded on staging.
 - **Risks:** Cold start and GPU cost (ADR-0001); generator choice pending (B-7).
-- **Owner:** AI engineer. **Milestone:** P3 (test double), P7 (live). **Status:** planned; live use blocked externally (B-1). **Evidence:** —
+- **Owner:** AI engineer. **Milestone:** P3 (test double), P7 (live). **Status:** in progress (the generator through the router, committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified); live use blocked externally (B-1). **Evidence:** in progress — `internal/ai/generator.go` on that branch; nothing verified.
 
 #### S-222 Claude Sonnet 5.5 verifier
 - **Problem:** AI summaries and health statements can distort what the person said or add unsupported claims.
@@ -1167,7 +1167,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   4. VC-8 release rules have one test per verdict and issue.
   5. Live: EV-2 and EV-3 recorded on staging.
 - **Risks:** Refusals on mental-health text (threshold `verifier.refusal_rate`); Anthropic's usage policy changes on 2026-11-12.
-- **Owner:** AI engineer. **Milestone:** P5. **Status:** planned; live use blocked externally (B-8). **Evidence:** —
+- **Owner:** AI engineer. **Milestone:** P5. **Status:** in progress (committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified); live use blocked externally (B-8). **Evidence:** in progress — `internal/ai/anthropic`, `internal/ai/verifier` and `eval/verifier` on that branch; nothing verified.
 
 #### S-223 Deterministic output guards and health-claim detector
 - **Problem:** No model may be trusted to avoid diagnosis, medication advice, a professional persona or manipulation.
@@ -1181,7 +1181,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. The same guard set runs on Meta and DeepSeek output (test).
   3. Output with an unknown action, an unknown target or an invalid schema is rejected before display (test).
 - **Risks:** False positives withhold good replies; measure the rate on the synthetic set.
-- **Owner:** AI engineer. **Milestone:** P3. **Status:** planned. **Evidence:** —
+- **Owner:** AI engineer. **Milestone:** P3. **Status:** in progress (committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified). **Evidence:** in progress — `internal/ai/guard` on that branch; nothing verified.
 
 #### S-224 DeepSeek as fallback generator
 - **Problem:** When the Meta model is unavailable, people get no reply.
@@ -1198,7 +1198,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   5. A DeepSeek listening reply is released only after a Claude check of it passes. If that check, permitted at preflight, then fails or becomes unavailable, the reply is withheld and DeepSeek never checks it (ADR-0003 RR-8, RR-9, RR-11). The Claude check is ADR-0003's means of meeting V20 for this brief-v3 task, not owner direction (§17 O-6, O-8).
   6. When the Claude route is not permitted for the user or its daily spend ceiling is already reached (no current `ai_provider_anthropic` consent, an age band without Claude, the verifier disabled or the `meta_only` profile, the per-user verifier limit reached, or Sela's verifier daily spend ceiling `SELA_VERIFIER_DAILY_USD` already reached that day), a Meta outage on a listening reply makes zero DeepSeek calls and ends in the no-AI path: `routing.deepseek_listening_calls_without_claude_route = 0`, one test per reason (ADR-0003 RR-2, RR-4 (i)).
 - **Risks:** Processing in the PRC; empty `json_object` responses.
-- **Owner:** AI engineer. **Milestone:** P5. **Status:** planned; live use blocked externally (B-9). **Evidence:** —
+- **Owner:** AI engineer. **Milestone:** P5. **Status:** in progress (committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified); live use blocked externally (B-9). **Evidence:** in progress — `internal/ai/deepseek` on that branch; nothing verified.
 
 #### S-225 DeepSeek as alternative verifier (later)
 - **Problem:** A Claude outage makes verifier-gated features abstain.
@@ -1225,7 +1225,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. Phone, NIK, email, card numbers, URLs and handles are replaced by placeholders (tests).
   3. Logs hold provider, task, route, outcome, latency and token counts only (log canary).
 - **Risks:** Over-redaction hurts reply quality.
-- **Owner:** AI engineer; Go backend engineer. **Milestone:** P3. **Status:** planned. **Evidence:** —
+- **Owner:** AI engineer; Go backend engineer. **Milestone:** P3. **Status:** in progress (committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified). **Evidence:** in progress — `internal/ai/minimize` on that branch; nothing verified.
 
 #### S-227 Meta-only demo profile
 - **Problem:** The Meta hackathon submission (deadline 2026-11-04 21:00 ET) must not depend on, or hide, other providers (D-050).
@@ -1238,7 +1238,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   1. Zero Anthropic and DeepSeek calls under the profile (test).
   2. AT-3 and AT-4 abstain with an explanation.
 - **Risks:** Live Meta needs B-1 before the deadline.
-- **Owner:** AI engineer; PM. **Milestone:** P3. **Status:** planned; the organizers' answer is blocked externally (B-12). **Evidence:** —
+- **Owner:** AI engineer; PM. **Milestone:** P3. **Status:** in progress (committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified); the organizers' answer is blocked externally (B-12). **Evidence:** in progress — the `meta_only` profile in `internal/ai` on that branch; nothing verified.
 
 #### S-228 AI evaluation
 - **Problem:** Without measured baselines, the verifier's benefit, error rates, latency, cost and fallback quality are guesses.
@@ -1252,7 +1252,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. Offline and test-double results are recorded; live results only after B-1, B-8 and B-9.
   3. Every report says it measures engineering properties on synthetic text.
 - **Risks:** Labellers are not clinicians; recorded as a limitation.
-- **Owner:** AI engineer; research engineer. **Milestone:** P5. **Status:** planned; live runs blocked externally (B-1, B-8, B-9). **Evidence:** —
+- **Owner:** AI engineer; research engineer. **Milestone:** P5. **Status:** in progress (committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified); live runs blocked externally (B-1, B-8, B-9). **Evidence:** in progress — `eval/verifier` and a new `eval/thresholds.json` version on that branch; nothing verified.
 
 #### S-229 Fine-tuning proposal gate (later)
 - **Problem:** Fine-tuning is sometimes proposed without a measured need.
@@ -1280,7 +1280,7 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
   1. Re-hashing the committed screening files matches the manifest.
   2. `corpus_pipeline.py verify` reports 0 violations; `tests/research` pass.
 - **Risks:** None significant.
-- **Owner:** Research engineer. **Milestone:** P6. **Status:** planned. **Evidence:** —
+- **Owner:** Research engineer. **Milestone:** P6. **Status:** in progress. **Evidence:** `268a101` on branch `feat/sela-v3-research` (draft PR #11 to main, not merged): `data/research/.gitattributes` and `docs/research/.gitattributes` pin LF for every hashed output and register document, and docs 06 and 10 carry dated superseded notes; `corpus_pipeline.py verify` reports 0 violations and `tests/research` pass locally and in CI on PR #11. Not done: the CI path filter (the workflow owner must add the paths listed in `docs/research/CORPUS_PIPELINE.md`) and the design flags in `web/src/pages/Research.tsx`.
 
 #### S-241 Resolve unchecked dates and wrong design labels
 - **Problem:** R002, R013, R065 and R100 lack a day-precision primary date, and R065 and R100 support feature rows; R032 and R083 are labelled RCT wrongly.
@@ -1304,7 +1304,7 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
   1. The offline rebuild stays byte-reproducible.
   2. Every new field, including `limitations`, is null when unknown; `findings` and `limitations` can be set only through a reviewer override with name and date (a `verify` check rejects any other source).
 - **Risks:** None significant.
-- **Owner:** Research engineer. **Milestone:** P6. **Status:** planned. **Evidence:** —
+- **Owner:** Research engineer. **Milestone:** P6. **Status:** in progress (committed on branch `feat/sela-v3-research` as `268a101`, draft PR #11 to main, not merged). **Evidence:** in progress — `scripts/research/corpus/v3fields.py` and the corpus changes on that branch; the local research checks passed on 2026-10-26 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); nothing verified while the work is not on the delivery branch.
 
 #### S-243 Search the gaps v3 needs
 - **Problem:** The register has no direct records on listening, journaling, consultation preparation or accessibility, two on adults 50+ (neither digital), and none on adolescent consent or confidentiality. Its help-seeking, safety and privacy records are dominated by students and young adults and include no Indonesian or code-switching crisis-detection evidence (discovery research audit of 2026-10-26, §5).
@@ -1315,7 +1315,7 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 - **Depends on:** S-242.
 - **Acceptance criteria:** The run is frozen with its queries and manifest; the screening is reproducible.
 - **Risks:** Few Indonesian-language sources in indexed databases.
-- **Owner:** Research engineer. **Milestone:** P6. **Status:** planned. **Evidence:** —
+- **Owner:** Research engineer. **Milestone:** P6. **Status:** in progress (committed on branch `feat/sela-v3-research` as `268a101`, draft PR #11 to main, not merged). **Evidence:** in progress — `scripts/research/v3_gap_search.py`, `data/research/v3_gap_search/` and `docs/research/V3_GAP_SEARCH.md` on that branch; the local research checks passed on 2026-10-26 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); nothing verified while the work is not on the delivery branch.
 
 #### S-244 Evidence map for v3 features
 - **Problem:** The evidence map covers only v2 features; 75 of 100 records map to no feature. Brief §9 asks for evidence on listening, journaling, help-seeking, consultation preparation, continuity, adolescents, adults, older adults, the Indonesian context, accessibility, safety and privacy.
@@ -1329,7 +1329,7 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
   2. The map has a row for each feature, topic and population listed in the scope; a test fails if one is missing.
   3. Rows without evidence say so as declared gaps, and each row says whether it rests on titles and abstracts or on appraised full text.
 - **Risks:** Abstract-level inference mistaken for appraisal; labels say which level each row is.
-- **Owner:** Research engineer. **Milestone:** P6. **Status:** planned. **Evidence:** —
+- **Owner:** Research engineer. **Milestone:** P6. **Status:** in progress (committed on branch `feat/sela-v3-research` as `268a101`, draft PR #11 to main, not merged). **Evidence:** in progress — `data/research/corpus/evidence_map_v3.json`, `scripts/research/v3_evidence.py` and `docs/research/EVIDENCE_MAP_V3.md` on that branch; the local research checks passed on 2026-10-26 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); nothing verified while the work is not on the delivery branch.
 
 #### S-245 Check that sources support the claims, and verify reading content
 - **Problem:** Only 6 of the research-doc statements were spot-checked against their abstracts; reading content must be checked before publication.
@@ -1342,7 +1342,7 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
   1. Each checked statement records source, level checked (abstract or full text) and result.
   2. No reading item is published without a recorded verification.
 - **Risks:** Licences that forbid text processing; those items stay unverified and unpublished.
-- **Owner:** Research engineer; AI engineer. **Milestone:** P6. **Status:** planned. **Evidence:** —
+- **Owner:** Research engineer; AI engineer. **Milestone:** P6. **Status:** in progress (committed on branch `feat/sela-v3-research` as `268a101`, draft PR #11 to main, not merged). **Evidence:** in progress — `data/research/corpus/claim_check_v3.json` on that branch; the local research checks passed on 2026-10-26 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); nothing verified while the work is not on the delivery branch.
 
 #### S-246 Human appraisal of the evidence
 - **Problem:** No record has had full-text critical appraisal; all are `not_reviewed`.
@@ -1400,7 +1400,7 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 - **Acceptance criteria:**
   1. ADR-0002 F-01 to F-09 and F-46 pass locally and in CI.
 - **Risks:** Toolchain change affects the Dockerfile and runbook.
-- **Owner:** Go backend engineer. **Milestone:** P2. **Status:** in progress. **Evidence:** in progress — `internal/db`, `cmd/sela/database.go`, `cmd/sela/cli.go`, `.github/workflows/v2.yml`, `go.mod`, uncommitted, not verified.
+- **Owner:** Go backend engineer. **Milestone:** P2. **Status:** verified locally ([SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26)): criterion 1 passes locally and in CI (`v2.yml` run 40405475962 on draft PR #9, implementation status §1); if a later CI run fails in these packages, the item counts as implemented until a fix passes. **Evidence:** F-01 to F-09 and F-46 pass (`internal/db`, `internal/db/dbtest`, `cmd/sela`) on Go 1.26.10 (D-054), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)).
 
 #### S-261 Separate environments
 - **Problem:** Demo or staging data must never mix with real data, and production must refuse test shortcuts.
@@ -1415,10 +1415,10 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
   3. In the demo, AI features run on live providers with synthetic data or on labelled test doubles (D-046); test-double output is labelled as such and never shown as live (SPEC V35, V42) (e2e on the demo configuration).
   4. Demo fixtures load only in the demo environment; staging and production refuse to start with them (configuration test; SPEC V42).
 - **Risks:** Configuration drift between hosts; the guards fail closed.
-- **Owner:** Go backend engineer. **Milestone:** P2. **Status:** in progress. **Evidence:** in progress — `internal/config`, uncommitted, not verified.
+- **Owner:** Go backend engineer. **Milestone:** P2. **Status:** in progress (startup guards implemented and verified locally; criterion 1 waits for row 52, criteria 2 to 4 for the demo build). **Evidence:** F-10 and F-11 pass (`internal/config`, `cmd/sela`, `internal/db`), foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); the guard still refuses the test double in the demo ([conflict matrix](CONFLICT_MATRIX.md) row 52).
 
 #### S-262 Backup and restore
-- **Problem:** Notes must survive failures, and a restore must never bring deleted accounts back.
+- **Problem:** Notes must survive failures, and a restore must honour deletions. One residual window remains: an account deleted after the newest key dump can come back after a total loss of the live database until a deletion journal exists in the backup storage (ADR-0002 §11; accepted for a controlled pilot and revisited before a public release, D-055).
 - **Outcome:** Daily content and key dumps with 30-day and 7-day retention, a reconcile step after restore, and a monthly restore drill (ADR-0002 §11).
 - **Priority:** pilot-critical. Brief §7 (clear backup policy), §10 (backup/restore).
 - **Scope:** `scripts/ops/` backup, restore and drill; `sela restore reconcile`; the canary record; storage in the hosting region.
@@ -1427,21 +1427,22 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 - **Acceptance criteria:**
   1. ADR-0002 F-44 passes locally.
   2. A drill on the hosted environment is recorded in the runbook with time-to-restore.
-- **Risks:** Backup storage target undecided (B-3, B-15).
-- **Owner:** Go backend engineer. **Milestone:** P2 (local), P7 (hosted). **Status:** in progress (local scripts); hosted part blocked externally (B-3, B-15). **Evidence:** in progress — `scripts/ops/backup.sh`, `restore.sh`, `restore-drill.sh`, uncommitted, not verified.
+  3. After every restore, Sela announces it in ID and EN in two places, as the privacy text `terms-privacy-2026-11-01.2` promises: an in-app notice that every visitor sees on their next visit after the restore, until they dismiss it (also without a session, because the restore ended every session), and a post on Sela's public status page. Both say what [runbook §8](RUNBOOK.md#8-backup-and-restore) lists under "After a restore, tell users", including that an account deleted in the hour before a total loss may have come back and should be deleted again, and that guests have lost access to their guest data, which the guest purge removes on schedule, also when it was deleted in that hour and came back (`guest-storage-2026-11-01.2`). The notice has a state in [screens](design/SCREENS.md) and its copy in [content style](design/CONTENT_STYLE.md) (design lead, S-190; not specified yet); an e2e test on a restored test database shows it in both languages. Milestones: the in-app notice is **P2**, with the app shell and sign-in (S-191, S-003); the status page and its address are part of the hosting setup (S-263), so the status-page post is **P7**.
+- **Risks:** Backup storage target undecided (B-3, B-15); the restore revival window above (D-055); the privacy text states it (S-177) and promises that every restore is announced (criterion 3, planned; RUNBOOK §8); without a status page and the in-app notice the privacy text's promise is not kept, so both are a gate for "ready for controlled pilot", and until they exist no restore of a pilot database may happen without a direct notice to every affected user through the app ([D-056](DECISION_LOG.md#d-056); [runbook §8](RUNBOOK.md#8-backup-and-restore)).
+- **Owner:** Go backend engineer; frontend engineer and UX designer (the in-app notice); owner (the status page's host). **Milestone:** P2 (criterion 1 and the in-app notice of criterion 3), P7 (criterion 2 and the status-page post of criterion 3). **Status:** in progress: criterion 1 verified locally (CI passed on draft PR #9, [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26)); criterion 3 (the in-app restore notice and the status-page post) planned; criterion 2, the hosted drill, blocked externally (B-3, B-15). **Evidence:** F-44 passes: `scripts/ops/restore-drill.sh` and the `cmd/sela` backup and restore tests, foundation commit `0ff3341`, verified locally on 2026-10-26 and in CI on draft PR #9 ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands)); criterion 2 needs the hosted environment; criterion 3 has no design state, code or status page yet.
 
 #### S-263 Deployment and rollback
 - **Problem:** Nothing is deployed; a pilot needs staging, demo and production with a way back.
 - **Outcome:** The same container image deployed to staging, demo and production over HTTPS, with secrets from a secret manager, migrations as a separate step and a rehearsed rollback.
 - **Priority:** pilot-critical. Brief §10 (deployment, rollback, environment separation); pilot gate (hosting).
-- **Scope:** Host choice and region (owner), HSTS, secret manager, a migration step with a backup reference, rollback (previous image plus down-last or restore), smoke test, uptime check.
+- **Scope:** Host choice and region (owner), HSTS, secret manager, a migration step with a backup reference, rollback (previous image plus down-last or restore), smoke test, uptime check, and Sela's public status page with its address (where the restore post of S-262 criterion 3 appears).
 - **Non-goals:** Multi-instance (S-268).
 - **Depends on:** S-261, S-262.
 - **Acceptance criteria:**
   1. Staging and demo deployed; smoke test passes; rollback rehearsed and recorded in the runbook.
   2. Production refuses to start with any guard of S-261 failing.
 - **Risks:** Data residency (UU 17/2023 Pasal 346–348 question).
-- **Owner:** Go backend engineer; owner (host). **Milestone:** P7. **Status:** blocked externally (B-3, B-15). **Evidence:** —
+- **Owner:** Go backend engineer; owner (host). **Milestone:** P7. **Status:** blocked externally (B-3, B-15). **Evidence:** deployment files in progress on branch `feat/sela-v3-ops`, uncommitted, not merged (`deploy/v3`, `docs/DEPLOYMENT.md`); nothing verified.
 
 #### S-264 Deploy the Meta model on Modal
 - **Problem:** No live Meta output has ever been produced.
@@ -1467,10 +1468,10 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
   1. ADR-0002 F-41 and F-43 pass; the log canary covers every v3 route.
   2. Each alert fires in a staging test.
 - **Risks:** Metrics that identify people at low volume; aggregate only.
-- **Owner:** Go backend engineer. **Milestone:** P7. **Status:** planned. **Evidence:** —
+- **Owner:** Go backend engineer. **Milestone:** P7. **Status:** in progress (documents, on branch `feat/sela-v3-ops`, uncommitted, not merged). **Evidence:** in progress — `docs/OBSERVABILITY.md` on that branch; nothing verified.
 
 #### S-266 Security review before the pilot
-- **Problem:** Real health data raises the stakes; 10 CodeQL alerts are open on PR #6.
+- **Problem:** Real health data raises the stakes; 10 CodeQL alerts were open on PR #6 (merged into main as `7fc6678`; re-check them on main).
 - **Outcome:** A threat-model update, the CodeQL alerts triaged, a dependency audit and a review of the authorization and isolation tests, with findings fixed or accepted by the owner.
 - **Priority:** pilot-critical. Brief §13 (isolation and authorization evidence); real personal data.
 - **Scope:** The v3 routes, cookies, recipient principal, encryption, logs, provider calls and the operator access audit (S-274).
@@ -1557,14 +1558,14 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 - **Problem:** SPEC.md and the supporting docs still describe the v2 limits (synthetic-only, adults-only, memory-only, Meta-only).
 - **Outcome:** The spec, decision log, blockers, feature matrix, provenance, ADRs, API contract, backlog, status, traceability and roadmap state the v3 scope explicitly.
 - **Priority:** pilot-critical. Brief §1 asks for explicit spec updates; everything else depends on them.
-- **Scope:** SPEC amendments to C3, C7, C8, C9, C12 in part, V1, V2, V9, V10, V16, V23, I.data and I.meta, with superseded decisions marked (D-026); D-026 to D-050 (PM) and D-051, D-052 (engineering defaults) in the decision log; B-8 to B-15 in the blockers; attribution preserved ([provenance](SELA_PROVENANCE.md)); document inventory and index updated.
+- **Scope:** SPEC amendments to C3, C7, C8, C9, C12 in part, V1, V2, V9, V10, V16, V23, I.data and I.meta, with superseded decisions marked (D-026); D-026 to D-056 (owner direction D-026; PM decisions D-027 to D-050 and D-054 to D-056; engineering defaults D-051 and D-052; merge record D-053) in the decision log; B-8 to B-15 in the blockers; attribution preserved ([provenance](SELA_PROVENANCE.md)); document inventory and index updated.
 - **Non-goals:** Reopening PM decisions.
 - **Depends on:** —
 - **Acceptance criteria:**
   1. Every amended spec ID states its new text and status.
   2. Link and anchor checks pass; the document inventory lists every new document.
 - **Risks:** Docs drifting from code; status claims cite evidence only.
-- **Owner:** PM. **Milestone:** P1. **Status:** in progress. **Evidence:** in progress, all uncommitted — new: `docs/DENGARIN_FEATURE_MATRIX.md`, ADR-0002, ADR-0003, `docs/API_SPEC_V3.md`, this backlog, `docs/design/`; modified: `SPEC.md` (amendments), `docs/DECISION_LOG.md` (D-026 to D-050 and D-051, D-052), `docs/DECISIONS.md`, `docs/BLOCKERS.md` (B-8 to B-15), `docs/DOCUMENT_INVENTORY.md`, `docs/CONFLICT_MATRIX.md`, `docs/PRODUCT.md`, `docs/SAFETY.md`, provenance, AI policy, Claude verifier, Meta integration, `README.md` and `docs/README.md`. Link and anchor check run on the uncommitted tree on 2026-10-26: 0 broken links or anchors over 137 Markdown files ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands) has the command); criterion 2 needs it re-run on the commit.
+- **Owner:** PM. **Milestone:** P1. **Status:** in progress. **Evidence:** in progress — new: `docs/DENGARIN_FEATURE_MATRIX.md`, ADR-0003, this backlog, `docs/design/`; ADR-0002 and `docs/API_SPEC_V3.md` came with the foundation commit `0ff3341`; modified: `SPEC.md` (amendments), `docs/DECISION_LOG.md` (D-026 to D-056), `docs/DECISIONS.md`, `docs/BLOCKERS.md` (B-8 to B-15), `docs/DOCUMENT_INVENTORY.md`, `docs/CONFLICT_MATRIX.md`, `docs/PRODUCT.md`, `docs/SAFETY.md`, provenance, AI policy, Claude verifier, Meta integration, `README.md` and `docs/README.md`. Committed with the planning documents (`4cadbfd`) and the merge of main (`59dba14`, D-053), both on `origin/feat/sela-v3-pilot` in draft PR #9; the integration pass that records D-054 to D-056 is committed on `feat/sela-v3-pilot` (draft PR #9). The link and anchor check passes on the tree of that integration pass ([implementation status §1](IMPLEMENTATION_STATUS.md#1-where-v3-stands) has the command and the result); criterion 2 needs it re-run on that commit.
 
 #### S-274 Operator access audit
 - **Problem:** The access audit of S-176 covers what the owner sees. Operator commands that can reach personal data or keys, and operator changes to a person's record, would leave no trace (D-052; discovery gap analysis of 2026-10-26: operator access must be logged).
@@ -1606,11 +1607,11 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 
 **P1 Audit and spec alignment.** Items: S-273.
 1. SPEC.md states the amended text and status of C3, C7, C8, C9, C12, V1, V2, V9, V10, V16, V23, I.data and I.meta.
-2. D-026 to D-050 (PM) and D-051, D-052 (engineering defaults) are in the decision log and B-8 to B-15 in the blockers list.
+2. D-026 to D-056 (owner direction D-026; PM decisions D-027 to D-050 and D-054 to D-056; engineering defaults D-051 and D-052; merge record D-053) are in the decision log and B-8 to B-15 in the blockers list.
 3. The feature matrix, provenance, ADR-0002, ADR-0003, API v3 foundation, this backlog, status, traceability and roadmap are committed; link and anchor checks pass; the document inventory is updated.
 
-**P2 Foundation.** Items: S-001, S-002, S-003, S-004, S-005, S-006, S-150 (ruleset -5 merged forward), S-152, S-153, S-170, S-171 (foundation and the storage and sharing purposes), S-172, S-173, S-174 (account and guest deletion), S-175 (foundation sections), S-176 (foundation events), S-177, S-190, S-191, S-193, S-194, S-195 (P2 screens), S-211 (backend), S-260, S-261, S-262 (local), S-274 (record and foundation commands).
-1. ADR-0002 F-01 to F-46 pass locally with `SELA_REQUIRE_DB_TESTS=1` and in CI.
+**P2 Foundation.** Items: S-001, S-002, S-003, S-004, S-005, S-006, S-150 (ruleset -5 merged forward), S-152, S-153, S-170, S-171 (foundation and the storage and sharing purposes), S-172, S-173, S-174 (account and guest deletion), S-175 (foundation sections), S-176 (foundation events), S-177, S-190, S-191, S-193, S-194, S-195 (P2 screens), S-211 (backend), S-260, S-261, S-262 (local: criterion 1, and the in-app restore notice of criterion 3), S-274 (record and foundation commands).
+1. ADR-0002 F-01 to F-47 pass locally with `SELA_REQUIRE_DB_TESTS=1` and in CI.
 2. The design documents exist and the PM's review against brief §4 is recorded.
 3. An e2e journey in ID and EN runs: welcome → guest start → consents → account upgrade → export → delete, with the S-194 gate passing on every screen.
 4. Ruleset -5 is merged forward and its tests pass.
@@ -1631,12 +1632,12 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 2. The VC-6 and VC-8 tests pass; EV-0 and the new threshold version are committed before any live verifier run.
 3. With B-1 and B-8 cleared, EV-1 to EV-4 are measured on staging; otherwise the item is recorded `blocked externally` with everything else verified locally.
 
-**P6 Research and evidence.** Items: S-140, S-141, S-240, S-241, S-242, S-243, S-244, S-245, S-246.
+**P6 Research and evidence.** Items: S-140, S-141, S-195 (P6 screens: reading library and "latihan kecil"), S-240, S-241, S-242, S-243, S-244, S-245, S-246.
 1. `tests/research` pass; `verify` has 0 violations and no warnings for cited records.
 2. The v3 gap search is frozen; the v3 evidence map has a row per v3 feature, per brief §9 topic and per population, with gaps declared.
 3. No reading item or "latihan kecil" is published without recorded verification; B-4 progress is recorded.
 
-**P7 Accessibility, security and operations.** Items: S-025, S-026, S-154, S-178, S-192, S-195 (full), S-196, S-210, S-211 (UI), S-212, S-213, S-221 (live), S-262 (hosted), S-263, S-264, S-265, S-266, S-267, S-274 (hosted access log).
+**P7 Accessibility, security and operations.** Items: S-025, S-026, S-154, S-178, S-192, S-195 (full), S-196, S-210, S-211 (UI), S-212, S-213, S-221 (live), S-262 (hosted: criterion 2, and the status-page post of criterion 3), S-263, S-264, S-265, S-266, S-267, S-274 (hosted access log).
 1. The full manual accessibility review is complete with no open blocking finding.
 2. The security review's findings are fixed or accepted by the owner.
 3. Staging and demo are deployed with a recorded restore drill (needs B-3, B-15); Modal is deployed (needs B-1).
@@ -1661,7 +1662,7 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-006 | Consents during onboarding | pilot-critical | P2 | planned |
 | S-007 | Optional conversation intent | pilot-important | P3 | planned |
 | S-008 | One-tap mood entry | post-pilot | later | planned |
-| S-020 | Conversation room | pilot-critical | P3 | planned |
+| S-020 | Conversation room | pilot-critical | P3 | in progress |
 | S-021 | Replies that listen | pilot-critical | P3 | planned |
 | S-022 | Screen-reader-friendly streaming and Stop | pilot-critical | P3 | planned |
 | S-023 | "Sela menangkap…" cards | pilot-critical | P3 | planned |
@@ -1671,14 +1672,14 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-027 | Voice room (paused) | post-pilot | later | planned (paused) |
 | S-040 | Personal home | pilot-important | P3 | planned |
 | S-041 | Optional neutral reminders | post-pilot | later | planned |
-| S-050 | Notes (journal) inside Catatan pribadiku | pilot-critical | P3 | planned |
+| S-050 | Notes (journal) inside Catatan pribadiku | pilot-critical | P3 | in progress |
 | S-051 | Reflection prompts | pilot-important | P3 | planned |
 | S-052 | Reflect on an entry with Sela | pilot-important | P3 | planned |
 | S-053 | Weekly reflection | post-pilot | later | planned |
-| S-060 | Check in any time | pilot-important | P3 | planned |
-| S-070 | Timeline across sessions | pilot-critical | P3 | planned |
+| S-060 | Check in any time | pilot-important | P3 | in progress |
+| S-070 | Timeline across sessions | pilot-critical | P3 | in progress |
 | S-071 | Find things in my timeline | pilot-important | P3 | planned |
-| S-080 | See and correct what Sela remembers | pilot-critical | P3 | planned |
+| S-080 | See and correct what Sela remembers | pilot-critical | P3 | in progress |
 | S-081 | Memory suggestions from Sela | pilot-important | P5 | planned |
 | S-090 | Build a "Ringkasan untuk konsultasi" | pilot-critical | P4 | planned |
 | S-091 | AI wording for summary items, verified | pilot-important | P5 | planned |
@@ -1693,18 +1694,18 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-122 | Verified professionals, booking, notes | post-pilot | later | planned |
 | S-130 | Reflect after a consultation | pilot-critical | P4 | planned |
 | S-131 | My own next steps | pilot-important | P4 | planned |
-| S-140 | Reading library | pilot-important | P6 | planned |
+| S-140 | Reading library | pilot-important | P6 | in progress |
 | S-141 | Small exercises ("latihan kecil") | pilot-important | P6 | planned |
 | S-142 | Forum (paused) | post-pilot | later | planned (paused) |
 | S-150 | Crisis screening on every text | pilot-critical | P2, P3 | in progress |
 | S-151 | Crisis support that keeps the words | pilot-critical | P3 | planned |
 | S-152 | Immediate help page and verified directory | pilot-critical | P2 | planned |
-| S-153 | "Need help now" and Quick Exit everywhere | pilot-critical | P2 | planned |
+| S-153 | "Need help now" and Quick Exit everywhere | pilot-critical | P2 | in progress |
 | S-154 | Re-verify help lines | pilot-critical | P7 | blocked externally (B-5) |
 | S-170 | Choose how Sela keeps my notes | pilot-critical | P2 | planned |
 | S-171 | Consent records per purpose and provider | pilot-critical | P2, P3, P5 | in progress |
 | S-172 | See and end my sessions | pilot-important | P2 | in progress |
-| S-173 | Encryption at rest and crypto-shredding | pilot-critical | P2 | in progress |
+| S-173 | Encryption at rest and crypto-shredding | pilot-critical | P2 | verified locally (CI passed on PR #9) |
 | S-174 | Deletion with derivatives | pilot-critical | P2–P4 | in progress |
 | S-175 | Export my data | pilot-critical | P2–P4 | in progress |
 | S-176 | Access audit | pilot-critical | P2, P4 | in progress |
@@ -1715,9 +1716,9 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-181 | Dengar.in device import (decision) | post-pilot | later | planned |
 | S-182 | Document upload | post-pilot | later | planned |
 | S-190 | Design direction, IA, screens, content style | pilot-critical | P2 | in progress |
-| S-191 | Design system and app shell | pilot-critical | P2 | planned |
+| S-191 | Design system and app shell | pilot-critical | P2 | in progress |
 | S-192 | Display settings | pilot-important | P7 | planned |
-| S-193 | Indonesian and English everywhere | pilot-critical | P2 onward | planned |
+| S-193 | Indonesian and English everywhere | pilot-critical | P2 onward | in progress |
 | S-194 | Automated WCAG 2.2 AA gate | pilot-critical | P2 | planned |
 | S-195 | Manual accessibility review and screenshots | pilot-critical | P2–P8 | planned |
 | S-196 | Slow connections and small devices | pilot-important | P7 | planned |
@@ -1725,32 +1726,32 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-211 | Guardian consent record | pilot-important | P2, P7 | in progress |
 | S-212 | Legal and provider gate for minors | pilot-important | P7 | blocked externally (B-10) |
 | S-213 | Evaluation and evidence for young people | pilot-important | P7 | planned |
-| S-220 | Routing core with test doubles | pilot-critical | P3, P5 | planned |
-| S-221 | Meta as primary generator | pilot-critical | P3, P7 | planned (live blocked, B-1) |
-| S-222 | Claude Sonnet 5.5 verifier | pilot-critical | P5 | planned (live blocked, B-8) |
-| S-223 | Output guards and health-claim detector | pilot-critical | P3 | planned |
-| S-224 | DeepSeek fallback generator | pilot-important | P5 | planned (live blocked, B-9) |
+| S-220 | Routing core with test doubles | pilot-critical | P3, P5 | in progress |
+| S-221 | Meta as primary generator | pilot-critical | P3, P7 | in progress (live blocked, B-1) |
+| S-222 | Claude Sonnet 5.5 verifier | pilot-critical | P5 | in progress (live blocked, B-8) |
+| S-223 | Output guards and health-claim detector | pilot-critical | P3 | in progress |
+| S-224 | DeepSeek fallback generator | pilot-important | P5 | in progress (live blocked, B-9) |
 | S-225 | DeepSeek alternative verifier | post-pilot | later | planned |
-| S-226 | Data minimisation and redaction | pilot-critical | P3 | planned |
-| S-227 | Meta-only demo profile | pilot-important | P3 | planned (B-12 open) |
-| S-228 | AI evaluation | pilot-critical | P5 | planned (live blocked, B-1, B-8, B-9) |
+| S-226 | Data minimisation and redaction | pilot-critical | P3 | in progress |
+| S-227 | Meta-only demo profile | pilot-important | P3 | in progress (B-12 open) |
+| S-228 | AI evaluation | pilot-critical | P5 | in progress (live blocked, B-1, B-8, B-9) |
 | S-229 | Fine-tuning proposal gate | post-pilot | later | planned |
-| S-240 | Corpus hygiene | pilot-important | P6 | planned |
+| S-240 | Corpus hygiene | pilot-important | P6 | in progress |
 | S-241 | Unchecked dates and design labels | pilot-important | P6 | planned |
-| S-242 | Corpus schema fields | pilot-important | P6 | planned |
-| S-243 | v3 gap searches | pilot-important | P6 | planned |
-| S-244 | v3 evidence map | pilot-important | P6 | planned |
-| S-245 | Claim support and reading verification | pilot-important | P6 | planned |
+| S-242 | Corpus schema fields | pilot-important | P6 | in progress |
+| S-243 | v3 gap searches | pilot-important | P6 | in progress |
+| S-244 | v3 evidence map | pilot-important | P6 | in progress |
+| S-245 | Claim support and reading verification | pilot-important | P6 | in progress |
 | S-246 | Human appraisal | pilot-important | P6 | blocked externally (B-4) |
 | S-247 | Review overlap table | post-pilot | later | planned |
 | S-248 | Held-out retrieval queries | post-pilot | later | planned |
 | S-249 | Clinical and user-research validation | post-pilot | later | blocked externally (B-6) |
-| S-260 | PostgreSQL and migrations | pilot-critical | P2 | in progress |
+| S-260 | PostgreSQL and migrations | pilot-critical | P2 | verified locally (CI passed on PR #9) |
 | S-261 | Separate environments | pilot-critical | P2 | in progress |
-| S-262 | Backup and restore | pilot-critical | P2, P7 | in progress |
+| S-262 | Backup and restore | pilot-critical | P2, P7 | in progress (criterion 1 verified locally; the in-app restore notice, P2, and the status-page post, P7, planned; the hosted drill blocked externally, B-3, B-15) |
 | S-263 | Deployment and rollback | pilot-critical | P7 | blocked externally (B-3, B-15) |
 | S-264 | Meta model on Modal | pilot-critical | P7 | blocked externally (B-1) |
-| S-265 | Observability without content | pilot-important | P7 | planned |
+| S-265 | Observability without content | pilot-important | P7 | in progress |
 | S-266 | Security review before the pilot | pilot-critical | P7 | planned |
 | S-267 | Legacy Dengar.in deployments | pilot-important | P7 | blocked externally (B-13) |
 | S-268 | More than one instance and incident on-call | post-pilot | later | planned |
@@ -1761,7 +1762,7 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-273 | Spec and documentation alignment | pilot-critical | P1 | in progress |
 | S-274 | Operator access audit | pilot-critical | P2, P7 | planned (hosted part blocked, B-3) |
 
-**Totals:** 107 items: 52 pilot-critical, 37 pilot-important, 18 post-pilot. The pilot-critical set is large because it holds the eleven DoD capabilities of brief §15 together with the safety controls and the legal and security preconditions for holding real health data; everything that improves the pilot without being required for it is pilot-important, and everything after the pilot or paused is post-pilot. Status today: 18 in progress, 9 blocked externally, 80 planned (S-221, S-222, S-224, S-225, S-227, S-228 and S-274 among them have parts blocked externally); none implemented or verified.
+**Totals:** 107 items: 52 pilot-critical, 37 pilot-important, 18 post-pilot. The pilot-critical set is large because it holds the eleven DoD capabilities of brief §15 together with the safety controls and the legal and security preconditions for holding real health data; everything that improves the pilot without being required for it is pilot-important, and everything after the pilot or paused is post-pilot. Status today: 2 verified locally (S-173 and S-260), 39 in progress, 9 blocked externally and 57 planned; S-221, S-222, S-224, S-225, S-227, S-228, S-262 and S-274 also have parts blocked externally. Of the 39 items in progress, 13 have their backend foundation part verified locally (S-002 to S-005, S-171, S-172, S-174 to S-177, S-211, S-261, and criterion 1 of S-262, whose restore notice is planned and whose hosted drill is blocked externally), 23 have work only uncommitted or on separate branches that are not merged (frontend shell, AI provider layer, research and reading content, listening backend, operations), and S-150, S-190 and S-273 are the ruleset `-5` fix loop (a WIP snapshot in draft PR #8), the design documents and the planning documents. Nothing is verified live.
 
 ## 6. Feature matrix coverage
 

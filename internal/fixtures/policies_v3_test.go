@@ -7,9 +7,11 @@ import (
 )
 
 // TestGuestStoragePolicyText: the guest notice states where the data is,
-// both deletion periods, the cookie dependency and that there is no
+// both deletion periods, the cookie dependency, that a restore from a
+// backup ends guest access (every session is revoked and a guest has no
+// other credential; ADR-0002 §11) and is announced, and that there is no
 // absolute anonymity, in Indonesian and English, without forbidden
-// phrases (ADR-0002 §7, F-33).
+// phrases (ADR-0002 §7, F-33). Changing the text means a new version.
 func TestGuestStoragePolicyText(t *testing.T) {
 	p := RenderV3Policies(7*24*time.Hour, 30*24*time.Hour, "")
 	g := p[PolicyGuestStorage]
@@ -22,8 +24,10 @@ func TestGuestStoragePolicyText(t *testing.T) {
 		text string
 		want []string
 	}{
-		"id": {id.String(), []string{"server sela", "basis data", "wilayah hosting", "7 hari", "30 hari", "cookie", "bukan anonimitas mutlak", "alamat ip", "dienkripsi"}},
-		"en": {en.String(), []string{"sela's server", "database", "hosting region", "7 days", "30 days", "cookie", "not absolute anonymity", "ip address", "encrypted"}},
+		"id": {id.String(), []string{"server sela", "basis data", "wilayah hosting", "7 hari", "30 hari", "cookie", "bukan anonimitas mutlak", "alamat ip", "dienkripsi",
+			"memulihkan basis datanya dari cadangan", "semua sesi ikut berakhir", "tidak bisa dibuka lagi", "satu jam sebelum kegagalan", "mengumumkan setiap pemulihan"}},
+		"en": {en.String(), []string{"sela's server", "database", "hosting region", "7 days", "30 days", "cookie", "not absolute anonymity", "ip address", "encrypted",
+			"restore its database from a backup", "every session ends", "can then no longer be opened", "the hour before the failure", "announces every such restore"}},
 	} {
 		for _, w := range c.want {
 			if !strings.Contains(c.text, w) {
@@ -43,8 +47,38 @@ func TestGuestStoragePolicyText(t *testing.T) {
 			}
 		}
 	}
-	if g.Version != "guest-storage-2026-11-01.1" {
-		t.Fatalf("version %s", g.Version)
+	if g.Version != "guest-storage-2026-11-01.2" {
+		t.Fatalf("version %s: a changed text needs a new version", g.Version)
+	}
+}
+
+// TestTermsPrivacyStatesBackupWindows: the privacy text states the backup
+// windows of ADR-0002 §11 and the restore window accepted for a controlled
+// pilot (D-055): an account deleted in the hour before a total database
+// loss may come back with a restore and need to be deleted again, and
+// restores are announced. Changing the text means a new policy version.
+func TestTermsPrivacyStatesBackupWindows(t *testing.T) {
+	p := MustV3Policies()[PolicyTermsPrivacy]
+	var id, en strings.Builder
+	for _, b := range p.Body {
+		id.WriteString(strings.ToLower(b.ID) + " ")
+		en.WriteString(strings.ToLower(b.EN) + " ")
+	}
+	for lang, c := range map[string]struct {
+		text string
+		want []string
+	}{
+		"id": {id.String(), []string{"7 hari", "30 hari", "memulihkan basis data dari cadangan", "satu jam sebelum kegagalan", "perlu dihapus lagi", "mengumumkan setiap pemulihan"}},
+		"en": {en.String(), []string{"7 days", "30 days", "restore the database from a backup", "the hour before the failure", "deleted again", "announces every such restore"}},
+	} {
+		for _, w := range c.want {
+			if !strings.Contains(c.text, w) {
+				t.Errorf("%s terms and privacy text does not state %q", lang, w)
+			}
+		}
+	}
+	if p.Version != "terms-privacy-2026-11-01.2" {
+		t.Fatalf("version %s: a changed text needs a new version", p.Version)
 	}
 }
 

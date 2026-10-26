@@ -2,7 +2,7 @@
 
 Status:
 - **Role accepted** (PM decision D-030). The contract is in [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md) §6–§7, and the stored verification status in §10.1.
-- **Runtime integration planned** (milestone P5). No verifier route, consent purpose or persistence exists yet.
+- **Runtime integration in progress** (milestone P5): committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`; `internal/ai/anthropic`, `internal/ai/verifier`, `eval/verifier`), not merged; nothing verified; live use **blocked externally** (B-8). Nothing of it is wired into the delivery branch (`feat/sela-v3-pilot`): no verifier route, consent purpose or persistence exists there yet.
 - **What exists** is [prototypes/evidenceguard](../prototypes/evidenceguard/README.md), **implemented as a standalone v2 prototype**. Its 6 mocked tests pass locally (`go test -count=1 ./...` in `prototypes/evidenceguard`, 2026-10-26) and in its own CI workflow (`.github/workflows/evidenceguard-prototype.yml`, run 40284245346, 2026-10-26). It is not wired into any runtime, and it is not v3 evidence.
 - **No live Claude request** has been made: no Console organization or API key exists (**blocked externally**, B-8). There is no clinical validation.
 
@@ -95,7 +95,7 @@ Sources and the remaining facts (rate limits, Batch, caching) are in ADR-0003 §
 
 Existing tests: `TestSupportedAndCorrectRequest`, `TestContradictedClaimNeedsHumanReview`, `TestRefuseUnauthorizedInputsBeforeApi`, `TestRejectMalformedOrForgedOutput` (unknown claim, unknown evidence, wrong status, missing claim, extra field, garbage), `TestApiFailureDoesNotLeakProviderBody`, `TestCanceledContext`.
 
-## 4. Pipeline (v3; planned)
+## 4. Pipeline (v3; in progress on branch `feat/sela-v3-ai`, not merged)
 
 1. **Crisis screen.** The deterministic crisis screen runs on every user text before any model. A match makes **zero** calls to any provider and shows verified help at once.
 2. **Generation.** Meta generates (or DeepSeek as fallback) under its own consent. Meaning Lock, the output guards and the health-claim detector run first. Only claims that survive them are sent for verification.
@@ -125,7 +125,7 @@ Planned. These are **UI states**, derived for display and never stored. What is 
 
 - `status` `not_requested` (provenance `not_requested`) has no verification state: the item has no new AI wording and carries its own provenance label instead (D-040).
 - Provenance `manual_review` is reserved (ADR-0003 §10.1) and has no UI state yet.
-- A labelled test-double verifier report (development, test and the demo, D-046; ADR-0003 §10.1) uses the same states, with "TEST DOUBLE — not Claude" (or "not DeepSeek") in place of the verifier's name. It is never shown as a check by Claude or DeepSeek.
+- A labelled test-double verifier report (development, test and the demo, D-046; ADR-0003 §10.1) is stored with the V35 provenance `test_double` and uses the same states, with "TEST DOUBLE — not Claude" (or "not DeepSeek") in place of the verifier's name. It is never shown as a check by Claude or DeepSeek.
 - When an output is withheld entirely, the task's own no-AI behaviour applies (ADR-0003 §3): a listening reply shows that Sela cannot reply right now, a reflection card is not shown, opening lines use the labelled template lines, and a summary uses the user's words with the `verification_unavailable` notice. A `safety_signal` issue shows the inline help card (VC-8).
 
 Per-claim explanations are Sela's own reviewed text, shown with the highlighted source span:
@@ -211,10 +211,10 @@ The [Meta hackathon](https://dev.meta.ai/events/global-hackathon) prioritizes Me
 
 - [Go prototype](../prototypes/evidenceguard/verifier.go) and [mock tests](../prototypes/evidenceguard/verifier_test.go): implemented as a standalone v2 prototype. Its 6 tests pass offline (`go test -count=1 ./...` in `prototypes/evidenceguard`, 2026-10-26), and GitHub Actions runs the same tests (`.github/workflows/evidenceguard-prototype.yml`, run 40284245346 passed, 2026-10-26). Not wired into any runtime; not v3 evidence.
 - Not done:
-  - no Anthropic API key or access check;
+  - no Anthropic API key or access check (B-8);
   - no measurement of the refusal rate on Sela's synthetic mental-health excerpts;
   - no quota or cost measurement;
-  - no deployed Sela endpoint (B-8).
+  - no deployed Sela endpoint (B-3).
 
 ## 12. History: superseded statements
 

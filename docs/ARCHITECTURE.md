@@ -1,6 +1,6 @@
 # Sela v2 architecture
 
-Status: **implemented** on branch `feat/v2-go-meta-runtime` (Go API, static frontend, Modal serving code); live Modal inference not yet verified ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) C1, C4–C8, C11, I.api/I.meta/I.data/I.research, V3–V25.
+Status: **implemented** on branch `feat/v2-go-meta-runtime` (Go API, static frontend, Modal serving code; PR #6, merged into main as `7fc6678`); live Modal inference not yet verified ([B-1](BLOCKERS.md)). The v3 persistence and accounts foundation below is **implemented and verified locally, and its CI run on draft PR #9 passed**, on `feat/sela-v3-pilot` (commit `0ff3341`; [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26); not deployed). Authority: [SPEC](../SPEC.md) C1, C4–C8, C11, I.api/I.meta/I.data/I.research, V3–V25.
 
 ## Runtime
 

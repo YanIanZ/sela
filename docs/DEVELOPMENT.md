@@ -4,16 +4,16 @@ Authority: [SPEC](../SPEC.md) C5/C10/C11, I.ops, V15.
 
 ## Two runtimes in one repository
 
-| | v2 (target) | v1 (inherited) |
+| | Go runtime: v2 demo and v3 (target) | v1 (inherited) |
 | --- | --- | --- |
-| Code | `cmd/`, `internal/` (Go 1.24), `web/` (React 19 + TypeScript + Vite 7), `modal/` (Modal + vLLM), `e2e/`, `eval/` | `apps/web` (Next.js), `packages/*`, `services/*` |
-| Data | In-memory sessions, embedded synthetic fixtures | PostgreSQL/Supabase, Redis |
+| Code | `cmd/`, `internal/` (Go 1.26.10, D-054), `web/` (React 19 + TypeScript + Vite 7), `modal/` (Modal + vLLM), `e2e/`, `eval/`, `scripts/ops/` | `apps/web` (Next.js), `packages/*`, `services/*` |
+| Data | v2 demo (`/api/v2`): in-memory sessions, embedded synthetic fixtures. v3 (`/api/v3`): PostgreSQL 16 with per-user encryption (ADR-0002; the backend foundation is verified locally, and its CI run on draft PR #9 passed: [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26)) | PostgreSQL/Supabase, Redis |
 | AI | Meta Muse Glimmer on Modal (not yet deployed) or labelled test double | v1 providers incl. AMD (historical) |
 | CI | `.github/workflows/v2.yml` | `.github/workflows/quality.yml` |
 
-Both are kept runnable until v2 acceptance (T9). New work goes to v2.
+Both are kept runnable until v3 acceptance (T9; D-020 status). New work goes to the Go runtime: the v2 demo stays as the demo configuration, and v3 is built beside it under `/api/v3`.
 
-## v2 commands that work now
+## Go runtime commands that work now (v2 demo and v3 foundation)
 
 See the [runbook](RUNBOOK.md) for configuration. From the repository root:
 
@@ -26,9 +26,11 @@ SELA_ENV=development SELA_SECURE_COOKIES=false SELA_LLM_MODE=test_double SELA_AL
   SELA_LLM_BASE_URL=http://127.0.0.1:8090 go run ./cmd/sela
 ```
 
-Checks: `gofmt -l cmd internal`, `go vet ./...`, `go test -race ./...`, `cd web && npm run typecheck && npm test && npm run build`, `python3 -m unittest discover -s tests/research -p 'test_*.py'`, `python3 -m unittest discover -s tests/modal -p 'test_*.py'`, `python3 scripts/research/corpus_pipeline.py verify`, `node e2e/journey.e2e.mjs`, `go run ./cmd/sela-eval -mode offline|test_double`.
+`/api/v3` needs PostgreSQL 16 (`SELA_DATABASE_URL`, a development KEK from `sela keys generate-kek --env development`; [runbook](RUNBOOK.md) §1 and §7); without it, its routes answer `503 store_unavailable` in development.
 
-Frontend dependencies are pinned exactly in `web/package.json`; Go uses the standard library only (no `go.sum`). The frontend has no router or UI framework dependency beyond React.
+Checks: `gofmt -l cmd internal`, `go vet ./...`, `go test -race ./...` (with `SELA_TEST_DATABASE_URL` set and `SELA_REQUIRE_DB_TESTS=1` the PostgreSQL tests are required, as in CI), `SELA_DRILL_DATABASE_URL="$SELA_TEST_DATABASE_URL" scripts/ops/restore-drill.sh` (the URL in the environment, not `--database-url`; [runbook §8](RUNBOOK.md#8-backup-and-restore)), `cd web && npm run typecheck && npm test && npm run build`, `python3 -m unittest discover -s tests/research -p 'test_*.py'`, `python3 -m unittest discover -s tests/modal -p 'test_*.py'`, `python3 scripts/research/corpus_pipeline.py verify`, `node e2e/journey.e2e.mjs`, `go run ./cmd/sela-eval -mode offline|test_double`.
+
+Frontend dependencies are pinned exactly in `web/package.json`. Go uses the standard library plus the approved modules pgx v5.10.0 and `golang.org/x/crypto` v0.57.0, and `golang.org/x/text` v0.42.0 (Unicode NFKC normalization of passwords), whose written reason is in ADR-0002 §1 and whose approval is confirmed by the PM ([D-056](DECISION_LOG.md#d-056); ADR-0002 §1, F-46); all three are pinned in `go.mod` and `go.sum`. The frontend has no router or UI framework dependency beyond React.
 
 ## v1 commands (unchanged)
 

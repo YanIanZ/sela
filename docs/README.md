@@ -1,12 +1,12 @@
 # Sela documentation
 
-**Start with [SPEC.md](../SPEC.md), the source of truth.** Sela v3 — a real-use listening and continuity app in Indonesian and English for ages 15 to 50+ (owner brief v3, D-026) — is **planned**; its foundation and design are in progress on branch `feat/sela-v3-pilot`. Sela v2 (Go API + React/TypeScript frontend, Meta Muse Glimmer on Modal, synthetic demo) is implemented and verified locally on PR #6; live Meta inference and public deployment are blocked on owner credentials, budget and hosting ([blockers](BLOCKERS.md)). The inherited Next.js v1 stays runnable until the cutover.
+**Start with [SPEC.md](../SPEC.md), the source of truth.** Sela v3 — a real-use listening and continuity app in Indonesian and English for ages 15 to 50+ (owner brief v3, D-026) — is **planned**: its backend foundation is verified locally, and its CI run on draft PR #9 passed (commit `0ff3341` on branch `feat/sela-v3-pilot`, open as draft PR #9 against main; [foundation status note](../SPEC.md#foundation-status-note-2026-10-26)), and its design, frontend shell, AI provider layer, research, listening backend and operations are in progress ([implementation status](IMPLEMENTATION_STATUS.md#1-where-v3-stands)). Sela v2 (Go API + React/TypeScript frontend, Meta Muse Glimmer on Modal, synthetic demo) is implemented and verified locally (PR #6, merged into main as `7fc6678` on 2026-10-26); live Meta inference and public deployment are blocked on owner credentials, budget and hosting ([blockers](BLOCKERS.md)). The inherited Next.js v1 stays runnable until the cutover.
 
 ## Authority and document ownership
 
 1. User decisions govern product scope (owner brief v3 of 2026-10-26 is the current one); record them in `SPEC.md`.
 2. `SPEC.md` governs requirements, invariants and task status.
-3. Active docs below elaborate those requirements; resolve conflicts in the spec first. PM decisions (D-026 onward) are recorded in the decision log and revisable by the owner.
+3. Active docs below elaborate those requirements; resolve conflicts in the spec first. PM decisions (D-027 to D-050 and D-054 onward) are recorded in the decision log and revisable by the owner.
 4. Source code and tests establish what runs; status claims cite them ([traceability](REQUIREMENTS_TRACEABILITY.md)).
 5. Archived documents preserve old decisions and evidence; none override the spec.
 
@@ -48,6 +48,7 @@ External terms (laws, provider terms, event rules) govern legality, eligibility 
 | [Meta integration](META_INTEGRATION.md) | Provider boundary, request parameters, failure behaviour |
 | [DeepSeek fallback](DEEPSEEK_FALLBACK.md) | Optional transparent generator fallback, explicit opt-in, Go prototype and safety gates (owner contract; v3 routing follows it, ADR-0003 §17) |
 | [Claude verifier](CLAUDE_VERIFIER.md) | Verifier role and contract, the standalone EvidenceGuard prototype and its evidence limits |
+| [EvidenceGuard prototype](../prototypes/evidenceguard/README.md) and [generation fallback prototype](../prototypes/generationfallback/README.md) | The owner's standalone Go prototypes (verifier; DeepSeek fallback), mock-tested and not wired into any runtime |
 | [Modal serving](../modal/README.md) and [model notes](../modal/MODEL_NOTES.md) | Deploy, secrets, cost, smoke test, rollback; verified model/server facts |
 
 ## Operating and validating
@@ -55,18 +56,19 @@ External terms (laws, provider terms, event rules) govern legality, eligibility 
 | Document | Responsibility |
 | --- | --- |
 | [Runbook](RUNBOOK.md) | Run, configure, deploy, cost controls, rollback, demo script |
-| [Development](DEVELOPMENT.md) | v2 and v1 commands and checks |
+| [Development](DEVELOPMENT.md) | Go runtime (v2 demo and v3 foundation) and v1 commands and checks |
 | [Evaluation](EVALUATION.md) | v2 scope: pre-registered thresholds, suites, results. The v3 routing evaluations EV-0 to EV-7 and their thresholds are in [ADR-0003 §12](adr/ADR-0003-ai-routing-verifier-fallback.md#12-evaluation-plan-pre-registered-here-2026-10-26-to-be-added-to-evalthresholdsjson-as-a-new-version-before-the-first-verifier-run) |
 | [Validation and demo](VALIDATION.md) | v2 scope: acceptance matrix and evidence. v3 acceptance gates: [roadmap §2](ROADMAP.md#2-release-ladder) and the milestone exit criteria in [backlog §4](BACKLOG.md#4-milestones) |
 | [Meta event notes](META_EVENT_NOTES.md) | Official references and unverified event requirements |
 | [Provenance](SELA_PROVENANCE.md) | Credits, inherited work and the new-work boundary for v2 and v3 |
 | [Document inventory](DOCUMENT_INVENTORY.md) | Every repository Markdown document |
+| [Specification format](../FORMAT.md) and [contributing](../CONTRIBUTING.md) | ID, status and statement rules for the spec; how to contribute and which checks to run |
 
 `OWNER_TESTER.md` (prerequisites, test steps, expected results, scenario priorities and where to record results) is planned for milestone P8 ([SPEC](../SPEC.md) T21).
 
 ## Research
 
-[Sela Relay strategy and 100-publication evidence map](research/sela-relay/README.md) is the non-normative proposal and annotated register (title/abstract screened, not full-text appraisal or clinical validation). The [corpus pipeline](research/CORPUS_PIPELINE.md) rebuilds it reproducibly with verified dates, licence/access status, traceable machine extraction (unreviewed) and a reviewer search index. For v3, brief §9 asks for evidence on listening, journaling, help-seeking, consultation preparation, continuity, adolescents, adults, older adults, the Indonesian context, accessibility, safety and privacy. The known gaps are recorded in D-048 (a shorter list; brief §9 governs), and the gap searches and evidence map are planned (backlog S-243, S-244; [SPEC](../SPEC.md) T19).
+[Sela Relay strategy and 100-publication evidence map](research/sela-relay/README.md) is the non-normative proposal and annotated register (with the [research collection of 2026-10-26](research/sela-relay/RESEARCH_COLLECTION_2026-10-26.md) and the [research expansion pipeline](research/sela-relay/RESEARCH_EXPANSION_PIPELINE.md); the data files are described in [data/research](../data/research/README.md)) (title/abstract screened, not full-text appraisal or clinical validation). The [corpus pipeline](research/CORPUS_PIPELINE.md) rebuilds it reproducibly with verified dates, licence/access status, traceable machine extraction (unreviewed) and a reviewer search index. For v3, brief §9 asks for evidence on listening, journaling, help-seeking, consultation preparation, continuity, adolescents, adults, older adults, the Indonesian context, accessibility, safety and privacy. The known gaps are recorded in D-048 (a shorter list; brief §9 governs), and the gap searches and evidence map are in progress on branch `feat/sela-v3-research`, not merged; nothing verified (backlog S-243, S-244; [SPEC](../SPEC.md) T19).
 
 ## Historical implementation
 
