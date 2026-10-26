@@ -102,7 +102,12 @@ func run() error {
 			}
 		}
 	}()
-	logger.Info("sela.start", "version", version, "config", cfg.String(), "fixtures", catalog.Version, "provider_mode", string(provider.Info().Mode))
+	// Only named, non-secret settings are logged; the Config value itself
+	// (which holds credentials) never reaches a log call.
+	info := provider.Info()
+	logger.Info("sela.start", "version", version, "env", cfg.Env, "addr", cfg.Addr, "llm_mode", string(info.Mode),
+		"model_id", info.ModelID, "model_revision", info.Revision, "secure_cookies", cfg.SecureCookies,
+		"max_sessions", cfg.MaxSessions, "metrics", cfg.MetricsToken != "", "fixtures", catalog.Version)
 	ln, err := net.Listen("tcp", cfg.Addr)
 	if err != nil {
 		return err

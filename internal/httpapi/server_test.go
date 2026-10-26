@@ -455,6 +455,31 @@ func TestStaticServingAndSPAFallback(t *testing.T) {
 	}
 }
 
+// A symlink inside the web directory that points outside it is never
+// followed (files are opened through os.Root).
+func TestStaticServingRefusesSymlinkEscape(t *testing.T) {
+	outside := filepath.Join(t.TempDir(), "secret.txt")
+	if err := os.WriteFile(outside, []byte("SECRET-OUTSIDE-WEBDIR"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, "assets"), 0o755)
+	os.WriteFile(filepath.Join(dir, "index.html"), []byte("<!doctype html><title>Sela</title>"), 0o644)
+	if err := os.Symlink(outside, filepath.Join(dir, "assets", "leak.txt")); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	e := newEnv(t, dir)
+	res, err := http.Get(e.srv.URL + "/assets/leak.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(res.Body)
+	res.Body.Close()
+	if res.StatusCode == http.StatusOK || strings.Contains(string(body), "SECRET-OUTSIDE-WEBDIR") {
+		t.Fatalf("symlink escape served: %d %q", res.StatusCode, body)
+	}
+}
+
 func TestResearchUnavailableWithoutIndexAndPublicEndpoints(t *testing.T) {
 	e := newEnv(t, "")
 	c := e.client()
