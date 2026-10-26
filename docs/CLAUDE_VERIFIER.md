@@ -1,6 +1,8 @@
 # Sela EvidenceGuard: optional Claude Sonnet 5.5 verifier
 
-**Status:** adopted product/contract direction; optional **Go prototype exists** in [prototypes/evidenceguard](../prototypes/evidenceguard/README.md), but no Sela v2 runtime, deployed verifier route, successful live Claude request, or demonstrated clinical validation yet. Governed by [SPEC](../SPEC.md), especially C12, I.verifier and V16–V18.
+**Status:** adopted product/contract direction; optional **Go prototype exists** in [prototypes/evidenceguard](../prototypes/evidenceguard/README.md). The Sela v2 runtime now exists (Go API and frontend, see [implementation status](IMPLEMENTATION_STATUS.md)), but the verifier is not wired into it: there is no verifier route, no successful live Claude request and no clinical validation. Governed by [SPEC](../SPEC.md), especially C12, I.verifier and V16–V18.
+
+> Reconciliation note (D-024): the implemented generator is the Meta open-weight **Muse Glimmer 30B** on Modal ([ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md)); the Muse Spark Open references below await the owner's decision ([B-7](BLOCKERS.md)). Everything else in this contract applies unchanged to whichever Meta model generates the draft.
 
 **As of 26 October 2026**, Anthropic officially lists Claude Sonnet 5.5 (released 28 September 2026), API model ID **claude-sonnet-5-5**, at $2 per million input tokens and $10 per million output tokens. Structured outputs support output_config.format with JSON Schema. The model rejects temperature, top_p and top_k. See https://platform.claude.com/docs/en/models/sonnet-5-5/overview and https://platform.claude.com/docs/en/build-with-claude/structured-outputs .
 

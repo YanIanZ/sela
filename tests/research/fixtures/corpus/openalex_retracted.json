@@ -1,0 +1,15 @@
+{
+ "_fixture_note": "Trimmed real API response (metadata fields only; no abstract, no author list), retrieved 2026-10-26 for offline tests.",
+ "doi": "https://doi.org/10.1177/1758835920922055",
+ "id": "https://openalex.org/W3021757537",
+ "is_retracted": true,
+ "open_access": {
+  "any_repository_has_fulltext": true,
+  "is_oa": true,
+  "oa_status": "gold",
+  "oa_url": "https://doi.org/10.1177/1758835920922055"
+ },
+ "publication_date": "2020-01-01",
+ "publication_year": 2020,
+ "type": "article"
+}

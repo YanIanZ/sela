@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SYNTHETIC fixture written for Sela's offline tests. Not a real article; all text is invented. -->
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+  <front>
+    <article-meta>
+      <permissions>
+        <license license-type="open-access" xlink:href="http://creativecommons.org/licenses/by-nc-nd/4.0/">
+          <license-p>Synthetic fixture under CC BY-NC-ND 4.0.</license-p>
+        </license>
+      </permissions>
+      <abstract>
+        <p>We randomized 120 adults to two synthetic conditions; 98 participants completed follow-up.</p>
+      </abstract>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Methods</title>
+      <p>The trial enrolled N = 120 people.</p>
+    </sec>
+  </body>
+</article>

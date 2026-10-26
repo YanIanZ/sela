@@ -1,0 +1,95 @@
+name: Sela research corpus
+
+# Offline check on pull requests (no network): unit tests with saved fixtures
+# and verification of the committed outputs in data/research/corpus/.
+# A manual run can additionally fetch from the public APIs and rebuild; its
+# outputs are uploaded as an artifact for review and are NEVER committed by
+# this workflow. Full text stays in the runner's cache and is not uploaded.
+# Action versions follow the README usage examples (checked 2026-10-26):
+#   https://github.com/actions/checkout  https://github.com/actions/setup-python
+#   https://github.com/actions/upload-artifact
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/research/**'
+      - 'tests/research/**'
+      - 'data/research/corpus/**'
+      - 'docs/research/sela-relay/research_100.json'
+      - 'docs/research/sela-relay/research_100.bib'
+      - 'docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md'
+      - 'docs/research/sela-relay/09_RESEARCH_REGISTER.md'
+      - 'docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md'
+      # the offline tests scan the UI copy with the claim gates (expects 0 hits)
+      - 'web/src/i18n/**'
+      - '.github/workflows/research-corpus.yml'
+  workflow_dispatch:
+    inputs:
+      freeze_date:
+        description: 'Freeze date YYYY-MM-DD (cutoff = freeze date minus five calendar years)'
+        required: true
+        default: '2026-10-26'
+      run_online:
+        description: 'Also fetch from Europe PMC / Crossref / OpenAlex / doi.org and rebuild (artifact only)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-corpus-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline:
+    name: Offline tests and output verification (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.12']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests (fixtures only, no network)
+        run: python3 -m unittest discover -s tests/research -p 'test_*.py'
+      - name: Verify committed corpus outputs (re-hash, schema, invariants)
+        run: python3 scripts/research/corpus_pipeline.py verify
+
+  online:
+    name: Manual fetch, build and verify (artifact only)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_online
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      FREEZE_DATE: ${{ inputs.freeze_date }}
+      # Optional Crossref polite-pool contact; read only from this secret, never logged or written.
+      SELA_RESEARCH_MAILTO: ${{ secrets.SELA_RESEARCH_MAILTO }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Fetch metadata (and CC-licensed open-access full text) into the local cache
+        run: python3 scripts/research/corpus_pipeline.py fetch --freeze-date "$FREEZE_DATE"
+      - name: Build outputs offline from the cache
+        run: python3 scripts/research/corpus_pipeline.py build --freeze-date "$FREEZE_DATE"
+      - name: Verify outputs
+        run: python3 scripts/research/corpus_pipeline.py verify
+      - name: Upload outputs for review (no cache, no full text)
+        uses: actions/upload-artifact@v7
+        with:
+          name: sela-research-corpus-${{ inputs.freeze_date }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            data/research/corpus/*.json
+            data/research/corpus/*.jsonl
+            data/research/corpus/eval_fixtures/
+            data/research/corpus/snapshots/
+            !data/research/corpus/.cache/**

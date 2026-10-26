@@ -13,22 +13,33 @@ Updated: 26 October 2026. Authority: [SPEC.md](../SPEC.md). Every repository Mar
 | [SECURITY.md](../SECURITY.md) | Current project / v2 supporting documentation |
 | [SPEC.md](../SPEC.md) | Normative v2 source of truth |
 | [apps/web/src/app/fonts/README.md](../apps/web/src/app/fonts/README.md) | Attached font source/license provenance; retained |
+| [data/research/README.md](../data/research/README.md) | Supporting research data documentation |
 | [deploy/vps/README.md](../deploy/vps/README.md) | Attached v1 implementation reference; not v2 requirement |
 | [docs/AI_POLICY.md](AI_POLICY.md) | Current project / v2 supporting documentation |
 | [docs/API_SPEC.md](API_SPEC.md) | Current project / v2 supporting documentation |
 | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | Current project / v2 supporting documentation |
+| [docs/BLOCKERS.md](BLOCKERS.md) | Current project / v2 supporting documentation |
+| [docs/CLAUDE_VERIFIER.md](CLAUDE_VERIFIER.md) | Current project / optional verifier contract (owner decision C12) |
+| [docs/CONFLICT_MATRIX.md](CONFLICT_MATRIX.md) | Current project / v2 supporting documentation |
 | [docs/DECISIONS.md](DECISIONS.md) | Current project / v2 supporting documentation |
+| [docs/DECISION_LOG.md](DECISION_LOG.md) | Current project / v2 supporting documentation |
+| [docs/DEEPSEEK_FALLBACK.md](DEEPSEEK_FALLBACK.md) | Current project / optional generation fallback contract (owner decision C13) |
 | [docs/DEMO_DATA.md](DEMO_DATA.md) | Current project / v2 supporting documentation |
 | [docs/DEVELOPMENT.md](DEVELOPMENT.md) | Current project / v2 supporting documentation |
 | [docs/DOCUMENT_INVENTORY.md](DOCUMENT_INVENTORY.md) | Current project / v2 supporting documentation |
+| [docs/EVALUATION.md](EVALUATION.md) | Current project / v2 supporting documentation |
+| [docs/IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | Current project / v2 supporting documentation |
 | [docs/META_EVENT_NOTES.md](META_EVENT_NOTES.md) | Current project / v2 supporting documentation |
 | [docs/META_INTEGRATION.md](META_INTEGRATION.md) | Current project / v2 supporting documentation |
 | [docs/PRODUCT.md](PRODUCT.md) | Current project / v2 supporting documentation |
 | [docs/README.md](README.md) | Current project / v2 supporting documentation |
+| [docs/REQUIREMENTS_TRACEABILITY.md](REQUIREMENTS_TRACEABILITY.md) | Current project / v2 supporting documentation |
 | [docs/ROADMAP.md](ROADMAP.md) | Current project / v2 supporting documentation |
+| [docs/RUNBOOK.md](RUNBOOK.md) | Current project / v2 supporting documentation |
 | [docs/SAFETY.md](SAFETY.md) | Current project / v2 supporting documentation |
 | [docs/SELA_PROVENANCE.md](SELA_PROVENANCE.md) | Current project / v2 supporting documentation |
 | [docs/VALIDATION.md](VALIDATION.md) | Current project / v2 supporting documentation |
+| [docs/adr/ADR-0001-meta-open-weight-model-on-modal.md](adr/ADR-0001-meta-open-weight-model-on-modal.md) | Current project / v2 architecture decision record |
 | [docs/archive/v1/AI_POLICY.md](archive/v1/AI_POLICY.md) | Archived v1 / superseded draft |
 | [docs/archive/v1/AMD_01_SCOPE_DAN_SYARAT.md](archive/v1/AMD_01_SCOPE_DAN_SYARAT.md) | Archived v1 / superseded draft |
 | [docs/archive/v1/AMD_SETUP.md](archive/v1/AMD_SETUP.md) | Archived v1 / superseded draft |
@@ -97,6 +108,11 @@ Updated: 26 October 2026. Authority: [SPEC.md](../SPEC.md). Every repository Mar
 | [docs/archive/v1/eval/A11Y_AUDIT_REPORT_2026-10-16.md](archive/v1/eval/A11Y_AUDIT_REPORT_2026-10-16.md) | Archived v1 / superseded draft |
 | [docs/archive/v1/eval/EVAL_REPORT.md](archive/v1/eval/EVAL_REPORT.md) | Archived v1 / superseded draft |
 | [docs/archive/v1/research/RISET_FITUR_DAN_GAP_2026-10-13.md](archive/v1/research/RISET_FITUR_DAN_GAP_2026-10-13.md) | Archived v1 / superseded draft |
+| [docs/research/CORPUS_PIPELINE.md](research/CORPUS_PIPELINE.md) | Current project / v2 research pipeline documentation |
+| [modal/MODEL_NOTES.md](../modal/MODEL_NOTES.md) | Current project / v2 verified model and serving facts |
+| [modal/README.md](../modal/README.md) | Current project / v2 Modal serving runbook |
+| [prototypes/evidenceguard/README.md](../prototypes/evidenceguard/README.md) | Standalone verifier prototype documentation (not wired into v2) |
+| [prototypes/generationfallback/README.md](../prototypes/generationfallback/README.md) | Standalone DeepSeek fallback prototype documentation (not wired into v2) |
 | [services/persistence/migrations/README.md](../services/persistence/migrations/README.md) | Attached v1 implementation reference; not v2 requirement |
 | [supabase/migrations/README.md](../supabase/migrations/README.md) | Attached v1 implementation reference; not v2 requirement |
 
@@ -115,6 +131,13 @@ These additions are non-normative, title/abstract-screened research and design p
 | [docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md](research/sela-relay/07_EVIDENCE_TO_FEATURE.md) | Non-normative research / proposal documentation |
 | [docs/research/sela-relay/08_ROADMAP_AND_VALIDATION.md](research/sela-relay/08_ROADMAP_AND_VALIDATION.md) | Non-normative research / proposal documentation |
 | [docs/research/sela-relay/09_RESEARCH_REGISTER.md](research/sela-relay/09_RESEARCH_REGISTER.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md](research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/11_PRODUCT_VERTICAL_SLICE.md](research/sela-relay/11_PRODUCT_VERTICAL_SLICE.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/12_GO_META_IMPLEMENTATION_CONTRACT.md](research/sela-relay/12_GO_META_IMPLEMENTATION_CONTRACT.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/13_JUDGING_AND_DEMO_PACKAGE.md](research/sela-relay/13_JUDGING_AND_DEMO_PACKAGE.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/14_METADATA_SCREENING_PROTOCOL.md](research/sela-relay/14_METADATA_SCREENING_PROTOCOL.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/RESEARCH_COLLECTION_2026-10-26.md](research/sela-relay/RESEARCH_COLLECTION_2026-10-26.md) | Non-normative research / proposal documentation |
+| [docs/research/sela-relay/RESEARCH_EXPANSION_PIPELINE.md](research/sela-relay/RESEARCH_EXPANSION_PIPELINE.md) | Non-normative research / proposal documentation |
 | [docs/research/sela-relay/README.md](research/sela-relay/README.md) | Non-normative research / proposal documentation |
 | [docs/research/sela-relay/research_100.bib](research/sela-relay/research_100.bib) | Supporting research metadata / citation export |
 | [docs/research/sela-relay/research_100.json](research/sela-relay/research_100.json) | Supporting research metadata / citation export |
@@ -203,4 +226,4 @@ Source comments, script messages and fixture-read paths that referenced moved ma
 
 `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, current docs and attached v1 READMEs were rewritten or status-scoped. Exact pre-edit revisions remain available at `d5da323` in Git. Archive headers override old words such as “active”, “done”, or “deployed” inside historical records.
 
-Add a classification here when adding/removing/moving a Markdown file. Update the archive index and reference paths when relocating historical assets.
+Test fixtures under `tests/research/fixtures/corpus/repo/` are trimmed synthetic copies used only by the corpus pipeline tests; they are not documentation. Add a classification here when adding/removing/moving a Markdown file. Update the archive index and reference paths when relocating historical assets.

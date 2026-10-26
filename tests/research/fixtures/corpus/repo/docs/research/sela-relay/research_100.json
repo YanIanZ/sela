@@ -1,0 +1,103 @@
+{
+  "status": "synthetic_test_register",
+  "as_of": "2026-10-26",
+  "count": 5,
+  "papers": [
+    {
+      "id": "R001",
+      "title": "Chatbot-delivered mental health support: Attitudes and utilization in a sample of U.S. college students.",
+      "authors": "Rackoff GN, Zhang ZZ, Newman MG.",
+      "first_publication_date": "2025-01-17",
+      "publication_year": "2025",
+      "journal": "Digital health",
+      "doi": "10.1177/20552076241313401",
+      "url": "https://doi.org/10.1177/20552076241313401",
+      "index_url": "https://pubmed.ncbi.nlm.nih.gov/39839954/",
+      "publication_types_from_index": [
+        "research-article",
+        "Journal Article"
+      ],
+      "theme": "AI_SUPPORT",
+      "abstract_based_note_id": "Catatan uji sintetis tentang mahasiswa AS.",
+      "transfer_limitation_id": "Batas uji sintetis.",
+      "review_status": "metadata_and_abstract_screened; full_text_critical_appraisal_pending",
+      "retrieved_date": "2026-10-26"
+    },
+    {
+      "id": "R002",
+      "title": "Synthetic test title for a retracted oncology article.",
+      "authors": "Tester A, Tester B.",
+      "first_publication_date": "2020-05-10",
+      "publication_year": "2020",
+      "journal": "Synthetic journal",
+      "doi": "https://doi.org/10.1177/1758835920922055",
+      "url": "https://doi.org/10.1177/1758835920922055",
+      "index_url": "https://pubmed.ncbi.nlm.nih.gov/32426053/",
+      "publication_types_from_index": [
+        "Journal Article"
+      ],
+      "theme": "SAFETY",
+      "abstract_based_note_id": "Catatan uji sintetis.",
+      "transfer_limitation_id": "Batas uji sintetis.",
+      "review_status": "metadata_and_abstract_screened; full_text_critical_appraisal_pending",
+      "retrieved_date": "2026-10-26"
+    },
+    {
+      "id": "R003",
+      "title": "Synthetic qualitative study of adolescents in Indonesia.",
+      "authors": "Tester C.",
+      "first_publication_date": "2019-05-01",
+      "publication_year": "2019",
+      "journal": "Synthetic journal",
+      "doi": "10.5555/SELA-TEST-OLD",
+      "url": "https://doi.org/10.5555/sela-test-old",
+      "index_url": "https://example.org/synthetic/R003",
+      "publication_types_from_index": [
+        "Journal Article"
+      ],
+      "theme": "INDONESIA",
+      "abstract_based_note_id": "Remaja di Indonesia (uji sintetis).",
+      "transfer_limitation_id": "Batas uji sintetis.",
+      "review_status": "metadata_and_abstract_screened; full_text_critical_appraisal_pending",
+      "retrieved_date": "2026-10-26"
+    },
+    {
+      "id": "R004",
+      "title": "Synthetic systematic review with month-only online date.",
+      "authors": "Tester D, et al.",
+      "first_publication_date": "2024-03-01",
+      "publication_year": "2024",
+      "journal": "Synthetic journal",
+      "doi": "10.5555/sela-test-month",
+      "url": "https://doi.org/10.5555/sela-test-month",
+      "index_url": "https://example.org/synthetic/R004",
+      "publication_types_from_index": [
+        "Systematic Review"
+      ],
+      "theme": "NAVIGATION",
+      "abstract_based_note_id": "Catatan uji sintetis.",
+      "transfer_limitation_id": "Batas uji sintetis.",
+      "review_status": "metadata_and_abstract_screened; full_text_critical_appraisal_pending",
+      "retrieved_date": "2026-10-26"
+    },
+    {
+      "id": "R005",
+      "title": "Synthetic record whose DOI does not resolve.",
+      "authors": "Tester E.",
+      "first_publication_date": "2025-06-01",
+      "publication_year": "2025",
+      "journal": "Synthetic journal",
+      "doi": "10.5555/sela-test-unresolvable",
+      "url": "https://doi.org/10.5555/sela-test-unresolvable",
+      "index_url": "https://example.org/synthetic/R005",
+      "publication_types_from_index": [
+        "Journal Article"
+      ],
+      "theme": "PRIVACY",
+      "abstract_based_note_id": "Catatan uji sintetis.",
+      "transfer_limitation_id": "Batas uji sintetis.",
+      "review_status": "metadata_and_abstract_screened; full_text_critical_appraisal_pending",
+      "retrieved_date": "2026-10-26"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "privacy": {
+    "version": "privacy-2026-10-26.1",
+    "title": {"id": "Batas layanan dan privasi", "en": "Service boundaries and privacy"},
+    "body": [
+      {"id": "Sela adalah demo navigasi menuju bantuan profesional. Sela bukan psikolog, bukan layanan darurat, dan tidak memberi diagnosis, resep, atau terapi.", "en": "Sela is a demo for navigating towards professional support. Sela is not a psychologist or an emergency service and gives no diagnosis, prescription or therapy."},
+      {"id": "Semua profesional, jadwal, konsultasi, dan rencana tindak lanjut di demo ini fiktif. Tidak ada pesan yang dikirim ke orang atau layanan nyata.", "en": "Every professional, appointment, consultation and follow-up plan in this demo is fictional. No message is sent to any real person or service."},
+      {"id": "Gunakan cerita contoh atau tulis cerita latihan yang fiktif. Jangan memasukkan nama asli, kontak, atau riwayat kesehatan nyata.", "en": "Use a sample story or write a fictional practice story. Do not enter real names, contact details or real health history."},
+      {"id": "Data sesimu hanya disimpan di memori server demo. Data hilang saat sesi berakhir, saat kamu menghapusnya, atau saat server dimulai ulang. Tidak ada basis data.", "en": "Your session data is kept only in the demo server's memory. It is erased when the session ends, when you delete it, or when the server restarts. There is no database."},
+      {"id": "Satu cookie acak menjaga sesimu. Cookie terpisah dipakai saat seseorang membuka tautan berbagi sebagai penerima fiktif.", "en": "One random cookie keeps your session. A separate cookie is used when someone opens a share link as the fictional recipient."},
+      {"id": "Log operasional Sela hanya mencatat rute, status, dan durasi. Isi ceritamu, kalimat yang dihasilkan AI, dan kode akses tidak dicatat.", "en": "Sela's operational logs record only route, status and duration. Your story, AI-generated wording and access codes are not logged."},
+      {"id": "Mode anonim berarti Sela tidak meminta nama. Itu bukan anonimitas teknis: penyedia hosting tetap memproses alamat IP dan waktu permintaan.", "en": "Anonymous mode means Sela does not ask for a name. It is not technical anonymity: the hosting provider still processes IP addresses and request times."}
+    ]
+  },
+  "ai_processing": {
+    "version": "ai-2026-10-26.1",
+    "title": {"id": "Izin pemrosesan AI", "en": "AI processing permission"},
+    "body": [
+      {"id": "Jika kamu mengizinkan, kalimat-kalimat ceritamu dikirim ke model terbuka Meta (Llama) yang dijalankan di server GPU Modal untuk menyusun draf catatan dan kalimat pembuka.", "en": "If you allow it, the sentences of your story are sent to a Meta open-weight model (Llama) running on a Modal GPU server to draft your note and opening lines."},
+      {"id": "Server model dikonfigurasi agar tidak mencatat isi permintaan. Modal tetap memproses data itu sebagai penyedia infrastruktur sesuai ketentuannya.", "en": "The model server is configured not to log request contents. Modal still processes that data as the infrastructure provider under its own terms."},
+      {"id": "Draf AI hanya usulan. Sela memeriksa setiap kalimat terhadap kata-katamu sendiri, dan kamu yang memutuskan apa yang disimpan.", "en": "The AI draft is only a proposal. Sela checks every sentence against your own words, and you decide what is kept."},
+      {"id": "Izin ini tidak berarti kamu setuju menyimpan atau membagikan apa pun. Kamu bisa mencabutnya kapan saja dan tetap memakai jalur manual.", "en": "This permission does not mean you agree to keep or share anything. You can withdraw it at any time and still use the manual path."}
+    ]
+  },
+  "storage": {
+    "version": "storage-2026-10-26.1",
+    "title": {"id": "Izin penyimpanan sementara", "en": "Temporary storage permission"},
+    "body": [
+      {"id": "Tanpa izin ini, sesimu dihapus setelah 30 menit tidak aktif dan paling lama 2 jam.", "en": "Without this permission, your session is deleted after 30 minutes of inactivity and after 2 hours at most."},
+      {"id": "Dengan izin ini, sesimu disimpan di memori hingga 24 jam agar kamu bisa kembali melihat status dan tindak lanjut.", "en": "With this permission, your session is kept in memory for up to 24 hours so you can come back to check status and follow-up."},
+      {"id": "Kamu bisa menghapus semuanya kapan saja. Server yang dimulai ulang juga menghapus semuanya.", "en": "You can delete everything at any time. A server restart also deletes everything."}
+    ]
+  },
+  "sharing": {
+    "version": "sharing-2026-10-26.1",
+    "title": {"id": "Izin berbagi", "en": "Sharing permission"},
+    "body": [
+      {"id": "Kamu memilih penerima fiktif, versi catatan yang sudah kamu setujui, dan bagian yang dibagikan. Penerima hanya melihat pratinjau yang sama.", "en": "You choose the fictional recipient, the approved version of your note and the parts to share. The recipient sees exactly the preview."},
+      {"id": "Akses membutuhkan tautan dan kode akses terpisah, dan berakhir sesuai durasi yang kamu pilih.", "en": "Access needs both the link and a separate access code, and ends after the duration you choose."},
+      {"id": "Mencabut akses memblokir akses berikutnya. Informasi yang sudah dilihat atau disalin tidak dapat ditarik kembali.", "en": "Revoking blocks future access. Information already viewed or copied cannot be recalled."},
+      {"id": "Permintaan yang terkirim belum berarti kamu sudah mendapat perawatan.", "en": "A sent request does not mean you have received care."}
+    ]
+  }
+}

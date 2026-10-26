@@ -1,0 +1,866 @@
+{
+  "canonical_date_rule": "earliest DAY-precision date from crossref.published_online, europepmc.first_publication_date or europepmc.electronic_publication_date; discrepancy when |diff| > 31 days, year differs, or a primary source is month/year precision",
+  "claim_gates_version": "sela-claim-gates-v2",
+  "counts": {
+    "access_status": {
+      "closed_or_unknown": 5,
+      "open_access_licensed": 84,
+      "open_access_unclear": 11
+    },
+    "date_discrepancies_by_kind": {
+      "primary": 15,
+      "register": 8,
+      "secondary": 34
+    },
+    "date_discrepancies_by_type": {
+      "gt_31_days": 7,
+      "missing_primary_day_date": 4,
+      "month_precision": 9,
+      "year_mismatch": 37
+    },
+    "date_discrepancies_total": 57,
+    "doi_resolvable": {
+      "true": 100
+    },
+    "evidence_items": 694,
+    "flags": {
+      "abstract_only_screening": 100,
+      "conference_or_preprint": 1,
+      "corrected": 3,
+      "date_discrepancy_primary": 10,
+      "full_text_machine_extracted_unreviewed": 84,
+      "licence_restricts_redistribution": 21,
+      "licence_unknown": 6,
+      "not_in_europepmc": 2,
+      "observational": 13,
+      "population_country_not_stated": 76,
+      "population_includes_minors_or_youth": 20,
+      "population_not_indonesian": 15,
+      "print_year_differs": 8,
+      "qualitative_design": 15,
+      "register_date_differs": 8,
+      "review_overlap_possible": 18,
+      "sample_size_conflicting_candidates": 31,
+      "trial_design_unverified": 8
+    },
+    "fulltext_eligible": 84,
+    "fulltexts_processed": 84,
+    "in_europepmc": 98,
+    "labelled_sections": {
+      "comparator": 2,
+      "intervention_or_exposure": 2,
+      "limitations": 38,
+      "outcomes": 4
+    },
+    "license": {
+      "CC-BY": 40,
+      "CC-BY-4.0": 33,
+      "CC-BY-NC": 1,
+      "CC-BY-NC-4.0": 6,
+      "CC-BY-NC-ND-4.0": 6,
+      "null": 6,
+      "publisher-specific": 3,
+      "publisher-tdm": 5
+    },
+    "license_family": {
+      "CC-BY": 73,
+      "CC-BY-NC": 7,
+      "CC-BY-NC-ND": 6,
+      "null": 6,
+      "publisher-specific": 3,
+      "publisher-tdm": 5
+    },
+    "records": 100,
+    "records_with_date_discrepancies": 21,
+    "records_with_primary_date_discrepancy": 10,
+    "records_with_register_date_discrepancy": 8,
+    "redistribution_allowed": 73,
+    "retraction_status": {
+      "corrected": 3,
+      "none_found": 97
+    },
+    "sample_size_conflicting": 31,
+    "sample_size_none_found": 30,
+    "sample_size_review_left_null": 15,
+    "sample_sizes_extracted": 8,
+    "screening_status": {
+      "included_title_abstract_v0": 96,
+      "needs_check": 4
+    },
+    "study_type_primary": {
+      "brief_report": 2,
+      "case_series": 1,
+      "clinical_trial": 1,
+      "cohort": 3,
+      "comparative_study": 2,
+      "conference_paper": 1,
+      "cross_sectional": 5,
+      "journal_article": 35,
+      "longitudinal": 3,
+      "meta_analysis": 3,
+      "mixed_methods": 4,
+      "observational_study": 2,
+      "pilot": 2,
+      "qualitative": 13,
+      "randomized_controlled_trial": 6,
+      "randomized_trial": 1,
+      "review": 2,
+      "scoping_review": 4,
+      "systematic_review": 9,
+      "validation_study": 1
+    },
+    "text_processing_allowed": 86,
+    "theme": {
+      "AI_SUPPORT": 9,
+      "ANCHOR": 7,
+      "CONTINUITY": 7,
+      "ENGAGEMENT": 12,
+      "HELP_SEEKING": 10,
+      "INDONESIA": 8,
+      "LANGUAGE_EQUITY": 7,
+      "NAVIGATION": 10,
+      "PRIVACY": 10,
+      "SAFETY": 12,
+      "SUMMARIZATION": 8
+    },
+    "with_pmcid": 89,
+    "within_cutoff": {
+      "null": 4,
+      "true": 96
+    },
+    "year_verified": {
+      "2023": 2,
+      "2024": 3,
+      "2025": 90,
+      "2026": 1,
+      "null": 4
+    }
+  },
+  "crossref_pool": {
+    "public": 100
+  },
+  "cutoff_date": "2021-10-26",
+  "dataset": "Sela research corpus: 100-publication register re-verified against public metadata",
+  "date_discrepancies": [
+    {
+      "canonical": null,
+      "days": null,
+      "id": "R002",
+      "kind": "primary",
+      "precision": null,
+      "source": "canonical",
+      "type": "missing_primary_day_date",
+      "value": null
+    },
+    {
+      "canonical": null,
+      "days": null,
+      "id": "R002",
+      "kind": "primary",
+      "precision": "month",
+      "source": "europepmc.first_publication_date",
+      "type": "month_precision",
+      "value": "2025-08"
+    },
+    {
+      "canonical": "2025-02-28",
+      "days": null,
+      "id": "R007",
+      "kind": "secondary",
+      "precision": "year",
+      "source": "openalex.publication_year",
+      "type": "year_mismatch",
+      "value": "2024"
+    },
+    {
+      "canonical": "2025-11-02",
+      "days": 59,
+      "id": "R011",
+      "kind": "secondary",
+      "precision": "day",
+      "source": "crossref.published_print",
+      "type": "gt_31_days",
+      "value": "2025-12-31"
+    },
+    {
+      "canonical": null,
+      "days": null,
+      "id": "R013",
+      "kind": "primary",
+      "precision": null,
+      "source": "canonical",
+      "type": "missing_primary_day_date",
+      "value": null
+    },
+    {
+      "canonical": null,
+      "days": null,
+      "id": "R013",
+      "kind": "primary",
+      "precision": "month",
+      "source": "europepmc.first_publication_date",
+      "type": "month_precision",
+      "value": "2025-09"
+    },
+    {
+      "canonical": "2025-09-22",
+      "days": null,
+      "id": "R018",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "crossref.published_print",
+      "type": "year_mismatch",
+      "value": "2026-04"
+    },
+    {
+      "canonical": "2025-09-22",
+      "days": null,
+      "id": "R018",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "europepmc.print_publication_date",
+      "type": "year_mismatch",
+      "value": "2026-04"
+    },
+    {
+      "canonical": "2025-09-22",
+      "days": null,
+      "id": "R018",
+      "kind": "secondary",
+      "precision": "year",
+      "source": "europepmc.pub_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-09-22",
+      "days": null,
+      "id": "R018",
+      "kind": "register",
+      "precision": "year",
+      "source": "register.publication_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-09-10",
+      "days": null,
+      "id": "R019",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "crossref.published_print",
+      "type": "year_mismatch",
+      "value": "2026-05"
+    },
+    {
+      "canonical": "2025-09-10",
+      "days": null,
+      "id": "R019",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "europepmc.print_publication_date",
+      "type": "year_mismatch",
+      "value": "2026-05"
+    },
+    {
+      "canonical": "2025-09-10",
+      "days": null,
+      "id": "R019",
+      "kind": "secondary",
+      "precision": "year",
+      "source": "europepmc.pub_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-09-10",
+      "days": null,
+      "id": "R019",
+      "kind": "register",
+      "precision": "year",
+      "source": "register.publication_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-10-29",
+      "days": 65,
+      "id": "R021",
+      "kind": "secondary",
+      "precision": "day",
+      "source": "crossref.published_print",
+      "type": "gt_31_days",
+      "value": "2026-01-02"
+    },
+    {
+      "canonical": "2025-10-29",
+      "days": null,
+      "id": "R021",
+      "kind": "secondary",
+      "precision": "day",
+      "source": "crossref.published_print",
+      "type": "year_mismatch",
+      "value": "2026-01-02"
+    },
+    {
+      "canonical": "2025-10-29",
+      "days": null,
+      "id": "R021",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "europepmc.print_publication_date",
+      "type": "year_mismatch",
+      "value": "2026-01"
+    },
+    {
+      "canonical": "2025-10-29",
+      "days": null,
+      "id": "R021",
+      "kind": "secondary",
+      "precision": "year",
+      "source": "europepmc.pub_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-10-29",
+      "days": null,
+      "id": "R021",
+      "kind": "register",
+      "precision": "year",
+      "source": "register.publication_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-12-13",
+      "days": null,
+      "id": "R022",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "crossref.issued",
+      "type": "year_mismatch",
+      "value": "2026-09"
+    },
+    {
+      "canonical": "2025-12-13",
+      "days": null,
+      "id": "R022",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "crossref.published_print",
+      "type": "year_mismatch",
+      "value": "2026-09"
+    },
+    {
+      "canonical": "2025-12-13",
+      "days": null,
+      "id": "R022",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "europepmc.print_publication_date",
+      "type": "year_mismatch",
+      "value": "2026-09"
+    },
+    {
+      "canonical": "2025-12-13",
+      "days": null,
+      "id": "R022",
+      "kind": "secondary",
+      "precision": "year",
+      "source": "europepmc.pub_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-12-13",
+      "days": null,
+      "id": "R022",
+      "kind": "register",
+      "precision": "year",
+      "source": "register.publication_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-09-19",
+      "days": null,
+      "id": "R025",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "crossref.published_print",
+      "type": "year_mismatch",
+      "value": "2026-10"
+    },
+    {
+      "canonical": "2025-09-19",
+      "days": null,
+      "id": "R025",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "europepmc.print_publication_date",
+      "type": "year_mismatch",
+      "value": "2026-10"
+    },
+    {
+      "canonical": "2025-09-19",
+      "days": null,
+      "id": "R025",
+      "kind": "secondary",
+      "precision": "year",
+      "source": "europepmc.pub_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-09-19",
+      "days": null,
+      "id": "R025",
+      "kind": "register",
+      "precision": "year",
+      "source": "register.publication_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-12-15",
+      "days": null,
+      "id": "R026",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "crossref.issued",
+      "type": "year_mismatch",
+      "value": "2026-06"
+    },
+    {
+      "canonical": "2025-12-15",
+      "days": null,
+      "id": "R026",
+      "kind": "primary",
+      "precision": "month",
+      "source": "crossref.published_online",
+      "type": "month_precision",
+      "value": "2026-06"
+    },
+    {
+      "canonical": "2025-12-15",
+      "days": null,
+      "id": "R026",
+      "kind": "primary",
+      "precision": "month",
+      "source": "crossref.published_online",
+      "type": "year_mismatch",
+      "value": "2026-06"
+    },
+    {
+      "canonical": "2025-12-15",
+      "days": null,
+      "id": "R026",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "europepmc.print_publication_date",
+      "type": "year_mismatch",
+      "value": "2026-06"
+    },
+    {
+      "canonical": "2025-12-15",
+      "days": null,
+      "id": "R026",
+      "kind": "secondary",
+      "precision": "year",
+      "source": "europepmc.pub_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-12-15",
+      "days": null,
+      "id": "R026",
+      "kind": "register",
+      "precision": "year",
+      "source": "register.publication_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2024-07-08",
+      "days": null,
+      "id": "R035",
+      "kind": "primary",
+      "precision": "month",
+      "source": "europepmc.first_publication_date",
+      "type": "month_precision",
+      "value": "2024-08"
+    },
+    {
+      "canonical": "2025-08-12",
+      "days": 141,
+      "id": "R047",
+      "kind": "secondary",
+      "precision": "day",
+      "source": "crossref.published_print",
+      "type": "gt_31_days",
+      "value": "2025-12-31"
+    },
+    {
+      "canonical": "2025-10-17",
+      "days": 75,
+      "id": "R049",
+      "kind": "secondary",
+      "precision": "day",
+      "source": "crossref.issued",
+      "type": "gt_31_days",
+      "value": "2025-12-31"
+    },
+    {
+      "canonical": "2025-10-17",
+      "days": 75,
+      "id": "R049",
+      "kind": "secondary",
+      "precision": "day",
+      "source": "crossref.published_print",
+      "type": "gt_31_days",
+      "value": "2025-12-31"
+    },
+    {
+      "canonical": "2025-07-09",
+      "days": null,
+      "id": "R051",
+      "kind": "primary",
+      "precision": "month",
+      "source": "europepmc.first_publication_date",
+      "type": "month_precision",
+      "value": "2025-07"
+    },
+    {
+      "canonical": null,
+      "days": null,
+      "id": "R065",
+      "kind": "primary",
+      "precision": null,
+      "source": "canonical",
+      "type": "missing_primary_day_date",
+      "value": null
+    },
+    {
+      "canonical": null,
+      "days": null,
+      "id": "R065",
+      "kind": "primary",
+      "precision": "month",
+      "source": "europepmc.first_publication_date",
+      "type": "month_precision",
+      "value": "2025-07"
+    },
+    {
+      "canonical": "2025-05-05",
+      "days": null,
+      "id": "R069",
+      "kind": "primary",
+      "precision": "month",
+      "source": "europepmc.first_publication_date",
+      "type": "month_precision",
+      "value": "2025-06"
+    },
+    {
+      "canonical": "2025-09-15",
+      "days": null,
+      "id": "R070",
+      "kind": "primary",
+      "precision": "month",
+      "source": "europepmc.first_publication_date",
+      "type": "month_precision",
+      "value": "2025-10"
+    },
+    {
+      "canonical": "2025-08-26",
+      "days": 67,
+      "id": "R074",
+      "kind": "secondary",
+      "precision": "day",
+      "source": "crossref.issued",
+      "type": "gt_31_days",
+      "value": "2025-11-01"
+    },
+    {
+      "canonical": "2025-08-26",
+      "days": 67,
+      "id": "R074",
+      "kind": "secondary",
+      "precision": "day",
+      "source": "crossref.published_print",
+      "type": "gt_31_days",
+      "value": "2025-11-01"
+    },
+    {
+      "canonical": "2025-09-29",
+      "days": null,
+      "id": "R083",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "crossref.issued",
+      "type": "year_mismatch",
+      "value": "2026-06"
+    },
+    {
+      "canonical": "2025-09-29",
+      "days": null,
+      "id": "R083",
+      "kind": "primary",
+      "precision": "month",
+      "source": "crossref.published_online",
+      "type": "month_precision",
+      "value": "2026-06"
+    },
+    {
+      "canonical": "2025-09-29",
+      "days": null,
+      "id": "R083",
+      "kind": "primary",
+      "precision": "month",
+      "source": "crossref.published_online",
+      "type": "year_mismatch",
+      "value": "2026-06"
+    },
+    {
+      "canonical": "2025-09-29",
+      "days": null,
+      "id": "R083",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "europepmc.print_publication_date",
+      "type": "year_mismatch",
+      "value": "2026-06"
+    },
+    {
+      "canonical": "2025-09-29",
+      "days": null,
+      "id": "R083",
+      "kind": "secondary",
+      "precision": "year",
+      "source": "europepmc.pub_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-09-29",
+      "days": null,
+      "id": "R083",
+      "kind": "register",
+      "precision": "year",
+      "source": "register.publication_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-12-12",
+      "days": null,
+      "id": "R089",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "crossref.issued",
+      "type": "year_mismatch",
+      "value": "2026-03"
+    },
+    {
+      "canonical": "2025-12-12",
+      "days": null,
+      "id": "R089",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "crossref.published_print",
+      "type": "year_mismatch",
+      "value": "2026-03"
+    },
+    {
+      "canonical": "2025-12-12",
+      "days": null,
+      "id": "R089",
+      "kind": "secondary",
+      "precision": "month",
+      "source": "europepmc.print_publication_date",
+      "type": "year_mismatch",
+      "value": "2026-03"
+    },
+    {
+      "canonical": "2025-12-12",
+      "days": null,
+      "id": "R089",
+      "kind": "secondary",
+      "precision": "year",
+      "source": "europepmc.pub_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": "2025-12-12",
+      "days": null,
+      "id": "R089",
+      "kind": "register",
+      "precision": "year",
+      "source": "register.publication_year",
+      "type": "year_mismatch",
+      "value": "2026"
+    },
+    {
+      "canonical": null,
+      "days": null,
+      "id": "R100",
+      "kind": "primary",
+      "precision": null,
+      "source": "canonical",
+      "type": "missing_primary_day_date",
+      "value": null
+    }
+  ],
+  "duplicates": {
+    "after_enrichment": [],
+    "count": 0,
+    "register_fields": []
+  },
+  "evidence_map": {
+    "entries": 20,
+    "entries_citing_non_included": 3,
+    "missing_r_ids": []
+  },
+  "freeze_date": "2026-10-26",
+  "index_version": "87902c81efe30d05",
+  "index_version_basis": "first 16 hex of sha256(knowledge_base.jsonl rows serialised without index_version)",
+  "input_cross_checks": {
+    "count": 2,
+    "issues": [
+      {
+        "field": "author_format",
+        "found": "comma-separated (parsed by BibTeX as one name)",
+        "id": "R099",
+        "json_value": "BibTeX 'and'-separated list",
+        "source": "research_100.bib"
+      },
+      {
+        "field": "author_format",
+        "found": "comma-separated (parsed by BibTeX as one name)",
+        "id": "R100",
+        "json_value": "BibTeX 'and'-separated list",
+        "source": "research_100.bib"
+      }
+    ]
+  },
+  "inputs": {
+    "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md": "df41203c2c4fe643b3ddce07a2cd5cc4263ef3d417a2cd739759084b7ae7d199",
+    "docs/research/sela-relay/09_RESEARCH_REGISTER.md": "02c768825f08c39ab42abf5dec4118d77bf5aa2a51602b022adc836d4d9ea220",
+    "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md": "6e115896fdd35a368cafa95bbe9e06b35447ad4790fabe735e27925cd34e5521",
+    "docs/research/sela-relay/research_100.bib": "ebefc1cb8e0fe5acd334a9cef1b6f5a4f94733fa04266d3614e07a3a782fc48b",
+    "docs/research/sela-relay/research_100.json": "90bae40e67a9b13847c1b9b85aa18e48fa45e515e85d54f23db3a351f77ec2cd"
+  },
+  "limitations": [
+    "Not a systematic review; the 100 records were selected earlier and are re-verified, not re-searched.",
+    "reviewer_status is not_reviewed for every record: no human reviewed any field produced here.",
+    "Screening is inherited title/abstract screening; no full-text appraisal or risk-of-bias assessment.",
+    "Population and country terms are explicit-word matches in titles/annotations, not verified study populations.",
+    "Full-text extraction is pattern-based and limited to CC-licensed Europe PMC open-access XML.",
+    "Licence fields reflect metadata published by Crossref and Europe PMC, not legal advice."
+  ],
+  "outputs": {
+    "eval_fixtures/claim_gates.json": "89f6f0312880d77c98f9dd60de685c9d0dfbec9a18e0098266c3c51b4889e81e",
+    "evidence_map.json": "920d6fa7122e18abf360fada7c4da977b4f51585b0eef32891a2eb65d300ae7c",
+    "knowledge_base.jsonl": "7a87c9ed906d760f1699cf22ebee5e0157f8c3eed905165143a5dbad48a70f45",
+    "records.jsonl": "69d368bbf7efe06fecc8bf3d051c03df614353c7128ba11a6ccf1937dbb0c616"
+  },
+  "pipeline_version": "1.1.0",
+  "retrieval_window": {
+    "first": "2026-10-26T04:24:55Z",
+    "last": "2026-10-26T04:36:25Z"
+  },
+  "rights_policy": {
+    "annotations": "register notes (note_id, transfer_limitation_id) are Sela's own text",
+    "full_text": "processed only under an explicit CC licence; cached locally (gitignored); never committed",
+    "inference_rag": "not used; product answers never retrieve literature",
+    "metadata": "bibliographic metadata from public APIs, with source and retrieval time per field",
+    "snippets": "verbatim <= 240 chars only for CC BY / BY-SA / CC0; otherwise locator + sha256 only",
+    "training_use": "none; this corpus is not a training dataset"
+  },
+  "rules_version": "sela-corpus-rules-v2",
+  "sources": {
+    "crossref": {
+      "endpoint": "https://api.crossref.org/works/{doi}",
+      "responses": {
+        "not_found": 1,
+        "ok": 99
+      }
+    },
+    "doi_handle": {
+      "endpoint": "https://doi.org/api/handles/{doi}",
+      "responses": {
+        "ok": 100
+      }
+    },
+    "europepmc": {
+      "endpoint": "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+      "responses": {
+        "ok": 100
+      }
+    },
+    "fulltext": {
+      "endpoint": "https://www.ebi.ac.uk/europepmc/webservices/rest/{pmcid}/fullTextXML",
+      "responses": {
+        "ok": 84
+      }
+    },
+    "openalex": {
+      "endpoint": "https://api.openalex.org/works/doi:{doi}",
+      "responses": {
+        "ok": 100
+      }
+    }
+  },
+  "status": "machine_verified_metadata_not_reviewed",
+  "window_rule": "cutoff_date <= publication_date <= freeze_date; cutoff_date = freeze_date minus five calendar years (29 February maps to 28 February)",
+  "year_distribution_check": {
+    "claim_source": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md (Verified local register integrity: First-publication year)",
+    "claimed": {
+      "2023": 2,
+      "2024": 3,
+      "2025": 86,
+      "2026": 9
+    },
+    "claimed_text": "2023: 2; 2024: 3; 2025: 86; 2026: 9",
+    "conclusion": "claim equals the JSON publication_year field; differs from the year of JSON first_publication_date; differs from verified canonical dates (4 record(s) without a verified date).",
+    "vs_json_first_publication_date_year": {
+      "difference_observed_minus_claimed": {
+        "2025": 8,
+        "2026": -8
+      },
+      "matches_claim": false,
+      "observed": {
+        "2023": 2,
+        "2024": 3,
+        "2025": 94,
+        "2026": 1
+      }
+    },
+    "vs_json_publication_year": {
+      "difference_observed_minus_claimed": {},
+      "matches_claim": true,
+      "observed": {
+        "2023": 2,
+        "2024": 3,
+        "2025": 86,
+        "2026": 9
+      }
+    },
+    "vs_verified_canonical_dates": {
+      "difference_observed_minus_claimed": {
+        "2025": 4,
+        "2026": -8
+      },
+      "matches_claim": false,
+      "observed": {
+        "2023": 2,
+        "2024": 3,
+        "2025": 90,
+        "2026": 1
+      },
+      "records_without_verified_date": 4
+    }
+  }
+}

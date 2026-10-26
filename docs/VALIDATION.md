@@ -1,54 +1,38 @@
 # Sela v2 acceptance and demo evidence
 
-Status: planned checks, not passing results. Authority: [SPEC](../SPEC.md) §V and T2–T9. Historical v1 test reports do not establish v2 acceptance.
+Authority: [SPEC](../SPEC.md) §V, T2–T12. Historical v1 reports do not establish v2 acceptance. Each row names the automated evidence; "live" rows stay pending until a real Modal deployment exists ([B-1](BLOCKERS.md)).
 
 ## Acceptance matrix
 
-| Coverage | Required observation | Spec |
-| --- | --- | --- |
-| Complete journey, ID/EN | Seeded story through fictional consultation and follow-up; complete localized states | V1,V2,V13 |
-| Crisis fixture | No inference or ordinary handoff; geography-labeled support screen | V3 |
-| Consent refusal/withdrawal | Manual synthetic path; canceled/stale AI result cannot commit | V4,V9 |
-| Edit after approval | Version changes, approval clears, stale handoff rejected | V5,V11 |
-| Shared projection | Only selected identity fields and approved facts reach the fictional inbox | V5,V12 |
-| Revoked/reset/expired session | All stale professional reads/actions denied; other visitors unaffected | V6,V11 |
-| Model failures | Malformed/ungrounded output rejected, timeout bounded, manual path available | V7,V9,V10 |
-| Discovery/empty availability | Exact fixture matches or honest empty state; no invented slot | V8 |
-| Repeat/racing requests | One idempotent simulated receipt; stale/changed payload conflicts | V11 |
-| Follow-up | Only allowed fixture plan after scripted completion; no model treatment changes | V7 |
-| Data boundaries | Unknown fixture IDs and arbitrary personal payloads rejected; metadata-only logs | V2,V12 |
-| Runtime cutover | Go/static bundle works without AMD, Node server, Redis or PostgreSQL dependencies | C6,C7,V14 |
-| Resource claims | Equivalent v1/v2 workload, environment and raw measurement recorded | V15 |
+| Coverage | Required observation | Evidence | Spec |
+| --- | --- | --- | --- |
+| Complete journey, ID and EN | Story → ledger → next step → share → recipient acknowledgement → scripted consultation → follow-up → revoke, in both languages | `e2e/journey.e2e.mjs` (ID with AI test double; EN manual), `internal/httpapi` `TestFullJourneyOverHTTP` | V1, V2, V13 |
+| Crisis fixture | No inference, no handoff/transition/plan; verified, region-labelled help | `TestCrisisStoryInterruptsBeforeAnyModelCallOrHandoff`, `TestCrisisAfterHandoffBlocksRecipientTransitions`, e2e crisis case, eval `safety.model_calls_on_crisis_path` | V3 |
+| Safety lexicon | Negation, quotation, slang, code-switching, ambiguity, idioms | `internal/safety` vectors and tests; eval `safety.*` | V3 |
+| Consent refusal/withdrawal | Manual path to handoff; canceled or stale AI results never commit | `TestNoAIConsentManualPathReachesFollowUp`, `TestStaleAIResultIsDiscarded`, `TestCancelOperation` | V4, V9, V22 |
+| Retention and deletion | Idle/absolute expiry by storage consent; delete purges session, shares, recipients | `TestConsentsAreIndependentAndRetentionWorks`, `TestSessionIdleExpiryPurges`, `TestRevokeExpiryAndDeleteEndRecipientAccess`, store tests, e2e settings case | V6, V23 |
+| Edit after approval | Version changes, approval clears, stale share rejected | `TestAIDraftNeedsReviewEditInvalidatesApproval` | V5, V11 |
+| Shared projection | Only selected fields; preview equals stored projection | `TestNoAIConsentManualPathReachesFollowUp`, `TestFullJourneyOverHTTP`, e2e EN case | V5, V12 |
+| Recipient authorization | Token alone insufficient; wrong code; lockout; uniform errors; separate cookie scope | `TestTokenAloneIsNotEnoughAndLockout`, `TestFullJourneyOverHTTP`, eval `authorization.violations` | V5, V12 |
+| Revoked/expired/deleted access | Recipient reads and actions denied; other visitors unaffected | `TestRevokeExpiryAndDeleteEndRecipientAccess`, `TestSessionsAreIsolated`, eval | V6, V11 |
+| Model failures | Malformed/ungrounded output rejected; unavailable/timeout honest; manual path | `TestMeaningLockRejectsFabricatedAndUnsafeModelOutput`, `TestMalformedModelOutputFailsHonestly`, `TestProviderUnavailableAndDisabled`, `internal/llm` tests, eval fault battery | V7, V9, V10 |
+| Next Step | Deterministic matches, reasons, honest empty state | `TestNextStepsAreDeterministicAndHonestWhenEmpty` | V8 |
+| Idempotency and races | One receipt for concurrent duplicates; changed payload conflicts; race detector clean | `TestIdempotentHandoffUnderConcurrency`, `go test -race ./...` | V11 |
+| Follow-up | Fixture plan only after scripted completion; once per option | `TestNoAIConsentManualPathReachesFollowUp` | V7 |
+| Data boundaries and logs | Unknown fields/IDs rejected; contact details rejected; no story, token or code in logs | `TestSessionCookieAttributesAndStrictJSON`, `TestPracticeTextBoundsAndContactDetails`, log canary checks in `TestFullJourneyOverHTTP` and e2e | V2, V12 |
+| Transport security | Same-origin guard, cookie attributes, CSP and headers, rate limits, static path safety | `internal/httpapi` tests | V11, V12, V25 |
+| Accessibility and i18n | axe WCAG 2.1 A/AA (no serious/critical), keyboard start, 390 px layout; key parity; no hard-coded strings | e2e, `web/src/test/*.test.ts` | V13 |
+| Research corpus | Reproducible build, provenance, licence/access, verified dates, nulls, citation validity | `tests/research/test_corpus_pipeline.py`, `corpus_pipeline.py verify`, eval `retrieval.*` | V24 |
+| Live Meta | Real Modal call with pinned model; bilingual wording; latency; cold start; cost | `modal/smoke_test.py`, `go run ./cmd/sela-eval -mode live` — **pending (B-1)** | V9, V10, V15 |
+| Runtime cutover | Go/static bundle without AMD, Node server, Redis or PostgreSQL | v2 binary and image have none of these; cutover itself pending (T9) | C6, C7, V14 |
 
 ## Repeatable demo
 
-1. Start a fresh session with the work-stress adult fixture and visible synthetic label.
-2. Choose ID/EN, inspect the seeded story and explicitly consent to Meta processing.
-3. Show a validated draft and its live/recorded/manual provenance.
-4. Filter fictional professionals and choose a fictional slot.
-5. Edit source-backed selections, approve the current brief, preview fields and separately share.
-6. Switch to the labeled professional perspective and show only the shared snapshot.
-7. Simulate acknowledgement and consultation completion; display a fixture-authored plan.
-8. Return to the user view, make a seeded follow-up check-in, then revoke/reset and prove the old view is inaccessible.
-9. Run the separate crisis fixture and show that inference/booking are bypassed.
-10. Demonstrate unavailable-model and no-AI-consent paths without pretending to call Meta.
+The script is in the [runbook](RUNBOOK.md#6-demo-script-about-3-minutes). Record commit, fixture version, provider mode and model revision with any recording; never present a test-double run as live Meta inference.
 
-Live API access is a separate prerequisite. If using a recording, say so throughout. Record the commit, fixture version, language, model/mode, checks and any limitations with the demo. Never use a real patient story or professional contact to make it more convincing.
+## Documentation baseline verified — 26 October 2026 (T1, before v2 implementation)
 
-## Baseline measurements
-
-Pin environment, build mode, fixture and load. Measure process startup, idle RSS, active RSS, static asset sizes and non-model API latency. Report model latency separately. Compare equivalent functionality and session/load counts; a smaller partial rewrite does not prove a faster full product. No numeric performance target is invented in this documentation phase.
-
-## Documentation baseline verified — 26 October 2026
-
-This evidence covers the documentation refactor and existing v1 reference compatibility only; it does not complete any v2 runtime task.
-
-- Inventory covers all 93 repository Markdown files; all 70 archived documents/assets exist and archived Markdown carries a superseded-status header.
-- All 630 relative Markdown file links and 29 checked local section anchors resolve. No missing explicit `docs/` paths remain outside the archive.
-- Spec task status/citation checks pass; all cited constraint/interface/invariant IDs exist.
-- The 34 changed runtime/test/SQL files differ only by old-document-path to archive-path substitutions.
-- `git diff --check`, `npm run test:migrations`, `npm run test:infra`, `npm run lint`, `npm run lint:services` and `npm run typecheck` pass.
-- No new Go build, new Meta call, v2 behavioral test or Sela deployment is claimed by this evidence.
+Inventory covered all 93 Markdown files; 630 relative links and 29 anchors resolved; spec task/citation checks passed; `git diff --check`, `npm run test:migrations`, `npm run test:infra`, `npm run lint`, `npm run lint:services` and `npm run typecheck` passed. That evidence covered documentation only.
 
 ## Optional Claude Sonnet 5.5 verifier acceptance (T5a, NOT YET PRODUCT-IMPLEMENTED)
 

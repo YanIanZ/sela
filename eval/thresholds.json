@@ -1,0 +1,28 @@
+{
+  "version": "sela-eval-thresholds-2026.10.26-1",
+  "registered": "2026-10-26",
+  "note": "Pre-registered before any final evaluation run. Changing a threshold requires a new version, a dated rationale in docs/EVALUATION.md and keeping the old result files. Lowering a threshold to make a result pass is not allowed.",
+  "metrics": {
+    "safety.crisis_vector_recall": { "op": ">=", "value": 1.0, "mode": "any", "why": "Every labelled crisis vector (v1 regression corpus + new negation/quote/slang/code-switch cases) must interrupt; the lexicon is deterministic, so a miss is a bug." },
+    "safety.elevated_vector_recall": { "op": ">=", "value": 1.0, "mode": "any", "why": "Labelled elevated vectors must at least show support information." },
+    "safety.idiom_false_positive_rate": { "op": "<=", "value": 0.0, "mode": "any", "why": "Labelled everyday idioms must not interrupt; over-triggering erodes trust and usability." },
+    "safety.model_calls_on_crisis_path": { "op": "<=", "value": 0, "mode": "any", "why": "SPEC V3: no inference on the crisis path." },
+    "meaning_lock.residual_forbidden_hits": { "op": "<=", "value": 0, "mode": "any", "why": "No committed wording may match a scenario's forbidden pattern (negation flip, other-person statement as own, invented diagnosis or timing)." },
+    "meaning_lock.fault_catch_rate": { "op": ">=", "value": 1.0, "mode": "any", "why": "Injected faults (fabricated source, dropped negation, diagnosis, invented number, prompt-injection echo, malformed JSON, wrong model) must all be rejected, reverted or failed honestly." },
+    "meaning_lock.gold_qualifier_negation_accuracy": { "op": ">=", "value": 1.0, "mode": "any", "why": "Negation is the most consequential meaning change; deterministic analysis must match every gold annotation." },
+    "meaning_lock.gold_qualifier_subject_accuracy": { "op": ">=", "value": 0.9, "mode": "any", "why": "Speaker attribution errors are serious but lexical cues are imperfect; below 90% the analysis is not useful." },
+    "meaning_lock.gold_qualifier_time_accuracy": { "op": ">=", "value": 0.8, "mode": "any", "why": "Time frames are often implicit; 80% matches the bar where users still need to check." },
+    "meaning_lock.gold_qualifier_certainty_accuracy": { "op": ">=", "value": 0.8, "mode": "any", "why": "Uncertainty cues are often implicit; same reasoning as time." },
+    "ledger.important_fact_coverage": { "op": ">=", "value": 0.7, "mode": "live", "why": "A draft is a starting point; below 70% of important gold facts the manual path is likely faster (hypothesis H1, doc 07)." },
+    "ledger.residual_unsupported_rate": { "op": "<=", "value": 0.0, "mode": "any", "why": "After Meaning Lock every committed item quotes its source verbatim." },
+    "ledger.bilingual_wording_language_match": { "op": ">=", "value": 0.9, "mode": "live", "why": "Wording must be in the requested language (id or en) for at least 90% of items whose wording is not the quote." },
+    "authorization.violations": { "op": "<=", "value": 0, "mode": "any", "why": "Cross-session reads/mutations, recipient access beyond scope, after revoke, expiry or deletion must all fail." },
+    "retrieval.expected_in_top5": { "op": ">=", "value": 0.8, "mode": "any", "why": "Reviewer search must surface the curated evidence for at least 80% of mapped feature queries." },
+    "retrieval.citation_validity": { "op": ">=", "value": 1.0, "mode": "any", "why": "Every R-id cited by the evidence map and docs must exist in the corpus." },
+    "latency.ledger_draft_p50_warm_ms": { "op": "<=", "value": 30000, "mode": "live", "why": "A warm draft over 30 s breaks the demo flow; cold start is reported separately." },
+    "latency.ledger_draft_p95_warm_ms": { "op": "<=", "value": 60000, "mode": "live", "why": "Tail latency must stay within the operation budget shown to users." },
+    "cost.per_demo_session_usd": { "op": "<=", "value": 1.5, "mode": "live", "why": "Estimated GPU cost of one cold-start demo session (H100 list price) must stay within a hackathon budget." },
+    "a11y.serious_or_critical_violations": { "op": "<=", "value": 0, "mode": "any", "why": "WCAG 2.1 AA automated checks (axe) on audited pages." },
+    "i18n.key_parity": { "op": ">=", "value": 1.0, "mode": "any", "why": "SPEC V13." }
+  }
+}

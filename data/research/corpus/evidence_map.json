@@ -1,0 +1,586 @@
+{
+  "all_r_ids_present": true,
+  "entries": [
+    {
+      "columns": {
+        "Batas inferensi": "Sebuah app tidak menghapus kekurangan tenaga profesional",
+        "Bukti pada register": "R098; R019",
+        "Keputusan Sela": "Filter biaya/waktu, opsi privasi dan langkah praktis",
+        "Temuan yang relevan": "Akses, biaya, stigma dan faktor sosial memengaruhi pencarian bantuan"
+      },
+      "feature": "Filter biaya/waktu, opsi privasi dan langkah praktis",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R019": "included_title_abstract_v0",
+        "R098": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R019",
+        "R098"
+      ],
+      "relies_on_non_included": [],
+      "row": 1,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Usability bukan bukti perubahan perilaku jangka panjang",
+        "Bukti pada register": "R012; R038",
+        "Keputusan Sela": "Satu next step, ekspektasi konsultasi dan navigasi jelas",
+        "Temuan yang relevan": "Pengguna membutuhkan cara masuk layanan dan informasi yang dapat dipahami"
+      },
+      "feature": "Satu next step, ekspektasi konsultasi dan navigasi jelas",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R012": "included_title_abstract_v0",
+        "R038": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R012",
+        "R038"
+      ],
+      "relies_on_non_included": [],
+      "row": 2,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Observasional, konteks layanan berbeda; efek kausal belum pasti",
+        "Bukti pada register": "R023",
+        "Keputusan Sela": "Handoff sampai ada respons dan recovery bila gagal",
+        "Temuan yang relevan": "Care navigation berasosiasi dengan penggunaan/retensi layanan lebih baik dalam kohort AS"
+      },
+      "feature": "Handoff sampai ada respons dan recovery bila gagal",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R023": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R023"
+      ],
+      "relies_on_non_included": [],
+      "row": 3,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Temuan konteks tertentu; bukan bukti seluruh handoff buruk",
+        "Bukti pada register": "R027",
+        "Keputusan Sela": "Uji jalur pengguna; jangan wajibkan warm handoff untuk semua",
+        "Temuan yang relevan": "Warm handoff tatap muka dikaitkan dengan odds attendance lebih rendah daripada referral internal tradisional pada studi remaja"
+      },
+      "feature": "Uji jalur pengguna; jangan wajibkan warm handoff untuk semua",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R027": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R027"
+      ],
+      "relies_on_non_included": [],
+      "row": 4,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Studi trauma mahasiswa, bukan seluruh pengguna Sela",
+        "Bukti pada register": "R047",
+        "Keputusan Sela": "Jangan berhenti pada edukasi; ukur penyelesaian langkah",
+        "Temuan yang relevan": "Pilot RCT Indonesia memperbaiki literasi tetapi tidak memperbaiki help-seeking intention atau outcome gejala dibanding kontrol"
+      },
+      "feature": "Jangan berhenti pada edukasi; ukur penyelesaian langkah",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R047": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R047"
+      ],
+      "relies_on_non_included": [],
+      "row": 5,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Belum membuktikan setiap dashboard akan meningkatkan engagement",
+        "Bukti pada register": "R031; R035",
+        "Keputusan Sela": "Catatan bisa diperiksa, dikoreksi dan dibahas",
+        "Temuan yang relevan": "Pemahaman tujuan data dan review kolaboratif penting bagi keterlibatan"
+      },
+      "feature": "Catatan bisa diperiksa, dikoreksi dan dibahas",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R031": "included_title_abstract_v0",
+        "R035": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R031",
+        "R035"
+      ],
+      "relies_on_non_included": [],
+      "row": 6,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Framework consent bukan jaminan kepatuhan Indonesia",
+        "Bukti pada register": "R045; R043",
+        "Keputusan Sela": "Grant per penerima/versi/field; preview dan revoke",
+        "Temuan yang relevan": "Transparansi dan consent sharing memerlukan implementasi konkret"
+      },
+      "feature": "Grant per penerima/versi/field; preview dan revoke",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R043": "included_title_abstract_v0",
+        "R045": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R043",
+        "R045"
+      ],
+      "relies_on_non_included": [],
+      "row": 7,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Tidak boleh memindahkan angka English/Korean ke Indonesia",
+        "Bukti pada register": "R057; R058",
+        "Keputusan Sela": "Eval ID/EN serta code-switching; sumber asli berdampingan",
+        "Temuan yang relevan": "Performa dan bias berubah menurut bahasa dan demografi"
+      },
+      "feature": "Eval ID/EN serta code-switching; sumber asli berdampingan",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R057": "included_title_abstract_v0",
+        "R058": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R057",
+        "R058"
+      ],
+      "relies_on_non_included": [],
+      "row": 8,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Ringkasan lancar tidak identik dengan benar",
+        "Bukti pada register": "R096; R065",
+        "Keputusan Sela": "Grounding, pemeriksaan negasi dan human approval",
+        "Temuan yang relevan": "Summarization menjanjikan tetapi dapat menghasilkan error/confabulation"
+      },
+      "feature": "Grounding, pemeriksaan negasi dan human approval",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R065": "needs_check",
+        "R096": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R065",
+        "R096"
+      ],
+      "relies_on_non_included": [
+        "R065"
+      ],
+      "row": 9,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Adaptasi rubrik untuk Sela bukan instrumen tervalidasi baru",
+        "Bukti pada register": "R069; R068",
+        "Keputusan Sela": "Rubrik completeness, correctness, clarity, utility; cek safety terpisah",
+        "Temuan yang relevan": "Evaluasi kualitas ringkasan perlu struktur dan penilaian klinis"
+      },
+      "feature": "Rubrik completeness, correctness, clarity, utility; cek safety terpisah",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R068": "included_title_abstract_v0",
+        "R069": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R068",
+        "R069"
+      ],
+      "relies_on_non_included": [],
+      "row": 10,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Studi remaja Jepang, bukan estimasi dropout Sela",
+        "Bukti pada register": "R087",
+        "Keputusan Sela": "Sederhanakan perjalanan; jangan memaksa AI atau delapan sesi",
+        "Temuan yang relevan": "Trial chatbot waiting-list dihentikan tanpa data evaluable karena engagement/rekrutmen"
+      },
+      "feature": "Sederhanakan perjalanan; jangan memaksa AI atau delapan sesi",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R087": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R087"
+      ],
+      "relies_on_non_included": [],
+      "row": 11,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Lebih banyak klik bukan manfaat",
+        "Bukti pada register": "R090; R092",
+        "Keputusan Sela": "Ukur task completion dan koreksi, bukan waktu chat",
+        "Temuan yang relevan": "Engagement harus dikaitkan dengan tujuan dan outcomes"
+      },
+      "feature": "Ukur task completion dan koreksi, bukan waktu chat",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R090": "included_title_abstract_v0",
+        "R092": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R090",
+        "R092"
+      ],
+      "relies_on_non_included": [],
+      "row": 12,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Rule gate dan pembatasan scope bukan sertifikasi keselamatan",
+        "Bukti pada register": "R099; R075; R081",
+        "Keputusan Sela": "Batasi model sebagai drafting/navigation assistant",
+        "Temuan yang relevan": "Chatbot dapat gagal dalam respons berisiko dan praktik terapeutik"
+      },
+      "feature": "Batasi model sebagai drafting/navigation assistant",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R075": "included_title_abstract_v0",
+        "R081": "included_title_abstract_v0",
+        "R099": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R075",
+        "R081",
+        "R099"
+      ],
+      "relies_on_non_included": [],
+      "row": 13,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Batas inferensi": "Efek produk lain tidak dapat diklaim sebagai efikasi Sela",
+        "Bukti pada register": "R097; R100",
+        "Keputusan Sela": "Tetap evaluasi dan jangan menolak AI tanpa bukti",
+        "Temuan yang relevan": "Ada sinyal manfaat pada intervensi terstruktur yang diteliti"
+      },
+      "feature": "Tetap evaluasi dan jangan menolak AI tanpa bukti",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R097": "included_title_abstract_v0",
+        "R100": "needs_check"
+      },
+      "r_ids": [
+        "R097",
+        "R100"
+      ],
+      "relies_on_non_included": [
+        "R100"
+      ],
+      "row": 14,
+      "section": "Peta bukti → keputusan produk",
+      "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
+    },
+    {
+      "columns": {
+        "Acceptable hackathon claim": "Reconstructs grounded draft claims on held-out fixtures",
+        "Counterevidence / transfer limits": "Summaries can omit details and hallucinate; synthetic texts differ from live care",
+        "Feature or claim": "Story Ledger and Meaning Lock",
+        "Registry starting points": "R065, R069, R096",
+        "Required evaluation": "Unsupported-claim rate, negation/time accuracy, coverage"
+      },
+      "feature": "Story Ledger and Meaning Lock",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R065": "needs_check",
+        "R069": "included_title_abstract_v0",
+        "R096": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R065",
+        "R069",
+        "R096"
+      ],
+      "relies_on_non_included": [
+        "R065"
+      ],
+      "row": 1,
+      "section": "Claim-to-feature evidence gate",
+      "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
+    },
+    {
+      "columns": {
+        "Acceptable hackathon claim": "Reduces steps needed in a simulated navigation task",
+        "Counterevidence / transfer limits": "Literacy gains may not translate to help-seeking",
+        "Feature or claim": "Practical Next Step",
+        "Registry starting points": "R012, R019, R038, R047, R098",
+        "Required evaluation": "Completion/time versus a static directory"
+      },
+      "feature": "Practical Next Step",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R012": "included_title_abstract_v0",
+        "R019": "included_title_abstract_v0",
+        "R038": "included_title_abstract_v0",
+        "R047": "included_title_abstract_v0",
+        "R098": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R012",
+        "R019",
+        "R038",
+        "R047",
+        "R098"
+      ],
+      "relies_on_non_included": [],
+      "row": 2,
+      "section": "Claim-to-feature evidence gate",
+      "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
+    },
+    {
+      "columns": {
+        "Acceptable hackathon claim": "Limits displayed fields and versions in the demo",
+        "Counterevidence / transfer limits": "Consent comprehension is not established by checking a box",
+        "Feature or claim": "Controlled disclosure",
+        "Registry starting points": "R031, R043, R045",
+        "Required evaluation": "Consent-comprehension questions; access-denial test"
+      },
+      "feature": "Controlled disclosure",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R031": "included_title_abstract_v0",
+        "R043": "included_title_abstract_v0",
+        "R045": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R031",
+        "R043",
+        "R045"
+      ],
+      "relies_on_non_included": [],
+      "row": 3,
+      "section": "Claim-to-feature evidence gate",
+      "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
+    },
+    {
+      "columns": {
+        "Acceptable hackathon claim": "Preserves accurate status across simulated handoff",
+        "Counterevidence / transfer limits": "Referral studies have mixed results and specific care contexts",
+        "Feature or claim": "Handoff Receipt",
+        "Registry starting points": "R023, R027, R035",
+        "Required evaluation": "State correctness, recovery task success"
+      },
+      "feature": "Handoff Receipt",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R023": "included_title_abstract_v0",
+        "R027": "included_title_abstract_v0",
+        "R035": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R023",
+        "R027",
+        "R035"
+      ],
+      "relies_on_non_included": [],
+      "row": 4,
+      "section": "Claim-to-feature evidence gate",
+      "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
+    },
+    {
+      "columns": {
+        "Acceptable hackathon claim": "ID/EN labels and source-visible bilingual brief",
+        "Counterevidence / transfer limits": "Evidence from English/Korean may not transfer to Bahasa Indonesia",
+        "Feature or claim": "Bilingual parity",
+        "Registry starting points": "R057, R058",
+        "Required evaluation": "Separate ID/EN/code-switch eval and human review"
+      },
+      "feature": "Bilingual parity",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R057": "included_title_abstract_v0",
+        "R058": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R057",
+        "R058"
+      ],
+      "relies_on_non_included": [],
+      "row": 5,
+      "section": "Claim-to-feature evidence gate",
+      "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
+    },
+    {
+      "columns": {
+        "Acceptable hackathon claim": "Crisis fixture interrupts before model/handoff",
+        "Counterevidence / transfer limits": "Deterministic checks miss some variants; model safety is not proven",
+        "Feature or claim": "Safety boundary",
+        "Registry starting points": "R075, R081, R099",
+        "Required evaluation": "Negative-route tests; zero unsafe transitions in tested fixtures"
+      },
+      "feature": "Safety boundary",
+      "missing_r_ids": [],
+      "r_id_screening_status": {
+        "R075": "included_title_abstract_v0",
+        "R081": "included_title_abstract_v0",
+        "R099": "included_title_abstract_v0"
+      },
+      "r_ids": [
+        "R075",
+        "R081",
+        "R099"
+      ],
+      "relies_on_non_included": [],
+      "row": 6,
+      "section": "Claim-to-feature evidence gate",
+      "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
+    }
+  ],
+  "features_by_r_id": {
+    "R012": [
+      "Practical Next Step",
+      "Satu next step, ekspektasi konsultasi dan navigasi jelas"
+    ],
+    "R019": [
+      "Filter biaya/waktu, opsi privasi dan langkah praktis",
+      "Practical Next Step"
+    ],
+    "R023": [
+      "Handoff Receipt",
+      "Handoff sampai ada respons dan recovery bila gagal"
+    ],
+    "R027": [
+      "Handoff Receipt",
+      "Uji jalur pengguna; jangan wajibkan warm handoff untuk semua"
+    ],
+    "R031": [
+      "Catatan bisa diperiksa, dikoreksi dan dibahas",
+      "Controlled disclosure"
+    ],
+    "R035": [
+      "Catatan bisa diperiksa, dikoreksi dan dibahas",
+      "Handoff Receipt"
+    ],
+    "R038": [
+      "Practical Next Step",
+      "Satu next step, ekspektasi konsultasi dan navigasi jelas"
+    ],
+    "R043": [
+      "Controlled disclosure",
+      "Grant per penerima/versi/field; preview dan revoke"
+    ],
+    "R045": [
+      "Controlled disclosure",
+      "Grant per penerima/versi/field; preview dan revoke"
+    ],
+    "R047": [
+      "Jangan berhenti pada edukasi; ukur penyelesaian langkah",
+      "Practical Next Step"
+    ],
+    "R057": [
+      "Bilingual parity",
+      "Eval ID/EN serta code-switching; sumber asli berdampingan"
+    ],
+    "R058": [
+      "Bilingual parity",
+      "Eval ID/EN serta code-switching; sumber asli berdampingan"
+    ],
+    "R065": [
+      "Grounding, pemeriksaan negasi dan human approval",
+      "Story Ledger and Meaning Lock"
+    ],
+    "R068": [
+      "Rubrik completeness, correctness, clarity, utility; cek safety terpisah"
+    ],
+    "R069": [
+      "Rubrik completeness, correctness, clarity, utility; cek safety terpisah",
+      "Story Ledger and Meaning Lock"
+    ],
+    "R075": [
+      "Batasi model sebagai drafting/navigation assistant",
+      "Safety boundary"
+    ],
+    "R081": [
+      "Batasi model sebagai drafting/navigation assistant",
+      "Safety boundary"
+    ],
+    "R087": [
+      "Sederhanakan perjalanan; jangan memaksa AI atau delapan sesi"
+    ],
+    "R090": [
+      "Ukur task completion dan koreksi, bukan waktu chat"
+    ],
+    "R092": [
+      "Ukur task completion dan koreksi, bukan waktu chat"
+    ],
+    "R096": [
+      "Grounding, pemeriksaan negasi dan human approval",
+      "Story Ledger and Meaning Lock"
+    ],
+    "R097": [
+      "Tetap evaluasi dan jangan menolak AI tanpa bukti"
+    ],
+    "R098": [
+      "Filter biaya/waktu, opsi privasi dan langkah praktis",
+      "Practical Next Step"
+    ],
+    "R099": [
+      "Batasi model sebagai drafting/navigation assistant",
+      "Safety boundary"
+    ],
+    "R100": [
+      "Tetap evaluasi dan jangan menolak AI tanpa bukti"
+    ]
+  },
+  "first_appraisal_batch": {
+    "missing_r_ids": [],
+    "r_ids": [
+      "R023",
+      "R027",
+      "R031",
+      "R038",
+      "R047",
+      "R057",
+      "R065",
+      "R069",
+      "R087",
+      "R098",
+      "R099",
+      "R100"
+    ],
+    "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
+  },
+  "inputs": {
+    "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md": "df41203c2c4fe643b3ddce07a2cd5cc4263ef3d417a2cd739759084b7ae7d199",
+    "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md": "6e115896fdd35a368cafa95bbe9e06b35447ad4790fabe735e27925cd34e5521"
+  },
+  "missing_r_ids": [],
+  "note": "Design hypotheses copied from our own docs; mapping a paper to a feature is not causal validation of Sela.",
+  "pipeline_version": "1.1.0"
+}

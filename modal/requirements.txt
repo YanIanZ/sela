@@ -1,0 +1,6 @@
+# Local / CI tooling to deploy modal/sela_llm.py. Not installed in the GPU
+# container (that runs the pinned vllm/vllm-openai:v0.32.0 image).
+# modal 1.6.2: latest on PyPI (released 2026-10-16), requires Python >=3.10,<3.16.
+# @app.server exists since modal 1.5.1. Checked 2026-10-26 at
+# https://pypi.org/pypi/modal/json and https://modal.com/docs/sdk/py/latest/App
+modal==1.6.2

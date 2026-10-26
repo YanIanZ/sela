@@ -1,0 +1,128 @@
+name: Modal deploy (manual)
+
+# Manual-only deployment of the Sela LLM server (modal/sela_llm.py) to one
+# Modal environment. It never runs on push or pull requests.
+#
+# Cost: deploying is free until a request arrives (min_containers=0). The
+# weight check runs on CPU. The optional smoke test starts one H100 container
+# (about 10-20 billed GPU-minutes, see modal/README.md "Cost").
+#
+# Repository secrets: MODAL_TOKEN_ID, MODAL_TOKEN_SECRET (deploy); for the
+# smoke test also SELA_LLM_API_KEY, SELA_MODAL_KEY, SELA_MODAL_SECRET and,
+# optionally, SELA_LLM_BASE_URL (must then match the chosen environment).
+# Values are passed through step env only and never printed.
+#
+# Checked 2026-10-26: https://modal.com/docs/guide/continuous-deployment
+# (MODAL_TOKEN_ID / MODAL_TOKEN_SECRET, MODAL_ENVIRONMENT), `modal deploy
+# --help` of modal 1.6.2 (--env, --strategy), actions/setup-python v7.1.0.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Modal environment to deploy to (create it first with `modal environment create`)
+        type: choice
+        options:
+          - dev
+          - staging
+        default: dev
+        required: true
+      run_smoke:
+        description: Run modal/smoke_test.py after deploying (starts a paid H100 container)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modal-deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy sela-llm to Modal (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      MODAL_ENVIRONMENT: ${{ inputs.environment }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned Modal client
+        run: python -m pip install -r modal/requirements.txt
+
+      - name: Offline configuration tests
+        run: python -m unittest discover -s tests/modal -p 'test_*.py' -v
+
+      - name: Check Modal credentials are configured
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: |
+          if [ -z "$MODAL_TOKEN_ID" ] || [ -z "$MODAL_TOKEN_SECRET" ]; then
+            echo "::error::Repository secrets MODAL_TOKEN_ID and MODAL_TOKEN_SECRET must be set."
+            exit 1
+          fi
+
+      - name: Ensure verified pinned weights in the environment's Volume (CPU only)
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: modal run --env "$MODAL_ENVIRONMENT" modal/sela_llm.py::download_weights
+
+      - name: Deploy
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: modal deploy --env "$MODAL_ENVIRONMENT" --strategy recreate modal/sela_llm.py
+
+      - name: Smoke test (starts a GPU container)
+        if: ${{ inputs.run_smoke }}
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          SELA_LLM_API_KEY: ${{ secrets.SELA_LLM_API_KEY }}
+          SELA_MODAL_KEY: ${{ secrets.SELA_MODAL_KEY }}
+          SELA_MODAL_SECRET: ${{ secrets.SELA_MODAL_SECRET }}
+          CONFIGURED_BASE_URL: ${{ secrets.SELA_LLM_BASE_URL }}
+        run: |
+          set -euo pipefail
+          # The URL of the server just deployed in this environment, from Modal.
+          deployed_url="$(python - <<'PY'
+          import os
+          import modal
+          server = modal.Server.from_name("sela-llm", "serve", environment_name=os.environ["MODAL_ENVIRONMENT"])
+          print(server.get_url() or "")
+          PY
+          )"
+          if [ -z "$deployed_url" ]; then
+            echo "::error::Could not resolve the URL of sela-llm/serve in this environment."
+            exit 1
+          fi
+          # The URL is not a credential (Modal proxy auth stays on), but it
+          # names the workspace. Mask the URL and its bare host, which the
+          # smoke report prints as target.host. Masking hides only output
+          # that follows; the Deploy step's own log may already show the URL.
+          deployed_host="${deployed_url#*://}"
+          deployed_host="${deployed_host%%/*}"
+          deployed_host="${deployed_host%%:*}"
+          echo "::add-mask::$deployed_url"
+          if [ -n "$deployed_host" ]; then
+            echo "::add-mask::$deployed_host"
+          fi
+          if [ -n "$CONFIGURED_BASE_URL" ] && [ "${CONFIGURED_BASE_URL%/}" != "${deployed_url%/}" ]; then
+            echo "::error::Secret SELA_LLM_BASE_URL does not match the server deployed in this environment. Unset it or point it at this environment."
+            exit 1
+          fi
+          export SELA_LLM_BASE_URL="$deployed_url"
+          python modal/smoke_test.py --cold-start-budget 1200

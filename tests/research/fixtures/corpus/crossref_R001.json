@@ -1,0 +1,66 @@
+{
+ "_fixture_note": "Trimmed real API response (metadata fields only; no abstract, no author list), retrieved 2026-10-26 for offline tests.",
+ "message": {
+  "DOI": "10.1177/20552076241313401",
+  "created": {
+   "date-parts": [
+    [
+     2025,
+     1,
+     17
+    ]
+   ],
+   "date-time": "2025-01-17T10:17:06Z",
+   "timestamp": 1737109026000
+  },
+  "issued": {
+   "date-parts": [
+    [
+     2025,
+     1
+    ]
+   ]
+  },
+  "license": [
+   {
+    "URL": "https://creativecommons.org/licenses/by/4.0/",
+    "content-version": "unspecified",
+    "delay-in-days": 0,
+    "start": {
+     "date-parts": [
+      [
+       2025,
+       1,
+       1
+      ]
+     ],
+     "date-time": "2025-01-01T00:00:00Z",
+     "timestamp": 1735689600000
+    }
+   }
+  ],
+  "published-online": {
+   "date-parts": [
+    [
+     2025,
+     1,
+     17
+    ]
+   ]
+  },
+  "published-print": {
+   "date-parts": [
+    [
+     2025,
+     1
+    ]
+   ]
+  },
+  "relation": {},
+  "title": [
+   "Chatbot-delivered mental health support: Attitudes and utilization in a sample of U.S. college students"
+  ],
+  "type": "journal-article"
+ },
+ "status": "ok"
+}

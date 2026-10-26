@@ -1,0 +1,42 @@
+{
+  "demoClock": "2026-11-06T09:00:00+07:00",
+  "checkIns": [
+    {"id": "checkin-scheduled", "kind": "progress", "label": {"id": "Aku sudah menyepakati sesi berikutnya (simulasi)", "en": "I agreed on the next session (simulated)"}},
+    {"id": "checkin-need-time", "kind": "pause", "label": {"id": "Aku butuh waktu dulu", "en": "I need some time first"}},
+    {"id": "checkin-other-option", "kind": "other_option", "label": {"id": "Aku ingin melihat pilihan lain", "en": "I want to look at other options"}},
+    {"id": "checkin-question", "kind": "question", "label": {"id": "Ada yang ingin kutanyakan ke penerima", "en": "I have a question for the recipient"}}
+  ],
+  "clarifyReasons": [
+    {"id": "clarify-schedule", "label": {"id": "Mohon konfirmasi jadwal yang paling cocok untukmu.", "en": "Please confirm which time works best for you."}},
+    {"id": "clarify-language", "label": {"id": "Mohon konfirmasi bahasa yang ingin kamu gunakan.", "en": "Please confirm which language you would like to use."}},
+    {"id": "clarify-goal", "label": {"id": "Mohon tuliskan singkat apa yang kamu harapkan dari pertemuan pertama.", "en": "Please briefly describe what you hope to get from the first meeting."}}
+  ],
+  "declineReasons": [
+    {"id": "decline-capacity", "label": {"id": "Kapasitas sedang penuh (simulasi).", "en": "Capacity is currently full (simulated)."}},
+    {"id": "decline-scope", "label": {"id": "Permintaan ini di luar layanan yang tersedia di sini (simulasi).", "en": "This request is outside the services available here (simulated)."}}
+  ],
+  "nextSteps": [
+    {"id": "step-practice", "action": "practice", "barriers": ["how_to_start", "not_ready", "none"],
+     "title": {"id": "Latih kalimat pembuka", "en": "Practise an opening line"},
+     "description": {"id": "Siapkan dua atau tiga kalimat untuk memulai percakapan, berdasarkan catatan yang sudah kamu setujui.", "en": "Prepare two or three sentences to start the conversation, based on the note you approved."}},
+    {"id": "step-save", "action": "save", "barriers": ["not_ready", "privacy", "schedule"],
+     "title": {"id": "Simpan catatan untuk nanti", "en": "Keep the note for later"},
+     "description": {"id": "Kamu tidak harus memutuskan sekarang. Catatan ini tetap ada selama masa simpan yang kamu pilih.", "en": "You do not have to decide now. The note stays available for the retention period you chose."}},
+    {"id": "step-trusted-person", "action": "trusted_person", "barriers": ["not_ready", "how_to_start", "cost"],
+     "title": {"id": "Bicara dengan orang yang kamu percaya", "en": "Talk to someone you trust"},
+     "description": {"id": "Catatanmu bisa jadi bahan untuk mulai bercerita kepada teman atau keluarga yang kamu percaya.", "en": "Your note can help you start talking to a friend or family member you trust."}},
+    {"id": "step-help", "action": "help", "barriers": ["none", "cost", "schedule", "how_to_start", "privacy", "not_ready"],
+     "title": {"id": "Lihat bantuan segera", "en": "See immediate help"},
+     "description": {"id": "Jika kamu merasa tidak aman, layanan bantuan yang terverifikasi ada di halaman bantuan.", "en": "If you feel unsafe, verified support services are listed on the help page."}},
+    {"id": "step-pause", "action": "pause", "barriers": ["not_ready"],
+     "title": {"id": "Berhenti sejenak", "en": "Take a pause"},
+     "description": {"id": "Belum siap itu wajar. Kamu bisa kembali kapan saja selama sesi masih berlaku.", "en": "Not being ready is okay. You can come back while the session is still active."}}
+  ],
+  "clarifications": {
+    "concern": {"id": "Apa hal utama yang ingin kamu bicarakan?", "en": "What is the main thing you would like to talk about?"},
+    "duration": {"id": "Sejak kapan kamu merasakan ini, kalau kamu ingat?", "en": "Since when have you felt this way, if you remember?"},
+    "daily_impact": {"id": "Apakah ini memengaruhi aktivitas sehari-harimu? Kalau ya, bagaimana?", "en": "Does this affect your daily activities? If so, how?"},
+    "goal": {"id": "Apa yang kamu harapkan dari percakapan dengan profesional?", "en": "What would you like to get from talking with a professional?"},
+    "support_preference": {"id": "Apakah ada preferensi praktis, misalnya bahasa, waktu, atau biaya?", "en": "Do you have practical preferences, such as language, time or cost?"}
+  }
+}
