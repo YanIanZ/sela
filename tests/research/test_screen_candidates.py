@@ -62,6 +62,12 @@ class TriageTest(unittest.TestCase):
             raw=(d/"sela_priority_review_queue.jsonl").read_bytes()
             self.assertEqual(hashlib.sha256(raw).hexdigest(),m["queue_sha256"])
             self.assertEqual(len(raw.splitlines()),2)
+            with (d/"sela_human_review_worksheet.csv").open(newline="") as f:
+                review=list(csv.DictReader(f))
+            self.assertEqual(len(review),2)
+            self.assertTrue(all(r["abstract_screening"]=="NOT_REVIEWED" for r in review))
+            self.assertTrue(all(r["rag_ready"]=="NO" for r in review))
+            self.assertEqual(m["review_worksheet_count"],2)
 
     def test_duplicate_detection(self):
         with tempfile.TemporaryDirectory() as td:
