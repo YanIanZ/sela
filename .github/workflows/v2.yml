@@ -1,0 +1,126 @@
+name: Sela v2
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v2-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    name: Go vet, format and race tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: test -z "$(gofmt -l cmd internal)" || (gofmt -l cmd internal && exit 1)
+      - name: go vet
+        run: go vet ./...
+      - name: go test (race)
+        run: go test -race -count=1 ./...
+
+  web:
+    name: Frontend typecheck, unit tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  python:
+    name: Research pipeline and Modal config tests (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Research tests
+        run: python3 -m unittest discover -s tests/research -p 'test_*.py'
+      - name: Modal configuration tests
+        run: python3 -m unittest discover -s tests/modal -p 'test_*.py'
+      - name: Verify committed research corpus
+        run: python3 scripts/research/corpus_pipeline.py verify
+
+  e2e:
+    name: End-to-end journeys (test double, never Meta)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [go, web]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            e2e/package-lock.json
+      - name: Build Go binaries
+        run: |
+          mkdir -p build
+          go build -o build/sela ./cmd/sela
+          go build -o build/fakellm ./cmd/fakellm
+      - name: Build frontend
+        working-directory: web
+        run: npm ci && npm run build
+      - name: Install Playwright
+        working-directory: e2e
+        run: npm ci && npx playwright install --with-deps chromium
+      - name: Run journeys
+        run: node e2e/journey.e2e.mjs
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report
+          path: e2e/results/
+          retention-days: 7
+
+  container:
+    name: Container image builds and serves health
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [go, web]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build image
+        run: docker build -f deploy/v2/Dockerfile -t sela-v2:ci .
+      - name: Start container (AI disabled)
+        run: docker run -d --name sela -p 8080:8080 -e SELA_SECURE_COOKIES=false sela-v2:ci
+      - name: Health, readiness and static frontend
+        run: |
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/api/v2/health && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8080/api/v2/ready
+          curl -fsS http://127.0.0.1:8080/ | grep -q '<div id="root">'
+          curl -fsS http://127.0.0.1:8080/api/v2/ai/status | grep -q '"mode":"disabled"'
+      - name: Container logs
+        if: always()
+        run: docker logs sela
