@@ -23,6 +23,7 @@ Dokumen ini menambah rancangan dan bahan keputusan. Ia tidak mengubah SPEC.md re
 11. [Sela Relay end-to-end, Meaning Lock dan Return Bridge](11_PRODUCT_VERTICAL_SLICE.md)
 12. [Kontrak implementasi Go + Meta dan migrasi](12_GO_META_IMPLEMENTATION_CONTRACT.md)
 13. [Runbook penjurian, evaluasi dan demo](13_JUDGING_AND_DEMO_PACKAGE.md)
+14. [Protokol penyaringan metadata 7.580 kandidat dan antrean telaah](14_METADATA_SCREENING_PROTOCOL.md)
 
 Data sitasi tersedia dalam [JSON](research_100.json) dan [BibTeX](research_100.bib). Teks lengkap artikel tidak disalin ke paket ini. Buka DOI atau tautan indeks untuk membaca sumber.
 
