@@ -1,0 +1,21 @@
+{
+  "version": "sela-retrieval-queries-2026.10.26-1",
+  "note": "Feature-level reviewer queries written from docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md (feature -> register rows). Queries use the feature's wording, not the paper titles. A query passes when any expected id is in the top 5.",
+  "queries": [
+    { "feature": "Handoff Receipt", "query": "care navigation utilization outcomes", "expect": ["R023"] },
+    { "feature": "Handoff Receipt", "query": "warm handoff adolescent treatment", "expect": ["R027"] },
+    { "feature": "Next Step", "query": "Indonesia barriers access mental health services", "expect": ["R098", "R019"] },
+    { "feature": "Next Step", "query": "help-seeking barriers ASEAN", "expect": ["R019"] },
+    { "feature": "Next Step", "query": "Indonesian students psychoeducation pilot trial", "expect": ["R047"] },
+    { "feature": "Controlled disclosure", "query": "consent platform health data sharing", "expect": ["R045"] },
+    { "feature": "Controlled disclosure", "query": "privacy policy compliance mental health apps", "expect": ["R043"] },
+    { "feature": "Story Ledger", "query": "large language model summarization errors", "expect": ["R065", "R068", "R096"] },
+    { "feature": "Story Ledger", "query": "summarization quality instrument", "expect": ["R069"] },
+    { "feature": "Bilingual parity", "query": "multilingual bias depression language models", "expect": ["R058", "R057"] },
+    { "feature": "Safety boundary", "query": "chatbot suicidal ideation detection", "expect": ["R081"] },
+    { "feature": "Safety boundary", "query": "stigma inappropriate responses LLM providers", "expect": ["R099"] },
+    { "feature": "Engagement", "query": "engagement attrition digital mental health", "expect": ["R090", "R092"] },
+    { "feature": "Engagement", "query": "chatbot waiting list trial terminated", "expect": ["R087"] },
+    { "feature": "Counterevidence", "query": "generative AI chatbot randomized trial treatment", "expect": ["R100"] }
+  ]
+}
