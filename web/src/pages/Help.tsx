@@ -12,6 +12,14 @@ import fallbackJSON from '../data/help.fallback.json';
  * the catalog cannot be loaded: Immediate help never depends on that call. */
 export const helpFallback = fallbackJSON as unknown as { helpNotice: Text; help: HelpResource[] };
 
+/** telHref dials the main number only. An extension ("119 ext 8") stays in the
+ * visible text: stripping the separator would dial a different number (1198),
+ * and an automatic pause can reach the wrong menu. */
+export function telHref(value: string): string {
+  const main = value.split(/\s*(?:ext\.?|ekstensi|x)\s*\d+\s*$/i)[0] ?? value;
+  return `tel:${main.replace(/[^0-9+]/g, '')}`;
+}
+
 export function HelpPage() {
   const { t, tx, date } = useI18n();
   const { navigate } = useRouter();
@@ -55,7 +63,7 @@ export function HelpPage() {
                       {c.value}
                     </a>
                   ) : c.kind === 'phone' ? (
-                    <a href={`tel:${c.value.replace(/[^0-9+]/g, '')}`}>{c.value}</a>
+                    <a href={telHref(c.value)}>{c.value}</a>
                   ) : (
                     <span>{c.value}</span>
                   )}

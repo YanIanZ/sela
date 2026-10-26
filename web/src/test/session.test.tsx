@@ -246,6 +246,8 @@ describe('catalog failures', () => {
     });
     renderApp(null);
     expect(await screen.findByRole('heading', { name: 'Healing119 (Kementerian Kesehatan RI)' })).toBeInTheDocument();
+    // The link dials exactly the number shown; the extension stays text (119 ext 8 once dialled 1198).
+    expect(screen.getByRole('link', { name: '119 ext 8' })).toHaveAttribute('href', 'tel:119');
     const before = api.count('GET /catalog');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(api.count('GET /catalog')).toBe(before + 1));
