@@ -21,3 +21,7 @@ User intends solo participation in the Indie Developer track. Proposed theme fit
 Whether self-hosted open weights count as "Meta AI tooling" for judging (no formal definition; [B-2](BLOCKERS.md)), participant acceptance, exact submission fields and video requirements, permitted reuse scope, live model access on Modal, deployment, and how the Muse Glimmer Usage Policy's health-related restrictions apply beyond Sela's synthetic-adult design (see ADR-0001). No terms are accepted or submission sent by these docs.
 
 Distinguish inherited Dengar.in/AMD work from new Go/Meta features using [provenance](SELA_PROVENANCE.md), spec task status and reproducible commit-specific evidence. Do not describe AMD or third-party fallback inference as Meta processing.
+
+## Optional non-Meta verifier (26 October 2026)
+
+Sela's primary generative model is a Meta open-weight model on Modal: Muse Glimmer 30B as implemented, with Muse Spark Open named by the verifier contract pending the owner's decision ([B-7](BLOCKERS.md), D-024); an optional Sonnet 5.5 source-fidelity review is planned with separate consent. The public event page emphasizes demonstrable Meta model use but does not conclusively address whether external second-pass verifiers are permitted in submitted projects. The final organizer Official Rules and any third-party service/data terms must be checked before relying on this component for eligibility. Never attribute Claude-generated/reviewed content to Meta or suggest Meta paid for Anthropic calls. See [verifier contract](CLAUDE_VERIFIER.md).

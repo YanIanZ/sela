@@ -6,7 +6,7 @@
 
 - **Backend:** one Go HTTP service using net/http, context cancellation, typed domain state, in-memory isolated demo store and explicit application-layer authorization. Pin toolchain and dependencies after verification; do not pretend that current Go files exist.
 - **Frontend:** new static React + TypeScript + Vite application, locale dictionaries for ID/EN, accessible mobile-first layouts and API-generated state. Do not port old Next.js server routes.
-- **AI:** Meta Model API accessed only from a Go server-side adapter after AI consent. Official cookbook currently documents schema-constrained structured output and function/tool calling; verify the account's allowed model and endpoint with a real, non-sensitive probe before fixing runtime configuration.
+- **AI:** Meta Model API accessed from a Go server-side adapter after Meta AI consent, with an optional separately consented Claude Sonnet 5.5 **source-fidelity verifier** (see [current contract](../../CLAUDE_VERIFIER.md)); Claude is not a generative fallback. Official cookbook currently documents schema-constrained structured output and function/tool calling; verify the account's allowed model and endpoint with a real, non-sensitive probe before fixing runtime configuration.
 - **Data:** versioned *synthetic* scenario, evidence, fictional-professional, slot, receipt, consultation and follow-up fixtures. No real patient database or live clinician marketplace.
 
 Suggested layout, subject to implementation:
@@ -89,7 +89,7 @@ Official docs: https://dev.meta.ai/docs/overview , https://dev.meta.ai/docs/cook
 
 The documented example base URL and model names are *candidates*, not proof of API entitlement. Log non-sensitive verification metadata separately: date, account-supported model identifier, endpoint/protocol, result code, request latency, validation status and rate-limit behavior. Do not commit tokens, raw prompts or patient information.
 
-Implement exactly one purposeful live path first (source-linked draft). A second Meta operation, such as bilingual semantic-diff suggestion, is justified only if it improves held-out fidelity; it cannot approve its own claims. A multi-agent spectacle that makes decisions without guardrails is not an evaluation advantage.
+Implement exactly one purposeful live path first (source-linked draft). A second Meta operation, such as bilingual semantic-diff suggestion, is justified only if it improves held-out fidelity; it cannot approve its own claims. A multi-agent spectacle that makes decisions without guardrails is not an evaluation advantage. The optional Sonnet reviewer never grants sharing permission and must not be mistaken for clinical truth.
 
 ## Rewrite order and rollback
 

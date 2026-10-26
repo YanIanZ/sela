@@ -27,3 +27,5 @@ Feature lineage: source-grounded Care Passport, clarification and opening-lines 
 ## Excluded
 
 Forum, gamification, general chatbot, diagnosis/prescribing/triage, therapy roleplay, payments, real scheduling or professionals, live microphone, health-record integration and model training.
+
+Optional, separately consented Anthropic Sonnet 5.5 source-fidelity review (EvidenceGuard, C12) is a standalone prototype, never a substitute for Meta generation or human approval, and not part of the current journey ([contract](CLAUDE_VERIFIER.md)).

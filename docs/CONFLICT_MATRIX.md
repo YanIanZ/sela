@@ -64,3 +64,11 @@ Each row ends with a resolution and the decision that records it in the [decisio
 - No AI fallback to a non-Meta provider (V9); outage means an honest unavailable state plus the manual path.
 - No content, prompt or model output in operational logs (V12).
 - Provenance and credits for Dengar.in and its team ([provenance](SELA_PROVENANCE.md)).
+
+## After merging main (PR #5, EvidenceGuard)
+
+| Topic | main (owner, PR #5) | This branch | Resolution |
+| --- | --- | --- | --- |
+| Second AI provider | Optional Claude Sonnet 5.5 verifier, separate consent, verification only (C12, V16–V18, T5a) | Meta only (V9) | Kept as main defines it; standalone prototype, not wired into v2 (D-024) |
+| Generator model | Muse Spark / "Muse Spark Open on Modal" | Muse Glimmer 30B on Modal (ADR-0001) | Glimmer kept for budget and access; owner decides (B-7) |
+| Spec IDs | C12, I.verifier, V16–V18 | C12–C13, V16–V19 (unpublished) | Branch IDs renumbered to C13–C14, V20–V23 |

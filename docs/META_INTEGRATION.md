@@ -21,11 +21,15 @@ Status: **adapter and Modal serving app implemented; live deployment not verifie
 | Consent withdrawn / story changed / session deleted / crisis during the call | Operation canceled or result discarded | — |
 | Test double (dev/CI only) | Banner "TEST DOUBLE — not Meta" on every item | `test_double` |
 
+[EvidenceGuard](CLAUDE_VERIFIER.md) may later review Meta-derived, source-bound claims with Claude after a separate user consent (C12, not wired yet). Claude never drafts in place of an unavailable Meta call; Meta remains the demonstrable generation provider.
+
 There is **no fallback to any other provider**. Retries happen only before the first token; the operation deadline bounds everything.
 
 ## Evidence
 
 `go test ./internal/llm/...` exercises the client against local servers and the test double (streaming, retries, cancellation, timeouts, model mismatch, oversize, empty content, no sampling override, reasoning kwarg, auth headers, redirects refused, no payload leakage). `go run ./cmd/sela-eval -mode test_double` runs a fault battery (malformed JSON, fabricated source, dropped negation, diagnosis, invented number, prompt-injection echo, wrong model, 503/429/401, slow, stall, oversize, truncated stream). `tests/modal` checks the Modal app configuration statically. **No live call has been made**; `live_meta` has never been produced. After deployment, `python3 modal/smoke_test.py` and `go run ./cmd/sela-eval -mode live` record non-sensitive evidence (status, latency, token counts, validation outcome) — never prompts or outputs.
+
+A separately labelled `live_anthropic` review, once it exists, must not be presented as Meta processing or clinical correctness. Verify the final hackathon rules about third-party models ([event notes](META_EVENT_NOTES.md)).
 
 ## Not used
 

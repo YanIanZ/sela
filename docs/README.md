@@ -35,6 +35,7 @@ External event terms govern event eligibility and third-party rights; the reposi
 | [Safety](SAFETY.md) | Crisis routing, care boundaries, sharing, privacy |
 | [AI policy](AI_POLICY.md) | Allowed model work, Meaning Lock, human control, provenance |
 | [Meta integration](META_INTEGRATION.md) | Provider boundary, request parameters, failure behaviour |
+| [Claude verifier](CLAUDE_VERIFIER.md) | Optional second-pass source-fidelity verification (EvidenceGuard), independent consent, standalone Go prototype and evidence limitations |
 | [Modal serving](../modal/README.md) and [model notes](../modal/MODEL_NOTES.md) | Deploy, secrets, cost, smoke test, rollback; verified model/server facts |
 
 ## Operating and validating

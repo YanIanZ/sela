@@ -15,11 +15,12 @@ flowchart LR
     J --> P["Provider boundary<br/>internal/llm"]
     P -->|HTTPS, proxy auth + API key| M["vLLM on Modal<br/>modal/sela_llm.py<br/>Muse Glimmer 30B"]
     P -.->|tests/dev only| TD["cmd/fakellm<br/>TEST DOUBLE"]
+    J -.->|planned, own consent| V["Optional Claude verifier<br/>prototypes/evidenceguard<br/>(not wired)"]
     API --> R["Reviewer corpus index<br/>internal/research"]
     R --> KB[("data/research/corpus<br/>knowledge_base.jsonl")]
 ```
 
-One Go binary (`cmd/sela`) serves `/api/v2` and the built frontend (`SELA_WEB_DIR`). There is no Node server, database or Redis. The model server is a separate Modal app; the Go app talks to it with an OpenAI-compatible client.
+One Go binary (`cmd/sela`) serves `/api/v2` and the built frontend (`SELA_WEB_DIR`). There is no Node server, database or Redis. The model server is a separate Modal app; the Go app talks to it with an OpenAI-compatible client. The optional EvidenceGuard verifier (Claude Sonnet 5.5, C12) is a standalone Go prototype in `prototypes/evidenceguard` with its own module; it is not wired into the v2 runtime ([contract](CLAUDE_VERIFIER.md)).
 
 ## Package boundaries
 
@@ -33,6 +34,8 @@ One Go binary (`cmd/sela`) serves `/api/v2` and the built frontend (`SELA_WEB_DI
 | `internal/store` | Per-session-locked memory store, share-token and recipient indexes (at most 3 principals per handoff), expiry, bounded eviction that spares recently active retained or shared sessions, a per-client live-session cap, and a purge hook that lets the journey cancel operations of purged sessions | Persistence |
 | `internal/fixtures` | Embedded, validated synthetic catalogue (scenarios with gold annotations, fictional professionals/slots/plans, options, verified help resources, versioned policy texts) | Real data |
 | `internal/research` | BM25 search over the exported research knowledge base | Session data, model calls |
+
+When the verifier is wired in, it uses only allowed synthetic evidence and claim ids after its own consent; an LLM verdict never grants domain permissions or substitutes for missing Meta output.
 
 ## Request path of an AI draft
 

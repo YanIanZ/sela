@@ -20,6 +20,7 @@ Demonstrate a bilingual mental-health care-navigation journey: enter → choose 
 - C9 New journey excludes forum, gamification, general chatbot, payments, real booking, real telemedicine, autonomous diagnosis/treatment/prescribing/triage, therapy roleplay and model training.
 - C10 No performance, deployment, clinical-quality, event-acceptance or live-inference claim without matching evidence.
 - C11 Preserve a recoverable v1 baseline and its regression evidence before runtime replacement. Historical snapshots are context, not v2 requirements.
+- C12 User-confirmed (26 Oct 2026): add optional Claude Sonnet 5.5 API as a **second-pass source-fidelity verifier**. Meta/Muse Spark remains the sole live *generator* and necessary hackathon contribution; Claude is not a fallback generator, clinician or source of truth. No real patient data in the hackathon. The requirement is documented and an isolated Go prototype is added, but product wiring and live access remain pending. *Reconciliation (D-024): C12 and the verifier contract name Muse Spark ("Muse Spark Open on Modal") as the generator; the implemented generator is the Meta open-weight Muse Glimmer 30B on Modal per C4 and [ADR-0001](docs/adr/ADR-0001-meta-open-weight-model-on-modal.md), because Muse-Spark-Open-816B-A42B is gated and needs ≥700 GB of GPU memory, beyond any approved budget. The adapter is model-agnostic; the owner decides ([B-7](docs/BLOCKERS.md)).*
 - C13 User-confirmed (2026-10-26): anonymous or pseudonymous use; separate consent for AI processing, storage and sharing; retention and deletion that actually work.
 - C14 User-confirmed (2026-10-26): reproducible research pipeline over the 100-publication register with a rolling five-year cutoff, provenance and rights tracking; no fine-tuning unless its prerequisites are met (D-016).
 
@@ -28,6 +29,7 @@ Demonstrate a bilingual mental-health care-navigation journey: enter → choose 
 - I.web: responsive bilingual user journey, fictional recipient view and reviewer research view in `web/`; [product](docs/PRODUCT.md).
 - I.api: same-origin `/api/v2` JSON + server-sent events; [contract](docs/API_SPEC.md).
 - I.meta: server-side OpenAI-compatible adapter (`internal/llm`) to a vLLM server on Modal (`modal/`); [integration](docs/META_INTEGRATION.md), [ADR-0001](docs/adr/ADR-0001-meta-open-weight-model-on-modal.md).
+- I.verifier: optional Anthropic Sonnet 5.5 server-side evidence review **only after separate consent**, using source-bound synthetic excerpts; [contract](docs/CLAUDE_VERIFIER.md). Standalone prototype in `prototypes/evidenceguard`, not wired into the v2 runtime; no deployed provider call is verified.
 - I.data: versioned synthetic scenario/professional/slot/plan/help fixtures embedded in the binary, bounded per-session state; [data](docs/DEMO_DATA.md).
 - I.ops: commands that work now are listed in [development](docs/DEVELOPMENT.md); deployment in [runbook](docs/RUNBOOK.md).
 - I.research: corpus pipeline (`scripts/research/corpus_pipeline.py`), exported knowledge base and reviewer search API; [corpus pipeline](docs/research/CORPUS_PIPELINE.md).
@@ -44,13 +46,16 @@ Demonstrate a bilingual mental-health care-navigation journey: enter → choose 
 - V6 Reset, deletion, expiry and revocation block stale/shared access, including recipient principals. Never affect another visitor. Already-viewed information cannot be recalled and the UI says so.
 - V7 Validate schema and source evidence before model output is used. Never invent symptoms, timing, diagnoses, professionals, credentials, slots or treatments. Fictional follow-up plans come only from approved fixtures.
 - V8 Match fictional professionals deterministically using explicit preferences. No AI medical triage, diagnosis or clinical suitability score.
-- V9 A Meta model is the only AI provider in v2. Keys stay server-side; bounded requests, cancellation, timeouts and concurrency limits apply. Missing access/outage uses an honest unavailable/manual state, never a silent alternative provider.
-- V10 (amended, D-019) Every AI result records `live_meta`, `recorded_demo`, `manual` or `test_double` provenance; recorded or test-double output is never presented as live inference.
+- V9 A Meta model is the only live **generative** provider in v2. Optional Anthropic Sonnet 5.5 performs **verification-only** review (V16–V18) and may not replace Meta inference, approve notes or generate treatments. Keys stay server-side; bounded requests, cancellation, timeouts and concurrency limits apply. Missing access/outage uses an honest unavailable/manual state, never a silent alternative provider.
+- V10 (amended, D-019) Every **draft** records `live_meta`, `recorded_demo`, `manual` or `test_double` provenance; recorded or test-double output is never presented as live inference. **Verification** records separately identify `live_anthropic`, `unavailable`, `not_requested` or `manual_review` plus model/version, without implying a medically verified result.
 - V11 Share/revoke/reset/completion operations are concurrency-safe. Idempotency prevents duplicate simulated requests; stale versions fail explicitly. Admission and rate limits protect expensive model calls.
 - V12 No story content, model prompt/output, credentials, tokens, access codes or shared-note text in operational logs; metadata-only events. The recipient principal is a demo authorization, not production identity verification.
 - V13 Indonesian/English key parity, accessible controls and consistent state/error messages cover the full journey, including failure, expired and revoked states.
 - V14 New v2 runtime has no AMD provider, AMD probe or AMD credential requirement. Archived AMD records and original credits remain historical evidence.
-- V15 Claims cite observed evidence for the exact runtime/version. Tests with mock inference do not establish live Meta quality, model access, clinical efficacy or eligibility.
+- V15 Claims cite observed evidence for the exact runtime/version. Tests with mock inference do not establish live Meta/Anthropic quality, model access, clinical efficacy or hackathon eligibility.
+- V16 Anthropic verification requires its **own explicit server-enforced consent**, separate from Meta AI processing, brief approval and sharing. Only bounded synthetic versioned evidence excerpts and candidate claims may leave the Go backend for Anthropic. Declined/withdrawn consent causes zero Anthropic calls.
+- V17 Verification is advisory: compare each claim to an actual allowed source excerpt; reject malformed/unknown claim IDs and citations; preserve unsupported/contradicted/uncertain states. A Claude agreement cannot bypass deterministic evidence checks, human review, crisis interruption, sharing approval or fixture-authored care. Show provider provenance honestly.
+- V18 Reset, expiry, changed brief, consent withdrawal or crisis fixture invalidates and/or cancels in-flight verifier work; no stale report may authorize sharing. Verifier errors are explicitly unavailable; never silently replace another provider or claim success.
 - V20 (new, D-009) Streaming sends only content that passed validation; operations can be canceled, have deadlines, and results whose session/story/ledger/consent changed are discarded.
 - V21 (new, D-005) Retention follows the storage decision; deletion purges the session, shares and recipient access immediately; restart erases state.
 - V22 (new, D-015/D-016) Research records carry provenance, retrieval date, licence/access status and verified dates; unknown values are null; no copyrighted full text is committed; corpus text is data, never instructions; no training use.
@@ -65,6 +70,7 @@ Demonstrate a bilingual mental-health care-navigation journey: enter → choose 
 | T3 | ~ | Create Go API/static frontend skeleton, bounded sessions and synthetic fixtures | C6,C7,I.api,I.data,V1,V2,V6,V11 |
 | T4 | ~ | Implement deterministic crisis/consent/approval/share rules with behavioral tests | I.api,V3,V4,V5,V6,V11,V12,V21 |
 | T5 | ~ | Integrate Meta text inference, schema/evidence validation, provenance and failure path | I.meta,V7,V9,V10,V15,V20 |
+| T5a | . | Integrate optional Claude verifier with distinct consent, version safety, evidence reference validation and mock/live evidence. Standalone Go adapter prototype exists but no product integration | C12,I.verifier,V3,V4,V7,V9,V10,V16–V18 |
 | T6 | ~ | Deliver bilingual onboarding/story/ledger/next-step/opening/manual path | I.web,V1,V2,V4,V7,V8,V13 |
 | T7 | ~ | Deliver simulated handoff, recipient view, consultation and follow-up | I.web,I.api,V1,V5,V6,V7,V11,V12 |
 | T8 | ~ | Verify complete journeys, isolation, failure states, accessibility and resource measurements | C10,I.ops,I.eval,V1,V3,V6,V9,V13,V15 |

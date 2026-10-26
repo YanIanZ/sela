@@ -109,3 +109,13 @@ Revocation, expiry, lockout, owner deletion and supersession all end access imme
 Ledger: `draft (unreviewed items) → reviewed → approved(version v)`; any change → `draft(v+1)`. Approval is required for Opening Practice drafts and handoffs; sharing references the immutable snapshot of `v`.
 
 Handoff: `requested → acknowledged → completed`; `requested|acknowledged → clarification_requested | declined`. Share access: `active → revoked | expired | locked`, independent of handoff status. A clarification is answered with a new version, approval and share (the new share supersedes the old one). `careReceived` is always false in this demo.
+
+## Second provider contract (planned only)
+
+The optional Anthropic verifier is **not** a fallback generator. A provider-specific verification consent must be granted **after the deterministic crisis gate**, distinct from Meta AI processing, user approval and share consent. Its own report is version-bound. Successful JSON/schema/model review is not a clinical safety verdict or an authorization to share. An unavailable/contradictory result displays an explicit review state and a user-controlled manual path. See [Claude verifier](CLAUDE_VERIFIER.md). No v2 route currently exists; the planned routes below are from the [verifier contract](CLAUDE_VERIFIER.md) and are not implemented.
+
+| Planned route | Body | Rule |
+| --- | --- | --- |
+| `PUT /api/v2/verification-consent` | `granted`, `expectedVersion` | Independent Anthropic consent for synthetic source excerpts; withdrawal cancels/invalidates verification; **planned only** |
+| `POST /api/v2/brief/verify` | `expectedVersion` (no free-text from client) | Optional Claude source-fidelity report on current fixture/brief; never advances approval/handoff; **planned only** |
+| `GET /api/v2/brief/verification` | Cookie | Read current session + brief version's report with provider/status; expired/stale reports omitted; **planned only** |

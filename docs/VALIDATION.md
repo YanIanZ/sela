@@ -33,3 +33,7 @@ The script is in the [runbook](RUNBOOK.md#6-demo-script-about-3-minutes). Record
 ## Documentation baseline verified — 26 October 2026 (T1, before v2 implementation)
 
 Inventory covered all 93 Markdown files; 630 relative links and 29 anchors resolved; spec task/citation checks passed; `git diff --check`, `npm run test:migrations`, `npm run test:infra`, `npm run lint`, `npm run lint:services` and `npm run typecheck` passed. That evidence covered documentation only.
+
+## Optional Claude Sonnet 5.5 verifier acceptance (T5a, NOT YET PRODUCT-IMPLEMENTED)
+
+Mock-network Go adapter tests are in [prototypes/evidenceguard](../prototypes/evidenceguard/README.md). Beyond adapter tests, the future Go runtime must prove: Anthropic consent declined -> zero outbound calls; crisis fixture -> no Meta or Claude; malformed IDs/output rejected; mismatch means needs human review; timeout/missing key/429 -> explicit unavailable; changed brief or consent revoked mid-flight -> stale report dropped; professional sees only separately approved handoff snapshot; both ID and EN and negation edge cases retain source provenance. Live Sonnet 5.5 request, real usage/latency, and end-to-end session safety remain unverified until T5a/T8 evidence is recorded. A model-supported label is NOT clinical safety validation.
