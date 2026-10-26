@@ -1,6 +1,6 @@
 # Research corpus pipeline
 
-Status: implemented and run on 2026-10-26 (pipeline `1.1.0`, rules `sela-corpus-rules-v2`, claim gates `sela-claim-gates-v2`, index version `87902c81efe30d05`). Supports SPEC C13, I.research, V18 and decisions D-015 and D-016. This document is non-normative; [SPEC.md](../../SPEC.md) stays authoritative.
+Status: implemented and run on 2026-10-26 (pipeline `1.1.0`, rules `sela-corpus-rules-v2`, claim gates `sela-claim-gates-v2`, index version `87902c81efe30d05`). Supports SPEC C14, I.research, V22 and decisions D-015 and D-016. This document is non-normative; [SPEC.md](../../SPEC.md) stays authoritative.
 
 ## Purpose
 
@@ -285,4 +285,4 @@ The owner set six prerequisites for fine-tuning. None is met:
 | Bilingual evaluation | No held-out ID/EN/code-switch evaluation for a tuned model exists. |
 | Risk/cost analysis | Not done. Tuning would add GPU cost, licence risk and safety-regression risk without a stated benefit. |
 
-Inference-time retrieval is not used either. Product answers never need literature: features are mapped to evidence statically in `evidence_map.json`. Retrieving third-party text at runtime would break the licence separation above. It would also put corpus text next to user stories in a model prompt, and V18 requires that corpus text stay data, never instructions. The corpus serves only the reviewer search API and people reading the evidence.
+Inference-time retrieval is not used either. Product answers never need literature: features are mapped to evidence statically in `evidence_map.json`. Retrieving third-party text at runtime would break the licence separation above. It would also put corpus text next to user stories in a model prompt, and V22 requires that corpus text stay data, never instructions. The corpus serves only the reviewer search API and people reading the evidence.

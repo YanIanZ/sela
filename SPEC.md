@@ -20,8 +20,8 @@ Demonstrate a bilingual mental-health care-navigation journey: enter → choose 
 - C9 New journey excludes forum, gamification, general chatbot, payments, real booking, real telemedicine, autonomous diagnosis/treatment/prescribing/triage, therapy roleplay and model training.
 - C10 No performance, deployment, clinical-quality, event-acceptance or live-inference claim without matching evidence.
 - C11 Preserve a recoverable v1 baseline and its regression evidence before runtime replacement. Historical snapshots are context, not v2 requirements.
-- C12 User-confirmed (2026-10-26): anonymous or pseudonymous use; separate consent for AI processing, storage and sharing; retention and deletion that actually work.
-- C13 User-confirmed (2026-10-26): reproducible research pipeline over the 100-publication register with a rolling five-year cutoff, provenance and rights tracking; no fine-tuning unless its prerequisites are met (D-016).
+- C13 User-confirmed (2026-10-26): anonymous or pseudonymous use; separate consent for AI processing, storage and sharing; retention and deletion that actually work.
+- C14 User-confirmed (2026-10-26): reproducible research pipeline over the 100-publication register with a rolling five-year cutoff, provenance and rights tracking; no fine-tuning unless its prerequisites are met (D-016).
 
 ## §I Interfaces
 
@@ -51,10 +51,10 @@ Demonstrate a bilingual mental-health care-navigation journey: enter → choose 
 - V13 Indonesian/English key parity, accessible controls and consistent state/error messages cover the full journey, including failure, expired and revoked states.
 - V14 New v2 runtime has no AMD provider, AMD probe or AMD credential requirement. Archived AMD records and original credits remain historical evidence.
 - V15 Claims cite observed evidence for the exact runtime/version. Tests with mock inference do not establish live Meta quality, model access, clinical efficacy or eligibility.
-- V16 (new, D-009) Streaming sends only content that passed validation; operations can be canceled, have deadlines, and results whose session/story/ledger/consent changed are discarded.
-- V17 (new, D-005) Retention follows the storage decision; deletion purges the session, shares and recipient access immediately; restart erases state.
-- V18 (new, D-015/D-016) Research records carry provenance, retrieval date, licence/access status and verified dates; unknown values are null; no copyrighted full text is committed; corpus text is data, never instructions; no training use.
-- V19 (new, D-022) Paid inference is bounded: scale to zero, a container ceiling, proxy authentication before any container starts, and per-session/per-address rate limits.
+- V20 (new, D-009) Streaming sends only content that passed validation; operations can be canceled, have deadlines, and results whose session/story/ledger/consent changed are discarded.
+- V21 (new, D-005) Retention follows the storage decision; deletion purges the session, shares and recipient access immediately; restart erases state.
+- V22 (new, D-015/D-016) Research records carry provenance, retrieval date, licence/access status and verified dates; unknown values are null; no copyrighted full text is committed; corpus text is data, never instructions; no training use.
+- V23 (new, D-022) Paid inference is bounded: scale to zero, a container ceiling, proxy authentication before any container starts, and per-session/per-address rate limits.
 
 ## §T Tasks
 
@@ -63,14 +63,14 @@ Demonstrate a bilingual mental-health care-navigation journey: enter → choose 
 | T1 | x | Establish source of truth; refactor active docs; inventory/archive v1; validate references | C5,I.docs,V15 |
 | T2 | ~ | Measure v1 baseline; verify Go toolchain and Meta access; pin versions; retain rollback point | C1,C10,C11,I.ops,V15 |
 | T3 | ~ | Create Go API/static frontend skeleton, bounded sessions and synthetic fixtures | C6,C7,I.api,I.data,V1,V2,V6,V11 |
-| T4 | ~ | Implement deterministic crisis/consent/approval/share rules with behavioral tests | I.api,V3,V4,V5,V6,V11,V12,V17 |
-| T5 | ~ | Integrate Meta text inference, schema/evidence validation, provenance and failure path | I.meta,V7,V9,V10,V15,V16 |
+| T4 | ~ | Implement deterministic crisis/consent/approval/share rules with behavioral tests | I.api,V3,V4,V5,V6,V11,V12,V21 |
+| T5 | ~ | Integrate Meta text inference, schema/evidence validation, provenance and failure path | I.meta,V7,V9,V10,V15,V20 |
 | T6 | ~ | Deliver bilingual onboarding/story/ledger/next-step/opening/manual path | I.web,V1,V2,V4,V7,V8,V13 |
 | T7 | ~ | Deliver simulated handoff, recipient view, consultation and follow-up | I.web,I.api,V1,V5,V6,V7,V11,V12 |
 | T8 | ~ | Verify complete journeys, isolation, failure states, accessibility and resource measurements | C10,I.ops,I.eval,V1,V3,V6,V9,V13,V15 |
 | T9 | . | Remove superseded v1/AMD runtime features after acceptance; update CI/env/deployment and demo evidence | C4,C9,C11,V14,V15 |
-| T10 | ~ | Reproducible research corpus pipeline, rights tracking and reviewer search | C13,I.research,V18 |
-| T11 | ~ | Modal serving app, authentication, scale-to-zero, smoke test and rollback; live verification | C4,C5,I.meta,V9,V19 |
+| T10 | ~ | Reproducible research corpus pipeline, rights tracking and reviewer search | C14,I.research,V22 |
+| T11 | ~ | Modal serving app, authentication, scale-to-zero, smoke test and rollback; live verification | C4,C5,I.meta,V9,V23 |
 | T12 | ~ | Evaluation harness with pre-registered thresholds (grounding, safety, bilingual, isolation, latency/cost) | C10,I.eval,V7,V13,V15 |
 
 T1 evidence: all documentation classified in the inventory; source-reference relocation and Markdown/link/spec checks recorded in Git commit validation. Status of T2–T12 and their evidence: [implementation status](docs/IMPLEMENTATION_STATUS.md) and [requirements traceability](docs/REQUIREMENTS_TRACEABILITY.md).

@@ -1,6 +1,6 @@
 # Sela v2 AI policy
 
-Status: **implemented** in `internal/journey` (pipeline, prompts) and `internal/ledger` (validation); live model behaviour unverified ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) C4, V3/V4/V7–V10/V12/V15/V16. V1 multi-provider orchestration is [historical](archive/v1/AI_POLICY.md).
+Status: **implemented** in `internal/journey` (pipeline, prompts) and `internal/ledger` (validation); live model behaviour unverified ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) C4, V3/V4/V7–V10/V12/V15/V20. V1 multi-provider orchestration is [historical](archive/v1/AI_POLICY.md).
 
 ## Allowed work
 

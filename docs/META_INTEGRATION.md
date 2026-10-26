@@ -1,6 +1,6 @@
 # Meta integration
 
-Status: **adapter and Modal serving app implemented; live deployment not verified** ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) I.meta, C4, V7, V9, V10, V15, V16, V19. Decision record: [ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md).
+Status: **adapter and Modal serving app implemented; live deployment not verified** ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) I.meta, C4, V7, V9, V10, V15, V20, V23. Decision record: [ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md).
 
 ## What runs where
 

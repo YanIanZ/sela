@@ -1,6 +1,6 @@
 # Sela v2 product
 
-Status: **implemented** in `web/` and `/api/v2` (demo scope); see [implementation status](IMPLEMENTATION_STATUS.md) for what is verified. Authority: [SPEC](../SPEC.md) §G, C1–C13, I.web, V1–V8, V13.
+Status: **implemented** in `web/` and `/api/v2` (demo scope); see [implementation status](IMPLEMENTATION_STATUS.md) for what is verified. Authority: [SPEC](../SPEC.md) §G, C1–C14, I.web, V1–V8, V13.
 
 Sela is a bridge to professional support, not an AI therapist. It helps a person put their story into words they understand and approve, choose a practical next step, rehearse how to start, share only what they choose, and see what actually happened after a (simulated) handoff. Everything in the demo is synthetic or fictional.
 

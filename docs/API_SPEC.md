@@ -1,6 +1,6 @@
 # Sela v2 API contract
 
-Status: **implemented** in `internal/httpapi` and `internal/journey` (Go); behaviour tested by `go test ./...`. Authority: [SPEC](../SPEC.md) I.api, V1–V19. The inherited Next.js API is in the [v1 API archive](archive/v1/API_SPEC.md).
+Status: **implemented** in `internal/httpapi` and `internal/journey` (Go); behaviour tested by `go test ./...`. Authority: [SPEC](../SPEC.md) I.api, V1–V23. The inherited Next.js API is in the [v1 API archive](archive/v1/API_SPEC.md).
 
 ## Conventions
 

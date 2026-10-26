@@ -1,6 +1,6 @@
 # Sela v2 architecture
 
-Status: **implemented** on branch `feat/v2-go-meta-runtime` (Go API, static frontend, Modal serving code); live Modal inference not yet verified ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) C1, C4–C8, C11, I.api/I.meta/I.data/I.research, V3–V19.
+Status: **implemented** on branch `feat/v2-go-meta-runtime` (Go API, static frontend, Modal serving code); live Modal inference not yet verified ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) C1, C4–C8, C11, I.api/I.meta/I.data/I.research, V3–V23.
 
 ## Runtime
 
