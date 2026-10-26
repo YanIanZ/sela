@@ -9,6 +9,7 @@ Status authority: [SPEC.md §T](../SPEC.md#t-tasks). All runtime stages are pend
 | New runtime foundation | T3 | Go/static frontend skeleton, bounded isolated sessions and synthetic catalog |
 | Rules before inference | T4 | Crisis, consent, brief version/approval and share isolation tests pass |
 | Meta text slice | T5 | Validated live synthetic output plus honest manual/unavailable paths |
+| Optional verification layer | T5a | Separate Anthropic consent, allowed fixture evidence, version-bound report, honest unavailable/manual review; mock + live evidence clearly distinguished |
 | User journey | T6 | ID/EN intake, fixture discovery and review/approval |
 | Professional continuity | T7 | Simulated handoff/inbox/consultation/follow-up; revocation demonstrated |
 | Acceptance | T8 | Full behavioral/accessibility/failure evidence and equivalent measurements |

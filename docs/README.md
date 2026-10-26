@@ -23,7 +23,8 @@ External event terms govern event eligibility and third-party rights. The repo's
 | [Synthetic demo data](DEMO_DATA.md) | Fixtures, identity choices, repeatability, session isolation |
 | [Safety](SAFETY.md) | Crisis and care boundaries, sharing, privacy |
 | [AI policy](AI_POLICY.md) | Allowed model work, validation, human control, truthful provenance |
-| [Meta integration](META_INTEGRATION.md) | Provider boundary, access verification, failure behavior |
+| [Meta integration](META_INTEGRATION.md) | Primary generation boundary, access verification, failure behavior |
+| [Claude verifier](CLAUDE_VERIFIER.md) | Optional second-pass source-fidelity verification, independent consent, Go prototype and evidence limitations |
 | [Development](DEVELOPMENT.md) | Commands that work now and the future Go cutover |
 | [Validation and demo](VALIDATION.md) | Acceptance matrix, demonstration script, evidence |
 | [Migration roadmap](ROADMAP.md) | Ordered transition tasks and removal criteria |

@@ -19,7 +19,7 @@ The Meta hackathon demonstration uses **synthetic people, fictional professional
 | --- | --- |
 | Backend decision | **Go**, confirmed |
 | Target frontend | Static React/TypeScript + Vite; engineering default |
-| AI direction | Meta-only live AI in the new journey; actual access/integration pending |
+| AI direction | Meta/Muse Spark primary generation; optional Claude 5.5 source verifier prototype (not product-integrated) |
 | New professional-care demo | Designed, not implemented |
 | Current runnable application | Inherited Next.js/TypeScript v1 |
 | V2 deployment | Not configured |
@@ -35,7 +35,7 @@ The current CI badge tests v1, not the proposed Go implementation. Docs and task
 - Simulated handoff and consultation followed by a fixture-authored plan.
 - Clear crisis interruption, unavailable-model, manual, revoked and expired states.
 
-Read the [product](docs/PRODUCT.md), [architecture](docs/ARCHITECTURE.md), [planned API](docs/API_SPEC.md), [Meta integration](docs/META_INTEGRATION.md) and [migration roadmap](docs/ROADMAP.md).
+Read the [product](docs/PRODUCT.md), [architecture](docs/ARCHITECTURE.md), [planned API](docs/API_SPEC.md), [Meta integration](docs/META_INTEGRATION.md), [optional Claude verifier](docs/CLAUDE_VERIFIER.md) and [migration roadmap](docs/ROADMAP.md).
 
 ## Run the existing v1 application
 
