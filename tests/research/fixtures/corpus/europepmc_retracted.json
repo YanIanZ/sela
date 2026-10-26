@@ -1,0 +1,49 @@
+{
+ "_fixture_note": "Trimmed real API response (metadata fields only; no abstract, no author list), retrieved 2026-10-26 for offline tests.",
+ "hitCount": 1,
+ "resultList": {
+  "result": [
+   {
+    "commentCorrectionList": {
+     "commentCorrection": [
+      {
+       "id": "37113738",
+       "orderIn": 1,
+       "reference": "Ther Adv Med Oncol. 2023 Apr 22;15:17588359231172420. doi: 10.1177/17588359231172420",
+       "source": "MED",
+       "type": "Retraction in"
+      }
+     ]
+    },
+    "doi": "10.1177/1758835920922055",
+    "electronicPublicationDate": "2020-05-10",
+    "firstPublicationDate": "2020-05-10",
+    "hasPDF": "N",
+    "id": "32426053",
+    "inEPMC": "Y",
+    "inPMC": "Y",
+    "isOpenAccess": "Y",
+    "journalInfo": {
+     "dateOfPublication": "2020 ",
+     "monthOfPublication": 0,
+     "printPublicationDate": "2020-01-01",
+     "volume": "12",
+     "yearOfPublication": 2020
+    },
+    "license": "cc by-nc",
+    "pmcid": "PMC7222246",
+    "pmid": "32426053",
+    "pubTypeList": {
+     "pubType": [
+      "Retracted Publication",
+      "research-article",
+      "Journal Article"
+     ]
+    },
+    "pubYear": "2020",
+    "source": "MED",
+    "title": "Myc is a prognostic biomarker and potential therapeutic target in osteosarcoma."
+   }
+  ]
+ }
+}

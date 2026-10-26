@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SYNTHETIC fixture written for Sela's offline tests. Not a real article; all text is invented. -->
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="review-article">
+  <front>
+    <article-meta>
+      <permissions>
+        <license xlink:href="https://creativecommons.org/licenses/by/4.0/"><license-p>CC BY 4.0</license-p></license>
+      </permissions>
+      <abstract>
+        <p>This synthetic commentary discusses design principles for navigation tools aged 18 to 25 years.</p>
+      </abstract>
+    </article-meta>
+  </front>
+  <body>
+    <sec><title>Introduction</title><p>Twelve participants is written in words and must not be parsed.</p></sec>
+    <sec><title>Methods</title><p>Studies published between 2019 and 2024 were eligible; 45.5% were surveys.</p></sec>
+  </body>
+</article>

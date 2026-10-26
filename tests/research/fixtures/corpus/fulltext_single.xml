@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SYNTHETIC fixture written for Sela's offline tests. Not a real article; all text is invented. -->
+<article xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ali="http://www.niso.org/schemas/ali/1.0/" article-type="research-article" xml:lang="en">
+  <front>
+    <article-meta>
+      <title-group><article-title>Synthetic survey of help-seeking preferences</article-title></title-group>
+      <permissions>
+        <license xlink:href="https://creativecommons.org/licenses/by/4.0/">
+          <ali:license_ref>https://creativecommons.org/licenses/by/4.0/</ali:license_ref>
+          <license-p>This synthetic fixture is distributed under CC BY 4.0.</license-p>
+        </license>
+      </permissions>
+      <abstract>
+        <sec><title>Background</title><p>Synthetic background sentence about service navigation.</p></sec>
+        <sec><title>Methods</title><p>We conducted a cross-sectional survey of 312 university students in Indonesia.</p></sec>
+        <sec><title>Results</title><p>Most respondents preferred a short checklist (64%).</p></sec>
+      </abstract>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Methods</title>
+      <sec>
+        <title>Participants</title>
+        <p>A total of 312 participants completed the questionnaire<xref ref-type="bibr" rid="b7">7</xref>. Participants were recruited online.</p>
+      </sec>
+      <sec>
+        <title>Measures</title>
+        <p>The scale was previously validated in 1,050 adults <xref ref-type="bibr" rid="b8">8</xref>.</p>
+      </sec>
+      <sec>
+        <title>Data analysis</title>
+        <p>Missing responses (n = 9, 3%) were excluded from the models.</p>
+      </sec>
+      <sec>
+        <title>Outcomes</title>
+        <p>The primary outcome was self-reported readiness to contact a service.</p>
+      </sec>
+    </sec>
+    <sec>
+      <title>Discussion</title>
+      <p>Synthetic discussion text with a citation<xref ref-type="bibr" rid="b9">9</xref>.</p>
+      <sec>
+        <title>Limitations</title>
+        <p>The synthetic sample was recruited online and may not represent all students.</p>
+      </sec>
+    </sec>
+  </body>
+  <back><ref-list><ref id="b7"><mixed-citation>Synthetic reference with 999 participants.</mixed-citation></ref></ref-list></back>
+</article>

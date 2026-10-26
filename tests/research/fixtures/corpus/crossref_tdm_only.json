@@ -1,0 +1,73 @@
+{
+ "_fixture_note": "Trimmed real API response (metadata fields only; no abstract, no author list), retrieved 2026-10-26 for offline tests.",
+ "message": {
+  "DOI": "10.1016/j.jagp.2025.12.006",
+  "created": {
+   "date-parts": [
+    [
+     2025,
+     12,
+     13
+    ]
+   ],
+   "date-time": "2025-12-13T07:49:29Z",
+   "timestamp": 1765612169000
+  },
+  "issued": {
+   "date-parts": [
+    [
+     2026,
+     9
+    ]
+   ]
+  },
+  "license": [
+   {
+    "URL": "https://www.elsevier.com/tdm/userlicense/1.0/",
+    "content-version": "tdm",
+    "delay-in-days": 0,
+    "start": {
+     "date-parts": [
+      [
+       2026,
+       9,
+       1
+      ]
+     ],
+     "date-time": "2026-09-01T00:00:00Z",
+     "timestamp": 1788220800000
+    }
+   },
+   {
+    "URL": "https://www.elsevier.com/legal/tdmrep-license",
+    "content-version": "tdm",
+    "delay-in-days": 0,
+    "start": {
+     "date-parts": [
+      [
+       2026,
+       9,
+       1
+      ]
+     ],
+     "date-time": "2026-09-01T00:00:00Z",
+     "timestamp": 1788220800000
+    }
+   }
+  ],
+  "published-print": {
+   "date-parts": [
+    [
+     2026,
+     9
+    ]
+   ]
+  },
+  "relation": {},
+  "title": [
+   "Can Hospital-Community Integration Facilitate Timely Access to Mental Health Service and Improve Mental Health Outcomes in Older Adults? An Observational Analysis"
+  ],
+  "type": "journal-article"
+ },
+ "status": "ok"
+}

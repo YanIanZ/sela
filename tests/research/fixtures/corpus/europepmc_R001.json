@@ -1,0 +1,37 @@
+{
+ "_fixture_note": "Trimmed real API response (metadata fields only; no abstract, no author list), retrieved 2026-10-26 for offline tests.",
+ "hitCount": 1,
+ "resultList": {
+  "result": [
+   {
+    "doi": "10.1177/20552076241313401",
+    "electronicPublicationDate": "2025-01-17",
+    "firstPublicationDate": "2025-01-17",
+    "hasPDF": "Y",
+    "id": "39839954",
+    "inEPMC": "Y",
+    "inPMC": "Y",
+    "isOpenAccess": "Y",
+    "journalInfo": {
+     "dateOfPublication": "2025 Jan-Dec",
+     "monthOfPublication": 0,
+     "printPublicationDate": "2025-01-01",
+     "volume": "11",
+     "yearOfPublication": 2025
+    },
+    "license": "cc by",
+    "pmcid": "PMC11748072",
+    "pmid": "39839954",
+    "pubTypeList": {
+     "pubType": [
+      "research-article",
+      "Journal Article"
+     ]
+    },
+    "pubYear": "2025",
+    "source": "MED",
+    "title": "Chatbot-delivered mental health support: Attitudes and utilization in a sample of U.S. college students."
+   }
+  ]
+ }
+}

@@ -1,0 +1,103 @@
+{
+ "_fixture_note": "Trimmed real API response (metadata fields only; no abstract, no author list), retrieved 2026-10-26 for offline tests.",
+ "message": {
+  "DOI": "10.1177/17588359231172420",
+  "created": {
+   "date-parts": [
+    [
+     2023,
+     4,
+     22
+    ]
+   ],
+   "date-time": "2023-04-22T07:08:07Z",
+   "timestamp": 1682147287000
+  },
+  "issued": {
+   "date-parts": [
+    [
+     2023,
+     1
+    ]
+   ]
+  },
+  "license": [
+   {
+    "URL": "https://creativecommons.org/licenses/by-nc/4.0/",
+    "content-version": "unspecified",
+    "delay-in-days": 0,
+    "start": {
+     "date-parts": [
+      [
+       2023,
+       1,
+       1
+      ]
+     ],
+     "date-time": "2023-01-01T00:00:00Z",
+     "timestamp": 1672531200000
+    }
+   }
+  ],
+  "published-online": {
+   "date-parts": [
+    [
+     2023,
+     4,
+     22
+    ]
+   ]
+  },
+  "published-print": {
+   "date-parts": [
+    [
+     2023,
+     1
+    ]
+   ]
+  },
+  "relation": {},
+  "title": [
+   "Retraction to 10.1177/1758835920922055"
+  ],
+  "type": "journal-article",
+  "update-to": [
+   {
+    "DOI": "10.1177/1758835920922055",
+    "label": "Retraction",
+    "record-id": "44124",
+    "source": "retraction-watch",
+    "type": "retraction",
+    "updated": {
+     "date-parts": [
+      [
+       2023,
+       4,
+       22
+      ]
+     ],
+     "date-time": "2023-04-22T00:00:00Z",
+     "timestamp": 1682121600000
+    }
+   },
+   {
+    "DOI": "10.1177/1758835920922055",
+    "label": "Retraction",
+    "source": "publisher",
+    "type": "retraction",
+    "updated": {
+     "date-parts": [
+      [
+       2023,
+       4,
+       22
+      ]
+     ],
+     "date-time": "2023-04-22T00:00:00Z",
+     "timestamp": 1682121600000
+    }
+   }
+  ]
+ },
+ "status": "ok"
+}
