@@ -8,7 +8,7 @@ import (
 
 var knownNotes = []string{
 	NoteWordingNegation, NoteWordingSubject, NoteWordingTime, NoteWordingCertainty,
-	NoteWordingNumber, NoteWordingUnsafe, NoteWordingTooLong, NoteQualifierFixed,
+	NoteWordingNumber, NoteWordingUnsafe, NoteWordingTooLong, NoteWordingAddedContent, NoteQualifierFixed,
 }
 
 func FuzzParseDraft(f *testing.F) {
@@ -84,7 +84,7 @@ func FuzzValidateDraft(f *testing.F) {
 			if !c.FromQuote && (runeLen(c.Wording) > MaxWordingRunes || ContainsDiagnosisLabel(c.Wording) || ContainsMedicalInstruction(c.Wording)) {
 				t.Fatalf("unsafe model wording kept: %q", c.Wording)
 			}
-			if ContainsDiagnosisLabel(c.Quote) && (c.Kind != KindContext || !clinicianAttributed(c.Quote)) {
+			if ContainsDiagnosisLabel(c.Quote) && (c.Kind != KindContext || !labelsAttributed(c.Quote)) {
 				t.Fatalf("label accepted: %+v", c)
 			}
 			if !validKind(c.Kind) || (c.Qualifiers.Subject != SubjectSelf && c.Qualifiers.Subject != SubjectOther) {

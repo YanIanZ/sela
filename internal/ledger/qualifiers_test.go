@@ -33,6 +33,26 @@ func TestAnalyzeNegation(t *testing.T) {
 		{"I feel tired without reason.", "I feel tired", false},
 		{"Jangan-jangan aku yang salah.", "aku yang salah", false},
 		{"Rasanya ngga ada yang ngerti.", "ada yang ngerti", true},
+		// Quote marks, brackets, slashes and dashes do not shield a word.
+		{`Aku tidak "baik-baik saja".`, "baik-baik saja", true},
+		{`I'm not "fine".`, "fine", true},
+		{"I'm not “okay” at all.", "okay", true},
+		{"Aku nggak (terlalu) cemas.", "cemas", true},
+		{"Aku nggak sedih/cemas.", "cemas", true},
+		{"Aku nggak - jujur - baik.", "baik", true},
+		{"Aku tidak sedih, cuma capek.", "cuma capek", false}, // a comma still ends the clause
+		// Fused informal negators and apostrophe-less contractions.
+		{"Aku gabisa tidur.", "tidur", true},
+		{"Aku gamau makan.", "makan", true},
+		{"Aku gatau harus gimana.", "harus gimana", true},
+		{"Aku bukannya malas.", "malas", true},
+		{"I dont sleep well.", "sleep well", true},
+		{"I cant focus at all.", "focus at all", true},
+		{"I didnt eat today.", "eat today", true},
+		// No "ga-" prefix rule.
+		{"Aku gagal ujian lagi.", "ujian lagi", false},
+		{"Aku lagi galau.", "galau", false},
+		{"Aku ganti jurusan.", "jurusan", false},
 	}
 	for _, tc := range tests {
 		if got := analyzeQuote(t, tc.text, tc.quote).Negated; got != tc.want {

@@ -8,10 +8,10 @@ import (
 
 // token is one folded word with its original byte span and clause context.
 //
-// clause changes at every punctuation boundary (comma and stronger) and at a
-// contrastive conjunction; region changes only at sentence-final punctuation,
-// semicolons, line breaks and contrastive conjunctions. Negation uses the
-// narrow clause; subject, time and certainty use the wider region.
+// clause changes at commas, colons and everything that changes region;
+// region changes at sentence-final punctuation, semicolons, line breaks and
+// contrastive conjunctions. Negation uses the narrow clause; subject, time
+// and certainty use the wider region.
 type token struct {
 	text       string
 	start, end int
@@ -29,9 +29,13 @@ func isHardBoundary(r rune) bool {
 	return false
 }
 
+// isSoftBoundary reports clause punctuation inside a sentence. Quote marks,
+// brackets, slashes, dashes and bars are deliberately transparent: they set
+// words off inside one clause and must not shield them from a negator
+// (`tidak "baik-baik saja"`, "nggak (terlalu) cemas", "nggak sedih/cemas").
 func isSoftBoundary(r rune) bool {
 	switch r {
-	case ',', ':', '(', ')', '[', ']', '{', '}', '"', '\'', '-', '/', '|', '–', '—', '、':
+	case ',', ':', '、':
 		return true
 	}
 	return false
@@ -182,18 +186,74 @@ func wordParts(t string) []string {
 	return strings.FieldsFunc(t, func(r rune) bool { return r == '-' || r == '\'' })
 }
 
+// isContent reports whether a word part carries content: at least three
+// runes and not a stopword.
+func isContent(p string) bool { return runeLen(p) >= 3 && !stopwords[p] }
+
 // contentWords returns the distinct content words of s in order of first
 // appearance: word parts of at least three runes that are not stopwords.
+// Negators are not content words; their effect is tracked per word by
+// negationCounts.
 func contentWords(s string) []string {
 	seen := map[string]bool{}
 	var out []string
 	for _, t := range tokenize(s) {
+		if isNegator(t.text) {
+			continue
+		}
 		for _, p := range wordParts(t.text) {
-			if runeLen(p) < 3 || stopwords[p] || seen[p] {
+			if !isContent(p) || seen[p] {
 				continue
 			}
 			seen[p] = true
 			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// negationCounts returns, for every token, how many negators govern it: the
+// negators within negationWindow tokens before it in the same clause. With
+// narrowHedge, a hedging negator ("not sure", "belum tahu") governs only the
+// knowing word right after it, and a fused hedge ("gatau") governs nothing.
+func negationCounts(toks []token, narrowHedge bool) []int {
+	counts := make([]int, len(toks))
+	for i, t := range toks {
+		if !isNegator(t.text) {
+			continue
+		}
+		window := negationWindow
+		if narrowHedge && isHedge(toks, i) {
+			window = 1
+			if fusedNegators[t.text] {
+				window = 0
+			}
+		}
+		for k := i + 1; k < len(toks) && k <= i+window && toks[k].clause == t.clause; k++ {
+			counts[k]++
+		}
+	}
+	return counts
+}
+
+// polarWord is one content word with the number of negators governing it.
+type polarWord struct {
+	word string
+	neg  int
+}
+
+// polarWords lists the content words of toks[from:to], in order and with
+// repeats, each with its count from negationCounts.
+func polarWords(toks []token, counts []int, from, to int) []polarWord {
+	var out []polarWord
+	for i := from; i < to; i++ {
+		if isNegator(toks[i].text) {
+			continue
+		}
+		for _, p := range wordParts(toks[i].text) {
+			if isContent(p) {
+				out = append(out, polarWord{word: p, neg: counts[i]})
+			}
 		}
 	}
 	return out

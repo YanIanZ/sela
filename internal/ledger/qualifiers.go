@@ -173,16 +173,22 @@ func classify(toks []token, i int) int {
 	return clsNone
 }
 
+// maxDeterminers bounds how many possessive determiners are skipped before a
+// speaker noun ("my", "our"), so adversarial runs stay linear.
+const maxDeterminers = 2
+
 // isSpeaker reports whether toks[i] can be the speaker of a reported-speech
 // frame, and returns the index just past the speaker phrase.
 func isSpeaker(toks []token, i int) (bool, int) {
+	for n := 0; n < maxDeterminers && i+1 < len(toks) && possessiveDeterminers[toks[i].text] &&
+		toks[i+1].region == toks[i].region; n++ {
+		i++
+	}
 	if i >= len(toks) {
 		return false, i
 	}
 	t := toks[i].text
 	switch {
-	case possessiveDeterminers[t] && i+1 < len(toks) && toks[i+1].region == toks[i].region:
-		return isSpeaker(toks, i+1)
 	case isOrangTua(toks, i):
 		return true, i + 2
 	case thirdPartyPronouns[t] || isThirdNoun(t) || frameSpeakers[t] || t == "orang-orang":
@@ -250,17 +256,33 @@ func subjectOf(toks []token, qs, qe int) Subject {
 	for re < len(toks) && toks[re].region == region {
 		re++
 	}
-	for _, f := range framesIn(toks, rs, re) {
+	frames := framesIn(toks, rs, re)
+	var clauseEnd []int // clauseEnd[k-rs]: index just past the clause of toks[k]
+	firstSelf := -1     // first self-referring token at or after qs
+	if len(frames) > 0 {
+		clauseEnd = make([]int, re-rs)
+		for k := re - 1; k >= rs; k-- {
+			if k+1 < re && toks[k+1].clause == toks[k].clause {
+				clauseEnd[k-rs] = clauseEnd[k+1-rs]
+			} else {
+				clauseEnd[k-rs] = k + 1
+			}
+		}
+		for k := qs; k < qe; k++ {
+			if classify(toks, k) == clsSelf {
+				firstSelf = k
+				break
+			}
+		}
+	}
+	for _, f := range frames {
 		switch {
 		case f.end <= qs:
 			// Reported content is the clause that follows the frame: "kata
 			// temanku aku cuma butuh liburan", "kata temanku, aku ...".
 			scope := f.end
 			if scope < re {
-				c := toks[scope].clause
-				for scope < re && toks[scope].clause == c {
-					scope++
-				}
+				scope = clauseEnd[scope-rs]
 			}
 			if qs < scope {
 				return SubjectOther
@@ -268,14 +290,7 @@ func subjectOf(toks []token, qs, qe int) Subject {
 		case f.start < qe && f.end > qs:
 			// The quote contains the frame, unless the user is its subject
 			// before the frame ("aku sedih karena kata temanku ...").
-			selfFirst := false
-			for k := qs; k < f.start; k++ {
-				if classify(toks, k) == clsSelf {
-					selfFirst = true
-					break
-				}
-			}
-			if !selfFirst {
+			if firstSelf < 0 || firstSelf >= f.start {
 				return SubjectOther
 			}
 		case f.start >= qe && f.end == re && f.start > 0 && toks[qe-1].clause == toks[f.start-1].clause:

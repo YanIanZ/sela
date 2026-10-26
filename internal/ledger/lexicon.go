@@ -20,13 +20,61 @@ func set(words ...string) map[string]bool {
 var negators = set(
 	// Indonesian, formal and informal.
 	"tidak", "tak", "nggak", "ngga", "ngak", "gak", "ga", "enggak", "engga", "ndak", "nda", "kagak", "kaga",
-	"tdk", "gk", "bukan", "belum", "blm", "tanpa", "jangan",
+	"tdk", "gk", "bukan", "bukannya", "bukanlah", "belum", "blm", "tanpa", "jangan",
 	// English ("n't" contractions are matched by suffix).
 	"not", "no", "never", "without", "nobody", "nothing", "neither", "nor", "none", "nowhere", "cannot",
+	"noone", "no-one",
+	// English contractions typed without an apostrophe, common in chat.
+	"dont", "doesnt", "didnt", "cant", "wont", "isnt", "arent", "wasnt", "werent", "couldnt", "wouldnt",
+	"shouldnt", "havent", "hasnt", "hadnt", "aint", "mustnt", "neednt", "dunno",
 )
 
+// Informal Indonesian negators fused with the next word ("gabisa", "gamau").
+// They are listed explicitly: a "ga-" prefix rule would also catch "gagal",
+// "galau" or "ganti".
+var (
+	fusedNegatorHeads = []string{"ga", "gak", "gk", "ngga", "nggak", "ngak", "enggak", "engga", "kagak", "kaga", "tdk", "tak", "ndak", "nda"}
+	fusedNegatorTails = []string{
+		"bisa", "bs", "mau", "ada", "suka", "usah", "kuat", "pernah", "boleh", "perlu", "punya", "jadi", "peduli",
+		"berani", "mampu", "sanggup", "sempat", "sempet", "tega", "enak", "papa", "apa", "mood", "nafsu", "semangat",
+		"pengen", "ingin",
+	}
+	// fusedKnowTails make a fused hedge ("gatau" = "nggak tahu").
+	fusedKnowTails = []string{"tau", "tahu", "yakin", "paham", "ngerti"}
+)
+
+// fusedNegators maps each fused negator to whether it is a hedge
+// ("gatau", "gayakin") rather than a negated fact.
+var fusedNegators = func() map[string]bool {
+	m := map[string]bool{"gada": false, "gbs": false, "gbisa": false, "gmau": false, "gpp": false, "gtau": true}
+	for _, h := range fusedNegatorHeads {
+		for _, t := range fusedNegatorTails {
+			m[h+t] = false
+		}
+		for _, t := range fusedKnowTails {
+			m[h+t] = true
+		}
+	}
+	return m
+}()
+
 // isNegator reports whether a token negates.
-func isNegator(t string) bool { return negators[t] || strings.HasSuffix(t, "n't") }
+func isNegator(t string) bool {
+	if negators[t] || strings.HasSuffix(t, "n't") {
+		return true
+	}
+	_, fused := fusedNegators[t]
+	return fused
+}
+
+// isHedge reports whether the negator at toks[i] only hedges ("not sure",
+// "belum tahu", "gatau"): it negates a knowing word, not a fact.
+func isHedge(toks []token, i int) bool {
+	if fusedNegators[toks[i].text] {
+		return true
+	}
+	return i+1 < len(toks) && toks[i+1].clause == toks[i].clause && knowWords[toks[i+1].text]
+}
 
 // contrastive conjunctions open a new clause and region.
 var contrastive = set(
@@ -95,7 +143,7 @@ var timeLexicon = newLexicon(map[string][]string{
 	tagFuture: {
 		"nanti", "besok", "akan", "lusa", "minggu depan", "bulan depan", "tahun depan", "semester depan",
 		"suatu hari", "will", "going to", "gonna", "tomorrow", "next week", "next month", "next year",
-		"next semester", "i'll", "we'll", "it'll", "you'll", "won't", "in the future", "someday",
+		"next semester", "i'll", "we'll", "it'll", "you'll", "won't", "wont", "in the future", "someday",
 	},
 	tagCurrent: {
 		"sekarang", "kini", "saat ini", "akhir-akhir ini", "akhir2 ini", "belakangan", "belakangan ini",
@@ -106,6 +154,31 @@ var timeLexicon = newLexicon(map[string][]string{
 		"sudah lama", "udah lama", "sejak dulu", "dari dulu",
 		"lately", "these days", "now", "right now", "currently", "nowadays", "at the moment", "still",
 		"recently", "today", "this week", "this month", "this semester", "this year",
+	},
+})
+
+// freeMarkerLexicon holds the generic time and certainty markers model
+// wording may add or translate when their tag is the source's ("lately" ->
+// "akhir-akhir ini", "kayaknya" -> "maybe"). Markers that add a claim of their
+// own ("sudah lama", "hari ini", "takut kalau") must come from the segment.
+var freeMarkerLexicon = newLexicon(map[string][]string{
+	tagCurrent: {
+		"sekarang", "kini", "saat ini", "akhir-akhir ini", "akhir2 ini", "belakangan", "belakangan ini",
+		"lately", "these days", "now", "right now", "currently", "nowadays", "at the moment", "recently",
+	},
+	tagPast: {
+		"dulu", "dahulu", "dulunya", "sempat", "pernah", "used to", "in the past", "previously", "formerly",
+		"back then",
+	},
+	tagFuture: {"nanti", "akan", "will", "going to", "gonna", "in the future", "someday"},
+	tagHypo: {
+		"kalau nanti", "kalo nanti", "jika nanti", "seandainya", "andaikan", "andai", "bagaimana kalau",
+		"gimana kalau", "gimana kalo", "kalau sampai", "kalo sampai", "what if", "if i", "in case", "suppose",
+		"imagine if",
+	},
+	tagUnsure: {
+		"mungkin", "kayaknya", "kayanya", "sepertinya", "keknya", "entah", "entahlah", "barangkali", "agaknya",
+		"kira-kira", "maybe", "might", "not sure", "unsure", "i guess", "probably", "perhaps", "possibly",
 	},
 })
 
@@ -131,11 +204,14 @@ var certaintyLexicon = newLexicon(map[string][]string{
 var numberWords = set(
 	"nol", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "sebelas",
 	"belas", "puluh", "ratus", "ribu", "juta", "setengah", "beberapa", "banyak", "sebagian", "semua", "seluruh",
-	"sehari", "seminggu", "sebulan", "setahun", "sejam", "persen",
+	"sehari", "seminggu", "sebulan", "setahun", "sejam", "persen", "belasan", "puluhan", "ratusan", "ribuan",
+	// "berhari-hari", "berbulan-bulan": the first part is checked.
+	"berjam", "berhari", "berminggu", "berbulan", "bertahun",
 	"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
 	"thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "thirty",
 	"forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred", "thousand", "million", "half", "once",
-	"twice", "dozen", "several", "many", "percent", "percentage",
+	"twice", "dozen", "dozens", "several", "many", "percent", "percentage", "few", "couple", "hundreds",
+	"thousands",
 )
 
 // claimMarkers are time, frequency and severity claims an opening line may
@@ -214,7 +290,24 @@ var intentVocab = set(
 
 // knowWords follow a negator in hedges that state no fact ("not sure",
 // "belum tahu").
-var knowWords = set("sure", "yakin", "tahu", "tau", "know", "paham", "understand")
+var knowWords = set("sure", "yakin", "tahu", "tau", "know", "paham", "understand", "ngerti", "mengerti")
+
+// paraphraseWords may appear in model wording without occurring in the
+// quote: reporting verbs and plain ways to refer to the user. Everything
+// else in the wording must be a spelling of a quote word or one of the
+// segment's own time and certainty markers.
+var paraphraseWords = set(
+	"kata", "katanya", "bilang", "berkata", "mengatakan", "ngomong", "menurut", "said", "says", "say", "told",
+	"tells", "tell", "according", "ngerasa", "kerasa", "rasa", "mengalami", "experiences", "experiencing",
+	"experienced", "pengguna", "user", "person",
+)
+
+// desireWords before an intent word make it a request ("ingin bercerita",
+// "would like to talk"), not a statement about an approved item.
+var desireWords = set(
+	"ingin", "mau", "pengen", "pingin", "hendak", "siap", "bersedia", "berharap", "harap", "butuh", "perlu",
+	"want", "wants", "wanted", "like", "love", "hope", "hoping", "ready", "willing", "need", "needs",
+)
 
 // pressureLexicon is urgency, guarantees, guilt and coercion.
 var pressureLexicon = newLexicon(map[string][]string{

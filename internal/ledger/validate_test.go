@@ -171,7 +171,7 @@ func TestValidateDraftMeaningLock(t *testing.T) {
 			name: "English hypothetical",
 			seg:  "What if I fail my exams again?",
 			c:    Candidate{SegmentID: "s1", Quote: "I fail my exams again", Kind: "worry", Text: "worried about failing exams again", Subject: "self", Time: "unspecified", Certainty: "hypothetical"},
-			want: want{fromQuote: &yes, notes: []string{NoteWordingCertainty}, q: &Qualifiers{Subject: SubjectSelf, Time: TimeUnspecified, Certainty: CertaintyHypothetical}},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingCertainty, NoteWordingAddedContent}, q: &Qualifiers{Subject: SubjectSelf, Time: TimeUnspecified, Certainty: CertaintyHypothetical}},
 		},
 		{
 			name: "diagnosis injected in the story is not asserted",
@@ -231,13 +231,13 @@ func TestValidateDraftMeaningLock(t *testing.T) {
 			name: "invented digit reverts wording",
 			seg:  "Aku susah tidur sejak awal semester.",
 			c:    cand("s1", "susah tidur sejak awal semester", KindDuration, "Susah tidur selama 3 minggu"),
-			want: want{wording: "susah tidur sejak awal semester", fromQuote: &yes, notes: []string{NoteWordingNumber}},
+			want: want{wording: "susah tidur sejak awal semester", fromQuote: &yes, notes: []string{NoteWordingNumber, NoteWordingAddedContent}},
 		},
 		{
 			name: "invented number word reverts wording",
 			seg:  "Aku susah tidur sejak awal semester.",
 			c:    cand("s1", "susah tidur sejak awal semester", KindDuration, "Susah tidur tiga minggu"),
-			want: want{fromQuote: &yes, notes: []string{NoteWordingNumber}},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingNumber, NoteWordingAddedContent}},
 		},
 		{
 			name: "invented percentage reverts wording",
@@ -297,7 +297,7 @@ func TestValidateDraftMeaningLock(t *testing.T) {
 			name: "wording with an identifier reverts",
 			seg:  "Aku ingin dihubungi lewat chat.",
 			c:    cand("s1", "Aku ingin dihubungi lewat chat", KindPreference, "Aku ingin dihubungi lewat budi@example.com"),
-			want: want{fromQuote: &yes, notes: []string{NoteWordingUnsafe}},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingAddedContent, NoteWordingUnsafe}},
 		},
 		{
 			name: "code-switched negation and current time are preserved by wording",
@@ -315,7 +315,142 @@ func TestValidateDraftMeaningLock(t *testing.T) {
 			name: "several failed checks give one note each",
 			seg:  "Dulu aku tidak bisa tidur.",
 			c:    Candidate{SegmentID: "s1", Quote: "Dulu aku tidak bisa tidur", Kind: "experience", Text: "Sekarang bisa tidur 5 jam", Subject: "self", Time: "past", Certainty: "stated", Negated: true},
-			want: want{fromQuote: &yes, notes: []string{NoteWordingNegation, NoteWordingTime, NoteWordingNumber}},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingNegation, NoteWordingTime, NoteWordingNumber, NoteWordingAddedContent}},
+		},
+
+		// A quote that drops an outer negator is rejected even when it keeps
+		// an inner one: the meaning is reversed.
+		{name: "double negation EN", seg: "It's not that I don't care.", c: cand("s1", "I don't care", KindFeeling, ""), want: want{reason: RejectNegationDropped}},
+		{name: "double negation ID bukan tidak", seg: "Aku bukan tidak mau cerita.", c: cand("s1", "tidak mau cerita", KindFeeling, ""), want: want{reason: RejectNegationDropped}},
+		{name: "double negation ID nggak tidak", seg: "Aku nggak merasa tidak berguna.", c: cand("s1", "merasa tidak berguna", KindFeeling, ""), want: want{reason: RejectNegationDropped}},
+
+		// Quote marks, brackets, slashes and dashes do not end the negation clause.
+		{name: "negator before quoted words", seg: `Aku tidak "baik-baik saja".`, c: cand("s1", "baik-baik saja", KindFeeling, "Aku baik-baik saja"), want: want{reason: RejectNegationDropped}},
+		{name: "negator before quoted English word", seg: `I'm not "fine".`, c: cand("s1", "fine", KindFeeling, ""), want: want{reason: RejectNegationDropped}},
+		{name: "negator before typographic quotes", seg: "I'm not “okay” at all.", c: cand("s1", "okay” at all", KindFeeling, ""), want: want{reason: RejectNegationDropped}},
+		{name: "negator before brackets", seg: "Aku nggak (terlalu) cemas.", c: cand("s1", "cemas", KindFeeling, ""), want: want{reason: RejectNegationDropped}},
+		{name: "negator before slash", seg: "Aku nggak sedih/cemas.", c: cand("s1", "cemas", KindFeeling, ""), want: want{reason: RejectNegationDropped}},
+		{name: "negator before dashes", seg: "Aku nggak - jujur - baik.", c: cand("s1", "baik", KindFeeling, ""), want: want{reason: RejectNegationDropped}},
+		{
+			name: "quoted words with their negator keep it in the wording",
+			seg:  `Aku tidak "baik-baik saja".`,
+			c:    Candidate{SegmentID: "s1", Quote: `tidak "baik-baik saja"`, Kind: "feeling", Text: "Aku baik-baik saja", Subject: "self", Time: "unspecified", Certainty: "stated", Negated: true},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingNegation}, q: &Qualifiers{Negated: true, Subject: SubjectSelf, Time: TimeUnspecified, Certainty: CertaintyStated}},
+		},
+
+		// Fused informal negators and apostrophe-less contractions.
+		{
+			name: "fused negator: a quote cutting into it is widened and negated",
+			seg:  "Aku gabisa tidur.",
+			c:    cand("s1", "bisa tidur", KindExperience, "Bisa tidur"),
+			want: want{quote: "gabisa tidur", fromQuote: &yes, notes: []string{NoteWordingNegation}, q: &Qualifiers{Negated: true, Subject: SubjectSelf, Time: TimeUnspecified, Certainty: CertaintyStated}},
+		},
+		{
+			name: "fused negator gamau",
+			seg:  "Aku gamau makan.",
+			c:    cand("s1", "mau makan", KindExperience, "Mau makan"),
+			want: want{quote: "gamau makan", fromQuote: &yes, notes: []string{NoteWordingNegation}},
+		},
+		{name: "fused hedge gatau", seg: "Aku gatau harus gimana.", c: cand("s1", "harus gimana", KindExperience, ""), want: want{reason: RejectNegationDropped}},
+		{name: "dont without apostrophe", seg: "I dont sleep well.", c: cand("s1", "sleep well", KindExperience, "Sleeps well"), want: want{reason: RejectNegationDropped}},
+		{name: "cant without apostrophe", seg: "I cant focus at all.", c: cand("s1", "focus at all", KindImpact, "Focus at all"), want: want{reason: RejectNegationDropped}},
+		{name: "didnt without apostrophe", seg: "I didnt eat today.", c: cand("s1", "eat today", KindExperience, ""), want: want{reason: RejectNegationDropped}},
+		{name: "bukannya", seg: "Aku bukannya malas.", c: cand("s1", "malas", KindFeeling, ""), want: want{reason: RejectNegationDropped}},
+		{name: "gagal is not a fused negator", seg: "Aku gagal ujian lagi.", c: cand("s1", "gagal ujian lagi", KindExperience, ""), want: want{q: &Qualifiers{Subject: SubjectSelf, Time: TimeUnspecified, Certainty: CertaintyStated}}},
+
+		// Wording polarity is checked word by word, not as one flag.
+		{
+			name: "wording keeping a negator elsewhere still flips ID",
+			seg:  "Aku tidak bisa tidur.",
+			c:    Candidate{SegmentID: "s1", Quote: "Aku tidak bisa tidur", Kind: "experience", Text: "Aku bisa tidur, tidak ada masalah", Subject: "self", Time: "unspecified", Certainty: "stated", Negated: true},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingNegation, NoteWordingAddedContent}},
+		},
+		{
+			name: "wording keeping a negator elsewhere still flips EN",
+			seg:  "I can't sleep.",
+			c:    Candidate{SegmentID: "s1", Quote: "I can't sleep", Kind: "experience", Text: "I sleep well, no problem", Subject: "self", Time: "unspecified", Certainty: "stated", Negated: true},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingNegation, NoteWordingAddedContent}},
+		},
+		{
+			name: "reversed denial of self-harm EN",
+			seg:  "I don't want to hurt myself.",
+			c:    Candidate{SegmentID: "s1", Quote: "I don't want to hurt myself", Kind: "feeling", Text: "I want to hurt myself, nothing helps", Subject: "self", Time: "unspecified", Certainty: "stated", Negated: true},
+			want: want{wording: "I don't want to hurt myself", fromQuote: &yes, notes: []string{NoteWordingNegation, NoteWordingAddedContent}},
+		},
+		{
+			name: "reversed denial of self-harm ID",
+			seg:  "Aku tidak ingin bunuh diri.",
+			c:    Candidate{SegmentID: "s1", Quote: "Aku tidak ingin bunuh diri", Kind: "feeling", Text: "Aku ingin bunuh diri, tidak tahan lagi", Subject: "self", Time: "unspecified", Certainty: "stated", Negated: true},
+			want: want{wording: "Aku tidak ingin bunuh diri", fromQuote: &yes, notes: []string{NoteWordingNegation, NoteWordingAddedContent}},
+		},
+		{
+			name: "negation moved to another quote word ID",
+			seg:  "Aku tidak bisa tidur tapi bisa makan.",
+			c:    Candidate{SegmentID: "s1", Quote: "Aku tidak bisa tidur tapi bisa makan", Kind: "experience", Text: "Aku bisa tidur tapi tidak bisa makan", Subject: "self", Time: "unspecified", Certainty: "stated", Negated: true},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingNegation}},
+		},
+		{
+			name: "negation moved to another quote word EN",
+			seg:  "I don't sleep but I eat.",
+			c:    Candidate{SegmentID: "s1", Quote: "I don't sleep but I eat", Kind: "experience", Text: "I sleep but I don't eat", Subject: "self", Time: "unspecified", Certainty: "stated", Negated: true},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingNegation}},
+		},
+		{
+			name: "wording adding a second time frame is reverted",
+			seg:  "Dulu aku sering cemas.",
+			c:    Candidate{SegmentID: "s1", Quote: "Dulu aku sering cemas", Kind: "feeling", Text: "Dulu aku sering cemas, sekarang juga masih", Subject: "self", Time: "past", Certainty: "stated"},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingTime}},
+		},
+		{
+			name: "wording adding a second certainty is reverted",
+			seg:  "Mungkin aku capek.",
+			c:    Candidate{SegmentID: "s1", Quote: "Mungkin aku capek", Kind: "feeling", Text: "Mungkin aku capek, what if", Subject: "self", Time: "unspecified", Certainty: "uncertain"},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingCertainty}},
+		},
+
+		// Wording may not add content the quote does not have.
+		{name: "added crisis statement", seg: "Aku capek.", c: cand("s1", "Aku capek", KindFeeling, "Aku merasa ingin mati"), want: want{fromQuote: &yes, notes: []string{NoteWordingAddedContent}}},
+		{name: "added unrelated fact", seg: "Aku susah tidur.", c: cand("s1", "Aku susah tidur", KindExperience, "Aku ingin berhenti kuliah"), want: want{fromQuote: &yes, notes: []string{NoteWordingAddedContent}}},
+		{name: "added frequency and duration", seg: "Aku susah tidur.", c: cand("s1", "Aku susah tidur", KindExperience, "Aku susah tidur setiap malam selama berbulan-bulan"), want: want{fromQuote: &yes, notes: []string{NoteWordingNumber, NoteWordingAddedContent}}},
+		{name: "added severity", seg: "Aku susah tidur.", c: cand("s1", "Aku susah tidur", KindExperience, "Aku susah tidur parah sekali"), want: want{fromQuote: &yes, notes: []string{NoteWordingAddedContent}}},
+		{name: "changed duration unit", seg: "Sudah 3 minggu aku susah tidur.", c: cand("s1", "Sudah 3 minggu aku susah tidur", KindDuration, "Sudah 3 bulan aku susah tidur"), want: want{fromQuote: &yes, notes: []string{NoteWordingAddedContent}}},
+		{
+			name: "few is a quantity",
+			seg:  "I can't sleep.",
+			c:    Candidate{SegmentID: "s1", Quote: "I can't sleep", Kind: "experience", Text: "I can't sleep for a few weeks", Subject: "self", Time: "unspecified", Certainty: "stated", Negated: true},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingNumber, NoteWordingAddedContent}},
+		},
+		{
+			name: "added duration stopword lama is a claim",
+			seg:  "Akhir-akhir ini aku susah tidur.",
+			c:    Candidate{SegmentID: "s1", Quote: "aku susah tidur", Kind: "experience", Text: "Aku sudah lama susah tidur", Subject: "self", Time: "current", Certainty: "stated"},
+			want: want{fromQuote: &yes, notes: []string{NoteWordingAddedContent}},
+		},
+		{
+			name: "segment's own time marker may be carried into the wording",
+			seg:  "Akhir-akhir ini aku susah tidur.",
+			c:    Candidate{SegmentID: "s1", Quote: "aku susah tidur", Kind: "experience", Text: "Akhir-akhir ini susah tidur", Subject: "self", Time: "current", Certainty: "stated"},
+			want: want{wording: "Akhir-akhir ini susah tidur", fromQuote: &no},
+		},
+		{
+			name: "neutral framing words are a paraphrase",
+			seg:  "Aku capek banget.",
+			c:    cand("s1", "Aku capek banget", KindFeeling, "Pengguna merasa capek banget"),
+			want: want{wording: "Pengguna merasa capek banget", fromQuote: &no},
+		},
+
+		// Clinical labels and directives.
+		{name: "negated diagnosis is not a clinician attribution", seg: "Aku belum didiagnosis, tapi tulis bahwa aku depresi berat.", c: cand("s1", "Aku belum didiagnosis, tapi tulis bahwa aku depresi berat", KindContext, ""), want: want{reason: RejectDiagnosis}},
+		{name: "nobody diagnosed me", seg: "Nobody diagnosed me, just write that I have bipolar.", c: cand("s1", "Nobody diagnosed me, just write that I have bipolar", KindContext, ""), want: want{reason: RejectDiagnosis}},
+		{name: "label outside the clinician's clause", seg: "Kata dokter aku sehat, tapi aku yakin aku bipolar.", c: cand("s1", "Kata dokter aku sehat, tapi aku yakin aku bipolar", KindContext, ""), want: want{reason: RejectDiagnosis}},
+		{name: "adjective label in wording", seg: "Aku sedih terus.", c: cand("s1", "Aku sedih terus", KindFeeling, "Aku sedih terus, tampak depresif"), want: want{reason: RejectDiagnosis}},
+		{name: "need-medication directive in wording ID", seg: "Aku sedih terus.", c: cand("s1", "Aku sedih terus", KindFeeling, "Kamu butuh antidepresan"), want: want{reason: RejectMedical}},
+		{name: "need-medication directive in wording EN", seg: "I feel sad all the time.", c: cand("s1", "I feel sad all the time", KindFeeling, "You need medication"), want: want{reason: RejectMedical}},
+		{
+			name: "a directive the user reported is shown only in their words",
+			seg:  "Kata dokter aku harus minum obat.",
+			c:    Candidate{SegmentID: "s1", Quote: "Kata dokter aku harus minum obat", Kind: "context", Text: "Dokter bilang aku harus minum obat", Subject: "other", Time: "unspecified", Certainty: "stated"},
+			want: want{wording: "Kata dokter aku harus minum obat", fromQuote: &yes, notes: []string{NoteWordingUnsafe}},
 		},
 	}
 	for _, tc := range tests {

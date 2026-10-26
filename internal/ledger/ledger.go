@@ -20,7 +20,7 @@ package ledger
 const SchemaVersion = "sela-ledger-draft-v1"
 
 // ValidatorVersion identifies the validation rules.
-const ValidatorVersion = "sela-meaning-lock-2026.10.26-1"
+const ValidatorVersion = "sela-meaning-lock-2026.10.26-2"
 
 // Limits on model drafts and user edits.
 const (
@@ -147,7 +147,10 @@ const (
 	NoteWordingNumber    = "wording_reverted:invented_number"
 	NoteWordingUnsafe    = "wording_reverted:unsafe_content"
 	NoteWordingTooLong   = "wording_reverted:too_long"
-	NoteQualifierFixed   = "qualifier_corrected" // model's qualifier flags disagreed with the source and were replaced
+	// NoteWordingAddedContent: the wording has words that are not in the
+	// quote (a new fact, cause, frequency or severity, or a translation).
+	NoteWordingAddedContent = "wording_reverted:added_content"
+	NoteQualifierFixed      = "qualifier_corrected" // model's qualifier flags disagreed with the source and were replaced
 )
 
 // RejectReason is a stable code for a rejected candidate.

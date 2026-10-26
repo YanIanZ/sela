@@ -159,14 +159,18 @@ func validateCandidate(c Candidate, byID map[string]*segmentData) (Claim, Reject
 
 	wording := strings.Join(strings.Fields(c.Text), " ")
 	verbatim := wording == "" || normalizeForGrounding(wording) == normalizeForGrounding(quote)
-	clinicianContext := kind == KindContext && clinicianAttributed(quote)
 	quoteLabel := ContainsDiagnosisLabel(quote)
+	if quoteLabel && !(kind == KindContext && labelsAttributed(quote)) {
+		return Claim{}, RejectDiagnosis
+	}
+	// The label and directive patterns are linear-time regular expressions,
+	// so they run on wording of any length.
 	wordingLabel := !verbatim && ContainsDiagnosisLabel(wording)
-	if (quoteLabel || wordingLabel) && !clinicianContext {
+	if wordingLabel && !quoteLabel {
 		return Claim{}, RejectDiagnosis
 	}
 	wordingMedical := !verbatim && ContainsMedicalInstruction(wording)
-	if wordingMedical && !clinicianContext {
+	if wordingMedical && !ContainsMedicalInstruction(quote) {
 		return Claim{}, RejectMedical
 	}
 
@@ -186,30 +190,16 @@ func validateCandidate(c Candidate, byID map[string]*segmentData) (Claim, Reject
 	if verbatim {
 		return claim, ""
 	}
-
-	var notes []string
 	if runeLen(wording) > MaxWordingRunes {
-		notes = append(notes, NoteWordingTooLong)
+		// Never tokenized: analysing oversized text costs CPU for nothing.
+		claim.Notes = append(claim.Notes, NoteWordingTooLong)
+		return claim, ""
 	}
-	w := analyze(tokenize(wording), 0, len(wording)).q
-	if w.Negated != src.q.Negated {
-		notes = append(notes, NoteWordingNegation)
-	}
-	if w.Subject != src.q.Subject {
-		notes = append(notes, NoteWordingSubject)
-	}
-	if w.Time != src.q.Time {
-		notes = append(notes, NoteWordingTime)
-	}
-	if w.Certainty != src.q.Certainty {
-		notes = append(notes, NoteWordingCertainty)
-	}
-	if inventsNumber(wording, quote) {
-		notes = append(notes, NoteWordingNumber)
-	}
+	notes := wordingNotes(wording, quote, src.q, sd.toks, start, end)
 	if quoteLabel || wordingLabel || wordingMedical || hasControl(wording) ||
 		(containsIdentifier(wording) && !containsIdentifier(quote)) {
-		// A clinician-attributed label is shown only in the user's words.
+		// A clinician-attributed label, or a directive the user wrote
+		// themselves, is shown only in the user's words.
 		notes = append(notes, NoteWordingUnsafe)
 	}
 	if len(notes) > 0 {
@@ -221,9 +211,163 @@ func validateCandidate(c Candidate, byID map[string]*segmentData) (Claim, Reject
 	return claim, ""
 }
 
+// wordingNotes compares the model's wording with the accepted quote
+// segToks[start:end] and returns one note per failed check.
+//
+//   - Negation: every content word the wording shares with the quote is
+//     governed by as many negators as one of its occurrences in the quote,
+//     the wording negates no word the quote lacks, and both are negated or
+//     neither is.
+//   - Subject: the same subject, and no third party the quote does not name.
+//   - Time and certainty: every marker in the wording has the source's tag;
+//     a wording without markers matches only "unspecified" or "stated".
+//   - Number: no digit, number word or percentage absent from the quote.
+//   - Added content: every other content word is a spelling of a quote word,
+//     one of the segment's own time or certainty marker words, a generic
+//     marker (freeMarkerLexicon; its tag is checked above), a reporting verb
+//     (paraphraseWords) or a third party (checked as subject). Frequency and
+//     severity words ("setiap", "parah"), new facts and translations are
+//     therefore reverted.
+func wordingNotes(wording, quote string, src Qualifiers, segToks []token, start, end int) []string {
+	wtoks := tokenize(wording)
+	w := analyze(wtoks, 0, len(wording)).q
+	qs, qe := tokenRange(segToks, start, end)
+	srcWords := polarWords(segToks, negationCounts(segToks, false), qs, qe)
+	wWords := polarWords(wtoks, negationCounts(wtoks, false), 0, len(wtoks))
+
+	var notes []string
+	if w.Negated != src.Negated || !polarityKept(srcWords, wWords) {
+		notes = append(notes, NoteWordingNegation)
+	}
+	if w.Subject != src.Subject || (namesOther(wtoks, 0, len(wtoks)) && !namesOther(segToks, qs, qe)) {
+		notes = append(notes, NoteWordingSubject)
+	}
+	if !onlyTag(timeLexicon, wtoks, string(src.Time), string(TimeUnspecified)) {
+		notes = append(notes, NoteWordingTime)
+	}
+	if !onlyTag(certaintyLexicon, wtoks, string(src.Certainty), string(CertaintyStated)) {
+		notes = append(notes, NoteWordingCertainty)
+	}
+	if inventsNumber(wording, quote) {
+		notes = append(notes, NoteWordingNumber)
+	}
+	if addsContent(wtoks, segToks[qs:qe], srcWords, markerParts(segToks)) {
+		notes = append(notes, NoteWordingAddedContent)
+	}
+	return notes
+}
+
+// polarityKept reports whether every wording word that also occurs in the
+// quote has the negation count of one of its quote occurrences, and no
+// wording word outside the quote is negated.
+func polarityKept(src, wording []polarWord) bool {
+	for _, ww := range wording {
+		found, same := false, false
+		for _, sw := range src {
+			if sameWord(ww.word, sw.word) {
+				found = true
+				if sw.neg == ww.neg {
+					same = true
+					break
+				}
+			}
+		}
+		if found != same || (!found && ww.neg > 0) {
+			return false
+		}
+	}
+	return true
+}
+
+// namesOther reports a token in toks[from:to] naming someone other than the
+// user ("temanku", "dia", "my mom").
+func namesOther(toks []token, from, to int) bool {
+	for i := from; i < to; i++ {
+		if classify(toks, i) == clsOther {
+			return true
+		}
+	}
+	return false
+}
+
+// onlyTag reports whether every lexicon match in toks is tagged want; with no
+// match, want must be none.
+func onlyTag(lx *lexicon, toks []token, want, none string) bool {
+	hits := lx.scan(toks)
+	if len(hits) == 0 {
+		return want == none
+	}
+	for _, h := range hits {
+		if h.tag != want {
+			return false
+		}
+	}
+	return true
+}
+
+// markerParts returns the word parts of the time and certainty markers in
+// toks ("akhir" of "akhir-akhir ini", "lama" of "sudah lama").
+func markerParts(toks []token) map[string]bool {
+	out := map[string]bool{}
+	for _, lx := range []*lexicon{timeLexicon, certaintyLexicon} {
+		for _, h := range lx.scan(toks) {
+			for _, t := range toks[h.start:h.end] {
+				for _, p := range wordParts(t.text) {
+					out[p] = true
+				}
+			}
+		}
+	}
+	return out
+}
+
+// addsContent reports a wording word that adds to the quote: a content word
+// or a time, frequency or severity marker (claimMarkers, including stopwords
+// such as "lama") that is neither a spelling of a word of quoteToks, nor one
+// of the segment's marker parts, nor part of a generic marker, nor a
+// paraphrase word or third party.
+func addsContent(wtoks, quoteToks []token, quote []polarWord, markers map[string]bool) bool {
+	free := make([]bool, len(wtoks))
+	for _, h := range freeMarkerLexicon.scan(wtoks) {
+		for k := h.start; k < h.end; k++ {
+			free[k] = true
+		}
+	}
+	quoteParts := map[string]bool{}
+	for _, t := range quoteToks {
+		for _, p := range wordParts(t.text) {
+			quoteParts[p] = true
+		}
+	}
+	for i, t := range wtoks {
+		if free[i] || isNegator(t.text) || isThirdNoun(t.text) {
+			continue
+		}
+	parts:
+		for _, p := range wordParts(t.text) {
+			if markers[p] || quoteParts[p] {
+				continue
+			}
+			if !claimMarkers[p] && (!isContent(p) || paraphraseWords[p]) {
+				continue
+			}
+			for _, q := range quote {
+				if sameWord(p, q.word) {
+					continue parts
+				}
+			}
+			return true
+		}
+	}
+	return false
+}
+
 // meaningReason applies the quote-level Meaning Lock checks to one occurrence.
+// A quote that starts after a governing negator is rejected even when it
+// keeps another negator: "It's not that I don't care" quoted as "I don't
+// care" reverses the meaning.
 func meaningReason(a analysis, c Candidate, kind Kind) RejectReason {
-	if a.negBefore && !a.negInside {
+	if a.negBefore {
 		return RejectNegationDropped
 	}
 	if a.q.Subject == SubjectOther && lowerTrim(c.Subject) != string(SubjectOther) && selfKind(kind) {
