@@ -1,0 +1,796 @@
+{
+  "schema": "reading_item.schema.json",
+  "content_set": "sela-reading-v1",
+  "file_id": "cards_kemenkes",
+  "description": "The 4 Dengar.in v1 cards paraphrased from Indonesian Ministry of Health public pages (Ayo Sehat, Ditjen Kesehatan Lanjutan), migrated without text changes.",
+  "file_licence": {
+    "text_licence": "MIT (repository licence) for the Dengar.in team's paraphrase",
+    "notice": "The source pages state no licence; the v1 team relied on UU 28/2014 Pasal 43 huruf b and states that it paraphrased without copying. A machine verbatim check confirms this for the Keslan page (longest shared run 3 words); for the two Ayo Sehat pages, which were unreachable on 2026-10-26, it is not yet verified (sources.json verbatim_check). Commercial use needs legal confirmation. Not legal advice."
+  },
+  "items": [
+    {
+      "id": "kiat-harian-kelola-stres",
+      "version": 1,
+      "kind": "exercise",
+      "topics": [
+        "stress"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Parafrase bahasa Indonesia oleh tim Dengar.in v1; tidak ada teks yang disalin.",
+        "en": "English translation of the paraphrase by the Dengar.in v1 team; not an official Kemenkes translation."
+      },
+      "audience": "adult",
+      "audience_basis": "General public guidance; the v1 paraphrase was written for adults 18+ and has not been reviewed for 15-17.",
+      "content": {
+        "title": {
+          "id": "Kiat harian mengelola stres",
+          "en": "Everyday tips for managing stress"
+        },
+        "summary": {
+          "id": "Kebiasaan sederhana yang disarankan Kemenkes untuk menjaga diri saat tekanan menumpuk.",
+          "en": "Simple habits recommended by Indonesia's Ministry of Health for looking after yourself when pressure builds."
+        },
+        "steps": {
+          "id": [
+            "Ceritakan yang kamu rasakan ke orang yang kamu percaya.",
+            "Bergerak sekitar 30 menit, misalnya jalan kaki, bersepeda, atau beres-beres rumah.",
+            "Sisihkan waktu untuk hal yang kamu nikmati: musik, memasak, membaca, atau merawat tanaman.",
+            "Jaga jam tidur yang teratur dan kurangi layar sebelum tidur."
+          ],
+          "en": [
+            "Tell someone you trust how you are feeling.",
+            "Move for about 30 minutes, such as walking, cycling, or doing housework.",
+            "Make time for something you enjoy: music, cooking, reading, or caring for plants.",
+            "Keep regular sleep hours and reduce screens before bed."
+          ]
+        },
+        "why": {
+          "id": "Dukungan sosial, gerak tubuh, kegiatan menyenangkan, dan tidur teratur adalah fondasi yang direkomendasikan lembaga kesehatan untuk menghadapi stres sehari-hari.",
+          "en": "Social support, physical movement, enjoyable activity, and regular sleep are the foundations health agencies recommend for everyday stress."
+        },
+        "seek_help_when": {
+          "id": "Kalau stres terasa tidak teratasi sendiri dan mulai mengganggu fungsi harianmu, Kemenkes menyarankan berkonsultasi ke tenaga kesehatan, misalnya di Puskesmas.",
+          "en": "If stress feels unmanageable on your own and starts to affect your daily functioning, the Ministry of Health advises consulting a health worker, for example at a Puskesmas."
+        }
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 1
+      },
+      "source": {
+        "source_ids": [
+          "kemenkes-ayosehat-stres-2024"
+        ],
+        "relation": "paraphrased",
+        "locator": "Whole page (paraphrase)"
+      },
+      "licence": {
+        "source_licence": "No licence statement; Indonesian government public information",
+        "item_text_licence": "MIT (repository licence); the Dengar.in team's paraphrase",
+        "commercial_use": "needs_legal_confirmation",
+        "share_alike": false,
+        "attribution_required": true,
+        "adaptation_notice_required": false,
+        "note": "The v1 team relied on UU 28/2014 Pasal 43 huruf b and asked for legal confirmation before a public release (v1 knowledge base, section 5.6). Not legal advice."
+      },
+      "attribution": {
+        "id": "Diparafrasekan dari informasi publik Kementerian Kesehatan RI (Ayo Sehat, 2024). Bukan kutipan dan bukan terjemahan resmi.",
+        "en": "Paraphrased from public information by Indonesia's Ministry of Health (Ayo Sehat, 2024). Not a quotation and not an official translation."
+      },
+      "adaptation_note": "Paraphrased into steps by the Dengar.in v1 team (2026-10-15). That team states that no text was copied, which is not yet verified: the verbatim check could not run, because the page was unreachable on 2026-10-26 (sources.json verbatim_check). Migrated to Sela v3 on 2026-10-26 without any text change.",
+      "contacts": [],
+      "evidence_note": "Indonesian public-sector health education (2024); general lifestyle guidance, not a clinical trial.",
+      "source_claims": [
+        {
+          "path": "content.summary",
+          "names": [
+            "Kemenkes"
+          ],
+          "source_ids": [
+            "kemenkes-ayosehat-stres-2024"
+          ],
+          "locator": "Whole page (paraphrase)",
+          "source_says": null,
+          "support": "not_checked",
+          "note": "Not checked: the Ayo Sehat page answered HTTP 503 (site under maintenance) on 2026-10-26, and the Internet Archive copy could not be reached from the checking environment. The v1 team read the page on 2026-10-15. Check this attribution against the page before publishing.",
+          "quote_check": null,
+          "status": "machine_checked_unreviewed",
+          "editor_confirmation": {
+            "status": "pending",
+            "editor": null,
+            "confirmed_on": null,
+            "confirmed_text_sha256": null
+          }
+        },
+        {
+          "path": "content.why",
+          "names": [
+            "health agencies"
+          ],
+          "source_ids": [
+            "kemenkes-ayosehat-stres-2024"
+          ],
+          "locator": "Whole page (paraphrase)",
+          "source_says": null,
+          "support": "not_checked",
+          "note": "Not checked: the Ayo Sehat page answered HTTP 503 (site under maintenance) on 2026-10-26, and the Internet Archive copy could not be reached from the checking environment. The v1 team read the page on 2026-10-15. Check this attribution against the page before publishing. The 'why' credits unnamed 'health agencies'; the card cites only the Ayo Sehat page.",
+          "quote_check": null,
+          "status": "machine_checked_unreviewed",
+          "editor_confirmation": {
+            "status": "pending",
+            "editor": null,
+            "confirmed_on": null,
+            "confirmed_text_sha256": null
+          }
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 7,
+              "words": 93,
+              "avg_words_per_sentence": 13.3,
+              "max_words_per_sentence": 20,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 7,
+              "words": 103,
+              "avg_words_per_sentence": 14.7,
+              "max_words_per_sentence": 28,
+              "sentences_over_20_words": 1,
+              "fk_grade": 10.3
+            }
+          },
+          "flags": [
+            "en:sentence_over_20_words:content.seek_help_when.en:28",
+            "en:fk_grade_over_8:10.3"
+          ],
+          "result": "needs_editor"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1",
+            "dengarin-v1-forbidden-terms"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": [
+            {
+              "path": "source",
+              "issue": "source_unreachable",
+              "detail": "Ayo Sehat answered HTTP 503 (site under maintenance) on 2026-10-26: twice in the morning and again at 20:07 UTC. The Internet Archive lists a snapshot of the page, but web.archive.org could not be reached from the checking environment. So neither the paraphrase nor the v1 team's statement that no text was copied could be checked; both are not yet verified. Before 2026-11-26, run tests/content/verbatim_overlap.py on the Indonesian text against the live page or the archived snapshot, record the result in sources.json (verbatim_check), and re-check the source_claims entries.",
+              "source_id": "kemenkes-ayosehat-stres-2024",
+              "status": "open"
+            }
+          ]
+        },
+        "source_fidelity": {
+          "status": "not_checked",
+          "note": "Not re-checked: the source page was under maintenance (HTTP 503) on 2026-10-26, and the archived copy could not be reached. Neither the paraphrase nor the absence of copied text is verified."
+        }
+      },
+      "origin": {
+        "kind": "migrated_v1",
+        "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
+        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "v1_id": "kiat-harian-kelola-stres",
+        "v1_text_sha256": "9962138cf0fbffd4f13c90358bf103ae9a86f0dbb984b3622b31c11f2652275f",
+        "v1_source": {
+          "title": "Apa Itu Stres: Gejala, Penyebab, Pencegahan dan Pengobatan",
+          "publisher": "Kementerian Kesehatan Republik Indonesia (Ayo Sehat)",
+          "url": "https://ayosehat.kemkes.go.id/apa-itu-stres",
+          "license": "Tidak ada pernyataan lisensi; informasi publik pemerintah RI (UU 28/2014 Pasal 43 huruf b), diparafrasekan tanpa menyalin",
+          "retrieved": "2026-10-15"
+        },
+        "v1_evidence_note": "Indonesian public-sector health education (2024); general lifestyle guidance, not a clinical trial.",
+        "text_changed": false,
+        "migrated_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "9962138cf0fbffd4f13c90358bf103ae9a86f0dbb984b3622b31c11f2652275f"
+    },
+    {
+      "id": "tidur-cukup-tujuh-sampai-sembilan-jam",
+      "version": 1,
+      "kind": "exercise",
+      "topics": [
+        "sleep",
+        "stress"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Parafrase bahasa Indonesia oleh tim Dengar.in v1; tidak ada teks yang disalin.",
+        "en": "English translation of the paraphrase by the Dengar.in v1 team; not an official Kemenkes translation."
+      },
+      "audience": "adult",
+      "audience_basis": "The card gives the adult figure (7-9 hours). The same Keslan page gives 8-10 hours for teens, so this card must not be shown as teen content.",
+      "content": {
+        "title": {
+          "id": "Tidur cukup untuk orang dewasa",
+          "en": "Enough sleep for adults"
+        },
+        "summary": {
+          "id": "Kemenkes menyarankan orang dewasa tidur 7 sampai 9 jam dengan rutinitas yang menenangkan sebelum tidur.",
+          "en": "Indonesia's Ministry of Health advises adults to sleep 7 to 9 hours with a calming pre-sleep routine."
+        },
+        "steps": {
+          "id": [
+            "Targetkan 7 sampai 9 jam, lalu atur jam tidur mundur dari jam bangunmu.",
+            "Jadikan 30 sampai 60 menit terakhir sebagai waktu menurunkan tempo: lampu redup, tanpa pekerjaan.",
+            "Batasi kafein dan gawai menjelang malam.",
+            "Bergerak aktif di siang hari agar lebih mudah mengantuk di malam hari."
+          ],
+          "en": [
+            "Aim for 7 to 9 hours and count back from your wake time.",
+            "Make the last 30 to 60 minutes a wind-down: dim lights, no work.",
+            "Limit caffeine and gadgets as evening approaches.",
+            "Be physically active during the day so you feel sleepier at night."
+          ]
+        },
+        "why": {
+          "id": "Kurang tidur berulang memengaruhi suasana hati, konsentrasi, dan daya tahan tubuh, sehingga tidur cukup adalah langkah dasar menjaga kesehatan jiwa.",
+          "en": "Repeated short sleep affects mood, concentration, and physical resilience, so enough sleep is a basic step for mental wellbeing."
+        },
+        "seek_help_when": {
+          "id": "Kalau kamu sulit tidur meski lelah, sering terbangun, atau merasa terkuras setiap hari selama beberapa minggu, konsultasikan ke fasilitas kesehatan.",
+          "en": "If you cannot fall asleep despite tiredness, wake often, or feel drained every day for several weeks, consult a health facility."
+        }
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 1
+      },
+      "source": {
+        "source_ids": [
+          "kemenkes-keslan-tidur-2025"
+        ],
+        "relation": "paraphrased",
+        "locator": "Whole page: durations by age and sleep-health strategies (paraphrase)"
+      },
+      "licence": {
+        "source_licence": "No licence statement; Indonesian government public information",
+        "item_text_licence": "MIT (repository licence); the Dengar.in team's paraphrase",
+        "commercial_use": "needs_legal_confirmation",
+        "share_alike": false,
+        "attribution_required": true,
+        "adaptation_notice_required": false,
+        "note": "The v1 team relied on UU 28/2014 Pasal 43 huruf b and asked for legal confirmation before a public release (v1 knowledge base, section 5.6). Not legal advice."
+      },
+      "attribution": {
+        "id": "Diparafrasekan dari informasi publik Kementerian Kesehatan RI (Ditjen Kesehatan Lanjutan, 2025). Bukan kutipan dan bukan terjemahan resmi.",
+        "en": "Paraphrased from public information by Indonesia's Ministry of Health (Ditjen Kesehatan Lanjutan, 2025). Not a quotation and not an official translation."
+      },
+      "adaptation_note": "Paraphrased into steps by the Dengar.in v1 team (2026-10-15). A machine verbatim check on 2026-10-26 (sela-verbatim-overlap-v1, unreviewed) found no run of more than 3 words shared with the Keslan page (sources.json verbatim_check). Migrated to Sela v3 on 2026-10-26 without any text change.",
+      "contacts": [],
+      "evidence_note": "Indonesian public-sector health article (March 2025) consistent with international sleep-hygiene guidance.",
+      "source_claims": [
+        {
+          "path": "content.summary",
+          "names": [
+            "Kemenkes"
+          ],
+          "source_ids": [
+            "kemenkes-keslan-tidur-2025"
+          ],
+          "locator": "Durations by age and sleep-health strategies (text block 48 of the page)",
+          "source_says": "The Keslan news item reports a talk by a doctor at RSUP Dr. M. Djamil Padang, a Ministry of Health hospital. She gives 7 to 9 hours of sleep for adults, and recommends a regular sleep pattern, a comfortable sleeping place, avoiding stimulants and relaxing before sleep.",
+          "support": "partly_supported",
+          "note": "The figures and the relaxing routine are on the page. 'Kemenkes menyarankan' / 'Indonesia's Ministry of Health advises' simplifies who gives the advice: a doctor quoted in a hospital news item published on the Ditjen Kesehatan Lanjutan site.",
+          "quote_check": {
+            "method": "sela-verbatim-overlap-v1",
+            "compared_with": [
+              "kemenkes-keslan-tidur-2025"
+            ],
+            "longest_shared_run_words": 4,
+            "checked_on": "2026-10-26",
+            "status": "machine_checked_unreviewed"
+          },
+          "status": "machine_checked_unreviewed",
+          "editor_confirmation": {
+            "status": "pending",
+            "editor": null,
+            "confirmed_on": null,
+            "confirmed_text_sha256": null
+          }
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 7,
+              "words": 100,
+              "avg_words_per_sentence": 14.3,
+              "max_words_per_sentence": 20,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 7,
+              "words": 102,
+              "avg_words_per_sentence": 14.6,
+              "max_words_per_sentence": 21,
+              "sentences_over_20_words": 1,
+              "fk_grade": 7.8
+            }
+          },
+          "flags": [
+            "en:sentence_over_20_words:content.seek_help_when.en:21"
+          ],
+          "result": "needs_editor"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1",
+            "dengarin-v1-forbidden-terms"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": [
+            {
+              "path": "content.summary",
+              "issue": "source_mismatch",
+              "detail": "The Keslan page is a news item from RSUP Dr. M. Djamil Padang, a Ministry of Health hospital, reporting a talk by one of its doctors; it is published on the Ditjen Kesehatan Lanjutan site. The figures (adults 7-9 hours) and the relaxing routine are hers. 'Kemenkes menyarankan' / 'Indonesia's Ministry of Health advises' simplifies who gives the advice. Found by the 2026-10-26 source check; not changed.",
+              "source_id": "kemenkes-keslan-tidur-2025",
+              "locator": "Page text block 48",
+              "proposed_revision": {
+                "id": "Artikel di situs Ditjen Kesehatan Lanjutan Kemenkes menyebut orang dewasa butuh tidur 7 sampai 9 jam, dengan rutinitas yang menenangkan sebelum tidur.",
+                "en": "An article on the Ministry of Health's Ditjen Kesehatan Lanjutan site gives adults 7 to 9 hours of sleep, with a calming routine before bed."
+              },
+              "status": "open"
+            }
+          ]
+        },
+        "source_fidelity": {
+          "status": "machine_spot_checked_unreviewed",
+          "note": "Compared with the Keslan page (read 2026-10-26): adults 7-9 hours, regular pattern, avoiding stimulants, insomnia signs. Consistent. The summary credits 'Kemenkes' with a doctor's advice reported in a hospital news item (see editor_flags)."
+        }
+      },
+      "origin": {
+        "kind": "migrated_v1",
+        "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
+        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "v1_id": "tidur-cukup-tujuh-sampai-sembilan-jam",
+        "v1_text_sha256": "c788f1c2bb7a339d4048d298691a5855d557a2495c87d294162696d2ac2e9545",
+        "v1_source": {
+          "title": "Penting Tidur Berkualitas, Jaga Kesehatan Fisik dan Mental",
+          "publisher": "Kementerian Kesehatan Republik Indonesia, Direktorat Jenderal Kesehatan Lanjutan",
+          "url": "https://keslan.kemkes.go.id/read/2539/penting-tidur-berkualitas-jaga-kesehatan-fisik-dan-mental",
+          "license": "Tidak ada pernyataan lisensi; informasi publik pemerintah RI (UU 28/2014 Pasal 43 huruf b), diparafrasekan tanpa menyalin",
+          "retrieved": "2026-10-15"
+        },
+        "v1_evidence_note": "Indonesian public-sector health article (March 2025) consistent with international sleep-hygiene guidance.",
+        "text_changed": false,
+        "migrated_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "c788f1c2bb7a339d4048d298691a5855d557a2495c87d294162696d2ac2e9545"
+    },
+    {
+      "id": "jeda-dan-batas-waktu-belajar",
+      "version": 1,
+      "kind": "exercise",
+      "topics": [
+        "overload_study",
+        "burnout"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Parafrase bahasa Indonesia oleh tim Dengar.in v1; tidak ada teks yang disalin.",
+        "en": "English translation of the paraphrase by the Dengar.in v1 team; not an official Kemenkes translation."
+      },
+      "audience": "adult",
+      "audience_basis": "General public guidance; the v1 paraphrase was written for adults 18+ and has not been reviewed for 15-17.",
+      "content": {
+        "title": {
+          "id": "Jeda dan batas waktu saat belajar",
+          "en": "Breaks and boundaries while studying"
+        },
+        "summary": {
+          "id": "Istirahat terjadwal dan batas jam belajar membantu mencegah kelelahan berkepanjangan.",
+          "en": "Scheduled breaks and a cut-off time help prevent prolonged exhaustion."
+        },
+        "steps": {
+          "id": [
+            "Tentukan jam selesai belajar setiap hari dan patuhi, sama seperti tenggat.",
+            "Ambil jeda singkat secara berkala: berdiri, minum air, regangkan badan.",
+            "Jaga jam makan dan tidur tetap teratur meski jadwal padat.",
+            "Sisakan waktu kecil untuk hobi atau bertemu teman; itu bagian dari produktivitas, bukan pengganggu."
+          ],
+          "en": [
+            "Set a daily stop time for studying and keep it, just like a deadline.",
+            "Take short regular breaks: stand up, drink water, stretch.",
+            "Keep meal and sleep times regular even when the schedule is full.",
+            "Leave small windows for hobbies or friends; they are part of productivity, not a distraction."
+          ]
+        },
+        "why": {
+          "id": "Kemenkes menyarankan istirahat berkala dan batas yang jelas antara kerja dan waktu pribadi untuk mencegah kelelahan.",
+          "en": "Indonesia's Ministry of Health advises regular rest and clear limits between work and personal time to prevent burnout."
+        },
+        "seek_help_when": {
+          "id": "Kalau kelelahan tidak membaik setelah istirahat, atau kamu kehilangan minat pada kuliah dan merasa hampa berkepanjangan, bicarakan dengan konselor atau tenaga kesehatan.",
+          "en": "If exhaustion does not ease after rest, or you lose interest in your studies and feel persistently empty, talk to a counsellor or health worker."
+        }
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 1
+      },
+      "source": {
+        "source_ids": [
+          "kemenkes-ayosehat-10cara-2025"
+        ],
+        "relation": "paraphrased",
+        "locator": "Whole page (paraphrase)"
+      },
+      "licence": {
+        "source_licence": "No licence statement; Indonesian government public information",
+        "item_text_licence": "MIT (repository licence); the Dengar.in team's paraphrase",
+        "commercial_use": "needs_legal_confirmation",
+        "share_alike": false,
+        "attribution_required": true,
+        "adaptation_notice_required": false,
+        "note": "The v1 team relied on UU 28/2014 Pasal 43 huruf b and asked for legal confirmation before a public release (v1 knowledge base, section 5.6). Not legal advice."
+      },
+      "attribution": {
+        "id": "Diparafrasekan dari informasi publik Kementerian Kesehatan RI (Ayo Sehat, 2025). Bukan kutipan dan bukan terjemahan resmi.",
+        "en": "Paraphrased from public information by Indonesia's Ministry of Health (Ayo Sehat, 2025). Not a quotation and not an official translation."
+      },
+      "adaptation_note": "Paraphrased into steps by the Dengar.in v1 team (2026-10-15). That team states that no text was copied, which is not yet verified: the verbatim check could not run, because the page was unreachable on 2026-10-26 (sources.json verbatim_check). Migrated to Sela v3 on 2026-10-26 without any text change.",
+      "contacts": [],
+      "evidence_note": "Indonesian public-sector health education (January 2025); general wellbeing guidance.",
+      "source_claims": [
+        {
+          "path": "content.why",
+          "names": [
+            "Kemenkes"
+          ],
+          "source_ids": [
+            "kemenkes-ayosehat-10cara-2025"
+          ],
+          "locator": "Whole page (paraphrase)",
+          "source_says": null,
+          "support": "not_checked",
+          "note": "Not checked: the Ayo Sehat page answered HTTP 503 (site under maintenance) on 2026-10-26, and the Internet Archive copy could not be reached from the checking environment. The v1 team read the page on 2026-10-15. Check this attribution against the page before publishing.",
+          "quote_check": null,
+          "status": "machine_checked_unreviewed",
+          "editor_confirmation": {
+            "status": "pending",
+            "editor": null,
+            "confirmed_on": null,
+            "confirmed_text_sha256": null
+          }
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 7,
+              "words": 93,
+              "avg_words_per_sentence": 13.3,
+              "max_words_per_sentence": 22,
+              "sentences_over_20_words": 1,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 7,
+              "words": 103,
+              "avg_words_per_sentence": 14.7,
+              "max_words_per_sentence": 25,
+              "sentences_over_20_words": 1,
+              "fk_grade": 7.9
+            }
+          },
+          "flags": [
+            "id:sentence_over_20_words:content.seek_help_when.id:22",
+            "en:sentence_over_20_words:content.seek_help_when.en:25"
+          ],
+          "result": "needs_editor"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1",
+            "dengarin-v1-forbidden-terms"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": [
+            {
+              "path": "source",
+              "issue": "source_unreachable",
+              "detail": "Ayo Sehat answered HTTP 503 (site under maintenance) on 2026-10-26: twice in the morning and again at 20:07 UTC. The Internet Archive lists a snapshot of the page, but web.archive.org could not be reached from the checking environment. So neither the paraphrase nor the v1 team's statement that no text was copied could be checked; both are not yet verified. Before 2026-11-26, run tests/content/verbatim_overlap.py on the Indonesian text against the live page or the archived snapshot, record the result in sources.json (verbatim_check), and re-check the source_claims entries.",
+              "source_id": "kemenkes-ayosehat-10cara-2025",
+              "status": "open"
+            }
+          ]
+        },
+        "source_fidelity": {
+          "status": "not_checked",
+          "note": "Not re-checked: the source page was under maintenance (HTTP 503) on 2026-10-26, and the archived copy could not be reached. Neither the paraphrase nor the absence of copied text is verified."
+        }
+      },
+      "origin": {
+        "kind": "migrated_v1",
+        "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
+        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "v1_id": "jeda-dan-batas-waktu-belajar",
+        "v1_text_sha256": "3b6fba702947fcc5b12b6a8071f54493fd4f156279e22d0a14b18194e92f69ab",
+        "v1_source": {
+          "title": "10 Cara Efektif Menjaga Kesehatan Mental Agar Tetap Bahagia",
+          "publisher": "Kementerian Kesehatan Republik Indonesia (Ayo Sehat)",
+          "url": "https://ayosehat.kemkes.go.id/cara-menjaga-kesehatan-mental",
+          "license": "Tidak ada pernyataan lisensi; informasi publik pemerintah RI (UU 28/2014 Pasal 43 huruf b), diparafrasekan tanpa menyalin",
+          "retrieved": "2026-10-15"
+        },
+        "v1_evidence_note": "Indonesian public-sector health education (January 2025); general wellbeing guidance.",
+        "text_changed": false,
+        "migrated_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "3b6fba702947fcc5b12b6a8071f54493fd4f156279e22d0a14b18194e92f69ab"
+    },
+    {
+      "id": "menerima-diri-dan-tujuan-realistis",
+      "version": 1,
+      "kind": "exercise",
+      "topics": [
+        "self_criticism",
+        "overload_study"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Parafrase bahasa Indonesia oleh tim Dengar.in v1; tidak ada teks yang disalin.",
+        "en": "English translation of the paraphrase by the Dengar.in v1 team; not an official Kemenkes translation."
+      },
+      "audience": "adult",
+      "audience_basis": "General public guidance; the v1 paraphrase was written for adults 18+ and has not been reviewed for 15-17.",
+      "content": {
+        "title": {
+          "id": "Menerima diri dan menetapkan tujuan realistis",
+          "en": "Accepting yourself and setting realistic goals"
+        },
+        "summary": {
+          "id": "Mengenali kekuatan dan keterbatasan diri, lalu mengubah target besar menjadi langkah yang bisa dicapai.",
+          "en": "Recognise your strengths and limits, then turn big targets into reachable steps."
+        },
+        "steps": {
+          "id": [
+            "Tulis tiga hal yang kamu lakukan dengan cukup baik minggu ini, sekecil apa pun.",
+            "Tulis satu keterbatasan yang kamu terima untuk saat ini, tanpa menghakimi.",
+            "Ubah satu target besar menjadi langkah berikutnya yang paling kecil dan bisa diukur.",
+            "Akhiri hari dengan mencatat satu hal yang kamu syukuri."
+          ],
+          "en": [
+            "Write three things you did reasonably well this week, however small.",
+            "Write one limitation you accept for now, without judgement.",
+            "Turn one big target into the smallest next measurable step.",
+            "End the day by noting one thing you are grateful for."
+          ]
+        },
+        "why": {
+          "id": "Kemenkes menyarankan menerima diri, menetapkan tujuan yang realistis, dan berlatih bersyukur sebagai bagian dari menjaga kesehatan jiwa.",
+          "en": "Indonesia's Ministry of Health advises self-acceptance, realistic goals, and gratitude practice as part of maintaining mental health."
+        },
+        "seek_help_when": {
+          "id": "Kalau rasa gagal terasa terus-menerus dan membuatmu menarik diri atau berhenti berfungsi, bicarakan dengan konselor atau tenaga kesehatan.",
+          "en": "If a sense of failure is constant and makes you withdraw or stop functioning, talk to a counsellor or health worker."
+        }
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 1
+      },
+      "source": {
+        "source_ids": [
+          "kemenkes-ayosehat-10cara-2025"
+        ],
+        "relation": "paraphrased",
+        "locator": "Whole page (paraphrase)"
+      },
+      "licence": {
+        "source_licence": "No licence statement; Indonesian government public information",
+        "item_text_licence": "MIT (repository licence); the Dengar.in team's paraphrase",
+        "commercial_use": "needs_legal_confirmation",
+        "share_alike": false,
+        "attribution_required": true,
+        "adaptation_notice_required": false,
+        "note": "The v1 team relied on UU 28/2014 Pasal 43 huruf b and asked for legal confirmation before a public release (v1 knowledge base, section 5.6). Not legal advice."
+      },
+      "attribution": {
+        "id": "Diparafrasekan dari informasi publik Kementerian Kesehatan RI (Ayo Sehat, 2025). Bukan kutipan dan bukan terjemahan resmi.",
+        "en": "Paraphrased from public information by Indonesia's Ministry of Health (Ayo Sehat, 2025). Not a quotation and not an official translation."
+      },
+      "adaptation_note": "Paraphrased into steps by the Dengar.in v1 team (2026-10-15). That team states that no text was copied, which is not yet verified: the verbatim check could not run, because the page was unreachable on 2026-10-26 (sources.json verbatim_check). Migrated to Sela v3 on 2026-10-26 without any text change.",
+      "contacts": [],
+      "evidence_note": "Indonesian public-sector health education (January 2025); general wellbeing guidance.",
+      "source_claims": [
+        {
+          "path": "content.why",
+          "names": [
+            "Kemenkes"
+          ],
+          "source_ids": [
+            "kemenkes-ayosehat-10cara-2025"
+          ],
+          "locator": "Whole page (paraphrase)",
+          "source_says": null,
+          "support": "not_checked",
+          "note": "Not checked: the Ayo Sehat page answered HTTP 503 (site under maintenance) on 2026-10-26, and the Internet Archive copy could not be reached from the checking environment. The v1 team read the page on 2026-10-15. Check this attribution against the page before publishing.",
+          "quote_check": null,
+          "status": "machine_checked_unreviewed",
+          "editor_confirmation": {
+            "status": "pending",
+            "editor": null,
+            "confirmed_on": null,
+            "confirmed_text_sha256": null
+          }
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 7,
+              "words": 96,
+              "avg_words_per_sentence": 13.7,
+              "max_words_per_sentence": 18,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 7,
+              "words": 91,
+              "avg_words_per_sentence": 13.0,
+              "max_words_per_sentence": 21,
+              "sentences_over_20_words": 1,
+              "fk_grade": 8.2
+            }
+          },
+          "flags": [
+            "en:sentence_over_20_words:content.seek_help_when.en:21",
+            "en:fk_grade_over_8:8.2"
+          ],
+          "result": "needs_editor"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1",
+            "dengarin-v1-forbidden-terms"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": [
+            {
+              "path": "source",
+              "issue": "source_unreachable",
+              "detail": "Ayo Sehat answered HTTP 503 (site under maintenance) on 2026-10-26: twice in the morning and again at 20:07 UTC. The Internet Archive lists a snapshot of the page, but web.archive.org could not be reached from the checking environment. So neither the paraphrase nor the v1 team's statement that no text was copied could be checked; both are not yet verified. Before 2026-11-26, run tests/content/verbatim_overlap.py on the Indonesian text against the live page or the archived snapshot, record the result in sources.json (verbatim_check), and re-check the source_claims entries.",
+              "source_id": "kemenkes-ayosehat-10cara-2025",
+              "status": "open"
+            }
+          ]
+        },
+        "source_fidelity": {
+          "status": "not_checked",
+          "note": "Not re-checked: the source page was under maintenance (HTTP 503) on 2026-10-26, and the archived copy could not be reached. Neither the paraphrase nor the absence of copied text is verified."
+        }
+      },
+      "origin": {
+        "kind": "migrated_v1",
+        "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
+        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "v1_id": "menerima-diri-dan-tujuan-realistis",
+        "v1_text_sha256": "5b4fee01c5b340639a8a6efbd21b4279c939de742ae3dd4bb05802716875b40c",
+        "v1_source": {
+          "title": "10 Cara Efektif Menjaga Kesehatan Mental Agar Tetap Bahagia",
+          "publisher": "Kementerian Kesehatan Republik Indonesia (Ayo Sehat)",
+          "url": "https://ayosehat.kemkes.go.id/cara-menjaga-kesehatan-mental",
+          "license": "Tidak ada pernyataan lisensi; informasi publik pemerintah RI (UU 28/2014 Pasal 43 huruf b), diparafrasekan tanpa menyalin",
+          "retrieved": "2026-10-15"
+        },
+        "v1_evidence_note": "Indonesian public-sector health education (January 2025); general wellbeing guidance.",
+        "text_changed": false,
+        "migrated_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "5b4fee01c5b340639a8a6efbd21b4279c939de742ae3dd4bb05802716875b40c"
+    }
+  ]
+}

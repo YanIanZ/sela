@@ -1,0 +1,486 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/YanIanZ/sela/data/content/reading/reading_item.schema.json",
+  "title": "Sela reading and support content (items file)",
+  "description": "One items file of the Sela reading library (\"Bacaan & latihan kecil\"). Kind-specific rules (steps for exercises, sections for guides, notices for CC BY-NC-SA material, recomputed machine checks) are enforced by tests/content/reading_validator.py, not by this schema alone.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "content_set", "file_id", "description", "file_licence", "items"],
+  "properties": {
+    "schema": {"const": "reading_item.schema.json"},
+    "content_set": {"const": "sela-reading-v1"},
+    "file_id": {"type": "string", "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"},
+    "description": {"type": "string", "minLength": 10},
+    "file_licence": {"$ref": "#/$defs/fileLicence"},
+    "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/item"}}
+  },
+  "$defs": {
+    "date": {"type": "string", "format": "date", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "slug": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "nonEmpty": {"type": "string", "minLength": 1},
+    "bilingual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "en"],
+      "properties": {"id": {"$ref": "#/$defs/nonEmpty"}, "en": {"$ref": "#/$defs/nonEmpty"}}
+    },
+    "bilingualList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "en"],
+      "properties": {
+        "id": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonEmpty"}},
+        "en": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonEmpty"}}
+      }
+    },
+    "fileLicence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text_licence", "notice"],
+      "properties": {
+        "text_licence": {"$ref": "#/$defs/nonEmpty"},
+        "notice": {"$ref": "#/$defs/nonEmpty"}
+      }
+    },
+    "basis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {"enum": ["source", "product_basis", "general_advice", "evidence_gap"]},
+        "source_id": {"$ref": "#/$defs/slug"},
+        "locator": {"$ref": "#/$defs/nonEmpty"},
+        "support": {"enum": ["paraphrase", "provenance", "rationale"]},
+        "refs": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^(SPEC:[CV][0-9]+|DECISION:D-[0-9]{3}|DESIGN:S[0-9]{2}|BLOCKER:B-[0-9]+|COPY:help\\.fallback\\.json#helpNotice)$"}},
+        "implementation_check": {"enum": ["pending", "verified"]},
+        "pending_review": {"$ref": "#/$defs/nonEmpty"},
+        "note": {"$ref": "#/$defs/nonEmpty"},
+        "label": {"$ref": "#/$defs/bilingual"}
+      }
+    },
+    "paragraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "en", "basis"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmpty"},
+        "en": {"$ref": "#/$defs/nonEmpty"},
+        "basis": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/basis"}}
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heading", "paragraphs"],
+      "properties": {
+        "heading": {"$ref": "#/$defs/bilingual"},
+        "paragraphs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/paragraph"}}
+      }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "summary"],
+      "properties": {
+        "title": {"$ref": "#/$defs/bilingual"},
+        "summary": {"$ref": "#/$defs/bilingual"},
+        "steps": {"$ref": "#/$defs/bilingualList"},
+        "why": {"$ref": "#/$defs/bilingual"},
+        "seek_help_when": {"$ref": "#/$defs/bilingual"},
+        "cautions": {"$ref": "#/$defs/bilingual"},
+        "sections": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/section"}}
+      }
+    },
+    "contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["values", "catalogue_id", "source_ids", "checked_on", "reverify_by"],
+      "properties": {
+        "values": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonEmpty"}},
+        "catalogue_id": {"$ref": "#/$defs/slug"},
+        "source_ids": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/slug"}},
+        "checked_on": {"$ref": "#/$defs/date"},
+        "reverify_by": {"$ref": "#/$defs/date"}
+      }
+    },
+    "gateHit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_set", "gate", "path", "match"],
+      "properties": {
+        "gate_set": {"$ref": "#/$defs/nonEmpty"},
+        "gate": {"$ref": "#/$defs/nonEmpty"},
+        "path": {"$ref": "#/$defs/nonEmpty"},
+        "match": {"$ref": "#/$defs/nonEmpty"}
+      }
+    },
+    "editorFlag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "issue", "detail", "status"],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonEmpty"},
+        "issue": {"enum": ["certainty_overstated", "rationale_presented_as_finding", "attribution_not_in_source", "causation_overstated", "source_mismatch", "source_unreachable", "other"]},
+        "detail": {"$ref": "#/$defs/nonEmpty"},
+        "source_id": {"$ref": "#/$defs/slug"},
+        "locator": {"$ref": "#/$defs/nonEmpty"},
+        "proposed_revision": {"$ref": "#/$defs/bilingual"},
+        "status": {"enum": ["open", "resolved"]}
+      }
+    },
+    "sourceClaim": {
+      "description": "What a cited source says, for a summary or 'why' that names a source (WHO, CDC, Kemenkes, Stanley & Brown or 'health agencies'). source_says is Sela's own quote-free paraphrase of the cited passage (English), checked by sela-verbatim-overlap-v1 against a local copy of the source; it is never the source's wording. The support verdict is a machine draft until a human editor confirms the entry for the exact current text (confirmed_text_sha256).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "names", "source_ids", "locator", "source_says", "support", "note", "quote_check", "status", "editor_confirmation"],
+      "properties": {
+        "path": {"enum": ["content.summary", "content.why"]},
+        "names": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["WHO", "CDC", "Kemenkes", "Stanley & Brown", "health agencies"]}},
+        "source_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/slug"}},
+        "locator": {"$ref": "#/$defs/nonEmpty"},
+        "source_says": {"anyOf": [{"$ref": "#/$defs/nonEmpty"}, {"type": "null"}]},
+        "support": {"enum": ["supported", "partly_supported", "not_supported", "not_checked"]},
+        "note": {"$ref": "#/$defs/nonEmpty"},
+        "quote_check": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["method", "compared_with", "longest_shared_run_words", "checked_on", "status"],
+              "properties": {
+                "method": {"const": "sela-verbatim-overlap-v1"},
+                "compared_with": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/slug"}},
+                "longest_shared_run_words": {"type": "integer", "minimum": 0},
+                "checked_on": {"$ref": "#/$defs/date"},
+                "status": {"const": "machine_checked_unreviewed"}
+              }
+            },
+            {"type": "null"}
+          ]
+        },
+        "status": {"const": "machine_checked_unreviewed"},
+        "editor_confirmation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "editor", "confirmed_on", "confirmed_text_sha256"],
+          "properties": {
+            "status": {"enum": ["pending", "confirmed"]},
+            "editor": {"type": ["string", "null"]},
+            "confirmed_on": {"anyOf": [{"$ref": "#/$defs/date"}, {"type": "null"}]},
+            "confirmed_text_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+          }
+        }
+      }
+    },
+    "verbatimCheck": {
+      "description": "Result of sela-verbatim-overlap-v1 (tests/content/verbatim_overlap.py) for a source whose text the library adapts or paraphrases: the longest run of identical words between the card text and a local copy of the source. Counts and locators only; no source text is stored. status not_run records why the check could not run and when it is due.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "status", "items_compared", "languages_compared", "no_text_copied_basis", "note"],
+      "properties": {
+        "method": {"const": "sela-verbatim-overlap-v1"},
+        "status": {"enum": ["machine_checked_unreviewed", "not_run"]},
+        "items_compared": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/slug"}},
+        "languages_compared": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["id", "en"]}},
+        "checked_on": {"$ref": "#/$defs/date"},
+        "copy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "url", "retrieved_on", "sha256"],
+          "properties": {
+            "kind": {"enum": ["publisher_pdf", "publisher_page", "archived_copy"]},
+            "url": {"type": "string", "pattern": "^https://"},
+            "retrieved_on": {"$ref": "#/$defs/date"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "text_extraction": {"$ref": "#/$defs/nonEmpty"}
+          }
+        },
+        "longest_shared_run_words": {"type": "integer", "minimum": 0},
+        "runs_at_or_over_5_words": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["item_id", "field", "words", "locator"],
+            "properties": {
+              "item_id": {"$ref": "#/$defs/slug"},
+              "field": {"$ref": "#/$defs/nonEmpty"},
+              "words": {"type": "integer", "minimum": 5},
+              "locator": {"$ref": "#/$defs/nonEmpty"}
+            }
+          }
+        },
+        "attempts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["on", "what"],
+            "properties": {"on": {"$ref": "#/$defs/date"}, "what": {"$ref": "#/$defs/nonEmpty"}}
+          }
+        },
+        "due_by": {"$ref": "#/$defs/date"},
+        "no_text_copied_basis": {"$ref": "#/$defs/nonEmpty"},
+        "note": {"$ref": "#/$defs/nonEmpty"}
+      }
+    },
+    "langMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sentences", "words", "avg_words_per_sentence", "max_words_per_sentence", "sentences_over_20_words", "fk_grade"],
+      "properties": {
+        "sentences": {"type": "integer", "minimum": 1},
+        "words": {"type": "integer", "minimum": 1},
+        "avg_words_per_sentence": {"type": "number", "minimum": 0},
+        "max_words_per_sentence": {"type": "integer", "minimum": 1},
+        "sentences_over_20_words": {"type": "integer", "minimum": 0},
+        "fk_grade": {"type": ["number", "null"]}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date_checked", "plain_language", "claims", "source_fidelity"],
+      "properties": {
+        "date_checked": {"$ref": "#/$defs/date"},
+        "plain_language": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "method", "metrics", "flags", "result"],
+          "properties": {
+            "status": {"const": "machine_checked_unreviewed"},
+            "method": {"const": "sela-plain-language-v1"},
+            "metrics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "en"],
+              "properties": {"id": {"$ref": "#/$defs/langMetrics"}, "en": {"$ref": "#/$defs/langMetrics"}}
+            },
+            "flags": {"type": "array", "items": {"type": "string"}},
+            "result": {"enum": ["within_targets", "needs_editor"]}
+          }
+        },
+        "claims": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "gate_sets", "hits", "result", "editor_flags"],
+          "properties": {
+            "status": {"const": "machine_checked_unreviewed"},
+            "gate_sets": {"type": "array", "minItems": 2, "items": {"type": "string"}},
+            "hits": {"type": "array", "items": {"$ref": "#/$defs/gateHit"}},
+            "result": {"enum": ["pass", "hits"]},
+            "editor_flags": {"type": "array", "items": {"$ref": "#/$defs/editorFlag"}}
+          }
+        },
+        "source_fidelity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "note"],
+          "properties": {
+            "status": {"enum": ["machine_spot_checked_unreviewed", "not_checked", "not_applicable"]},
+            "note": {"$ref": "#/$defs/nonEmpty"}
+          }
+        }
+      }
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "authors"],
+      "properties": {
+        "kind": {"enum": ["migrated_v1", "new_v3"]},
+        "authors": {"$ref": "#/$defs/nonEmpty"},
+        "migrated_from": {"$ref": "#/$defs/nonEmpty"},
+        "v1_id": {"$ref": "#/$defs/slug"},
+        "v1_text_sha256": {"$ref": "#/$defs/sha256"},
+        "v1_source": {"type": "object"},
+        "v1_evidence_note": {"$ref": "#/$defs/nonEmpty"},
+        "text_changed": {"type": "boolean"},
+        "migrated_on": {"$ref": "#/$defs/date"},
+        "drafted_on": {"$ref": "#/$defs/date"}
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "human_editor", "reviewed_on", "approved_text_sha256", "teen_review", "verifier", "publishable"],
+      "properties": {
+        "status": {"enum": ["machine_drafted_unreviewed", "human_changes_requested", "human_approved"]},
+        "human_editor": {"type": ["string", "null"]},
+        "reviewed_on": {"anyOf": [{"$ref": "#/$defs/date"}, {"type": "null"}]},
+        "approved_text_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "teen_review": {"enum": ["not_reviewed", "reviewed_suitable", "reviewed_unsuitable", "not_applicable"]},
+        "verifier": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "note"],
+          "properties": {
+            "status": {"enum": ["not_run", "supported", "unsupported", "contradicted", "insufficient_evidence"]},
+            "note": {"$ref": "#/$defs/nonEmpty"}
+          }
+        },
+        "publishable": {"type": "boolean"}
+      }
+    },
+    "licence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_licence", "item_text_licence", "commercial_use", "share_alike", "attribution_required", "adaptation_notice_required"],
+      "properties": {
+        "source_licence": {"$ref": "#/$defs/nonEmpty"},
+        "item_text_licence": {"$ref": "#/$defs/nonEmpty"},
+        "commercial_use": {"enum": ["blocked", "needs_legal_confirmation", "allowed"]},
+        "blocker": {"type": "string", "pattern": "^B-[0-9]+$"},
+        "share_alike": {"type": "boolean"},
+        "attribution_required": {"type": "boolean"},
+        "adaptation_notice_required": {"type": "boolean"},
+        "note": {"$ref": "#/$defs/nonEmpty"}
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "kind", "topics", "surfaces", "ai_may_offer", "languages", "language_notes", "audience", "audience_basis", "content", "reading_time_minutes", "source", "licence", "attribution", "adaptation_note", "contacts", "checks", "origin", "review", "text_sha256"],
+      "properties": {
+        "id": {"$ref": "#/$defs/slug"},
+        "version": {"type": "integer", "minimum": 1},
+        "kind": {"enum": ["exercise", "guide", "safety_plan"]},
+        "topics": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["stress", "sleep", "worry", "low_mood", "overload_study", "overload_work", "money", "loneliness", "grief", "relationship_conflict", "family_conflict", "grounding", "health_worry", "self_criticism", "burnout", "safety_plan", "listening", "journaling", "consultation_preparation", "privacy", "sharing", "confidentiality", "urgent_help", "accessibility"]}},
+        "surfaces": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["reading", "help_page"]}},
+        "ai_may_offer": {"type": "boolean"},
+        "languages": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"enum": ["id", "en"]}},
+        "language_notes": {"$ref": "#/$defs/bilingual"},
+        "audience": {"enum": ["adult", "15-17", "all"]},
+        "audience_basis": {"$ref": "#/$defs/nonEmpty"},
+        "availability_note": {"$ref": "#/$defs/nonEmpty"},
+        "content": {"$ref": "#/$defs/content"},
+        "reading_time_minutes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "en"],
+          "properties": {"id": {"type": "integer", "minimum": 1}, "en": {"type": "integer", "minimum": 1}}
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source_ids", "relation", "locator"],
+          "properties": {
+            "source_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/slug"}},
+            "relation": {"enum": ["adapted", "paraphrased", "structure_only", "sela_original"]},
+            "locator": {"$ref": "#/$defs/nonEmpty"}
+          }
+        },
+        "licence": {"$ref": "#/$defs/licence"},
+        "attribution": {"$ref": "#/$defs/bilingual"},
+        "adaptation_notice": {"$ref": "#/$defs/bilingual"},
+        "adaptation_note": {"$ref": "#/$defs/nonEmpty"},
+        "contacts": {"type": "array", "items": {"$ref": "#/$defs/contact"}},
+        "evidence_note": {"$ref": "#/$defs/nonEmpty"},
+        "source_claims": {"type": "array", "items": {"$ref": "#/$defs/sourceClaim"}},
+        "checks": {"$ref": "#/$defs/checks"},
+        "origin": {"$ref": "#/$defs/origin"},
+        "review": {"$ref": "#/$defs/review"},
+        "text_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "publisher", "year", "kind", "url", "licence", "stated_population", "use", "checked_on", "check", "reverify_by"],
+      "properties": {
+        "id": {"$ref": "#/$defs/slug"},
+        "title": {"$ref": "#/$defs/nonEmpty"},
+        "publisher": {"$ref": "#/$defs/nonEmpty"},
+        "year": {"type": "integer", "minimum": 1990, "maximum": 2100},
+        "published_on": {"$ref": "#/$defs/date"},
+        "kind": {"enum": ["who_publication", "government_web_page", "government_service_site", "us_government_web_page", "peer_reviewed_article", "practice_guide", "w3c_standard", "w3c_wai_page"]},
+        "url": {"type": "string", "pattern": "^https://"},
+        "persistent_url": {"type": "string", "pattern": "^https://"},
+        "identifiers": {"type": "object", "additionalProperties": {"type": "string"}},
+        "licence": {"$ref": "#/$defs/nonEmpty"},
+        "licence_url": {"type": "string", "pattern": "^https://"},
+        "licence_evidence": {"$ref": "#/$defs/nonEmpty"},
+        "suggested_citation": {"$ref": "#/$defs/nonEmpty"},
+        "translation_disclaimer_verbatim": {"$ref": "#/$defs/nonEmpty"},
+        "stated_population": {"enum": ["general", "adults", "workers", "adolescents", "older_adults", "all_ages", "clinical_population", "not_population_specific"]},
+        "population_note": {"$ref": "#/$defs/nonEmpty"},
+        "use": {"$ref": "#/$defs/nonEmpty"},
+        "checked_on": {"$ref": "#/$defs/date"},
+        "check": {"$ref": "#/$defs/nonEmpty"},
+        "last_verified_content_on": {"$ref": "#/$defs/date"},
+        "reverify_by": {"$ref": "#/$defs/date"},
+        "url_note": {"$ref": "#/$defs/nonEmpty"},
+        "commercial_use": {"enum": ["blocked", "needs_legal_confirmation", "allowed", "not_applicable"]},
+        "blocker": {"type": "string", "pattern": "^B-[0-9]+$"},
+        "verbatim_check": {"$ref": "#/$defs/verbatimCheck"}
+      }
+    },
+    "sourcesFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "content_set", "description", "sources"],
+      "properties": {
+        "schema": {"const": "reading_item.schema.json#/$defs/sourcesFile"},
+        "content_set": {"const": "sela-reading-v1"},
+        "description": {"$ref": "#/$defs/nonEmpty"},
+        "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source"}}
+      }
+    },
+    "setFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "content_set", "version", "status", "created_on", "description", "changes", "files", "counts", "fingerprint", "methods", "v1_baseline"],
+      "properties": {
+        "schema": {"const": "reading_item.schema.json#/$defs/setFile"},
+        "content_set": {"const": "sela-reading-v1"},
+        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "status": {"$ref": "#/$defs/nonEmpty"},
+        "created_on": {"$ref": "#/$defs/date"},
+        "description": {"$ref": "#/$defs/nonEmpty"},
+        "changes": {
+          "description": "Version history of the content set, oldest first. Every change gets a new version and an entry here; a content set is never rewritten silently.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["version", "date", "summary"],
+            "properties": {
+              "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+              "date": {"$ref": "#/$defs/date"},
+              "summary": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonEmpty"}}
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "item_ids"],
+            "properties": {
+              "path": {"type": "string", "pattern": "^[a-z0-9_]+\\.json$"},
+              "item_ids": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/slug"}}
+            }
+          }
+        },
+        "counts": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "fingerprint": {"$ref": "#/$defs/sha256"},
+        "methods": {"type": "object", "additionalProperties": {"type": "string"}},
+        "v1_baseline": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "commit", "card_count"],
+          "properties": {
+            "path": {"$ref": "#/$defs/nonEmpty"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "commit": {"$ref": "#/$defs/nonEmpty"},
+            "card_count": {"type": "integer"}
+          }
+        }
+      }
+    }
+  }
+}

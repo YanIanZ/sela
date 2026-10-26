@@ -1,0 +1,2654 @@
+{
+  "schema": "reading_item.schema.json",
+  "content_set": "sela-reading-v1",
+  "file_id": "guides_sela",
+  "description": "New v3 psychoeducation guides that explain Sela's own features honestly (listening, notes, consultation preparation, storage, sharing, confidentiality for 16-17, help now, accessibility), with the basis of every paragraph.",
+  "file_licence": {
+    "text_licence": "MIT (repository licence)",
+    "notice": "Sela's own text. Facts are cited from WHO, Kemenkes/Healing119 and W3C pages with locators; no source text is reproduced or adapted."
+  },
+  "items": [
+    {
+      "id": "didengarkan-di-sela",
+      "version": 1,
+      "kind": "guide",
+      "topics": [
+        "listening"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Teks bahasa Indonesia ditulis bersama versi Inggris oleh agen AI pada 26 Okt 2026; belum ditinjau editor manusia.",
+        "en": "English text written together with the Indonesian by an AI agent on 26 Oct 2026; not yet reviewed by a human editor."
+      },
+      "audience": "all",
+      "audience_basis": "Explains Sela's own features and official help routes; the statements hold for every enabled age band. No adult-only evidence is used. Teen differences are covered in kerahasiaan-usia-16-17.",
+      "content": {
+        "title": {
+          "id": "Didengarkan di Sela: apa yang bisa dan tidak bisa",
+          "en": "Being heard in Sela: what it can and can't do"
+        },
+        "summary": {
+          "id": "Sela adalah ruang untuk bercerita. Bacaan ini menjelaskan apa yang Sela lakukan dan apa yang tidak.",
+          "en": "Sela is a space to talk things through. This explains what Sela does and what it doesn't."
+        },
+        "sections": [
+          {
+            "heading": {
+              "id": "Yang Sela lakukan",
+              "en": "What Sela does"
+            },
+            "paragraphs": [
+              {
+                "id": "Kamu bisa mulai bercerita tanpa mengisi profil panjang.",
+                "en": "You can start talking without filling in a long profile.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V26",
+                      "DECISION:D-035"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kamu boleh memilih maksud percakapan, misalnya didengarkan saja atau merapikan pikiran. Pilihan ini boleh dilewati.",
+                "en": "You can pick what you want from the conversation, such as just being listened to or sorting your thoughts. You can also skip this.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V26",
+                      "DECISION:D-035"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Balasan Sela dibuat oleh AI. Setiap balasan berisi paling banyak satu pertanyaan, dan saran hanya ditawarkan.",
+                "en": "Sela's replies are written by AI. Each reply asks at most one question, and suggestions are only offered.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V26",
+                      "DECISION:D-030"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kalau AI tidak bisa membalas, Sela memberitahumu. Sela tidak menggantinya dengan kalimat siap pakai.",
+                "en": "If the AI can't reply, Sela tells you. It doesn't fill the gap with a ready-made line.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V26"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kalau Sela salah menangkap maksudmu, kamu bisa mengubah, menyetujui, atau menghapus kartu \"Sela menangkap…\".",
+                "en": "If Sela gets you wrong, you can edit, confirm or remove the \"Sela understood…\" card.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V26",
+                      "SPEC:V28"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kamu bisa mengakhiri percakapan kapan saja dengan satu tombol.",
+                "en": "You can end the conversation at any time with one button.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V26"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sebelum AI membaca tulisanmu, Sela memeriksanya dengan daftar kata tetap untuk tanda bahaya. Kalau ada yang cocok, Sela menunjukkan bantuan.",
+                "en": "Before any AI reads what you write, Sela checks it against a fixed list of danger signs. If something matches, Sela shows you help.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V38",
+                      "DECISION:D-036"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kecocokan itu tidak pernah menghapus tulisanmu. Balasan AI dijeda sampai kamu memilih untuk melanjutkan.",
+                "en": "A match never deletes what you wrote. AI replies pause until you choose to continue.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V38",
+                      "DECISION:D-036"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Yang Sela tidak lakukan",
+              "en": "What Sela doesn't do"
+            },
+            "paragraphs": [
+              {
+                "id": "Sela bukan psikolog, dokter, atau konselor, dan tidak berpura-pura menjadi salah satunya.",
+                "en": "Sela isn't a psychologist, doctor or counsellor, and doesn't pretend to be one.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C23",
+                      "SPEC:V26"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sela tidak memberi diagnosis, tidak memberi saran obat, dan tidak memberi skor tentang keadaanmu.",
+                "en": "Sela doesn't diagnose, doesn't give advice about medicines, and doesn't score how you are doing.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C23",
+                      "DECISION:D-037",
+                      "DECISION:D-038"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sela tidak menghubungi siapa pun atas namamu.",
+                "en": "Sela doesn't contact anyone on your behalf.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C23",
+                      "DECISION:D-036"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kamu tidak wajib mencari profesional setiap kali memakai Sela. Kalau kamu mau, Sela bisa membantumu bersiap.",
+                "en": "You don't have to look for a professional every time you use Sela. If you want to, Sela can help you prepare.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V26",
+                      "DECISION:D-039"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "AI bisa keliru",
+              "en": "AI can get things wrong"
+            },
+            "paragraphs": [
+              {
+                "id": "Menurut WHO, jawaban AI bisa salah, tidak lengkap, atau bias. Jawaban yang salah bisa terdengar sama meyakinkannya dengan yang benar.",
+                "en": "WHO notes that AI answers can be false, incomplete or biased. A wrong answer can sound just as convincing as a right one.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "who-lmm-ai-2024",
+                    "locator": "PDF p. 28 (false answers cannot be told apart from accurate ones) and PDF p. 32 (risks of wrong, biased or incomplete answers)",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Karena itu, periksa lagi hal yang penting. Untuk pertanyaan kesehatan, tanyakan kepada tenaga kesehatan.",
+                "en": "So check important things again. For health questions, ask a health worker.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  },
+                  {
+                    "kind": "source",
+                    "source_id": "who-lmm-ai-2024",
+                    "locator": "PDF p. 32 (risks are higher for people without medical expertise)",
+                    "support": "rationale"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Kalau butuh bantuan sekarang",
+              "en": "If you need help now"
+            },
+            "paragraphs": [
+              {
+                "id": "Kalau kamu dalam bahaya atau berpikir untuk mengakhiri hidup, cari bantuan sekarang. Buka \"Butuh bantuan sekarang\" atau hubungi Healing119 di 119 ext 8.",
+                "en": "If you are in danger or thinking about ending your life, get help now. Open \"Need help now\" or call Healing119 on 119 ext 8.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V38"
+                    ],
+                    "implementation_check": "pending"
+                  },
+                  {
+                    "kind": "source",
+                    "source_id": "healing119-site",
+                    "locator": "front page: 'Hubungi 119 ext. 8 untuk darurat bunuh diri'",
+                    "support": "paraphrase"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reading_time_minutes": {
+        "id": 2,
+        "en": 2
+      },
+      "source": {
+        "source_ids": [
+          "who-lmm-ai-2024",
+          "healing119-site"
+        ],
+        "relation": "sela_original",
+        "locator": "Per paragraph (content.sections[].paragraphs[].basis)"
+      },
+      "licence": {
+        "source_licence": "Sela's own text; facts cited from official sources",
+        "item_text_licence": "MIT (repository licence)",
+        "commercial_use": "allowed",
+        "share_alike": false,
+        "attribution_required": false,
+        "adaptation_notice_required": false,
+        "note": "Cites short facts with their sources; no source text is reproduced or adapted. Not legal advice."
+      },
+      "attribution": {
+        "id": "Ditulis untuk Sela. Dasar setiap paragraf tercantum; tidak ada teks sumber yang disalin.",
+        "en": "Written for Sela. Each paragraph lists its basis; no source text is copied."
+      },
+      "adaptation_note": "New v3 item drafted on 2026-10-26 by an AI agent from the v3 SPEC, PM decisions, design screens and the official sources listed per paragraph. Product statements describe the planned pilot behaviour and must be checked against the implementation (implementation_check: pending) before publishing.",
+      "contacts": [
+        {
+          "values": [
+            "119 ext 8"
+          ],
+          "catalogue_id": "healing119-kemenkes",
+          "source_ids": [
+            "kemenkes-healing119-2025",
+            "healing119-site"
+          ],
+          "checked_on": "2026-10-26",
+          "reverify_by": "2027-01-14"
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 26,
+              "words": 232,
+              "avg_words_per_sentence": 8.9,
+              "max_words_per_sentence": 14,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 26,
+              "words": 268,
+              "avg_words_per_sentence": 10.3,
+              "max_words_per_sentence": 19,
+              "sentences_over_20_words": 0,
+              "fk_grade": 4.4
+            }
+          },
+          "flags": [],
+          "result": "within_targets"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": []
+        },
+        "source_fidelity": {
+          "status": "not_applicable",
+          "note": "Sela's own text; each paragraph's basis is listed with a locator. A human editor checks every cited locator before approval."
+        }
+      },
+      "origin": {
+        "kind": "new_v3",
+        "authors": "AI agent (content and licence curator role) on the Sela v3 research branch; no human author yet",
+        "drafted_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "f2b822b84565d48bb713e128bbe3435eaa0f5118f43ae4d81bedddf297806d09"
+    },
+    {
+      "id": "menulis-catatan-dan-melihat-kembali",
+      "version": 1,
+      "kind": "guide",
+      "topics": [
+        "journaling"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Teks bahasa Indonesia ditulis bersama versi Inggris oleh agen AI pada 26 Okt 2026; belum ditinjau editor manusia.",
+        "en": "English text written together with the Indonesian by an AI agent on 26 Oct 2026; not yet reviewed by a human editor."
+      },
+      "audience": "all",
+      "audience_basis": "Explains Sela's own features and official help routes; the statements hold for every enabled age band. No adult-only evidence is used. Teen differences are covered in kerahasiaan-usia-16-17.",
+      "content": {
+        "title": {
+          "id": "Menulis catatan dan melihatnya kembali",
+          "en": "Writing notes and looking back at them"
+        },
+        "summary": {
+          "id": "Catatan adalah tempat menulis untuk dirimu sendiri. Bacaan ini menjelaskan cara kerjanya di Sela.",
+          "en": "A note is a place to write for yourself. This explains how notes work in Sela."
+        },
+        "sections": [
+          {
+            "heading": {
+              "id": "Menulis dengan caramu",
+              "en": "Writing your way"
+            },
+            "paragraphs": [
+              {
+                "id": "Tidak ada cara yang benar atau salah. Kamu bisa menulis satu kalimat atau satu halaman.",
+                "en": "There is no right or wrong way. You can write one sentence or a whole page.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "Kalau bingung mulai dari mana, kamu bisa memakai pancingan, misalnya \"Apa yang paling terasa hari ini?\".",
+                "en": "If you're not sure where to start, you can use a prompt, such as \"What stands out most today?\".",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S10"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Menulis catatan tidak memakai AI, kecuali kamu memintanya.",
+                "en": "Writing a note doesn't use AI unless you ask for it.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S10",
+                      "SPEC:C18"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Beberapa latihan di Bacaan juga memakai tulisan, misalnya membuat daftar hal yang mengganggu pikiranmu. Latihan itu diadaptasi dari panduan PM+ WHO.",
+                "en": "Some exercises in Reading also use writing, such as listing what is on your mind. They are adapted from WHO's PM+ guide.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "who-pmplus-2018",
+                    "locator": "Chapter 7, step 1 'Listing problems' (PDF p. 49)",
+                    "support": "provenance"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Melihat kembali",
+              "en": "Looking back"
+            },
+            "paragraphs": [
+              {
+                "id": "Kamu bisa membuka catatan lama, mengubahnya, atau menghapusnya. Saat diubah, versi sebelumnya tetap tersimpan.",
+                "en": "You can open old notes, edit them or delete them. When you edit a note, the earlier version is kept.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S10",
+                      "SPEC:V28"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kalau mau, kamu bisa meminta Sela menangkap isi catatanmu. Fitur ini memakai AI, jadi butuh persetujuanmu.",
+                "en": "If you want, you can ask Sela to reflect on a note. This uses AI, so it needs your consent.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S10",
+                      "SPEC:C18"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Hasilnya adalah tafsiran Sela yang belum tentu benar. Kamu yang memutuskan apakah hasil itu disimpan.",
+                "en": "The result is Sela's interpretation, which may be wrong. You decide whether to keep it.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V28",
+                      "DESIGN:S10"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Catatan yang terdengar sangat berat tetap disimpan. Sela hanya menunjukkan bantuan yang bisa kamu pakai kalau mau.",
+                "en": "A note that sounds very heavy is still saved. Sela just shows help you can use if you want.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V38",
+                      "DECISION:D-036"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Yang perlu kamu tahu",
+              "en": "Good to know"
+            },
+            "paragraphs": [
+              {
+                "id": "Catatan hanya disimpan kalau penyimpanan sudah kamu nyalakan.",
+                "en": "Notes are only saved if you have turned storage on.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V27"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sela tidak menjanjikan bahwa menulis catatan akan membuatmu merasa lebih baik. Penelitian yang sudah Sela kumpulkan belum membahas hal ini.",
+                "en": "Sela doesn't promise that writing notes will make you feel better. The research Sela has gathered so far doesn't cover this.",
+                "basis": [
+                  {
+                    "kind": "evidence_gap",
+                    "refs": [
+                      "DECISION:D-048"
+                    ],
+                    "note": "The 100-record research register holds no journaling or expressive-writing record (research audit, section 5); the gap is recorded under D-048."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 2
+      },
+      "source": {
+        "source_ids": [
+          "who-pmplus-2018"
+        ],
+        "relation": "sela_original",
+        "locator": "Per paragraph (content.sections[].paragraphs[].basis)"
+      },
+      "licence": {
+        "source_licence": "Sela's own text; facts cited from official sources",
+        "item_text_licence": "MIT (repository licence)",
+        "commercial_use": "allowed",
+        "share_alike": false,
+        "attribution_required": false,
+        "adaptation_notice_required": false,
+        "note": "Cites short facts with their sources; no source text is reproduced or adapted. Not legal advice."
+      },
+      "attribution": {
+        "id": "Ditulis untuk Sela. Dasar setiap paragraf tercantum; tidak ada teks sumber yang disalin.",
+        "en": "Written for Sela. Each paragraph lists its basis; no source text is copied."
+      },
+      "adaptation_note": "New v3 item drafted on 2026-10-26 by an AI agent from the v3 SPEC, PM decisions, design screens and the official sources listed per paragraph. Product statements describe the planned pilot behaviour and must be checked against the implementation (implementation_check: pending) before publishing.",
+      "contacts": [],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 19,
+              "words": 164,
+              "avg_words_per_sentence": 8.6,
+              "max_words_per_sentence": 16,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 19,
+              "words": 189,
+              "avg_words_per_sentence": 9.9,
+              "max_words_per_sentence": 19,
+              "sentences_over_20_words": 0,
+              "fk_grade": 2.9
+            }
+          },
+          "flags": [],
+          "result": "within_targets"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": []
+        },
+        "source_fidelity": {
+          "status": "not_applicable",
+          "note": "Sela's own text; each paragraph's basis is listed with a locator. A human editor checks every cited locator before approval."
+        }
+      },
+      "origin": {
+        "kind": "new_v3",
+        "authors": "AI agent (content and licence curator role) on the Sela v3 research branch; no human author yet",
+        "drafted_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "d646fd92b7986a5cabb6fcd86326da8f5fe66094cfdb103a748b48e921754b41"
+    },
+    {
+      "id": "menyiapkan-konsultasi",
+      "version": 1,
+      "kind": "guide",
+      "topics": [
+        "consultation_preparation"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Teks bahasa Indonesia ditulis bersama versi Inggris oleh agen AI pada 26 Okt 2026; belum ditinjau editor manusia.",
+        "en": "English text written together with the Indonesian by an AI agent on 26 Oct 2026; not yet reviewed by a human editor."
+      },
+      "audience": "all",
+      "audience_basis": "Explains Sela's own features and official help routes; the statements hold for every enabled age band. No adult-only evidence is used. Teen differences are covered in kerahasiaan-usia-16-17.",
+      "content": {
+        "title": {
+          "id": "Menyiapkan konsultasi: apa yang bisa dibawa",
+          "en": "Preparing for a consultation: what to bring"
+        },
+        "summary": {
+          "id": "Langkah persiapan sebelum bertemu tenaga kesehatan atau konselor. Semua langkahnya pilihan.",
+          "en": "Ways to prepare before you see a health worker or counsellor. Every step is optional."
+        },
+        "sections": [
+          {
+            "heading": {
+              "id": "Sebelum berangkat",
+              "en": "Before you go"
+            },
+            "paragraphs": [
+              {
+                "id": "Tulis apa yang ingin kamu sampaikan: apa yang terjadi, sejak kapan, dan apa yang paling mengganggu.",
+                "en": "Write down what you want to say: what has been happening, since when, and what bothers you most.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "Tulis juga pertanyaanmu, dan apa yang kamu harapkan dari pertemuan itu.",
+                "en": "Also write down your questions, and what you hope to get from the visit.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "Di Sela, kamu bisa membuat Ringkasan untuk konsultasi dari yang sudah kamu simpan. Ringkasan itu berisi catatanmu sendiri, bukan rekam medis.",
+                "en": "In Sela, you can make a Summary for a consultation from what you've saved. It holds your own notes, not a medical record.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DECISION:D-039",
+                      "SPEC:C22"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kamu yang memilih isi ringkasan. Sela tidak menambahkan diagnosis atau riwayat yang tidak kamu tulis.",
+                "en": "You choose what goes in the summary. Sela doesn't add a diagnosis or history you didn't write.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V30"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Yang bisa dibawa",
+              "en": "What to bring"
+            },
+            "paragraphs": [
+              {
+                "id": "Ringkasanmu, di HP atau dicetak. Kamu boleh membacakannya atau menunjukkannya kalau sulit mengucapkannya.",
+                "en": "Your summary, on your phone or printed. You can read it out or show it if saying it is hard.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  },
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V40"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kartu identitas dan kartu jaminan kesehatan, kalau kamu memakainya. Tanyakan ke layanan tujuanmu apa lagi yang perlu dibawa.",
+                "en": "Your ID card and health insurance card, if you use one. Ask the service what else to bring.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "Surat atau catatan dari layanan yang pernah kamu datangi, kalau ada.",
+                "en": "Letters or notes from services you've been to before, if you have any.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Tentang layanan",
+              "en": "About services"
+            },
+            "paragraphs": [
+              {
+                "id": "Menurut Kemenkes (2024), skrining kesehatan jiwa bisa diakses di Puskesmas (pusat kesehatan masyarakat). Skrining ini ditujukan untuk semua kelompok usia.",
+                "en": "Indonesia's Ministry of Health said in 2024 that mental health screening is available at Puskesmas (community health centres). It is meant for all age groups.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "kemenkes-skrining-2024",
+                    "locator": "whole article (screening for every life stage; available at puskesmas)",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Healing119 dari Kemenkes memberi dukungan psikologis awal, dan bisa merujuk ke layanan profesional.",
+                "en": "Healing119, from the Ministry of Health, gives initial psychological support and can refer you to professional services.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "kemenkes-healing119-2025",
+                    "locator": "section 'Apa Itu Healing119.id?'",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Langkah dan persyaratan bisa berbeda di tiap tempat. Kalau ragu, tanyakan langsung ke layanannya.",
+                "en": "Steps and requirements can differ from place to place. If you're unsure, ask the service directly.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "Kalau usiamu 16–17 tahun, kamu boleh bertanya di awal apa yang dirahasiakan, dan kapan kerahasiaan itu punya batas.",
+                "en": "If you are 16–17, you can ask at the start what is kept private, and when that has limits.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  },
+                  {
+                    "kind": "source",
+                    "source_id": "who-adolescent-standards-2025",
+                    "locator": "Standard 3, Statement 3.2 (PDF p. 43)",
+                    "support": "rationale"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Setelah konsultasi",
+              "en": "After the consultation"
+            },
+            "paragraphs": [
+              {
+                "id": "Setelah konsultasi, kamu bisa menulis catatan tentang apa yang dibicarakan dan langkah berikutnya.",
+                "en": "Afterwards, you can write a note about what was discussed and what comes next.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S19"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Membagikan ringkasan tidak berarti kamu sudah mendapat perawatan. Sela tidak membuat janji temu.",
+                "en": "Sharing a summary doesn't mean you have received care. Sela doesn't book appointments.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V30",
+                      "SPEC:C22",
+                      "DECISION:D-042"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reading_time_minutes": {
+        "id": 2,
+        "en": 2
+      },
+      "source": {
+        "source_ids": [
+          "kemenkes-skrining-2024",
+          "kemenkes-healing119-2025",
+          "who-adolescent-standards-2025"
+        ],
+        "relation": "sela_original",
+        "locator": "Per paragraph (content.sections[].paragraphs[].basis)"
+      },
+      "licence": {
+        "source_licence": "Sela's own text; facts cited from official sources",
+        "item_text_licence": "MIT (repository licence)",
+        "commercial_use": "allowed",
+        "share_alike": false,
+        "attribution_required": false,
+        "adaptation_notice_required": false,
+        "note": "Cites short facts with their sources; no source text is reproduced or adapted. Not legal advice."
+      },
+      "attribution": {
+        "id": "Ditulis untuk Sela. Dasar setiap paragraf tercantum; tidak ada teks sumber yang disalin.",
+        "en": "Written for Sela. Each paragraph lists its basis; no source text is copied."
+      },
+      "adaptation_note": "New v3 item drafted on 2026-10-26 by an AI agent from the v3 SPEC, PM decisions, design screens and the official sources listed per paragraph. Product statements describe the planned pilot behaviour and must be checked against the implementation (implementation_check: pending) before publishing.",
+      "contacts": [],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 22,
+              "words": 208,
+              "avg_words_per_sentence": 9.5,
+              "max_words_per_sentence": 19,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 22,
+              "words": 243,
+              "avg_words_per_sentence": 11.0,
+              "max_words_per_sentence": 20,
+              "sentences_over_20_words": 0,
+              "fk_grade": 4.9
+            }
+          },
+          "flags": [],
+          "result": "within_targets"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": []
+        },
+        "source_fidelity": {
+          "status": "not_applicable",
+          "note": "Sela's own text; each paragraph's basis is listed with a locator. A human editor checks every cited locator before approval."
+        }
+      },
+      "origin": {
+        "kind": "new_v3",
+        "authors": "AI agent (content and licence curator role) on the Sela v3 research branch; no human author yet",
+        "drafted_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "85d3e20a60b8e8ff932ed846cedf4c234001c8c6d766f5d44bc8c941e3ed6161"
+    },
+    {
+      "id": "apa-yang-terjadi-pada-yang-kamu-simpan",
+      "version": 1,
+      "kind": "guide",
+      "topics": [
+        "privacy"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Teks bahasa Indonesia ditulis bersama versi Inggris oleh agen AI pada 26 Okt 2026; belum ditinjau editor manusia.",
+        "en": "English text written together with the Indonesian by an AI agent on 26 Oct 2026; not yet reviewed by a human editor."
+      },
+      "audience": "all",
+      "audience_basis": "Explains Sela's own features and official help routes; the statements hold for every enabled age band. No adult-only evidence is used. Teen differences are covered in kerahasiaan-usia-16-17.",
+      "content": {
+        "title": {
+          "id": "Apa yang terjadi pada yang kamu simpan",
+          "en": "What happens to what you save"
+        },
+        "summary": {
+          "id": "Penjelasan singkat tentang penyimpanan, enkripsi, AI, ekspor, dan penghapusan di Sela.",
+          "en": "A short guide to storage, encryption, AI, export and deletion in Sela."
+        },
+        "sections": [
+          {
+            "heading": {
+              "id": "Kamu yang memilih",
+              "en": "You choose"
+            },
+            "paragraphs": [
+              {
+                "id": "Sela menanyakan pilihan penyimpananmu sebelum menyimpan apa pun.",
+                "en": "Sela asks for your storage choice before it saves anything.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V27"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Setiap percakapan punya pilihan Simpan atau Jangan simpan. Kamu bisa mengubahnya nanti.",
+                "en": "Each conversation has a Save or Don't save choice. You can change it later.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V27",
+                      "DECISION:D-035"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Percakapan yang tidak disimpan hanya dipegang sementara di memori server, untuk balasan di percakapan itu saja.",
+                "en": "A conversation you don't save is held only briefly in the server's memory, just for replies in that conversation.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V27"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Isinya dibuang saat kamu mengakhiri percakapan, setelah 30 menit tanpa aktivitas, atau paling lama setelah 2 jam.",
+                "en": "It is discarded when you end the conversation, after 30 minutes without activity, or after 2 hours at most.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V27"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Percakapan itu juga tidak dipakai untuk ingatan Sela, linimasa, atau ekspor.",
+                "en": "It is also never used for what Sela remembers, the timeline or export.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V27"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Di mana dan bagaimana disimpan",
+              "en": "Where and how it is kept"
+            },
+            "paragraphs": [
+              {
+                "id": "Yang kamu simpan ada di server Sela, juga dalam mode tamu.",
+                "en": "What you save is kept on Sela's servers, in guest mode too.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C16",
+                      "SPEC:C17"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Isinya dienkripsi dengan kunci yang hanya dipakai untuk datamu. Enkripsi artinya data diacak supaya tidak bisa dibaca tanpa kunci.",
+                "en": "It is encrypted with a key used only for your data. Encryption means the data is scrambled so it can't be read without the key.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C16",
+                      "DECISION:D-028"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Secara bawaan, data tamu dihapus setelah 7 hari tanpa aktivitas, atau paling lama 30 hari setelah dibuat. Cookie di browsermu adalah satu-satunya kuncinya.",
+                "en": "By default, guest data is deleted after 7 days of no activity, or at most 30 days after it began. The cookie in your browser is the only key to it.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C17",
+                      "DECISION:D-029"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Orang yang menjalankan server Sela secara teknis bisa mengakses data. Hukum juga bisa mewajibkan data diberikan dalam keadaan tertentu.",
+                "en": "The people who run Sela's servers can technically access data. The law can also require data to be handed over in some situations.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S26",
+                      "BLOCKER:B-10"
+                    ],
+                    "implementation_check": "pending",
+                    "pending_review": "Wording from the minors design (S26); its legal accuracy is pending the legal review B-10."
+                  }
+                ]
+              },
+              {
+                "id": "Karena itu, Sela tidak menjanjikan anonimitas mutlak.",
+                "en": "So Sela doesn't promise complete anonymity.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C17"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "AI dan datamu",
+              "en": "AI and your data"
+            },
+            "paragraphs": [
+              {
+                "id": "Fitur AI hanya dipakai kalau kamu menyetujuinya. Setiap penyedia AI punya persetujuan sendiri yang bisa kamu cabut.",
+                "en": "AI features are used only if you agree. Each AI provider has its own consent, and you can withdraw it.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C18",
+                      "DECISION:D-030"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Penyedia AI hanya menerima potongan teks yang diperlukan. Nama yang kamu samarkan dan kontak diganti dulu sebelum dikirim.",
+                "en": "An AI provider gets only the parts of text it needs. Names you keep private and contact details are replaced before sending.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V41"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sela tidak memakai catatanmu untuk melatih model AI. Penyedia AI menyimpan salinan sesuai aturan mereka, yang dijelaskan sebelum kamu setuju.",
+                "en": "Sela doesn't use your notes to train AI models. AI providers keep copies under their own rules, which are explained before you agree.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DECISION:D-048",
+                      "SPEC:V34",
+                      "DECISION:D-049"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Mengunduh dan menghapus",
+              "en": "Downloading and deleting"
+            },
+            "paragraphs": [
+              {
+                "id": "Kamu bisa mengunduh semua datamu kapan saja.",
+                "en": "You can download all your data at any time.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V40"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kalau kamu menghapus sesuatu, yang dibuat dari situ ikut terhapus. Ringkasan yang mengutipnya diberi tanda.",
+                "en": "When you delete something, what was made from it is deleted too. Summaries that quoted it are marked.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V34"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kalau kamu menghapus akun, kunci datamu dihancurkan. Dalam 7 hari, salinan cadangan tidak bisa dibaca lagi, dan dalam 30 hari salinan itu hilang.",
+                "en": "When you delete your account, your data key is destroyed. Within 7 days backups can no longer be read, and within 30 days they are gone.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V34",
+                      "DECISION:D-028"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Salinan yang sudah kamu unduh atau bagikan tidak bisa ditarik kembali oleh Sela.",
+                "en": "Sela can't pull back copies you've already downloaded or shared.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V31",
+                      "SPEC:V40"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reading_time_minutes": {
+        "id": 2,
+        "en": 2
+      },
+      "source": {
+        "source_ids": [],
+        "relation": "sela_original",
+        "locator": "Per paragraph (content.sections[].paragraphs[].basis)"
+      },
+      "licence": {
+        "source_licence": "Sela's own text",
+        "item_text_licence": "MIT (repository licence)",
+        "commercial_use": "allowed",
+        "share_alike": false,
+        "attribution_required": false,
+        "adaptation_notice_required": false,
+        "note": "Cites short facts with their sources; no source text is reproduced or adapted. Not legal advice."
+      },
+      "attribution": {
+        "id": "Ditulis untuk Sela. Dasar setiap paragraf tercantum; tidak ada teks sumber yang disalin.",
+        "en": "Written for Sela. Each paragraph lists its basis; no source text is copied."
+      },
+      "adaptation_note": "New v3 item drafted on 2026-10-26 by an AI agent from the v3 SPEC, PM decisions, design screens and the official sources listed per paragraph. Product statements describe the planned pilot behaviour and must be checked against the implementation (implementation_check: pending) before publishing.",
+      "contacts": [],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 27,
+              "words": 267,
+              "avg_words_per_sentence": 9.9,
+              "max_words_per_sentence": 17,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 27,
+              "words": 312,
+              "avg_words_per_sentence": 11.6,
+              "max_words_per_sentence": 20,
+              "sentences_over_20_words": 0,
+              "fk_grade": 5.9
+            }
+          },
+          "flags": [],
+          "result": "within_targets"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": []
+        },
+        "source_fidelity": {
+          "status": "not_applicable",
+          "note": "Sela's own text; each paragraph's basis is listed with a locator. A human editor checks every cited locator before approval."
+        }
+      },
+      "origin": {
+        "kind": "new_v3",
+        "authors": "AI agent (content and licence curator role) on the Sela v3 research branch; no human author yet",
+        "drafted_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "23744101d15bf69b86f7706203b11476272bf41e8b257a2faf5028012305fc0c"
+    },
+    {
+      "id": "berbagi-dan-mencabut-akses",
+      "version": 1,
+      "kind": "guide",
+      "topics": [
+        "sharing",
+        "privacy"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Teks bahasa Indonesia ditulis bersama versi Inggris oleh agen AI pada 26 Okt 2026; belum ditinjau editor manusia.",
+        "en": "English text written together with the Indonesian by an AI agent on 26 Oct 2026; not yet reviewed by a human editor."
+      },
+      "audience": "all",
+      "audience_basis": "Explains Sela's own features and official help routes; the statements hold for every enabled age band. No adult-only evidence is used. Teen differences are covered in kerahasiaan-usia-16-17.",
+      "content": {
+        "title": {
+          "id": "Berbagi ringkasan dan mencabut akses",
+          "en": "Sharing a summary and revoking access"
+        },
+        "summary": {
+          "id": "Apa yang terjadi saat kamu membagikan Ringkasan untuk konsultasi, dan apa arti mencabut akses.",
+          "en": "What happens when you share a Summary for a consultation, and what revoking access means."
+        },
+        "sections": [
+          {
+            "heading": {
+              "id": "Saat berbagi",
+              "en": "When you share"
+            },
+            "paragraphs": [
+              {
+                "id": "Kamu bisa membagikan ringkasan kepada orang yang kamu undang sendiri, misalnya psikolog atau doktermu.",
+                "en": "You can share a summary with someone you invite yourself, such as your psychologist or doctor.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DECISION:D-042"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sebelum berbagi, kamu melihat persis apa yang akan dibaca penerima.",
+                "en": "Before you share, you see exactly what the recipient will read.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V30"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kamu memilih bagian yang dibagikan, nama penerima, tujuan, dan lama akses.",
+                "en": "You choose which parts to share, the recipient's name, the purpose and how long access lasts.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V30"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Penerima butuh dua hal: tautan dan kode akses yang terpisah. Kirim keduanya lewat jalur berbeda, misalnya tautan lewat WhatsApp dan kode lewat SMS.",
+                "en": "The recipient needs two things: a link and a separate access code. Send them by different routes, such as the link by WhatsApp and the code by text message.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V30",
+                      "DESIGN:S17"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sela tidak memeriksa siapa penerimanya. Halaman penerima juga menyebutkan hal ini.",
+                "en": "Sela doesn't check who the recipient is. The recipient's page says so too.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V30",
+                      "DECISION:D-042"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Arti status",
+              "en": "What the status means"
+            },
+            "paragraphs": [
+              {
+                "id": "Kamu bisa melihat setiap kali ringkasanmu dibuka.",
+                "en": "You can see each time your summary is opened.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V32"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Ringkasan yang terkirim atau dibuka tidak berarti kamu sudah mendapat perawatan.",
+                "en": "A summary that was sent or opened doesn't mean you have received care.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V30",
+                      "SPEC:C22",
+                      "DECISION:D-041"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Mencabut akses",
+              "en": "Revoking access"
+            },
+            "paragraphs": [
+              {
+                "id": "Kamu bisa mencabut akses kapan saja. Setelah itu, tautan dan kode tidak bisa dipakai lagi.",
+                "en": "You can revoke access at any time. After that, the link and code no longer work.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V31"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Akses juga berakhir saat waktunya habis, atau saat kamu menghapus ringkasan atau akunmu.",
+                "en": "Access also ends when its time runs out, or when you delete the summary or your account.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V31",
+                      "SPEC:V34"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Mencabut akses tidak bisa menarik kembali apa yang sudah dibaca, diunduh, dicetak, atau disalin penerima.",
+                "en": "Revoking access can't take back what the recipient has already read, downloaded, printed or copied.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V31"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Karena itu, bagikan hanya bagian yang kamu nyaman dibaca orang lain.",
+                "en": "So share only the parts you're comfortable with someone else reading.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 2
+      },
+      "source": {
+        "source_ids": [],
+        "relation": "sela_original",
+        "locator": "Per paragraph (content.sections[].paragraphs[].basis)"
+      },
+      "licence": {
+        "source_licence": "Sela's own text",
+        "item_text_licence": "MIT (repository licence)",
+        "commercial_use": "allowed",
+        "share_alike": false,
+        "attribution_required": false,
+        "adaptation_notice_required": false,
+        "note": "Cites short facts with their sources; no source text is reproduced or adapted. Not legal advice."
+      },
+      "attribution": {
+        "id": "Ditulis untuk Sela. Dasar setiap paragraf tercantum; tidak ada teks sumber yang disalin.",
+        "en": "Written for Sela. Each paragraph lists its basis; no source text is copied."
+      },
+      "adaptation_note": "New v3 item drafted on 2026-10-26 by an AI agent from the v3 SPEC, PM decisions, design screens and the official sources listed per paragraph. Product statements describe the planned pilot behaviour and must be checked against the implementation (implementation_check: pending) before publishing.",
+      "contacts": [],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 15,
+              "words": 155,
+              "avg_words_per_sentence": 10.3,
+              "max_words_per_sentence": 15,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 15,
+              "words": 181,
+              "avg_words_per_sentence": 12.1,
+              "max_words_per_sentence": 17,
+              "sentences_over_20_words": 0,
+              "fk_grade": 5.7
+            }
+          },
+          "flags": [],
+          "result": "within_targets"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": []
+        },
+        "source_fidelity": {
+          "status": "not_applicable",
+          "note": "Sela's own text; each paragraph's basis is listed with a locator. A human editor checks every cited locator before approval."
+        }
+      },
+      "origin": {
+        "kind": "new_v3",
+        "authors": "AI agent (content and licence curator role) on the Sela v3 research branch; no human author yet",
+        "drafted_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "726e3a6eadfae72261043e0fe76886097435badbb408f48bf38ccd8acabcee1b"
+    },
+    {
+      "id": "kerahasiaan-usia-16-17",
+      "version": 1,
+      "kind": "guide",
+      "topics": [
+        "confidentiality",
+        "privacy"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Teks bahasa Indonesia ditulis bersama versi Inggris oleh agen AI pada 26 Okt 2026; belum ditinjau editor manusia.",
+        "en": "English text written together with the Indonesian by an AI agent on 26 Oct 2026; not yet reviewed by a human editor."
+      },
+      "audience": "15-17",
+      "audience_basis": "Written for the 15_17 band. The confidentiality statement comes from an adolescent-specific WHO source (Statement 3.2); no adult evidence is used.",
+      "availability_note": "Shown only where the 15_17 age band is enabled. Production keeps the band disabled until the legal review B-10 (C19); 15-year-olds stay blocked, so in practice the item is for ages 16-17 (D-031, S26).",
+      "content": {
+        "title": {
+          "id": "Usia 16–17: apa yang tetap pribadi dan apa batasnya",
+          "en": "Ages 16–17: what stays private and where the limits are"
+        },
+        "summary": {
+          "id": "Penjelasan untuk pengguna berusia 16–17 tahun tentang kerahasiaan di Sela.",
+          "en": "For users aged 16–17: how privacy works in Sela."
+        },
+        "sections": [
+          {
+            "heading": {
+              "id": "Yang tetap pribadi",
+              "en": "What stays private"
+            },
+            "paragraphs": [
+              {
+                "id": "Apa yang kamu tulis di Sela tidak dikirim ke orang tuamu, walimu, atau sekolah.",
+                "en": "What you write in Sela isn't sent to your parents, guardian or school.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V37",
+                      "DESIGN:S26"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Orang tua atau walimu perlu memberi persetujuan supaya kamu bisa memakai Sela. Persetujuan itu tidak membuat mereka bisa membaca ceritamu.",
+                "en": "Your parent or guardian needs to agree to you using Sela. That doesn't let them read what you write.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V37",
+                      "SPEC:C19",
+                      "DECISION:D-031",
+                      "DESIGN:S26"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sela tidak memantaumu diam-diam.",
+                "en": "Sela doesn't secretly monitor you.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V37"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "\"Yang Sela ingat\" mati sampai kamu sendiri menyalakannya.",
+                "en": "\"What Sela remembers\" stays off until you turn it on yourself.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V37",
+                      "DESIGN:S26"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Batasnya",
+              "en": "The limits"
+            },
+            "paragraphs": [
+              {
+                "id": "Sela tidak akan menghubungi siapa pun, termasuk saat kamu dalam bahaya. Karena itu Sela menunjukkan layanan bantuan yang bisa kamu hubungi sendiri.",
+                "en": "Sela won't contact anyone, even if you're in danger. That's why it shows you services you can contact yourself.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S26",
+                      "DECISION:D-036"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Orang yang memegang HP-mu bisa membuka Sela kalau Sela masih terbuka atau kamu tetap masuk.",
+                "en": "Someone holding your phone can open Sela if it is still open or you stay signed in.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S26"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Orang yang menjalankan server Sela secara teknis bisa mengakses data. Hukum juga bisa mewajibkan data diberikan dalam keadaan tertentu.",
+                "en": "The people who run Sela's servers can technically access data. The law can also require data to be handed over in some situations.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S26",
+                      "BLOCKER:B-10"
+                    ],
+                    "implementation_check": "pending",
+                    "pending_review": "Wording from the minors design (S26); its legal accuracy is pending the legal review B-10."
+                  }
+                ]
+              },
+              {
+                "id": "Kalau kamu membagikan ringkasan, penerimanya bisa membaca apa yang kamu pilih.",
+                "en": "If you share a summary, the recipient can read what you chose.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S26",
+                      "SPEC:V30"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Saat bicara dengan tenaga kesehatan",
+              "en": "When you talk to a health worker"
+            },
+            "paragraphs": [
+              {
+                "id": "Standar WHO menyebut layanan kesehatan untuk remaja perlu menjaga kerahasiaan, dan menjelaskan kapan kerahasiaan itu harus dibuka.",
+                "en": "WHO standards say health services for adolescents should keep things confidential, and explain when confidentiality must be broken.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "who-adolescent-standards-2025",
+                    "locator": "Standard 3, Statement 3.2 and its rationale (PDF p. 43)",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Kamu boleh bertanya di awal: apa yang dirahasiakan, dan kapan mereka perlu memberi tahu orang lain.",
+                "en": "You can ask at the start what is kept private, and when they would need to tell someone else.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  },
+                  {
+                    "kind": "source",
+                    "source_id": "who-adolescent-standards-2025",
+                    "locator": "Statement 3.2 (PDF p. 43)",
+                    "support": "rationale"
+                  }
+                ]
+              },
+              {
+                "id": "Aturan di Indonesia bisa berbeda dari satu layanan ke layanan lain. Sela belum memeriksa aturan itu.",
+                "en": "Rules in Indonesia can differ from one service to another. Sela hasn't checked those rules yet.",
+                "basis": [
+                  {
+                    "kind": "evidence_gap",
+                    "refs": [
+                      "DECISION:D-048"
+                    ],
+                    "note": "No Indonesian source on adolescent confidentiality in health services has been checked; the adolescent consent and confidentiality gap is recorded under D-048."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Kalau butuh bantuan sekarang",
+              "en": "If you need help now"
+            },
+            "paragraphs": [
+              {
+                "id": "Kalau kamu dalam bahaya sekarang, hubungi orang dewasa yang kamu percaya di dekatmu, atau buka \"Butuh bantuan sekarang\".",
+                "en": "If you are in danger right now, contact a trusted adult near you, or open \"Need help now\".",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  },
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V38",
+                      "COPY:help.fallback.json#helpNotice"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Healing119 dari Kemenkes bisa dihubungi di 119 ext 8.",
+                "en": "Healing119, from the Ministry of Health, can be reached on 119 ext 8.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "healing119-site",
+                    "locator": "front page",
+                    "support": "paraphrase"
+                  },
+                  {
+                    "kind": "source",
+                    "source_id": "kemenkes-healing119-2025",
+                    "locator": "section 'Bagaimana Cara Mengakses'",
+                    "support": "paraphrase"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reading_time_minutes": {
+        "id": 2,
+        "en": 2
+      },
+      "source": {
+        "source_ids": [
+          "who-adolescent-standards-2025",
+          "healing119-site",
+          "kemenkes-healing119-2025"
+        ],
+        "relation": "sela_original",
+        "locator": "Per paragraph (content.sections[].paragraphs[].basis)"
+      },
+      "licence": {
+        "source_licence": "Sela's own text; facts cited from official sources",
+        "item_text_licence": "MIT (repository licence)",
+        "commercial_use": "allowed",
+        "share_alike": false,
+        "attribution_required": false,
+        "adaptation_notice_required": false,
+        "note": "Cites short facts with their sources; no source text is reproduced or adapted. Not legal advice."
+      },
+      "attribution": {
+        "id": "Ditulis untuk Sela. Dasar setiap paragraf tercantum; tidak ada teks sumber yang disalin.",
+        "en": "Written for Sela. Each paragraph lists its basis; no source text is copied."
+      },
+      "adaptation_note": "New v3 item drafted on 2026-10-26 by an AI agent from the v3 SPEC, PM decisions, design screens and the official sources listed per paragraph. Product statements describe the planned pilot behaviour and must be checked against the implementation (implementation_check: pending) before publishing.",
+      "contacts": [
+        {
+          "values": [
+            "119 ext 8"
+          ],
+          "catalogue_id": "healing119-kemenkes",
+          "source_ids": [
+            "kemenkes-healing119-2025",
+            "healing119-site"
+          ],
+          "checked_on": "2026-10-26",
+          "reverify_by": "2027-01-14"
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 18,
+              "words": 200,
+              "avg_words_per_sentence": 11.1,
+              "max_words_per_sentence": 18,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 18,
+              "words": 213,
+              "avg_words_per_sentence": 11.8,
+              "max_words_per_sentence": 19,
+              "sentences_over_20_words": 0,
+              "fk_grade": 5.6
+            }
+          },
+          "flags": [],
+          "result": "within_targets"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": []
+        },
+        "source_fidelity": {
+          "status": "not_applicable",
+          "note": "Sela's own text; each paragraph's basis is listed with a locator. A human editor checks every cited locator before approval."
+        }
+      },
+      "origin": {
+        "kind": "new_v3",
+        "authors": "AI agent (content and licence curator role) on the Sela v3 research branch; no human author yet",
+        "drafted_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "d8ec62f71e5b55448a42659275a30822505ac59120c7ad2d55d7744433f562ab"
+    },
+    {
+      "id": "butuh-bantuan-sekarang",
+      "version": 2,
+      "kind": "guide",
+      "topics": [
+        "urgent_help"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Teks bahasa Indonesia ditulis bersama versi Inggris oleh agen AI pada 26 Okt 2026; belum ditinjau editor manusia.",
+        "en": "English text written together with the Indonesian by an AI agent on 26 Oct 2026; not yet reviewed by a human editor."
+      },
+      "audience": "all",
+      "audience_basis": "Explains Sela's own features and official help routes; the statements hold for every enabled age band. No adult-only evidence is used. Teen differences are covered in kerahasiaan-usia-16-17.",
+      "content": {
+        "title": {
+          "id": "Butuh bantuan sekarang: kapan dan bagaimana",
+          "en": "Need help now: when and how"
+        },
+        "summary": {
+          "id": "Kapan sebaiknya mencari bantuan sekarang, dan cara menghubunginya.",
+          "en": "When to get help right away, and how to reach it."
+        },
+        "sections": [
+          {
+            "heading": {
+              "id": "Kapan",
+              "en": "When"
+            },
+            "paragraphs": [
+              {
+                "id": "Cari bantuan sekarang kalau kamu berpikir untuk mengakhiri hidup.",
+                "en": "Get help now if you are thinking about ending your life.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "healing119-site",
+                    "locator": "front page: 'Saya merasa ingin mengakhiri hidup' leads to 'Hubungi 119 ext. 8 untuk darurat bunuh diri'",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Cari bantuan juga kalau kamu dalam bahaya, atau merasa tidak bisa menjaga dirimu tetap aman.",
+                "en": "Also get help if you are in danger, or feel you can't keep yourself safe.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "COPY:help.fallback.json#helpNotice"
+                    ],
+                    "implementation_check": "pending"
+                  },
+                  {
+                    "kind": "source",
+                    "source_id": "kemenkes-healing119-2025",
+                    "locator": "section 'Apa Itu Healing119.id?' (situasi krisis psikologis)",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "WHO menyarankan mencari bantuan kalau latihan self-help tidak cukup untuk menghadapi stres yang terasa tak tertahankan. Bantuan itu bisa dari layanan kesehatan, layanan sosial, atau orang yang kamu percaya.",
+                "en": "WHO advises getting help if self-help exercises aren't enough to cope with stress that feels unbearable. That help can come from health services, social services or people you trust.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "who-dwmm-2020",
+                    "locator": "'How to use this book' (PDF p. 11)",
+                    "support": "paraphrase"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Bagaimana",
+              "en": "How"
+            },
+            "paragraphs": [
+              {
+                "id": "Kalau kamu dalam bahaya saat ini, hubungi layanan darurat setempat atau orang terdekat yang bisa menemanimu.",
+                "en": "If you are in danger right now, contact local emergency services or someone nearby who can stay with you.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "COPY:help.fallback.json#helpNotice",
+                      "DESIGN:S21"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Healing119 adalah layanan Kementerian Kesehatan. Telepon 119 ekstensi 8, lalu ikuti panduannya.",
+                "en": "Healing119 is a Ministry of Health service. Call 119 extension 8, then follow the instructions.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "kemenkes-healing119-2025",
+                    "locator": "section 'Bagaimana Cara Mengakses Layanan Healing119.id?'",
+                    "support": "paraphrase"
+                  },
+                  {
+                    "kind": "source",
+                    "source_id": "healing119-site",
+                    "locator": "front page",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Kamu juga bisa membuka healing119.id untuk menelepon atau chat lewat WhatsApp.",
+                "en": "You can also open healing119.id to call or chat on WhatsApp.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "kemenkes-healing119-2025",
+                    "locator": "section 'Bagaimana Cara Mengakses Layanan Healing119.id?'",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Menurut Kemenkes, layanan ini gratis, dan kamu bisa bercerita tanpa menyebut nama.",
+                "en": "According to the Ministry of Health, it is free, and you can talk without giving your name.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "kemenkes-healing119-2025",
+                    "locator": "section 'Apa Itu Healing119.id?' (gratis; secara anonim)",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Menurut Kemenkes, layanan ini beroperasi dari pagi hingga malam hari.",
+                "en": "According to the Ministry of Health, it runs from morning to night.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "kemenkes-healing119-2025",
+                    "locator": "section 'Kapan Layanan Tersedia?'",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Kalau tidak tersambung dan keadaanmu darurat, pergilah ke IGD (instalasi gawat darurat) rumah sakit terdekat. Kamu juga bisa meminta orang yang kamu percaya untuk menemanimu.",
+                "en": "If you can't get through and it's an emergency, go to the nearest hospital emergency department (IGD). You can also ask someone you trust to stay with you.",
+                "basis": [
+                  {
+                    "kind": "general_advice",
+                    "label": {
+                      "id": "saran umum",
+                      "en": "general advice"
+                    }
+                  },
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "COPY:help.fallback.json#helpNotice"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Di Sela",
+              "en": "In Sela"
+            },
+            "paragraphs": [
+              {
+                "id": "Tombol \"Butuh bantuan sekarang\" selalu ada di bagian atas layar.",
+                "en": "The \"Need help now\" button is always at the top of the screen.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V38",
+                      "DECISION:D-036"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sela tidak bisa menghubungi siapa pun atas namamu, juga saat kamu dalam bahaya. Karena itu, hubungi sendiri layanan di atas atau minta orang lain membantumu.",
+                "en": "Sela can't contact anyone on your behalf, even if you are in danger. So contact a service yourself, or ask someone to help you.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DECISION:D-036",
+                      "SPEC:C23",
+                      "DESIGN:S26"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Daftar di halaman Bantuan sekarang hanya untuk Indonesia, dan setiap layanan diberi tanggal pemeriksaan.",
+                "en": "The list on the Help now page is for Indonesia only, and each service shows when it was checked.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:V39",
+                      "DECISION:D-044",
+                      "DESIGN:S21"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reading_time_minutes": {
+        "id": 2,
+        "en": 2
+      },
+      "source": {
+        "source_ids": [
+          "healing119-site",
+          "kemenkes-healing119-2025",
+          "who-dwmm-2020"
+        ],
+        "relation": "sela_original",
+        "locator": "Per paragraph (content.sections[].paragraphs[].basis)"
+      },
+      "licence": {
+        "source_licence": "Sela's own text; facts cited from official sources",
+        "item_text_licence": "MIT (repository licence)",
+        "commercial_use": "allowed",
+        "share_alike": false,
+        "attribution_required": false,
+        "adaptation_notice_required": false,
+        "note": "Cites short facts with their sources; no source text is reproduced or adapted. Not legal advice."
+      },
+      "attribution": {
+        "id": "Ditulis untuk Sela. Dasar setiap paragraf tercantum; tidak ada teks sumber yang disalin.",
+        "en": "Written for Sela. Each paragraph lists its basis; no source text is copied."
+      },
+      "adaptation_note": "New v3 item drafted on 2026-10-26 by an AI agent from the v3 SPEC, PM decisions, design screens and the official sources listed per paragraph. Product statements describe the planned pilot behaviour and must be checked against the implementation (implementation_check: pending) before publishing. Version 2 (2026-10-26): section 1, paragraph 3 (English) reworded so that it no longer shares a 6-word run with WHO's guide (DWMM PDF p. 11), found by the verbatim check; same meaning.",
+      "contacts": [
+        {
+          "values": [
+            "119 ekstensi 8",
+            "119 extension 8",
+            "healing119.id"
+          ],
+          "catalogue_id": "healing119-kemenkes",
+          "source_ids": [
+            "kemenkes-healing119-2025",
+            "healing119-site"
+          ],
+          "checked_on": "2026-10-26",
+          "reverify_by": "2027-01-14"
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 17,
+              "words": 197,
+              "avg_words_per_sentence": 11.6,
+              "max_words_per_sentence": 16,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 17,
+              "words": 225,
+              "avg_words_per_sentence": 13.2,
+              "max_words_per_sentence": 19,
+              "sentences_over_20_words": 0,
+              "fk_grade": 5.8
+            }
+          },
+          "flags": [],
+          "result": "within_targets"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": []
+        },
+        "source_fidelity": {
+          "status": "not_applicable",
+          "note": "Sela's own text; each paragraph's basis is listed with a locator. A human editor checks every cited locator before approval."
+        }
+      },
+      "origin": {
+        "kind": "new_v3",
+        "authors": "AI agent (content and licence curator role) on the Sela v3 research branch; no human author yet",
+        "drafted_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "76f54f217c1d2425668487a00f9a8ad0359746a58b4d2306eaf2f16a9541b7e3"
+    },
+    {
+      "id": "tampilan-dan-aksesibilitas",
+      "version": 1,
+      "kind": "guide",
+      "topics": [
+        "accessibility"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Teks bahasa Indonesia ditulis bersama versi Inggris oleh agen AI pada 26 Okt 2026; belum ditinjau editor manusia.",
+        "en": "English text written together with the Indonesian by an AI agent on 26 Oct 2026; not yet reviewed by a human editor."
+      },
+      "audience": "all",
+      "audience_basis": "Explains Sela's own features and official help routes; the statements hold for every enabled age band. No adult-only evidence is used. Teen differences are covered in kerahasiaan-usia-16-17.",
+      "content": {
+        "title": {
+          "id": "Mengatur Sela supaya nyaman dipakai",
+          "en": "Setting up Sela to suit you"
+        },
+        "summary": {
+          "id": "Pengaturan tampilan dan aksesibilitas, dan standar yang Sela tuju.",
+          "en": "Display and accessibility settings, and the standard Sela aims for."
+        },
+        "sections": [
+          {
+            "heading": {
+              "id": "Yang bisa kamu atur",
+              "en": "What you can change"
+            },
+            "paragraphs": [
+              {
+                "id": "Di Tampilan & aksesibilitas, kamu bisa mengatur ukuran teks, jarak baris, tema warna, kontras, dan gerakan.",
+                "en": "In Display & accessibility, you can change text size, line spacing, colour theme, contrast and motion.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S23"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Kamu juga bisa menyalakan baca keras yang memakai suara di perangkatmu sendiri.",
+                "en": "You can also turn on read-aloud, which uses the voices on your own device.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S23",
+                      "DECISION:D-038"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Pengaturan ini disimpan di perangkat ini saja. \"Kembalikan ke bawaan\" mengembalikan semuanya sekaligus.",
+                "en": "These settings are saved on this device only. \"Reset to defaults\" puts everything back at once.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S23"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              },
+              {
+                "id": "Sela tidak menebak kebutuhanmu dari usiamu. Kamu yang memilih.",
+                "en": "Sela doesn't guess your needs from your age. You choose.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "DESIGN:S23",
+                      "SPEC:C26"
+                    ],
+                    "implementation_check": "pending"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": {
+              "id": "Standar yang Sela tuju",
+              "en": "The standard Sela aims for"
+            },
+            "paragraphs": [
+              {
+                "id": "Sela menargetkan WCAG 2.2 tingkat AA. WCAG adalah pedoman aksesibilitas web dari W3C.",
+                "en": "Sela aims to meet WCAG 2.2 at level AA. WCAG is W3C's set of web accessibility guidelines.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C26"
+                    ],
+                    "implementation_check": "pending"
+                  },
+                  {
+                    "kind": "source",
+                    "source_id": "w3c-wcag22",
+                    "locator": "title and status ('W3C Recommendation 12 December 2024')",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Target ini belum diperiksa secara menyeluruh. Sela tidak mengklaim sudah memenuhinya.",
+                "en": "This target hasn't been fully checked yet. Sela doesn't claim to meet it.",
+                "basis": [
+                  {
+                    "kind": "product_basis",
+                    "refs": [
+                      "SPEC:C26"
+                    ],
+                    "implementation_check": "pending",
+                    "note": "The WCAG 2.2 AA audit of the v3 surfaces is still pending (P7)."
+                  }
+                ]
+              },
+              {
+                "id": "Contohnya, WCAG meminta teks bisa diperbesar sampai 200 persen tanpa ada isi yang hilang.",
+                "en": "For example, WCAG asks that text can be enlarged up to 200 percent without losing content.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "w3c-wcag22",
+                    "locator": "Success Criterion 1.4.4 Resize Text (Level AA)",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "WCAG juga meminta semua fungsi bisa dipakai dengan papan ketik.",
+                "en": "WCAG also asks that everything can be used with a keyboard.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "w3c-wcag22",
+                    "locator": "Success Criterion 2.1.1 Keyboard (Level A)",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Menurut W3C, banyak orang lanjut usia mengalami perubahan penglihatan, gerak tangan, pendengaran, atau daya ingat.",
+                "en": "W3C notes that many older people have changes in vision, hand movement, hearing or memory.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "w3c-wai-older-users",
+                    "locator": "section 'Overlapping Needs: People who are Elderly and People with Disabilities'",
+                    "support": "paraphrase"
+                  }
+                ]
+              },
+              {
+                "id": "Pedoman yang sama mencakup sebagian besar kebutuhan itu, tetapi tidak semua kebutuhan setiap orang.",
+                "en": "The same guidelines cover most of these needs, but not every need of every person.",
+                "basis": [
+                  {
+                    "kind": "source",
+                    "source_id": "w3c-wai-older-users",
+                    "locator": "section 'Background' (W3C standards cover most older users' needs)",
+                    "support": "paraphrase"
+                  },
+                  {
+                    "kind": "source",
+                    "source_id": "w3c-wcag22",
+                    "locator": "Abstract (the guidelines do not meet every user need)",
+                    "support": "paraphrase"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 1
+      },
+      "source": {
+        "source_ids": [
+          "w3c-wcag22",
+          "w3c-wai-older-users"
+        ],
+        "relation": "sela_original",
+        "locator": "Per paragraph (content.sections[].paragraphs[].basis)"
+      },
+      "licence": {
+        "source_licence": "Sela's own text; facts cited from official sources",
+        "item_text_licence": "MIT (repository licence)",
+        "commercial_use": "allowed",
+        "share_alike": false,
+        "attribution_required": false,
+        "adaptation_notice_required": false,
+        "note": "Cites short facts with their sources; no source text is reproduced or adapted. Not legal advice."
+      },
+      "attribution": {
+        "id": "Ditulis untuk Sela. Dasar setiap paragraf tercantum; tidak ada teks sumber yang disalin.",
+        "en": "Written for Sela. Each paragraph lists its basis; no source text is copied."
+      },
+      "adaptation_note": "New v3 item drafted on 2026-10-26 by an AI agent from the v3 SPEC, PM decisions, design screens and the official sources listed per paragraph. Product statements describe the planned pilot behaviour and must be checked against the implementation (implementation_check: pending) before publishing.",
+      "contacts": [],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 15,
+              "words": 136,
+              "avg_words_per_sentence": 9.1,
+              "max_words_per_sentence": 15,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 15,
+              "words": 153,
+              "avg_words_per_sentence": 10.2,
+              "max_words_per_sentence": 16,
+              "sentences_over_20_words": 0,
+              "fk_grade": 5.8
+            }
+          },
+          "flags": [],
+          "result": "within_targets"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": []
+        },
+        "source_fidelity": {
+          "status": "not_applicable",
+          "note": "Sela's own text; each paragraph's basis is listed with a locator. A human editor checks every cited locator before approval."
+        }
+      },
+      "origin": {
+        "kind": "new_v3",
+        "authors": "AI agent (content and licence curator role) on the Sela v3 research branch; no human author yet",
+        "drafted_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "e08c9701b62750cb5765eaa955a8f14be8eecd6e6339930840b18af825ccc010"
+    }
+  ]
+}

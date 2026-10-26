@@ -1,0 +1,648 @@
+{
+  "schema": "reading_item.schema.json#/$defs/sourcesFile",
+  "content_set": "sela-reading-v1",
+  "description": "Every source the reading library adapts, paraphrases or cites, with its licence, the date it was checked, what was read and when it must be re-verified. Full texts were read from official open routes only (WHO IRIS, CDC, Kemenkes, Healing119, W3C) and are never committed.",
+  "sources": [
+    {
+      "id": "who-dwmm-2020",
+      "title": "Doing what matters in times of stress: an illustrated guide",
+      "publisher": "World Health Organization",
+      "year": 2020,
+      "published_on": "2020-04-28",
+      "kind": "who_publication",
+      "url": "https://www.who.int/publications/i/item/9789240003927",
+      "persistent_url": "https://iris.who.int/handle/10665/331901",
+      "identifiers": {
+        "isbn_electronic": "978-92-4-000391-0",
+        "isbn_print": "978-92-4-000392-7",
+        "iris_handle": "10665/331901"
+      },
+      "licence": "CC BY-NC-SA 3.0 IGO",
+      "licence_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo",
+      "licence_evidence": "The copyright page of the English PDF (PDF p. 4) states the CC BY-NC-SA 3.0 IGO licence; IRIS dc.rights says CC BY-NC-SA 3.0 IGO. Read on 2026-10-26.",
+      "suggested_citation": "Doing what matters in times of stress: an illustrated guide. Geneva: World Health Organization; 2020. Licence: CC BY-NC-SA 3.0 IGO.",
+      "translation_disclaimer_verbatim": "This translation was not created by the World Health Organization (WHO). WHO is not responsible for the content or accuracy of this translation. The original English edition shall be the binding and authentic edition",
+      "stated_population": "general",
+      "population_note": "The preface (PDF p. 7) says the guide is meant for anyone who experiences stress. Its examples are adults (parents, carers, health professionals); it gives no adolescent-specific guidance. IRIS lists no Indonesian edition.",
+      "use": "adapted: 10 cards (Tools 1-5)",
+      "checked_on": "2026-10-26",
+      "check": "Landing page HTTP 200; IRIS record and English PDF (9789240003910-eng.pdf) retrieved from IRIS; copyright page and the pages cited by the cards read. The PDF is kept only in a local scratch directory, never committed.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "blocked",
+      "blocker": "B-14",
+      "verbatim_check": {
+        "method": "sela-verbatim-overlap-v1",
+        "status": "machine_checked_unreviewed",
+        "items_compared": [
+          "grounding-saat-badai-emosi",
+          "grounding-satu-menit-lima-indra",
+          "lepas-kaitan-sadari-namai-fokus",
+          "memberi-ruang-untuk-perasaan-sulit",
+          "bertindak-sesuai-nilai",
+          "berduka-memberi-ruang-dan-berbaik-hati",
+          "jeda-dulu-sebelum-bicara",
+          "konflik-keluarga-nilai-dan-satu-tindakan-baik",
+          "khawatir-soal-tubuh-dan-kesehatan",
+          "bersikap-baik-pada-diri-sendiri",
+          "butuh-bantuan-sekarang"
+        ],
+        "languages_compared": [
+          "en"
+        ],
+        "checked_on": "2026-10-26",
+        "copy": {
+          "kind": "publisher_pdf",
+          "url": "https://iris.who.int/handle/10665/331901",
+          "retrieved_on": "2026-10-26",
+          "sha256": "5413685924bf3041a4b1fdd14bcad9a640dac2cf823c6e840ade5862400ef5c2",
+          "text_extraction": "English PDF 9789240003910-eng.pdf from WHO IRIS; text layer extracted with pdftotext -layout (poppler)"
+        },
+        "longest_shared_run_words": 10,
+        "runs_at_or_over_5_words": [
+          {
+            "item_id": "grounding-saat-badai-emosi",
+            "field": "content.steps.en[3]",
+            "words": 5,
+            "locator": "PDF p. 41"
+          },
+          {
+            "item_id": "grounding-saat-badai-emosi",
+            "field": "content.steps.en[4]",
+            "words": 6,
+            "locator": "PDF p. 69"
+          },
+          {
+            "item_id": "lepas-kaitan-sadari-namai-fokus",
+            "field": "content.steps.en[0]",
+            "words": 10,
+            "locator": "PDF p. 125"
+          },
+          {
+            "item_id": "lepas-kaitan-sadari-namai-fokus",
+            "field": "content.steps.en[1]",
+            "words": 6,
+            "locator": "PDF p. 125"
+          },
+          {
+            "item_id": "bertindak-sesuai-nilai",
+            "field": "content.title.en",
+            "words": 5,
+            "locator": "PDF p. 42"
+          },
+          {
+            "item_id": "bertindak-sesuai-nilai",
+            "field": "content.steps.en[1]",
+            "words": 5,
+            "locator": "PDF p. 22"
+          },
+          {
+            "item_id": "berduka-memberi-ruang-dan-berbaik-hati",
+            "field": "content.summary.en",
+            "words": 5,
+            "locator": "PDF p. 53"
+          },
+          {
+            "item_id": "jeda-dulu-sebelum-bicara",
+            "field": "content.steps.en[2]",
+            "words": 6,
+            "locator": "PDF p. 40"
+          },
+          {
+            "item_id": "konflik-keluarga-nilai-dan-satu-tindakan-baik",
+            "field": "content.steps.en[3]",
+            "words": 5,
+            "locator": "PDF p. 98"
+          }
+        ],
+        "no_text_copied_basis": "Not claimed. cards_who.json is an adaptation under CC BY-NC-SA 3.0 IGO (share-alike), so WHO's wording may be reused; every run of 5 or more words is disclosed here, as locators.",
+        "note": "First run on 2026-10-26 for content set 1.1.0; re-run for 1.2.0 with tests/content/verbatim_overlap.py, which reproduces the 1.1.0 result exactly on the v1 text. English text only: IRIS lists no Indonesian edition. The PDF stays in a local scratch directory and is never committed."
+      }
+    },
+    {
+      "id": "who-pmplus-2018",
+      "title": "Problem Management Plus (PM+): individual psychological help for adults impaired by distress in communities exposed to adversity (generic field-trial version 1.1)",
+      "publisher": "World Health Organization",
+      "year": 2018,
+      "kind": "who_publication",
+      "url": "https://iris.who.int/handle/10665/375604",
+      "persistent_url": "https://iris.who.int/handle/10665/375604",
+      "identifiers": {
+        "who_reference": "WHO/MSD/MER/18.5",
+        "iris_handle": "10665/375604"
+      },
+      "licence": "CC BY-NC-SA 3.0 IGO",
+      "licence_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo",
+      "licence_evidence": "Copyright page of the English PDF (WHO_MSD_MER_18.5_eng.pdf, front matter): CC BY-NC-SA 3.0 IGO; IRIS dc.rights 'CC BY-NC-SA 3.0 IGO'. Read on 2026-10-26. PM+ version 1.0 (2016) is 'All rights reserved' and is not used (v1 knowledge base).",
+      "suggested_citation": "Problem Management Plus (PM+): individual psychological help for adults impaired by distress in communities exposed to adversity (generic field-trial version 1.1). Geneva: World Health Organization; 2018. Licence: CC BY-NC-SA 3.0 IGO.",
+      "translation_disclaimer_verbatim": "This translation was not created by the World Health Organization (WHO). WHO is not responsible for the content or accuracy of this translation. The original English edition shall be the binding and authentic edition",
+      "stated_population": "adults",
+      "population_note": "Title and suggested citation: 'for adults impaired by distress'. A manual for trained non-specialist helpers, not a self-help book.",
+      "use": "adapted: 8 cards (Chapters 6-9)",
+      "checked_on": "2026-10-26",
+      "check": "IRIS handle HTTP 200 (redirects to the IRIS item page); English PDF retrieved from IRIS; copyright page and Chapters 6-9 (PDF pp. 44-71) read.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "blocked",
+      "blocker": "B-14",
+      "verbatim_check": {
+        "method": "sela-verbatim-overlap-v1",
+        "status": "machine_checked_unreviewed",
+        "items_compared": [
+          "napas-lambat-tiga-hitungan",
+          "pilah-yang-bisa-diubah",
+          "mulai-bergerak-lagi-sedikit-demi-sedikit",
+          "pecah-tugas-kuliah-jadi-langkah-kecil",
+          "masalah-uang-enam-langkah",
+          "perkuat-dukungan-sosial",
+          "berduka-tetap-terhubung-dan-rutinitas",
+          "konflik-hubungan-pecah-jadi-bagian-kecil",
+          "menulis-catatan-dan-melihat-kembali"
+        ],
+        "languages_compared": [
+          "en"
+        ],
+        "checked_on": "2026-10-26",
+        "copy": {
+          "kind": "publisher_pdf",
+          "url": "https://iris.who.int/handle/10665/375604",
+          "retrieved_on": "2026-10-26",
+          "sha256": "aaa6ce06dacc1058ba8b695b7d8146d33abfdfcf8a13ea7d888f71a01a833cbe",
+          "text_extraction": "English PDF WHO_MSD_MER_18.5_eng.pdf from WHO IRIS; text layer extracted with pdftotext -layout (poppler)"
+        },
+        "longest_shared_run_words": 4,
+        "runs_at_or_over_5_words": [],
+        "no_text_copied_basis": "Not claimed. cards_who.json is an adaptation under CC BY-NC-SA 3.0 IGO (share-alike), so WHO's wording may be reused; every run of 5 or more words is disclosed here, as locators.",
+        "note": "First run on 2026-10-26 for content set 1.1.0; re-run for 1.2.0 with tests/content/verbatim_overlap.py, which reproduces the 1.1.0 result exactly on the v1 text. English text only: IRIS lists no Indonesian edition. The PDF stays in a local scratch directory and is never committed."
+      }
+    },
+    {
+      "id": "who-mh-work-2022",
+      "title": "WHO guidelines on mental health at work",
+      "publisher": "World Health Organization",
+      "year": 2022,
+      "published_on": "2022-09-27",
+      "kind": "who_publication",
+      "url": "https://www.who.int/publications/i/item/9789240053052",
+      "persistent_url": "https://iris.who.int/handle/10665/363177",
+      "identifiers": {
+        "isbn_electronic": "978-92-4-005305-2",
+        "isbn_print": "978-92-4-005306-9",
+        "iris_handle": "10665/363177"
+      },
+      "licence": "CC BY-NC-SA 3.0 IGO",
+      "licence_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo",
+      "licence_evidence": "Copyright page of the English PDF (9789240053052-eng.pdf): CC BY-NC-SA 3.0 IGO; IRIS dc.rights 'CC BY-NC-SA 3.0 IGO'. Read on 2026-10-26.",
+      "suggested_citation": "WHO guidelines on mental health at work. Geneva: World Health Organization; 2022. Licence: CC BY-NC-SA 3.0 IGO.",
+      "translation_disclaimer_verbatim": "This translation was not created by the World Health Organization (WHO). WHO is not responsible for the content or accuracy of this translation. The original English edition shall be the binding and authentic edition",
+      "stated_population": "workers",
+      "population_note": "Guidelines for workers and workplaces. Recommendation 8B (leisure-based physical activity) is a conditional recommendation with very low-certainty evidence (PDF p. 60).",
+      "use": "adapted: 3 cards",
+      "checked_on": "2026-10-26",
+      "check": "Landing page HTTP 200; English PDF retrieved from IRIS; copyright page and recommendation 8B read.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "blocked",
+      "blocker": "B-14",
+      "verbatim_check": {
+        "method": "sela-verbatim-overlap-v1",
+        "status": "machine_checked_unreviewed",
+        "items_compared": [
+          "beban-kerja-bicara-dan-atur-batas",
+          "gerak-tubuh-setelah-kerja",
+          "kelelahan-kerja-kenali-dan-pulihkan"
+        ],
+        "languages_compared": [
+          "en"
+        ],
+        "checked_on": "2026-10-26",
+        "copy": {
+          "kind": "publisher_pdf",
+          "url": "https://iris.who.int/handle/10665/363177",
+          "retrieved_on": "2026-10-26",
+          "sha256": "fabbc1aae233c14bdd9f37f19a00c7951cdbf2c9c0c455d7bbe85222afdc3f60",
+          "text_extraction": "English PDF 9789240053052-eng.pdf from WHO IRIS; text layer extracted with pdftotext -layout (poppler)"
+        },
+        "longest_shared_run_words": 6,
+        "runs_at_or_over_5_words": [
+          {
+            "item_id": "gerak-tubuh-setelah-kerja",
+            "field": "content.why.en",
+            "words": 6,
+            "locator": "PDF p. 1"
+          }
+        ],
+        "no_text_copied_basis": "Not claimed. cards_who.json is an adaptation under CC BY-NC-SA 3.0 IGO (share-alike), so WHO's wording may be reused; every run of 5 or more words is disclosed here, as locators.",
+        "note": "First run on 2026-10-26 for content set 1.1.0; re-run for 1.2.0 with tests/content/verbatim_overlap.py, which reproduces the 1.1.0 result exactly on the v1 text. English text only: IRIS lists no Indonesian edition. The PDF stays in a local scratch directory and is never committed."
+      }
+    },
+    {
+      "id": "who-loneliness-2025",
+      "title": "From loneliness to social connection: charting a path to healthier societies. Report of the WHO Commission on Social Connection",
+      "publisher": "World Health Organization",
+      "year": 2025,
+      "published_on": "2025-06-27",
+      "kind": "who_publication",
+      "url": "https://www.who.int/publications/i/item/978240112360",
+      "persistent_url": "https://iris.who.int/handle/10665/381746",
+      "identifiers": {
+        "isbn_electronic": "978-92-4-011236-0",
+        "isbn_print": "978-92-4-011237-7",
+        "iris_handle": "10665/381746"
+      },
+      "licence": "CC BY-NC-SA 3.0 IGO",
+      "licence_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo",
+      "licence_evidence": "Copyright page of the English PDF (9789240112360-eng.pdf): CC BY-NC-SA 3.0 IGO; WHO landing page metadata 'copyrightNotice: CC BY-NC-SA 3.0 IGO'; IRIS dc.rights 'CC BY-NC-SA 3.0 IGO'. Read on 2026-10-26.",
+      "suggested_citation": "From loneliness to social connection - charting a path to healthier societies: report of the WHO Commission on Social Connection. Geneva: World Health Organization; 2025. Licence: CC BY-NC-SA 3.0 IGO.",
+      "translation_disclaimer_verbatim": "This translation was not created by the World Health Organization (WHO). WHO is not responsible for the content or accuracy of this translation. The original English edition shall be the binding and authentic edition",
+      "stated_population": "general",
+      "population_note": "Covers all ages. Reports that about one in six people worldwide experience loneliness (PDF p. 18) and that rates are highest among adolescents and young adults (PDF p. 44).",
+      "use": "adapted: 1 card",
+      "checked_on": "2026-10-26",
+      "check": "WHO landing page .../978240112360 HTTP 200 (its canonical link is the same 12-digit slug); .../9789240112360 HTTP 404; IRIS record 10665/381746 and English PDF retrieved; copyright page read.",
+      "url_note": "The discovery report flagged the v1 URL .../i/item/978240112360 as one digit short. It is one digit short of the ISBN, but it is the slug WHO itself publishes: on 2026-10-26 it answered HTTP 200 and is the page's canonical URL, while the 13-digit form .../i/item/9789240112360 answered HTTP 404. The fix therefore keeps WHO's working landing URL, adds the IRIS handle as the persistent URL, and records the correct ISBN 978-92-4-011236-0.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "blocked",
+      "blocker": "B-14",
+      "verbatim_check": {
+        "method": "sela-verbatim-overlap-v1",
+        "status": "machine_checked_unreviewed",
+        "items_compared": [
+          "kesepian-langkah-kecil-terhubung"
+        ],
+        "languages_compared": [
+          "en"
+        ],
+        "checked_on": "2026-10-26",
+        "copy": {
+          "kind": "publisher_pdf",
+          "url": "https://iris.who.int/handle/10665/381746",
+          "retrieved_on": "2026-10-26",
+          "sha256": "d7e7fd68b5b4a9512043f115f6c1ac2a7ac19b277642be1be179841a6cfd69a6",
+          "text_extraction": "English PDF 9789240112360-eng.pdf from WHO IRIS; text layer extracted with pdftotext -layout (poppler)"
+        },
+        "longest_shared_run_words": 4,
+        "runs_at_or_over_5_words": [],
+        "no_text_copied_basis": "Not claimed. cards_who.json is an adaptation under CC BY-NC-SA 3.0 IGO (share-alike), so WHO's wording may be reused; every run of 5 or more words is disclosed here, as locators.",
+        "note": "First run on 2026-10-26 for content set 1.1.0; re-run for 1.2.0 with tests/content/verbatim_overlap.py, which reproduces the 1.1.0 result exactly on the v1 text. English text only: IRIS lists no Indonesian edition. The PDF stays in a local scratch directory and is never committed."
+      }
+    },
+    {
+      "id": "who-lmm-ai-2024",
+      "title": "Ethics and governance of artificial intelligence for health: guidance on large multi-modal models",
+      "publisher": "World Health Organization",
+      "year": 2024,
+      "published_on": "2024-01-08",
+      "kind": "who_publication",
+      "url": "https://iris.who.int/handle/10665/375579",
+      "persistent_url": "https://iris.who.int/handle/10665/375579",
+      "identifiers": {
+        "isbn_electronic": "978-92-4-008475-9",
+        "iris_handle": "10665/375579"
+      },
+      "licence": "CC BY-NC-SA 3.0 IGO",
+      "licence_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/igo",
+      "licence_evidence": "Copyright page of the English PDF (9789240084759-eng.pdf): CC BY-NC-SA 3.0 IGO; IRIS dc.rights. Read on 2026-10-26.",
+      "suggested_citation": "Ethics and governance of artificial intelligence for health. Guidance on large multi-modal models. Geneva: World Health Organization; 2024. Licence: CC BY-NC-SA 3.0 IGO.",
+      "stated_population": "not_population_specific",
+      "use": "cited for two short facts in a guide (no text adapted or reproduced)",
+      "checked_on": "2026-10-26",
+      "check": "IRIS record and English PDF retrieved; PDF p. 28 (false answers cannot be told apart from accurate ones) and PDF p. 32 (risks of wrong, biased or incomplete answers for patients and lay users) read.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "not_applicable"
+    },
+    {
+      "id": "who-adolescent-standards-2025",
+      "title": "Global standards for quality health care services for adolescents",
+      "publisher": "World Health Organization",
+      "year": 2025,
+      "published_on": "2025-10-30",
+      "kind": "who_publication",
+      "url": "https://iris.who.int/handle/10665/383313",
+      "persistent_url": "https://iris.who.int/handle/10665/383313",
+      "identifiers": {
+        "isbn_electronic": "978-92-4-011401-2",
+        "iris_handle": "10665/383313"
+      },
+      "licence": "CC BY-NC-SA 4.0 IGO according to the PDF's suggested citation; IRIS dc.rights says CC BY-NC-SA 3.0 IGO (discrepancy recorded, not resolved)",
+      "licence_evidence": "PDF copyright page (9789240114012-eng.pdf, PDF p. 4): 'Licence: CC BY-NC-SA 4.0 IGO'; IRIS metadata: 'CC BY-NC-SA 3.0 IGO'. Read on 2026-10-26. Only a short fact is cited, so no adaptation notice is needed.",
+      "suggested_citation": "Global standards for quality health care services for adolescents. Geneva: World Health Organization; 2025. Licence: CC BY-NC-SA 4.0 IGO.",
+      "stated_population": "adolescents",
+      "use": "cited for Statement 3.2 in two guides (no text adapted or reproduced)",
+      "checked_on": "2026-10-26",
+      "check": "IRIS record and English PDF retrieved; Standard 3, Statement 3.2 (PDF p. 43) read: services keep adolescents' information confidential and explain its limits, including when and how it may have to be broken.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "not_applicable"
+    },
+    {
+      "id": "kemenkes-ayosehat-stres-2024",
+      "title": "Apa Itu Stres: Gejala, Penyebab, Pencegahan dan Pengobatan",
+      "publisher": "Kementerian Kesehatan Republik Indonesia (Ayo Sehat)",
+      "year": 2024,
+      "published_on": "2024-07-04",
+      "kind": "government_web_page",
+      "url": "https://ayosehat.kemkes.go.id/apa-itu-stres",
+      "licence": "No licence statement; Indonesian government public information (the v1 team relied on UU 28/2014 Pasal 43 huruf b). Paraphrased; the v1 team states that no text was copied, which is not yet verified (see verbatim_check). Not legal advice.",
+      "stated_population": "general",
+      "use": "paraphrased: 1 card",
+      "checked_on": "2026-10-26",
+      "check": "HTTP 503 on two attempts in the morning and again at 20:07 UTC, page 'Situs Sedang Dalam Pemeliharaan' (site under maintenance). Content not re-verified; last verified by the Dengar.in v1 team on 2026-10-15. The Internet Archive lists a snapshot, but web.archive.org could not be reached from the checking environment.",
+      "last_verified_content_on": "2026-10-15",
+      "reverify_by": "2026-11-26",
+      "commercial_use": "needs_legal_confirmation",
+      "verbatim_check": {
+        "method": "sela-verbatim-overlap-v1",
+        "status": "not_run",
+        "items_compared": [
+          "kiat-harian-kelola-stres"
+        ],
+        "languages_compared": [
+          "id"
+        ],
+        "attempts": [
+          {
+            "on": "2026-10-26",
+            "what": "Live page: HTTP 503 (site under maintenance), twice in the morning and again at 20:07 UTC."
+          },
+          {
+            "on": "2026-10-26",
+            "what": "Internet Archive: the availability API lists a snapshot of 2026-10-02 12:05:55 UTC that answered HTTP 200 (https://web.archive.org/web/20261002120555/https://ayosehat.kemkes.go.id/apa-itu-stres). web.archive.org itself could not be reached from the checking environment (the connection was reset at the egress proxy), so the copy was not read."
+          }
+        ],
+        "due_by": "2026-11-26",
+        "no_text_copied_basis": "Only the Dengar.in v1 team's statement of 2026-10-15 ('paraphrased, no text copied'); not yet verified by any check.",
+        "note": "Before 2026-11-26: run tests/content/verbatim_overlap.py --lang id on the items above against the live page, or against the archived snapshot if the page is still down; record the copy (kind, URL, date, SHA-256) and the result here; then resolve or keep the items' source_unreachable flags and re-check their source_claims. Until then the items keep commercial_use needs_legal_confirmation and stay unpublishable."
+      }
+    },
+    {
+      "id": "kemenkes-ayosehat-10cara-2025",
+      "title": "10 Cara Efektif Menjaga Kesehatan Mental Agar Tetap Bahagia",
+      "publisher": "Kementerian Kesehatan Republik Indonesia (Ayo Sehat)",
+      "year": 2025,
+      "published_on": "2025-01-13",
+      "kind": "government_web_page",
+      "url": "https://ayosehat.kemkes.go.id/cara-menjaga-kesehatan-mental",
+      "licence": "No licence statement; Indonesian government public information (the v1 team relied on UU 28/2014 Pasal 43 huruf b). Paraphrased; the v1 team states that no text was copied, which is not yet verified (see verbatim_check). Not legal advice.",
+      "stated_population": "general",
+      "use": "paraphrased: 2 cards",
+      "checked_on": "2026-10-26",
+      "check": "HTTP 503 on two attempts in the morning and again at 20:07 UTC, page 'Situs Sedang Dalam Pemeliharaan' (site under maintenance). Content not re-verified; last verified by the Dengar.in v1 team on 2026-10-15. The Internet Archive lists a snapshot, but web.archive.org could not be reached from the checking environment.",
+      "last_verified_content_on": "2026-10-15",
+      "reverify_by": "2026-11-26",
+      "commercial_use": "needs_legal_confirmation",
+      "verbatim_check": {
+        "method": "sela-verbatim-overlap-v1",
+        "status": "not_run",
+        "items_compared": [
+          "jeda-dan-batas-waktu-belajar",
+          "menerima-diri-dan-tujuan-realistis"
+        ],
+        "languages_compared": [
+          "id"
+        ],
+        "attempts": [
+          {
+            "on": "2026-10-26",
+            "what": "Live page: HTTP 503 (site under maintenance), twice in the morning and again at 20:07 UTC."
+          },
+          {
+            "on": "2026-10-26",
+            "what": "Internet Archive: the availability API lists a snapshot of 2026-06-11 16:47:13 UTC that answered HTTP 200 (https://web.archive.org/web/20260611164713/https://ayosehat.kemkes.go.id/cara-menjaga-kesehatan-mental). web.archive.org itself could not be reached from the checking environment (the connection was reset at the egress proxy), so the copy was not read."
+          }
+        ],
+        "due_by": "2026-11-26",
+        "no_text_copied_basis": "Only the Dengar.in v1 team's statement of 2026-10-15 ('paraphrased, no text copied'); not yet verified by any check.",
+        "note": "Before 2026-11-26: run tests/content/verbatim_overlap.py --lang id on the items above against the live page, or against the archived snapshot if the page is still down; record the copy (kind, URL, date, SHA-256) and the result here; then resolve or keep the items' source_unreachable flags and re-check their source_claims. Until then the items keep commercial_use needs_legal_confirmation and stay unpublishable."
+      }
+    },
+    {
+      "id": "kemenkes-keslan-tidur-2025",
+      "title": "Penting Tidur Berkualitas, Jaga Kesehatan Fisik dan Mental",
+      "publisher": "Kementerian Kesehatan RI, Direktorat Jenderal Kesehatan Lanjutan (news item by Humas RSUP Dr. M. Djamil Padang)",
+      "year": 2025,
+      "published_on": "2025-03-18",
+      "kind": "government_web_page",
+      "url": "https://keslan.kemkes.go.id/read/2539/penting-tidur-berkualitas-jaga-kesehatan-fisik-dan-mental",
+      "licence": "No licence statement; Indonesian government public information (the v1 team relied on UU 28/2014 Pasal 43 huruf b); paraphrased. A machine verbatim check on 2026-10-26 found no shared run of more than 4 words (verbatim_check). Not legal advice.",
+      "stated_population": "general",
+      "population_note": "Gives sleep durations by age: adults 7-9 hours, teens 8-10 hours, children 9-12 hours.",
+      "use": "paraphrased: 1 card; supporting source for the sleep-problem signs in 1 CDC card",
+      "checked_on": "2026-10-26",
+      "check": "HTTP 200; page dated 18 March 2025 read: durations by age, regular sleep pattern, comfortable environment, avoiding stimulants, signs of insomnia and sleep apnoea.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "needs_legal_confirmation",
+      "verbatim_check": {
+        "method": "sela-verbatim-overlap-v1",
+        "status": "machine_checked_unreviewed",
+        "items_compared": [
+          "tidur-cukup-tujuh-sampai-sembilan-jam",
+          "kamar-dan-layar-sebelum-tidur"
+        ],
+        "languages_compared": [
+          "id"
+        ],
+        "checked_on": "2026-10-26",
+        "copy": {
+          "kind": "publisher_page",
+          "url": "https://keslan.kemkes.go.id/read/2539/penting-tidur-berkualitas-jaga-kesehatan-fisik-dan-mental",
+          "retrieved_on": "2026-10-26",
+          "sha256": "706dfe8b59276f40842bbfb88c44e4d2975f5142709b79df26c268c457c55f04",
+          "text_extraction": "HTML page; visible text blocks (scripts and styles removed) by tests/content/verbatim_overlap.py"
+        },
+        "longest_shared_run_words": 4,
+        "runs_at_or_over_5_words": [],
+        "no_text_copied_basis": "The Dengar.in v1 team's statement of 2026-10-15, now checked by machine: no run of 5 or more words is shared with the page (longest 4 words; 3 for tidur-cukup-tujuh-sampai-sembilan-jam).",
+        "note": "Indonesian text compared, all fields of both items (kamar-dan-layar-sebelum-tidur paraphrases the page's sleep-apnoea signs). The English text is the v1 team's translation and was not compared. The page copy stays in a local scratch directory."
+      }
+    },
+    {
+      "id": "kemenkes-healing119-2025",
+      "title": "Cegah Bunuh Diri, Dukung Kesehatan Jiwa: Kenali Layanan Healing119.id",
+      "publisher": "Kementerian Kesehatan RI, Direktorat Jenderal Kesehatan Primer dan Komunitas",
+      "year": 2025,
+      "published_on": "2025-08-07",
+      "kind": "government_web_page",
+      "url": "https://kesprimkom.kemkes.go.id/konten/127/151/0/cegah-bunuh-diri-dukung-kesehatan-jiwa-kenali-layanan-healing119-id",
+      "licence": "No licence statement; facts cited with the source, no text copied.",
+      "stated_population": "general",
+      "population_note": "Names young people, workers and homemakers among the groups the service aims to reach; states no age limit.",
+      "use": "cited for Healing119 facts (help route in cards and guides)",
+      "checked_on": "2026-10-26",
+      "check": "HTTP 200; page dated 7 August 2025 read: free; initial psychological support; anonymous, not face to face; follow-up and referral to professional services when needed; voice call to 119 extension 8 or through www.healing119.id; WhatsApp chat from the site; operates from morning to night.",
+      "reverify_by": "2027-01-14",
+      "commercial_use": "not_applicable"
+    },
+    {
+      "id": "healing119-site",
+      "title": "Healing 119: Layanan Hotline Kesehatan Mental dan Bunuh Diri Kementerian Kesehatan",
+      "publisher": "Kementerian Kesehatan Republik Indonesia",
+      "year": 2026,
+      "kind": "government_service_site",
+      "url": "https://www.healing119.id/",
+      "licence": "No licence statement; service facts cited, no text copied.",
+      "stated_population": "general",
+      "use": "cited for the help route (cards and guides)",
+      "checked_on": "2026-10-26",
+      "check": "HTTP 200; front page read: 'Hubungi 119 ext. 8 untuk darurat bunuh diri'; 'Konseling via WhatsApp'; 'Layanan Hotline Kesehatan Mental dan Bunuh Diri Kementerian Kesehatan'.",
+      "reverify_by": "2027-01-14",
+      "commercial_use": "not_applicable"
+    },
+    {
+      "id": "kemenkes-skrining-2024",
+      "title": "Skrining Kesehatan Jiwa Minimal Setahun Sekali",
+      "publisher": "Kementerian Kesehatan RI (Biro Komunikasi dan Pelayanan Publik)",
+      "year": 2024,
+      "published_on": "2024-10-25",
+      "kind": "government_web_page",
+      "url": "https://www.kemkes.go.id/id/skrining-kesehatan-jiwa-minimal-setahun-sekali",
+      "licence": "No licence statement; facts cited with the source, no text copied.",
+      "stated_population": "all_ages",
+      "population_note": "Screening is recommended for every life stage, from children to older people.",
+      "use": "cited in one guide (consultation preparation)",
+      "checked_on": "2026-10-26",
+      "check": "HTTP 200; text read: mental health screening recommended at least once a year for the whole population, from children to older people; available at puskesmas, not only in large cities.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "not_applicable"
+    },
+    {
+      "id": "cdc-about-sleep",
+      "title": "About Sleep",
+      "publisher": "Centers for Disease Control and Prevention (CDC), USA",
+      "year": 2024,
+      "published_on": "2024-05-15",
+      "kind": "us_government_web_page",
+      "url": "https://www.cdc.gov/sleep/about/index.html",
+      "licence": "Public domain (work of the US federal government); attribution to CDC, no endorsement implied.",
+      "stated_population": "general",
+      "population_note": "Durations by age: teens 13-17 '8-10 hours'; adults 18-60 '7 or more hours'; 61-64 '7-9 hours'; 65 and older '7-8 hours'.",
+      "use": "adapted: 2 cards",
+      "checked_on": "2026-10-26",
+      "check": "HTTP 200; text read: durations by age and the habits list (same bed and wake time; quiet, relaxing, cool bedroom; devices off at least 30 minutes before bed; no large meals or alcohol before bed; no caffeine in the afternoon or evening).",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "allowed",
+      "verbatim_check": {
+        "method": "sela-verbatim-overlap-v1",
+        "status": "machine_checked_unreviewed",
+        "items_compared": [
+          "jadwal-tidur-konsisten",
+          "kamar-dan-layar-sebelum-tidur"
+        ],
+        "languages_compared": [
+          "en"
+        ],
+        "checked_on": "2026-10-26",
+        "copy": {
+          "kind": "publisher_page",
+          "url": "https://www.cdc.gov/sleep/about/index.html",
+          "retrieved_on": "2026-10-26",
+          "sha256": "fc86bbe162acc8b4619cd9643aad742a21559dd42ba0abda6923ce8625df98a1",
+          "text_extraction": "HTML page; visible text blocks (scripts and styles removed) by tests/content/verbatim_overlap.py"
+        },
+        "longest_shared_run_words": 5,
+        "runs_at_or_over_5_words": [
+          {
+            "item_id": "kamar-dan-layar-sebelum-tidur",
+            "field": "content.steps.en[1]",
+            "words": 5,
+            "locator": "block 102 of the page text"
+          }
+        ],
+        "no_text_copied_basis": "Not claimed. The page is a US public-domain work; runs of 5 or more words are disclosed here.",
+        "note": "The copy was retrieved earlier on 2026-10-26 (HTTP 200); a later re-fetch on the same day was refused (HTTP 403) and was not pursued. English text only; the Indonesian text is the v1 team's translation."
+      }
+    },
+    {
+      "id": "stanley-brown-2012",
+      "title": "Safety Planning Intervention: A brief intervention to mitigate suicide risk",
+      "publisher": "Elsevier (Cognitive and Behavioral Practice 19(2):256-264); authors Barbara Stanley and Gregory K. Brown",
+      "year": 2012,
+      "kind": "peer_reviewed_article",
+      "url": "https://doi.org/10.1016/j.cbpra.2011.01.001",
+      "identifiers": {
+        "doi": "10.1016/j.cbpra.2011.01.001"
+      },
+      "licence": "Paywalled article. Only the six-step structure (a method) is described in the team's own words; no text or form is reproduced. The form is copyright Stanley & Brown 2008, 2021.",
+      "stated_population": "clinical_population",
+      "population_note": "A clinical intervention built with a professional; the v1 cards describe its structure for adults.",
+      "use": "structure only: 2 cards",
+      "checked_on": "2026-10-26",
+      "check": "DOI resolves (doi.org handle API responseCode 1). Full text not accessed: no open-access copy was used and no paywall was bypassed.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "needs_legal_confirmation"
+    },
+    {
+      "id": "sprc-safety-planning-guide-2008",
+      "title": "Safety Planning Guide: A Quick Guide for Clinicians",
+      "publisher": "Western Interstate Commission for Higher Education (WICHE) and the Suicide Prevention Resource Center (SPRC); authors Barbara Stanley and Gregory K. Brown",
+      "year": 2008,
+      "kind": "practice_guide",
+      "url": "https://sprc.org/resources/safety-planning-guide-quick-guide-clinicians/",
+      "identifiers": {
+        "pdf_url": "https://sprc.org/wp-content/uploads/2023/01/SafetyPlanningGuide-Quick-Guide-for-Clinicians.pdf",
+        "pdf_sha256": "efe021564d49ae0665ca1cf833861c5377ebaa1bfa5e7d9fdb078e5489fcfd1f"
+      },
+      "licence": "Copyright 2008 Barbara Stanley and Gregory K. Brown, reprinted by WICHE and SPRC with the authors' express permission; no portion may be reproduced without their written permission. Free to read on SPRC's site. Read only: the cards describe the structure in Sela's own words and reproduce nothing.",
+      "licence_evidence": "Copyright line at the foot of PDF p. 1, read on 2026-10-26. SPRC's resource page lists the guide as 'Year Published/Updated: 2009'; the guide itself carries the 2008 copyright.",
+      "stated_population": "clinical_population",
+      "population_note": "A guide for clinicians who develop a safety plan together with patients assessed to be at high risk for suicide. It states no age band.",
+      "use": "structure check only: 2 cards (no text reproduced)",
+      "checked_on": "2026-10-26",
+      "check": "SPRC resource page HTTP 200; the older PDF path .../sites/default/files/SafetyPlanningGuide Quick Guide for Clinicians.pdf answered HTTP 404, so the PDF was taken from the link on the resource page (HTTP 200, 2 pages, SHA-256 in identifiers). Read: the six-step process (PDF p. 2) and the steps after the plan is developed (PDF p. 1). Kept only in a local scratch directory, never committed. No paywall involved.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "needs_legal_confirmation",
+      "verbatim_check": {
+        "method": "sela-verbatim-overlap-v1",
+        "status": "machine_checked_unreviewed",
+        "items_compared": [
+          "rencana-keselamatan-enam-langkah",
+          "rencana-keselamatan-cara-menggunakan"
+        ],
+        "languages_compared": [
+          "en"
+        ],
+        "checked_on": "2026-10-26",
+        "copy": {
+          "kind": "publisher_pdf",
+          "url": "https://sprc.org/wp-content/uploads/2023/01/SafetyPlanningGuide-Quick-Guide-for-Clinicians.pdf",
+          "retrieved_on": "2026-10-26",
+          "sha256": "efe021564d49ae0665ca1cf833861c5377ebaa1bfa5e7d9fdb078e5489fcfd1f",
+          "text_extraction": "text layer extracted with pdftotext -layout (poppler)"
+        },
+        "longest_shared_run_words": 3,
+        "runs_at_or_over_5_words": [],
+        "no_text_copied_basis": "The guide may not be reproduced without the authors' written permission. Checked by machine: no run of 5 or more words is shared with it (longest 3 words).",
+        "note": "Optional for a structure-only source; recorded because the guide forbids reproduction. English text only."
+      }
+    },
+    {
+      "id": "w3c-wcag22",
+      "title": "Web Content Accessibility Guidelines (WCAG) 2.2",
+      "publisher": "World Wide Web Consortium (W3C)",
+      "year": 2024,
+      "published_on": "2024-12-12",
+      "kind": "w3c_standard",
+      "url": "https://www.w3.org/TR/WCAG22/",
+      "persistent_url": "https://www.w3.org/TR/2024/REC-WCAG22-20241212/",
+      "licence": "W3C document licence; cited, not adapted.",
+      "stated_population": "not_population_specific",
+      "use": "cited in one guide (accessibility)",
+      "checked_on": "2026-10-26",
+      "check": "HTTP 200; 'W3C Recommendation 12 December 2024'; abstract, SC 1.4.4 Resize Text (Level AA) and SC 2.1.1 Keyboard (Level A) read.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "not_applicable"
+    },
+    {
+      "id": "w3c-wai-older-users",
+      "title": "Older Users and Web Accessibility: Meeting the Needs of Ageing Web Users",
+      "publisher": "W3C Web Accessibility Initiative (WAI)",
+      "year": 2026,
+      "kind": "w3c_wai_page",
+      "url": "https://www.w3.org/WAI/older-users/",
+      "licence": "W3C permissive licence for WAI material; cited, not adapted.",
+      "stated_population": "older_adults",
+      "population_note": "The page carries no publication date; the year is the copyright year shown on 2026-10-26.",
+      "use": "cited in one guide (accessibility)",
+      "checked_on": "2026-10-26",
+      "check": "HTTP 200; sections 'Overlapping Needs' (age-related changes in vision, physical ability, hearing and cognition) and 'Background' (W3C accessibility standards cover most older users' needs) read.",
+      "reverify_by": "2027-04-26",
+      "commercial_use": "not_applicable"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "version": "sela-reading-content-gates-v1",
+  "purpose": "Extra FORBIDDEN claims for reading and support content (ID/EN), on top of the 13 product-claim gates in data/research/corpus/eval_fixtures/claim_gates.json (sela-claim-gates-v2). They target cure, guaranteed-outcome, efficacy-certainty, causal-benefit, condition-label, medication and engagement-pressure wording. A hit means a human editor rewords or justifies the text; it is not an automatic verdict and the list is not exhaustive.",
+  "flags": "IGNORECASE",
+  "wrapping": "tests/content/reading_validator.py wraps every claim pattern as PREFIX + '(' + pattern + ')', where PREFIX is the negation-window prefix published in claim_gates.json (identical for all of its patterns). A claim therefore matches only if none of the 6 tokens before it in the same clause is a negation cue (tidak, bukan, belum, tanpa, not, no, never, n't ...), exactly as in sela-claim-gates-v2.",
+  "gates": [
+    {
+      "id": "cure_or_heal",
+      "claim_en": "The content cures or heals",
+      "claim_id": "Konten ini menyembuhkan",
+      "claim_patterns": [
+        "\\b(?:cures?|cured|curing|heals?|healed)\\b",
+        "\\b(?:menyembuhkan|disembuhkan|kesembuhan|sembuh)\\b"
+      ],
+      "forbidden_examples": ["This exercise cures anxiety.", "Latihan ini menyembuhkan stres.", "Kamu akan sembuh dengan latihan ini."],
+      "allowed_examples": ["Latihan ini tidak menyembuhkan apa pun.", "This card does not cure anything.", "Hubungi Healing119 di 119 ext 8."]
+    },
+    {
+      "id": "guaranteed_outcome",
+      "claim_en": "An outcome is guaranteed or certain",
+      "claim_id": "Hasil dijamin atau pasti",
+      "claim_patterns": [
+        "\\b(?:guarantee[sd]?|guaranteeing)\\b",
+        "\\b(?:dijamin|menjamin)\\b",
+        "\\bjaminan\\s+(?:hasil|sembuh|berhasil)\\b",
+        "\\bpasti\\s+(?:berhasil|membaik|sembuh|hilang|aman)\\b",
+        "\\b(?:will|definitely|certainly)\\s+(?:make\\s+you\\s+feel\\s+better|fix|solve)\\b",
+        "\\b(?:always|selalu)\\s+(?:works?|berhasil)\\b"
+      ],
+      "forbidden_examples": ["This is guaranteed to help.", "Hasilnya dijamin.", "Perasaanmu pasti membaik.", "This will make you feel better."],
+      "allowed_examples": ["Sela tidak menjamin hasil apa pun.", "Bawa kartu jaminan kesehatan kalau kamu memakainya.", "It may not work for everyone."]
+    },
+    {
+      "id": "efficacy_or_certainty",
+      "claim_en": "Efficacy or research certainty is asserted",
+      "claim_id": "Efektivitas atau kepastian bukti dinyatakan",
+      "claim_patterns": [
+        "\\b(?:proven|shown)\\s+to\\s+(?:work|help|reduce|improve)\\b",
+        "\\b(?:evidence|research|studies|science)\\s+(?:shows?|proves?|demonstrates?|confirms?)\\b",
+        "\\b(?:programmes?|programs?|studies|research|trials?)\\s+(?:finds?|found)\\b",
+        "\\bterbukti\\b",
+        "\\b(?:bukti|penelitian|riset|studi)\\s+(?:menunjukkan|membuktikan)\\b",
+        "\\bmenemukan\\s+bahwa\\b",
+        "\\b(?:effective|efektif|ampuh|manjur)\\b"
+      ],
+      "forbidden_examples": ["Evidence shows this works.", "Bukti menunjukkan manfaatnya.", "Program WHO menemukan bahwa ini membantu.", "Latihan ini efektif.", "WHO programmes find that it helps."],
+      "allowed_examples": ["Buktinya masih sangat terbatas.", "Sela tidak mengklaim latihan ini efektif.", "The evidence is still very limited."]
+    },
+    {
+      "id": "causal_benefit",
+      "claim_en": "An association is presented as a direct or causal benefit",
+      "claim_id": "Hubungan disajikan sebagai sebab-akibat",
+      "claim_patterns": [
+        "\\bdirectly\\s+linked\\b",
+        "\\bberkaitan\\s+langsung\\b",
+        "\\b(?:leads?|led)\\s+to\\s+(?:better|improved|less|lower|fewer)\\b",
+        "\\b(?:causes?|caused)\\s+(?:better|improved|less|lower)\\b",
+        "\\b(?:menyebabkan|mengakibatkan)\\s+(?:membaik|berkurang|menurun|lebih\\s+baik)\\b"
+      ],
+      "forbidden_examples": ["Activity is directly linked to better mood.", "Kegiatan berkaitan langsung dengan suasana hati.", "Writing leads to better sleep."],
+      "allowed_examples": ["PM+ memakai langkah ini untuk memutus lingkaran tidak aktif.", "This is not directly linked to any outcome."]
+    },
+    {
+      "id": "condition_label",
+      "claim_en": "The reader is told they have a condition",
+      "claim_id": "Pembaca dilabeli punya kondisi tertentu",
+      "claim_patterns": [
+        "\\byou\\s+(?:have|are\\s+suffering\\s+from|suffer\\s+from|are\\s+experiencing)\\s+(?:clinical\\s+)?(?:depression|anxiety|an?\\s+(?:anxiety|depressive|mental|panic)\\s+disorder|ptsd|burn-?out|insomnia)\\b",
+        "\\bkamu\\s+(?:mengalami|menderita|terkena|mengidap)\\s+(?:depresi|gangguan|kecemasan|ansietas|burnout|insomnia)\\b"
+      ],
+      "forbidden_examples": ["You have depression.", "Kamu mengalami depresi.", "You are suffering from an anxiety disorder."],
+      "allowed_examples": ["Kartu ini tidak menilai apakah gejalamu berbahaya.", "You don't have to label what you feel."]
+    },
+    {
+      "id": "medication",
+      "claim_en": "Medication is named or advised",
+      "claim_id": "Obat disebut atau disarankan",
+      "claim_patterns": [
+        "\\b(?:medication|medications|medicines?|antidepressants?|dosage|doses?|pills?)\\b",
+        "\\b(?:obat|antidepresan|dosis|suplemen)\\b"
+      ],
+      "forbidden_examples": ["Take your medication.", "Minum obat ini.", "Ask about the dose."],
+      "allowed_examples": ["Sela tidak memberi saran obat.", "Sela doesn't give advice about medicines."]
+    },
+    {
+      "id": "engagement_pressure",
+      "claim_en": "Streaks, badges or day counters (D-037, D-038)",
+      "claim_id": "Streak, lencana, atau hitungan hari",
+      "claim_patterns": [
+        "\\b(?:streaks?|badges?|lencana)\\b",
+        "\\b(?:hari|day)\\s+(?:ke-?\\s*)?[0-9]+\\s+(?:dari|of)\\s+[0-9]+\\b",
+        "\\bjangan\\s+putus(?:kan)?\\s+(?:rantai|streak)\\b"
+      ],
+      "forbidden_examples": ["Keep your streak going.", "Hari ke-3 dari 14.", "Day 3 of 14."],
+      "allowed_examples": ["Semuanya pilihan, tanpa hitungan hari.", "No streaks, no badges."]
+    }
+  ]
+}
