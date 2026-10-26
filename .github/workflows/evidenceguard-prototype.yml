@@ -1,0 +1,39 @@
+name: EvidenceGuard prototype (Go)
+on:
+  push:
+    branches:
+      - feat/claude-sonnet-5-5-evidenceguard
+    paths:
+      - 'prototypes/evidenceguard/**'
+      - '.github/workflows/evidenceguard-prototype.yml'
+  pull_request:
+    paths:
+      - 'prototypes/evidenceguard/**'
+      - '.github/workflows/evidenceguard-prototype.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  go-verifier:
+    name: Unit tests (mocked Claude only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: prototypes/evidenceguard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: prototypes/evidenceguard/go.mod
+          cache: false
+      - name: Format check
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "$unformatted"
+            exit 1
+          fi
+      - name: Offline tests (race detector)
+        run: go test -race -count=1 ./...
