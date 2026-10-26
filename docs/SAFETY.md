@@ -1,25 +1,35 @@
 # Sela v2 safety and privacy
 
-Status: required target behavior, not a claim of clinical validation. Authority: [SPEC](../SPEC.md) V1–V8, V11–V13. Historical v1 controls are [archived](archive/v1/SAFETY.md).
+Status: **implemented and tested as software behaviour** (`internal/safety`, `internal/journey`, `internal/httpapi`); not a clinical validation or safety certification. Authority: [SPEC](../SPEC.md) V1–V8, V11–V13, V16–V19. Historical v1 controls are [archived](archive/v1/SAFETY.md).
 
 ## Care boundary
 
-The demo shows access and handoff toward fictional professional care. Sela does not provide clinical diagnosis, prescriptions, treatment decisions, autonomous medical triage or actual consultations. The fictional professional's plan is a predefined demonstration artifact; AI cannot create or modify treatment instructions. All care-data surfaces identify the simulation in ID/EN.
+Sela prepares and simulates a handoff to **fictional** professionals. It does not diagnose, prescribe, triage, give treatment advice, act as a therapist or provide consultations. Fictional follow-up plans are fixture text attributed to a fictional professional; the model cannot write or change them. Every care surface carries a synthetic/simulated label in Indonesian and English, and receipts state that a sent or acknowledged request is not care received.
 
-## Crisis interruption
+## Deterministic safety routing
 
-A deterministic crisis rule runs before inference and ordinary handoff transitions. The crisis fixture interrupts the journey and provides a clearly identified immediate-support screen. It makes no model call, marks no referral completed and schedules no visit. Any retained real help contact must carry geography, source and verification date; English does not imply global coverage. Unverified contacts are not presented as verified.
+`internal/safety` assesses **every user-authored text before it is stored or sent to a model**: the story (as a whole and per sentence), clarification answers, wording edits, opening lines and rehearsal attempts. It is a lexicon ported from the Dengar.in crisis engine with the same rule ids, extended for clause-level explicit denial ("aku tidak mau bunuh diri" alone does not count, but "… tapi aku ingin mengakhiri hidupku" does), quotations and third-party framing (routed to *elevated* support information rather than ignored), slang, leetspeak and code-switching, and documented idiom exceptions. Ambiguity takes the safer path. Its limitations are listed in the package documentation and the test vectors.
 
-## Consent and disclosure
+- **crisis** → the session is interrupted: the triggering text and the draft are discarded, running AI operations are canceled, and no further model call, approval, share, recipient transition, check-in or plan display is possible. The help page lists verified Indonesian services with region, sources and verification dates and says that language does not determine jurisdiction. "Delete this session and start again" is offered.
+- **elevated** → the journey continues and support information is shown.
+- Routing outcomes are counted (content-free counters), never logged per request.
 
-AI consent authorizes only a bounded synthetic processing operation. Brief approval approves one version. Sharing consent authorizes a selected snapshot, recipient and synthetic identity fields. None of these decisions implies another. The server validates them and rejects stale versions; client checkboxes alone are insufficient.
+No ML classifier is used (D-017); the model never decides routing.
 
-Edits invalidate approval. Withdrawal/reset/expiry cancels pending inference and invalidates stale responses. Share revocation removes the professional view's access even after a simulated consultation was completed. No old URL, guessed ID or demo role toggle restores it.
+## Consent, approval and sharing
 
-The professional view sees only explicitly selected fields and the approved brief; it cannot read private intake/history. Selected profile fields are synthetic. Optional anonymity remains available before handoff, with an explicit preview if a synthetic identity is chosen.
+Four independent, versioned, server-enforced decisions: AI processing, storage (retention), brief approval (bound to one ledger version and content hash) and sharing (per recipient, selected fields, duration, current policy version). Any ledger change clears approval. A share can never outlive the session. The recipient needs the link (token in the URL fragment, removed from the address bar on load) **and** a separate access code; five wrong codes lock the share; one uniform error hides why access failed. Revocation, expiry, supersession and deletion end access immediately; the UI says already-viewed information cannot be recalled.
 
-## Operations
+## Privacy
 
-Store bounded session data in memory and isolate each visitor. Apply body limits, same-origin mutation checks, opaque session cookies, expiry, admission limits and concurrency-safe updates. Metadata-only logs exclude text, prompts, provider responses, credentials and note content. Error messages do not echo provider payloads. See [API](API_SPEC.md) and [architecture](ARCHITECTURE.md).
+- **What is processed:** story text the user selects or writes, clarification answers and edits; with AI consent, the sentences are sent to the Meta model on Modal (configured not to log requests; Modal processes data as infrastructure provider). The hosting platform processes IP addresses and timing.
+- **What is stored:** only in server memory under the retention choice; restart erases everything. Practice text with obvious contact details (emails, phone-like numbers, 16-digit IDs, URLs) is rejected.
+- **Identity:** anonymous by default or a pseudonym; not technical anonymity.
+- **Logs:** route template, status, duration and request id; model call metadata (status, latency, token counts). Never story text, prompts, model output, tokens, access codes or credentials — verified by tests that search logs for canary strings.
+- **Browser:** HttpOnly SameSite=Strict cookies, strict CSP (`default-src 'self'`, no inline scripts), `Referrer-Policy: no-referrer`, `frame-ancestors 'none'`. Only the interface language is kept in `localStorage`.
 
-Tests demonstrate the specified software behavior, not clinical safety certification. No actual patient or professional data is accepted in this demo. Private security reports follow [SECURITY.md](../SECURITY.md).
+## Abuse and cost bounds
+
+Per-address token buckets for session creation, AI starts, recipient sign-in and other requests; per-session AI operation limit; global admission semaphore; Modal proxy authentication before any GPU starts; at most one GPU container; scale to zero after five minutes.
+
+Tests demonstrate this software behaviour on synthetic data only. Private security reports: [SECURITY.md](../SECURITY.md).

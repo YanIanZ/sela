@@ -89,3 +89,7 @@ Chronological, append-only record of v2 implementation decisions. Authority: [SP
 ## D-022
 
 2026-10-26 · Engineering · **Cost guards.** Modal `max_containers=1`, scale to zero after 5 minutes, proxy auth before any container starts; Go per-session limit (8 AI operations per 10 minutes) and per-address request limits. AI status is computed without contacting Modal (a health request can start a GPU).
+
+## D-023
+
+2026-10-26 · Engineering · **Meaning of `negated`, and one gold-label correction.** `negated` is the polarity of the quoted clause's main predicate: true when a negator (tidak, nggak, gak, bukan, belum, no, not, never, -n't, can't) applies to it. A hedge such as "not sure", "nggak yakin" or "tidak tahu apakah" is certainty (`uncertain`), not negation. Under this definition the synthetic gold fact "I wake up after a few hours and can't get back to sleep" was mislabelled `negated: false`; it is corrected to `true` in fixtures `sela-fixtures-2026.10.26-2`. The correction was made during development, before any final evaluation run, and the pre-registered threshold (`meaning_lock.gold_qualifier_negation_accuracy >= 1.0`) is unchanged. The remaining disagreement ("I'm not sure if it's the rotating schedule…" analysed as negated) is a ledger defect to fix, not a label to change.

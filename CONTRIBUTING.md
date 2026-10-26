@@ -1,39 +1,39 @@
 # Contributing to Sela
 
-Start with [SPEC.md](SPEC.md), then the [documentation index](docs/README.md). Go is the selected v2 backend; code is still v1 Next.js/TypeScript. Never describe a proposed endpoint, provider or deployment as implemented.
+Start with [SPEC.md](SPEC.md), then the [documentation index](docs/README.md). New work goes to v2 (`cmd/`, `internal/`, `web/`, `modal/`, `e2e/`, `eval/`, `scripts/research/`); v1 (Next.js) stays runnable until the cutover (T9). Never describe a proposed endpoint, provider or deployment as implemented, and never present a test-double run as Meta inference.
 
 ## Work boundaries
 
-Update the spec before changing requirements; use [FORMAT.md](FORMAT.md) for stable IDs and task status. Supporting docs must cite the relevant invariants and agree with the spec. Archived v1 docs are evidence/reference, not current directives. Preserve original contributor and license notices.
+Update the spec before changing requirements; use [FORMAT.md](FORMAT.md) for stable IDs and task status. Record engineering decisions in the [decision log](docs/DECISION_LOG.md) and keep [requirements traceability](docs/REQUIREMENTS_TRACEABILITY.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md) truthful: a status needs a test, an evaluation result or recorded evidence. Preserve original contributor and licence notices.
 
-Keep changes focused. Describe the resulting behavior, limitations and checks in each PR. Use synthetic data in fixtures, screenshots, issues and recordings. No real professional/patient registration, medical claims or real care transaction belongs in this demo.
+Keep changes focused. Describe the resulting behaviour, limitations and checks in each PR. Use synthetic data in fixtures, screenshots, issues and recordings. No real professional or patient data, medical claims or real care transactions belong in this demo. Do not lower an evaluation threshold to make a run pass.
 
-## Commands that work now
+## v2 checks
 
-Use Node.js 22.18+ and npm 10+; `nvm install && nvm use` selects the CI major version.
-
-```sh
-npm ci
-cp .env.example .env.local
-npm run dev
-```
-
-Current checks:
+Go 1.24, Node.js 22, Python 3.10+ (standard library only). From the repository root:
 
 ```sh
-npm run lint
-npm run lint:services
-npm run typecheck
-npm test
-npm run build
+gofmt -l cmd internal                 # must print nothing
+go vet ./... && go test -race ./...
+(cd web && npm ci && npm run typecheck && npm test && npm run build)
+python3 -m unittest discover -s tests/research -p 'test_*.py'
+python3 -m unittest discover -s tests/modal -p 'test_*.py'
+python3 scripts/research/corpus_pipeline.py verify
+go build -o build/sela ./cmd/sela && go build -o build/fakellm ./cmd/fakellm
+(cd e2e && npm ci) && node e2e/journey.e2e.mjs
+go run ./cmd/sela-eval -mode offline   # and -mode test_double
 ```
 
-Full v1 tests need `redis-server` or Docker. Go module/version/build/test commands will be documented when T2/T3 create them. See [development](docs/DEVELOPMENT.md).
+CI runs the same commands (`.github/workflows/v2.yml`), plus a container build. Live Modal deployment is manual (`.github/workflows/modal-deploy.yml`) and costs money; see [modal/README.md](modal/README.md).
+
+## v1 checks
+
+Node.js 22.18+ and npm 10+: `npm ci`, `npm run lint`, `npm run lint:services`, `npm run typecheck`, `npm test`, `npm run build`. Full v1 tests need `redis-server` or Docker. See [development](docs/DEVELOPMENT.md).
 
 ## Review focus
 
-Preserve ID/EN parity, crisis interruption, independent consent/approval/share decisions, exact-version snapshots, session isolation and truthful AI provenance. Tests changing those behaviors should exercise failure/race/revocation cases, not merely mirror implementation. Never publish keys, raw stories or model payloads in logs.
+Preserve ID/EN parity, crisis interruption before inference, independent AI/storage/sharing consents, exact-version approval and shares, Meaning Lock grounding, session isolation, recipient authorization (token alone is never access) and truthful AI provenance. Tests changing those behaviours should exercise failure, race, expiry and revocation cases, not merely mirror the implementation. Never log stories, quotes, model payloads, tokens, access codes or keys.
 
-Docs-only changes need link/anchor checks and source-reference validation; runtime fixture moves also need affected tests. Update [document inventory](docs/DOCUMENT_INVENTORY.md) when adding/moving/removing documentation. Check [validation](docs/VALIDATION.md) before claiming v2 acceptance.
+Docs changes need link/anchor checks; update the [document inventory](docs/DOCUMENT_INVENTORY.md) when adding, moving or removing documentation. Check [validation](docs/VALIDATION.md) before claiming acceptance.
 
 Use [GitHub Issues](https://github.com/YanIanZ/sela/issues) for reproducible bugs. Report sensitive vulnerabilities privately through [SECURITY.md](SECURITY.md).

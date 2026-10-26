@@ -4,59 +4,56 @@
 
 *Ruang sejenak untuk didengar.*
 
-[![Quality gate](https://github.com/YanIanZ/sela/actions/workflows/quality.yml/badge.svg)](https://github.com/YanIanZ/sela/actions/workflows/quality.yml)
+[![Sela v2](https://github.com/YanIanZ/sela/actions/workflows/v2.yml/badge.svg)](https://github.com/YanIanZ/sela/actions/workflows/v2.yml)
+[![v1 quality gate](https://github.com/YanIanZ/sela/actions/workflows/quality.yml/badge.svg)](https://github.com/YanIanZ/sela/actions/workflows/quality.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Sela is being redesigned as a bilingual companion for the journey toward professional mental-health support: **tell your story → understand your needs → explore professionals → prepare a consultation brief → share with consent → follow up**.
+Sela is a bilingual (Indonesian/English) bridge toward professional mental-health support, not an AI therapist. A person tells their story, reviews a source-grounded note in which every item quotes their own words, chooses a practical next step, rehearses how to start the conversation, shares only what they approve with a (fictional) professional, and sees honestly what happened next.
 
-The Meta hackathon demonstration uses **synthetic people, fictional professionals and simulated care**. It does not book real appointments, deliver medical treatment, diagnose or prescribe. Anonymity is an optional privacy choice within the journey.
+The demo uses **synthetic adults, fictional professionals and simulated care**. It books nothing real, contacts no one, and gives no diagnosis, prescription, triage or therapy. Crisis language stops the ordinary journey before any AI runs and shows verified Indonesian help services.
 
-## Source of truth and status
+## Status (26 October 2026)
 
-**[SPEC.md](SPEC.md) is the source of truth.** Start there, then use the [documentation index](docs/README.md).
+[SPEC.md](SPEC.md) is the source of truth. Detailed status: [implementation status](docs/IMPLEMENTATION_STATUS.md) · [requirements traceability](docs/REQUIREMENTS_TRACEABILITY.md) · [blockers](docs/BLOCKERS.md).
 
 | Area | Status |
 | --- | --- |
-| Backend decision | **Go**, confirmed |
-| Target frontend | Static React/TypeScript + Vite; engineering default |
-| AI direction | Meta-only live AI in the new journey; actual access/integration pending |
-| New professional-care demo | Designed, not implemented |
-| Current runnable application | Inherited Next.js/TypeScript v1 |
-| V2 deployment | Not configured |
+| v2 runtime: Go 1.24 API + React/TypeScript/Vite frontend in one binary | Implemented, tested locally (Go race tests, Vitest, Playwright journeys) |
+| Full journey in ID and EN, crisis routing, consents, retention/deletion, Story Ledger with Meaning Lock, Next Step, Opening Practice, handoff with token + access code, recipient view, follow-up, revoke | Implemented, tested locally |
+| AI: Meta **Muse Glimmer 30B** (open weights, Apache-2.0) on **Modal** via vLLM | Adapter and Modal app implemented and tested offline; **not deployed** — no Modal credentials or GPU budget yet ([B-1](docs/BLOCKERS.md)). Local runs use AI off or a clearly labelled **test double**, never presented as Meta |
+| Research corpus (100 publications): reproducible pipeline, verified dates, licences, traceable extraction, reviewer search | Implemented, tested locally; human appraisal not done ([B-4](docs/BLOCKERS.md)) |
+| Evaluation with pre-registered thresholds | Offline and test-double suites run; live-model metrics blocked ([evaluation](docs/EVALUATION.md)) |
+| Public deployment | Not configured ([B-3](docs/BLOCKERS.md)) |
+| Inherited v1 (Next.js) | Still runnable; retired only after v2 acceptance (T9) |
 
-The current CI badge tests v1, not the proposed Go implementation. Docs and task status distinguish target behavior from code that already exists.
+## Run v2 locally
 
-## Target demonstration
-
-- Indonesian and English user and fictional-professional perspectives.
-- Seeded intake, source-grounded consultation notes and explicit AI consent.
-- Deterministic discovery of fictional professionals and appointment slots.
-- Version-bound review, approval and separate consent to share selected fields.
-- Simulated handoff and consultation followed by a fixture-authored plan.
-- Clear crisis interruption, unavailable-model, manual, revoked and expired states.
-
-Read the [product](docs/PRODUCT.md), [architecture](docs/ARCHITECTURE.md), [planned API](docs/API_SPEC.md), [Meta integration](docs/META_INTEGRATION.md) and [migration roadmap](docs/ROADMAP.md).
-
-## Run the existing v1 application
-
-These commands run the old runtime, not Sela v2. Use Node.js 22.18+ and npm 10+.
+Go 1.24 and Node.js 22.
 
 ```sh
-git clone https://github.com/YanIanZ/sela.git
-cd sela
-npm ci
-cp .env.example .env.local
-npm run dev
+git clone https://github.com/YanIanZ/sela.git && cd sela
+(cd web && npm ci && npm run build)
+SELA_ENV=development SELA_SECURE_COOKIES=false go run ./cmd/sela   # AI off; open http://localhost:8080
 ```
 
-Open [localhost:3000](http://localhost:3000). Current environment templates and provider settings are v1-only. No Go command is available until the new runtime is implemented. See [development](docs/DEVELOPMENT.md) for current checks and [archive](docs/archive/v1/README.md) for inherited setup/operations.
+With the labelled test double (development only; the UI shows "TEST DOUBLE — not Meta"):
+
+```sh
+go run ./cmd/fakellm -addr 127.0.0.1:8090 &
+SELA_ENV=development SELA_SECURE_COOKIES=false SELA_LLM_MODE=test_double SELA_ALLOW_TEST_DOUBLE=true \
+  SELA_LLM_BASE_URL=http://127.0.0.1:8090 go run ./cmd/sela
+```
+
+Checks: `go vet ./... && go test -race ./...`, `cd web && npm run typecheck && npm test`, `node e2e/journey.e2e.mjs` (after building `build/sela` and `build/fakellm`), `go run ./cmd/sela-eval -mode offline`. Configuration, the Modal deployment, cost controls, rollback and a three-minute demo script are in the [runbook](docs/RUNBOOK.md) and [modal/README.md](modal/README.md).
+
+## Documentation
+
+[Documentation index](docs/README.md) · [product](docs/PRODUCT.md) · [architecture](docs/ARCHITECTURE.md) · [API](docs/API_SPEC.md) · [safety](docs/SAFETY.md) · [AI policy](docs/AI_POLICY.md) · [Meta integration](docs/META_INTEGRATION.md) · [ADR-0001: model choice](docs/adr/ADR-0001-meta-open-weight-model-on-modal.md) · [research corpus pipeline](docs/research/CORPUS_PIPELINE.md) · [decision log](docs/DECISION_LOG.md).
 
 ## Contributing and security
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Use synthetic examples only; never post private stories, credentials or recovery keys in public issues. Requirement changes start in `SPEC.md`.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Use synthetic examples only; never post private stories, credentials or keys in public issues. Requirement changes start in `SPEC.md`.
 
 ## Provenance and license
 
-Maintained individually by [I Wayan Bagus Arya Darma Wiguna](https://github.com/YanIanZ). Sela builds on the Dengar.in project by **Kata Justin Nama Timnya Gokil Udah** (Telkom University Surabaya). Original authorship and [MIT notices](LICENSE) are retained. See [provenance](docs/SELA_PROVENANCE.md).
-
-Historical AMD work is archived and does not describe the new Meta implementation. The [Meta event notes](docs/META_EVENT_NOTES.md) record official sources and unresolved eligibility/submission details.
+Maintained by [I Wayan Bagus Arya Darma Wiguna](https://github.com/YanIanZ). Sela builds on the Dengar.in project by **Kata Justin Nama Timnya Gokil Udah** (Telkom University Surabaya): its bilingual support, source-grounded Care Passport, opening-lines pipeline and crisis lexicon were ported into v2 and extended. Original authorship and [MIT notices](LICENSE) are retained. See [provenance](docs/SELA_PROVENANCE.md). Historical AMD work is archived and is not part of the v2 runtime. Hackathon eligibility of the Meta setup is not claimed ([event notes](docs/META_EVENT_NOTES.md)).

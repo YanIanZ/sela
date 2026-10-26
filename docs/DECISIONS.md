@@ -9,11 +9,11 @@ Authority: [SPEC](../SPEC.md). This record explains origin; it does not override
 | Indonesian and English | User | Confirmed across the complete journey |
 | Synthetic demonstration | User | Confirmed for people, professionals, slots, consultation and follow-up |
 | Backend Go | User | Confirmed; replaces earlier Go/Swift uncertainty |
-| Meta-aligned AI and hackathon | User | Confirmed direction; actual model/API access remains unverified |
-| Single static-web deployment | Engineering default | React/TypeScript + Vite, Go serves API/assets; not implemented |
-| In-memory bounded demo state | Engineering default | Per visitor; no database/Redis in target demo; no real-data migration |
-| Text-first, adult fixtures | Engineering default | Optional synthetic audio later; no live microphone/open patient intake in MVP |
-| Clinical handoff simulation | Engineering default consistent with user scope | Fictional inbox, separate sharing consent, scripted consultation/plan, explicit demo labels |
+| Meta-aligned AI and hackathon | User | Confirmed; Meta open-weight model on Modal ([ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md)); adapter and serving app implemented, live access not yet verified ([B-1](BLOCKERS.md)) |
+| Single static-web deployment | Engineering default | React/TypeScript + Vite, Go serves API/assets; implemented |
+| In-memory bounded demo state | Engineering default | Per visitor; no database/Redis; implemented with idle/absolute expiry (D-005, D-010) |
+| Text-first, adult fixtures | Engineering default | Implemented: seeded fictional adults plus bounded fictional practice text (D-003); no live microphone or open patient intake |
+| Clinical handoff simulation | Engineering default consistent with user scope | Implemented: per-owner fictional recipient, link token + access code, separate sharing consent, scripted consultation/plan, explicit demo labels (D-006, D-007) |
 | Legacy documentation archive | User-requested documentation refactor | Historical content and credits preserved; active requirements replaced by SPEC |
 
-Changing a user-confirmed decision requires new user direction. Engineering defaults may change with recorded rationale and consistent spec/doc updates; they must not silently expand product scope. No row implies implementation, clinical validation, real partnerships or event acceptance.
+Engineering decisions made during implementation are recorded in the [decision log](DECISION_LOG.md). Changing a user-confirmed decision requires new user direction. Engineering defaults may change with recorded rationale and consistent spec/doc updates; they must not silently expand product scope. No row implies implementation, clinical validation, real partnerships or event acceptance.

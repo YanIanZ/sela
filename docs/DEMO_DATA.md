@@ -1,28 +1,24 @@
 # Synthetic demo data
 
-Status: target data contract; new fixtures are not implemented. Authority: [SPEC](../SPEC.md) I.data, C3/C7/C8, V1/V2/V6/V7/V8/V11.
-
-Use deterministic, versioned fictional records. Never repurpose a real journal entry, patient story, provider identity, appointment, audio recording or clinical document. No real email, phone number, address, professional license or booking URL is required. Existing v1 evaluation fixtures remain historical until explicitly reviewed and adopted.
+Status: **implemented** in `internal/fixtures/data/*.json` (version `sela-fixtures-2026.10.26-2`), embedded in the binary and validated at start-up. Authority: [SPEC](../SPEC.md) I.data, C3/C7/C8, V1/V2/V6/V7/V8/V11.
 
 ## Fixture families
 
-| Record | Required contents |
-| --- | --- |
-| Scenario | Stable ID/version, adult persona, source evidence spans, ID/EN narrative, allowed questions and edits, scripted check-ins |
-| Professional | Clearly fictional name, service category, language tags, synthetic location/remote status, demo cost, allowed slot IDs |
-| Slot | Stable ID, professional ID, fixed demo timestamp, availability flag |
-| Plan | Stable ID/version, linked scenario/professional, explicit fictional-professional attribution, predefined follow-up steps |
-| Recorded AI result | Source fixture hash/version, labeled recorded provenance, original synthetic input reference; never default live evidence |
-| Crisis case | Explicit synthetic hazard input and expected deterministic interruption; no ordinary handoff or plan |
+| File | Contents | Validation at load |
+| --- | --- | --- |
+| `scenarios.json` | Four fictional adults: Nadia (Indonesian, overwhelm, cost), Sam (English, shift work, minimal sharing), Dimas (code-switched), and a crisis-routing test with a content warning. Each seeded scenario has gold facts (quote, kind, negation, subject, time, certainty, importance) and forbidden patterns for evaluation | Both languages present; quotes occur in the story; patterns compile; no contact-like data |
+| `professionals.json` | Six visibly fictional profiles ("(fiktif)"/"(fictional)") across categories, languages, formats, cost tiers and availability, with slots on a fixed demo clock; one service has only full slots to show an honest empty state | Fictional names, valid enums, slots on the demo clock, plans exist |
+| `plans.json` | Three fixture follow-up plans attributed to fictional professionals; one states explicitly that the demo has no prescription or treatment decision | Translations complete |
+| `options.json` | Demo clock, check-in options, recipient clarification/decline reasons, non-handoff next steps per barrier, clarification question templates | Translations complete |
+| `help.json` | Real Indonesian services copied only from v1 entries marked `verified_official` (Healing119, LISA Helpline, Yayasan Pulih) with sources, access dates (2026-10-14/15), verifier and re-verification date | Only `verified_official`; https sources with dates |
+| `policies.json` | Versioned privacy, AI-processing, storage and sharing texts that consent decisions reference | Versions present, translations complete |
 
-Use a fixed demo clock for scenarios and available slots so recordings are repeatable. Display the demo date separately from real system time. Session expiry and operational timeout use the real clock. Language changes select translations of the same IDs rather than mutating the clinical story.
+Language changes select translations of the same records; story text and quotes stay in the persona's own language. The demo clock (2026-11-06, slots 10–15 November) is shown as a fixed demo date; session expiry uses real time.
 
-## Editable data and isolation
+## Practice text
 
-The MVP exposes seeded story and source-backed selection/edit controls, not open real-patient intake. API rejects unknown IDs, arbitrary personal fields, cross-scenario evidence, unrelated plans/slots and unsupported model claims. AI consent sends only the selected synthetic narrative/evidence needed for that operation.
+Besides the fixtures, a user may write a fictional practice story (D-003): 20–3000 characters, adult attestation, safety gate first, obvious contact details rejected, memory-only. It is not used for evaluation or training.
 
-Session state contains selected IDs, versions, bounded generated output, consent/approval events, shared snapshots, simulated handoff status and seeded follow-up choices. Exact limits are implementation constants documented with T3 evidence; do not leave memory unbounded.
+## Isolation
 
-Public visitors never share user state. A fictional professional view is a projection inside the same visitor's session. Reset/expiry purges that session's data and revokes shares; an in-flight model result is discarded if its generation/version is stale. No cross-session directory of patient snapshots exists.
-
-Optional synthetic audio must have documented generation/source rights and language transcripts. No live microphone recording, real consultation transcription or automatic media generation is part of the MVP.
+All session state is per visitor, in memory, under the retention policy; reset, deletion and expiry purge it with its shares and recipient principals. Fictional recipients are instantiated per owner session, so no cross-visitor inbox or directory exists. A stale model result (changed story, ledger or consent) is discarded.

@@ -1,25 +1,32 @@
 # Sela v2 AI policy
 
-Status: target contract. Authority: [SPEC](../SPEC.md) C4, V3/V4/V7–V10/V12/V15. V1 multi-provider orchestration is [historical](archive/v1/AI_POLICY.md).
+Status: **implemented** in `internal/journey` (pipeline, prompts) and `internal/ledger` (validation); live model behaviour unverified ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) C4, V3/V4/V7–V10/V12/V15/V16. V1 multi-provider orchestration is [historical](archive/v1/AI_POLICY.md).
 
 ## Allowed work
 
-Meta may structure seeded intake into descriptive concerns, daily impact, stated timeline and consultation questions. Every retained factual claim must be backed by the selected scenario's evidence. Missing information remains unknown. The model may suggest a clarification from allowed scenario questions; it cannot introduce new patient facts.
+The Meta model (Muse Glimmer 30B on Modal, [ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md)) may:
 
-The model does not select crisis urgency, invent professionals or slots, decide a diagnosis, issue medication instructions, complete appointments, grant consent, approve notes, choose shared fields or modify a fictional professional's plan. Those transitions are deterministic application behavior under explicit user actions.
+1. Propose Story Ledger claims: each quotes one story sentence verbatim, has a kind, a short wording in the interface language and qualifier flags.
+2. Pick at most one clarification field from Sela's fixed list (concern, duration, daily impact, goal, practical preference); the question text is Sela's own.
+3. Draft two or three opening lines from the **approved** brief items only.
+
+It may not decide safety routing, consent, approval, sharing, recipients, slots, matching, plans or any transition, and it never sees other sessions, the professional catalogue or the research corpus.
 
 ## Pipeline
 
-Validate fixture/session/version → deterministic crisis gate → explicit AI consent → quota/concurrency admission → bounded Meta request → schema/evidence validation → recheck live session/version/consent → store a draft with provenance. Cancellation or staleness discards the result and releases admission slots.
+Session/version checks → deterministic safety gate (on submission) → explicit AI consent → per-session limit and global admission → bounded streamed request with a JSON Schema constraint and fixed prompts (`journey.PromptVersion`) that mark the user's text as data → strict parse → Meaning Lock → recheck story/ledger/consent versions and crisis state → commit as **unreviewed** items with provenance. Cancellation, timeout, withdrawal or staleness discards the result.
 
-Treat all provider output as untrusted. Reject malformed JSON, unknown fields, unsupported claims, unsafe instructions, forged fixture IDs and output outside the schema. Do not execute model-supplied URLs or side effects. Function/tool calls, if introduced, need an allowlisted read-only catalog contract and the same server-side checks; they are not required for the first text integration.
+Meaning Lock rejects a claim when its segment is unknown, its quote is not in that segment, a governing negator was cut off, another person's statement is presented as the user's own experience, or it asserts a diagnosis or medication/treatment directive. When only the wording is wrong (changed negation, subject, time or certainty; invented numbers; unsafe content; too long) the claim keeps the user's own quote as wording and records why. Qualifiers always come from deterministic analysis of the source. Opening lines are dropped when they add content words, numbers, identifiers, diagnoses, medical instructions or pressure language. Every item must be reviewed by the user before approval.
 
 ## Truthful modes
 
-- `live_meta`: a successful real Meta API request with verified model ID, followed by validation.
-- `recorded_demo`: a prerecorded synthetic result explicitly labeled recorded/simulated.
-- `manual`: allowed synthetic facts selected without a model call.
+- `live_meta`: the configured Modal provider returned the pinned served model name and the output passed validation.
+- `test_double`: `cmd/fakellm` in development/CI; refused in production; labelled "TEST DOUBLE — not Meta".
+- `manual`: the user's own sentences, no model.
+- `recorded_demo`: reserved for a labelled recording of a real live run; none exists, none will be fabricated.
 
-No AMD, DeepSeek, Gemini or OpenRouter fallback is used by the new journey. A missing Meta key, access error, timeout or validation failure produces a localized unavailable state and manual path. Never relabel a recorded fixture as live Meta output.
+No other AI provider exists in v2. Chain-of-thought/reasoning tokens are discarded. A schema, a mock test or hackathon affiliation does not establish clinical effectiveness or model quality; see [evaluation](EVALUATION.md).
 
-A model schema, mock test or hackathon affiliation does not establish clinical effectiveness. Access, endpoint, model capabilities and supported languages must be verified from the current official docs and reproducible calls. See [Meta integration](META_INTEGRATION.md).
+## Usage policies
+
+The Muse Glimmer Usage Policy (mirrors the Llama 4 AUP) prohibits unlicensed medical practice, inferring health information without rights, facilitating self-harm and presenting outputs as human-written, and says the model is not intended for people under 18. Sela's responses: fictional/synthetic data, adult attestation, crisis gate before inference, AI labels on every AI wording, no medical outputs, and disclosed limitations.
