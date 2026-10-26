@@ -141,6 +141,10 @@ type Ledger struct {
 	// Rejected counts model claims Meaning Lock dropped, by reason.
 	Rejected map[string]int `json:"rejected,omitempty"`
 	nextItem int
+	// answered lists unknown fields the user answered through Clarify. Like
+	// Skipped, an answered field is never asked (or accepted) again for this
+	// story, which also bounds how much clarification text reaches the model.
+	answered []ledger.UnknownField
 }
 
 // BriefSnapshot is an immutable copy of an approved ledger version.
@@ -257,12 +261,17 @@ type Projection struct {
 	Items        []ProjectedItem       `json:"items"`
 	Unknowns     []ledger.UnknownField `json:"unknowns,omitempty"`
 	Opening      []string              `json:"opening,omitempty"`
-	Preferences  *Preferences          `json:"preferences,omitempty"`
-	DisplayName  string                `json:"displayName,omitempty"`
-	AgeRange     string                `json:"ageRange,omitempty"`
-	Preferred    string                `json:"preferredLanguage,omitempty"`
-	SlotID       string                `json:"slotId"`
-	Provenance   Provenance            `json:"provenance"`
+	// OpeningProvenance and OpeningUserEdited say who wrote the shared
+	// opening lines (set whenever the opening field is shared), so the
+	// recipient never mistakes an approved AI draft for the user's own words.
+	OpeningProvenance Provenance   `json:"openingProvenance,omitempty"`
+	OpeningUserEdited bool         `json:"openingUserEdited"`
+	Preferences       *Preferences `json:"preferences,omitempty"`
+	DisplayName       string       `json:"displayName,omitempty"`
+	AgeRange          string       `json:"ageRange,omitempty"`
+	Preferred         string       `json:"preferredLanguage,omitempty"`
+	SlotID            string       `json:"slotId"`
+	Provenance        Provenance   `json:"provenance"`
 }
 
 // ProjectedItem is a shared ledger item.
@@ -313,6 +322,11 @@ type OpRecord struct {
 	StoryVersion    int `json:"-"`
 	ConsentRevision int `json:"-"`
 	BriefVersion    int `json:"-"`
+	// LedgerRevision and OpeningRevision change on every ledger-state change
+	// (items, approval, skip, clarification) and every opening change, so a
+	// result never overwrites what the user did while the model ran.
+	LedgerRevision  int `json:"-"`
+	OpeningRevision int `json:"-"`
 }
 
 // Retention is the active retention policy.
@@ -348,6 +362,14 @@ type Session struct {
 	Ops           []*OpRecord             `json:"ops"`
 	idem          map[string]idemRecord
 	nextHandoff   int
+	// ledgerRev and openingRev count every change of the ledger state and of
+	// the opening lines (including replacement and discard); AI operations
+	// capture them and discard their result on mismatch.
+	ledgerRev  int
+	openingRev int
+	// storageSince is the first storage grant; the 24-hour retention is
+	// measured from it, so re-granting never extends the session.
+	storageSince time.Time
 }
 
 type idemRecord struct {

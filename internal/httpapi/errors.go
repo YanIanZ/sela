@@ -39,14 +39,15 @@ var messages = map[string]message{
 	journey.CodeSlotUnavailable:   {"Jadwal fiktif ini tidak tersedia. Pilih jadwal lain.", "This fictional slot is not available. Choose another one."},
 	journey.CodeNoStory:           {"Ceritakan atau pilih cerita contoh terlebih dahulu.", "Write or choose a sample story first."},
 	journey.CodeAdultRequired:     {"Demo ini hanya untuk orang dewasa (18+).", "This demo is for adults (18+) only."},
-	"limit_reached":               {"Batas sesi demo ini untuk langkah ini sudah tercapai. Lanjutkan dengan yang sudah ada, atau mulai sesi baru.", "This demo session has reached its limit for this step. Continue with what you have, or start a new session."},
-	"method_not_allowed":          {"Metode permintaan ini tidak didukung di alamat ini.", "This request method is not supported at this address."},
-	"too_large":                   {"Isian terlalu besar.", "The input is too large."},
-	"cross_origin":                {"Permintaan lintas situs ditolak.", "Cross-site requests are rejected."},
-	"unsupported_media":           {"Gunakan JSON.", "Use JSON."},
-	"internal":                    {"Terjadi kesalahan di server. Coba lagi.", "Something went wrong on the server. Try again."},
-	"research_unavailable":        {"Korpus riset belum dibangun di server ini.", "The research corpus has not been built on this server."},
-	"frontend_not_built":          {"Frontend belum dibangun.", "The frontend has not been built."},
+	// "limit_reached" is journey.CodeLimitReached (per-session caps, 409).
+	"limit_reached":        {"Batas sesi demo ini untuk langkah ini sudah tercapai. Lanjutkan dengan yang sudah ada, atau mulai sesi baru.", "This demo session has reached its limit for this step. Continue with what you have, or start a new session."},
+	"method_not_allowed":   {"Metode permintaan ini tidak didukung di alamat ini.", "This request method is not supported at this address."},
+	"too_large":            {"Isian terlalu besar.", "The input is too large."},
+	"cross_origin":         {"Permintaan lintas situs ditolak.", "Cross-site requests are rejected."},
+	"unsupported_media":    {"Gunakan JSON.", "Use JSON."},
+	"internal":             {"Terjadi kesalahan di server. Coba lagi.", "Something went wrong on the server. Try again."},
+	"research_unavailable": {"Korpus riset belum dibangun di server ini.", "The research corpus has not been built on this server."},
+	"frontend_not_built":   {"Frontend belum dibangun.", "The frontend has not been built."},
 }
 
 // lang picks the message language: explicit header, then Accept-Language.

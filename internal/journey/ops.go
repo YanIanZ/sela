@@ -22,14 +22,18 @@ type OpEvent struct {
 }
 
 // opRuntime is the in-process side of an operation: cancellation and an
-// append-only, bounded event log with broadcast.
+// append-only, bounded event log with broadcast. Sequence numbers are never
+// reused, so a purged log (see purge) still resumes correctly.
 type opRuntime struct {
 	id        string
 	sessionID string
 	kind      OpKind
+	ctx       context.Context
 	cancel    context.CancelCauseFunc
+	stop      context.CancelFunc
 
 	mu     sync.Mutex
+	seq    int
 	events []OpEvent
 	done   bool
 	wake   chan struct{}
@@ -49,8 +53,26 @@ func (r *opRuntime) emit(typ string, data any) {
 	if r.done || len(r.events) >= maxOpEvents && typ != "done" && typ != "error" {
 		return
 	}
-	r.events = append(r.events, OpEvent{Seq: len(r.events) + 1, Type: typ, Data: data})
+	r.seq++
+	r.events = append(r.events, OpEvent{Seq: r.seq, Type: typ, Data: data})
 	if typ == "done" || typ == "error" {
+		r.done = true
+	}
+	close(r.wake)
+	r.wake = make(chan struct{})
+}
+
+// purge drops every content-bearing event (item previews carry the user's
+// quotes) and keeps one content-free terminal event: the existing "done" or
+// "error", or a new "error" for a still-running operation, which ends it.
+func (r *opRuntime) purge(reason string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.done && len(r.events) > 0 {
+		r.events = []OpEvent{r.events[len(r.events)-1]}
+	} else {
+		r.seq++
+		r.events = []OpEvent{{Seq: r.seq, Type: "error", Data: map[string]any{"code": "canceled", "reason": reason}}}
 		r.done = true
 	}
 	close(r.wake)
@@ -66,8 +88,10 @@ func (r *opRuntime) Events(after int) ([]OpEvent, bool, <-chan struct{}) {
 		after = 0
 	}
 	var out []OpEvent
-	if after < len(r.events) {
-		out = append(out, r.events[after:]...)
+	for _, e := range r.events {
+		if e.Seq > after {
+			out = append(out, e)
+		}
 	}
 	return out, r.done, r.wake
 }
@@ -143,6 +167,36 @@ func (s *Service) cancelKind(sess *Session, kind OpKind, reason string) {
 	}
 }
 
+// purgeRuntimes cancels every operation of a session and drops the content
+// of its event logs at once (deletion, crisis, story replacement, purge by
+// the store). forget also removes the runtimes, for sessions that are gone;
+// a subscriber already streaming still receives the terminal event.
+func (s *Service) purgeRuntimes(sessionID, reason string, forget bool) {
+	if sessionID == "" {
+		return
+	}
+	s.opsMu.Lock()
+	var rts []*opRuntime
+	for id, rt := range s.ops {
+		if rt.sessionID == sessionID {
+			rts = append(rts, rt)
+			if forget {
+				delete(s.ops, id)
+			}
+		}
+	}
+	s.opsMu.Unlock()
+	for _, rt := range rts {
+		rt.cancel(errors.New(reason))
+		rt.purge(reason)
+	}
+}
+
+// sessionPurged is the store's purge hook (expiry, sweep, eviction, delete).
+func (s *Service) sessionPurged(sessionID string) {
+	s.purgeRuntimes(sessionID, "session_ended", true)
+}
+
 // reapOps forgets finished runtimes after a grace period for late subscribers.
 func (s *Service) reapOps(now time.Time) {
 	s.opsMu.Lock()
@@ -200,7 +254,8 @@ func (s *Service) startOp(sess *Session, kind OpKind) (*OpRecord, error) {
 	if recent >= s.cfg.MaxOpsPerWindow {
 		return nil, errf(CodeRateLimited, 429, "")
 	}
-	rec := &OpRecord{ID: "op_" + randomToken(12), Kind: kind, State: OpQueued, StartedAt: s.now(), ConsentRevision: sess.consent(ConsentAI).Revision}
+	rec := &OpRecord{ID: "op_" + randomToken(12), Kind: kind, State: OpQueued, StartedAt: s.now(), ConsentRevision: sess.consent(ConsentAI).Revision,
+		LedgerRevision: sess.ledgerRev, OpeningRevision: sess.openingRev}
 	if sess.Story != nil {
 		rec.StoryVersion = sess.Story.Version
 	}
@@ -214,21 +269,28 @@ func (s *Service) startOp(sess *Session, kind OpKind) (*OpRecord, error) {
 	return rec, nil
 }
 
-func (s *Service) launch(sessionID string, rec *OpRecord, job func(ctx context.Context, rt *opRuntime) error) {
+// register creates the operation's runtime. Caller holds the session, so a
+// concurrent deletion, crisis or purge always finds (and cancels) it; the
+// job starts with launch after the session lock is released.
+func (s *Service) register(sess *Session, rec *OpRecord) *opRuntime {
 	ctx, cancel := context.WithCancelCause(context.Background())
 	ctx, stop := context.WithTimeout(ctx, s.cfg.OpTimeout)
-	rt := &opRuntime{id: rec.ID, sessionID: sessionID, kind: rec.Kind, cancel: cancel, wake: make(chan struct{})}
+	rt := &opRuntime{id: rec.ID, sessionID: sess.ID, kind: rec.Kind, ctx: ctx, cancel: cancel, stop: stop, wake: make(chan struct{})}
 	s.opsMu.Lock()
 	s.ops[rec.ID] = rt
 	s.opsMu.Unlock()
 	s.opsInFlight.Add(1)
+	return rt
+}
+
+func (s *Service) launch(rt *opRuntime, job func(ctx context.Context, rt *opRuntime) error) {
 	go func() {
 		defer s.opsInFlight.Done()
-		defer stop()
-		defer cancel(nil)
+		defer rt.stop()
+		defer rt.cancel(nil)
 		rt.emit("status", map[string]any{"state": "queued"})
-		err := job(ctx, rt)
-		s.finishOp(sessionID, rec.ID, rt, ctx, err)
+		err := job(rt.ctx, rt)
+		s.finishOp(rt.sessionID, rt.id, rt, rt.ctx, err)
 	}()
 }
 
@@ -343,6 +405,9 @@ func (s *Service) generate(ctx context.Context, rt *opRuntime, req llm.Request, 
 		return onDelta(d)
 	}
 	for attempt := 1; ; attempt++ {
+		if err := ctx.Err(); err != nil {
+			return llm.Result{}, err // canceled (deleted, purged, crisis) before the call
+		}
 		res, err := s.provider.Complete(ctx, req, track)
 		if err == nil {
 			s.markLive()
@@ -380,7 +445,8 @@ func coldStartRetryable(mode llm.Mode, err error) bool {
 // rate limit → global admission → bounded model call → Meaning Lock →
 // recheck story/ledger/consent versions → commit with provenance.
 func (s *Service) StartLedgerDraft(sessionID string, expectedVersion int) (*OpRecord, error) {
-	var rec *OpRecord
+	var snapshot OpRecord
+	var rt *opRuntime
 	var segments []ledger.Segment
 	var lang string
 	err := s.update(sessionID, func(sess *Session) error {
@@ -394,18 +460,18 @@ func (s *Service) StartLedgerDraft(sessionID string, expectedVersion int) (*OpRe
 		if err != nil {
 			return err
 		}
-		rec = r
+		snapshot = *r
 		segments = append([]ledger.Segment{}, sess.Story.Segments...)
 		lang = sess.Language
 		bump(sess)
+		rt = s.register(sess, r)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	snapshot := *rec
 	s.metrics.add("ai_op_started")
-	s.launch(sessionID, rec, func(ctx context.Context, rt *opRuntime) error {
+	s.launch(rt, func(ctx context.Context, rt *opRuntime) error {
 		return s.runLedgerDraft(ctx, rt, sessionID, snapshot, segments, lang)
 	})
 	return &snapshot, nil
@@ -458,8 +524,12 @@ func (s *Service) runLedgerDraft(ctx context.Context, rt *opRuntime, sessionID s
 			return errStaleResult
 		}
 		c := sess.consent(ConsentAI)
+		// Any ledger-state change while the model ran (an edit, approval,
+		// skip or answer) makes the result stale: it never overwrites what
+		// the user did.
 		if sess.Safety.Interrupted || !c.Granted || c.Revision != rec.ConsentRevision ||
-			sess.Story == nil || sess.Story.Version != rec.StoryVersion || sess.Ledger == nil || sess.Ledger.Version != rec.BriefVersion {
+			sess.Story == nil || sess.Story.Version != rec.StoryVersion || sess.Ledger == nil || sess.Ledger.Version != rec.BriefVersion ||
+			sess.ledgerRev != rec.LedgerRevision {
 			return errStaleResult
 		}
 		l := sess.Ledger
@@ -476,16 +546,12 @@ func (s *Service) runLedgerDraft(ctx context.Context, rt *opRuntime, sessionID s
 		}
 		l.Items = items
 		l.Provenance, l.Model, l.Rejected = prov, model, rejected
-		l.Skipped = nil
-		l.Clarification = ""
-		if result.Clarification != "" {
-			l.Clarification = result.Clarification
-		}
-		changeLedger(l)
+		// The user's skipped and answered fields stay: they are never asked
+		// again. recompute keeps the model's suggestion only if it is still
+		// unknown and was not skipped or answered.
+		l.Clarification = result.Clarification
+		changeLedger(sess)
 		recompute(l)
-		if result.Clarification != "" && containsField(l.Unknowns, result.Clarification) {
-			l.Clarification = result.Clarification
-		}
 		cur.State, cur.Provenance, cur.EndedAt = OpSucceeded, prov, s.now()
 		bump(sess)
 		summary = map[string]any{"accepted": len(items), "rejected": rejected, "provenance": prov, "model": model,

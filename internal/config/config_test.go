@@ -12,7 +12,7 @@ func clean(t *testing.T) {
 		"SELA_SECURE_COOKIES", "SELA_TRUST_PROXY", "SELA_MAX_SESSIONS", "SELA_LLM_MODE", "SELA_LLM_BASE_URL", "SELA_LLM_API_KEY",
 		"SELA_MODAL_KEY", "SELA_MODAL_SECRET", "SELA_LLM_SERVED_MODEL", "SELA_LLM_MODEL_ID", "SELA_LLM_MODEL_REVISION",
 		"SELA_LLM_CONCURRENCY", "SELA_LLM_OP_TIMEOUT", "SELA_LLM_WARM_WINDOW", "SELA_LLM_COLD_START_ESTIMATE",
-		"SELA_MAX_AI_OPS_PER_SESSION", "SELA_ALLOW_TEST_DOUBLE"} {
+		"SELA_MAX_AI_OPS_PER_SESSION", "SELA_ALLOW_TEST_DOUBLE", "SELA_METRICS_TOKEN"} {
 		t.Setenv(k, "")
 	}
 }
@@ -95,5 +95,28 @@ func TestInvalidValuesAreRejected(t *testing.T) {
 				t.Fatalf("%s=%s accepted", k, v)
 			}
 		})
+	}
+}
+
+func TestMetricsTokenIsOptionalStrongAndNeverPrinted(t *testing.T) {
+	clean(t)
+	c, err := Load()
+	if err != nil || c.MetricsToken != "" {
+		t.Fatalf("metrics should be off by default: %q %v", c.MetricsToken, err)
+	}
+	for _, weak := range []string{"short", "has a space in the token value"} {
+		t.Setenv("SELA_METRICS_TOKEN", weak)
+		if _, err := Load(); err == nil || !strings.Contains(err.Error(), "SELA_METRICS_TOKEN") {
+			t.Fatalf("weak metrics token %q accepted: %v", weak, err)
+		}
+	}
+	const token = "metrics-0123456789-abcdef"
+	t.Setenv("SELA_METRICS_TOKEN", "  "+token+"\n")
+	c, err = Load()
+	if err != nil || c.MetricsToken != token {
+		t.Fatalf("metrics token: %q %v", c.MetricsToken, err)
+	}
+	if s := c.String(); strings.Contains(s, token) || !strings.Contains(s, "metrics=true") {
+		t.Fatalf("String(): %s", s)
 	}
 }

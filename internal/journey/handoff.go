@@ -35,7 +35,8 @@ var idemKeyPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{16,64}$`)
 // approval of exactly LedgerVersion, explicit share consent for the current
 // sharing policy, a valid fixture recipient and available slot, a field
 // selection that includes the brief items, and an Idempotency-Key. The same
-// key and payload return the same receipt; a changed payload conflicts.
+// key and payload return the same receipt; a changed payload conflicts. A
+// session holds at most MaxHandoffs handoffs (limit_reached).
 func (s *Service) CreateHandoff(sessionID, idemKey string, in HandoffInput) (*HandoffCreated, error) {
 	if !idemKeyPattern.MatchString(idemKey) {
 		return nil, errf(CodeIdempotencyKey, 400, "Idempotency-Key")
@@ -69,6 +70,9 @@ func (s *Service) CreateHandoff(sessionID, idemKey string, in HandoffInput) (*Ha
 		}
 		if snap.Version != in.LedgerVersion {
 			return errf(CodeStale, 409, "ledgerVersion")
+		}
+		if len(sess.Handoffs) >= MaxHandoffs {
+			return errLimit("handoffs")
 		}
 		if !in.ShareConsent {
 			return errf(CodeConsentRequired, 403, "shareConsent")
@@ -210,6 +214,7 @@ func (s *Service) project(sess *Session, h *Handoff, snap BriefSnapshot) Project
 		for _, l := range sess.Opening.Lines {
 			p.Opening = append(p.Opening, l.Text)
 		}
+		p.OpeningProvenance, p.OpeningUserEdited = sess.Opening.Provenance, sess.Opening.UserEdited
 	}
 	if set[FieldPreferences] && sess.Preferences != nil {
 		pref := *sess.Preferences
@@ -230,6 +235,16 @@ func (s *Service) project(sess *Session, h *Handoff, snap BriefSnapshot) Project
 		p.Preferred = sess.Language
 	}
 	return p
+}
+
+// shareExpiry is the share's effective end: its own expiry, never beyond the
+// owner session's absolute expiry (the idle timeout is suspended while a
+// share is active, see Session.IdleDeadline).
+func shareExpiry(sess *Session, h *Handoff) time.Time {
+	if sess.ExpiresAt.Before(h.ExpiresAt) {
+		return sess.ExpiresAt
+	}
+	return h.ExpiresAt
 }
 
 // shareState computes the effective share state at now.
@@ -260,28 +275,35 @@ func actorFor(reason string) string {
 	return "system"
 }
 
-// RevokeInput revokes a share.
+// RevokeInput revokes a share. ExpectedVersion is accepted for
+// compatibility and ignored: revoking is a privacy action that must never
+// fail because the recipient (or another tab) changed the session.
 type RevokeInput struct {
 	ExpectedVersion int `json:"expectedVersion"`
 }
 
 // RevokeShare blocks all further recipient access, whatever the handoff
-// status. Repeating it is safe. Already-viewed information cannot be
-// recalled; the UI says so.
-func (s *Service) RevokeShare(sessionID, handoffID string, in RevokeInput) (*SessionView, error) {
+// status and the session version. It is idempotent: revoking a share that
+// already ended succeeds and returns the current view. Already-viewed
+// information cannot be recalled; the UI says so.
+func (s *Service) RevokeShare(sessionID, handoffID string, _ RevokeInput) (*SessionView, error) {
 	var view *SessionView
 	err := s.update(sessionID, func(sess *Session) error {
 		h := sess.handoff(handoffID)
 		if h == nil {
 			return errf(CodeNotFound, 404, "handoffId")
 		}
-		if h.Share == ShareActive {
-			if err := checkVersion(sess, in.ExpectedVersion); err != nil {
-				return err
-			}
-			s.endShare(sess, h, ShareRevoked, "revoked_by_user", s.now())
+		now := s.now()
+		switch s.shareState(h, now) {
+		case ShareActive:
+			s.endShare(sess, h, ShareRevoked, "revoked_by_user", now)
 			bump(sess)
 			s.metrics.add("share_revoked")
+		case ShareExpired:
+			if h.Share == ShareActive {
+				s.endShare(sess, h, ShareExpired, "expired", now)
+				bump(sess)
+			}
 		}
 		view = s.buildView(sess)
 		return nil

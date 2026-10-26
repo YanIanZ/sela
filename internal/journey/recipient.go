@@ -18,7 +18,9 @@ type RecipientAuthInput struct {
 // AuthenticateRecipient creates a recipient principal for exactly one
 // handoff. The token only locates the grant; the access code proves the
 // recipient received it through a second channel. Five wrong codes lock the
-// share; the owner must share again.
+// share; the owner must share again. At most MaxRecipientsPerHandoff
+// principals live per handoff (a new sign-in replaces the oldest), and every
+// failure is the uniform access_ended.
 func (s *Service) AuthenticateRecipient(in RecipientAuthInput) (string, error) {
 	if len(in.Token) < 20 || len(in.Token) > 100 || len(in.Code) > 20 {
 		return "", errAccess
@@ -53,12 +55,12 @@ func (s *Service) AuthenticateRecipient(in RecipientAuthInput) (string, error) {
 			return errAccess
 		}
 		exp := now.Add(s.cfg.RecipientTTL)
-		if exp.After(h.ExpiresAt) {
-			exp = h.ExpiresAt
+		if end := shareExpiry(sess, h); exp.After(end) {
+			exp = end
 		}
 		principal = RecipientSession{ID: randomToken(32), SessionID: sess.ID, HandoffID: h.ID, ProfessionalID: h.ProfessionalID, CreatedAt: now, ExpiresAt: exp}
 		if err := s.store.CreateRecipient(principal); err != nil {
-			return errf(CodeCapacity, 503, "")
+			return errAccess
 		}
 		opened := false
 		for _, e := range h.Timeline {
@@ -73,10 +75,7 @@ func (s *Service) AuthenticateRecipient(in RecipientAuthInput) (string, error) {
 		return nil
 	})
 	if err != nil {
-		if _, ok := err.(*Error); !ok {
-			return "", errAccess
-		}
-		return "", err
+		return "", errAccess
 	}
 	return principal.ID, nil
 }
@@ -129,22 +128,22 @@ func (s *Service) withRecipient(recipientID string, fn func(sess *Session, h *Ha
 	return err
 }
 
-func (s *Service) recipientView(h *Handoff) *RecipientHandoff {
+func (s *Service) recipientView(sess *Session, h *Handoff) *RecipientHandoff {
 	prof, _ := s.catalog.Professional(h.ProfessionalID)
 	plans := []string{}
 	if prof != nil {
 		plans = append(plans, prof.Plans...)
 	}
 	return &RecipientHandoff{ID: h.ID, Version: h.Version, ProfessionalID: h.ProfessionalID, Status: h.Status, Projection: h.Projection,
-		ExpiresAt: h.ExpiresAt, Timeline: append([]TimelineEvent{}, h.Timeline...), ClarifyReason: h.ClarifyReason, DeclineReason: h.DeclineReason,
+		ExpiresAt: shareExpiry(sess, h), Timeline: append([]TimelineEvent{}, h.Timeline...), ClarifyReason: h.ClarifyReason, DeclineReason: h.DeclineReason,
 		PlanID: h.PlanID, Plans: plans, Synthetic: true}
 }
 
 // RecipientGet returns the shared projection for the principal's handoff.
 func (s *Service) RecipientGet(recipientID string) (*RecipientHandoff, error) {
 	var out *RecipientHandoff
-	err := s.withRecipient(recipientID, func(_ *Session, h *Handoff, _ time.Time) error {
-		out = s.recipientView(h)
+	err := s.withRecipient(recipientID, func(sess *Session, h *Handoff, _ time.Time) error {
+		out = s.recipientView(sess, h)
 		return nil
 	})
 	return out, err
@@ -206,7 +205,7 @@ func (s *Service) RecipientAct(recipientID string, in RecipientActionInput) (*Re
 		h.Timeline = append(h.Timeline, TimelineEvent{Kind: string(h.Status), At: now, Actor: "recipient"})
 		sess.Version++
 		s.metrics.add("handoff_" + string(h.Status))
-		out = s.recipientView(h)
+		out = s.recipientView(sess, h)
 		return nil
 	})
 	return out, err

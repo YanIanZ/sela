@@ -18,7 +18,9 @@ type CreateInput struct {
 }
 
 // CreateSession creates an isolated session and returns its opaque id. The
-// id is only ever sent as an HttpOnly cookie.
+// id is only ever sent as an HttpOnly cookie. A pseudonym is user-authored
+// text and passes the safety gate first: crisis language creates the
+// session already interrupted (crisis route) and the pseudonym is not stored.
 func (s *Service) CreateSession(in CreateInput) (string, *SessionView, error) {
 	if in.Language != "id" && in.Language != "en" {
 		return "", nil, errf(CodeInvalid, 400, "language")
@@ -29,10 +31,6 @@ func (s *Service) CreateSession(in CreateInput) (string, *SessionView, error) {
 	if in.PrivacyPolicy != s.policy("privacy") {
 		return "", nil, errf(CodePolicyOutdated, 409, "privacyPolicy")
 	}
-	id, err := validIdentity(in.Identity)
-	if err != nil {
-		return "", nil, err
-	}
 	now := s.now()
 	sess := &Session{
 		ID:            randomToken(32),
@@ -41,7 +39,7 @@ func (s *Service) CreateSession(in CreateInput) (string, *SessionView, error) {
 		LastSeen:      now,
 		ExpiresAt:     now.Add(SessionMaxLife),
 		Language:      in.Language,
-		Identity:      id,
+		Identity:      Identity{Mode: IdentityAnonymous},
 		AdultAttested: true,
 		PolicyVersion: in.PrivacyPolicy,
 		Consents:      map[ConsentKind]Consent{},
@@ -52,12 +50,19 @@ func (s *Service) CreateSession(in CreateInput) (string, *SessionView, error) {
 		Ops:           []*OpRecord{},
 		idem:          map[string]idemRecord{},
 	}
+	if in.Identity.Pseudonym == "" || !s.screen(sess, in.Identity.Pseudonym) {
+		id, err := validIdentity(in.Identity)
+		if err != nil {
+			return "", nil, err
+		}
+		sess.Identity = id
+	}
 	if err := s.store.Create(sess); err != nil {
 		return "", nil, errf(CodeCapacity, 503, "")
 	}
 	s.metrics.add("session_created")
 	var view *SessionView
-	err = s.view(sess.ID, func(x *Session) error { view = s.buildView(x); return nil })
+	err := s.view(sess.ID, func(x *Session) error { view = s.buildView(x); return nil })
 	return sess.ID, view, err
 }
 
@@ -98,12 +103,19 @@ type SettingsInput struct {
 // UpdateSettings changes language and/or identity. Language only changes the
 // interface: quotes stay in the user's words and approval is unaffected.
 // Identity changes do not alter existing shares (their projections are
-// immutable); new shares use the new identity.
+// immutable); new shares use the new identity. A new pseudonym passes the
+// safety gate first: on the crisis route it is not stored and nothing else
+// in the request is applied.
 func (s *Service) UpdateSettings(sessionID string, in SettingsInput) (*SessionView, error) {
 	var view *SessionView
 	err := s.update(sessionID, func(sess *Session) error {
 		if err := checkVersion(sess, in.ExpectedVersion); err != nil {
 			return err
+		}
+		if in.Identity != nil && in.Identity.Pseudonym != "" && s.screen(sess, in.Identity.Pseudonym) {
+			bump(sess)
+			view = s.buildView(sess)
+			return nil
 		}
 		if in.Language != nil {
 			if *in.Language != "id" && *in.Language != "en" {
@@ -135,8 +147,10 @@ type ConsentInput struct {
 // SetConsent records an AI-processing or storage decision. Each is
 // independent (SPEC V4): neither implies approval, sharing or the other.
 // Withdrawing AI consent cancels running AI operations and discards their
-// results. Granting storage extends retention to 24 hours from now;
-// withdrawing it returns to session-only retention immediately.
+// results. Granting storage keeps the session up to 24 hours from the first
+// grant (re-granting never extends it); withdrawing it returns to
+// session-only retention immediately (with an idle grace if it was kept for
+// the day). Declining never extends a session.
 func (s *Service) SetConsent(sessionID string, kind ConsentKind, in ConsentInput) (*SessionView, error) {
 	policyKey := map[ConsentKind]string{ConsentAI: "ai_processing", ConsentStorage: "storage"}[kind]
 	if policyKey == "" {
@@ -160,15 +174,22 @@ func (s *Service) SetConsent(sessionID string, kind ConsentKind, in ConsentInput
 			}
 		case ConsentStorage:
 			if in.Granted {
-				sess.Retention = RetentionDay
-				sess.ExpiresAt = now.Add(DayMaxLife)
-			} else {
-				sess.Retention = RetentionSession
-				limit := sess.CreatedAt.Add(SessionMaxLife)
-				if limit.Before(now.Add(SessionIdle)) {
-					limit = now.Add(SessionIdle)
+				if sess.storageSince.IsZero() {
+					sess.storageSince = now
 				}
-				sess.ExpiresAt = limit
+				sess.Retention = RetentionDay
+				sess.ExpiresAt = sess.storageSince.Add(DayMaxLife)
+			} else {
+				if sess.Retention == RetentionDay {
+					limit := sess.CreatedAt.Add(SessionMaxLife)
+					if limit.Before(now.Add(SessionIdle)) {
+						limit = now.Add(SessionIdle)
+					}
+					if limit.Before(sess.ExpiresAt) {
+						sess.ExpiresAt = limit
+					}
+				}
+				sess.Retention = RetentionSession
 			}
 			// Shares never outlive the session.
 			for _, h := range sess.Handoffs {
@@ -186,21 +207,25 @@ func (s *Service) SetConsent(sessionID string, kind ConsentKind, in ConsentInput
 }
 
 // DeleteSession purges everything for the session: story, ledger, shares,
-// recipient access and operations. Other sessions are unaffected.
+// recipient access and operations (their event logs included). Cancel and
+// purge happen under one session lock, so no operation can start in
+// between. Other sessions are unaffected.
 func (s *Service) DeleteSession(sessionID string) error {
 	err := s.update(sessionID, func(sess *Session) error {
 		s.cancelSessionOps(sess, "deleted")
+		s.store.Delete(sess.ID)
 		return nil
 	})
 	if err != nil {
 		return err
 	}
-	s.store.Delete(sessionID)
+	s.purgeRuntimes(sessionID, "deleted", true) // also for stores without OnPurge
 	s.metrics.add("session_deleted")
 	return nil
 }
 
-// Sweep purges expired sessions; run periodically.
+// Sweep purges expired sessions (the store's purge hook ends their
+// operations); run periodically.
 func (s *Service) Sweep() int {
 	n := s.store.Sweep(s.now())
 	s.reapOps(s.now())

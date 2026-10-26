@@ -24,7 +24,11 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /api/v2/ready", s.ready)
 	m.HandleFunc("GET /api/v2/catalog", s.catalog)
 	m.HandleFunc("GET /api/v2/ai/status", s.aiStatus)
-	m.HandleFunc("GET /api/v2/metrics", s.limited("read", s.metrics))
+	// Operator only, and only registered when a token is configured, so an
+	// unconfigured deployment answers 404 for every method (no 405 + Allow).
+	if s.opt.MetricsToken != "" {
+		m.HandleFunc("GET /api/v2/metrics", s.limited("read", s.metrics))
+	}
 
 	// Owner session.
 	m.HandleFunc("POST /api/v2/sessions", s.mutation("session", smallBody, s.createSession))
@@ -120,7 +124,8 @@ func (s *Server) ready(w http.ResponseWriter, r *http.Request) {
 
 // metrics is for the operator only: live counters include safety routing
 // and consent outcomes, which in a quiet demo can reveal what one visitor
-// just did. Without a configured token the route does not exist.
+// just did. Without a configured token the route is not registered; the
+// empty-token check below is a defensive second guard.
 func (s *Server) metrics(w http.ResponseWriter, r *http.Request) {
 	if s.opt.MetricsToken == "" {
 		writeError(w, r, http.StatusNotFound, journey.CodeNotFound, "")

@@ -10,10 +10,15 @@ import (
 
 // changeLedger records a content change: new version, approval cleared
 // (SPEC V5: editing a brief invalidates approval).
-func changeLedger(l *Ledger) {
-	l.Version++
-	l.Approved = nil
+func changeLedger(sess *Session) {
+	sess.Ledger.Version++
+	sess.Ledger.Approved = nil
+	touchLedger(sess)
 }
+
+// touchLedger records a ledger-state change that keeps the version
+// (approval, skip). Running AI drafts then discard their result.
+func touchLedger(sess *Session) { sess.ledgerRev++ }
 
 func (l *Ledger) newItemID() string {
 	l.nextItem++
@@ -28,23 +33,29 @@ func itemClaims(items []Item) []ledger.Claim {
 	return out
 }
 
-// recompute refreshes unknowns and the suggested clarification.
+// recompute refreshes unknowns and the suggested clarification. A skipped or
+// answered field is never suggested again.
 func recompute(l *Ledger) {
 	l.Unknowns = ledger.ComputeUnknowns(itemClaims(l.Items))
 	if l.Unknowns == nil {
 		l.Unknowns = []ledger.UnknownField{}
 	}
-	if l.Clarification != "" && (!containsField(l.Unknowns, l.Clarification) || containsField(l.Skipped, l.Clarification)) {
+	if l.Clarification != "" && (!containsField(l.Unknowns, l.Clarification) || l.asked(l.Clarification)) {
 		l.Clarification = ""
 	}
 	if l.Clarification == "" {
 		for _, f := range l.Unknowns {
-			if !containsField(l.Skipped, f) {
+			if !l.asked(f) {
 				l.Clarification = f
 				break
 			}
 		}
 	}
+}
+
+// asked reports whether the user already skipped or answered the field.
+func (l *Ledger) asked(f ledger.UnknownField) bool {
+	return containsField(l.Skipped, f) || containsField(l.answered, f)
 }
 
 func containsField(list []ledger.UnknownField, f ledger.UnknownField) bool {
@@ -115,15 +126,15 @@ func (s *Service) AddManualItem(sessionID string, in AddItemInput) (*SessionView
 				return errf(CodeInvalid, 409, "segmentId")
 			}
 		}
-		if len(l.Items) >= ledger.MaxClaims*2 {
-			return errf(CodeInvalid, 409, "items")
+		if len(l.Items) >= MaxLedgerItems {
+			return errLimit("items")
 		}
 		c := ledger.ManualClaim(seg, in.Kind)
 		l.Items = append(l.Items, Item{
 			ID: l.newItemID(), Kind: c.Kind, SegmentID: c.SegmentID, Quote: c.Quote, Start: c.Start, End: c.End,
 			Wording: c.Wording, WordingOrigin: WordingQuote, Qualifiers: c.Qualifiers, Status: ItemConfirmed, Provenance: ProvenanceManual,
 		})
-		changeLedger(l)
+		changeLedger(sess)
 		recompute(l)
 		bump(sess)
 		view = s.buildView(sess)
@@ -153,12 +164,21 @@ type ItemInput struct {
 
 // ReviewItem applies a correction, confirmation or deletion. Any content
 // change creates a new ledger version and clears approval. A user edit is
-// the user's own text and passes the safety gate first.
+// the user's own text and passes the safety gate before anything else.
 func (s *Service) ReviewItem(sessionID, itemID string, in ItemInput) (*SessionView, error) {
 	var view *SessionView
 	err := s.update(sessionID, func(sess *Session) error {
 		if err := checkVersion(sess, in.ExpectedVersion); err != nil {
 			return err
+		}
+		if sess.Safety.Interrupted {
+			return errCrisis
+		}
+		w := strings.TrimSpace(in.Wording)
+		if w != "" && s.screen(sess, w) {
+			bump(sess)
+			view = s.buildView(sess)
+			return nil
 		}
 		if err := s.requireLedger(sess); err != nil {
 			return err
@@ -184,17 +204,11 @@ func (s *Service) ReviewItem(sessionID, itemID string, in ItemInput) (*SessionVi
 		case ActionUseQuote:
 			it.Wording, it.WordingOrigin, it.Status = it.Quote, WordingQuote, ItemConfirmed
 		case ActionEdit:
-			w := strings.TrimSpace(in.Wording)
 			if err := ledger.ValidateUserWording(w); err != nil {
 				return errf(CodeInvalid, 400, "wording")
 			}
 			if containsContactDetails(w) {
 				return errf(CodeContactDetails, 422, "wording")
-			}
-			if a := s.assessText(sess, w); a.Interrupts() {
-				bump(sess)
-				view = s.buildView(sess)
-				return nil
 			}
 			it.Wording, it.WordingOrigin, it.Status = w, WordingUser, ItemConfirmed
 		case ActionRemove:
@@ -207,7 +221,7 @@ func (s *Service) ReviewItem(sessionID, itemID string, in ItemInput) (*SessionVi
 		default:
 			return errf(CodeInvalid, 400, "action")
 		}
-		changeLedger(l)
+		changeLedger(sess)
 		recompute(l)
 		bump(sess)
 		view = s.buildView(sess)
@@ -234,12 +248,24 @@ var fieldKind = map[ledger.UnknownField]ledger.Kind{
 
 // Clarify records the user's answer to one clarification question (as a new
 // user-statement segment and a confirmed item) or a "not now / I don't
-// know" choice. Skipping is always allowed and is never asked again.
+// know" choice. Only a field that is still unknown and was neither answered
+// nor skipped can be answered or skipped (otherwise invalid_transition), so
+// a skipped field is never asked again and the clarification text sent to
+// the model stays bounded (limit_reached beyond the item and story caps).
 func (s *Service) Clarify(sessionID string, in ClarifyInput) (*SessionView, error) {
 	var view *SessionView
 	err := s.update(sessionID, func(sess *Session) error {
 		if err := checkVersion(sess, in.ExpectedVersion); err != nil {
 			return err
+		}
+		if sess.Safety.Interrupted {
+			return errCrisis
+		}
+		answer := strings.TrimSpace(in.Answer)
+		if answer != "" && s.screen(sess, answer) {
+			bump(sess)
+			view = s.buildView(sess)
+			return nil
 		}
 		if err := s.requireLedger(sess); err != nil {
 			return err
@@ -249,24 +275,19 @@ func (s *Service) Clarify(sessionID string, in ClarifyInput) (*SessionView, erro
 			return errf(CodeInvalid, 400, "field")
 		}
 		l := sess.Ledger
+		if !containsField(l.Unknowns, in.Field) || l.asked(in.Field) {
+			return errf(CodeInvalidTransition, 409, "field")
+		}
 		if in.Skip {
-			if !containsField(l.Skipped, in.Field) {
-				l.Skipped = append(l.Skipped, in.Field)
-			}
+			l.Skipped = append(l.Skipped, in.Field)
+			touchLedger(sess)
 			recompute(l)
 			bump(sess)
 			view = s.buildView(sess)
 			return nil
 		}
-		answer := strings.TrimSpace(in.Answer)
 		if n := utf8.RuneCountInString(answer); n < 2 || n > ledger.MaxEditRunes || containsControl(answer) {
 			return errf(CodeInvalid, 400, "answer")
-		}
-		if a := s.assessText(sess, answer); a.Interrupts() {
-			sess.Story, sess.Ledger, sess.Opening = nil, nil, nil
-			bump(sess)
-			view = s.buildView(sess)
-			return nil
 		}
 		if containsContactDetails(answer) {
 			return errf(CodeContactDetails, 422, "answer")
@@ -276,6 +297,13 @@ func (s *Service) Clarify(sessionID string, in ClarifyInput) (*SessionView, erro
 		if len(segs) == 0 {
 			return errf(CodeInvalid, 400, "answer")
 		}
+		if len(l.Items) >= MaxLedgerItems {
+			return errLimit("items")
+		}
+		if len(sess.Story.Segments)+len(segs) > MaxStorySegments || storyRunes(sess.Story.Segments)+storyRunes(segs) > MaxStoryRunes {
+			return errLimit("answer")
+		}
+		l.answered = append(l.answered, in.Field)
 		sess.Story.Segments = append(sess.Story.Segments, segs...)
 		sess.Story.Version++
 		// The answer as a whole becomes one item quoting its first segment;
@@ -287,7 +315,7 @@ func (s *Service) Clarify(sessionID string, in ClarifyInput) (*SessionView, erro
 		})
 		l.StoryVersion = sess.Story.Version
 		s.cancelKind(sess, OpLedgerDraft, "story_changed")
-		changeLedger(l)
+		changeLedger(sess)
 		recompute(l)
 		bump(sess)
 		view = s.buildView(sess)
@@ -338,6 +366,7 @@ func (s *Service) Approve(sessionID string, in ApproveInput) (*SessionView, erro
 		now := s.now()
 		hash := briefHash(l)
 		l.Approved = &Approval{Version: l.Version, Hash: hash, At: now}
+		touchLedger(sess)
 		snap := BriefSnapshot{Version: l.Version, Hash: hash, Language: sess.Language, Items: append([]Item{}, l.Items...), Unknowns: append([]ledger.UnknownField{}, l.Unknowns...), At: now}
 		sess.Snapshots = append(sess.Snapshots, snap)
 		if len(sess.Snapshots) > 8 {

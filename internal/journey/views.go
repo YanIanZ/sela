@@ -8,6 +8,8 @@ import (
 
 // SessionView is the owner's complete, user-visible state. It contains the
 // owner's own data only and never credentials (the session id is a cookie).
+// It shares no memory with the session: callers encode it after the session
+// lock is released while AI operations keep updating the session.
 type SessionView struct {
 	Version       int                     `json:"version"`
 	Synthetic     bool                    `json:"synthetic"`
@@ -95,7 +97,7 @@ func (s *Service) handoffView(sess *Session, h *Handoff) HandoffView {
 	return HandoffView{
 		ID: h.ID, Version: h.Version, ProfessionalID: h.ProfessionalID, SlotID: h.SlotID, BriefVersion: h.Brief.Version,
 		Fields: h.Fields, Projection: h.Projection, Status: h.Status, Share: s.shareState(h, s.now()), ShareReason: h.ShareReason,
-		CreatedAt: h.CreatedAt, ExpiresAt: h.ExpiresAt, Timeline: append([]TimelineEvent{}, h.Timeline...),
+		CreatedAt: h.CreatedAt, ExpiresAt: shareExpiry(sess, h), Timeline: append([]TimelineEvent{}, h.Timeline...),
 		ClarifyReason: h.ClarifyReason, DeclineReason: h.DeclineReason, PlanID: h.PlanID, ReplacesID: h.ReplacesID, Opened: opened,
 	}
 }
@@ -121,7 +123,7 @@ func stage(sess *Session) string {
 func (s *Service) buildView(sess *Session) *SessionView {
 	v := &SessionView{
 		Version: sess.Version, Synthetic: true, Language: sess.Language, Identity: sess.Identity,
-		CreatedAt: sess.CreatedAt, ExpiresAt: sess.ExpiresAt, IdleExpiresAt: sess.LastSeen.Add(sess.IdleTimeout()),
+		CreatedAt: sess.CreatedAt, ExpiresAt: sess.ExpiresAt, IdleExpiresAt: sess.IdleDeadline(),
 		Retention: sess.Retention, Consents: map[ConsentKind]Consent{},
 		Policies: map[string]string{
 			"privacy": s.policy("privacy"), "ai_processing": s.policy("ai_processing"),
@@ -129,23 +131,42 @@ func (s *Service) buildView(sess *Session) *SessionView {
 		},
 		Safety:      SafetyView{Level: string(maxLevel(sess.Safety.Level, "")), Interrupted: sess.Safety.Interrupted, ThirdParty: sess.Safety.ThirdParty},
 		Stage:       stage(sess),
-		Preferences: sess.Preferences,
-		Opening:     sess.Opening,
 		Handoffs:    []HandoffView{},
 		CheckIns:    append([]CheckIn{}, sess.CheckIns...),
-		Ops:         append([]*OpRecord{}, sess.Ops...),
+		Ops:         make([]*OpRecord, 0, len(sess.Ops)),
 		AI:          s.AIStatus(),
 		FixturesVer: s.catalog.Version,
 	}
 	for k, c := range sess.Consents {
 		v.Consents[k] = c
 	}
+	// Records are copied by value: the operation goroutine updates them
+	// under the session lock while the view is encoded without it.
+	for _, o := range sess.Ops {
+		rec := *o
+		v.Ops = append(v.Ops, &rec)
+	}
+	if sess.Preferences != nil {
+		p := *sess.Preferences
+		v.Preferences = &p
+	}
+	if sess.Opening != nil {
+		o := *sess.Opening
+		o.Lines = append([]ledger.OpeningLine{}, o.Lines...)
+		v.Opening = &o
+	}
 	if sess.Story != nil {
 		v.Story = &StoryView{Version: sess.Story.Version, Mode: sess.Story.Mode, ScenarioID: sess.Story.ScenarioID, Segments: append([]ledger.Segment{}, sess.Story.Segments...)}
 	}
 	if l := sess.Ledger; l != nil {
 		lv := &LedgerView{Version: l.Version, Items: append([]Item{}, l.Items...), Unknowns: append([]ledger.UnknownField{}, l.Unknowns...),
-			Skipped: append([]ledger.UnknownField{}, l.Skipped...), Clarification: l.Clarification, Provenance: l.Provenance, Model: l.Model, Rejected: l.Rejected}
+			Skipped: append([]ledger.UnknownField{}, l.Skipped...), Clarification: l.Clarification, Provenance: l.Provenance, Model: l.Model}
+		if l.Rejected != nil {
+			lv.Rejected = make(map[string]int, len(l.Rejected))
+			for k, n := range l.Rejected {
+				lv.Rejected[k] = n
+			}
+		}
 		if l.Approved != nil && l.Approved.Version == l.Version {
 			a := *l.Approved
 			lv.Approved = &a

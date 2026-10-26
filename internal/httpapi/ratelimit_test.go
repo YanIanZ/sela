@@ -23,7 +23,7 @@ func TestLimiterEvictsLeastRecentlyUsedInsteadOfFailingClosed(t *testing.T) {
 		t.Fatal("exhausted bucket allowed")
 	}
 	l.allow("ai", "192.0.2.2")
-	l.allow("ai", "192.0.2.3") // full: .1 .2 .3
+	l.allow("ai", "192.0.2.3")      // full: .1 .2 .3
 	if l.allow("ai", "192.0.2.1") { // .1 becomes the most recent
 		t.Fatal("exhausted bucket allowed")
 	}

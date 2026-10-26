@@ -542,14 +542,22 @@ func TestTrustedProxyUsesLastHopAcrossHeaderLines(t *testing.T) {
 
 // Review finding: /metrics was public and showed safety_crisis deltas live.
 func TestMetricsNeedOperatorToken(t *testing.T) {
-	off := newEnv(t, "")
-	res, b := off.client().do("GET", "/api/v2/metrics", nil, nil)
-	if res.StatusCode != 404 || errCode(b) != "not_found" {
-		t.Fatalf("metrics without a configured token: %d %v", res.StatusCode, b)
+	// Without a token the route must not exist for any method: a 405 with
+	// Allow would announce it (verifier finding).
+	off := newEnv(t, "").client()
+	for _, m := range []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"} {
+		res, b := off.do(m, "/api/v2/metrics", nil, nil)
+		if res.StatusCode != 404 || res.Header.Get("Allow") != "" || (m != "HEAD" && errCode(b) != "not_found") {
+			t.Errorf("%s metrics without a configured token: %d Allow=%q %v", m, res.StatusCode, res.Header.Get("Allow"), b)
+		}
 	}
 	const token = "metrics-token-0123456789abcdef"
 	e := newEnvWith(t, httpapi.Options{MetricsToken: token}, scripted{})
 	c := e.client()
+	res, b := c.do("POST", "/api/v2/metrics", nil, nil)
+	if res.StatusCode != 405 || res.Header.Get("Allow") != "GET, HEAD" {
+		t.Errorf("POST metrics with a configured token: %d Allow=%q %v", res.StatusCode, res.Header.Get("Allow"), b)
+	}
 	for name, auth := range map[string]string{
 		"missing": "", "wrong": "Bearer metrics-token-0123456789abcdeX", "prefix": "Bearer " + token[:10],
 		"longer": "Bearer " + token + "x", "scheme": "Basic " + token, "bare": token,
@@ -705,30 +713,25 @@ func shareOnce(t *testing.T, owner *client) string {
 	t.Helper()
 	cat := fixtures.MustLoad()
 	b := owner.start("id")
-	v := version(b)
-	_, b = owner.do("POST", "/api/v2/ledger/items", map[string]any{"expectedVersion": v, "kind": "experience", "text": "Tokoh fiktif merasa lelah setiap hari."}, nil)
-	if errCode(b) != "" {
-		// The manual path needs a story first on some builds.
-		_, b = owner.do("PUT", "/api/v2/story", map[string]any{"expectedVersion": v, "mode": "practice", "text": "Tokoh fiktif merasa lelah setiap hari karena pekerjaan baru."}, nil)
-		v = version(b)
-		_, b = owner.do("POST", "/api/v2/ledger/items", map[string]any{"expectedVersion": v, "kind": "experience", "text": "Tokoh fiktif merasa lelah setiap hari."}, nil)
+	res, b := owner.do("PUT", "/api/v2/story", map[string]any{"expectedVersion": version(b), "mode": "practice", "text": "Tokoh fiktif merasa lelah setiap hari karena pekerjaan baru."}, nil)
+	if res.StatusCode != 200 {
+		t.Fatalf("story: %d %v", res.StatusCode, b)
+	}
+	seg := data(b)["session"].(map[string]any)["story"].(map[string]any)["segments"].([]any)[0].(map[string]any)["id"]
+	res, b = owner.do("POST", "/api/v2/ledger/items", map[string]any{"expectedVersion": version(b), "segmentId": seg, "kind": "experience"}, nil)
+	if res.StatusCode != 200 {
+		t.Fatalf("manual item: %d %v", res.StatusCode, b)
 	}
 	sess := data(b)
-	if s, ok := sess["session"].(map[string]any); ok {
-		sess = s
-	}
-	led, _ := sess["ledger"].(map[string]any)
-	if led == nil {
-		t.Fatalf("manual item: %v", b)
-	}
-	v = int(sess["version"].(float64))
+	led := sess["ledger"].(map[string]any)
+	v := int(sess["version"].(float64))
 	for _, it := range led["items"].([]any) {
 		id := it.(map[string]any)["id"].(string)
 		_, b = owner.do("PATCH", "/api/v2/ledger/items/"+id, map[string]any{"expectedVersion": v, "action": "confirm"}, nil)
 		v = version(b)
 	}
 	lv := int(data(b)["ledger"].(map[string]any)["version"].(float64))
-	res, b := owner.do("POST", "/api/v2/ledger/approval", map[string]any{"expectedVersion": v, "ledgerVersion": lv}, nil)
+	res, b = owner.do("POST", "/api/v2/ledger/approval", map[string]any{"expectedVersion": v, "ledgerVersion": lv}, nil)
 	if res.StatusCode != 200 {
 		t.Fatalf("approve: %d %v", res.StatusCode, b)
 	}

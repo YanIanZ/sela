@@ -65,6 +65,9 @@ const (
 	CodeSlotUnavailable   = "slot_unavailable"
 	CodeNoStory           = "story_required"
 	CodeAdultRequired     = "adult_attestation_required"
+	// CodeLimitReached (409) is a per-session cap: ledger items, story
+	// clarification text, handoffs.
+	CodeLimitReached = "limit_reached"
 )
 
 func errf(code string, status int, field string) *Error {
@@ -76,6 +79,8 @@ var (
 	errStale   = errf(CodeStale, 409, "expectedVersion")
 	errCrisis  = errf(CodeCrisis, 409, "")
 )
+
+func errLimit(field string) *Error { return errf(CodeLimitReached, 409, field) }
 
 // Config tunes the service. Zero values get safe defaults.
 type Config struct {
@@ -195,7 +200,11 @@ func New(cfg Config, st Store, cat *fixtures.Catalog, p llm.Provider, adm *llm.A
 	if adm == nil {
 		adm = llm.NewAdmission(2)
 	}
-	return &Service{cfg: cfg, store: st, catalog: cat, provider: p, admission: adm, log: cfg.Logger, ops: map[string]*opRuntime{}}
+	s := &Service{cfg: cfg, store: st, catalog: cat, provider: p, admission: adm, log: cfg.Logger, ops: map[string]*opRuntime{}}
+	if n, ok := st.(PurgeNotifier); ok {
+		n.OnPurge(s.sessionPurged)
+	}
+	return s
 }
 
 // Catalog returns the fixture catalogue.
@@ -315,16 +324,28 @@ func (s *Service) assessText(sess *Session, texts ...string) safety.Assessment {
 	if a.Interrupts() {
 		// Crisis route (SPEC V3): stop the ordinary journey for this session.
 		// The text that triggered it is not kept, nor is the draft built from
-		// earlier text; existing shares stay revocable but no transition,
-		// model call or plan can follow.
+		// earlier text (operation event logs included); existing shares stay
+		// revocable but no transition, model call or plan can follow.
 		sess.Safety.Interrupted = true
 		sess.Story, sess.Ledger, sess.Opening = nil, nil, nil
+		sess.ledgerRev++
+		sess.openingRev++
 		s.cancelSessionOps(sess, "crisis")
+		s.purgeRuntimes(sess.ID, "crisis", false)
 	}
 	// Routing outcomes are health-related metadata: count them, never log
 	// them per request (no session id, IP or timing correlation in logs).
 	s.metrics.add("safety_" + string(a.Level))
 	return a
+}
+
+// screen runs the deterministic crisis gate over user-authored text before
+// any other validation of that text (length, characters, contact details,
+// approval, pattern), so crisis language is never turned away as an
+// ordinary input error (SPEC V3). It reports whether the crisis route was
+// taken; the caller then stores nothing from the request.
+func (s *Service) screen(sess *Session, texts ...string) bool {
+	return s.assessText(sess, texts...).Interrupts()
 }
 
 func maxLevel(a, b safety.Level) safety.Level {

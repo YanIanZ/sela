@@ -1,6 +1,7 @@
 package store
 
 import (
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -139,5 +140,143 @@ func TestRecipientNeedsLiveOwnerAndUnexpired(t *testing.T) {
 	m.DeleteRecipientsFor("a", "h")
 	if _, ok := m.Recipient("r", c.now()); ok {
 		t.Fatal("recipient survived DeleteRecipientsFor")
+	}
+}
+
+func TestCapacitySparesRetainedOrSharedSessions(t *testing.T) {
+	c := &fakeClock{t: time.Unix(1_800_000_000, 0)}
+	m := NewMemory(Options{MaxSessions: 2, Now: c.now})
+	day := newSession("day", c.now())
+	day.Retention, day.ExpiresAt = journey.RetentionDay, c.now().Add(journey.DayMaxLife)
+	_ = m.Create(day)
+	shared := newSession("shared", c.now())
+	shared.Handoffs = []*journey.Handoff{{ID: "h1", Share: journey.ShareActive, ExpiresAt: c.now().Add(time.Hour)}}
+	_ = m.Create(shared)
+	c.add(11 * time.Minute)
+	if err := m.Create(newSession("c", c.now())); err != journey.ErrCapacity {
+		t.Fatalf("protected session evicted: %v", err)
+	}
+	// Once the share ended, the idle session-only session may be evicted.
+	_ = m.Update("shared", func(s *journey.Session) error { s.Handoffs[0].Share = journey.ShareRevoked; return nil })
+	if err := m.Create(newSession("c", c.now())); err != nil {
+		t.Fatalf("idle eviction failed: %v", err)
+	}
+	if err := m.View("day", func(*journey.Session) error { return nil }); err != nil {
+		t.Fatal("storage-consented session evicted")
+	}
+}
+
+// Protected sessions cannot hold the store for longer than the ordinary idle
+// timeout, and an ordinary idle session always goes before a protected one.
+func TestCapacityEvictsProtectedSessionsLast(t *testing.T) {
+	c := &fakeClock{t: time.Unix(1_800_000_000, 0)}
+	m := NewMemory(Options{MaxSessions: 3, Now: c.now})
+	protect := func(id string) *journey.Session {
+		s := newSession(id, c.now())
+		s.Retention, s.ExpiresAt = journey.RetentionDay, c.now().Add(journey.DayMaxLife)
+		return s
+	}
+	_ = m.Create(protect("day1"))
+	c.add(time.Minute)
+	_ = m.Create(protect("day2"))
+	shared := newSession("shared", c.now())
+	shared.Handoffs = []*journey.Handoff{{ID: "h1", Share: journey.ShareActive, ExpiresAt: c.now().Add(time.Hour)}}
+	_ = m.Create(shared)
+	c.add(journey.SessionIdle - 2*time.Minute)
+	if err := m.Create(newSession("early", c.now())); err != journey.ErrCapacity {
+		t.Fatalf("protected session evicted before the ordinary idle timeout: %v", err)
+	}
+	c.add(time.Minute)
+	if err := m.Create(newSession("v1", c.now())); err != nil {
+		t.Fatalf("idle protected sessions lock the store: %v", err)
+	}
+	if err := m.View("day1", func(*journey.Session) error { return nil }); err != journey.ErrNotFound {
+		t.Fatal("the least recently seen protected session was not the one evicted")
+	}
+	for _, id := range []string{"day2", "shared"} {
+		if err := m.View(id, func(*journey.Session) error { return nil }); err != nil {
+			t.Fatalf("%s evicted too", id)
+		}
+	}
+	// v1 is ordinary: once idle it goes before the older protected sessions.
+	c.add(11 * time.Minute)
+	if err := m.Create(newSession("v2", c.now())); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.View("v1", func(*journey.Session) error { return nil }); err != journey.ErrNotFound {
+		t.Fatal("a protected session was evicted while an ordinary idle one could go")
+	}
+	for _, id := range []string{"day2", "shared", "v2"} {
+		if err := m.View(id, func(*journey.Session) error { return nil }); err != nil {
+			t.Fatalf("%s evicted", id)
+		}
+	}
+}
+
+func TestRecipientsPerHandoffReplaceTheOldest(t *testing.T) {
+	c := &fakeClock{t: time.Unix(1_800_000_000, 0)}
+	m := NewMemory(Options{MaxSessions: 1, Now: c.now})
+	_ = m.Create(newSession("a", c.now()))
+	exp := c.now().Add(time.Hour)
+	for _, id := range []string{"r1", "r2", "r3", "r4"} {
+		if err := m.CreateRecipient(journey.RecipientSession{ID: id, SessionID: "a", HandoffID: "h1", CreatedAt: c.now(), ExpiresAt: exp}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, ok := m.Recipient("r1", c.now()); ok {
+		t.Fatal("oldest principal not replaced")
+	}
+	for _, id := range []string{"r2", "r3", "r4"} {
+		if _, ok := m.Recipient(id, c.now()); !ok {
+			t.Fatalf("%s replaced", id)
+		}
+	}
+	// Another handoff is unaffected, and the default global bound fits every
+	// principal the per-handoff and per-session bounds allow.
+	if err := m.CreateRecipient(journey.RecipientSession{ID: "x1", SessionID: "a", HandoffID: "h2", ExpiresAt: exp}); err != nil {
+		t.Fatal(err)
+	}
+	if got := m.Stats().Recipients; got != journey.MaxRecipientsPerHandoff+1 {
+		t.Fatalf("recipients = %d", got)
+	}
+	if m.maxRecips < journey.MaxHandoffs*journey.MaxRecipientsPerHandoff {
+		t.Fatalf("default recipient bound %d too small", m.maxRecips)
+	}
+}
+
+func TestOnPurgeReportsEveryPurge(t *testing.T) {
+	c := &fakeClock{t: time.Unix(1_800_000_000, 0)}
+	m := NewMemory(Options{MaxSessions: 3, Now: c.now})
+	var mu sync.Mutex
+	var purged []string
+	m.OnPurge(func(id string) { mu.Lock(); purged = append(purged, id); mu.Unlock() })
+	got := func() []string { mu.Lock(); defer mu.Unlock(); return append([]string{}, purged...) }
+	for _, id := range []string{"deleted", "swept", "accessed"} {
+		_ = m.Create(newSession(id, c.now()))
+	}
+	// Delete inside the session's own Update reports the purge without deadlock.
+	_ = m.Update("deleted", func(*journey.Session) error { m.Delete("deleted"); return nil })
+	c.add(journey.SessionIdle + time.Second)
+	_ = m.View("accessed", func(*journey.Session) error { return nil }) // expiry on access
+	m.Sweep(c.now())
+	_ = m.Create(newSession("idle1", c.now()))
+	_ = m.Create(newSession("idle2", c.now()))
+	_ = m.Create(newSession("idle3", c.now()))
+	c.add(11 * time.Minute)
+	_ = m.Create(newSession("new", c.now())) // evicts one idle session
+	want := map[string]bool{"deleted": true, "swept": true, "accessed": true}
+	evicted := 0
+	for _, id := range got() {
+		if strings.HasPrefix(id, "idle") {
+			evicted++
+		}
+		delete(want, id)
+	}
+	if len(want) != 0 || evicted != 1 {
+		t.Fatalf("purges reported %v (missing %v)", got(), want)
+	}
+	m.Delete("missing") // nothing to report
+	if n := len(got()); n != 4 {
+		t.Fatalf("reports = %d, want 4", n)
 	}
 }

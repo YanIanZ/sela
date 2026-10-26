@@ -52,6 +52,7 @@ func (s *Service) TemplateOpening(sessionID string, in OpeningInput) (*SessionVi
 			v = sess.Opening.Version + 1
 		}
 		sess.Opening = &Opening{Lines: lines, Provenance: ProvenanceManual, BriefVersion: snap.Version, Version: v}
+		sess.openingRev++
 		bump(sess)
 		view = s.buildView(sess)
 		return nil
@@ -65,7 +66,8 @@ func (s *Service) StartOpeningDraft(sessionID string, in OpeningInput) (*OpRecor
 	if in.Recipient != "professional" && in.Recipient != "trusted_person" {
 		return nil, errf(CodeInvalid, 400, "recipient")
 	}
-	var rec *OpRecord
+	var snapshot OpRecord
+	var rt *opRuntime
 	var items []ledger.ApprovedItem
 	var lang string
 	var briefVersion int
@@ -81,16 +83,16 @@ func (s *Service) StartOpeningDraft(sessionID string, in OpeningInput) (*OpRecor
 		if err != nil {
 			return err
 		}
-		rec, items, lang, briefVersion = r, approvedItems(snap), sess.Language, snap.Version
+		snapshot, items, lang, briefVersion = *r, approvedItems(snap), sess.Language, snap.Version
 		bump(sess)
+		rt = s.register(sess, r)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	snapshot := *rec
 	s.metrics.add("ai_op_started")
-	s.launch(sessionID, rec, func(ctx context.Context, rt *opRuntime) error {
+	s.launch(rt, func(ctx context.Context, rt *opRuntime) error {
 		req := openingRequest(items, lang, in.Recipient)
 		res, err := s.generate(ctx, rt, req, nil)
 		if err != nil {
@@ -117,7 +119,10 @@ func (s *Service) StartOpeningDraft(sessionID string, in OpeningInput) (*OpRecor
 			}
 			c := sess.consent(ConsentAI)
 			snap, ok := approvedSnapshot(sess)
-			if sess.Safety.Interrupted || !c.Granted || c.Revision != snapshot.ConsentRevision || !ok || snap.Version != briefVersion {
+			// Lines the user wrote or chose while the model ran (any opening
+			// change) are never overwritten.
+			if sess.Safety.Interrupted || !c.Granted || c.Revision != snapshot.ConsentRevision || !ok || snap.Version != briefVersion ||
+				sess.openingRev != snapshot.OpeningRevision {
 				return errStaleResult
 			}
 			v := 1
@@ -125,6 +130,7 @@ func (s *Service) StartOpeningDraft(sessionID string, in OpeningInput) (*OpRecor
 				v = sess.Opening.Version + 1
 			}
 			sess.Opening = &Opening{Lines: result.Lines, Provenance: prov, Model: model, BriefVersion: briefVersion, Version: v}
+			sess.openingRev++
 			cur.State, cur.Provenance, cur.EndedAt = OpSucceeded, prov, s.now()
 			bump(sess)
 			rejected := map[string]int{}
@@ -154,47 +160,51 @@ type EditOpeningInput struct {
 }
 
 // EditOpening stores user-written lines. They are the user's own words, so
-// they are not vocabulary-restricted, but they pass the safety gate and the
-// contact-detail check.
+// they are not vocabulary-restricted, but they pass the safety gate (before
+// any other check) and the contact-detail check.
 func (s *Service) EditOpening(sessionID string, in EditOpeningInput) (*SessionView, error) {
-	if len(in.Lines) < ledger.MinOpeningLines || len(in.Lines) > ledger.MaxOpeningLines {
-		return nil, errf(CodeInvalid, 400, "lines")
-	}
-	lines := make([]ledger.OpeningLine, 0, len(in.Lines))
-	for _, l := range in.Lines {
-		t := strings.TrimSpace(l)
-		if t == "" || utf8.RuneCountInString(t) > ledger.MaxOpeningRunes || containsControl(t) {
-			return nil, errf(CodeInvalid, 400, "lines")
-		}
-		lines = append(lines, ledger.OpeningLine{Text: t, BasedOn: []string{"user"}})
-	}
 	var view *SessionView
 	err := s.update(sessionID, func(sess *Session) error {
 		if err := checkVersion(sess, in.ExpectedVersion); err != nil {
 			return err
 		}
+		if sess.Safety.Interrupted {
+			return errCrisis
+		}
+		texts := make([]string, 0, len(in.Lines))
+		for _, l := range in.Lines {
+			texts = append(texts, strings.TrimSpace(l))
+		}
+		if s.screen(sess, texts...) {
+			bump(sess)
+			view = s.buildView(sess)
+			return nil
+		}
+		if len(texts) < ledger.MinOpeningLines || len(texts) > ledger.MaxOpeningLines {
+			return errf(CodeInvalid, 400, "lines")
+		}
+		lines := make([]ledger.OpeningLine, 0, len(texts))
+		for _, t := range texts {
+			if t == "" || utf8.RuneCountInString(t) > ledger.MaxOpeningRunes || containsControl(t) {
+				return errf(CodeInvalid, 400, "lines")
+			}
+			lines = append(lines, ledger.OpeningLine{Text: t, BasedOn: []string{"user"}})
+		}
 		snap, err := s.requireApproved(sess)
 		if err != nil {
 			return err
 		}
-		all := make([]string, 0, len(lines))
 		for _, l := range lines {
 			if containsContactDetails(l.Text) {
 				return errf(CodeContactDetails, 422, "lines")
 			}
-			all = append(all, l.Text)
-		}
-		if a := s.assessText(sess, all...); a.Interrupts() {
-			sess.Story, sess.Ledger, sess.Opening = nil, nil, nil
-			bump(sess)
-			view = s.buildView(sess)
-			return nil
 		}
 		v := 1
 		if sess.Opening != nil {
 			v = sess.Opening.Version + 1
 		}
 		sess.Opening = &Opening{Lines: lines, Provenance: ProvenanceManual, BriefVersion: snap.Version, UserEdited: true, Version: v}
+		sess.openingRev++
 		bump(sess)
 		view = s.buildView(sess)
 		return nil
@@ -214,24 +224,27 @@ type PracticeResult struct {
 }
 
 // Practice gives deterministic feedback on which approved items a rehearsal
-// mentions. The attempt passes the safety gate and is discarded afterwards.
+// mentions. The attempt passes the safety gate (before any other check) and
+// is discarded afterwards.
 func (s *Service) Practice(sessionID string, in PracticeInput) (*PracticeResult, error) {
 	t := strings.TrimSpace(in.Attempt)
-	if t == "" || utf8.RuneCountInString(t) > ledger.MaxPracticeRunes || containsControl(t) {
-		return nil, errf(CodeInvalid, 400, "attempt")
-	}
 	var out *PracticeResult
 	err := s.update(sessionID, func(sess *Session) error {
-		snap, err := s.requireApproved(sess)
-		if err != nil {
-			return err
+		if sess.Safety.Interrupted {
+			return errCrisis
 		}
 		a := s.assessText(sess, t)
 		if a.Interrupts() {
-			sess.Story, sess.Ledger, sess.Opening = nil, nil, nil
 			bump(sess)
 			out = &PracticeResult{Safety: string(a.Level), Coverage: ledger.Coverage{Mentioned: []string{}, NotMentioned: []string{}}}
 			return nil
+		}
+		if t == "" || utf8.RuneCountInString(t) > ledger.MaxPracticeRunes || containsControl(t) {
+			return errf(CodeInvalid, 400, "attempt")
+		}
+		snap, err := s.requireApproved(sess)
+		if err != nil {
+			return err
 		}
 		out = &PracticeResult{Coverage: ledger.PracticeCoverage(t, approvedItems(snap)), Safety: string(a.Level)}
 		return nil
