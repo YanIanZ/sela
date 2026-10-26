@@ -355,6 +355,8 @@ func adversarialInputs() map[string]string {
 		// bare "sh" ran a regexp window per match (review finding).
 		"benign-run": repeat(benignRunUnit),
 		"sh-run":     repeat("sh "),
+		"sh-fused":   repeat("sh"),
+		"kms-fused":  repeat("kmsx"),
 	}
 }
 
@@ -381,6 +383,12 @@ func TestPerformance(t *testing.T) {
 	}
 	inputs := adversarialInputs()
 	inputs["realistic"] = in
+	run := vectorRun(t, 32000)
+	inputs["vector-run"] = run[:strings.LastIndexByte(run[:8000], ' ')]
+	// The whole 32000-byte run, a long voice transcript, is bounded at four
+	// times the budget (review finding: it took about 1.9s; matched in
+	// windows it takes about 0.25s, see window.go).
+	inputs["vector-run-32k"] = run
 	for name, s := range inputs {
 		if raceEnabled {
 			start := time.Now()
@@ -388,14 +396,36 @@ func TestPerformance(t *testing.T) {
 			t.Logf("%s: %v (race detector on, not asserted)", name, time.Since(start))
 			continue
 		}
+		budget := perfBudget
+		if len(s) > 8000 {
+			budget = 4 * perfBudget
+		}
 		d := medianDuration(func() { Assess(s) })
 		switch {
-		case d > perfBudget:
-			t.Errorf("%s 8000-char input took %v, budget %v", name, d, perfBudget)
+		case d > budget:
+			t.Errorf("%s %d-byte input took %v, budget %v", name, len(s), d, budget)
 		default:
 			t.Logf("%s: %v", name, d)
 		}
 	}
+}
+
+// vectorRun is one long unpunctuated sentence made of the texts of the
+// vectors that want none, cut at a space before n bytes: a benign voice
+// transcript full of idioms (see TestPerformance).
+func vectorRun(t testing.TB, n int) string {
+	unpunct := strings.NewReplacer(".", " ", "!", " ", "?", " ", "\n", " ")
+	var b strings.Builder
+	for b.Len() < n {
+		for _, v := range loadVectors(t) {
+			if v.Want == LevelNone {
+				b.WriteString(unpunct.Replace(v.Text))
+				b.WriteByte(' ')
+			}
+		}
+	}
+	s := b.String()[:n]
+	return s[:strings.LastIndexByte(s, ' ')]
 }
 
 // TestLinearTime checks that Assess stays linear in the input length:
@@ -438,6 +468,10 @@ func TestLinearTime(t *testing.T) {
 		"od-next": "I don't want to take all my pills. but ", "take-me": "god take me to the mall ",
 		"benign-run": benignRunUnit, "sh-run": "sh ", "denial-retract": "I'm not suicidal, haha jk ",
 		"passive-wish": "I just want to be gone by the time the party starts ",
+		// One long unspaced word of dense short atoms: every occurrence
+		// widened its window to the whole word (review finding).
+		"sh-fused": "sh", "shx-fused": "shx", "kms-fused": "kmsx",
+		"denial-later": "I'm not suicidal just need a break, ", "denial-act": "I'm not suicidal, I promise ",
 	}
 	fastest := func(in string) time.Duration {
 		best := time.Duration(1<<63 - 1)

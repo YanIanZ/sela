@@ -486,7 +486,7 @@ func (c *shape) analyseClause(cl *clause) {
 			if loc == nil {
 				continue
 			}
-			if rest := t[seg.start+loc[1] : seg.end]; !endsDenial(rest) {
+			if rest := t[seg.start+loc[1] : seg.end]; !endsDenial(rest, sentenceAfter(t, seg.end)) {
 				continue
 			}
 			d.end = seg.start + loc[3]
@@ -499,15 +499,19 @@ func (c *shape) analyseClause(cl *clause) {
 		// "just", after laughter or a filler ("I'm not suicidal, jk", "...,
 		// haha just kidding", "aku gak mau bunuh diri, boong deng", "...,
 		// yet"; see retraction).
-		next := ""
+		nsp := span{-1, -1}
 		if !last {
-			next = t[segs[i+1].start:segs[i+1].end]
-		} else if !cl.contrastNext {
-			next = c.nextClauseText(cl)
+			nsp = segs[i+1]
+		} else {
+			nsp = c.nextClauseSpan(cl)
+		}
+		next := ""
+		if nsp.start >= 0 && (!last || !cl.contrastNext) {
+			next = t[nsp.start:nsp.end]
 		}
 		next = stripFillers(next)
 		if rest, ok := justRest(next); ok {
-			switch continuationKind(rest) {
+			switch laterKind(rest, sentenceAfter(t, nsp.end), continuationKind(rest)) {
 			case qualVoid:
 				continue
 			case qualHedge:
@@ -516,6 +520,12 @@ func (c *shape) analyseClause(cl *clause) {
 				d.hedged = d.hedged || (i+1 == len(segs)-1 && cl.contrastNext)
 			}
 		} else if retraction(next) {
+			continue
+		} else if nsp.start >= 0 && laterOwnAct(wordPrefix(t[nsp.start:nsp.end], checkWindow)+sentenceAfter(t, nsp.end)) {
+			// "I'm not suicidal, I promise I'll do it tonight", "...,
+			// I've got the pills ready", "aku gak mau bunuh diri, serius
+			// besok aku lakuin" (review finding: v1 crisis, none since
+			// e9711af).
 			continue
 		}
 		cl.denials = append(cl.denials, d)
@@ -642,15 +652,40 @@ func (c *shape) analyseClause(cl *clause) {
 	cl.hidden = mergeSpans(cl.hidden)
 }
 
-// nextClauseText returns the text of the clause after cl, or "" when cl is
-// the last one. The first segment is enough for justRest.
-func (c *shape) nextClauseText(cl *clause) string {
+// nextClauseSpan returns the first segment of the clause after cl, or
+// {-1, -1} when cl is the last one. The first segment is enough for
+// justRest.
+func (c *shape) nextClauseSpan(cl *clause) span {
 	k := sort.Search(len(c.clauses), func(i int) bool { return c.clauses[i].start >= cl.end })
 	if k == len(c.clauses) || len(c.clauses[k].segments) == 0 {
+		return span{-1, -1}
+	}
+	return c.clauses[k].segments[0]
+}
+
+// sentenceAfter returns the text of t after offset i up to the end of its
+// sentence ('.', '!', '?' or a newline), at most checkWindow bytes and cut
+// at a word boundary, so that reading it once per denial or match stays
+// linear.
+func sentenceAfter(t string, i int) string {
+	if i < 0 || i >= len(t) {
 		return ""
 	}
-	seg := c.clauses[k].segments[0]
-	return c.text[seg.start:seg.end]
+	if k := strings.IndexAny(t[i:min(len(t), i+checkWindow)], ".!?\n"); k >= 0 {
+		return t[i : i+k]
+	}
+	return wordPrefix(t[i:], checkWindow)
+}
+
+// wordPrefix returns s cut to at most n bytes at a word boundary.
+func wordPrefix(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && isLetter(s[n]) {
+		n--
+	}
+	return s[:n]
 }
 
 // qualifierLead reports whether s opens with words that may qualify a
@@ -736,8 +771,122 @@ func continuationKind(rest string) int {
 // whole segment the speaker's own words, as in v1 (review finding: a
 // generic "want"/"pengen" ended the denial, so a passive death wish that no
 // rule lists routed none).
-func endsDenial(rest string) bool {
-	return (tiredRe.MatchString(rest) || benignWantRe.MatchString(strings.TrimLeft(rest, " "))) && continuationKind(rest) == qualNone
+//
+// after is the rest of the sentence after the segment. The denial does not
+// end either when the continuation or the rest of its sentence names a
+// self-directed method, a deferral or a threat ("just need a break with my
+// pills", "... before I end it", "... or I'll do something", "cuma pengen
+// tidur, pakai semua obatku"), an absence or an ending in a later segment
+// ("..., permanently") or another wish ("..., i want out"; see laterKind;
+// review finding: the denial stayed exempt and the rest matched nothing).
+func endsDenial(rest, after string) bool {
+	if !tiredRe.MatchString(rest) && !benignWantRe.MatchString(strings.TrimLeft(rest, " ")) {
+		return false
+	}
+	return laterKind(rest, after, continuationKind(rest)) == qualNone
+}
+
+// laterKind raises kind, the qualification that the words rest after a
+// "just"/"cuma" give a denial (see continuationKind), by what follows them:
+// after, the rest of the sentence after the segment of rest. A deferral to
+// the act or a threat ("before I end it", "or I'll do something", "atau aku
+// bakal nekat"), a later act ("I'll do it tonight"; see laterOwnAct), a
+// self-directed method in a later segment, or in rest when nothing else
+// qualifies it ("just want some rest with the whole bottle of pills"; "just
+// need my meds" stays a hedge), and an absence or an ending in a later
+// segment ("..., permanently", "..., selamanya") take the denial back. Any
+// other wish in a later segment that is not for a listed benign thing
+// ("..., i want out") hedges it.
+func laterKind(rest, after string, kind int) int {
+	if kind == qualVoid {
+		return kind
+	}
+	rest = wordPrefix(rest, 2*checkWindow)
+	both := rest + " " + after
+	switch {
+	case denialThreatRe.MatchString(both), laterOwnAct(both), denialMethodRe.MatchString(after), absenceRe.MatchString(after):
+		return qualVoid
+	case denialMethodRe.MatchString(benignTail(rest, kind)):
+		return qualVoid
+	}
+	return max(kind, wishQualifier(after))
+}
+
+// benignTail returns the words of rest after its listed tiredness phrase or
+// benign wish ("need a break| and the rope is ready"), the whole of rest
+// when nothing qualifies it, and "" otherwise: a method noun there is not
+// the object of another wish ("just need my meds" stays a hedge).
+func benignTail(rest string, kind int) string {
+	if loc := tiredRe.FindStringIndex(rest); loc != nil {
+		return rest[loc[1]:]
+	}
+	t := strings.TrimLeft(rest, " ")
+	if loc := benignWantRe.FindStringIndex(t); loc != nil {
+		return t[loc[1]:]
+	}
+	if kind == qualNone {
+		return rest
+	}
+	return ""
+}
+
+// laterOwnAct reports whether s, the words after a denial, report a later
+// act of the speaker's: a first-person future or progressive "do it" or
+// "end it" with a time or sincerity word ("I promise I'll do it tonight",
+// "for real this time I'm going to do it", "serius besok aku lakuin"), a
+// prepared means ("I've got the pills ready", "udah siapin obat"; see
+// justMeansRe), or a set time ("tonight is the night"). Such words take
+// the denial back.
+func laterOwnAct(s string) bool {
+	if justMeansRe.MatchString(s) {
+		return true
+	}
+	if loc := setTimeRe.FindStringIndex(s); loc != nil && onlyFillers(s[loc[1]:]) {
+		return true
+	}
+	if !laterTimeRe.MatchString(s) {
+		return false
+	}
+	for _, loc := range laterActEnRe.FindAllStringIndex(s, -1) {
+		w := nextWords(s, loc[1], 2)
+		if laterActOthers[w[0]] || (w[0] == "for" && w[1] != "real" && w[1] != "good") {
+			continue // "I'll end it with him tonight", "doing it for my kids"
+		}
+		if timedSegment(s, loc[0], loc[1]) {
+			return true
+		}
+	}
+	for _, loc := range laterActIdRe.FindAllStringIndex(s, -1) {
+		if w := nextWords(s, loc[1], 1)[0]; (w == "" || laterActEnds[w]) && timedSegment(s, loc[0], loc[1]) {
+			return true
+		}
+	}
+	return false
+}
+
+// timedSegment reports whether a time or sincerity word stands in the comma
+// segment of s around s[start:end] ("for real this time I'm going to do
+// it"; not "I'm finally doing it, I'm moving out tonight").
+func timedSegment(s string, start, end int) bool {
+	lo, hi := start, end
+	for lo > 0 && strings.IndexByte(",;:", s[lo-1]) < 0 {
+		lo--
+	}
+	for hi < len(s) && strings.IndexByte(",;:", s[hi]) < 0 {
+		hi++
+	}
+	return laterTimeRe.MatchString(s[lo:hi])
+}
+
+// onlyFillers reports whether s has no words but laughter and fillers.
+func onlyFillers(s string) bool {
+	for _, w := range strings.Fields(s) {
+		w = strings.Trim(w, ",.!?;:'\"()")
+		if w != "" && !laughter(w) && !laughterWords[w] && !fillerWords[w] {
+			return false
+		}
+	}
+	return true
 }
 
 // wishQualifier reads a wish in the continuation of a denial. A wish for an
@@ -843,7 +992,7 @@ var (
 var (
 	// desireRe finds a wish in the continuation of a denial (see
 	// wishQualifier).
-	desireRe = regexp.MustCompile(`\b(?:want|wants|wanting|wanna|need|needs|needing|wish|wishing|hope|hoping|ready|` +
+	desireRe = mustGuarded(`\b(?:want|wants|wanting|wanna|need|needs|needing|wish|wishing|hope|hoping|ready|` +
 		`pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|mau|mw|ingin|butuh|perlu|siap|rela|berharap|semoga)\b`)
 	// benignWantRe is a wish for a listed benign thing: rest, sleep, a break,
 	// someone to talk to, time alone (see endsDenial).
@@ -858,7 +1007,7 @@ var (
 		`didengar|didengarkan|dipeluk|pelukan|ditemenin|ditemani|sendiri|sendirian|nangis|menangis|teriak|makan|` +
 		`waktu|ruang|bantuan|dukungan|psikolog|konseling)\b`)
 	// absenceRe is an absence or an ending (see wishQualifier).
-	absenceRe = regexp.MustCompile(`\b(?:exist|existing|existence|alive|gone|vanish|vanishing|disappear|disappearing|` +
+	absenceRe = mustGuarded(`\b(?:exist|existing|existence|alive|gone|vanish|vanishing|disappear|disappearing|` +
 		`fade\s+away|fading\s+away|forever|for\s+good|permanently|eternally|dead|die|dying|death|never\s+wake|not\s+wake|` +
 		`(?:not|never|no\s+longer)\s+(?:be\s+)?(?:here|around)|(?:be|being)\s+(?:here|around)\s+any\s*more|` +
 		`(?:it|it\s+all|everything|all\s+of\s+(?:it|this)|my\s+life|this\s+life|life|things)\s+(?:to\s+)?(?:(?:just|finally|all)\s+)?(?:end|ends|stop|stops|be\s+over|is\s+over)|` +
@@ -876,12 +1025,49 @@ var (
 		"waiting wait nunggu nungguin menunggu tunggu planning plan plans planned rencana berencana ngerencanain merencanakan")
 	// justMeansRe: preparing a means ("cuma udah siapin obat", "just got the
 	// pills ready") takes the denial back (review finding).
-	justMeansRe = regexp.MustCompile(`\b(?:siapin|nyiapin|nyiapain|menyiapkan|disiapin|siapkan|ngumpulin|kumpulin|mengumpulkan|nimbun|beli|` +
+	justMeansRe = mustGuarded(`\b(?:siapin|nyiapin|nyiapain|menyiapkan|disiapin|siapkan|ngumpulin|kumpulin|mengumpulkan|nimbun|beli|` +
 		`prepared|preparing|prepping|ready|got|bought|stockpiling|stockpiled|saving|saved|collecting|collected|hoarding)\b.*\b(?:obat|pil|tali|pisau|silet|racun|` +
-		`pills|meds|medication|rope|noose|knife|blade|razor|poison|gun|note|letter)\b`)
+		`pills|meds|medication|rope|noose|knife|blade|razor|poison|gun|note|letter)\b|` +
+		// The means first: "the pills are ready", "talinya udah siap".
+		`\b(?:(?:obat|pil|tali|pisau|silet|racun)(?:ku|nya)?|pills|meds|rope|noose|knife|blade|razor|poison|gun|note|letter)\s+` +
+		`(?:(?:is|are|'s|was|were|all|udah|sudah|sdh|dah|udh)\s+){0,2}(?:ready|prepared|set|siap|disiapin|disiapkan)\b`)
+	// denialMethodRe is a self-directed method after a denial and its
+	// continuation (see laterKind): the means of justMeansRe and a bottle.
+	denialMethodRe = mustGuarded(`\b(?:(?:obat|pil|tali|pisau|silet|racun|botol|pistol)(?:ku|nya|mu)?|` +
+		`pills?|meds|medications?|rope|noose|knife|blades?|razors?|poison|gun|bottle|overdose|overdosis)\b`)
+	// denialThreatRe is a deferral to the act or a threat after a denial
+	// and its continuation (see laterKind): "before I end it", "or I'll do
+	// something", "atau aku bakal nekat".
+	denialThreatRe = mustGuarded(`\b(?:before|or|otherwise|else|sebelum|atau|ato|kalau\s+nggak|kalo\s+nggak|kalo\s+gak|kalau\s+tidak)\s+` +
+		`(?:(?:else|then|maybe|mungkin|nanti|ntar)\s+)?(?:i|i'll|ill|i'm|im|i'd|aku|gw|gue|gua|saya|ku)\s+` +
+		`(?:(?:will|would|might|gonna|going\s+to|just|finally|actually|bakal|akan|mau|bisa|langsung|jadi|pasti)\s+){0,2}` +
+		`(?:(?:do|doing)\s+(?:it|something|anything|this|that)|(?:end|ending)\s+(?:it|this|that|everything|things|myself|my\s+life)|` +
+		`act\s+on\s+it|(?:kill|hurt)\s+(?:myself|me)|jump|go\s+through\s+with\s+it|nekat|bunuh\s+diri|` +
+		`(?:lakuin|ngelakuin|melakukan|lakukan|akhiri|akhirin|ngakhirin|mengakhiri)(?:nya)?(?:\s+(?:itu|semua|semuanya|hidup|hidupku|aja|deh|beneran|malam|besok|sekarang|nanti)\b|\s*(?:$|[,.!?;])))`)
+	// laterTimeRe is a time or sincerity word that makes a later act
+	// definite (see laterOwnAct).
+	laterTimeRe = mustGuarded(`\b(?:tonight|today|tomorrow|now|soon|later|this\s+time|this\s+week(?:end)?|midnight|for\s+real|no\s+lie|promise|seriously|` +
+		`malam\s+ini|nanti\s+malam|ntar\s+malam|besok|bsk|sekarang|skrg|hari\s+ini|minggu\s+ini|segera|sebentar\s+lagi|bentar\s+lagi|nanti|beneran|serius|janji)\b`)
+	// laterActEnRe is a first-person future or progressive "do it" or "end
+	// it" (see laterOwnAct).
+	laterActEnRe = mustGuarded(`\b(?:i'?ll|ill|i\s+will|i'?m|im|i\s+am)\s+(?:(?:going\s+to|gonna|gna|finally|actually|really|definitely|totally|seriously|just)\s+){0,2}` +
+		`(?:(?:do|doing|go\s+through\s+with|going\s+through\s+with)\s+it|(?:end|ending)\s+(?:it|this|that))\b`)
+	// laterActIdRe is an Indonesian "do it" without an object (see
+	// laterOwnAct and laterActEnds): "besok aku lakuin", "malam ini
+	// kulakukan".
+	laterActIdRe = mustGuarded(`\b(?:(?:aku|gw|gue|gua|saya)\s+|ku)?(?:(?:akan|bakal|mau|pasti|langsung)\s+)?` +
+		`(?:lakuin|ngelakuin|lakukan|melakukan|ngelakukan|eksekusi|akhiri|akhirin|ngakhirin|mengakhiri)(?:nya)?\b`)
+	laterActEnds = setOf("itu aja saja deh kok sih lah ya yah dong beneran serius malam besok sekarang skrg nanti hari pas")
+	// laterActOthers after "do it" or "end it" make it about someone or
+	// something else (see laterOwnAct).
+	laterActOthers = setOf("with between together")
+	// setTimeRe is a set time for the act after a denial ("tonight is the
+	// night"; see laterOwnAct).
+	setTimeRe = mustGuarded(`\b(?:(?:tonight|today|tomorrow)(?:\s+is|'s|\s+will\s+be)\s+the\s+(?:night|day)|` +
+		`(?:malam\s+ini|hari\s+ini|besok)\s+(?:adalah\s+)?(?:saatnya|waktunya|harinya|malamnya))\b`)
 	// justScaredRe: fear of the act itself is a lack of courage ("just too
 	// scared to do it", "cuma terlalu takut"; review finding).
-	justScaredRe = regexp.MustCompile(`\b(?:too|terlalu|masih|still)\s+(?:(?:much\s+of\s+a\s+)?(?:scared|afraid|takut|chicken|cowardly|weak)|of\s+a\s+(?:coward|chicken))\b|` +
+	justScaredRe = mustGuarded(`\b(?:too|terlalu|masih|still)\s+(?:(?:much\s+of\s+a\s+)?(?:scared|afraid|takut|chicken|cowardly|weak)|of\s+a\s+(?:coward|chicken))\b|` +
 		`\b(?:scared|afraid|takut)\s+(?:to\s+(?:do\s+it|do\s+that|try|actually|go\s+through)|(?:buat|untuk|utk)\s+(?:ngelakuin|melakukan|nyoba|mencoba)|ngelakuin|nyoba)\b`)
 	// justDeferStart and justDeferPairs open a deferral ("just now", "just
 	// not today", "cuma untuk sekarang").

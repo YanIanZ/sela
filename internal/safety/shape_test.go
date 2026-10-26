@@ -531,8 +531,41 @@ func TestJustQualifier(t *testing.T) {
 		{" mau udahan aja", false}, {" want to be left", false}, {" need a break forever", false},
 		{" tired and want to disappear", false},
 	} {
-		if got := endsDenial(c.rest); got != c.want {
+		if got := endsDenial(c.rest, ""); got != c.want {
 			t.Errorf("endsDenial(%q) = %v, want %v", c.rest, got, c.want)
+		}
+	}
+	// A method, a deferral, a threat, a later act, an absence in a later
+	// segment or another wish after the listed phrase keeps the denial from
+	// ending (review finding).
+	for _, c := range []struct {
+		rest, after string
+		want        bool
+	}{
+		{" need a break", "", true}, {" need a break from work", ", see you tomorrow", true},
+		{" need a break with my pills", "", false}, {" need a hug", ", or a rope", false},
+		{" want some rest before i end it", "", false}, {" need a break or i'll do something", "", false},
+		{" pengen istirahat atau aku bakal nekat", "", false}, {" pengen tidur", ", pakai semua obatku", false},
+		{" need a break from everything", ", permanently", false}, {" having a bad day", ", every day, i want out", false},
+		{" tired", ", i'm going to do it tonight", false}, {" need a break and the rope is ready", "", false},
+		{" need a nap before i go to work", "", true}, {" need a break or i'll go crazy", "", true},
+	} {
+		if got := endsDenial(c.rest, c.after); got != c.want {
+			t.Errorf("endsDenial(%q, %q) = %v, want %v", c.rest, c.after, got, c.want)
+		}
+	}
+	for _, c := range []struct {
+		s    string
+		want bool
+	}{
+		{" I promise i'll do it tonight", true}, {" for real this time i'm going to do it", true},
+		{" serius besok aku lakuin", true}, {" I've got the pills ready", true}, {" the pills are ready", true},
+		{" lol tonight is the night", true}, {" udah siapin obat", true},
+		{" I promise", false}, {" I promise I'll do my homework tonight", false}, {" besok aku lakuin tugasnya", false},
+		{" I'm doing this for my kids, I promise", false}, {" tonight is the night we celebrate", false},
+	} {
+		if got := laterOwnAct(c.s); got != c.want {
+			t.Errorf("laterOwnAct(%q) = %v, want %v", c.s, got, c.want)
 		}
 	}
 	for _, c := range []struct {

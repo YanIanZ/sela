@@ -19,8 +19,11 @@
 // two-letter elongation inside a word included; fused spaced-out words
 // split; symbols, emoji, emphasis marks and spaced dashes between words read
 // as spaces, and hesitation dots, or a pause before a newline, as a newline
-// that keeps the canonical form's clause boundary; contractions and common
-// misspellings spelt out), its dash-joined form, and an alternative
+// that keeps the canonical form's clause boundary; contractions, common
+// misspellings and chat spellings spelt out: "aq", "ak" and "sy" as
+// pronouns, "aj" as "aja", "bsk" as "besok", "tdk" as "tidak", "tonite" as
+// "tonight", and a free-standing "w" as "gw" next to an Indonesian word or
+// as "with" before an English object), its dash-joined form, and an alternative
 // leetspeak reading (@ $ ! | 7 +, and each 1 or | read as i or l, whichever
 // spells a vocabulary word: "k1ll", "$u1c1d3", "m@t1"; a final "!" after a
 // whole word stays punctuation: "m@ti! Lampu kamar mati"). Variants only
@@ -38,11 +41,15 @@
 // bytes of the text after its sentence, for an elliptical continuation ("I
 // hope I don't wake up late. or ever").
 //
-// Assess runs in time linear in the length of the input: an adversarial
+// Assess runs in time linear in the length of the input. A long sentence
+// (768 bytes or more, such as an unpunctuated voice transcript) is matched
+// only in windows around the literal atoms of each pattern, bounded by the
+// longest match the pattern allows (see window.go). An adversarial
 // 8000-character text takes up to about 30ms and a realistic one about 5ms
-// in a normal build, a 32000-character story body up to about 100ms and a
-// 48000-character one up to about 150ms (TestPerformance bounds the
-// 8000-character inputs at 200ms; TestLinearTime
+// in a normal build; a 32000-byte unpunctuated transcript made of the benign
+// vectors takes about 0.25s and 48000 bytes of a bare slang word repeated
+// about 10ms (TestPerformance bounds the 8000-character inputs at 200ms and
+// the 32000-byte transcript at 800ms; TestLinearTime
 // checks the growth of every adversarial unit, under the race detector
 // too). It has no input cap of its own, because truncating would drop risk
 // language; callers bound request sizes.
@@ -70,14 +77,41 @@
 //     not suicidal, just tired of living") is elevated. Without the comma a
 //     denial that "just" or "cuma" continues ends before it only when a
 //     listed tiredness, sadness or passive-ideation phrase follows ("I'm not
-//     suicidal just tired of living"); any other continuation leaves the
-//     segment the speaker's own words, as in v1. What "just"/"cuma" adds,
-//     after a comma or opening the next clause too, can take the denial back:
-//     a retraction, a deferral, a condition or a lack of courage ("I don't
-//     want to kill myself, just yet", "just kidding", "just not today",
-//     "only because of my mom", "cuma untuk sekarang", "cuma belum berani")
-//     makes the risk phrase count, and thinking about it, fear or a negation
-//     ("cuma kadang kepikiran", "just scared") hedges it. A denial that is
+//     suicidal just tired of living") or a wish for a listed benign thing
+//     ("just need a break", "cuma pengen istirahat", "just want someone to
+//     talk to"); any other continuation, any other wish included ("just
+//     want to not exist", "cuma pengen nggak ada"), leaves the segment the
+//     speaker's own words, as in v1. So does a listed phrase after which
+//     the continuation or the rest of its sentence names a self-directed
+//     method ("just need a break with my pills", "cuma pengen tidur, pakai
+//     semua obatku"), a deferral to the act or a threat ("... before I end
+//     it", "... or I'll do something", "... atau aku bakal nekat"), a later
+//     act, an absence or an ending in a later segment ("..., permanently")
+//     or another wish ("..., i want out"). What "just"/"cuma" adds, after a
+//     comma or opening the next clause too, can take the denial back: a
+//     retraction, a deferral, waiting or planning, a condition, a prepared
+//     means, a lack of courage or a wish for an absence or an ending ("I
+//     don't want to kill myself, just yet", "just kidding", "just not
+//     today", "just waiting for the right time", "only because of my mom",
+//     "cuma untuk sekarang", "cuma udah siapin obat", "cuma belum berani",
+//     "just too scared to do it", "just want to be gone") makes the risk
+//     phrase count, and thinking about it, fear, a negation or any other
+//     wish ("cuma kadang kepikiran", "just scared", "just want the pain to
+//     stop") hedges it; the rest of the sentence after it is read the same
+//     way (a method, a deferral, a threat, a later act or an absence takes
+//     the denial back, and another wish hedges it). A retraction or a
+//     deferral that opens the next segment or clause without "just"/"cuma",
+//     after laughter or a filler, takes the denial back too ("I'm not
+//     suicidal, jk", "..., haha just kidding", "..., not really", "aku gak
+//     mau bunuh diri, boong deng",
+//     "..., gak deng", "..., belum"), while laughter or reassurance alone
+//     ("..., haha", "..., not at all", "..., I promise") leaves it. A later
+//     act in the next segment, clause or sentence takes the denial back
+//     too: a first-person future or progressive "do it" with a time or
+//     sincerity word ("..., I promise I'll do it tonight", "..., serius
+//     besok aku lakuin"), a prepared means ("..., I've got the pills
+//     ready", "..., udah siapin obat") or a set time ("..., lol tonight is
+//     the night"). A denial that is
 //     followed by a contrastive conjunction, after its "just"/"cuma"
 //     continuation too, is hedged and counts as elevated, whether or not
 //     anything follows the conjunction ("aku tidak mau bunuh diri, tapi kadang
@@ -157,20 +191,48 @@
 //     hope, wish and overdose forms: dying of old age, growing old and dying,
 //     "die of happiness", "dead wrong", "dead asleep", "dead honest", "not
 //     alive to see it" ("it", "that", "what" or "how"; not a time, "the" or
-//     "this": "... to see the morning" is crisis), a death in a game ("I hope
-//     I die first in the game", "... make it to the next round" with a game
-//     word in the sentence), not seeing the sunrise while sleeping in, a
-//     destination or an occasion after "make it" ("... make it to the
-//     meeting", "... in time"; not "home", "there" or a time), a life
-//     that ends happily, "die on this hill", a past bottle of something else
-//     ("I took the whole bottle of water"), "my heart stops racing", a plea
-//     to be taken to an everyday destination ("God take me back to school",
-//     "lord take me higher"; not "take me home", "to heaven", "to my
-//     family", "out of this world", "there" or "somewhere" to rest), a
-//     subjectless curse on someone else whose victim ends the clause
-//     ("semoga cepet mati tuh orang", "moga mampus si koruptor"; not
-//     "semoga cepet mati semuanya beres"), a question about taking medicine
-//     together ("boleh minum obat sekaligus dengan vitamin?") and
+//     "this": "... to see the morning" is crisis), a death in a game that
+//     happens in the game noun phrase right after the match ("I hope I die
+//     first in the game", "... make it to the next round" with a game word
+//     in the sentence; not after a conjunction or "before", "this game
+//     called life" or "the game of life"), not seeing the sunrise while
+//     sleeping in, a listed everyday destination or occasion after "make
+//     it" ("... make it to the meeting", "... in time", "... for dinner";
+//     not "at all", "home", "there", "in this world", "into tomorrow", a
+//     day or a time), being away for a listed everyday occasion, trip or
+//     place after a hope or a wish to be gone ("I hope I'm gone before
+//     traffic gets bad", "I hope I'm not here when the movers come", "I want
+//     to be gone by the time the party starts"), an online absence or a
+//     stay elsewhere after a wish not to exist or not to be here ("I want to
+//     not exist on social media", "I want to not be here today"), "nggak
+//     ada" before a listed object or an everyday place ("pengen nggak ada
+//     pr", "semoga aku nggak ada di kelas besok"; not "di muka bumi", "di
+//     alam ini", "di tahun depan", "di sini lagi" or "di antara kalian"),
+//     leaving a place or ending something with someone after a wish to go
+//     forever or be done ("pengen pergi selamanya dari kota ini", "pengen
+//     udahan aja sama dia"), a way of living after a wish to stop living
+//     ("pengen berhenti hidup boros", "... hidup dengan boros", "... tanpa
+//     tujuan"; not a manner of dying or a method: "... dengan tenang",
+//     "... tanpa rasa sakit", "... dengan minum obat"), a short break after
+//     a wish to leave this world ("pengen pergi dari dunia ini sebentar";
+//     not the farewell "dulu", "sebentar lagi" or "selamanya" later in the
+//     sentence), the legacy idiom after "leave this world" ("a better
+//     place", "a little better than I found it"; not "a little early", "a
+//     bit sooner", "better off" or "without me" later in the sentence),
+//     devotion ("aku siap mati demi kamu"), a life that ends happily, "die
+//     on this hill", a past bottle of something else ("I took the whole
+//     bottle of water"), "my heart stops racing", a plea
+//     to be taken to an everyday destination, a trip or a past year ("God
+//     take me back to school", "lord take me higher", "God take me to
+//     Bali", "take me back to 2019"; not "take me home", "to heaven", "to
+//     my family", "out of this world", "there" or "somewhere" to rest, and
+//     not with a self-directed method or an intent word anywhere in the
+//     sentence: "God take me to the beach and let me drown"), a subjectless
+//     curse on someone else whose victim ends the clause ("semoga cepet
+//     mati tuh orang", "moga mampus si koruptor"; not "semoga cepet mati
+//     semuanya beres" or "... itu aja"), a question about taking medicine
+//     together ("boleh minum obat sekaligus dengan vitamin?"; not with a
+//     quantity after it: "... sekaligus semuanya") and
 //     "menenggelamkan diri dalam pekerjaan"; a risk word anywhere in the
 //     sentence keeps a hope or wish idiom. An overdose plan is never
 //     narrowed by its object. A negated intent or hope ("I don't want to take
@@ -187,12 +249,14 @@
 //     makes a compound an idiom: "teroris itu siap jalanin misi bunuh diri" is
 //     attributed too), while a third party that is part of a subject with the
 //     speaker or follows a preposition or a verb ("aku dan temanku siap ...",
-//     "demi mereka siap ...", "aku ikut mereka siap ...") or a first-person
+//     "demi mereka siap ...", "aku ikut mereka siap ...", a comma after the
+//     preposition read as a slip: "demi, mereka siap ...") or a first-person
 //     pronoun earlier in the clause leaves the readiness the speaker's own;
 //     "I'm on a suicide mission at work" stays an idiom. "kms" after a number
 //     or a quantity word ("5 kms", "a few kms", "I'll run until 10 kms" after
-//     a motion verb, "5 kms per hour"; "at 8 kms", "by 9 kms" and "wait
-//     until 10 kms" are a time)
+//     a motion verb, "5 kms per hour"; "at 8 kms", "by 9 kms", "jam 12 kms
+//     lagi" and "wait until 10 kms" are a time: after a clock word only
+//     "per", "away" or another distance word makes a speed or a distance)
 //     or as the child health card ("KMS anakku", near "posyandu") is not the
 //     slang, unless an intent word governs it ("i want to kms"; "aku mau lari 5
 //     kms" is a distance). A leisure jump by a group ("kami terjun dari tebing
@@ -357,11 +421,18 @@
 // narrowed by its object ("pengen nyilet kertas" is crisis). A hope or wish
 // idiom with "I'll" keeps its match ("hopefully I'll get rich and die
 // happy"), and being gone, not here or not around after a hope is a death
-// wish whatever follows ("I hope I'm gone before they arrive", "I hope I'm
-// not here when he comes" are crisis). A comma segment or clause that "just"/"cuma" opens
-// after a denial is read only for a retraction, deferral, condition, fear or
-// thinking word, so "I'm not suicidal, just sad because my cat died" stays a
-// denial while "..., only because of my mom" takes it back. Fixed idioms are
+// wish whatever follows unless a listed everyday occasion, trip or place
+// does ("I hope I'm gone before they arrive", "I hope I'm not here when he
+// comes" are crisis). A comma segment or clause that "just"/"cuma" opens
+// after a denial is read only for a retraction, deferral, condition, means,
+// fear, thinking word or wish, so "I'm not suicidal, just sad because my
+// cat died" stays a denial while "..., only because of my mom" takes it
+// back. Bare "sh" counts as the self-harm slang only after an intent,
+// urge, aspect, thought or relapse word, before a relapse, urge or scar
+// noun, as a past form ("sh'd"), or after a first-person subject with a
+// time, habit or reason word after it ("i sh every night"); with none of
+// these around it ("sh be quiet", "run the build.sh file") it is not the
+// slang. Fixed idioms are
 // read from the words right around the match: a time does not mark
 // medication adherence ("I took all
 // my meds this morning" is crisis), capital "KMS" cannot be told from slang

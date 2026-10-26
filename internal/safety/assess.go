@@ -616,11 +616,10 @@ func compactInts(s []int) []int {
 // pattern s followed by the text after it (see pattern.wide).
 func (p *pattern) each(s, ctx string, fn func(start, end int, third, marked bool) bool) {
 	for pos := 0; pos <= len(s); {
-		loc := p.re.FindStringIndex(s[pos:])
-		if loc == nil {
+		start, end, ok := p.find(s, pos, len(s))
+		if !ok {
 			return
 		}
-		start, end := pos+loc[0], pos+loc[1]
 		if p.reject == nil || !p.reject(ctx, start, end) {
 			third := p.third != nil && p.third(ctx, start, end)
 			if fn(start, end, third, p.marker != nil && p.marker(ctx, start, end)) {
@@ -629,6 +628,32 @@ func (p *pattern) each(s, ctx string, fn func(start, end int, third, marked bool
 		}
 		pos = nextWordStart(s, start+1)
 	}
+}
+
+// find returns the leftmost match of p in s[pos:hi], as offsets in s. pos
+// starts a word or follows a non-word byte, and hi ends the text or comes
+// before a non-word byte (see each and eachIn), so a word boundary reads the
+// same in s[pos:hi] as in s.
+func (p *pattern) find(s string, pos, hi int) (int, int, bool) {
+	if p.word == "" {
+		loc := p.re.FindStringIndex(s[pos:hi])
+		if loc == nil {
+			return 0, 0, false
+		}
+		return pos + loc[0], pos + loc[1], true
+	}
+	for pos < hi {
+		k := strings.Index(s[pos:hi], p.word)
+		if k < 0 {
+			break
+		}
+		start, end := pos+k, pos+k+len(p.word)
+		if (start == 0 || !isWordByte(s[start-1])) && (end == len(s) || !isWordByte(s[end])) {
+			return start, end, true
+		}
+		pos = start + 1
+	}
+	return 0, 0, false
 }
 
 // nextWordStart returns the first index >= i that starts a word, or

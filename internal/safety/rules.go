@@ -69,11 +69,24 @@ type pattern struct {
 	// win bounds the length of a match, so that a long sentence is matched
 	// only in windows around the atoms (see window.go).
 	win windowInfo
+	// word is set when the expression is one literal word between word
+	// boundaries (`\bsh\b`, `\bkms\b`): it is then found by a string search
+	// instead of the regexp (see pattern.find), so a text made of many such
+	// words does not pay a regexp call per match (review finding).
+	word string
 }
+
+// literalWordRe recognises an expression that is one literal word between
+// word boundaries.
+var literalWordRe = regexp.MustCompile(`^\\b([a-z]+)\\b$`)
 
 func pat(expr string) *pattern {
 	f := compileFilter(expr)
-	return &pattern{re: regexp.MustCompile(expr), filter: f, atoms: f.flatAtoms(), win: newWindowInfo(expr)}
+	p := &pattern{re: regexp.MustCompile(expr), filter: f, atoms: f.flatAtoms(), win: newWindowInfo(expr)}
+	if m := literalWordRe.FindStringSubmatch(expr); m != nil {
+		p.word = m[1]
+	}
+	return p
 }
 
 func patReject(expr string, reject func(s string, start, end int) bool) *pattern {
@@ -623,7 +636,10 @@ var catalogue = []rule{
 	newRule("en-passive-death-wish", CategorySuicide, LevelCrisis,
 		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}(?:not|never)\s*(?:to\s*)?(?:(?:have\s*)?exist(?:ed)?|be\s*alive|(?:have\s*)?been\s*born|be\s*born|be\s*here|be\s*around)\b`, absenceOccasion),
 		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:for\s*)?(?:it\s*all|my\s*(?:whole\s*)?life|this\s*life|my\s*existence)\s*to\s*(?:(?:just|finally|all|already)\s*)?(?:end|be\s*over|stop)\b`, absenceOccasion),
-		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}be\s*gone\b`, absenceOccasion)),
+		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}be\s*gone\b`, absenceOccasion),
+		// "I want to leave this world" (review sweep: v1 none); "... a
+		// better place" is rejected (see absenceOccasion).
+		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}leave\s*this\s*(?:world|earth|planet|life)\b`, absenceOccasion)),
 	// The Indonesian counterparts: not being there ("aku pengen nggak ada",
 	// "pengen nggak ada lagi di dunia ini"), leaving or resting forever ("aku
 	// pengen pergi selamanya", "pengen istirahat selamanya"), being done
@@ -640,6 +656,13 @@ var catalogue = []rule{
 		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt|rasanya|sih|deh|udah|sudah|udh)\s*){0,2}(?:nggak|ngga|gak|ga|gk|tidak|tdk|tak|enggak|engga)\s*(?:ada|hidup|idup|bernyawa|bernapas|bernafas)\b`, idAbsence),
 		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw|akan)\s*(?:(?:aja|saja|banget|bgt)\s*)?(?:pergi|istirahat|beristirahat|rehat)\s*(?:(?:aja|saja|jauh|dengan\s*tenang|yang\s*tenang|untuk|utk|buat)\s*){0,2}(?:selamanya|selama-lamanya|abadi)\b`, idAbsence),
 		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt)\s*)?udahan\b`, idAbsence),
+		// Stopping living and leaving this world ("aku pengen berhenti hidup",
+		// "mau pergi aja dari dunia ini", "pengen ninggalin dunia ini"; review
+		// sweep: v1 none). A manner after "hidup" ("berhenti hidup boros") and
+		// a short break ("pergi dari dunia ini sebentar") are rejected (see
+		// idAbsence).
+		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt|rasanya)\s*){0,2}(?:berhenti|stop)\s*(?:hidup|idup|bernapas|bernafas)\b`, idAbsence),
+		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt|rasanya)\s*){0,2}(?:(?:pergi|keluar|minggat)\s*(?:(?:aja|saja)\s*)?(?:dari|dr)|ninggalin|ninggalkan|meninggalkan|tinggalin)\s*(?:dunia|bumi)\s*(?:ini|fana)\b`, idAbsence),
 		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt)\s*)?(?:semua(?:nya)?(?:\s*ini)?|segalanya|hidup(?:ku|\s*(?:aku|gue|gw|saya))?)\s*(?:(?:cepet|cepat|segera|aja|saja)\s*)?(?:berakhir|tamat|usai)\b`, idAbsence),
 		patReject(`\b(?:aku|saya|gue|gw|gua|ku|aq|ak|sy)\s*(?:(?:udah|sudah|udh|sdh|dah|emang|memang|benar-benar|bener-bener|beneran|sangat|pun)\s*){0,2}(?:siap|rela|ikhlas)\s*(?:(?:buat|untuk|utk)\s*)?(?:mati|meninggal|mampus)\b`, idAbsence)),
 }

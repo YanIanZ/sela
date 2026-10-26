@@ -226,6 +226,37 @@ type sentenceWindows struct {
 	occ   map[string][]int
 	grams map[uint32][]int32
 	pairs map[uint16][]int32
+	// wordLo[i] and wordHi[i] are the start and the end of the word run
+	// around offset i (see wordBounds); nil until first needed.
+	wordLo, wordHi []int32
+}
+
+// wordBounds widens [lo, hi) to the bounds of the words around it. The
+// bounds are computed once per sentence, so that many atom occurrences in
+// one long unspaced word do not each rescan it (review finding: a 32000-byte
+// word of "sh" took 0.4s).
+func (sw *sentenceWindows) wordBounds(lo, hi int) (int, int) {
+	s := sw.text
+	if sw.wordLo == nil {
+		n := len(s)
+		sw.wordLo, sw.wordHi = make([]int32, n+1), make([]int32, n+1)
+		for i := 1; i <= n; i++ {
+			if isWordByte(s[i-1]) {
+				sw.wordLo[i] = sw.wordLo[i-1]
+			} else {
+				sw.wordLo[i] = int32(i)
+			}
+		}
+		sw.wordHi[n] = int32(n)
+		for i := n - 1; i >= 0; i-- {
+			if isWordByte(s[i]) {
+				sw.wordHi[i] = sw.wordHi[i+1]
+			} else {
+				sw.wordHi[i] = int32(i)
+			}
+		}
+	}
+	return int(sw.wordLo[lo]), int(sw.wordHi[hi])
 }
 
 // hasAny reports whether one of atoms occurs in the sentence.
@@ -330,13 +361,7 @@ func (sw *sentenceWindows) windows(p *pattern) []span {
 	var ws []span
 	for _, a := range p.atoms {
 		for _, at := range sw.occurrences(a) {
-			lo, hi := max(0, at+len(a)-ml), min(len(s), at+ml)
-			for lo > 0 && isWordByte(s[lo-1]) {
-				lo--
-			}
-			for hi < len(s) && isWordByte(s[hi]) {
-				hi++
-			}
+			lo, hi := sw.wordBounds(max(0, at+len(a)-ml), min(len(s), at+ml))
 			// The match lies inside the window, so the window must pass the
 			// whole prefilter (a hope needs its death word too).
 			if p.filter == nil || sw.filterIn(p.filter, lo, hi) {
@@ -415,11 +440,10 @@ func (p *pattern) eachIn(s, ctx string, ws []span, fn func(start, end int, third
 	for _, w := range ws {
 		pos = max(pos, w.start)
 		for pos < w.end {
-			loc := p.re.FindStringIndex(s[pos:w.end])
-			if loc == nil {
+			start, end, ok := p.find(s, pos, w.end)
+			if !ok {
 				break
 			}
-			start, end := pos+loc[0], pos+loc[1]
 			if p.reject == nil || !p.reject(ctx, start, end) {
 				third := p.third != nil && p.third(ctx, start, end)
 				if fn(start, end, third, p.marker != nil && p.marker(ctx, start, end)) {

@@ -78,6 +78,20 @@ func localWindow(s string, start, end int) (lo, hi int) {
 var clauseWords = setOf("but tapi tetapi namun and dan terus trus lalu then so jadi because karena soalnya abis habis " +
 	"although whereas padahal sedangkan")
 
+// wordAt is nextWords(s, i, 1)[0] without the allocation, for checks that
+// run once per match of a frequent pattern (see shSlang).
+func wordAt(s string, i int) string {
+	lim := min(len(s), i+checkWindow)
+	for i < lim && s[i] == ' ' {
+		i++
+	}
+	k := i
+	for k < lim && (isLetter(s[k]) || s[k] == '\'' || s[k] == '-') {
+		k++
+	}
+	return s[i:k]
+}
+
 // nextWords returns up to n words that follow s[i:], separated by spaces
 // only, within checkWindow bytes.
 func nextWords(s string, i, n int) []string {
@@ -345,7 +359,9 @@ var readinessWords = setOf("siap rela bersedia")
 // a preposition or a verb ("aku dan temanku siap ...", "demi mereka siap
 // ...", "aku ikut mereka siap ...": a joining word up to three words before
 // it), or when a first-person pronoun comes earlier in the clause (review
-// finding).
+// finding). A comma right after the joining word does not end its phrase
+// ("demi, mereka siap ...": a preposition needs its object, so the comma is
+// read as a slip; review sweep).
 func thirdBefore(s string, i int) bool {
 	w, ws := tokenBefore(s, i)
 	for n := 0; n < 3 && readinessAspect[w]; n++ {
@@ -356,6 +372,11 @@ func thirdBefore(s string, i int) bool {
 	}
 	for n, p := 0, ws; n < 8; n++ {
 		t, ts := tokenBefore(s, p)
+		if t == "" && n < 3 && ts > 0 && s[ts-1] == ',' {
+			if j, _ := tokenBefore(s, ts-1); readinessJoin[j] {
+				return false
+			}
+		}
 		switch {
 		case t == "" || conjunctions[t]:
 			return true
@@ -1753,11 +1774,11 @@ func shSlang(s string, start, end int) bool {
 		return true
 	}
 	if end+1 < len(s) && s[end] == '\'' {
-		if w := nextWords(s, end+1, 1)[0]; w == "d" || w == "ed" || w == "ing" {
+		if w := wordAt(s, end+1); w == "d" || w == "ed" || w == "ing" {
 			return false // "i sh'd last night"
 		}
 	}
-	next := nextWords(s, end, 1)[0]
+	next := wordAt(s, end)
 	if shTrail[next] {
 		return false
 	}
@@ -1810,7 +1831,7 @@ func shNotSlang(s string, _, end int) bool {
 	if end < len(s) && strings.IndexByte("*#@$%!-", s[end]) >= 0 {
 		return true
 	}
-	w := nextWords(s, end, 1)[0]
+	w := wordAt(s, end)
 	return w == "t" || w == "it" || w == "itty" || w == "ite"
 }
 
@@ -1877,8 +1898,34 @@ func absenceOccasion(s string, start, end int) bool {
 		return happyEndings[w[0]]
 	case strings.HasSuffix(m, "stop"):
 		return strings.HasSuffix(w[0], "ing") || happyEndings[w[0]]
+	case strings.Contains(m, "leave"):
+		return leaveLegacy(s, end)
 	}
 	return false
+}
+
+// leaveLegacy reports whether the words after "leave this world" are the
+// legacy idiom: "a better place", "a little kinder place", "better than I
+// found it". Any other "a" phrase ("a little early", "a bit sooner"),
+// "better off", and a legacy phrase that "without me", "early" or "soon"
+// follows in the sentence ("a better place without me in it") keep the match
+// (review finding: every "a" and every listed adjective was rejected).
+func leaveLegacy(s string, end int) bool {
+	w := nextWords(s, end, 4)
+	k := 0
+	if w[0] == "a" {
+		k = 1
+		if legacyDegrees[w[k]] {
+			k++
+		}
+	}
+	if !leaveWorldTails[w[k]] {
+		return false
+	}
+	if next := w[k+1]; next != "place" && next != "than" && !(w[0] == "a" && next == "") {
+		return false
+	}
+	return !leaveSoonRe.MatchString(sentenceAfter(s, end))
 }
 
 // riskOutside reports whether an intent, modal or habit word stands in the
@@ -1928,6 +1975,16 @@ func goneOccasion(s string, end int) bool {
 	}
 	return false
 }
+
+// leaveWorldTails after "leave this world" make it a legacy, not a death
+// ("leave this world a better place"; see absenceOccasion).
+var (
+	leaveWorldTails = setOf("better cleaner greener kinder safer healthier happier nicer brighter fairer")
+	legacyDegrees   = setOf("little bit slightly much lot tiny")
+	// leaveSoonRe after "leave this world" is about dying early, not a
+	// legacy (see leaveLegacy).
+	leaveSoonRe = regexp.MustCompile(`\b(?:without\s+me|early|earlier|sooner|soon)\b`)
+)
 
 var (
 	goneLeads     = setOf("by before when for on from until till til during after while at to in")
@@ -1981,12 +2038,18 @@ func idAbsence(s string, start, end int) bool {
 		if w[0] == "di" || w[0] == "dalam" {
 			return everydayPlace(w[1:])
 		}
+		if strings.Contains(m, "berhenti") || strings.Contains(m, "stop") {
+			return stopLivingManner(w)
+		}
 		return aliveManners[w[0]]
 	case strings.HasSuffix(m, "selamanya") || strings.HasSuffix(m, "abadi"):
 		if w[0] == "ke" {
 			return !afterlifePlaces[w[1]]
 		}
 		return vanishPlace(s, start, end)
+	case strings.HasSuffix(m, " ini") || strings.HasSuffix(m, "fana"):
+		// "pengen pergi dari dunia ini sebentar": a short break.
+		return briefBreak(w) && !foreverRe.MatchString(sentenceAfter(s, end))
 	case strings.HasSuffix(m, "udahan"):
 		k := 0
 		for k < 2 && (w[k] == "aja" || w[k] == "saja" || w[k] == "ajah" || particles[w[k]]) {
@@ -2016,6 +2079,55 @@ func everydayPlace(w []string) bool {
 	}
 	return true
 }
+
+// briefBreak reports whether the words w after "pergi dari dunia ini" make
+// it a short break: a brief time word ("sebentar", "sejenak") that "lagi"
+// ("sebentar lagi" is "soon") and an ending word ("selamanya", "abadi")
+// do not follow, in the sentence (see foreverRe). "dulu" is the farewell
+// particle after a leaving verb ("aku mau pergi dari dunia ini dulu ya"),
+// not a short break (review finding: both were rejected).
+func briefBreak(w []string) bool {
+	if !briefTimes[w[0]] {
+		return false
+	}
+	for _, x := range w[1:] {
+		if x == "lagi" || x == "lg" || x == "selamanya" || x == "abadi" || x == "forever" {
+			return false
+		}
+	}
+	return true
+}
+
+// stopLivingManner reports whether the words w after "berhenti hidup" name
+// a way of living that the speaker wants to stop ("pengen berhenti hidup
+// boros", "... hidup numpang", "... hidup dengan boros"). Unlike
+// aliveManners it has no "dengan" or "tanpa" of its own: a manner of dying
+// or a method ("... dengan tenang", "... tanpa rasa sakit", "... dengan
+// minum obat") keeps the match, and so does "dgn" (review finding: every
+// "dengan"/"tanpa" tail was rejected).
+func stopLivingManner(w []string) bool {
+	switch w[0] {
+	case "dengan", "dgn", "secara":
+		return stopManners[w[1]]
+	case "tanpa":
+		return stopAimless[w[1]] // "berhenti hidup tanpa tujuan"
+	}
+	return stopManners[w[0]]
+}
+
+var (
+	// briefTimes after "pergi dari dunia ini" make it a short break (see
+	// briefBreak).
+	briefTimes = setOf("sebentar bentar sejenak sesaat")
+	// foreverRe later in the sentence makes "pergi dari dunia ini
+	// sebentar" more than a short break (see briefBreak).
+	foreverRe = regexp.MustCompile(`\b(?:selamanya|selama-lamanya|abadi|forever|for\s+good)\b`)
+	// stopManners after "berhenti hidup" name a way of living (see
+	// stopLivingManner).
+	stopManners = setOf("susah miskin sengsara melarat kekurangan sendirian sendiri kesepian boros mewah foya-foya " +
+		"bergantung numpang menumpang hedon hemat konsumtif berfoya-foya ngutang berutang")
+	stopAimless = setOf("tujuan arah makna rencana aturan")
+)
 
 var (
 	// absenceObjects complete "pengen nggak ada" as "there to be no ...":
