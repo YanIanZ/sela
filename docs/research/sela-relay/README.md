@@ -54,3 +54,7 @@ This research/proposal package is non-normative. [SPEC.md](../../../SPEC.md) rem
 | Meta and judging | C4,C10,I.meta,V7,V9,V10,V15 |
 | Research method, register and evidence map | C10,I.docs,V15 |
 | Roadmap and owner validation | I.ops,V1–V15,T2–T9 |
+| Evidence appraisal and 100-study claim gates | C10,I.docs,V7,V15 |
+| Relay vertical slice and feature proposals | C2,C3,C8,C9,I.web,V1–V8,V13 |
+| Go + Meta implementation contract | C1,C4,C6,C7,I.api,I.meta,V3–V15 |
+| Judging, experiment and demo runbook | C10,I.ops,V1–V15,T2–T9 |
