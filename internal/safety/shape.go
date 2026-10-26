@@ -2,6 +2,8 @@ package safety
 
 import (
 	"regexp"
+	"regexp/syntax"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -349,15 +351,50 @@ func matchFrame(t string, start, limit int) (int, bool) {
 	}
 	from := start + off
 	end := min(limit, from+frameWindow)
-	loc := frameRe.FindStringIndex(t[from:end])
+	loc := frameFind(t[from:end])
 	if loc != nil && from+loc[1] == end && end < limit {
-		loc = frameRe.FindStringIndex(t[from:limit]) // the match reached the window edge
+		loc = frameFind(t[from:limit]) // the match reached the window edge
 	}
 	if loc == nil {
 		return 0, false
 	}
 	return from + loc[1], true
 }
+
+// frameFind is frameRe.FindStringIndex restricted to the branches that can
+// begin with the first word of s. A frame is tried on every comma segment,
+// and trying all eight branches there dominated the cost of long texts.
+func frameFind(s string) []int {
+	w := firstWord(s)
+	for i, g := range frameRe.alts {
+		if frameOpens[i](w) {
+			if loc := g.FindStringIndex(s); loc != nil {
+				return loc
+			}
+		}
+	}
+	return nil
+}
+
+// frameOpens[i] reports whether branch i of frameRe can begin with word w.
+// TestFrameDispatch checks it against trying every branch.
+var frameOpens = []func(w string) bool{
+	func(w string) bool { return w == "dalam" || w == "di" },
+	func(w string) bool { return w == "in" },
+	func(w string) bool {
+		return strings.HasPrefix(w, "tokoh") || strings.HasPrefix(w, "karakter") || strings.HasPrefix(w, "pemeran")
+	},
+	func(w string) bool { return w == "the" },
+	func(w string) bool { return w == "katanya" || w == "kata" || w == "menurut" },
+	func(w string) bool { return w == "according" },
+	func(w string) bool { return idSubjectStarts[w] || hasFrameStem(w) },
+	func(w string) bool { return enSubjectStarts[w] },
+}
+
+var (
+	idSubjectStarts = setOf("dia ia mereka beliau seseorang orang")
+	enSubjectStarts = setOf("he she they someone somebody this the my a our his her their")
+)
 
 // frameStart skips up to three lead-in words and reports where the frame
 // proper would begin, if the next word can begin one. It keeps the lead-in
@@ -694,7 +731,8 @@ func (a altGuarded) FindStringIndex(s string) []int {
 // space, comma or parenthesis) of the last tailWords words whose word can
 // open the frame.
 type tailFrame struct {
-	re     *regexp.Regexp
+	re     *regexp.Regexp // expr with sorted alternations
+	expr   string
 	starts func(word string) bool
 }
 
@@ -705,7 +743,31 @@ const tailWords = 14
 
 func newTailFrame(starts func(string) bool, branches ...string) tailFrame {
 	expr := `^(?:` + strings.Join(branches, `|`) + `)` + complement + `\s*[:,]?\s*$`
-	return tailFrame{re: regexp.MustCompile(expr), starts: starts}
+	return tailFrame{re: regexp.MustCompile(sortAlternations(expr)), expr: expr, starts: starts}
+}
+
+// sortAlternations rewrites expr with the branches of every alternation in
+// sorted order, so that the parser factors their common prefixes ("bilang",
+// "bicara" become "bi(?:lang|cara)") and RE2's NFA follows a few threads
+// where the verb lists would otherwise start hundreds. Branch order only
+// decides which match is reported, never whether one exists, so the result
+// is equivalent for MatchString (not for FindStringIndex).
+func sortAlternations(expr string) string {
+	re, err := syntax.Parse(expr, syntax.Perl)
+	if err != nil {
+		panic("safety: invalid expression " + expr + ": " + err.Error())
+	}
+	var walk func(*syntax.Regexp)
+	walk = func(r *syntax.Regexp) {
+		for _, sub := range r.Sub {
+			walk(sub)
+		}
+		if r.Op == syntax.OpAlternate {
+			slices.SortStableFunc(r.Sub, func(a, b *syntax.Regexp) int { return strings.Compare(a.String(), b.String()) })
+		}
+	}
+	walk(re)
+	return re.String()
 }
 
 // leftmost returns the start of the longest frame that ends at the end of

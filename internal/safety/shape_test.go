@@ -288,6 +288,49 @@ func TestFirstPerson(t *testing.T) {
 	}
 }
 
+// TestFrameDispatch checks that frameFind, which only tries the frameRe
+// branches that can begin with the first word, finds what trying every
+// branch finds, on every corpus segment and on random token soup.
+func TestFrameDispatch(t *testing.T) {
+	if len(frameOpens) != len(frameRe.alts) {
+		t.Fatalf("frameOpens has %d entries for %d branches", len(frameOpens), len(frameRe.alts))
+	}
+	var inputs []string
+	for _, v := range loadVectors(t) {
+		s := Normalize(v.Text)
+		for _, cl := range splitClauses(s, findQuotes(s)) {
+			for _, seg := range cl.segments {
+				inputs = append(inputs, s[seg.start:cl.end])
+			}
+		}
+	}
+	words := strings.Fields("dalam di in film berita movie the character tokoh tokohnya karakter kata katanya menurut " +
+		"according to her dia ia mereka orang seseorang temanku teman aku my friend she he they someone this guy a " +
+		"our sister said bilang cerita pernah tadi ke kalau that , : itu yang kutonton tonton watched i")
+	rng := rand.New(rand.NewSource(11))
+	for n := 0; n < 4000; n++ {
+		var b strings.Builder
+		for k := 1 + rng.Intn(8); k > 0; k-- {
+			b.WriteString(words[rng.Intn(len(words))])
+			b.WriteByte(' ')
+		}
+		inputs = append(inputs, b.String())
+	}
+	matched := 0
+	for _, in := range inputs {
+		want := frameRe.FindStringIndex(in)
+		if got := frameFind(in); !slices.Equal(got, want) {
+			t.Errorf("frameFind(%q) = %v, all branches %v", in, got, want)
+		}
+		if want != nil {
+			matched++
+		}
+	}
+	if matched < 200 {
+		t.Errorf("only %d inputs open a frame", matched)
+	}
+}
+
 // TestTailFrame checks the word-start search of tailFrame against the same
 // expression searched the slow way (unanchored at the start, anchored at $)
 // on the corpus and on random token soup.
@@ -314,8 +357,14 @@ func TestTailFrame(t *testing.T) {
 		inputs = append(inputs, strings.TrimSpace(b.String()))
 	}
 	for name, f := range map[string]tailFrame{"reportingTail": reportingTailRe, "ownTail": ownTailRe} {
-		ref := regexp.MustCompile(`(?:^|[\s,(])` + strings.TrimPrefix(f.re.String(), "^"))
+		ref := regexp.MustCompile(`(?:^|[\s,(])` + strings.TrimPrefix(f.expr, "^"))
+		unsorted := regexp.MustCompile(f.expr)
 		for _, in := range inputs {
+			for i := 0; i <= len(in); i++ {
+				if got, want := f.re.MatchString(in[i:]), unsorted.MatchString(in[i:]); got != want {
+					t.Errorf("%s: sorted alternations give %v on %q, the expression %v", name, got, in[i:], want)
+				}
+			}
 			want := -1
 			if loc := ref.FindStringIndex(in); loc != nil {
 				want = loc[0]
