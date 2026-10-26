@@ -1,0 +1,37 @@
+{
+  "terms_privacy": {
+    "version": "terms-privacy-2026-11-01.1",
+    "title": {"id": "Ketentuan layanan dan pemberitahuan privasi", "en": "Terms of service and privacy notice"},
+    "body": [
+      {"id": "Teks ini adalah draf teknis fondasi Sela v3. Teks ini menunggu tinjauan hukum dan UX sebelum dipakai oleh pengguna nyata.", "en": "This text is a technical draft for the Sela v3 foundation. It awaits legal and UX review before real users rely on it."},
+      {"id": "Sela adalah ruang untuk bercerita dan merefleksikan pengalamanmu. Sela bukan layanan darurat, bukan psikolog, dan tidak memberi diagnosis, resep, atau terapi.", "en": "Sela is a space to tell your story and reflect on your experiences. Sela is not an emergency service or a psychologist and gives no diagnosis, prescription or therapy."},
+      {"id": "Sela dibuat untuk usia 15 tahun ke atas. Kelompok usia yang tersedia diatur per lingkungan; di bawah 15 tahun tidak dapat mendaftar.", "en": "Sela is made for people aged 15 and over. Which age groups can sign up is configured per environment; people under 15 cannot sign up."},
+      {"id": "Catatan pribadimu disimpan di basis data server Sela dan isinya dienkripsi dengan kunci khusus untukmu. Server Sela dapat mendekripsinya untuk menampilkannya kepadamu dan menjalankan fitur yang kamu pilih.", "en": "Your personal notes are stored in Sela's server database and their content is encrypted with a key of your own. Sela's server can decrypt it to show it to you and to run the features you choose."},
+      {"id": "Kamu bisa mengekspor data kapan saja dan menghapus akunmu. Setelah dihapus, data hilang dari basis data aktif; dalam 7 hari tidak ada cadangan yang masih memegang kunci yang bisa membukanya, dan dalam 30 hari salinan terenkripsinya juga keluar dari cadangan.", "en": "You can export your data at any time and delete your account. After deletion the data is gone from the live database; within 7 days no backup holds a key that can open it, and within 30 days its encrypted copies have also left the backups."},
+      {"id": "Mencabut akses menghentikan akses berikutnya; salinan yang sudah diunduh atau dilihat orang lain tidak dapat ditarik kembali.", "en": "Revoking access stops future access; copies already downloaded or viewed by others cannot be recalled."},
+      {"id": "Log operasional hanya mencatat rute, status, durasi, dan hasil masuk. Isi tulisanmu, nama pengguna, kata sandi, kode pemulihan, dan token sesi tidak dicatat.", "en": "Operational logs record only route, status, duration and the outcome of sign-ins. Your writing, username, password, recovery codes and session tokens are not logged."}
+    ]
+  },
+  "guest_storage": {
+    "version": "guest-storage-2026-11-01.1",
+    "title": {"id": "Cara Sela menyimpan data tamu", "en": "How Sela keeps guest data"},
+    "body": [
+      {"id": "Mode tamu tidak meminta nama, email, atau nomor telepon.", "en": "Guest mode does not ask for your name, email or phone number."},
+      {"id": "Data tamumu disimpan di server Sela, di dalam basis data PostgreSQL, di wilayah hosting: {region}. Isi pribadimu dienkripsi per pengguna.", "en": "Your guest data is stored on Sela's server, in a PostgreSQL database, in the hosting region: {region}. Your personal content is encrypted per user."},
+      {"id": "Data tamu dihapus otomatis setelah {inactive} tanpa aktivitas, dan paling lambat {maxAge} setelah sesi tamu dimulai. Tanggal pastinya terlihat di profilmu.", "en": "Guest data is deleted automatically after {inactive} without activity, and at the latest {maxAge} after the guest session started. The exact dates are shown in your profile."},
+      {"id": "Satu-satunya kunci ke data tamumu adalah cookie di browser ini. Jika cookie hilang (jendela pribadi ditutup, data browser dihapus, atau kamu memakai perangkat lain), datamu tidak bisa dibuka lagi dan dihapus sesuai jadwal.", "en": "The only key to your guest data is the cookie in this browser. If the cookie is lost (a private window is closed, browser data is cleared, or you use another device), your data cannot be opened again and is deleted on schedule."},
+      {"id": "Mode tamu bukan anonimitas mutlak: server tetap melihat alamat IP koneksimu untuk keamanan dan pembatasan permintaan (tidak disimpan di basis data), penyedia hosting dan operator Sela menjalankan infrastrukturnya, dan server Sela dapat mendekripsi isimu untuk menampilkannya kepadamu dan menjalankan fitur yang kamu pilih.", "en": "Guest mode is not absolute anonymity: the server still sees your connection's IP address for security and rate limiting (not stored in the database), the hosting provider and Sela's operators run the infrastructure, and Sela's server can decrypt your content to show it to you and to run the features you choose."},
+      {"id": "Kamu bisa menyimpan data tamumu ke akun kapan saja, atau mengekspor lalu menghapusnya.", "en": "You can save your guest data to an account at any time, or export it and then delete it."}
+    ]
+  },
+  "guardian_information": {
+    "version": "guardian-information-2026-11-01.1",
+    "title": {"id": "Informasi untuk orang tua atau wali (usia 15-17)", "en": "Information for a parent or guardian (ages 15-17)"},
+    "body": [
+      {"id": "Untuk pengguna berusia 15-17 tahun, Sela mencatat bahwa orang tua atau wali sah menyetujui pemakaian Sela. Persetujuan ini dicatat di perangkat pengguna saat orang tua atau wali hadir.", "en": "For users aged 15-17, Sela records that a parent or legal guardian agreed to the use of Sela. The agreement is recorded on the user's device while the parent or guardian is present."},
+      {"id": "Persetujuan bukan akses. Orang tua atau wali tidak mendapat akun, tautan, pemberitahuan, laporan, atau ekspor, dan tidak ada tulisan pengguna yang dibagikan kepada mereka karena catatan ini.", "en": "Consent is not access. The parent or guardian gets no account, link, notification, report or export, and nothing the user writes is shared with them because of this record."},
+      {"id": "Nama orang tua atau wali boleh dikosongkan. Jika diisi, nama disimpan terenkripsi. Sela tidak meminta kontak orang tua atau wali.", "en": "The parent's or guardian's name is optional. If given, it is stored encrypted. Sela does not ask for the parent's or guardian's contact details."},
+      {"id": "Pengguna dapat mencabut atau memperbarui catatan ini kapan saja di pengaturan.", "en": "The user can withdraw or renew this record at any time in settings."}
+    ]
+  }
+}

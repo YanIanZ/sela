@@ -213,7 +213,9 @@ func runModel(rep *Report, root, mode string) error {
 	var cleanup func()
 	switch mode {
 	case "live":
-		cfg, err := config.Load()
+		// Only the model settings matter here, not the server's database
+		// and HTTP guards.
+		cfg, err := config.LoadMode(config.ModeModel)
 		if err != nil {
 			return err
 		}

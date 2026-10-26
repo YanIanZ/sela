@@ -1,8 +1,10 @@
-# Sela v2: one Go process serving /api/v2 and the static frontend.
+# Sela: one Go process serving /api/v2, /api/v3 and the static frontend.
 # Build from the repository root:
 #   docker build -f deploy/v2/Dockerfile --build-arg VERSION=$(git rev-parse --short HEAD) -t sela:v2 .
-# Run (AI disabled until a Modal endpoint is configured, see docs/RUNBOOK.md):
-#   docker run --rm -p 8080:8080 -e SELA_SECURE_COOKIES=false sela:v2
+# The image defaults to SELA_ENV=production, which refuses to start without
+# SELA_DATABASE_URL, a prod- KEK (SELA_DATA_KEK, SELA_DATA_KEK_ID) and an https
+# SELA_PUBLIC_ORIGIN. Run migrations first with: docker run ... sela:v2 migrate up
+# (see docs/RUNBOOK.md). AI stays disabled until a Modal endpoint is configured.
 
 FROM node:22-alpine AS web
 WORKDIR /src/web
@@ -11,10 +13,11 @@ RUN npm ci --no-audit --no-fund
 COPY web/ ./
 RUN npm run build
 
-FROM golang:1.24.7-alpine AS go
+FROM golang:1.26.10-alpine AS go
 ARG VERSION=dev
 WORKDIR /src
-COPY go.mod ./
+COPY go.mod go.sum ./
+RUN go mod download
 COPY cmd ./cmd
 COPY internal ./internal
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/sela ./cmd/sela
