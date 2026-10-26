@@ -1,6 +1,6 @@
 # Sela v2 product
 
-Status: **implemented** in `web/` and `/api/v2` (demo scope); see [implementation status](IMPLEMENTATION_STATUS.md) for what is verified. Authority: [SPEC](../SPEC.md) §G, C1–C14, I.web, V1–V8, V13.
+Status: **implemented** in `web/` and `/api/v2` (demo scope); see [implementation status](IMPLEMENTATION_STATUS.md) for what is verified. Authority: [SPEC](../SPEC.md) §G, C1–C15, I.web, V1–V8, V13.
 
 Sela is a bridge to professional support, not an AI therapist. It helps a person put their story into words they understand and approve, choose a practical next step, rehearse how to start, share only what they choose, and see what actually happened after a (simulated) handoff. Everything in the demo is synthetic or fictional.
 
@@ -29,3 +29,5 @@ Feature lineage: source-grounded Care Passport, clarification and opening-lines 
 Forum, gamification, general chatbot, diagnosis/prescribing/triage, therapy roleplay, payments, real scheduling or professionals, live microphone, health-record integration and model training.
 
 Optional, separately consented Anthropic Sonnet 5.5 source-fidelity review (EvidenceGuard, C12) is a standalone prototype, never a substitute for Meta generation or human approval, and not part of the current journey ([contract](CLAUDE_VERIFIER.md)).
+
+Optional, separately consented DeepSeek-V4.1-Flash-1017 availability fallback (C13) is a standalone, default-OFF prototype in `prototypes/generationfallback`, allowed only after an eligible Meta outage and never for unsafe output; it is not part of the current journey, which has no DeepSeek route ([contract](DEEPSEEK_FALLBACK.md)).

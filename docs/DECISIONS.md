@@ -10,6 +10,7 @@ Authority: [SPEC](../SPEC.md). This record explains origin; it does not override
 | Synthetic demonstration | User | Confirmed for people, professionals, slots, consultation and follow-up |
 | Backend Go | User | Confirmed; replaces earlier Go/Swift uncertainty |
 | Meta-aligned AI and hackathon | User | Confirmed; Meta open-weight model on Modal ([ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md)); adapter and serving app implemented, live access not yet verified ([B-1](BLOCKERS.md)) |
+| DeepSeek-V4.1-Flash-1017 fallback | User (26 October 2026) | Confirmed opt-in availability fallback only, Meta remains primary; explicit consent, fail-closed and truthful provider attribution. Standalone Go prototype, not integrated |
 | Claude Sonnet 5.5 secondary verifier | User (26 October 2026) | Confirmed optional independent-provider *review role* only, separate consent; no backup generation or medical claims. Isolated Go prototype, not yet integrated |
 | Single static-web deployment | Engineering default | React/TypeScript + Vite, Go serves API/assets; implemented |
 | In-memory bounded demo state | Engineering default | Per visitor; no database/Redis; implemented with idle/absolute expiry (D-005, D-010) |

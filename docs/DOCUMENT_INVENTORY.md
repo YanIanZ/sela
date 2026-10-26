@@ -23,6 +23,7 @@ Updated: 26 October 2026. Authority: [SPEC.md](../SPEC.md). Every repository Mar
 | [docs/CONFLICT_MATRIX.md](CONFLICT_MATRIX.md) | Current project / v2 supporting documentation |
 | [docs/DECISIONS.md](DECISIONS.md) | Current project / v2 supporting documentation |
 | [docs/DECISION_LOG.md](DECISION_LOG.md) | Current project / v2 supporting documentation |
+| [docs/DEEPSEEK_FALLBACK.md](DEEPSEEK_FALLBACK.md) | Current project / optional generation fallback contract (owner decision C13) |
 | [docs/DEMO_DATA.md](DEMO_DATA.md) | Current project / v2 supporting documentation |
 | [docs/DEVELOPMENT.md](DEVELOPMENT.md) | Current project / v2 supporting documentation |
 | [docs/DOCUMENT_INVENTORY.md](DOCUMENT_INVENTORY.md) | Current project / v2 supporting documentation |
@@ -111,6 +112,7 @@ Updated: 26 October 2026. Authority: [SPEC.md](../SPEC.md). Every repository Mar
 | [modal/MODEL_NOTES.md](../modal/MODEL_NOTES.md) | Current project / v2 verified model and serving facts |
 | [modal/README.md](../modal/README.md) | Current project / v2 Modal serving runbook |
 | [prototypes/evidenceguard/README.md](../prototypes/evidenceguard/README.md) | Standalone verifier prototype documentation (not wired into v2) |
+| [prototypes/generationfallback/README.md](../prototypes/generationfallback/README.md) | Standalone DeepSeek fallback prototype documentation (not wired into v2) |
 | [services/persistence/migrations/README.md](../services/persistence/migrations/README.md) | Attached v1 implementation reference; not v2 requirement |
 | [supabase/migrations/README.md](../supabase/migrations/README.md) | Attached v1 implementation reference; not v2 requirement |
 

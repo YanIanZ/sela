@@ -9,6 +9,8 @@
 ## Product decision: second-pass review, never an automatic truth oracle
 
 - **Muse Spark Open on Modal remains Sela's primary generative AI**. Meta creates constrained, source-linked intake/brief drafts; the Go application owns all patient/fixture version rules and data transitions.
+- A consented DeepSeek `deepseek-flash` may generate a fallback draft only after an eligible Meta outage, **not** as an Anthropic verifier replacement. See [fallback](DEEPSEEK_FALLBACK.md).
+- A separately consented DeepSeek `deepseek-flash` may generate a fallback draft only after an eligible Meta outage; it does not replace the source-fidelity verifier. See [DeepSeek fallback](DEEPSEEK_FALLBACK.md).
 - **Claude Sonnet 5.5 is optional** and has a different job: audit whether each proposed claim preserves the supplied, versioned source quotation without changing negation, speaker, timeline, uncertainty or important context.
 - Claude **cannot** generate alternate free-form clinical advice, make clinical risk/urgency determinations, select providers, replace a failed Meta request, approve handoff, issue a diagnostic conclusion or create a safety certification.
 - **Agreement between two LLMs is not independent validation.** The hard constraints are explicit source mapping, deterministic rule checks, user review and—when clinically relevant—real licensed-professional oversight. Claude receives source quotes, not only Meta's answer.

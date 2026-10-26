@@ -9,6 +9,7 @@ Status authority: [SPEC.md §T](../SPEC.md#t-tasks) and [implementation status](
 | Runtime foundation | T3 | Go API + static frontend, bounded sessions, fixtures | Implemented and tested |
 | Rules before inference | T4 | Crisis, consent, version/approval, share isolation, retention/deletion tests | Implemented and tested |
 | Meta text slice | T5 | Validated live output plus honest manual/unavailable paths | Adapter, validation and failure paths tested with the test double; live pending (B-1) |
+| Optional DeepSeek availability fallback | T5b | Default-OFF consented routing, fail-closed errors, source provenance and mock/live evidence separately recorded | Standalone prototype on main (`prototypes/generationfallback`, f4ccc4b), mock-tested only; not integrated into v2, which has no DeepSeek route; default OFF |
 | Optional verification layer | T5a | Separate Anthropic consent, allowed evidence, version-bound report, honest unavailable/manual review; mock and live evidence distinguished | Standalone prototype on main (PR #5); not integrated into v2 |
 | User journey | T6 | ID/EN onboarding, story, ledger, next step, practice, manual path | Implemented; e2e with test double |
 | Continuity | T7 | Handoff, recipient view, consultation, follow-up, revocation | Implemented; e2e with test double |

@@ -1,6 +1,6 @@
 # Sela v2 safety and privacy
 
-Status: **implemented and tested as software behaviour** (`internal/safety`, `internal/journey`, `internal/httpapi`); not a clinical validation or safety certification. Authority: [SPEC](../SPEC.md) V1–V8, V11–V13, V20–V23. Historical v1 controls are [archived](archive/v1/SAFETY.md).
+Status: **implemented and tested as software behaviour** (`internal/safety`, `internal/journey`, `internal/httpapi`); not a clinical validation or safety certification. Authority: [SPEC](../SPEC.md) V1–V8, V11–V13, V22–V25. Historical v1 controls are [archived](archive/v1/SAFETY.md).
 
 ## Care boundary
 

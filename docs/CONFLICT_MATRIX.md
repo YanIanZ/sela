@@ -11,7 +11,7 @@ Each row ends with a resolution and the decision that records it in the [decisio
 
 | # | Topic | SPEC (89ac3cf) | Relay proposal | Owner direction | Code (89ac3cf) | Resolution |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | AI provider | Hosted "Meta Model API" adapter (I.meta); model/endpoint unverified | Hosted `api.meta.ai` examples, explicitly unverified | Meta **open-weight** model self-hosted on **Modal.com**; licence, revision pin, GPU, cost and hackathon fit must be verified | v1 multi-provider (AMD default, Gemini, DeepSeek, OpenRouter) | Adopt self-hosted Meta open-weight model on Modal; V9 "Meta-only" kept; no other provider in v2. [D-001], [ADR-0001] |
+| 1 | AI provider | Hosted "Meta Model API" adapter (I.meta); model/endpoint unverified | Hosted `api.meta.ai` examples, explicitly unverified | Meta **open-weight** model self-hosted on **Modal.com**; licence, revision pin, GPU, cost and hackathon fit must be verified | v1 multi-provider (AMD default, Gemini, DeepSeek, OpenRouter) | Adopt self-hosted Meta open-weight model on Modal; V9 "Meta-only" kept; no other provider in v2. [D-001], [ADR-0001] (Later superseded in the spec: V9 now also allows the owner's opt-in DeepSeek fallback, C13; the v2 runtime still runs only the Meta model; see the last section.) |
 | 2 | Hackathon tooling eligibility | "External event terms control eligibility"; unverified | Mentions judging weights; unverified | Do not assume self-hosting counts as Meta tooling | n/a | Recorded as **unverified** with sources in ADR-0001 and [blockers](BLOCKERS.md). No eligibility claim. [D-002] |
 | 3 | Story input | V2: seeded fixtures only; **no arbitrary personal stories** | Same; "free text input requires SPEC amendment" | "Ruang bercerita — input teks"; express feelings; keep synthetic-adult boundary | v1 Care Passport accepts free text | Amend V2: keep seeded scenarios as default demo; add bounded **practice text** that the UI labels as fictional/practice-only, with adult attestation, crisis gate, size limits, memory-only storage and no content logs. Not a real-patient intake. [D-003] |
 | 4 | Consent model | V4: AI consent, brief approval, sharing consent | Same + share grant per recipient/version/field | Separate consent for **AI processing, storage, sharing**; working retention and deletion | v1: client-side consent + AI consent | Add **storage/retention consent** as a fourth independent, versioned decision; retention choices enforced by the store janitor; delete-now purges. [D-004], [D-005] |
@@ -61,7 +61,7 @@ Each row ends with a resolution and the decision that records it in the [decisio
 - C3 synthetic people, fictional professionals, simulated care. Practice text does not turn the demo into a real service; the UI says so on every care surface.
 - Adult-only scenarios and adult attestation (C8). No minors' pathway is offered.
 - No diagnosis, triage, prescription, therapy roleplay, real booking, payment, forum or gamification (C9).
-- No AI fallback to a non-Meta provider (V9); outage means an honest unavailable state plus the manual path.
+- No AI fallback to a non-Meta provider (V9); outage means an honest unavailable state plus the manual path. (The owner later added an opt-in DeepSeek fallback, C13; it is a standalone prototype, not wired into v2; see the last section.)
 - No content, prompt or model output in operational logs (V12).
 - Provenance and credits for Dengar.in and its team ([provenance](SELA_PROVENANCE.md)).
 
@@ -71,4 +71,15 @@ Each row ends with a resolution and the decision that records it in the [decisio
 | --- | --- | --- | --- |
 | Second AI provider | Optional Claude Sonnet 5.5 verifier, separate consent, verification only (C12, V16–V18, T5a) | Meta only (V9) | Kept as main defines it; standalone prototype, not wired into v2 (D-024) |
 | Generator model | Muse Spark / "Muse Spark Open on Modal" | Muse Glimmer 30B on Modal (ADR-0001) | Glimmer kept for budget and access; owner decides (B-7) |
-| Spec IDs | C12, I.verifier, V16–V18 | C12–C13, V16–V19 (unpublished) | Branch IDs renumbered to C13–C14, V20–V23 |
+| Spec IDs | C12, I.verifier, V16–V18 | C12–C13, V16–V19 (unpublished) | Branch IDs renumbered to C13–C14, V20–V23 (moved again by the next merge, below) |
+
+## After merging main (f4ccc4b, DeepSeek fallback prototype)
+
+Renumbering note (2026-10-26): main's C13, I.fallback, V19–V21 and T5b are published and win. This branch's unpublished IDs moved again: C13 → C14, C14 → C15, V20 → V22, V21 → V23, V22 → V24, V23 → V25, everywhere they are cited, including the §T cites ([D-025](DECISION_LOG.md#d-025)). The rows above keep the IDs that were current when they were written.
+
+| Topic | main (owner, f4ccc4b) | This branch | Resolution |
+| --- | --- | --- | --- |
+| Generation fallback | Optional DeepSeek-V4.1-Flash-1017 (`deepseek-flash`) availability fallback with its own consent, OFF by default in hackathon mode (C13, I.fallback, V19–V21, T5b) | Meta only (V9); no fallback provider (D-001) | Kept as main defines it; standalone, mock-tested prototype in `prototypes/generationfallback`, not wired into v2; the v2 runtime has no DeepSeek route; T5b open (D-025) |
+| C5, C12, V9, V10 wording | Verifier/fallback prototypes; Meta primary; `live_deepseek_fallback` provenance | Implementation-phase C5; Meta only; `test_double` provenance (D-019) | main's wording kept for C12, V9 and V10, with the branch's implementation facts added and marked as runtime status. C5 keeps the branch's implementation-phase text plus main's prototype sentence; main's first sentence ("Existing Sela v2 application runtime remains unimplemented") was dropped because the v2 runtime is implemented and tested locally |
+| Spec IDs | C13, I.fallback, V19–V21, T5b | C13–C14, V20–V23 (unpublished) | Branch IDs renumbered to C14–C15, V22–V25 |
+| Duplicate rows | docs/README.md and docs/ROADMAP.md list the same DeepSeek row twice | n/a | First row kept in each |

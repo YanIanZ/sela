@@ -3,9 +3,12 @@
 // Production inference uses a Meta open-weight model served by a vLLM
 // OpenAI-compatible server on Modal (see modal/ and docs/adr). The same HTTP
 // client also talks to cmd/fakellm, a deterministic test double that is
-// always reported as ModeTestDouble and never as Meta inference. There is no
-// fallback to any other provider (SPEC V9): when the configured provider
-// fails, callers get a typed error and show an honest unavailable state.
+// always reported as ModeTestDouble and never as Meta inference. The v2
+// runtime has no fallback to any other provider: the opt-in DeepSeek fallback
+// of SPEC C13/V19-V21 exists only as the standalone prototype in
+// prototypes/generationfallback and is not wired in. When the configured
+// provider fails, callers get a typed error and show an honest unavailable
+// state (SPEC V9).
 //
 // The package never logs prompts, model output or credentials. Metadata
 // (operation, status, latency, token counts) is reported through Observer.

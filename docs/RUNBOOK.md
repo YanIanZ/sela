@@ -1,6 +1,6 @@
 # Sela v2 runbook
 
-Authority: [SPEC](../SPEC.md) I.ops, C5, V9, V23. Commands below were run in this repository on 2026-10-26 unless marked **not run** (they need credentials or a budget that this environment does not have; see [blockers](BLOCKERS.md)).
+Authority: [SPEC](../SPEC.md) I.ops, C5, V9, V25. Commands below were run in this repository on 2026-10-26 unless marked **not run** (they need credentials or a budget that this environment does not have; see [blockers](BLOCKERS.md)).
 
 ## 1. Run locally from a clean checkout
 

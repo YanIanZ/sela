@@ -1,6 +1,6 @@
 # Sela v2 architecture
 
-Status: **implemented** on branch `feat/v2-go-meta-runtime` (Go API, static frontend, Modal serving code); live Modal inference not yet verified ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) C1, C4–C8, C11, I.api/I.meta/I.data/I.research, V3–V23.
+Status: **implemented** on branch `feat/v2-go-meta-runtime` (Go API, static frontend, Modal serving code); live Modal inference not yet verified ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) C1, C4–C8, C11, I.api/I.meta/I.data/I.research, V3–V25.
 
 ## Runtime
 
@@ -15,12 +15,14 @@ flowchart LR
     J --> P["Provider boundary<br/>internal/llm"]
     P -->|HTTPS, proxy auth + API key| M["vLLM on Modal<br/>modal/sela_llm.py<br/>Muse Glimmer 30B"]
     P -.->|tests/dev only| TD["cmd/fakellm<br/>TEST DOUBLE"]
+    P -.->|planned: Meta outage + own consent| DF["Optional DeepSeek Flash 1017 fallback<br/>prototypes/generationfallback<br/>(not wired, default OFF)"]
+    DF -.-> DS["DeepSeek official API"]
     J -.->|planned, own consent| V["Optional Claude verifier<br/>prototypes/evidenceguard<br/>(not wired)"]
     API --> R["Reviewer corpus index<br/>internal/research"]
     R --> KB[("data/research/corpus<br/>knowledge_base.jsonl")]
 ```
 
-One Go binary (`cmd/sela`) serves `/api/v2` and the built frontend (`SELA_WEB_DIR`). There is no Node server, database or Redis. The model server is a separate Modal app; the Go app talks to it with an OpenAI-compatible client. The optional EvidenceGuard verifier (Claude Sonnet 5.5, C12) is a standalone Go prototype in `prototypes/evidenceguard` with its own module; it is not wired into the v2 runtime ([contract](CLAUDE_VERIFIER.md)).
+One Go binary (`cmd/sela`) serves `/api/v2` and the built frontend (`SELA_WEB_DIR`). There is no Node server, database or Redis. The model server is a separate Modal app; the Go app talks to it with an OpenAI-compatible client. The optional EvidenceGuard verifier (Claude Sonnet 5.5, C12) is a standalone Go prototype in `prototypes/evidenceguard` with its own module; it is not wired into the v2 runtime ([contract](CLAUDE_VERIFIER.md)). The optional fallback is described in [DeepSeek fallback](DEEPSEEK_FALLBACK.md) and has an isolated Go prototype, not integrated with Meta production routing. That prototype (DeepSeek-V4.1-Flash-1017, C13) calls the official DeepSeek API, lives in `prototypes/generationfallback` with its own module and is OFF by default; the v2 runtime has no DeepSeek route.
 
 ## Package boundaries
 
@@ -36,6 +38,8 @@ One Go binary (`cmd/sela`) serves `/api/v2` and the built frontend (`SELA_WEB_DI
 | `internal/research` | BM25 search over the exported research knowledge base | Session data, model calls |
 
 When the verifier is wired in, it uses only allowed synthetic evidence and claim ids after its own consent; an LLM verdict never grants domain permissions or substitutes for missing Meta output.
+
+DeepSeek is an optional, default-OFF provider switch for Meta availability failures only and requires additional provider-specific consent; unsafe Meta output never triggers a second model. Both outputs remain untrusted and require Go source validation. The fallback is not wired in yet (T5b): `internal/llm` has no DeepSeek client.
 
 ## Request path of an AI draft
 

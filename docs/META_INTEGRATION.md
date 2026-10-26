@@ -1,6 +1,6 @@
 # Meta integration
 
-Status: **adapter and Modal serving app implemented; live deployment not verified** ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) I.meta, C4, V7, V9, V10, V15, V20, V23. Decision record: [ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md).
+Status: **adapter and Modal serving app implemented; live deployment not verified** ([B-1](BLOCKERS.md)). Authority: [SPEC](../SPEC.md) I.meta, C4, V7, V9, V10, V15, V22, V25. Decision record: [ADR-0001](adr/ADR-0001-meta-open-weight-model-on-modal.md).
 
 ## What runs where
 
@@ -21,15 +21,15 @@ Status: **adapter and Modal serving app implemented; live deployment not verifie
 | Consent withdrawn / story changed / session deleted / crisis during the call | Operation canceled or result discarded | — |
 | Test double (dev/CI only) | Banner "TEST DOUBLE — not Meta" on every item | `test_double` |
 
-[EvidenceGuard](CLAUDE_VERIFIER.md) may later review Meta-derived, source-bound claims with Claude after a separate user consent (C12, not wired yet). Claude never drafts in place of an unavailable Meta call; Meta remains the demonstrable generation provider.
+[EvidenceGuard](CLAUDE_VERIFIER.md) may later review Meta-derived, source-bound claims with Claude after a separate user consent (C12, not wired yet). Claude never drafts in place of an unavailable Meta call; Meta remains the demonstrable **primary** generation provider. An **opt-in DeepSeek** fallback is allowed for eligible Meta availability failures with independently granted DeepSeek consent, default OFF in hackathon mode, no silent switch. See [fallback](DEEPSEEK_FALLBACK.md).
 
-There is **no fallback to any other provider**. Retries happen only before the first token; the operation deadline bounds everything.
+The v2 runtime has **no fallback to any other provider** yet: the DeepSeek fallback (C13, V19–V21) exists only as the standalone, default-OFF prototype `prototypes/generationfallback` and is not wired in (T5b), so every failure above ends in the unavailable/manual path. Retries happen only before the first token; the operation deadline bounds everything.
 
 ## Evidence
 
 `go test ./internal/llm/...` exercises the client against local servers and the test double (streaming, retries, cancellation, timeouts, model mismatch, oversize, empty content, no sampling override, reasoning kwarg, auth headers, redirects refused, no payload leakage). `go run ./cmd/sela-eval -mode test_double` runs a fault battery (malformed JSON, fabricated source, dropped negation, diagnosis, invented number, prompt-injection echo, wrong model, 503/429/401, slow, stall, oversize, truncated stream). `tests/modal` checks the Modal app configuration statically. **No live call has been made**; `live_meta` has never been produced. After deployment, `python3 modal/smoke_test.py` and `go run ./cmd/sela-eval -mode live` record non-sensitive evidence (status, latency, token counts, validation outcome) — never prompts or outputs.
 
-A separately labelled `live_anthropic` review, once it exists, must not be presented as Meta processing or clinical correctness. Verify the final hackathon rules about third-party models ([event notes](META_EVENT_NOTES.md)).
+A live demo must show actual Meta provenance; unavailable access must remain visibly unavailable unless a separately consented fallback was transparently invoked. A fallback demo is not Meta inference. The fallback prototype is mock-tested only (`cd prototypes/generationfallback && go test ./...`); no live DeepSeek call has been made. A separately labelled `live_anthropic` review, once it exists, must not be presented as Meta processing or clinical correctness. Verify the final hackathon rules about third-party models ([event notes](META_EVENT_NOTES.md)).
 
 ## Not used
 

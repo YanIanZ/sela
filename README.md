@@ -22,6 +22,7 @@ The demo uses **synthetic adults, fictional professionals and simulated care**. 
 | Full journey in ID and EN, crisis routing, consents, retention/deletion, Story Ledger with Meaning Lock, Next Step, Opening Practice, handoff with token + access code, recipient view, follow-up, revoke | Implemented, tested locally |
 | AI: Meta **Muse Glimmer 30B** (open weights, Apache-2.0) on **Modal** via vLLM | Adapter and Modal app implemented and tested offline; **not deployed** — no Modal credentials or GPU budget yet ([B-1](docs/BLOCKERS.md)). Local runs use AI off or a clearly labelled **test double**, never presented as Meta |
 | Optional verifier: Claude Sonnet 5.5 **EvidenceGuard** (owner decision C12) | Standalone Go prototype in `prototypes/evidenceguard` (PR #5); not wired into the v2 runtime; would need its own consent (V16–V18) ([contract](docs/CLAUDE_VERIFIER.md)) |
+| Optional generation fallback: DeepSeek-V4.1-Flash-1017 `deepseek-flash` (owner decision C13) | Standalone Go prototype in `prototypes/generationfallback`, mock-tested only; not wired into the v2 runtime, which has no DeepSeek route; OFF by default in hackathon mode; would need its own consent and eligibility guards (V19–V21) ([contract](docs/DEEPSEEK_FALLBACK.md)) |
 | Research corpus (100 publications): reproducible pipeline, verified dates, licences, traceable extraction, reviewer search | Implemented, tested locally; human appraisal not done ([B-4](docs/BLOCKERS.md)) |
 | Evaluation with pre-registered thresholds | Offline and test-double suites run; live-model metrics blocked ([evaluation](docs/EVALUATION.md)) |
 | Public deployment | Not configured ([B-3](docs/BLOCKERS.md)) |
@@ -49,7 +50,7 @@ Checks: `go vet ./... && go test -race ./...`, `cd web && npm run typecheck && n
 
 ## Documentation
 
-[Documentation index](docs/README.md) · [product](docs/PRODUCT.md) · [architecture](docs/ARCHITECTURE.md) · [API](docs/API_SPEC.md) · [safety](docs/SAFETY.md) · [AI policy](docs/AI_POLICY.md) · [Meta integration](docs/META_INTEGRATION.md) · [optional Claude verifier](docs/CLAUDE_VERIFIER.md) · [ADR-0001: model choice](docs/adr/ADR-0001-meta-open-weight-model-on-modal.md) · [research corpus pipeline](docs/research/CORPUS_PIPELINE.md) · [decision log](docs/DECISION_LOG.md).
+[Documentation index](docs/README.md) · [product](docs/PRODUCT.md) · [architecture](docs/ARCHITECTURE.md) · [API](docs/API_SPEC.md) · [safety](docs/SAFETY.md) · [AI policy](docs/AI_POLICY.md) · [Meta integration](docs/META_INTEGRATION.md) · [opt-in DeepSeek fallback](docs/DEEPSEEK_FALLBACK.md) · [optional Claude verifier](docs/CLAUDE_VERIFIER.md) · [ADR-0001: model choice](docs/adr/ADR-0001-meta-open-weight-model-on-modal.md) · [research corpus pipeline](docs/research/CORPUS_PIPELINE.md) · [decision log](docs/DECISION_LOG.md).
 
 ## Contributing and security
 
