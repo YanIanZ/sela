@@ -66,20 +66,29 @@ func analyze(toks []token, start, end int) analysis {
 	if qs >= qe {
 		return a
 	}
-	for _, t := range toks[qs:qe] {
-		if isNegator(t.text) {
+	// negFact: a negator that negates a fact. A hedge ("not sure", "belum
+	// yakin", "gatau") is certainty, not polarity (D-023), so it does not
+	// set Negated; it still counts for negBefore, so a quote that cuts a
+	// hedge off is rejected as negation_dropped.
+	negFact := false
+	for i := qs; i < qe; i++ {
+		if isNegator(toks[i].text) {
 			a.negInside = true
-			break
+			if !isHedge(toks, i) {
+				negFact = true
+			}
 		}
 	}
 	clause := toks[qs].clause
 	for k := qs - 1; k >= 0 && k >= qs-negationWindow && toks[k].clause == clause; k-- {
 		if isNegator(toks[k].text) {
 			a.negBefore = true
-			break
+			if !isHedge(toks, k) {
+				negFact = true
+			}
 		}
 	}
-	a.q.Negated = a.negInside || a.negBefore
+	a.q.Negated = negFact
 	a.q.Subject = subjectOf(toks, qs, qe)
 	if tag := markerNear(timeLexicon, toks, qs, qe); tag != "" {
 		a.q.Time = Time(tag)

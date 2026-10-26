@@ -227,8 +227,9 @@ func TestPracticeCoverage(t *testing.T) {
 	}{
 		{"Halo, saya susah tidur akhir-akhir ini.", []string{"a"}},
 		{"Kuliah saya berantakan dan saya tidak bisa tidur.", []string{"a", "b"}},
-		{"Saya ingin tahu soal konseling.", nil},                               // 2 of 6 content words for c
+		{"Saya ingin tahu soal konseling.", []string{"c"}},                     // 2 of 6 content words for c is enough
 		{"Saya mau tahu pilihan konseling kampus yang gratis.", []string{"c"}}, // 5 of 6
+		{"Saya cuma mau soal konseling.", nil},                                 // 1 of 6 is not enough for a long item
 		{"I can't sleep and my studies are a mess.", nil},                      // different language, no shared word
 		{"", nil},
 	}
@@ -243,6 +244,15 @@ func TestPracticeCoverage(t *testing.T) {
 		if len(got.Mentioned)+len(got.NotMentioned) != len(items) {
 			t.Errorf("coverage does not partition items: %+v", got)
 		}
+	}
+	// A short word inside an unrelated longer one is not a mention.
+	year := []ApprovedItem{{ID: "d", Kind: KindDuration, Text: "Sudah setahun"}}
+	if got := PracticeCoverage("Saya tidak tahu harus bilang apa.", year); len(got.Mentioned) != 0 {
+		t.Errorf("tahu matched setahun: %+v", got)
+	}
+	nadia := []ApprovedItem{{ID: "s1", Kind: KindFeeling, Text: "Akhir-akhir ini aku merasa kewalahan dengan skripsi dan kerja paruh waktu."}}
+	if got := PracticeCoverage("Saya merasa kewalahan dengan skripsi.", nadia); !slices.Equal(got.Mentioned, []string{"s1"}) {
+		t.Errorf("two shared content words of a long item: %+v", got)
 	}
 	long := strings.Repeat("x ", MaxPracticeRunes) + "susah tidur"
 	if got := PracticeCoverage(long, items); slices.Contains(got.Mentioned, "a") {

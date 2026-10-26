@@ -44,7 +44,11 @@ func TestAnalyzeNegation(t *testing.T) {
 		// Fused informal negators and apostrophe-less contractions.
 		{"Aku gabisa tidur.", "tidur", true},
 		{"Aku gamau makan.", "makan", true},
-		{"Aku gatau harus gimana.", "harus gimana", true},
+		// A hedge is certainty, not polarity (D-023); validation still
+		// rejects a quote that cuts the hedge off (negBefore).
+		{"Aku gatau harus gimana.", "harus gimana", false},
+		{"I'm not sure if it's the rotating schedule or something else", "I'm not sure if it's the rotating schedule or something else", false},
+		{"Aku belum yakin ini masalah besar.", "Aku belum yakin ini masalah besar", false},
 		{"Aku bukannya malas.", "malas", true},
 		{"I dont sleep well.", "sleep well", true},
 		{"I cant focus at all.", "focus at all", true},

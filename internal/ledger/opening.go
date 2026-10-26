@@ -349,10 +349,30 @@ func hasKind(kinds []Kind, k Kind) bool {
 	return false
 }
 
+// spokenWord matches a rehearsal word to an item word: the same word or
+// stem, or one containing the other when the shorter has at least five
+// runes. The looser sameWord would match "tahu" inside "setahun".
+func spokenWord(item, said string) bool {
+	if item == said {
+		return true
+	}
+	si, ss := stem(item), stem(said)
+	if si == ss {
+		return true
+	}
+	for _, pair := range [][2]string{{item, said}, {si, ss}} {
+		a, b := pair[0], pair[1]
+		if min(runeLen(a), runeLen(b)) >= 5 && (strings.Contains(a, b) || strings.Contains(b, a)) {
+			return true
+		}
+	}
+	return false
+}
+
 // PracticeCoverage reports which approved items a practice attempt mentions,
 // in input order. An item with fewer than four content words is mentioned
-// when the attempt shares at least one of them (affix-insensitive); an item
-// with four or more needs at least half of them. Only the first
+// when the attempt shares at least one of them; an item with four or more
+// needs at least two (affix-insensitive, see spokenWord). Only the first
 // MaxPracticeRunes runes of the attempt are read. It is never a score.
 func PracticeCoverage(attempt string, items []ApprovedItem) Coverage {
 	if r := []rune(attempt); len(r) > MaxPracticeRunes {
@@ -365,16 +385,21 @@ func PracticeCoverage(attempt string, items []ApprovedItem) Coverage {
 		shared := 0
 		for _, w := range words {
 			for _, a := range said {
-				if sameWord(w, a) {
+				if spokenWord(w, a) {
 					shared++
 					break
 				}
 			}
 		}
-		mentioned := shared >= 1
+		// Feedback, not a score: a short item counts as mentioned with one
+		// shared content word, a longer one with two. Requiring half of a
+		// long item's words treated "kewalahan dengan skripsi" as not
+		// mentioning "kewalahan dengan skripsi dan kerja paruh waktu".
+		need := 1
 		if len(words) >= 4 {
-			mentioned = shared*2 >= len(words)
+			need = 2
 		}
+		mentioned := len(words) > 0 && shared >= need
 		if mentioned {
 			cov.Mentioned = append(cov.Mentioned, it.ID)
 		} else {
