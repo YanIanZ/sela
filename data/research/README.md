@@ -10,6 +10,23 @@ This folder contains a **reproducible, unreviewed bibliographic candidate pool**
 
 **Record fields:** `title`, `authors`, `doi`, `pmid`, `first_publication_date`, `journal`, `publication_type`, `themes`, `europepmc_url`, `screening_status`, `source_batches`. No abstracts, PDFs, article full texts, or private patient data.
 
+## Preliminary title-only screening (not inclusion or evidence quality)
+
+- [Complete scoring index](sela_screening_index.csv): machine priority for all 7,580 metadata candidates.
+- [400-item next-review queue](sela_priority_review_queue.jsonl): high/medium title matches with reasons; no abstract/full-text screening yet.
+- [Human appraisal worksheet](sela_human_review_worksheet.csv): blank decision columns. `rag_ready=NO` unless separately verified by a reviewer.
+- [Screening manifest](sela_screening_manifest.json): reproducible totals, family distributions, SHA-256 and exact rule version.
+- [Screening protocol](../../docs/research/sela-relay/14_METADATA_SCREENING_PROTOCOL.md): methodological constraints, biases, and human-review steps.
+
+Regenerate reproducibly:
+
+```sh
+python3 -m unittest discover -s tests/research -p 'test_*.py'
+python3 scripts/research/screen_candidates.py --priority-limit 400
+```
+
+No AI model was used to rank these metadata candidates and none were automatically approved for RAG or fine-tuning.
+
 ## Source and reproduction
 
 Metadata comes from these two historical GitHub Actions runs:
