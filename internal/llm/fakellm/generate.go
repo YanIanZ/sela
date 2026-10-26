@@ -87,7 +87,10 @@ func generate(user string, fault Fault) string {
 		return oversize()
 	}
 	var out any = json.RawMessage(unknownTask)
-	if in, ok := parseInput(user); ok {
+	if in, ok := parseAIInput(user); ok {
+		// internal/ai generation (schema sela-ai-generation-v1).
+		out = aiGenerate(in, fault)
+	} else if in, ok := parseInput(user); ok {
 		switch in.Task {
 		case "ledger_draft":
 			out = ledgerDraft(in, fault)

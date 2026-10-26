@@ -11,6 +11,14 @@
 // "ledger_draft" and "opening_draft" tasks by quoting the input verbatim.
 // Faults (see Fault) reproduce provider and model failures for tests. It
 // never logs or prints request content.
+//
+// The same handler also serves the TEST DOUBLES of internal/ai's other
+// providers (providers.go): an Anthropic-compatible POST /v1/messages that
+// reports the model "test-double-not-claude", and a DeepSeek-compatible
+// POST /chat/completions that reports "test-double-not-deepseek". Both
+// carry the test-double header, answer the internal/ai generation and
+// verifier inputs deterministically and inject the failures listed in
+// ProviderFault. They are never Claude or DeepSeek.
 package fakellm
 
 import (
@@ -140,8 +148,14 @@ type Config struct {
 	// AllowFaultHeader lets a request choose its fault with HeaderFault.
 	// Without it, a request carrying that header is rejected with 400.
 	AllowFaultHeader bool
-	// SlowDelay is the FaultSlow delay; zero means DefaultSlowDelay.
+	// SlowDelay is the FaultSlow delay; zero means DefaultSlowDelay. It is
+	// also the delay of ProviderFaultTimeout.
 	SlowDelay time.Duration
+	// ProviderFault applies to every request on the Anthropic-compatible
+	// (POST /v1/messages) and DeepSeek-compatible (POST /chat/completions)
+	// routes ("" means ProviderFaultNone). AllowFaultHeader also lets a
+	// request choose one with HeaderProviderFault.
+	ProviderFault ProviderFault
 }
 
 type handler struct {
@@ -157,6 +171,11 @@ func NewHandler(cfg Config) (http.Handler, error) {
 		return nil, err
 	}
 	cfg.Fault = f
+	pf, err := ParseProviderFault(string(cfg.ProviderFault))
+	if err != nil {
+		return nil, err
+	}
+	cfg.ProviderFault = pf
 	if cfg.Latency < 0 || cfg.SlowDelay < 0 {
 		return nil, errors.New("fakellm: durations must not be negative")
 	}
@@ -167,7 +186,11 @@ func NewHandler(cfg Config) (http.Handler, error) {
 	h.mux.HandleFunc("GET /health", h.health)
 	h.mux.HandleFunc("GET /v1/models", h.auth(h.models))
 	h.mux.HandleFunc("POST /v1/chat/completions", h.auth(h.chat))
-	for _, p := range []string{"/health", "/v1/models", "/v1/chat/completions"} {
+	// Provider test doubles (internal/ai): Anthropic-compatible and
+	// DeepSeek-compatible, each labelled as a test double.
+	h.mux.HandleFunc("POST /v1/messages", h.auth(h.anthropicMessages))
+	h.mux.HandleFunc("POST /chat/completions", h.auth(h.deepseekChat))
+	for _, p := range []string{"/health", "/v1/models", "/v1/chat/completions", "/v1/messages", "/chat/completions"} {
 		h.mux.HandleFunc(p, func(w http.ResponseWriter, _ *http.Request) {
 			writeError(w, http.StatusMethodNotAllowed, "method_not_allowed")
 		})

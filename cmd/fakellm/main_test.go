@@ -156,8 +156,46 @@ func TestRunShutsDownWithStalledStream(t *testing.T) {
 	}
 }
 
+func TestRunProviderDoubles(t *testing.T) {
+	base, stdout, stop := start(t, "-addr", "127.0.0.1:0", "-provider-fault", "refusal")
+	line := stdout.String()
+	for _, want := range []string{"claude_double=test-double-not-claude", "deepseek_double=test-double-not-deepseek",
+		"provider_fault=refusal", "not Claude, not DeepSeek", "not Meta"} {
+		if !strings.Contains(line, want) {
+			t.Fatalf("startup line %q lacks %q", line, want)
+		}
+	}
+	body := `{"model":"test-double-not-claude","max_tokens":100,"messages":[{"role":"user","content":"hi"}]}`
+	req, _ := http.NewRequest(http.MethodPost, base+"/v1/messages", strings.NewReader(body))
+	req.Header.Set("anthropic-version", "2026-10-21")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || resp.Header.Get("X-Sela-Test-Double") != "true" || !strings.Contains(string(b), `"stop_reason":"refusal"`) {
+		t.Fatalf("status %d body %s", resp.StatusCode, b)
+	}
+	resp, err = http.Post(base+"/chat/completions", "application/json",
+		strings.NewReader(`{"model":"test-double-not-deepseek","messages":[{"role":"user","content":"json please"}],"response_format":{"type":"json_object"}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ = io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || !strings.Contains(string(b), `"finish_reason":"content_filter"`) || !strings.Contains(string(b), "test-double-not-deepseek") {
+		t.Fatalf("status %d body %s", resp.StatusCode, b)
+	}
+	if err := stop(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestRunRejectsBadFlags(t *testing.T) {
 	for _, args := range [][]string{
+		{"-provider-fault", "explode"},
+		{"-slow-delay", "-1s"},
 		{"-fault", "explode"},
 		{"-latency", "-1s"},
 		{"-addr", "127.0.0.1:0", "extra"},
