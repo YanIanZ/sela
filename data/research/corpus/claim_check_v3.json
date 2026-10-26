@@ -1,0 +1,2690 @@
+{
+  "check_version": "sela-claim-check-v3.1",
+  "counts": {
+    "assertion_status": {
+      "absent_as_expected": 2,
+      "abstract_unavailable": 1,
+      "not_found": 3,
+      "terms_found": 49
+    },
+    "assertions": 55,
+    "mismatches": 4,
+    "overall": {
+      "abstract_unavailable": 1,
+      "not_found": 3,
+      "terms_found": 19
+    },
+    "statements": 23,
+    "wording_issues": [
+      "07-r01"
+    ]
+  },
+  "inputs": {
+    "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md": "5e24acb7108de0d06f530788574bef211b9d7c4d1efd68d64013ee0fea07701a",
+    "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md": "0849fb03c001b840c53dd6d57d69450de04095ce4738d68a8dbf5c1015ca6d6f"
+  },
+  "is_appraisal": false,
+  "method": "Each doc 07/10 statement was decomposed (by the AI research agent, unreviewed) into explicit assertions; each assertion lists regular-expression term sets that must all appear in the public title or abstract of a cited source, plus contradiction cues. 'terms_found' means the words are present, not that the abstract supports the claim; anything else is listed under mismatches for a person to read. Abstracts were read from the local cache only and are not committed.",
+  "mismatches": [
+    {
+      "assertion": "a3",
+      "claim_part": "linked to engagement",
+      "note": "R035 links measurement-based care with shared decision-making, not with engagement",
+      "statement": "07-r06",
+      "status": "not_found"
+    },
+    {
+      "assertion": "a3",
+      "claim_part": "R100 abstract checked",
+      "note": "no open abstract (NEJM AI not in Europe PMC; no Crossref abstract; landing page blocked)",
+      "statement": "07-r14",
+      "status": "abstract_unavailable"
+    },
+    {
+      "assertion": "a1",
+      "claim_part": "a cited source measures consent comprehension",
+      "note": "none of the cited sources measures consent comprehension",
+      "statement": "10-g3",
+      "status": "not_found"
+    },
+    {
+      "assertion": "a2",
+      "claim_part": "deterministic checks miss variants",
+      "note": "this part is about Sela's own rules, not a finding of these sources",
+      "statement": "10-g6",
+      "status": "not_found"
+    }
+  ],
+  "sources": {
+    "R012": {
+      "abstract_available": true,
+      "abstract_sha256": "97d2ecb09f2a7efe6ba93e75ad374a705517a63134b2ede289ad1c6ccde53f82",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:15Z",
+      "source_record": "MED:40839588",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1371%2Fjournal.pone.0329905%22&format=json&resultType=core&pageSize=5"
+    },
+    "R019": {
+      "abstract_available": true,
+      "abstract_sha256": "60ff848ba33a1069b6786495509f9a67bed1225d568fa166bba3ae0e81a2d4fb",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:16Z",
+      "source_record": "MED:40928181",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1177%2F00207640251367289%22&format=json&resultType=core&pageSize=5"
+    },
+    "R023": {
+      "abstract_available": true,
+      "abstract_sha256": "dcd9715db868390debe3c0e0ee02be8cdd97ef9098b28eb30040b2ecf2478587",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:16Z",
+      "source_record": "MED:40966254",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1371%2Fjournal.pone.0331454%22&format=json&resultType=core&pageSize=5"
+    },
+    "R027": {
+      "abstract_available": true,
+      "abstract_sha256": "7e37e18f0af0cbc61d9cbd063dbf60c24253abccb39c714242c1507c5a138e6c",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:17Z",
+      "source_record": "MED:39891644",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1016%2Fj.pedhc.2024.11.010%22&format=json&resultType=core&pageSize=5"
+    },
+    "R031": {
+      "abstract_available": true,
+      "abstract_sha256": "13d606664de97e2261ce61e95813bcad5934b282ca32555d6aa6464dc0f458ec",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:17Z",
+      "source_record": "MED:40420311",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1186%2Fs12913-025-12889-1%22&format=json&resultType=core&pageSize=5"
+    },
+    "R035": {
+      "abstract_available": true,
+      "abstract_sha256": "fa492e923b143c8ab623d5784a16bd71773ea658f19ba5711257e9274528383a",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:18Z",
+      "source_record": "MED:38976368",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1111%2Fhex.14137%22&format=json&resultType=core&pageSize=5"
+    },
+    "R038": {
+      "abstract_available": true,
+      "abstract_sha256": "f45941edb4de5b250b8e2f3c52d6b93553ccce26efb8494277c4b462e5edf87c",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:19Z",
+      "source_record": "MED:41333108",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.3389%2Ffdgth.2025.1633987%22&format=json&resultType=core&pageSize=5"
+    },
+    "R043": {
+      "abstract_available": true,
+      "abstract_sha256": "227ada4892a43701864237690ef729d830970471a1b78d9862466d7c6273c46f",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:19Z",
+      "source_record": "MED:40607739",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.2196%2F66762%22&format=json&resultType=core&pageSize=5"
+    },
+    "R045": {
+      "abstract_available": true,
+      "abstract_sha256": "f232f06b77731b1e58c7e63bbfefef7816f37104358c27bc165042e81135fc52",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:20Z",
+      "source_record": "MED:41298895",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1038%2Fs41746-025-02147-3%22&format=json&resultType=core&pageSize=5"
+    },
+    "R047": {
+      "abstract_available": true,
+      "abstract_sha256": "f8c8d44955215618e2d955c065ce5ea1eb550e59616c8d11f414e2975478df55",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:20Z",
+      "source_record": "MED:40792380",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1080%2F20008066.2025.2535082%22&format=json&resultType=core&pageSize=5"
+    },
+    "R057": {
+      "abstract_available": true,
+      "abstract_sha256": "4bd53e2b21cb19e2830dc7e071f301eeaced3e4b8ff6d3f4484ba063cf03c0f3",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:21Z",
+      "source_record": "MED:40825309",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.2196%2F69857%22&format=json&resultType=core&pageSize=5"
+    },
+    "R058": {
+      "abstract_available": true,
+      "abstract_sha256": "30b8dec880ccecc56108b93cbace7125a3703922f6a5c04b32a26202b1dcabe0",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:22Z",
+      "source_record": "MED:41102216",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1038%2Fs41598-025-19980-x%22&format=json&resultType=core&pageSize=5"
+    },
+    "R065": {
+      "abstract_available": true,
+      "abstract_sha256": "3ddaa5cc9dbbe509d870df4cecc0fdd8c88ccb4f6d1a5696c662cbbb7c247a73",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:22Z",
+      "source_record": "MED:40323616",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1001%2Fjamainternmed.2025.0821%22&format=json&resultType=core&pageSize=5"
+    },
+    "R068": {
+      "abstract_available": true,
+      "abstract_sha256": "ef2ddf723e4d0df25afd5ec24b6de2dc7f9beee242229fa3056100a7cbd3b799",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:23Z",
+      "source_record": "MED:40371947",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.2196%2F68998%22&format=json&resultType=core&pageSize=5"
+    },
+    "R069": {
+      "abstract_available": true,
+      "abstract_sha256": "52cd0d74939302e72d22227b446dafe92d8c8839478f1e6f15a26f1b8d4f7e24",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:23Z",
+      "source_record": "MED:40323321",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1093%2Fjamia%2Focaf068%22&format=json&resultType=core&pageSize=5"
+    },
+    "R070": {
+      "abstract_available": true,
+      "abstract_sha256": "e48de5258d6d98859d3fed90fa9cbfa588279dac14483f0bb69d715433270c2c",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:31Z",
+      "source_record": "MED:40948070",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1002%2Fwps.21352%22&format=json&resultType=core&pageSize=5"
+    },
+    "R075": {
+      "abstract_available": true,
+      "abstract_sha256": "5455f4eb1f7bbdf97eb7e8517b6e0a95f416a31a3a293a912a3a4f90291d8f2a",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:24Z",
+      "source_record": "MED:40397927",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.2196%2F69709%22&format=json&resultType=core&pageSize=5"
+    },
+    "R081": {
+      "abstract_available": true,
+      "abstract_sha256": "c40f69b5f7e7660891e074ccc2512dc61752831bb03b075f86a8630b746a1556",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:24Z",
+      "source_record": "MED:40866537",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1038%2Fs41598-025-17242-4%22&format=json&resultType=core&pageSize=5"
+    },
+    "R087": {
+      "abstract_available": true,
+      "abstract_sha256": "7fa98ad125f60f56fd6ba76225569b99c4e0241966f8856efa9571d200b30e5b",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:25Z",
+      "source_record": "MED:41055096",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.2196%2F70960%22&format=json&resultType=core&pageSize=5"
+    },
+    "R090": {
+      "abstract_available": true,
+      "abstract_sha256": "cb767fac42ab531413d1ba1c6a710ae398054521793514609a4e700cda24f51e",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:25Z",
+      "source_record": "MED:40604240",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1038%2Fs41746-025-01778-w%22&format=json&resultType=core&pageSize=5"
+    },
+    "R092": {
+      "abstract_available": true,
+      "abstract_sha256": "f8ba2298636cd250c574a2424c27227552ee64ab7a762a087b460b28791804af",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:26Z",
+      "source_record": "MED:41432275",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.2196%2F69464%22&format=json&resultType=core&pageSize=5"
+    },
+    "R096": {
+      "abstract_available": true,
+      "abstract_sha256": "8b116df11e8069e1d07aa6fd11563552ad2811d1d998ba252f65b008414d6a2f",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:26Z",
+      "source_record": "MED:38413730",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1038%2Fs41591-024-02855-5%22&format=json&resultType=core&pageSize=5"
+    },
+    "R097": {
+      "abstract_available": true,
+      "abstract_sha256": "0a5da5b26845641ef0114da812b3046b4e51e13899b78e1c51a98ec77d0ca35b",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:27Z",
+      "source_record": "MED:38114588",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1038%2Fs41746-023-00979-5%22&format=json&resultType=core&pageSize=5"
+    },
+    "R098": {
+      "abstract_available": true,
+      "abstract_sha256": "24af6ba30afeff082f5d17205220e0d3be05b777af4e0aad46897340df6afe99",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:28Z",
+      "source_record": "MED:37469586",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.33546%2Fbnj.2521%22&format=json&resultType=core&pageSize=5"
+    },
+    "R099": {
+      "abstract_available": true,
+      "abstract_sha256": "488c16b1b2b02df25939aff89f64ac42118d6389ee7ab4b71d9242b1725548b7",
+      "kind": "arxiv",
+      "retrieved_at": "2026-10-26T17:28:28Z",
+      "source_record": "http://arxiv.org/abs/2504.18412v1",
+      "url": "https://export.arxiv.org/api/query?id_list=2504.18412"
+    },
+    "R100": {
+      "abstract_available": false,
+      "abstract_sha256": null,
+      "kind": "crossref",
+      "retrieved_at": "2026-10-26T17:28:28Z",
+      "source_record": "crossref:10.1056/aioa2400802",
+      "url": "https://api.crossref.org/works/10.1056/aioa2400802"
+    },
+    "nature_medicine_2026_audit": {
+      "abstract_available": true,
+      "abstract_sha256": "4f096ecb82e6fa34a2d2b2ca38f089acb91d23837dbdc5e771900058615ba7cc",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:29Z",
+      "source_record": "MED:42567928",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1038%2Fs41591-026-04577-2%22&format=json&resultType=core&pageSize=5"
+    },
+    "npj_dm_scoping_review": {
+      "abstract_available": true,
+      "abstract_sha256": "fbd99a7e373a38a32308d3891f987ec271659bce30a0d42c4a09e388400abbbb",
+      "kind": "europepmc",
+      "retrieved_at": "2026-10-26T17:28:30Z",
+      "source_record": "MED:40307331",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1038%2Fs41746-025-01611-4%22&format=json&resultType=core&pageSize=5"
+    },
+    "stanford_news_2025": {
+      "abstract_available": false,
+      "abstract_sha256": null,
+      "kind": "news",
+      "note": "news item, not peer reviewed; not checked; doc 10 should cite R099 instead",
+      "retrieved_at": null,
+      "source_record": null,
+      "url": "https://news.stanford.edu/stories/2025/06/ai-mental-health-care-tools-dangers-risks"
+    }
+  },
+  "spec_sha256": "fcd833ae5cc81ce67843487944596315709afeacb072cc1638d34b4c92fd6174",
+  "statements": [
+    {
+      "agent_reading": "Consistent. R098: qualitative interviews, 90 people aged 18-32 with depression, anxiety or bipolar disorder in Indonesia. R019: systematic review with narrative synthesis, ASEAN, participants 18 and over. Adults only.",
+      "assertions": [
+        {
+          "claim_part": "access is a barrier",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R019": {
+              "abstract_sha256": "60ff848ba33a1069b6786495509f9a67bed1225d568fa166bba3ae0e81a2d4fb",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "barrier"
+              ],
+              "matched_terms": [
+                "access/availability",
+                "barrier"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R098": {
+              "abstract_sha256": "24af6ba30afeff082f5d17205220e0d3be05b777af4e0aad46897340df6afe99",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "access/availability",
+                "barrier"
+              ],
+              "matched_terms": [
+                "access/availability",
+                "barrier"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "cost is a barrier",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R019": {
+              "abstract_sha256": "60ff848ba33a1069b6786495509f9a67bed1225d568fa166bba3ae0e81a2d4fb",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "cost/affordability"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R098": {
+              "abstract_sha256": "24af6ba30afeff082f5d17205220e0d3be05b777af4e0aad46897340df6afe99",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "cost/affordability"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "stigma is a barrier",
+          "expect": "present",
+          "id": "a3",
+          "note": null,
+          "per_source": {
+            "R019": {
+              "abstract_sha256": "60ff848ba33a1069b6786495509f9a67bed1225d568fa166bba3ae0e81a2d4fb",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "stigma"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R098": {
+              "abstract_sha256": "24af6ba30afeff082f5d17205220e0d3be05b777af4e0aad46897340df6afe99",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "stigma"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "social factors",
+          "expect": "present",
+          "id": "a4",
+          "note": null,
+          "per_source": {
+            "R019": {
+              "abstract_sha256": "60ff848ba33a1069b6786495509f9a67bed1225d568fa166bba3ae0e81a2d4fb",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "social"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R098": {
+              "abstract_sha256": "24af6ba30afeff082f5d17205220e0d3be05b777af4e0aad46897340df6afe99",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "social"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "design reports perceived barriers (not measured effects)",
+          "expect": "present",
+          "id": "a5",
+          "note": null,
+          "per_source": {
+            "R019": {
+              "abstract_sha256": "60ff848ba33a1069b6786495509f9a67bed1225d568fa166bba3ae0e81a2d4fb",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "qualitative or narrative synthesis"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R098": {
+              "abstract_sha256": "24af6ba30afeff082f5d17205220e0d3be05b777af4e0aad46897340df6afe99",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "qualitative or narrative synthesis"
+              ],
+              "matched_terms": [
+                "qualitative or narrative synthesis"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        }
+      ],
+      "cited": [
+        "R098",
+        "R019"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r01",
+      "location": "table row 1",
+      "overall": "terms_found",
+      "statement": "Akses, biaya, stigma dan faktor sosial memengaruhi pencarian bantuan",
+      "wording_issue": "'memengaruhi' (influence) reads as a causal effect; both sources report perceived barriers (qualitative interviews; a narrative-synthesis review). Suggested wording: 'dilaporkan sebagai hambatan'."
+    },
+    {
+      "agent_reading": "Consistent. R012: thematic analysis of open survey answers from university students in Ireland. R038: three usability-testing cycles with 26 participants. Neither measures help-seeking behaviour. University students (adults).",
+      "assertions": [
+        {
+          "claim_part": "people need a way into services",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R012": {
+              "abstract_sha256": "97d2ecb09f2a7efe6ba93e75ad374a705517a63134b2ede289ad1c6ccde53f82",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "how to access / entrance / finding support"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R038": {
+              "abstract_sha256": "f45941edb4de5b250b8e2f3c52d6b93553ccce26efb8494277c4b462e5edf87c",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "how to access / entrance / finding support"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R012",
+            "R038"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "understandable information about services",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R012": {
+              "abstract_sha256": "97d2ecb09f2a7efe6ba93e75ad374a705517a63134b2ede289ad1c6ccde53f82",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "what to expect",
+                "literacy"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R012"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R012",
+        "R038"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r02",
+      "location": "table row 2",
+      "overall": "terms_found",
+      "statement": "Pengguna membutuhkan cara masuk layanan dan informasi yang dapat dipahami",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent, and doc 07's 'berasosiasi' is the correct reading. The abstract's conclusion says navigation 'improved' utilization and 'reduced' depression and anxiety, but the design is a retrospective, propensity-matched cohort of an employer-sponsored benefit described by the platform; that causal wording must not be quoted. Sponsorship and conflicts are not assessed here.",
+      "assertions": [
+        {
+          "claim_part": "care navigation associated with utilization/retention",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R023": {
+              "abstract_sha256": "dcd9715db868390debe3c0e0ee02be8cdd97ef9098b28eb30040b2ecf2478587",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "care navigation",
+                "associated",
+                "utilization/retention"
+              ],
+              "matched_terms": [
+                "care navigation",
+                "associated",
+                "utilization/retention"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R023"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "US cohort",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R023": {
+              "abstract_sha256": "dcd9715db868390debe3c0e0ee02be8cdd97ef9098b28eb30040b2ecf2478587",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "cohort"
+              ],
+              "matched_terms": [
+                "cohort",
+                "US"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R023"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R023"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r03",
+      "location": "table row 3",
+      "overall": "terms_found",
+      "statement": "Care navigation berasosiasi dengan penggunaan/retensi layanan lebih baik dalam kohort AS",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent (OR 0.34, 95% CI 0.13-0.88, N=145; mixed-methods case study). The authors still conclude that the findings support warm handoffs, which is not the same reading. Ages are not stated in the abstract (MeSH: Adolescent); not evidence for adults.",
+      "assertions": [
+        {
+          "claim_part": "lower odds of attendance after in-person warm handoff vs traditional in-house referral",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R027": {
+              "abstract_sha256": "7e37e18f0af0cbc61d9cbd063dbf60c24253abccb39c714242c1507c5a138e6c",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "warm handoff"
+              ],
+              "matched_terms": [
+                "warm handoff",
+                "decreased odds",
+                "attendance",
+                "traditional in-house referral"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R027"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "adolescent study",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R027": {
+              "abstract_sha256": "7e37e18f0af0cbc61d9cbd063dbf60c24253abccb39c714242c1507c5a138e6c",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "adolescents"
+              ],
+              "matched_terms": [
+                "adolescents"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R027"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R027"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r04",
+      "location": "table row 4",
+      "overall": "terms_found",
+      "statement": "Warm handoff tatap muka dikaitkan dengan odds attendance lebih rendah daripada referral internal tradisional pada studi remaja",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. N=130 Indonesian undergraduate students; the abstract states no ages, and the record's machine age band is minors_possible_unverified (MeSH also tags Adolescent), so this is not adult-only evidence by itself and not evidence for ages 15-17. Null for help-seeking intention and symptoms; acceptability high, feasibility lower.",
+      "assertions": [
+        {
+          "claim_part": "pilot RCT in Indonesia",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R047": {
+              "abstract_sha256": "f8c8d44955215618e2d955c065ce5ea1eb550e59616c8d11f414e2975478df55",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "pilot RCT",
+                "Indonesia"
+              ],
+              "matched_terms": [
+                "pilot RCT",
+                "Indonesia"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R047"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "mental health literacy improved vs control",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R047": {
+              "abstract_sha256": "f8c8d44955215618e2d955c065ce5ea1eb550e59616c8d11f414e2975478df55",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "literacy improved more"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R047"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "no improvement in help-seeking intention vs control",
+          "expect": "present",
+          "id": "a3",
+          "note": null,
+          "per_source": {
+            "R047": {
+              "abstract_sha256": "f8c8d44955215618e2d955c065ce5ea1eb550e59616c8d11f414e2975478df55",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "did not improve more: help-seeking"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R047"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "no improvement in symptoms vs control",
+          "expect": "present",
+          "id": "a4",
+          "note": null,
+          "per_source": {
+            "R047": {
+              "abstract_sha256": "f8c8d44955215618e2d955c065ce5ea1eb550e59616c8d11f414e2975478df55",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "did not improve more: symptoms"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R047"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R047"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r05",
+      "location": "table row 5",
+      "overall": "terms_found",
+      "statement": "Pilot RCT Indonesia memperbaiki literasi tetapi tidak memperbaiki help-seeking intention atau outcome gejala dibanding kontrol",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Partly. R031 (mixed methods, 18 young adults, mean age 21.7) supports it. R035 (co-design workshops, 24 people aged 16-31) supports the shared decision-making part, not engagement. R031's title says measurement-based care 'enhances engagement' on the basis of n=18 perceptions; that is not an effect.",
+      "assertions": [
+        {
+          "claim_part": "collaborative data review is a facilitator",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R031": {
+              "abstract_sha256": "13d606664de97e2261ce61e95813bcad5934b282ca32555d6aa6464dc0f458ec",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "collaborative data review"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R031"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "understanding the purpose of collected data",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R031": {
+              "abstract_sha256": "13d606664de97e2261ce61e95813bcad5934b282ca32555d6aa6464dc0f458ec",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "comprehension of data purpose"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R035": {
+              "abstract_sha256": "fa492e923b143c8ab623d5784a16bd71773ea658f19ba5711257e9274528383a",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "comprehension of data purpose"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R031",
+            "R035"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "linked to engagement",
+          "expect": "present",
+          "id": "a3",
+          "note": "R035 links measurement-based care with shared decision-making, not with engagement",
+          "per_source": {
+            "R031": {
+              "abstract_sha256": "13d606664de97e2261ce61e95813bcad5934b282ca32555d6aa6464dc0f458ec",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "engagement"
+              ],
+              "matched_terms": [
+                "engagement"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R035": {
+              "abstract_sha256": "fa492e923b143c8ab623d5784a16bd71773ea658f19ba5711257e9274528383a",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "engagement"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            }
+          },
+          "sources": [
+            "R031",
+            "R035"
+          ],
+          "status": "not_found",
+          "support_mode": "all"
+        }
+      ],
+      "cited": [
+        "R031",
+        "R035"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r06",
+      "location": "table row 6",
+      "overall": "not_found",
+      "statement": "Pemahaman tujuan data dan review kolaboratif penting bagi keterlibatan",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. R045 is a system description (no users studied). R043 is a cross-sectional review of 115 Chinese apps' privacy policies; its conclusion that better compliance 'can significantly improve app quality and user engagement' rests on a correlation (r=0.354) and must not be reused as a causal claim.",
+      "assertions": [
+        {
+          "claim_part": "consent / user-controlled sharing",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R043": {
+              "abstract_sha256": "227ada4892a43701864237690ef729d830970471a1b78d9862466d7c6273c46f",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "consent or confirmation"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R045": {
+              "abstract_sha256": "f232f06b77731b1e58c7e63bbfefef7816f37104358c27bc165042e81135fc52",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "consent or confirmation"
+              ],
+              "matched_terms": [
+                "consent or confirmation"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R045",
+            "R043"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "transparency",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R043": {
+              "abstract_sha256": "227ada4892a43701864237690ef729d830970471a1b78d9862466d7c6273c46f",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "transparency"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R045": {
+              "abstract_sha256": "f232f06b77731b1e58c7e63bbfefef7816f37104358c27bc165042e81135fc52",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "transparency"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R045",
+            "R043"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "concrete implementation",
+          "expect": "present",
+          "id": "a3",
+          "note": null,
+          "per_source": {
+            "R043": {
+              "abstract_sha256": "227ada4892a43701864237690ef729d830970471a1b78d9862466d7c6273c46f",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "implementation"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R045": {
+              "abstract_sha256": "f232f06b77731b1e58c7e63bbfefef7816f37104358c27bc165042e81135fc52",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "implementation"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R045",
+            "R043"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        }
+      ],
+      "cited": [
+        "R045",
+        "R043"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r07",
+      "location": "table row 7",
+      "overall": "terms_found",
+      "statement": "Transparansi dan consent sharing memerlukan implementasi konkret",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. R057: Korean vs English psychiatric notes (one 7B model); R058: English, Spanish and Dutch. Neither covers Bahasa Indonesia or code-switching.",
+      "assertions": [
+        {
+          "claim_part": "performance differs by language",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R057": {
+              "abstract_sha256": "4bd53e2b21cb19e2830dc7e071f301eeaced3e4b8ff6d3f4484ba063cf03c0f3",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "language difference"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R058": {
+              "abstract_sha256": "30b8dec880ccecc56108b93cbace7125a3703922f6a5c04b32a26202b1dcabe0",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "language difference"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R057",
+            "R058"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "demographic bias",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R058": {
+              "abstract_sha256": "30b8dec880ccecc56108b93cbace7125a3703922f6a5c04b32a26202b1dcabe0",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "age/gender"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R058"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "languages studied are not Indonesian",
+          "expect": "absent",
+          "id": "a3",
+          "note": null,
+          "per_source": {
+            "R057": {
+              "abstract_sha256": "4bd53e2b21cb19e2830dc7e071f301eeaced3e4b8ff6d3f4484ba063cf03c0f3",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "Indonesian / Malay"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "absent_as_expected"
+            },
+            "R058": {
+              "abstract_sha256": "30b8dec880ccecc56108b93cbace7125a3703922f6a5c04b32a26202b1dcabe0",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "Indonesian / Malay"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "absent_as_expected"
+            }
+          },
+          "sources": [
+            "R057",
+            "R058"
+          ],
+          "status": "absent_as_expected",
+          "support_mode": "all"
+        }
+      ],
+      "cited": [
+        "R057",
+        "R058"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r08",
+      "location": "table row 8",
+      "overall": "terms_found",
+      "statement": "Performa dan bias berubah menurut bahasa dan demografi",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. Both are clinician-facing summaries of EHR text (R096: radiology reports, patient questions, progress notes, dialogue; R065: hospital discharge summaries, 100 encounters, cross-sectional) judged by physicians. Nothing about summaries people write about themselves for a consultation. R065 is needs_check (date documented, inside window).",
+      "assertions": [
+        {
+          "claim_part": "promising (comparable or better than clinicians)",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R065": {
+              "abstract_sha256": "3ddaa5cc9dbbe509d870df4cecc0fdd8c88ccb4f6d1a5696c662cbbb7c247a73",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "equivalent/superior/comparable"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R096": {
+              "abstract_sha256": "8b116df11e8069e1d07aa6fd11563552ad2811d1d998ba252f65b008414d6a2f",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "equivalent/superior/comparable"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R096",
+            "R065"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "errors / fabricated information",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R065": {
+              "abstract_sha256": "3ddaa5cc9dbbe509d870df4cecc0fdd8c88ccb4f6d1a5696c662cbbb7c247a73",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "errors or fabrication"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R096": {
+              "abstract_sha256": "8b116df11e8069e1d07aa6fd11563552ad2811d1d998ba252f65b008414d6a2f",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "errors or fabrication"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R096",
+            "R065"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        }
+      ],
+      "cited": [
+        "R096",
+        "R065"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r09",
+      "location": "table row 9",
+      "overall": "terms_found",
+      "statement": "Summarization menjanjikan tetapi dapat menghasilkan error/confabulation",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. R069 validates PDSQI-9 with 7 physician raters (factors: organization, clarity, accuracy, utility). R068 is a scoping review of 30 retrospective studies. Doc 07's rubric names (completeness, correctness, clarity, utility) mix R096's and R069's dimensions; an adapted rubric is not a validated instrument.",
+      "assertions": [
+        {
+          "claim_part": "structured instrument or framework",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R068": {
+              "abstract_sha256": "ef2ddf723e4d0df25afd5ec24b6de2dc7f9beee242229fa3056100a7cbd3b799",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "instrument/framework"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R069": {
+              "abstract_sha256": "52cd0d74939302e72d22227b446dafe92d8c8839478f1e6f15a26f1b8d4f7e24",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "instrument/framework"
+              ],
+              "matched_terms": [
+                "instrument/framework"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R069",
+            "R068"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "clinical (human) rating",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R068": {
+              "abstract_sha256": "ef2ddf723e4d0df25afd5ec24b6de2dc7f9beee242229fa3056100a7cbd3b799",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "physician raters / human evaluation"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R069": {
+              "abstract_sha256": "52cd0d74939302e72d22227b446dafe92d8c8839478f1e6f15a26f1b8d4f7e24",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "physician raters / human evaluation"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R069",
+            "R068"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "current evaluation is heterogeneous",
+          "expect": "present",
+          "id": "a3",
+          "note": null,
+          "per_source": {
+            "R068": {
+              "abstract_sha256": "ef2ddf723e4d0df25afd5ec24b6de2dc7f9beee242229fa3056100a7cbd3b799",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "heterogeneous"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R068"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R069",
+        "R068"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r10",
+      "location": "table row 10",
+      "overall": "terms_found",
+      "statement": "Evaluasi kualitas ringkasan perlu struktur dan penilaian klinis",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. The title calls the paper a 'Randomized Controlled Study Termination Report', so 'dihentikan' (stopped) is accurate; the abstract adds that of 96 eligible youths 8 expressed interest and 3 consented, and all 3 withdrew or were excluded, so no data could be evaluated. The authors offer possible reasons (perceived irrelevance of digital tools, complex protocols, privacy concerns); these are suggestions, not tested causes. Ages 12-18, Japan: one of the few register records whose accepted age range explicitly includes 15-17.",
+      "assertions": [
+        {
+          "claim_part": "no evaluable data",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R087": {
+              "abstract_sha256": "7fa98ad125f60f56fd6ba76225569b99c4e0241966f8856efa9571d200b30e5b",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "waiting list"
+              ],
+              "matched_terms": [
+                "no evaluable data",
+                "waiting list"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R087"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "engagement / recruitment problem",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R087": {
+              "abstract_sha256": "7fa98ad125f60f56fd6ba76225569b99c4e0241966f8856efa9571d200b30e5b",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "engagement",
+                "withdrew"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R087"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "adolescents in Japan",
+          "expect": "present",
+          "id": "a3",
+          "note": null,
+          "per_source": {
+            "R087": {
+              "abstract_sha256": "7fa98ad125f60f56fd6ba76225569b99c4e0241966f8856efa9571d200b30e5b",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "aged 12-18",
+                "Japan"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R087"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "the trial was stopped (termination report)",
+          "expect": "present",
+          "id": "a4",
+          "note": null,
+          "per_source": {
+            "R087": {
+              "abstract_sha256": "7fa98ad125f60f56fd6ba76225569b99c4e0241966f8856efa9571d200b30e5b",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "termination"
+              ],
+              "matched_terms": [
+                "termination"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R087"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R087"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r11",
+      "location": "table row 11",
+      "overall": "terms_found",
+      "statement": "Trial chatbot waiting-list dihentikan tanpa data evaluable karena engagement/rekrutmen",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. R090 is a consensus statement with a systematic review; R092 is a secondary analysis of two smartphone RCTs (2,201 adults) and reports associations between symptom trajectory and adherence, not effects.",
+      "assertions": [
+        {
+          "claim_part": "engagement linked to outcomes",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R090": {
+              "abstract_sha256": "cb767fac42ab531413d1ba1c6a710ae398054521793514609a4e700cda24f51e",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "engagement and outcomes"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R092": {
+              "abstract_sha256": "f8ba2298636cd250c574a2424c27227552ee64ab7a762a087b460b28791804af",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "engagement and outcomes"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            }
+          },
+          "sources": [
+            "R090",
+            "R092"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "adherence/retention indicators",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R092": {
+              "abstract_sha256": "f8ba2298636cd250c574a2424c27227552ee64ab7a762a087b460b28791804af",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "adherence/retention"
+              ],
+              "matched_terms": [
+                "adherence/retention"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R092"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R090",
+        "R092"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r12",
+      "location": "table row 12",
+      "overall": "terms_found",
+      "statement": "Engagement harus dikaitkan dengan tujuan dan outcomes",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. Vignette and simulated-scenario studies of model responses (R099 also a mapping review), not user outcomes; none in Indonesian or with code-switching.",
+      "assertions": [
+        {
+          "claim_part": "inappropriate or inadequate responses",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R075": {
+              "abstract_sha256": "5455f4eb1f7bbdf97eb7e8517b6e0a95f416a31a3a293a912a3a4f90291d8f2a",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "inappropriate/inadequate/unsuitable"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R081": {
+              "abstract_sha256": "c40f69b5f7e7660891e074ccc2512dc61752831bb03b075f86a8630b746a1556",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "inappropriate/inadequate/unsuitable"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R099": {
+              "abstract_sha256": "488c16b1b2b02df25939aff89f64ac42118d6389ee7ab4b71d9242b1725548b7",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "inappropriate/inadequate/unsuitable"
+              ],
+              "matched_terms": [
+                "inappropriate/inadequate/unsuitable"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R099",
+            "R075",
+            "R081"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "in risky situations (crisis, suicidal, delusion)",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R075": {
+              "abstract_sha256": "5455f4eb1f7bbdf97eb7e8517b6e0a95f416a31a3a293a912a3a4f90291d8f2a",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "crisis/suicidal/delusional"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R081": {
+              "abstract_sha256": "c40f69b5f7e7660891e074ccc2512dc61752831bb03b075f86a8630b746a1556",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "crisis/suicidal/delusional"
+              ],
+              "matched_terms": [
+                "crisis/suicidal/delusional"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R099": {
+              "abstract_sha256": "488c16b1b2b02df25939aff89f64ac42118d6389ee7ab4b71d9242b1725548b7",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "crisis/suicidal/delusional"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R099",
+            "R075",
+            "R081"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        }
+      ],
+      "cited": [
+        "R099",
+        "R075",
+        "R081"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r13",
+      "location": "table row 13",
+      "overall": "terms_found",
+      "statement": "Chatbot dapat gagal dalam respons berisiko dan praktik terapeutik",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "R097 (meta-analysis of 15 RCTs) shows symptom reduction (depression g 0.64, distress g 0.70) but no significant change in overall well-being; effects were larger in elderly populations, which is a signal for older adults, not evidence about Sela. R100 could not be checked against an open abstract.",
+      "assertions": [
+        {
+          "claim_part": "benefit signal",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R097": {
+              "abstract_sha256": "0a5da5b26845641ef0114da812b3046b4e51e13899b78e1c51a98ec77d0ca35b",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "reduced depression symptoms"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R100": {
+              "contradiction_cues": [],
+              "matched_terms": [],
+              "missing_terms": [],
+              "status": "abstract_unavailable"
+            }
+          },
+          "sources": [
+            "R097",
+            "R100"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "nuance: no well-being effect in the meta-analysis",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R097": {
+              "abstract_sha256": "0a5da5b26845641ef0114da812b3046b4e51e13899b78e1c51a98ec77d0ca35b",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "no significant well-being improvement"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R097"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "R100 abstract checked",
+          "expect": "present",
+          "id": "a3",
+          "note": "no open abstract (NEJM AI not in Europe PMC; no Crossref abstract; landing page blocked)",
+          "per_source": {
+            "R100": {
+              "contradiction_cues": [],
+              "matched_terms": [],
+              "missing_terms": [],
+              "status": "abstract_unavailable"
+            }
+          },
+          "sources": [
+            "R100"
+          ],
+          "status": "abstract_unavailable",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R097",
+        "R100"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r14",
+      "location": "table row 14",
+      "overall": "abstract_unavailable",
+      "statement": "Ada sinyal manfaat pada intervensi terstruktur yang diteliti",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent (R065 counts omissions and hallucinations; R096 categorises fabricated information). 'Synthetic texts differ from live care' is a design caution, not a finding of these sources.",
+      "assertions": [
+        {
+          "claim_part": "omissions",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R065": {
+              "abstract_sha256": "3ddaa5cc9dbbe509d870df4cecc0fdd8c88ccb4f6d1a5696c662cbbb7c247a73",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "omission"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R069": {
+              "abstract_sha256": "52cd0d74939302e72d22227b446dafe92d8c8839478f1e6f15a26f1b8d4f7e24",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "omission"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            },
+            "R096": {
+              "abstract_sha256": "8b116df11e8069e1d07aa6fd11563552ad2811d1d998ba252f65b008414d6a2f",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "omission"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            }
+          },
+          "sources": [
+            "R065",
+            "R069",
+            "R096"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "hallucination / fabrication",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R065": {
+              "abstract_sha256": "3ddaa5cc9dbbe509d870df4cecc0fdd8c88ccb4f6d1a5696c662cbbb7c247a73",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "hallucination/fabrication"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R069": {
+              "abstract_sha256": "52cd0d74939302e72d22227b446dafe92d8c8839478f1e6f15a26f1b8d4f7e24",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "hallucination/fabrication"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            },
+            "R096": {
+              "abstract_sha256": "8b116df11e8069e1d07aa6fd11563552ad2811d1d998ba252f65b008414d6a2f",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "hallucination/fabrication"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R065",
+            "R069",
+            "R096"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R065",
+        "R069",
+        "R096"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g1",
+      "location": "claim-to-feature gate: Story Ledger and Meaning Lock",
+      "overall": "terms_found",
+      "statement": "Summaries can omit details and hallucinate; synthetic texts differ from live care",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent (R047).",
+      "assertions": [
+        {
+          "claim_part": "literacy improved, help-seeking intention did not",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R047": {
+              "abstract_sha256": "f8c8d44955215618e2d955c065ce5ea1eb550e59616c8d11f414e2975478df55",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "literacy improved",
+                "help-seeking not improved"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R047"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R012",
+        "R019",
+        "R038",
+        "R047",
+        "R098"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g2",
+      "location": "claim-to-feature gate: Practical Next Step",
+      "overall": "terms_found",
+      "statement": "Literacy gains may not translate to help-seeking",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Not supported by the cited sources: the statement is a sound design caution, but none of R031, R043 or R045 measures whether people understand consent. R043 reports that 26% of 115 apps did not require active confirmation of the privacy policy. Treat as a declared evidence gap.",
+      "assertions": [
+        {
+          "claim_part": "a cited source measures consent comprehension",
+          "expect": "present",
+          "id": "a1",
+          "note": "none of the cited sources measures consent comprehension",
+          "per_source": {
+            "R031": {
+              "abstract_sha256": "13d606664de97e2261ce61e95813bcad5934b282ca32555d6aa6464dc0f458ec",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "consent comprehension"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            },
+            "R043": {
+              "abstract_sha256": "227ada4892a43701864237690ef729d830970471a1b78d9862466d7c6273c46f",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "consent comprehension"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            },
+            "R045": {
+              "abstract_sha256": "f232f06b77731b1e58c7e63bbfefef7816f37104358c27bc165042e81135fc52",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "consent comprehension"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            }
+          },
+          "sources": [
+            "R031",
+            "R043",
+            "R045"
+          ],
+          "status": "not_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R031",
+        "R043",
+        "R045"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g3",
+      "location": "claim-to-feature gate: Controlled disclosure",
+      "overall": "not_found",
+      "statement": "Consent comprehension is not established by checking a box",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent: R023 (US employer-benefit cohort, association) and R027 (adolescent clinic, lower attendance after warm handoff). Different populations and settings.",
+      "assertions": [
+        {
+          "claim_part": "a positive association",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R023": {
+              "abstract_sha256": "dcd9715db868390debe3c0e0ee02be8cdd97ef9098b28eb30040b2ecf2478587",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "increased utilization"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R023"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "a negative finding",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R027": {
+              "abstract_sha256": "7e37e18f0af0cbc61d9cbd063dbf60c24253abccb39c714242c1507c5a138e6c",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "decreased odds of attendance"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R027"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R023",
+        "R027",
+        "R035"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g4",
+      "location": "claim-to-feature gate: Handoff Receipt",
+      "overall": "terms_found",
+      "statement": "Referral studies have mixed results and specific care contexts",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. R058 adds English, Spanish and Dutch (not Korean).",
+      "assertions": [
+        {
+          "claim_part": "English/Korean evidence",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R057": {
+              "abstract_sha256": "4bd53e2b21cb19e2830dc7e071f301eeaced3e4b8ff6d3f4484ba063cf03c0f3",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "English"
+              ],
+              "matched_terms": [
+                "Korean",
+                "English"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R057"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "no Indonesian-language evidence in the cited sources",
+          "expect": "absent",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R057": {
+              "abstract_sha256": "4bd53e2b21cb19e2830dc7e071f301eeaced3e4b8ff6d3f4484ba063cf03c0f3",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "Indonesian / Malay"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "absent_as_expected"
+            },
+            "R058": {
+              "abstract_sha256": "30b8dec880ccecc56108b93cbace7125a3703922f6a5c04b32a26202b1dcabe0",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "Indonesian / Malay"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "absent_as_expected"
+            }
+          },
+          "sources": [
+            "R057",
+            "R058"
+          ],
+          "status": "absent_as_expected",
+          "support_mode": "all"
+        }
+      ],
+      "cited": [
+        "R057",
+        "R058"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g5",
+      "location": "claim-to-feature gate: Bilingual parity",
+      "overall": "terms_found",
+      "statement": "Evidence from English/Korean may not transfer to Bahasa Indonesia",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "The model-safety part is consistent. 'Deterministic checks miss some variants' describes Sela's own lexicon, which these sources do not test.",
+      "assertions": [
+        {
+          "claim_part": "model safety not established",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R075": {
+              "abstract_sha256": "5455f4eb1f7bbdf97eb7e8517b6e0a95f416a31a3a293a912a3a4f90291d8f2a",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "safety not established"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R081": {
+              "abstract_sha256": "c40f69b5f7e7660891e074ccc2512dc61752831bb03b075f86a8630b746a1556",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "safety not established"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            },
+            "R099": {
+              "abstract_sha256": "488c16b1b2b02df25939aff89f64ac42118d6389ee7ab4b71d9242b1725548b7",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "safety not established"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R075",
+            "R081",
+            "R099"
+          ],
+          "status": "terms_found",
+          "support_mode": "all"
+        },
+        {
+          "claim_part": "deterministic checks miss variants",
+          "expect": "present",
+          "id": "a2",
+          "note": "this part is about Sela's own rules, not a finding of these sources",
+          "per_source": {
+            "R075": {
+              "abstract_sha256": "5455f4eb1f7bbdf97eb7e8517b6e0a95f416a31a3a293a912a3a4f90291d8f2a",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "rule/keyword detection misses"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            },
+            "R081": {
+              "abstract_sha256": "c40f69b5f7e7660891e074ccc2512dc61752831bb03b075f86a8630b746a1556",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "rule/keyword detection misses"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            },
+            "R099": {
+              "abstract_sha256": "488c16b1b2b02df25939aff89f64ac42118d6389ee7ab4b71d9242b1725548b7",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [],
+              "missing_terms": [
+                "rule/keyword detection misses"
+              ],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "not_found"
+            }
+          },
+          "sources": [
+            "R075",
+            "R081",
+            "R099"
+          ],
+          "status": "not_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R075",
+        "R081",
+        "R099"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g6",
+      "location": "claim-to-feature gate: Safety boundary",
+      "overall": "not_found",
+      "statement": "Deterministic checks miss some variants; model safety is not proven",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent (R019 is this review; DOI 10.1177/00207640251367289).",
+      "assertions": [
+        {
+          "claim_part": "three barrier groups",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "R019": {
+              "abstract_sha256": "60ff848ba33a1069b6786495509f9a67bed1225d568fa166bba3ae0e81a2d4fb",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "social and cultural",
+                "personal",
+                "structural"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R019"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "R019"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-c1",
+      "location": "design conclusion 1",
+      "overall": "terms_found",
+      "statement": "The ASEAN-focused systematic review by Syafitri et al. describes social/cultural, personal and structural barriers",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. The npj Digital Medicine scoping review (16 studies) is out of the register; the World Psychiatry review is register record R070 (160 studies, 2020-2024), which doc 10 cites by DOI without its R-id. Both DOIs resolve.",
+      "assertions": [
+        {
+          "claim_part": "non-standardised evaluation (npj Digital Medicine scoping review)",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "npj_dm_scoping_review": {
+              "abstract_sha256": "fbd99a7e373a38a32308d3891f987ec271659bce30a0d42c4a09e388400abbbb",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "non-standardized / ad-hoc"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "npj_dm_scoping_review"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "few clinical efficacy tests (World Psychiatry review = register record R070, cited by DOI only)",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R070": {
+              "abstract_sha256": "e48de5258d6d98859d3fed90fa9cbfa588279dac14483f0bb69d715433270c2c",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "only 16% of LLM studies efficacy-tested",
+                "critical gap"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R070"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "npj_dm_scoping_review",
+        "R070"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-c2",
+      "location": "design conclusion 2",
+      "overall": "terms_found",
+      "statement": "Reviews of generative LLMs in mental-health contexts describe sparse reliable clinical evaluation and notable gaps",
+      "wording_issue": null
+    },
+    {
+      "agent_reading": "Consistent. The Stanford item is a news story, not peer reviewed; cite R099 instead. The Nature Medicine audit used simulated users with frontier chatbots (including Claude, ChatGPT, Gemini, Grok, Llama); it reports that concerning behaviour was widespread, though reduced in newer models, and accumulated over turns.",
+      "assertions": [
+        {
+          "claim_part": "multi-turn, cumulative risk (Nature Medicine 2026)",
+          "expect": "present",
+          "id": "a1",
+          "note": null,
+          "per_source": {
+            "nature_medicine_2026_audit": {
+              "abstract_sha256": "4f096ecb82e6fa34a2d2b2ca38f089acb91d23837dbdc5e771900058615ba7cc",
+              "contradiction_cues": [],
+              "matched_in_title": [],
+              "matched_terms": [
+                "multi-turn",
+                "accumulated over turns"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "nature_medicine_2026_audit"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        },
+        {
+          "claim_part": "failure modes in therapy chatbots (peer-reviewed paper behind the Stanford news item)",
+          "expect": "present",
+          "id": "a2",
+          "note": null,
+          "per_source": {
+            "R099": {
+              "abstract_sha256": "488c16b1b2b02df25939aff89f64ac42118d6389ee7ab4b71d9242b1725548b7",
+              "contradiction_cues": [],
+              "matched_in_title": [
+                "stigma / inappropriate responses"
+              ],
+              "matched_terms": [
+                "stigma / inappropriate responses"
+              ],
+              "missing_terms": [],
+              "searched": [
+                "title",
+                "abstract"
+              ],
+              "status": "terms_found"
+            }
+          },
+          "sources": [
+            "R099"
+          ],
+          "status": "terms_found",
+          "support_mode": "any"
+        }
+      ],
+      "cited": [
+        "nature_medicine_2026_audit",
+        "R099"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-c5",
+      "location": "design conclusion 5",
+      "overall": "terms_found",
+      "statement": "A 2026 Nature Medicine study on auditing chatbot behavior emphasizes cumulative interactions, and a 2025 Stanford investigation documents failure modes in AI therapy chatbots",
+      "wording_issue": null
+    }
+  ],
+  "status": "machine_checked_unreviewed",
+  "wording_issues": [
+    {
+      "issue": "'memengaruhi' (influence) reads as a causal effect; both sources report perceived barriers (qualitative interviews; a narrative-synthesis review). Suggested wording: 'dilaporkan sebagai hambatan'.",
+      "statement": "07-r01",
+      "statement_text": "Akses, biaya, stigma dan faktor sosial memengaruhi pencarian bantuan"
+    }
+  ]
+}

@@ -1,0 +1,398 @@
+{
+  "audit_sample": {
+    "auditor_columns": {
+      "auditor_publication_kind": [
+        "NOT_AUDITED",
+        "study_report",
+        "protocol",
+        "correction_or_erratum",
+        "editorial",
+        "retraction_notice_or_retracted",
+        "other"
+      ],
+      "auditor_relevance": [
+        "NOT_AUDITED",
+        "relevant",
+        "not_relevant",
+        "unsure"
+      ]
+    },
+    "blinding": "the auditor receives only fn_audit_sheet.csv: audit id, title and DOI, rows in one stable shuffle (sha256('sela-fn-audit-2026-10-26-run-1.2|blinded-order|<source>:<candidate_id>')) across all strata; the key (stratum, machine priority, v3 priority if eligible, eligibility basis, machine flag) is not in the repository until the audit is complete (withheld_outputs)",
+    "criterion": "doc 14 acceptance criterion 5 (manual false-positive / false-negative audit), plus a check of the publication-type eligibility rule",
+    "design": {
+      "pool_7580:deferred": 100,
+      "pool_7580:excluded_publication_type": 10,
+      "pool_7580:high": 20,
+      "pool_7580:medium": 20,
+      "v3_run:deferred": 60,
+      "v3_run:excluded_publication_type": 10,
+      "v3_run:high": 20,
+      "v3_run:medium": 20
+    },
+    "excluded_publication_type_rows": {
+      "excluded_by_title_cue_only": 2,
+      "sampled": 20
+    },
+    "machine_pre_audit_pool_deferred": {
+      "note": "a machine re-screen with lexicon sela-v3-families-2, NOT the manual audit; the auditor columns are blank",
+      "sampled": 100,
+      "v3_rescreen_high_or_medium": 39
+    },
+    "rows": 263,
+    "selection": "first n rows by sha256('sela-fn-audit-2026-10-26-run-1.2|<source>:<stratum>|<candidate_id>'); stable across Python versions; plus deferred pool titles named in the research audit (purposive)",
+    "status": "prepared_not_audited"
+  },
+  "audit_sheet": {
+    "blank_sheet_sha256": "54c2bddc507ae539451ac85f000fdaa6286e967e8f2d1fa4b194cff375f12b52",
+    "file": "fn_audit_sheet.csv",
+    "machine_columns": [
+      "audit_id",
+      "title",
+      "doi"
+    ],
+    "machine_columns_sha256": "53b8f2e5000221c23ef764a311c983a972ebe0f77655defeddb39618f30db9f0",
+    "rows": 263
+  },
+  "candidates": 29508,
+  "changes_from_previous_screening": [
+    "same lexicon (sela-v3-families-2), population band v2, priority rule and queue rule as screening v1.1, applied to the larger candidate set of run v1.2",
+    "the audit key (fn_audit_key.csv) is withheld from the repository until the audit is complete: only its SHA-256 is recorded here (withheld_outputs); the file is written to the local, gitignored private directory and released into screening/ by `v3_gap_search.py release-audit-key` once every sheet row carries an auditor, a date and both auditor decisions",
+    "a run-specific seed (sela-fn-audit-2026-10-26-run-1.2), so the sampled rows differ from those whose strata the unblinded v1.0 sample (fn_audit_sample.csv) shows",
+    "fn_audit_sheet.csv is tracked by the SHA-256 of its machine columns (audit_id, title, doi), so the auditor's entries do not break verify; screen never overwrites a sheet that holds auditor entries"
+  ],
+  "crossref_depth_yield": {
+    "note": "rows of each Indonesian-language Crossref query (1,000 rows by relevance) per rank band of 200: how many carry an Indonesian title cue and how many the machine screen put in high or medium. A Crossref record found by several queries counts in each; this is a reading aid, not recall",
+    "queries": {
+      "ai_id_mh_cr": [
+        {
+          "indonesian_title_cue": 117,
+          "ranks": "1-200",
+          "rows": 200,
+          "screened_in": 97
+        },
+        {
+          "indonesian_title_cue": 112,
+          "ranks": "201-400",
+          "rows": 200,
+          "screened_in": 77
+        },
+        {
+          "indonesian_title_cue": 117,
+          "ranks": "401-600",
+          "rows": 200,
+          "screened_in": 77
+        },
+        {
+          "indonesian_title_cue": 131,
+          "ranks": "601-800",
+          "rows": 200,
+          "screened_in": 73
+        },
+        {
+          "indonesian_title_cue": 130,
+          "ranks": "801-1000",
+          "rows": 200,
+          "screened_in": 68
+        }
+      ],
+      "id_dewasa_pekerja_cr": [
+        {
+          "indonesian_title_cue": 189,
+          "ranks": "1-200",
+          "rows": 200,
+          "screened_in": 158
+        },
+        {
+          "indonesian_title_cue": 185,
+          "ranks": "201-400",
+          "rows": 200,
+          "screened_in": 117
+        },
+        {
+          "indonesian_title_cue": 171,
+          "ranks": "401-600",
+          "rows": 200,
+          "screened_in": 92
+        },
+        {
+          "indonesian_title_cue": 173,
+          "ranks": "601-800",
+          "rows": 200,
+          "screened_in": 104
+        },
+        {
+          "indonesian_title_cue": 171,
+          "ranks": "801-1000",
+          "rows": 200,
+          "screened_in": 101
+        }
+      ],
+      "id_kesehatan_mental_aplikasi": [
+        {
+          "indonesian_title_cue": 195,
+          "ranks": "1-200",
+          "rows": 200,
+          "screened_in": 158
+        },
+        {
+          "indonesian_title_cue": 166,
+          "ranks": "201-400",
+          "rows": 200,
+          "screened_in": 133
+        },
+        {
+          "indonesian_title_cue": 150,
+          "ranks": "401-600",
+          "rows": 200,
+          "screened_in": 116
+        },
+        {
+          "indonesian_title_cue": 147,
+          "ranks": "601-800",
+          "rows": 200,
+          "screened_in": 117
+        },
+        {
+          "indonesian_title_cue": 158,
+          "ranks": "801-1000",
+          "rows": 200,
+          "screened_in": 106
+        }
+      ],
+      "id_konseling_daring": [
+        {
+          "indonesian_title_cue": 198,
+          "ranks": "1-200",
+          "rows": 200,
+          "screened_in": 200
+        },
+        {
+          "indonesian_title_cue": 193,
+          "ranks": "201-400",
+          "rows": 200,
+          "screened_in": 199
+        },
+        {
+          "indonesian_title_cue": 194,
+          "ranks": "401-600",
+          "rows": 200,
+          "screened_in": 197
+        },
+        {
+          "indonesian_title_cue": 199,
+          "ranks": "601-800",
+          "rows": 200,
+          "screened_in": 200
+        },
+        {
+          "indonesian_title_cue": 193,
+          "ranks": "801-1000",
+          "rows": 200,
+          "screened_in": 196
+        }
+      ],
+      "id_lansia_cr": [
+        {
+          "indonesian_title_cue": 182,
+          "ranks": "1-200",
+          "rows": 200,
+          "screened_in": 142
+        },
+        {
+          "indonesian_title_cue": 179,
+          "ranks": "201-400",
+          "rows": 200,
+          "screened_in": 116
+        },
+        {
+          "indonesian_title_cue": 170,
+          "ranks": "401-600",
+          "rows": 200,
+          "screened_in": 84
+        },
+        {
+          "indonesian_title_cue": 165,
+          "ranks": "601-800",
+          "rows": 200,
+          "screened_in": 90
+        },
+        {
+          "indonesian_title_cue": 175,
+          "ranks": "801-1000",
+          "rows": 200,
+          "screened_in": 86
+        }
+      ],
+      "id_pdp": [
+        {
+          "indonesian_title_cue": 128,
+          "ranks": "1-200",
+          "rows": 200,
+          "screened_in": 41
+        },
+        {
+          "indonesian_title_cue": 121,
+          "ranks": "201-400",
+          "rows": 200,
+          "screened_in": 34
+        },
+        {
+          "indonesian_title_cue": 106,
+          "ranks": "401-600",
+          "rows": 200,
+          "screened_in": 30
+        },
+        {
+          "indonesian_title_cue": 106,
+          "ranks": "601-800",
+          "rows": 200,
+          "screened_in": 26
+        },
+        {
+          "indonesian_title_cue": 132,
+          "ranks": "801-1000",
+          "rows": 200,
+          "screened_in": 39
+        }
+      ],
+      "id_remaja_privasi_cr": [
+        {
+          "indonesian_title_cue": 194,
+          "ranks": "1-200",
+          "rows": 200,
+          "screened_in": 191
+        },
+        {
+          "indonesian_title_cue": 196,
+          "ranks": "201-400",
+          "rows": 200,
+          "screened_in": 169
+        },
+        {
+          "indonesian_title_cue": 194,
+          "ranks": "401-600",
+          "rows": 200,
+          "screened_in": 167
+        },
+        {
+          "indonesian_title_cue": 197,
+          "ranks": "601-800",
+          "rows": 200,
+          "screened_in": 156
+        },
+        {
+          "indonesian_title_cue": 196,
+          "ranks": "801-1000",
+          "rows": 200,
+          "screened_in": 134
+        }
+      ]
+    }
+  },
+  "eligibility_rule_version": "sela-pubtype-eligibility-v1",
+  "human_screening_done": false,
+  "indonesian_age_term_titles": {
+    "note": "titles containing remaja, anak, siswa, pelajar, lansia or lanjut usia; a check that Indonesian age words now give a population signal",
+    "population_band": {
+      "adolescent_or_youth_unverified": 1628,
+      "adults_signal": 39,
+      "includes_15_17_explicit": 194,
+      "not_stated": 1,
+      "older_adults_signal": 431
+    },
+    "screened_in_population_band_not_stated": 1,
+    "titles": 2293
+  },
+  "inputs": {
+    "candidates.jsonl": "a8c30509aba560216e82a27cfb10a5e57fb34e903f626773473b520df4e2a7f4",
+    "data/research/sela_screening_index.csv": "8847a72bd51827082c8d4fad6ce4bcba8efd7c2549348b07f413adf997473da8"
+  },
+  "is_appraisal": false,
+  "lexicon_version": "sela-v3-families-2",
+  "limitations": [
+    "Lexical families miss paraphrases and over-match generic words (for example 'trust', 'stress', 'anak'); every label is a prompt for a human screener, not a relevance or quality judgement.",
+    "Population bands come from words, MeSH groups and explicit ages in titles/abstracts; adult and adolescent signals are kept apart and are unverified.",
+    "possible_null_or_negative_finding is a cue list for finding counter-evidence, not a result.",
+    "The worksheet supports dual screening (two reviewers, disagreement resolution); all decisions are blank.",
+    "Withholding the key removes the direct link from audit id to stratum, but the machine priority of every row can still be looked up by DOI or title in committed files (this run's screening/index.csv, the pool's data/research/sela_screening_index.csv, earlier runs' files). The auditor must work from the sheet alone, received out of band, and not consult the repository until the audit is done."
+  ],
+  "llm_used": false,
+  "outputs": {
+    "index.csv": "35be252504ef25c1cde8a296aed4b8ea7fc6a60f6d0629aaff76cb82c24c4815",
+    "queue.jsonl": "fdca60c6b4b925997adecca939ea8fc8ba476f55585fe1cb1283cc6d31b61598",
+    "worksheet.csv": "c5d753cee28d00bedc94d9aa43fe836fe04d957636c79f315986d3fb59c34c53"
+  },
+  "population_band_counts_screened_in": {
+    "adolescent_or_youth_unverified": 4090,
+    "adults_signal": 3183,
+    "includes_15_17_explicit": 937,
+    "not_stated": 3003,
+    "older_adults_signal": 4794
+  },
+  "population_band_rule": "Screening v1.1: includes_15_17_explicit only when the title/abstract ages agree on ONE range or minimum that overlaps 15-17 and the record is not a review (a review's ages are eligibility rules, not one sample), the same rule as the corpus age band; ages that describe an advisory or working group do not count. Any other minor age, or youth words without such a range, is adolescent_or_youth_unverified.",
+  "possible_null_or_negative_screened_in": 1633,
+  "priority_counts": {
+    "deferred": 12280,
+    "excluded_publication_type": 1221,
+    "high": 5798,
+    "medium": 10209
+  },
+  "queue_count": 400,
+  "queue_family_counts": {
+    "accessibility_disability": 69,
+    "adolescent_consent_confidentiality": 45,
+    "ai_language_code_switching": 30,
+    "check_in_self_monitoring": 54,
+    "consultation_preparation": 37,
+    "continuity_after_consultation": 52,
+    "health_data_privacy_law": 41,
+    "help_seeking": 56,
+    "indonesian_context": 98,
+    "journaling_expressive_writing": 37,
+    "listening_feeling_heard": 41,
+    "memory_correction_source_fidelity": 32,
+    "older_adults_50_plus": 90,
+    "privacy": 151,
+    "safety": 141,
+    "sharing_and_revocation": 30,
+    "working_age_adults": 60
+  },
+  "queue_rule": "per feature family up to 30 (title hit for that family first, then high before medium, score desc), then the remaining best rows up to 400",
+  "run_version": "sela-v3-gap-search-v1.2",
+  "screened_in_by_feature_family": {
+    "accessibility_disability": 1539,
+    "adolescent_consent_confidentiality": 547,
+    "ai_language_code_switching": 80,
+    "check_in_self_monitoring": 982,
+    "consultation_preparation": 441,
+    "continuity_after_consultation": 1616,
+    "health_data_privacy_law": 209,
+    "help_seeking": 2645,
+    "indonesian_context": 3902,
+    "journaling_expressive_writing": 511,
+    "listening_feeling_heard": 541,
+    "memory_correction_source_fidelity": 135,
+    "older_adults_50_plus": 4539,
+    "privacy": 2215,
+    "safety": 3557,
+    "sharing_and_revocation": 73,
+    "working_age_adults": 2184
+  },
+  "screening_unit": "title + abstract (abstract read from the local cache only; never committed)",
+  "screening_version": "sela-v3-tiab-screen-v1.2",
+  "status": "machine_title_abstract_screen_unreviewed",
+  "supersedes": {
+    "lexicon_version": "sela-v3-families-2",
+    "note": "screening sela-v3-tiab-screen-v1.1 of run sela-v3-gap-search-v1.1 stays frozen and reproducible; this screening uses the same lexicon and rules",
+    "screening_version": "sela-v3-tiab-screen-v1.1"
+  },
+  "withheld_outputs": {
+    "fn_audit_key.csv": {
+      "held_at": "local private directory data/research/corpus/.cache/v3_search/2026-10-26_search-1.2/private/fn_audit_key.csv (gitignored; regenerated byte for byte by `screen` from the local cache)",
+      "release": "after the audit: `v3_gap_search.py release-audit-key` checks that every sheet row is audited and that the key matches this SHA-256, then copies it into screening/; verify then checks it against this SHA-256 and fails if it is committed while any row is unaudited",
+      "rows": 263,
+      "sha256": "3b93534ee50c3c213e6130ef1f96a2382df30280efa81c3dde66fbaa7067363c",
+      "status": "withheld_until_audit_complete"
+    }
+  }
+}

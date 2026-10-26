@@ -12,6 +12,11 @@ KB_FIELDS = ("id", "title", "authors", "year", "publication_date", "journal", "d
              "note_id", "transfer_limitation_id", "study_type", "population", "country_or_language",
              "sample_size", "license", "access_status", "screening_status", "reviewer_status",
              "within_cutoff", "flags", "evidence", "index_version")
+KB_FIELDS_V3 = KB_FIELDS + ("publication_language", "age_range", "age_band", "age_groups_indexed",
+                             "study_type_caution", "needs_check_documented", "reviewer_name", "review_date",
+                             "review_decision", "findings", "study_type_reviewer_override",
+                             "publication_date_reviewer_override", "appraisal_tool", "reviewer_2_name",
+                             "review_disagreement", "adjudicated_by", "schema_version")
 LABELLED_FIELDS = ("intervention_or_exposure", "comparator", "outcomes", "limitations")
 
 
@@ -59,8 +64,8 @@ def public_record(record):
     return rec
 
 
-def kb_row(rec):
-    """Reviewer search-index row built from a PUBLIC record."""
+def kb_row(rec, v3=False):
+    """Reviewer search-index row built from a PUBLIC record (``v3``: schema-v3 columns too)."""
     evidence = []
     for e in rec["evidence"]:
         item = {k: e.get(k) for k in ("field", "value", "locator", "source_url", "status", "snippet_sha256")}
@@ -68,7 +73,7 @@ def kb_row(rec):
             item["snippet"] = e["snippet"]
         evidence.append(item)
     rel = rec["relevance_to_sela"]
-    return {
+    row = {
         "id": rec["id"], "title": rec["title"], "authors": rec["authors"], "year": rec["year"],
         "publication_date": rec["publication_date"], "journal": rec["journal"], "doi": rec["doi"],
         "url": rec["source_url"], "theme": rec["theme"], "note_id": rel["note_id"],
@@ -79,6 +84,23 @@ def kb_row(rec):
         "within_cutoff": rec["within_cutoff"], "flags": [f["id"] for f in rec["flags"]],
         "evidence": evidence,
     }
+    if not v3:
+        return row
+    caution = rec.get("study_type_caution")
+    row.update({
+        "publication_language": rec["publication_language"], "age_range": rec["age_range"],
+        "age_band": rec["age_band"]["summary"], "age_groups_indexed": rec["age_groups_indexed"],
+        "study_type_caution": caution["caution"] if caution else None,
+        "needs_check_documented": rec["needs_check_evidence"] is not None,
+        "reviewer_name": rec["reviewer_name"], "review_date": rec["review_date"],
+        "review_decision": rec["review_decision"], "findings": rec["findings"],
+        "study_type_reviewer_override": rec["study_type_reviewer_override"],
+        "publication_date_reviewer_override": rec["publication_date_reviewer_override"],
+        "appraisal_tool": rec["appraisal_tool"], "reviewer_2_name": rec["reviewer_2_name"],
+        "review_disagreement": rec["review_disagreement"], "adjudicated_by": rec["adjudicated_by"],
+        "schema_version": rec["schema_version"],
+    })
+    return row
 
 
 def with_index_version(rows):

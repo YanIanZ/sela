@@ -1,6 +1,11 @@
 # Research corpus pipeline
 
-Status: implemented and run on 2026-10-26 (pipeline `1.1.0`, rules `sela-corpus-rules-v2`, claim gates `sela-claim-gates-v2`, index version `87902c81efe30d05`). Supports SPEC C15, I.research, V24 and decisions D-015 and D-016. This document is non-normative; [SPEC.md](../../SPEC.md) stays authoritative.
+Status: implemented and run on 2026-10-26.
+
+- **Current outputs:** pipeline `1.2.0` (rules `sela-corpus-rules-v3`, schema `sela-corpus-schema-v3`, claim gates `sela-claim-gates-v2`), snapshot `snapshots/2026-10-26_pipeline-1.2.0/`.
+- **Frozen snapshot:** the pipeline `1.1.0` snapshot `snapshots/2026-10-26/` (rules `sela-corpus-rules-v2`, index version `87902c81efe30d05`) is unchanged and still rebuilds byte for byte (see [Versions and frozen snapshots](#versions-and-frozen-snapshots)).
+
+Supports SPEC C15, I.research, V24 and decisions D-015, D-016 and D-048. This document is non-normative; [SPEC.md](../../SPEC.md) stays authoritative.
 
 ## Purpose
 
@@ -16,7 +21,7 @@ Where a Creative Commons licence explicitly allows it, the pipeline also extract
 
 ## What this is NOT
 
-- **Not a systematic review.** No new search was run. The 100 records were selected earlier, and this pipeline re-verifies them; it does not search again or decide whether they belong in the register.
+- **Not a systematic review.** No new search was run for the register. The 100 records were selected earlier, and this pipeline re-verifies them; it does not search again or decide whether they belong in the register. The separate v3 gap search is a new frozen run of candidates only: see [V3_GAP_SEARCH.md](V3_GAP_SEARCH.md).
 - **Not 100 full-text appraisals.** Every record keeps `reviewer_status: "not_reviewed"`. No person reviewed any field produced here. The inherited screening is title/abstract only.
 - **Not clinical evidence.** Nothing here supports a claim that Sela is safe, effective or validated. The feature mappings are design hypotheses.
 - **Not training data.** The corpus is never used to train or fine-tune a model, and product answers never retrieve it at inference time (see the last section).
@@ -34,22 +39,70 @@ python3 scripts/research/corpus_pipeline.py fetch --freeze-date 2026-10-26
 #    --offline: no network, only report missing cache entries (exit 1 if any)
 #    --only R001,R002: limit to some records    --refresh: re-fetch cached entries
 
-# 2. build outputs offline from the cache (byte-for-byte reproducible)
+# 2. build outputs offline from the cache (byte-for-byte reproducible); default profile 1.2.0
 python3 scripts/research/corpus_pipeline.py build --freeze-date 2026-10-26
+#    --pipeline-version 1.1.0: build the legacy schema of the frozen snapshot instead
 
-# 3. re-hash outputs and check schema/invariants (exit 1 on any violation)
+# 3. re-hash outputs and check schema/invariants (exit 1 on any violation); also checks that the
+#    recorded inputs of every frozen snapshot are still available (live or frozen) and runs the v3
+#    gap-search and v3 evidence checks. It does not rebuild: the byte rebuild is step 4 (needs the cache)
 python3 scripts/research/corpus_pipeline.py verify
+
+# 4. byte-identical rebuild of the frozen 1.1.0 snapshot into a scratch directory (offline, needs the cache)
+python3 scripts/research/corpus_pipeline.py reproduce --snapshot 2026-10-26
+#    prints IDENTICAL/DIFFERENT per file and exits 1 on any difference; --keep DIR keeps the rebuilt tree,
+#    --report FILE writes the comparison as JSON. The current snapshot: --snapshot 2026-10-26_pipeline-1.2.0
 
 # optional: scan product copy for forbidden claims (exit 1 on any hit)
 python3 scripts/research/corpus_pipeline.py scan-claims path/to/copy.ts
 #    --show-negated: also list claim wordings that the negation window suppressed (not counted)
+
+# 5. leak check (local, needs the caches): no committed file carries 8+ consecutive tokens of a protected abstract
+#    or full text; also checks that the committed fingerprints are current (--write-fingerprints rewrites them)
+python3 scripts/research/leak_check.py --require-cache
+#    --fingerprints-only: the CI half (no cache; corpus_pipeline.py verify runs it too)
+
+# all required checks in one go (offline tests, verify, local leak check)
+sh scripts/research/precommit.sh
 ```
+
+### Required before committing
+
+Run `sh scripts/research/precommit.sh` (or its three commands) before **every** commit that touches `scripts/research/**`, `tests/research/**`, `data/research/**` or `docs/research/**`, on a machine that has the local caches. It exits non-zero on any failure, including a missing cache.
+
+- **Why it cannot be left to CI.** The tests that compare abstracts and full texts with the committed files need the gitignored caches (`data/research/corpus/.cache/v3_abstracts/`, `.cache/fulltext/`, `.cache/v3_search/<run>/`). CI has no cache, so those tests are skipped there (`skipUnless`), and a CI pass says nothing about abstract or NC/ND text in committed files. They are: `tests/research/test_leak_check.py` (`LocalExactLeakTests`) and the `test_no_cached_abstract_text_in_committed*_files` tests of every gap-search run in `tests/research/test_v3_gap_search.py`.
+- **What the local check covers** (`scripts/research/leak_check.py`): every cached abstract of the register and of the two doc-10 sources (101 of 102; R100 has none), every cached CC full text whose licence does not allow redistribution (12), and every abstract of every gap-search run and of the pool audit sample (41,389), compared with every committed agent-written file (docs, specs, evidence and claim maps, manifests, tests, fixtures, scripts) and, for protected text, also with the machine outputs. A shared run of 8 or more tokens fails, except bibliographic titles, journal names and author lists, locator headings, identifiers, runs with fewer than 5 word tokens (statistics), runs that also occur in a CC BY / BY-SA / CC0 register text, and the overlaps listed in `REVIEWED_COINCIDENCES` (one entry, a synthetic fixture sentence, with its reason; judged coincidental by the AI research agent, not yet by a person). Runs from a CC BY abstract in an agent-written file are listed separately (allowed with the citation).
+- **What CI does check** (`leak_check.py --fingerprints-only`, also run by `corpus_pipeline.py verify`): `data/research/corpus/leak_fingerprints.json` holds, for each of the 28 protected abstracts (CC BY-NC, BY-NC-ND, publisher, TDM-only, none, and the two out-of-register doc-10 sources), the truncated SHA-256 of every 8-token run that is not exempt (no text). CI fails when an agent-written file contains one of them. Full texts and gap-search abstracts are not in the fingerprints (too large); they need the local check.
+- The pre-commit script is not installed as a git hook by this repository (that would change shared git configuration); install it yourself if you want it to run automatically.
 
 - **Contact address for Crossref.** Crossref's polite pool uses a contact address. It is read only from the environment variable `SELA_RESEARCH_MAILTO`, sent only to Crossref, and never written to the cache, logs or outputs. Without it, the public pool is used at no more than 2 requests per second.
 - **Missing cache entries.** `build` refuses to run while cache entries are missing, so a network failure can never be published as a column of `null`s.
-- **Workflow.** [.github/workflows/research-corpus.yml](../../.github/workflows/research-corpus.yml) runs the offline tests and `verify` on pull requests (Python 3.10 and 3.12). Changes to `web/src/i18n/` also trigger it, because the tests scan that copy with the claim gates. A manual run can also fetch and rebuild. It uploads the outputs as an artifact and never commits them; the cache and full text are not uploaded.
+- **Workflow.** [.github/workflows/research-corpus.yml](../../.github/workflows/research-corpus.yml) runs the offline tests and `verify` on pull requests (Python 3.10 and 3.12). A manual run can also fetch and rebuild. It uploads the outputs as an artifact and never commits them; the cache and full text are not uploaded.
+  - **What triggers it (checked 2026-10-26).** Only a pull request that changes `scripts/research/**`, `tests/research/**`, `data/research/corpus/**`, the five register documents (`research_100.json`, `research_100.bib`, 07, 09, 10), `web/src/i18n/**` (the tests scan that copy with the claim gates) or the workflow file itself.
+  - **What does not trigger it.** `data/research/register_inputs/**` (the human reviewer file `reviewer_decisions.json`, which is an input of the 1.2.0 snapshot, and the `.frozen` copies), `data/research/v3_gap_search/**`, `data/research/screening_history/**` and `data/research/*.csv|jsonl|json`. A pull request that changes only those files runs no research check, so a reviewer entry named after a model, or changed input bytes that make a snapshot unreproducible, would not be caught there. Until the workflow owner adds these paths to the `pull_request` filter, run `python3 scripts/research/corpus_pipeline.py verify` (and the offline tests) yourself before committing a change to them.
 
 Code: [scripts/research/corpus_pipeline.py](../../scripts/research/corpus_pipeline.py) (CLI) and the helper package [scripts/research/corpus/](../../scripts/research/corpus/). Tests: [tests/research/test_corpus_pipeline.py](../../tests/research/test_corpus_pipeline.py) with fixtures in [tests/research/fixtures/corpus/](../../tests/research/fixtures/corpus/). The fixtures are trimmed real metadata responses (no abstracts, no author lists) and synthetic JATS XML written for these tests. A synthetic 5-record mini register under `fixtures/corpus/repo/` drives the build and snapshot tests.
+
+## Versions and frozen snapshots
+
+A snapshot under `data/research/corpus/snapshots/` is never rewritten. A pipeline change that alters any output byte is a new pipeline version with a new snapshot directory; the old snapshot keeps rebuilding exactly.
+
+| Snapshot | Pipeline | Rules / schema | Inputs | Status |
+| --- | --- | --- | --- | --- |
+| `2026-10-26/` | `1.1.0` | `sela-corpus-rules-v2` | 5 register documents | frozen; `manifest.json` sha256 `56969da4…e81e`, `records.jsonl` sha256 `69d368bb…c616` (pinned in `tests/research/test_corpus_v3.py`) |
+| `2026-10-26_pipeline-1.2.0/` | `1.2.0` | `sela-corpus-rules-v3`, `sela-corpus-schema-v3` | the same 5 + `data/research/register_inputs/reviewer_decisions.json` (schema `sela-register-review-v2`) | current; equals the top-level `manifest.json` and `records.jsonl`; `manifest.json` sha256 `9d03c998…2153`, `records.jsonl` sha256 `e7aaa751…0e19` (pinned in `tests/research/test_corpus_v3.py`; frozen once committed) |
+
+- **Profiles.** `scripts/research/corpus/profiles.py` holds one build profile per frozen version. The 1.1.0 profile runs the pre-1.2.0 code path: no v3 field, flag, input or cache lookup, and the 1.1.0 version strings. A test pins the fixture build of that profile to the SHA-256 values recorded with the pre-1.2.0 code.
+- **Frozen inputs.** The snapshot manifest records the SHA-256 of every input. Docs 07 and 10 received dated superseded notes on 2026-10-26 (research audit P2 and R-9), so their exact pre-edit bytes for the 1.1.0 snapshot are kept at `data/research/register_inputs/frozen/2026-10-26/<path>.frozen`. `reproduce` uses the live file when its bytes still match and the frozen copy otherwise. `verify` reports a violation when an input of any snapshot is neither: its recorded inputs are still available (live or frozen). That is an availability check, not a rebuild; the byte rebuild needs `reproduce` and the local cache. In CI the violation appears only when the pull request also touches a path the workflow watches (see Workflow above).
+- **Line endings.** The register documents are pinned to LF by `docs/research/.gitattributes` (`sela-relay/** text eol=lf`), `data/research/**` by `data/research/.gitattributes`, and the `.frozen` copies are `-text` (bytes never converted), so a checkout with `core.autocrlf=true` cannot change the hashed bytes. `tests/research/test_corpus_v3.py` checks the attributes and that every input still hashes to its manifest value.
+- **`reproduce`.**
+  1. It stages the inputs in a scratch directory and rebuilds with the snapshot's own profile, from the cache.
+  2. It compares the snapshot files byte for byte.
+  3. It compares every output against the SHA-256 that the snapshot manifest recorded: records, knowledge base, evidence map and claim gates.
+
+  On 2026-10-26 both snapshots were `BYTE-IDENTICAL` under Python 3.10.20 and 3.13.
+
+- **Correction of 2026-10-26 (before any commit).** The first 1.2.0 build derived `age_band` from every raw age candidate, so records whose candidates conflicted (R031: its 16-30 candidate described the lived-experience working group that advised on the focus-group guide, while the study invited only people aged 18-30) and review-type records (R071, a meta-analysis whose eligibility rule was "aged 14 years or older") were labelled `includes_15_17_explicit`. The same first draft of the R-9 claim check carried a wrong wording issue for doc 07 row 11 (see the claim-check bullet under Observed results, pipeline 1.2.0). That 1.2.0 snapshot had never been committed, so it was deleted and rebuilt with the corrected rules under the same version; the 1.1.0 snapshot was not touched and still rebuilds byte for byte.
 
 ## Steps
 
@@ -119,6 +172,28 @@ Every step is a pure function. Network access happens only in `corpus/fetch.py`,
     - **Snapshots.** `snapshots/<freeze_date>/` holds a copy of the manifest and records. An existing snapshot with different content makes `build` fail *before* anything is written.
     - **`index_version`** is the first 16 hex characters of the SHA-256 over the knowledge-base rows serialised **without** the `index_version` field. A file cannot contain a hash of itself; `verify` recomputes it the same way.
 
+## Schema v3 additions (pipeline 1.2.0)
+
+Research audit tasks R-2 and R-6 and problems P3, P4 and P8 (`scripts/research/corpus/v3fields.py`). These fields are added to each record; no 1.1.0 field changes value, except the rule text of the flag `population_includes_minors_or_youth`, which no longer says "Sela demo is adult-only".
+
+| Field | Rule | Label |
+| --- | --- | --- |
+| `publication_language` (+ `_detail`) | Europe PMC `language` (MEDLINE indexing), else Crossref `language` (publisher deposit), else OpenAlex `language` (machine-inferred, flagged `publication_language_inferred_only`); ISO 639-2 mapped to ISO 639-1; disagreements recorded | `machine_copied_from_index_unreviewed` |
+| `age_range` (+ `_detail`) | explicit age patterns ("aged 12-18 years", "between 15 and 17 years", "18-25-year-olds", "aged 65 and older", "mean age 21.7") in the abstract (except Background/Objective headings) and top-level methods sections of the CC full text; every candidate is an `evidence[]` item (`field: age_range`) with a locator; a value only when all range/minimum candidates agree; review-type records stay `null` | `machine_extracted_unreviewed` |
+| `age_groups_indexed` | NLM MeSH age check tags (Adolescent, Young Adult, Adult, Middle Aged, Aged, …) copied from Europe PMC | copied |
+| `age_band` | derived **only from the `age_range` value the record accepted**: `includes_15_17_explicit` (the accepted range or minimum of a primary study overlaps 15-17), `adults_only_explicit` (the accepted range or minimum starts at 18 or above), `conflicting_explicit_ranges` (several different voting candidates, `age_range` null; never an explicit band), `review_eligibility_includes_minors` / `review_eligibility_adults_only` (review-type records: their ages are eligibility rules or included studies, not one sample), else `minors_possible_unverified`, `adults_indexed_or_named_only` or `not_stated`; the signals and `candidates_overlapping_15_17` are kept. An age candidate that describes a non-sample group (an advisory, working, steering or reference group named before the age in the same sentence, or in the previous sentence that "This group" refers back to) is kept as `non_voting` and never counts. Only `includes_15_17_explicit` can speak about ages 15-17 | `machine_derived_unreviewed` |
+| `country_evidence_fulltext` | country names in the CC full text (first locator, occurrence count) as candidates; **reviewer-promotable**: only a human entry can fill `promoted_labels` and `country_or_language_reviewer_promoted`; `country_or_language` itself never changes | `machine_extracted_unreviewed` |
+| `study_type_caution` + flag `study_type_label_conflict` | primary label is a trial label that comes only from an index publication type while the title carries another design cue or an association cue ("associated with", "secondary analysis", …); the machine label is kept, a caution is shown, `study_type_reviewer_override` stays `null` until a reviewer sets it | `machine_flag_unreviewed` |
+| `publication_type_eligibility` | protocols, corrections/errata, editorials and retraction notices become `excluded_publication_type` (shared rule `sela-pubtype-eligibility-v1`, also used by the title screener and the v3 gap search) | derived |
+| `needs_check_evidence` + flag `needs_check_documented` | for `needs_check` records only: public PubMed history dates (E-utilities efetch, dates only) and the publisher landing page reached via doi.org (date meta tags only; a challenge page is recorded as `blocked`, never bypassed; a TDM-reserved page is not followed); the canonical-date rule and the status do **not** change | `machine_documented_unreviewed` |
+| `reviewer_name`, `review_date`, `review_decision`, `findings`, `appraisal_tool`, `reviewer_2_name`, `reviewer_2_decision`, `review_disagreement`, `adjudicated_by`, `study_type_reviewer_override`, `publication_date_reviewer_override`, `country_or_language_reviewer_promoted` | copied only from a validated human entry in `data/research/register_inputs/reviewer_decisions.json` (schema `sela-register-review-v2`): every person block needs `human_attestation: true`; names of AI tools and models (Claude Opus, ChatGPT, GPT-4o, Gemini, DeepSeek, Llama 3, Meta Llama, a bare "Llama", Muse Spark and Muse Glimmer (this project's generators, D-030), "Sela Verifier", "Sonnet 4.5", "Opus 4.1", Gemma 2, Phi-3, Kimi K2, Codex, Cohere Command R, ...), automation words (LLM, AI agent, pipeline, script, ...) and template placeholders ("Full Name", "Second Person", "Reviewer A", "Anonymous Reviewer", "Human Reviewer", "Jane Doe", ...) are refused, while ordinary given names that share a token with them are accepted (for example the Sundanese given name "Ai" in "Ai Nurhasanah", "Claude Martin", "Gemma Collins" or "Sela Ward"; "Gemma", "Kimi" or "Sela" alone, or with a model version, are refused). `human_attestation` remains the primary safeguard; the name list is a second line; a full-text review must name its `appraisal_tool`; findings need a full-text review; dual review (R-5): `reviewer_2` is a second person, and when the two decisions differ an `adjudication` by a third person is required and gives the final `review_decision`; a date override needs its https source; `reviewer_status` becomes `human_reviewed_title_abstract` or `human_reviewed_full_text`; machine fields are never overwritten | human only; all `null` now |
+
+`verify` enforces the labels.
+
+- **Reviewer fields.** Every reviewer field must be `null` unless its provenance is `human_reviewer`. `findings` requires `human_reviewed_full_text`; a full-text review needs `appraisal_tool`; a disagreement needs `adjudicated_by`.
+- **Field consistency.** `age_range` needs matching full-text evidence. An explicit age band needs an accepted `age_range` that it agrees with; a review band or `conflicting_explicit_ranges` needs a null `age_range`. `needs_check_evidence` is present exactly for `needs_check` records. Every machine block keeps a `machine_*` status.
+- **Knowledge base.** It gains `publication_language`, `age_range`, `age_band`, `age_groups_indexed`, `study_type_caution`, `needs_check_documented`, the reviewer columns (including `appraisal_tool`, `reviewer_2_name`, `review_disagreement` and `adjudicated_by`) and `schema_version`. The Go reviewer API ignores fields it does not know.
+
 ## Outputs (`data/research/corpus/`)
 
 | File | Content |
@@ -126,7 +201,11 @@ Every step is a pure function. Network access happens only in `corpus/fetch.py`,
 | `records.jsonl` | Full record per R-id. Required fields: `id, title, authors[], publication_date, doi, source_url, study_type, population, country_or_language, sample_size, intervention_or_exposure, comparator, outcomes, limitations, relevance_to_sela, license, access_status, screening_status, extraction_source, retrieval_date, reviewer_status`, plus `pmid, pmcid, journal, theme, dates{source->date}, date_precision, date_discrepancies[], within_cutoff, window_by_any_source, retraction_status, retraction_detail, text_processing_allowed, redistribution_allowed, flags[], evidence[], provenance{}, sources{}`, and `*_detail` objects that hold the basis of each simple value. |
 | `knowledge_base.jsonl` | Reviewer search index used by the Go reviewer API (`SELA_RESEARCH_KB`): `id, title, authors, year, publication_date, journal, doi, url, theme, note_id, transfer_limitation_id, study_type, population, country_or_language, sample_size, license, access_status, screening_status, reviewer_status, within_cutoff, flags[] (ids), evidence[], index_version`. |
 | `manifest.json` | Freeze and cutoff dates, versions, `index_version`, input and output SHA-256s, counts by status, year, access, licence, flag and more, every date discrepancy, the year-distribution check, duplicate and cross-check results, source endpoints and response counts, the retrieval window, and the rights policy. |
-| `snapshots/2026-10-26/` | Immutable copy of `manifest.json` and `records.jsonl` for this freeze date. |
+| `snapshots/2026-10-26/` | Frozen copy of `manifest.json` and `records.jsonl`, pipeline 1.1.0. |
+| `snapshots/2026-10-26_pipeline-1.2.0/` | Immutable copy for pipeline 1.2.0 (current). Snapshots after 1.1.0 are named `<freeze date>_pipeline-<version>`. |
+| `evidence_map_v3.json` | v3 evidence map (`sela-evidence-map-v3.2`): one row per v3 feature and a help-seeking row, with register support, design and age band, age groups, agent-drafted inference labels and notes, counter-evidence, claim boundary, declared gaps, coverage of a register theme where the row claims one (help-seeking: every `HELP_SEEKING` record) and v3 candidates from gap-search run v1.2 with their language basis (`machine_assembled_agent_drafted_unreviewed`). The brief section 9 topic table is built from per-record topic tags, not from the union of rows. Built by `scripts/research/v3_evidence.py evidence-map` from `evidence_map_v3_spec.json`; rendered as [EVIDENCE_MAP_V3.md](EVIDENCE_MAP_V3.md). |
+| `leak_fingerprints.json` | Truncated SHA-256 hashes (no text) of every 8-token run of each protected abstract, for the CI half of the leak check (see [Required before committing](#required-before-committing)). Rebuilt by `scripts/research/leak_check.py --write-fingerprints`; the local check fails while it is stale. |
+| `claim_check_v3.json` | R-9: every doc 07/10 statement decomposed into checkable assertions (`claim_check_v3_spec.json`) and matched against the public title and abstract of each cited source (`sela-claim-check-v3.1`, `machine_checked_unreviewed`; mismatches and wording issues listed; no abstract text). |
 | `evidence_map.json` | Feature → R-id rows parsed from the tables in [07](sela-relay/07_EVIDENCE_TO_FEATURE.md) and [10](sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md). Each row records its R-ids, any missing ones, each R-id's screening status, and the rows that rely on records that are not included. Also holds doc 10's first appraisal batch. |
 | `eval_fixtures/claim_gates.json` | 13 FORBIDDEN product-claim gates in Indonesian and English: `clinical_validation`, `efficacy`, `reduces_symptoms`, `suicide_prevention`, `safe_or_certified`, `diagnosis`, `therapy_or_counselling`, `risk_assessment_or_triage`, `prescribing`, `care_received_or_booking`, `evidence_count_overclaim`, `solves_access_barriers`, `statistical_or_adherence`. Each gate has its source document section, examples that must match and disclaimers that must not. `patterns` are self-contained case-insensitive regexes for Python `re` and JavaScript `new RegExp(p, 'iu')` (the form `web/src/test/claims.test.ts` uses); capture group 1 is the claim. Each pattern carries a negation window: a claim matches only if none of the 6 tokens before it in the same clause is a negation cue (`not`, `no`, `never`, `cannot`, `…n't`, `tidak`, `bukan`, `belum`, `tanpa`, `tak`, …). Clauses end at `. ! ? ; :` before whitespace, line breaks, em/en dashes and spaced hyphens. `but`/`however`/`tetapi`/`namun`/`melainkan` start a new scope, so "not a chatbot but an AI therapist" still matches. `claim_patterns` are the bare claims, for reading only. Go's RE2 cannot compile the patterns (no lookaround). A hit means a person rewords the copy; it is not an automatic verdict. |
 
@@ -160,12 +239,53 @@ python3 scripts/research/corpus_pipeline.py verify
 ```
 
 - **Cutoff.** The new cutoff is the freeze date minus five calendar years (here 2022-04-30). Records older than that become `excluded_out_of_window`, and nothing is deleted.
-- **New snapshot.** A new `snapshots/<freeze_date>/` is written. Existing snapshots are never overwritten: rebuilding a past freeze date with different content fails.
+- **New snapshot.** A new `snapshots/<freeze_date>_pipeline-<version>/` is written (1.1.0 used `snapshots/<freeze_date>/`). Existing snapshots are never overwritten: rebuilding a past freeze date with different content fails.
+- **Editing an input.** Before editing a register document or `reviewer_decisions.json` that a frozen snapshot hashed, copy its current bytes to `data/research/register_inputs/frozen/<snapshot>/<path>.frozen`; `verify` fails otherwise (locally always; in CI only when the pull request touches a watched path).
 - **Licences** are re-evaluated against the new freeze date (start dates).
 - **Commit.** Commit the outputs only after `verify` exits 0.
 - **Adding papers** means editing the register first. The pipeline never adds papers on its own.
 
-## Observed results (run of 2026-10-26)
+## Observed results, pipeline 1.2.0 (run of 2026-10-26)
+
+- **Language.** `publication_language` is `en` for all 100 records. The basis is the Europe PMC indexer for 98 records, a Crossref deposit for 1, and OpenAlex inference only for 1 (R099).
+- **Ages.**
+  - `age_range` was set for 19 records; 7 have conflicting candidates and stay `null`. One candidate is `non_voting` (R031's 16-30, the advisory working group), so R031's accepted range is its 18-30 sample.
+  - MeSH age groups are present for 52 records.
+  - `age_band` (derived only from the accepted `age_range`):
+
+    | Band | Records | Which |
+    | --- | --- | --- |
+    | `includes_15_17_explicit` | 7 | R006 (16-24), R016 (16-25), R035 (16-31), R054 (16-18), R056 (15-19), R085 (10-25), R087 (12-18) |
+    | `adults_only_explicit` | 12 | includes R031 (18-30) |
+    | `conflicting_explicit_ranges` | 7 | R008, R017, R048, R089, R091 (a candidate overlaps 15-17); R036, R038 (every candidate 18+) |
+    | `review_eligibility_includes_minors` | 2 | R040 (scoping review, 10-24), R071 (meta-analysis, 14+) |
+    | `review_eligibility_adults_only` | 1 | R019 (systematic review, 18+) |
+    | `minors_possible_unverified` | 13 | |
+    | `adults_indexed_or_named_only` | 24 | |
+    | `not_stated` | 34 | |
+
+  - So **7 records**, not 15, have an accepted explicit age range that overlaps 15-17, and even those mostly mix 15-17-year-olds with young adults without separate results. The first build's count of 15 included conflicting candidates (R008, R017, R031, R048, R089, R091) and reviews (R040, R071).
+  - The age candidates were read against their snippets during development. Two kinds of false hit led to rules: structured-abstract Background/Objective sections give target populations, not the sample, so they are excluded; and ages of an advisory or working group are kept but do not vote.
+- **Country evidence.** Full-text country candidates exist for 70 records; none has been promoted.
+- **`study_type_caution`.** Exactly R032 ("Lived Experience-Led Qualitative Study", trial label from the parent trial's pubType) and R083 ("features associated with engagement"). Both keep the machine label `randomized_controlled_trial`. Neither is cited by a doc 07/10 row.
+- **Publication type.** All 100 records are eligible.
+- **needs_check documentation.** R002, R013, R065 and R100 stay `needs_check`. In every case all publication and index dates fall inside the window:
+  - R002: the IOS Press landing page gives `citation_online_date` 2025-08-07.
+  - R013: the Elsevier landing page reserves TDM rights and was not followed; PubMed history has accepted 2024-02-28 and entrez 2025-09-04.
+  - R065: the JAMA page was blocked (HTTP 403); PubMed entrez and Crossref deposit are both 2025-05-05.
+  - R100: the NEJM AI page was blocked (HTTP 403); Crossref and OpenAlex give 2025-03-27.
+- **Reviewer status.** `reviewer_status` is `not_reviewed` for all 100, with 0 reviewer entries and 0 findings.
+- **Claim check (R-9, `sela-claim-check-v3.1`).** 23 statements and 55 assertions; 4 mismatches; 1 wording issue (doc 07 row 1, "memengaruhi" reads as causal). A first draft also listed doc 07 row 11 ("dihentikan", stopped) as a wording issue because R087's abstract does not say the trial was terminated. That was wrong: the title calls the paper a "Randomized Controlled Study Termination Report". The check now matches terms in the title as well as the abstract, row 11 is consistent, and doc 07's dated note says so.
+- **`verify`.** 0 violations and the same 3 warnings as before (R065, R100). The warnings now say that the dates are documented and that reviewer confirmation is pending.
+
+## Review round 3 (2026-10-26): what changed, and what did not
+
+- **No snapshot changed.** The frozen 1.1.0 snapshot and the 1.2.0 snapshot were rebuilt from the cache with `reproduce` after these changes: both `BYTE-IDENTICAL`. Nothing here changes a pipeline output; the reviewer-name list matters only for future entries (the reviewer file is still empty).
+- **Leak check.** A new exact check (`leak_check.py`) and committed fingerprints (`leak_fingerprints.json`) replace the earlier leak tests, which sampled two 80-character windows of every 50th gap-search abstract and never checked the agent-written files. The first full run found one real leak: the R031 counter-evidence line of the v3 evidence map (and its rendered Markdown) carried a 10-token run of R031's CC BY-NC-ND abstract. The line was paraphrased; the R031 age-range regression fixture in `test_corpus_v3.py`, which followed R031's full text sentence by sentence, was rewritten with invented wording, numbers and group name. Every other overlap was metadata (titles, journal names, author lists, locator headings, identifiers), statistics, a phrase that also occurs in a CC BY register text, or the one fixture coincidence the agent judged coincidental (a person should confirm it). After the fixes: 0 leaks.
+- **v3 evidence map 3.2.** A help-seeking row (every `HELP_SEEKING` record plus R040, R047, R088 and R098, with inference labels: R014 and R015 are mediation models on cross-sectional data, associations only; R016's 16-25 band is kept apart from the adult-only records); brief section 9 topics from per-record tags; reworded R020, R031, R036, R051, R073, R087 and R092 lines. Abstracts of all 100 register records are now in the local `v3_abstracts` cache (101 of 102 sources have one; R100 has none), so every row can be drafted and leak-checked against its source.
+- **Gap search run v1.2** (all hits of the D-048 gap queries, withheld audit key): see [V3_GAP_SEARCH.md](V3_GAP_SEARCH.md).
+
+## Observed results, pipeline 1.1.0 snapshot (run of 2026-10-26)
 
 **Run**
 - Fetch: 497 HTTP requests between 04:24:55Z and 04:28:44Z, plus one full-text request at 04:36:25Z after a licence-rule fix for R049.
@@ -246,7 +366,7 @@ python3 scripts/research/corpus_pipeline.py verify
   - R065 in doc 07 row 9 and doc 10 "Story Ledger and Meaning Lock";
   - R100 in doc 07 row 14.
 
-  Resolve their dates by hand before relying on them in public claims.
+  Resolve their dates by hand before relying on them in public claims. (2026-10-26, pipeline 1.2.0: the public dates are now documented in `needs_check_evidence`; a reviewer still has to confirm them.)
 
 **Claim gates:** 13 gates, 69 patterns. Every pattern compiles in Python `re` and in Node 22 `new RegExp(p, 'iu')`, and every example behaves as declared in both.
 - `scan-claims` over `web/src/i18n/en.ts`, `web/src/i18n/id.ts`, `docs/SAFETY.md` and `docs/PRODUCT.md` gives 0 hits. Seven disclaimers are suppressed by the negation window, for example "A sent request does not mean you have received care", "… belum berarti kamu sudah mendapat perawatan", "Sela … tidak memberi diagnosis" and "… not an AI therapist".
@@ -255,6 +375,12 @@ python3 scripts/research/corpus_pipeline.py verify
 
 ## Known limitations
 
+- (1.2.0) Age patterns miss ages written as words and ranges stated only in tables. MeSH "Adolescent" covers 13-18 and is also tagged for 18-year-olds, so it alone never makes `includes_15_17_explicit`. An accepted range is not necessarily the ages of the people analysed; a reviewer has to confirm every band:
+  - it can be a service's target range (R085: a platform for ages 10-25, sample mean 15.8);
+  - it can be an eligibility criterion (R006: the inclusion criterion "aged 16 to 24"; the participants' own ages are not extracted);
+  - it can belong to a trial with no evaluable participants (R087: eligibility 12-18; 3 consented and all withdrew or were excluded, so no one was analysed).
+- (1.2.0) The non-sample-group rule recognises only explicit advisory/working/steering/reference group nouns (not a plain "panel", which is the sample in a Delphi study) and errs towards keeping a candidate's vote, which leaves `age_range` null when candidates conflict.
+- (1.2.0) Landing-page dates are read from meta tags only. Publishers that block automated requests (JAMA, NEJM AI) or reserve TDM rights (Elsevier) stay undocumented there, and nothing is done to get around that.
 - Term lexicons, design phrases and sample-size patterns miss paraphrases, numbers written as words and non-English text. Precision was checked only on the 8 extracted values.
 - Population terms are not checked for role. "klinisi" as raters or care providers (R009, R025, R032) still counts as a population term, because it appears in an affirmative clause.
 - The claim gates' negation window can hide a real claim when an unrelated negation sits within six tokens ("Never feel alone with your AI therapist"). The window can also flag a disclaimer whose negation sits further back in a long list. The gates are a prompt for review, not a guarantee.

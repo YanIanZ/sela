@@ -1,0 +1,2432 @@
+{
+  "candidates_sha256": "4bfee75e60dc2c3e85bc34d8e8e4ce7c4a6030f96d3455d8c5b5f9435674473b",
+  "candidates_storage": {
+    "file": "candidates.jsonl.gz",
+    "format": "gzip (RFC 1952), one member; header without file name, comment or extra field, MTIME 0, XFL 2, OS 255; raw deflate level 9 (window 15, memLevel 8, default strategy); CRC-32 and size trailer",
+    "gz_sha256": "b35d8870ba3ef7665b0ea2a748c11f1d9a4872b52b4534b535628d519ffbdce2",
+    "note": "candidates_sha256, and every hash recorded elsewhere under the name candidates.jsonl (inputs of later runs, screening/manifest.json, the v3 evidence map), is the SHA-256 of the uncompressed content of this file; gz_sha256 is the SHA-256 of its committed bytes",
+    "storage_version": "sela-jsonl-gzip-v1"
+  },
+  "changes_from_previous_run": [
+    "id_digital (no mental-health term; 300 of 15,653 hits retrieved, 1.9%, mostly general telemedicine and AI) is replaced by id_digital_mh (Indonesia, a mental-health term and a digital term, all in title/abstract) plus id_health_data_law (Indonesia and health-data privacy, for UU PDP)",
+    "a11y_core (300 of 7,042, 4.3%; 'accessible' alone matched access to services) is replaced by the narrowed a11y_core_v2",
+    "new family working_age_adults (dewasa: working-age and mid-life adults), the brief topic without a family in v1.0",
+    "per-bucket cap raised from 50 to 200 for the queries retrieved at 5% or less in v1.0 (checkin_core, teen_digital, older_digital) and for the new or narrowed queries",
+    "Indonesian Crossref queries added for adolescents' confidentiality and for older adults (lansia)",
+    "requests identical to v1.0 (same query, bucket and cap) reuse the v1.0 response, copied into this run's cache with its original retrieval time"
+  ],
+  "counts": {
+    "abstract_available": 8080,
+    "by_family_retrieved": {
+      "accessibility_disability": 741,
+      "adolescents_15_17": 1517,
+      "ai_bahasa_code_switching": 390,
+      "check_in_self_monitoring": 1187,
+      "consultation_preparation": 335,
+      "continuity_after_consultation": 336,
+      "help_seeking": 331,
+      "indonesia_digital_mh_privacy": 916,
+      "journaling_expressive_writing": 335,
+      "listening_feeling_heard": 283,
+      "older_adults_50_plus": 1242,
+      "privacy_sharing_revocation": 591,
+      "safety": 295,
+      "working_age_adults": 605
+    },
+    "candidates": 8712,
+    "candidates_by_source": {
+      "both": 89,
+      "crossref": 974,
+      "europepmc": 7827
+    },
+    "eligibility": {
+      "eligible": 8163,
+      "excluded_publication_type": 549
+    },
+    "in_pool_7580": 731,
+    "in_register": [
+      "R004",
+      "R007",
+      "R010",
+      "R011",
+      "R014",
+      "R015",
+      "R017",
+      "R019",
+      "R037",
+      "R038",
+      "R039",
+      "R040",
+      "R041",
+      "R042",
+      "R044",
+      "R045",
+      "R048",
+      "R050",
+      "R052",
+      "R053",
+      "R055",
+      "R056",
+      "R071",
+      "R072",
+      "R073",
+      "R074",
+      "R075",
+      "R077",
+      "R078",
+      "R079",
+      "R080",
+      "R081",
+      "R084",
+      "R087",
+      "R088",
+      "R089",
+      "R091",
+      "R092"
+    ],
+    "in_run_1_0": 4373,
+    "only_crossref": 885,
+    "openalex_enriched": 753,
+    "publication_language": {
+      "None": 472,
+      "de": 16,
+      "en": 8188,
+      "es": 3,
+      "fr": 6,
+      "id": 19,
+      "it": 1,
+      "ko": 1,
+      "ng": 1,
+      "sv": 1,
+      "zh": 4
+    },
+    "publication_language_basis": {
+      "curated": 7826,
+      "machine_inferred_only": 42,
+      "not_stated": 472,
+      "publisher_deposit": 372
+    },
+    "source_records_by_source": {
+      "crossref": 1003,
+      "europepmc": 7855
+    },
+    "title_cue_disagrees_with_language_metadata": 17,
+    "title_suggests_indonesian": 262,
+    "within_window": {
+      "none": 6,
+      "true": 8706
+    },
+    "year": {
+      "2021": 816,
+      "2022": 1513,
+      "2023": 1516,
+      "2024": 1533,
+      "2025": 1714,
+      "2026": 1620
+    }
+  },
+  "cutoff_date": "2021-10-26",
+  "dataset": "Sela v3 gap search: bibliographic candidates for the v3 evidence gaps (metadata only, unreviewed)",
+  "freeze_date": "2026-10-26",
+  "inputs": {
+    "data/research/sela_research_candidates_7580.jsonl": "027644e28ffe2aa232397f328d4162efcb3347a5fb4423cf302d6aebb40cea31",
+    "data/research/v3_gap_search/2026-10-26/candidates.jsonl": "db9b4c0b769dc7cd54a038de927683738f1ed2a665e81aee2720ec2d5b4b17cc",
+    "docs/research/sela-relay/research_100.json": "90bae40e67a9b13847c1b9b85aa18e48fa45e515e85d54f23db3a351f77ec2cd"
+  },
+  "limitations": [
+    "Searches are bounded (per-bucket and per-query caps) and ranked by each API; this is not an exhaustive or systematic search, and hit counts are not evidence counts.",
+    "Crossref keyword search is fuzzy and noisy; Crossref-only records have no MeSH age groups.",
+    "Publication language comes from Europe PMC (indexer) or Crossref (publisher deposit); OpenAlex language is machine-inferred and flagged. Some Indonesian-titled Crossref records are deposited as 'en' or carry no language: title_suggests_indonesian / title_cue_disagrees flag them; the value is not changed.",
+    "No Garuda/SINTA harvest: those portals have no documented free API; listed as a manual gap.",
+    "Nothing here is screened by a person; status is candidate_metadata_only_unreviewed."
+  ],
+  "per_query_retrieval": [
+    {
+      "cap": 50,
+      "capped_requests": 5,
+      "family": "listening_feeling_heard",
+      "hit_count": 663,
+      "query_id": "listen_core",
+      "requests": 6,
+      "retrieved": 271,
+      "share_retrieved": 0.4087,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "listening_feeling_heard",
+      "hit_count": 1719437,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "listen_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 50,
+      "capped_requests": 5,
+      "family": "journaling_expressive_writing",
+      "hit_count": 742,
+      "query_id": "journal_core",
+      "requests": 6,
+      "retrieved": 265,
+      "share_retrieved": 0.3571,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "journaling_expressive_writing",
+      "hit_count": 1833302,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "journal_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "journaling_expressive_writing",
+      "hit_count": 528951,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "journal_digital_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0001,
+      "source": "crossref"
+    },
+    {
+      "cap": 200,
+      "capped_requests": 5,
+      "family": "check_in_self_monitoring",
+      "hit_count": 5502,
+      "query_id": "checkin_core",
+      "requests": 6,
+      "retrieved": 1155,
+      "share_retrieved": 0.2099,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "check_in_self_monitoring",
+      "hit_count": 2426580,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "checkin_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 50,
+      "capped_requests": 5,
+      "family": "consultation_preparation",
+      "hit_count": 774,
+      "query_id": "qpl_core",
+      "requests": 6,
+      "retrieved": 280,
+      "share_retrieved": 0.3618,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "consultation_preparation",
+      "hit_count": 1086453,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "qpl_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "consultation_preparation",
+      "hit_count": 2052777,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "previsit_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 50,
+      "capped_requests": 6,
+      "family": "continuity_after_consultation",
+      "hit_count": 3168,
+      "query_id": "continuity_core",
+      "requests": 6,
+      "retrieved": 300,
+      "share_retrieved": 0.0947,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "continuity_after_consultation",
+      "hit_count": 3740827,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "continuity_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 50,
+      "capped_requests": 5,
+      "family": "adolescents_15_17",
+      "hit_count": 1883,
+      "query_id": "teen_consent",
+      "requests": 6,
+      "retrieved": 299,
+      "share_retrieved": 0.1588,
+      "source": "europepmc"
+    },
+    {
+      "cap": 200,
+      "capped_requests": 5,
+      "family": "adolescents_15_17",
+      "hit_count": 6111,
+      "query_id": "teen_digital",
+      "requests": 6,
+      "retrieved": 1148,
+      "share_retrieved": 0.1879,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "adolescents_15_17",
+      "hit_count": 2138304,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "teen_consent_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "adolescents_15_17",
+      "hit_count": 2227046,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "teen_consent_cr2",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "adolescents_15_17",
+      "hit_count": 329829,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "id_remaja_privasi_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0001,
+      "source": "crossref"
+    },
+    {
+      "cap": 200,
+      "capped_requests": 5,
+      "family": "older_adults_50_plus",
+      "hit_count": 5994,
+      "query_id": "older_digital",
+      "requests": 6,
+      "retrieved": 1181,
+      "share_retrieved": 0.197,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "older_adults_50_plus",
+      "hit_count": 2360829,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "older_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "older_adults_50_plus",
+      "hit_count": 887792,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "id_lansia_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 200,
+      "capped_requests": 0,
+      "family": "accessibility_disability",
+      "hit_count": 665,
+      "query_id": "a11y_core_v2",
+      "requests": 6,
+      "retrieved": 665,
+      "share_retrieved": 1.0,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "accessibility_disability",
+      "hit_count": 1778630,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "a11y_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "accessibility_disability",
+      "hit_count": 2596327,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "a11y_cr2",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 200,
+      "capped_requests": 0,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 282,
+      "query_id": "id_digital_mh",
+      "requests": 6,
+      "retrieved": 282,
+      "share_retrieved": 1.0,
+      "source": "europepmc"
+    },
+    {
+      "cap": 200,
+      "capped_requests": 0,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 489,
+      "query_id": "id_health_data_law",
+      "requests": 6,
+      "retrieved": 489,
+      "share_retrieved": 1.0,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 789573,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "id_kesehatan_mental_aplikasi",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0001,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 567681,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "id_konseling_daring",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0001,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 653898,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "id_pdp",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0001,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 2750746,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "id_digital_en",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 50,
+      "capped_requests": 5,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 965,
+      "query_id": "ai_id_lang",
+      "requests": 6,
+      "retrieved": 271,
+      "share_retrieved": 0.2808,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 1361954,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "ai_codeswitch_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 1290540,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "ai_id_mh_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 3562476,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "ai_id_llm_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 50,
+      "capped_requests": 6,
+      "family": "help_seeking",
+      "hit_count": 2830,
+      "query_id": "help_v3",
+      "requests": 6,
+      "retrieved": 300,
+      "share_retrieved": 0.106,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "help_seeking",
+      "hit_count": 2597819,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "help_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 50,
+      "capped_requests": 5,
+      "family": "safety",
+      "hit_count": 2501,
+      "query_id": "safety_v3",
+      "requests": 6,
+      "retrieved": 258,
+      "share_retrieved": 0.1032,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "safety",
+      "hit_count": 2439726,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "safety_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 50,
+      "capped_requests": 5,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 2063,
+      "query_id": "privacy_v3",
+      "requests": 6,
+      "retrieved": 279,
+      "share_retrieved": 0.1352,
+      "source": "europepmc"
+    },
+    {
+      "cap": 50,
+      "capped_requests": 5,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 1071,
+      "query_id": "revocation_v3",
+      "requests": 6,
+      "retrieved": 282,
+      "share_retrieved": 0.2633,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 3209943,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "revocation_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 200,
+      "capped_requests": 0,
+      "family": "working_age_adults",
+      "hit_count": 527,
+      "query_id": "working_adults_digital",
+      "requests": 6,
+      "retrieved": 527,
+      "share_retrieved": 1.0,
+      "source": "europepmc"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "working_age_adults",
+      "hit_count": 2475092,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "working_adults_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0,
+      "source": "crossref"
+    },
+    {
+      "cap": 40,
+      "capped_requests": 1,
+      "family": "working_age_adults",
+      "hit_count": 799119,
+      "note": "Crossref total-results counts every work that matches any query word; the top rows by relevance were kept, so the share is not a recall estimate",
+      "query_id": "id_dewasa_pekerja_cr",
+      "requests": 1,
+      "retrieved": 40,
+      "share_retrieved": 0.0001,
+      "source": "crossref"
+    }
+  ],
+  "query_families": {
+    "accessibility_disability": {
+      "crossref": {
+        "a11y_cr": "accessibility disability mental health app",
+        "a11y_cr2": "WCAG accessibility evaluation mental health applications"
+      },
+      "europepmc": {
+        "a11y_core_v2": "TITLE_ABS:(WCAG OR \"digital accessibility\" OR \"web accessibility\" OR \"accessibility guidelines\" OR \"accessibility evaluation\" OR \"screen reader\" OR \"assistive technology\" OR \"universal design\" OR \"inclusive design\" OR disability OR disabilities OR \"visual impairment\" OR \"low vision\" OR blind OR deaf OR \"hard of hearing\" OR \"intellectual disability\" OR \"low literacy\" OR \"plain language\" OR \"easy read\" OR dyslexia) AND TITLE_ABS:(\"mental health\" OR depress* OR anxiety OR wellbeing OR \"well-being\" OR psychological OR distress) AND TITLE_ABS:(app OR apps OR smartphone OR chatbot OR \"conversational agent\" OR \"online intervention\" OR \"e-mental health\" OR mHealth OR \"digital mental health\" OR \"internet-based\" OR website OR \"digital intervention\")"
+      },
+      "europepmc_per_bucket_cap": {
+        "a11y_core_v2": 200
+      },
+      "purpose": "accessibility and disability in mental-health apps (narrowed: digital-accessibility or disability terms, a mental-health term and a digital-tool term, all in title/abstract; 'accessible' alone and 'cognitive impairment' dropped)"
+    },
+    "adolescents_15_17": {
+      "crossref": {
+        "id_remaja_privasi_cr": "kerahasiaan remaja persetujuan orang tua layanan kesehatan mental",
+        "teen_consent_cr": "adolescent confidentiality parental access patient portal mental health",
+        "teen_consent_cr2": "adolescent consent digital mental health app minors"
+      },
+      "europepmc": {
+        "teen_consent": "TITLE_ABS:(adolescen* OR teen* OR minors OR \"high school\" OR youth) AND TITLE_ABS:(consent OR assent OR confidential* OR \"parental access\" OR \"parental consent\" OR guardian OR \"proxy access\" OR privacy) AND (\"mental health\" OR \"digital health\" OR app OR \"patient portal\" OR psychiatr* OR counsel*)",
+        "teen_digital": "TITLE_ABS:(adolescen* OR teen* OR \"high school\" OR \"secondary school\") AND (\"digital mental health\" OR \"mental health app\" OR chatbot OR \"conversational agent\" OR smartphone OR \"online support\" OR \"e-mental health\")"
+      },
+      "europepmc_per_bucket_cap": {
+        "teen_consent": 50,
+        "teen_digital": 200
+      },
+      "purpose": "minors mode: adolescents 15-17, consent, confidentiality, parental or guardian access, digital tools"
+    },
+    "ai_bahasa_code_switching": {
+      "crossref": {
+        "ai_codeswitch_cr": "code-switching Indonesian English language model",
+        "ai_id_llm_cr": "large language model Bahasa Indonesia evaluation health",
+        "ai_id_mh_cr": "deteksi depresi bahasa Indonesia machine learning"
+      },
+      "europepmc": {
+        "ai_id_lang": "(\"Bahasa Indonesia\" OR \"Indonesian language\" OR Indonesian OR Malay OR \"code-switching\" OR \"code-mixing\" OR \"code switching\" OR \"code mixing\" OR \"low-resource language\") AND (\"language model\" OR LLM OR \"natural language processing\" OR NLP OR chatbot) AND (health OR \"mental health\" OR depress* OR suicid* OR emotion* OR clinical)"
+      },
+      "europepmc_per_bucket_cap": {
+        "ai_id_lang": 50
+      },
+      "purpose": "AI handling of Bahasa Indonesia and Indonesian-English code-switching"
+    },
+    "check_in_self_monitoring": {
+      "crossref": {
+        "checkin_cr": "mood tracking self-monitoring app mental health users experience"
+      },
+      "europepmc": {
+        "checkin_core": "TITLE_ABS:(\"mood tracking\" OR \"mood monitoring\" OR \"self-monitoring\" OR \"ecological momentary assessment\" OR \"mood diary\" OR \"check-in\" OR \"symptom tracking\") AND (\"mental health\" OR depress* OR anxiety OR wellbeing) AND (app OR smartphone OR digital OR mobile OR online)"
+      },
+      "europepmc_per_bucket_cap": {
+        "checkin_core": 200
+      },
+      "purpose": "check-in and timeline: mood tracking, self-monitoring, momentary assessment in apps"
+    },
+    "consultation_preparation": {
+      "crossref": {
+        "previsit_cr": "pre-visit summary patient generated mental health consultation",
+        "qpl_cr": "question prompt list consultation preparation patients"
+      },
+      "europepmc": {
+        "qpl_core": "TITLE_ABS:(\"question prompt list\" OR \"question prompt sheet\" OR \"prompt list\" OR \"pre-visit\" OR previsit OR \"pre-consultation\" OR \"consultation preparation\" OR \"visit preparation\" OR \"patient-held record\" OR \"patient-generated summary\" OR \"agenda setting\" OR \"communication aid\") AND (consultation OR visit OR appointment OR clinician OR physician OR \"primary care\" OR \"mental health\" OR psychiatr*)"
+      },
+      "europepmc_per_bucket_cap": {
+        "qpl_core": 50
+      },
+      "purpose": "consultation summary: question prompt lists, pre-visit patient-held or patient-generated summaries"
+    },
+    "continuity_after_consultation": {
+      "crossref": {
+        "continuity_cr": "open notes mental health patients reading clinical notes"
+      },
+      "europepmc": {
+        "continuity_core": "TITLE_ABS:(\"after-visit summary\" OR \"after visit summary\" OR \"visit summary\" OR \"open notes\" OR opennotes OR \"patient portal\" OR \"between sessions\" OR \"between-session\" OR \"post-visit\" OR \"continuity of care\") AND (\"mental health\" OR psychiatr* OR psychotherap* OR depress*)"
+      },
+      "europepmc_per_bucket_cap": {
+        "continuity_core": 50
+      },
+      "purpose": "timeline and follow-up: after-visit summaries, open notes, between-session continuity"
+    },
+    "help_seeking": {
+      "crossref": {
+        "help_cr": "help-seeking mental health digital young people"
+      },
+      "europepmc": {
+        "help_v3": "TITLE_ABS:(\"help-seeking\" OR \"help seeking\") AND \"mental health\" AND (digital OR online OR app OR chatbot OR adolescen* OR \"older adults\" OR Indonesia*)"
+      },
+      "europepmc_per_bucket_cap": {
+        "help_v3": 50
+      },
+      "purpose": "help-seeking with digital tools, adolescents, older adults or Indonesia"
+    },
+    "indonesia_digital_mh_privacy": {
+      "crossref": {
+        "id_digital_en": "Indonesia digital mental health application",
+        "id_kesehatan_mental_aplikasi": "aplikasi kesehatan mental digital",
+        "id_konseling_daring": "konseling online kesehatan mental mahasiswa remaja",
+        "id_pdp": "pelindungan data pribadi kesehatan rekam medis"
+      },
+      "europepmc": {
+        "id_digital_mh": "TITLE_ABS:(Indonesia OR Indonesian) AND TITLE_ABS:(\"mental health\" OR \"kesehatan mental\" OR \"kesehatan jiwa\" OR depress* OR anxiety OR psychological OR suicid* OR wellbeing OR \"well-being\" OR stress) AND TITLE_ABS:(\"digital mental health\" OR \"mental health app\" OR app OR apps OR smartphone OR chatbot OR \"artificial intelligence\" OR telemedicine OR telehealth OR \"online counseling\" OR \"online counselling\" OR online OR internet OR \"mobile health\" OR mHealth OR digital OR \"social media\")",
+        "id_health_data_law": "TITLE_ABS:(Indonesia OR Indonesian) AND TITLE_ABS:(\"personal data protection\" OR \"data protection\" OR \"data privacy\" OR \"health data\" OR \"medical record\" OR \"medical records\" OR \"health information\" OR confidentiality OR privacy) AND TITLE_ABS:(health OR medical OR patient* OR hospital*)"
+      },
+      "europepmc_per_bucket_cap": {
+        "id_digital_mh": 200,
+        "id_health_data_law": 200
+      },
+      "purpose": "Indonesian digital mental health (a mental-health term is now required) and Indonesian health-data privacy (UU PDP) as its own query"
+    },
+    "journaling_expressive_writing": {
+      "crossref": {
+        "journal_cr": "expressive writing journaling intervention mental health",
+        "journal_digital_cr": "digital journaling app wellbeing"
+      },
+      "europepmc": {
+        "journal_core": "TITLE_ABS:(\"expressive writing\" OR journaling OR journalling OR \"reflective writing\" OR \"diary intervention\" OR \"writing intervention\" OR \"digital journal\" OR \"online journal\" OR \"gratitude journal\" OR \"emotional disclosure\" OR \"written disclosure\") AND (\"mental health\" OR depress* OR anxiety OR wellbeing OR \"well-being\" OR stress OR distress)"
+      },
+      "europepmc_per_bucket_cap": {
+        "journal_core": 50
+      },
+      "purpose": "journal: expressive writing, journaling and diaries, including digital journaling"
+    },
+    "listening_feeling_heard": {
+      "crossref": {
+        "listen_cr": "feeling heard empathic listening chatbot mental health"
+      },
+      "europepmc": {
+        "listen_core": "TITLE_ABS:(\"feel heard\" OR \"feeling heard\" OR \"felt heard\" OR \"being heard\" OR \"active listening\" OR \"empathic listening\" OR \"reflective listening\" OR \"perceived empathy\" OR \"feeling understood\" OR \"digital alliance\") AND (\"mental health\" OR wellbeing OR \"well-being\" OR distress OR loneliness OR psychological)"
+      },
+      "europepmc_per_bucket_cap": {
+        "listen_core": 50
+      },
+      "purpose": "listening room: feeling heard, empathic or non-judgemental listening, alliance with digital agents"
+    },
+    "older_adults_50_plus": {
+      "crossref": {
+        "id_lansia_cr": "kesehatan mental lansia aplikasi digital teknologi",
+        "older_cr": "older adults digital mental health app usability"
+      },
+      "europepmc": {
+        "older_digital": "TITLE_ABS:(\"older adults\" OR \"older people\" OR elderly OR \"late life\" OR \"middle-aged\" OR midlife OR seniors) AND (\"digital mental health\" OR \"mental health app\" OR chatbot OR \"conversational agent\" OR \"internet-based\" OR \"online intervention\" OR smartphone OR \"digital intervention\" OR \"voice assistant\")"
+      },
+      "europepmc_per_bucket_cap": {
+        "older_digital": 200
+      },
+      "purpose": "older adults (50+) with digital mental health tools"
+    },
+    "privacy_sharing_revocation": {
+      "crossref": {
+        "revocation_cr": "dynamic consent revocation health data sharing patients"
+      },
+      "europepmc": {
+        "privacy_v3": "TITLE_ABS:(privacy OR confidential* OR \"data sharing\" OR consent OR \"data protection\") AND (\"mental health app\" OR \"digital mental health\" OR chatbot OR \"patient portal\" OR \"health app\") AND (user* OR patient* OR adolescen* OR perception* OR attitude*)",
+        "revocation_v3": "TITLE_ABS:(\"dynamic consent\" OR \"granular consent\" OR \"consent withdrawal\" OR \"withdraw consent\" OR revocation OR \"patient-controlled\" OR \"data sharing preferences\") AND (health OR \"mental health\")"
+      },
+      "europepmc_per_bucket_cap": {
+        "privacy_v3": 50,
+        "revocation_v3": 50
+      },
+      "purpose": "privacy, sharing and revocation: user views, consent withdrawal, granular or dynamic consent"
+    },
+    "safety": {
+      "crossref": {
+        "safety_cr": "chatbot suicide risk response evaluation large language model"
+      },
+      "europepmc": {
+        "safety_v3": "TITLE_ABS:(suicid* OR \"self-harm\" OR crisis OR \"risk detection\" OR safety) AND (chatbot OR \"large language model\" OR \"conversational agent\" OR \"mental health app\") AND (evaluation OR detection OR response OR \"red teaming\" OR harm)"
+      },
+      "europepmc_per_bucket_cap": {
+        "safety_v3": 50
+      },
+      "purpose": "safety: crisis and self-harm handling by chatbots and mental-health apps"
+    },
+    "working_age_adults": {
+      "crossref": {
+        "id_dewasa_pekerja_cr": "kesehatan mental pekerja dewasa intervensi digital aplikasi",
+        "working_adults_cr": "employees working adults digital mental health app intervention"
+      },
+      "europepmc": {
+        "working_adults_digital": "TITLE_ABS:(\"working-age\" OR \"working age\" OR employees OR employee OR workers OR workplace OR occupational OR \"middle-aged\" OR midlife OR \"mid-life\" OR \"general adult population\" OR \"community-dwelling adults\") AND TITLE_ABS:(\"mental health\" OR depress* OR anxiety OR wellbeing OR \"well-being\" OR stress OR distress OR burnout) AND TITLE_ABS:(\"digital mental health\" OR \"mental health app\" OR chatbot OR \"conversational agent\" OR \"internet-based\" OR \"online intervention\" OR smartphone OR \"e-mental health\" OR \"digital intervention\" OR \"mobile app\")"
+      },
+      "europepmc_per_bucket_cap": {
+        "working_adults_digital": 200
+      },
+      "purpose": "working-age and mid-life adults (dewasa) with digital mental-health tools, beyond students"
+    }
+  },
+  "requests": [
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "listening_feeling_heard",
+      "hit_count": 21,
+      "http_status": 200,
+      "key": "epmc:listen_core:2021-10-26:2021-12-31",
+      "query_id": "listen_core",
+      "retrieved_at": "2026-10-26T17:26:21Z",
+      "returned": 21,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "listening_feeling_heard",
+      "hit_count": 86,
+      "http_status": 200,
+      "key": "epmc:listen_core:2022-01-01:2022-12-31",
+      "query_id": "listen_core",
+      "retrieved_at": "2026-10-26T17:26:23Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "listening_feeling_heard",
+      "hit_count": 90,
+      "http_status": 200,
+      "key": "epmc:listen_core:2023-01-01:2023-12-31",
+      "query_id": "listen_core",
+      "retrieved_at": "2026-10-26T17:26:25Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "listening_feeling_heard",
+      "hit_count": 130,
+      "http_status": 200,
+      "key": "epmc:listen_core:2024-01-01:2024-12-31",
+      "query_id": "listen_core",
+      "retrieved_at": "2026-10-26T17:26:33Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "listening_feeling_heard",
+      "hit_count": 180,
+      "http_status": 200,
+      "key": "epmc:listen_core:2025-01-01:2025-12-31",
+      "query_id": "listen_core",
+      "retrieved_at": "2026-10-26T17:26:37Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "listening_feeling_heard",
+      "hit_count": 156,
+      "http_status": 200,
+      "key": "epmc:listen_core:2026-01-01:2026-10-26",
+      "query_id": "listen_core",
+      "retrieved_at": "2026-10-26T17:26:40Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "listening_feeling_heard",
+      "hit_count": 1719437,
+      "http_status": 200,
+      "key": "crossref:listen_cr",
+      "query_id": "listen_cr",
+      "retrieved_at": "2026-10-26T17:36:25Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "journaling_expressive_writing",
+      "hit_count": 15,
+      "http_status": 200,
+      "key": "epmc:journal_core:2021-10-26:2021-12-31",
+      "query_id": "journal_core",
+      "retrieved_at": "2026-10-26T17:26:41Z",
+      "returned": 15,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "journaling_expressive_writing",
+      "hit_count": 109,
+      "http_status": 200,
+      "key": "epmc:journal_core:2022-01-01:2022-12-31",
+      "query_id": "journal_core",
+      "retrieved_at": "2026-10-26T17:26:43Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "journaling_expressive_writing",
+      "hit_count": 119,
+      "http_status": 200,
+      "key": "epmc:journal_core:2023-01-01:2023-12-31",
+      "query_id": "journal_core",
+      "retrieved_at": "2026-10-26T17:26:45Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "journaling_expressive_writing",
+      "hit_count": 102,
+      "http_status": 200,
+      "key": "epmc:journal_core:2024-01-01:2024-12-31",
+      "query_id": "journal_core",
+      "retrieved_at": "2026-10-26T17:26:46Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "journaling_expressive_writing",
+      "hit_count": 191,
+      "http_status": 200,
+      "key": "epmc:journal_core:2025-01-01:2025-12-31",
+      "query_id": "journal_core",
+      "retrieved_at": "2026-10-26T17:26:48Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "journaling_expressive_writing",
+      "hit_count": 206,
+      "http_status": 200,
+      "key": "epmc:journal_core:2026-01-01:2026-10-26",
+      "query_id": "journal_core",
+      "retrieved_at": "2026-10-26T17:26:50Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "journaling_expressive_writing",
+      "hit_count": 1833302,
+      "http_status": 200,
+      "key": "crossref:journal_cr",
+      "query_id": "journal_cr",
+      "retrieved_at": "2026-10-26T17:36:26Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "journaling_expressive_writing",
+      "hit_count": 528951,
+      "http_status": 200,
+      "key": "crossref:journal_digital_cr",
+      "query_id": "journal_digital_cr",
+      "retrieved_at": "2026-10-26T17:36:28Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 200,
+      "family": "check_in_self_monitoring",
+      "hit_count": 155,
+      "http_status": 200,
+      "key": "epmc:checkin_core:2021-10-26:2021-12-31:n200",
+      "query_id": "checkin_core",
+      "retrieved_at": "2026-10-26T19:04:54Z",
+      "returned": 155,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 200,
+      "family": "check_in_self_monitoring",
+      "hit_count": 1083,
+      "http_status": 200,
+      "key": "epmc:checkin_core:2022-01-01:2022-12-31:n200",
+      "query_id": "checkin_core",
+      "retrieved_at": "2026-10-26T19:04:58Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 200,
+      "family": "check_in_self_monitoring",
+      "hit_count": 933,
+      "http_status": 200,
+      "key": "epmc:checkin_core:2023-01-01:2023-12-31:n200",
+      "query_id": "checkin_core",
+      "retrieved_at": "2026-10-26T19:05:03Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 200,
+      "family": "check_in_self_monitoring",
+      "hit_count": 985,
+      "http_status": 200,
+      "key": "epmc:checkin_core:2024-01-01:2024-12-31:n200",
+      "query_id": "checkin_core",
+      "retrieved_at": "2026-10-26T19:05:06Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 200,
+      "family": "check_in_self_monitoring",
+      "hit_count": 1299,
+      "http_status": 200,
+      "key": "epmc:checkin_core:2025-01-01:2025-12-31:n200",
+      "query_id": "checkin_core",
+      "retrieved_at": "2026-10-26T19:05:11Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 200,
+      "family": "check_in_self_monitoring",
+      "hit_count": 1047,
+      "http_status": 200,
+      "key": "epmc:checkin_core:2026-01-01:2026-10-26:n200",
+      "query_id": "checkin_core",
+      "retrieved_at": "2026-10-26T19:05:14Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "check_in_self_monitoring",
+      "hit_count": 2426580,
+      "http_status": 200,
+      "key": "crossref:checkin_cr",
+      "query_id": "checkin_cr",
+      "retrieved_at": "2026-10-26T17:36:29Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "consultation_preparation",
+      "hit_count": 30,
+      "http_status": 200,
+      "key": "epmc:qpl_core:2021-10-26:2021-12-31",
+      "query_id": "qpl_core",
+      "retrieved_at": "2026-10-26T17:27:15Z",
+      "returned": 30,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "consultation_preparation",
+      "hit_count": 126,
+      "http_status": 200,
+      "key": "epmc:qpl_core:2022-01-01:2022-12-31",
+      "query_id": "qpl_core",
+      "retrieved_at": "2026-10-26T17:27:18Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "consultation_preparation",
+      "hit_count": 130,
+      "http_status": 200,
+      "key": "epmc:qpl_core:2023-01-01:2023-12-31",
+      "query_id": "qpl_core",
+      "retrieved_at": "2026-10-26T17:27:21Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "consultation_preparation",
+      "hit_count": 128,
+      "http_status": 200,
+      "key": "epmc:qpl_core:2024-01-01:2024-12-31",
+      "query_id": "qpl_core",
+      "retrieved_at": "2026-10-26T17:27:22Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "consultation_preparation",
+      "hit_count": 163,
+      "http_status": 200,
+      "key": "epmc:qpl_core:2025-01-01:2025-12-31",
+      "query_id": "qpl_core",
+      "retrieved_at": "2026-10-26T17:27:23Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "consultation_preparation",
+      "hit_count": 197,
+      "http_status": 200,
+      "key": "epmc:qpl_core:2026-01-01:2026-10-26",
+      "query_id": "qpl_core",
+      "retrieved_at": "2026-10-26T17:27:28Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "consultation_preparation",
+      "hit_count": 1086453,
+      "http_status": 200,
+      "key": "crossref:qpl_cr",
+      "query_id": "qpl_cr",
+      "retrieved_at": "2026-10-26T17:36:30Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "consultation_preparation",
+      "hit_count": 2052777,
+      "http_status": 200,
+      "key": "crossref:previsit_cr",
+      "query_id": "previsit_cr",
+      "retrieved_at": "2026-10-26T17:36:32Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "continuity_after_consultation",
+      "hit_count": 73,
+      "http_status": 200,
+      "key": "epmc:continuity_core:2021-10-26:2021-12-31",
+      "query_id": "continuity_core",
+      "retrieved_at": "2026-10-26T17:27:35Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "continuity_after_consultation",
+      "hit_count": 562,
+      "http_status": 200,
+      "key": "epmc:continuity_core:2022-01-01:2022-12-31",
+      "query_id": "continuity_core",
+      "retrieved_at": "2026-10-26T17:27:40Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "continuity_after_consultation",
+      "hit_count": 472,
+      "http_status": 200,
+      "key": "epmc:continuity_core:2023-01-01:2023-12-31",
+      "query_id": "continuity_core",
+      "retrieved_at": "2026-10-26T17:27:41Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "continuity_after_consultation",
+      "hit_count": 511,
+      "http_status": 200,
+      "key": "epmc:continuity_core:2024-01-01:2024-12-31",
+      "query_id": "continuity_core",
+      "retrieved_at": "2026-10-26T17:27:43Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "continuity_after_consultation",
+      "hit_count": 687,
+      "http_status": 200,
+      "key": "epmc:continuity_core:2025-01-01:2025-12-31",
+      "query_id": "continuity_core",
+      "retrieved_at": "2026-10-26T17:27:45Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "continuity_after_consultation",
+      "hit_count": 863,
+      "http_status": 200,
+      "key": "epmc:continuity_core:2026-01-01:2026-10-26",
+      "query_id": "continuity_core",
+      "retrieved_at": "2026-10-26T17:27:48Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "continuity_after_consultation",
+      "hit_count": 3740827,
+      "http_status": 200,
+      "key": "crossref:continuity_cr",
+      "query_id": "continuity_cr",
+      "retrieved_at": "2026-10-26T17:36:35Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "adolescents_15_17",
+      "hit_count": 49,
+      "http_status": 200,
+      "key": "epmc:teen_consent:2021-10-26:2021-12-31",
+      "query_id": "teen_consent",
+      "retrieved_at": "2026-10-26T17:27:50Z",
+      "returned": 49,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "adolescents_15_17",
+      "hit_count": 261,
+      "http_status": 200,
+      "key": "epmc:teen_consent:2022-01-01:2022-12-31",
+      "query_id": "teen_consent",
+      "retrieved_at": "2026-10-26T17:27:51Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "adolescents_15_17",
+      "hit_count": 321,
+      "http_status": 200,
+      "key": "epmc:teen_consent:2023-01-01:2023-12-31",
+      "query_id": "teen_consent",
+      "retrieved_at": "2026-10-26T17:27:53Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "adolescents_15_17",
+      "hit_count": 356,
+      "http_status": 200,
+      "key": "epmc:teen_consent:2024-01-01:2024-12-31",
+      "query_id": "teen_consent",
+      "retrieved_at": "2026-10-26T17:27:54Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "adolescents_15_17",
+      "hit_count": 442,
+      "http_status": 200,
+      "key": "epmc:teen_consent:2025-01-01:2025-12-31",
+      "query_id": "teen_consent",
+      "retrieved_at": "2026-10-26T17:27:58Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "adolescents_15_17",
+      "hit_count": 454,
+      "http_status": 200,
+      "key": "epmc:teen_consent:2026-01-01:2026-10-26",
+      "query_id": "teen_consent",
+      "retrieved_at": "2026-10-26T17:27:59Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 200,
+      "family": "adolescents_15_17",
+      "hit_count": 148,
+      "http_status": 200,
+      "key": "epmc:teen_digital:2021-10-26:2021-12-31:n200",
+      "query_id": "teen_digital",
+      "retrieved_at": "2026-10-26T19:05:17Z",
+      "returned": 148,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 200,
+      "family": "adolescents_15_17",
+      "hit_count": 1112,
+      "http_status": 200,
+      "key": "epmc:teen_digital:2022-01-01:2022-12-31:n200",
+      "query_id": "teen_digital",
+      "retrieved_at": "2026-10-26T19:05:21Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 200,
+      "family": "adolescents_15_17",
+      "hit_count": 1012,
+      "http_status": 200,
+      "key": "epmc:teen_digital:2023-01-01:2023-12-31:n200",
+      "query_id": "teen_digital",
+      "retrieved_at": "2026-10-26T19:05:25Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 200,
+      "family": "adolescents_15_17",
+      "hit_count": 1096,
+      "http_status": 200,
+      "key": "epmc:teen_digital:2024-01-01:2024-12-31:n200",
+      "query_id": "teen_digital",
+      "retrieved_at": "2026-10-26T19:05:32Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 200,
+      "family": "adolescents_15_17",
+      "hit_count": 1426,
+      "http_status": 200,
+      "key": "epmc:teen_digital:2025-01-01:2025-12-31:n200",
+      "query_id": "teen_digital",
+      "retrieved_at": "2026-10-26T19:05:37Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 200,
+      "family": "adolescents_15_17",
+      "hit_count": 1317,
+      "http_status": 200,
+      "key": "epmc:teen_digital:2026-01-01:2026-10-26:n200",
+      "query_id": "teen_digital",
+      "retrieved_at": "2026-10-26T19:05:42Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "adolescents_15_17",
+      "hit_count": 2138304,
+      "http_status": 200,
+      "key": "crossref:teen_consent_cr",
+      "query_id": "teen_consent_cr",
+      "retrieved_at": "2026-10-26T17:36:36Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "adolescents_15_17",
+      "hit_count": 2227046,
+      "http_status": 200,
+      "key": "crossref:teen_consent_cr2",
+      "query_id": "teen_consent_cr2",
+      "retrieved_at": "2026-10-26T17:36:37Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "adolescents_15_17",
+      "hit_count": 329829,
+      "http_status": 200,
+      "key": "crossref:id_remaja_privasi_cr",
+      "query_id": "id_remaja_privasi_cr",
+      "retrieved_at": "2026-10-26T19:05:42Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 200,
+      "family": "older_adults_50_plus",
+      "hit_count": 181,
+      "http_status": 200,
+      "key": "epmc:older_digital:2021-10-26:2021-12-31:n200",
+      "query_id": "older_digital",
+      "retrieved_at": "2026-10-26T19:05:47Z",
+      "returned": 181,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 200,
+      "family": "older_adults_50_plus",
+      "hit_count": 1126,
+      "http_status": 200,
+      "key": "epmc:older_digital:2022-01-01:2022-12-31:n200",
+      "query_id": "older_digital",
+      "retrieved_at": "2026-10-26T19:05:54Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 200,
+      "family": "older_adults_50_plus",
+      "hit_count": 943,
+      "http_status": 200,
+      "key": "epmc:older_digital:2023-01-01:2023-12-31:n200",
+      "query_id": "older_digital",
+      "retrieved_at": "2026-10-26T19:05:58Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 200,
+      "family": "older_adults_50_plus",
+      "hit_count": 1101,
+      "http_status": 200,
+      "key": "epmc:older_digital:2024-01-01:2024-12-31:n200",
+      "query_id": "older_digital",
+      "retrieved_at": "2026-10-26T19:06:03Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 200,
+      "family": "older_adults_50_plus",
+      "hit_count": 1414,
+      "http_status": 200,
+      "key": "epmc:older_digital:2025-01-01:2025-12-31:n200",
+      "query_id": "older_digital",
+      "retrieved_at": "2026-10-26T19:06:07Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 200,
+      "family": "older_adults_50_plus",
+      "hit_count": 1229,
+      "http_status": 200,
+      "key": "epmc:older_digital:2026-01-01:2026-10-26:n200",
+      "query_id": "older_digital",
+      "retrieved_at": "2026-10-26T19:06:11Z",
+      "returned": 200,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "older_adults_50_plus",
+      "hit_count": 2360829,
+      "http_status": 200,
+      "key": "crossref:older_cr",
+      "query_id": "older_cr",
+      "retrieved_at": "2026-10-26T17:36:37Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "older_adults_50_plus",
+      "hit_count": 887792,
+      "http_status": 200,
+      "key": "crossref:id_lansia_cr",
+      "query_id": "id_lansia_cr",
+      "retrieved_at": "2026-10-26T19:06:12Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 200,
+      "family": "accessibility_disability",
+      "hit_count": 18,
+      "http_status": 200,
+      "key": "epmc:a11y_core_v2:2021-10-26:2021-12-31:n200",
+      "query_id": "a11y_core_v2",
+      "retrieved_at": "2026-10-26T19:06:14Z",
+      "returned": 18,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 200,
+      "family": "accessibility_disability",
+      "hit_count": 130,
+      "http_status": 200,
+      "key": "epmc:a11y_core_v2:2022-01-01:2022-12-31:n200",
+      "query_id": "a11y_core_v2",
+      "retrieved_at": "2026-10-26T19:06:16Z",
+      "returned": 130,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 200,
+      "family": "accessibility_disability",
+      "hit_count": 105,
+      "http_status": 200,
+      "key": "epmc:a11y_core_v2:2023-01-01:2023-12-31:n200",
+      "query_id": "a11y_core_v2",
+      "retrieved_at": "2026-10-26T19:06:19Z",
+      "returned": 105,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 200,
+      "family": "accessibility_disability",
+      "hit_count": 122,
+      "http_status": 200,
+      "key": "epmc:a11y_core_v2:2024-01-01:2024-12-31:n200",
+      "query_id": "a11y_core_v2",
+      "retrieved_at": "2026-10-26T19:06:22Z",
+      "returned": 122,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 200,
+      "family": "accessibility_disability",
+      "hit_count": 155,
+      "http_status": 200,
+      "key": "epmc:a11y_core_v2:2025-01-01:2025-12-31:n200",
+      "query_id": "a11y_core_v2",
+      "retrieved_at": "2026-10-26T19:06:25Z",
+      "returned": 155,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 200,
+      "family": "accessibility_disability",
+      "hit_count": 135,
+      "http_status": 200,
+      "key": "epmc:a11y_core_v2:2026-01-01:2026-10-26:n200",
+      "query_id": "a11y_core_v2",
+      "retrieved_at": "2026-10-26T19:06:27Z",
+      "returned": 135,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "accessibility_disability",
+      "hit_count": 1778630,
+      "http_status": 200,
+      "key": "crossref:a11y_cr",
+      "query_id": "a11y_cr",
+      "retrieved_at": "2026-10-26T17:36:39Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "accessibility_disability",
+      "hit_count": 2596327,
+      "http_status": 200,
+      "key": "crossref:a11y_cr2",
+      "query_id": "a11y_cr2",
+      "retrieved_at": "2026-10-26T17:36:41Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 8,
+      "http_status": 200,
+      "key": "epmc:id_digital_mh:2021-10-26:2021-12-31:n200",
+      "query_id": "id_digital_mh",
+      "retrieved_at": "2026-10-26T19:06:28Z",
+      "returned": 8,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 37,
+      "http_status": 200,
+      "key": "epmc:id_digital_mh:2022-01-01:2022-12-31:n200",
+      "query_id": "id_digital_mh",
+      "retrieved_at": "2026-10-26T19:06:30Z",
+      "returned": 37,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 58,
+      "http_status": 200,
+      "key": "epmc:id_digital_mh:2023-01-01:2023-12-31:n200",
+      "query_id": "id_digital_mh",
+      "retrieved_at": "2026-10-26T19:06:32Z",
+      "returned": 58,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 38,
+      "http_status": 200,
+      "key": "epmc:id_digital_mh:2024-01-01:2024-12-31:n200",
+      "query_id": "id_digital_mh",
+      "retrieved_at": "2026-10-26T19:06:33Z",
+      "returned": 38,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 61,
+      "http_status": 200,
+      "key": "epmc:id_digital_mh:2025-01-01:2025-12-31:n200",
+      "query_id": "id_digital_mh",
+      "retrieved_at": "2026-10-26T19:06:35Z",
+      "returned": 61,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 80,
+      "http_status": 200,
+      "key": "epmc:id_digital_mh:2026-01-01:2026-10-26:n200",
+      "query_id": "id_digital_mh",
+      "retrieved_at": "2026-10-26T19:06:36Z",
+      "returned": 80,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 12,
+      "http_status": 200,
+      "key": "epmc:id_health_data_law:2021-10-26:2021-12-31:n200",
+      "query_id": "id_health_data_law",
+      "retrieved_at": "2026-10-26T19:06:37Z",
+      "returned": 12,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 89,
+      "http_status": 200,
+      "key": "epmc:id_health_data_law:2022-01-01:2022-12-31:n200",
+      "query_id": "id_health_data_law",
+      "retrieved_at": "2026-10-26T19:06:39Z",
+      "returned": 89,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 85,
+      "http_status": 200,
+      "key": "epmc:id_health_data_law:2023-01-01:2023-12-31:n200",
+      "query_id": "id_health_data_law",
+      "retrieved_at": "2026-10-26T19:06:40Z",
+      "returned": 85,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 89,
+      "http_status": 200,
+      "key": "epmc:id_health_data_law:2024-01-01:2024-12-31:n200",
+      "query_id": "id_health_data_law",
+      "retrieved_at": "2026-10-26T19:06:43Z",
+      "returned": 89,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 108,
+      "http_status": 200,
+      "key": "epmc:id_health_data_law:2025-01-01:2025-12-31:n200",
+      "query_id": "id_health_data_law",
+      "retrieved_at": "2026-10-26T19:06:44Z",
+      "returned": 108,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 200,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 106,
+      "http_status": 200,
+      "key": "epmc:id_health_data_law:2026-01-01:2026-10-26:n200",
+      "query_id": "id_health_data_law",
+      "retrieved_at": "2026-10-26T19:06:46Z",
+      "returned": 106,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 789573,
+      "http_status": 200,
+      "key": "crossref:id_kesehatan_mental_aplikasi",
+      "query_id": "id_kesehatan_mental_aplikasi",
+      "retrieved_at": "2026-10-26T17:36:42Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 567681,
+      "http_status": 200,
+      "key": "crossref:id_konseling_daring",
+      "query_id": "id_konseling_daring",
+      "retrieved_at": "2026-10-26T17:36:44Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 653898,
+      "http_status": 200,
+      "key": "crossref:id_pdp",
+      "query_id": "id_pdp",
+      "retrieved_at": "2026-10-26T17:36:46Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "indonesia_digital_mh_privacy",
+      "hit_count": 2750746,
+      "http_status": 200,
+      "key": "crossref:id_digital_en",
+      "query_id": "id_digital_en",
+      "retrieved_at": "2026-10-26T17:36:47Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 21,
+      "http_status": 200,
+      "key": "epmc:ai_id_lang:2021-10-26:2021-12-31",
+      "query_id": "ai_id_lang",
+      "retrieved_at": "2026-10-26T17:28:55Z",
+      "returned": 21,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 102,
+      "http_status": 200,
+      "key": "epmc:ai_id_lang:2022-01-01:2022-12-31",
+      "query_id": "ai_id_lang",
+      "retrieved_at": "2026-10-26T17:28:57Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 110,
+      "http_status": 200,
+      "key": "epmc:ai_id_lang:2023-01-01:2023-12-31",
+      "query_id": "ai_id_lang",
+      "retrieved_at": "2026-10-26T17:28:58Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 136,
+      "http_status": 200,
+      "key": "epmc:ai_id_lang:2024-01-01:2024-12-31",
+      "query_id": "ai_id_lang",
+      "retrieved_at": "2026-10-26T17:29:00Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 308,
+      "http_status": 200,
+      "key": "epmc:ai_id_lang:2025-01-01:2025-12-31",
+      "query_id": "ai_id_lang",
+      "retrieved_at": "2026-10-26T17:29:04Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 288,
+      "http_status": 200,
+      "key": "epmc:ai_id_lang:2026-01-01:2026-10-26",
+      "query_id": "ai_id_lang",
+      "retrieved_at": "2026-10-26T17:29:05Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 1361954,
+      "http_status": 200,
+      "key": "crossref:ai_codeswitch_cr",
+      "query_id": "ai_codeswitch_cr",
+      "retrieved_at": "2026-10-26T17:36:49Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 1290540,
+      "http_status": 200,
+      "key": "crossref:ai_id_mh_cr",
+      "query_id": "ai_id_mh_cr",
+      "retrieved_at": "2026-10-26T17:36:50Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "ai_bahasa_code_switching",
+      "hit_count": 3562476,
+      "http_status": 200,
+      "key": "crossref:ai_id_llm_cr",
+      "query_id": "ai_id_llm_cr",
+      "retrieved_at": "2026-10-26T17:36:52Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "help_seeking",
+      "hit_count": 71,
+      "http_status": 200,
+      "key": "epmc:help_v3:2021-10-26:2021-12-31",
+      "query_id": "help_v3",
+      "retrieved_at": "2026-10-26T17:29:09Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "help_seeking",
+      "hit_count": 453,
+      "http_status": 200,
+      "key": "epmc:help_v3:2022-01-01:2022-12-31",
+      "query_id": "help_v3",
+      "retrieved_at": "2026-10-26T17:29:11Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "help_seeking",
+      "hit_count": 441,
+      "http_status": 200,
+      "key": "epmc:help_v3:2023-01-01:2023-12-31",
+      "query_id": "help_v3",
+      "retrieved_at": "2026-10-26T17:29:12Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "help_seeking",
+      "hit_count": 490,
+      "http_status": 200,
+      "key": "epmc:help_v3:2024-01-01:2024-12-31",
+      "query_id": "help_v3",
+      "retrieved_at": "2026-10-26T17:29:15Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "help_seeking",
+      "hit_count": 690,
+      "http_status": 200,
+      "key": "epmc:help_v3:2025-01-01:2025-12-31",
+      "query_id": "help_v3",
+      "retrieved_at": "2026-10-26T17:29:16Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "help_seeking",
+      "hit_count": 685,
+      "http_status": 200,
+      "key": "epmc:help_v3:2026-01-01:2026-10-26",
+      "query_id": "help_v3",
+      "retrieved_at": "2026-10-26T17:29:17Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "help_seeking",
+      "hit_count": 2597819,
+      "http_status": 200,
+      "key": "crossref:help_cr",
+      "query_id": "help_cr",
+      "retrieved_at": "2026-10-26T17:36:54Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "safety",
+      "hit_count": 8,
+      "http_status": 200,
+      "key": "epmc:safety_v3:2021-10-26:2021-12-31",
+      "query_id": "safety_v3",
+      "retrieved_at": "2026-10-26T17:29:20Z",
+      "returned": 8,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "safety",
+      "hit_count": 86,
+      "http_status": 200,
+      "key": "epmc:safety_v3:2022-01-01:2022-12-31",
+      "query_id": "safety_v3",
+      "retrieved_at": "2026-10-26T17:29:22Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "safety",
+      "hit_count": 141,
+      "http_status": 200,
+      "key": "epmc:safety_v3:2023-01-01:2023-12-31",
+      "query_id": "safety_v3",
+      "retrieved_at": "2026-10-26T17:29:23Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "safety",
+      "hit_count": 268,
+      "http_status": 200,
+      "key": "epmc:safety_v3:2024-01-01:2024-12-31",
+      "query_id": "safety_v3",
+      "retrieved_at": "2026-10-26T17:29:25Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "safety",
+      "hit_count": 705,
+      "http_status": 200,
+      "key": "epmc:safety_v3:2025-01-01:2025-12-31",
+      "query_id": "safety_v3",
+      "retrieved_at": "2026-10-26T17:29:37Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "safety",
+      "hit_count": 1293,
+      "http_status": 200,
+      "key": "epmc:safety_v3:2026-01-01:2026-10-26",
+      "query_id": "safety_v3",
+      "retrieved_at": "2026-10-26T17:29:38Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "safety",
+      "hit_count": 2439726,
+      "http_status": 200,
+      "key": "crossref:safety_cr",
+      "query_id": "safety_cr",
+      "retrieved_at": "2026-10-26T17:36:56Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 29,
+      "http_status": 200,
+      "key": "epmc:privacy_v3:2021-10-26:2021-12-31",
+      "query_id": "privacy_v3",
+      "retrieved_at": "2026-10-26T17:29:41Z",
+      "returned": 29,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 237,
+      "http_status": 200,
+      "key": "epmc:privacy_v3:2022-01-01:2022-12-31",
+      "query_id": "privacy_v3",
+      "retrieved_at": "2026-10-26T17:29:43Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 271,
+      "http_status": 200,
+      "key": "epmc:privacy_v3:2023-01-01:2023-12-31",
+      "query_id": "privacy_v3",
+      "retrieved_at": "2026-10-26T17:29:44Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 360,
+      "http_status": 200,
+      "key": "epmc:privacy_v3:2024-01-01:2024-12-31",
+      "query_id": "privacy_v3",
+      "retrieved_at": "2026-10-26T17:29:46Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 609,
+      "http_status": 200,
+      "key": "epmc:privacy_v3:2025-01-01:2025-12-31",
+      "query_id": "privacy_v3",
+      "retrieved_at": "2026-10-26T17:29:48Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 557,
+      "http_status": 200,
+      "key": "epmc:privacy_v3:2026-01-01:2026-10-26",
+      "query_id": "privacy_v3",
+      "retrieved_at": "2026-10-26T17:29:51Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 32,
+      "http_status": 200,
+      "key": "epmc:revocation_v3:2021-10-26:2021-12-31",
+      "query_id": "revocation_v3",
+      "retrieved_at": "2026-10-26T17:29:52Z",
+      "returned": 32,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 197,
+      "http_status": 200,
+      "key": "epmc:revocation_v3:2022-01-01:2022-12-31",
+      "query_id": "revocation_v3",
+      "retrieved_at": "2026-10-26T17:29:59Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 176,
+      "http_status": 200,
+      "key": "epmc:revocation_v3:2023-01-01:2023-12-31",
+      "query_id": "revocation_v3",
+      "retrieved_at": "2026-10-26T17:30:06Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 190,
+      "http_status": 200,
+      "key": "epmc:revocation_v3:2024-01-01:2024-12-31",
+      "query_id": "revocation_v3",
+      "retrieved_at": "2026-10-26T17:30:07Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 223,
+      "http_status": 200,
+      "key": "epmc:revocation_v3:2025-01-01:2025-12-31",
+      "query_id": "revocation_v3",
+      "retrieved_at": "2026-10-26T17:30:09Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 50,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 253,
+      "http_status": 200,
+      "key": "epmc:revocation_v3:2026-01-01:2026-10-26",
+      "query_id": "revocation_v3",
+      "retrieved_at": "2026-10-26T17:30:10Z",
+      "returned": 50,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "privacy_sharing_revocation",
+      "hit_count": 3209943,
+      "http_status": 200,
+      "key": "crossref:revocation_cr",
+      "query_id": "revocation_cr",
+      "retrieved_at": "2026-10-26T17:36:58Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2021-12-31",
+      "cap": 200,
+      "family": "working_age_adults",
+      "hit_count": 21,
+      "http_status": 200,
+      "key": "epmc:working_adults_digital:2021-10-26:2021-12-31:n200",
+      "query_id": "working_adults_digital",
+      "retrieved_at": "2026-10-26T19:06:47Z",
+      "returned": 21,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2022-01-01..2022-12-31",
+      "cap": 200,
+      "family": "working_age_adults",
+      "hit_count": 109,
+      "http_status": 200,
+      "key": "epmc:working_adults_digital:2022-01-01:2022-12-31:n200",
+      "query_id": "working_adults_digital",
+      "retrieved_at": "2026-10-26T19:06:49Z",
+      "returned": 109,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2023-01-01..2023-12-31",
+      "cap": 200,
+      "family": "working_age_adults",
+      "hit_count": 96,
+      "http_status": 200,
+      "key": "epmc:working_adults_digital:2023-01-01:2023-12-31:n200",
+      "query_id": "working_adults_digital",
+      "retrieved_at": "2026-10-26T19:06:51Z",
+      "returned": 96,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2024-01-01..2024-12-31",
+      "cap": 200,
+      "family": "working_age_adults",
+      "hit_count": 83,
+      "http_status": 200,
+      "key": "epmc:working_adults_digital:2024-01-01:2024-12-31:n200",
+      "query_id": "working_adults_digital",
+      "retrieved_at": "2026-10-26T19:06:53Z",
+      "returned": 83,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2025-01-01..2025-12-31",
+      "cap": 200,
+      "family": "working_age_adults",
+      "hit_count": 111,
+      "http_status": 200,
+      "key": "epmc:working_adults_digital:2025-01-01:2025-12-31:n200",
+      "query_id": "working_adults_digital",
+      "retrieved_at": "2026-10-26T19:06:55Z",
+      "returned": 111,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2026-01-01..2026-10-26",
+      "cap": 200,
+      "family": "working_age_adults",
+      "hit_count": 107,
+      "http_status": 200,
+      "key": "epmc:working_adults_digital:2026-01-01:2026-10-26:n200",
+      "query_id": "working_adults_digital",
+      "retrieved_at": "2026-10-26T19:06:56Z",
+      "returned": 107,
+      "source": "europepmc"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "working_age_adults",
+      "hit_count": 2475092,
+      "http_status": 200,
+      "key": "crossref:working_adults_cr",
+      "query_id": "working_adults_cr",
+      "retrieved_at": "2026-10-26T19:06:57Z",
+      "returned": 40,
+      "source": "crossref"
+    },
+    {
+      "bucket": "2021-10-26..2026-10-26",
+      "cap": 40,
+      "family": "working_age_adults",
+      "hit_count": 799119,
+      "http_status": 200,
+      "key": "crossref:id_dewasa_pekerja_cr",
+      "query_id": "id_dewasa_pekerja_cr",
+      "retrieved_at": "2026-10-26T19:06:59Z",
+      "returned": 40,
+      "source": "crossref"
+    }
+  ],
+  "requests_reused_from_v1_0": {
+    "crossref_search": 22,
+    "europepmc": 63,
+    "openalex": 476
+  },
+  "retrieval_window": {
+    "first": "2026-10-26T17:26:21Z",
+    "last": "2026-10-26T19:06:59Z"
+  },
+  "rights_policy": {
+    "committed": "bibliographic metadata, identifiers, dates, publication language, licence strings, abstract SHA-256 and availability; no abstract or full text",
+    "local_cache_only": "search responses including abstracts (data/research/corpus/.cache/v3_search/, gitignored); used only for machine screening",
+    "training_use": "none"
+  },
+  "run_dir": "data/research/v3_gap_search/2026-10-26_search-1.1",
+  "run_version": "sela-v3-gap-search-v1.1",
+  "sources": {
+    "crossref": {
+      "endpoint": "https://api.crossref.org/works",
+      "filter": "from-pub-date/until-pub-date, type:journal-article",
+      "pool": "public",
+      "rows_per_query": 40,
+      "sort": "relevance"
+    },
+    "europepmc": {
+      "endpoint": "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+      "filter": "(SRC:MED OR SRC:PMC) AND FIRST_PDATE per year bucket",
+      "per_bucket_cap": 50,
+      "per_query_caps": {
+        "a11y_core_v2": 200,
+        "checkin_core": 200,
+        "id_digital_mh": 200,
+        "id_health_data_law": 200,
+        "older_digital": 200,
+        "teen_digital": 200,
+        "working_adults_digital": 200
+      },
+      "resultType": "core"
+    },
+    "openalex": {
+      "budget_stop": null,
+      "endpoint": "https://api.openalex.org/works/doi:{doi}",
+      "lookups_planned": 450,
+      "reused_from_v1_0_cache": 476,
+      "use": "free singleton lookups for screened-in candidates (language, retraction signal), plus every v1.0 lookup for a DOI of this run; OpenAlex list/search queries were not used (the keyless daily budget was exhausted at 2026-10-26T16:49Z during run v1.0) and no API key was requested"
+    }
+  },
+  "status": "candidate_metadata_only_unreviewed",
+  "supersedes": {
+    "note": "run v1.0 and its screening v1.0 stay frozen and rebuild byte for byte from their own cache (`v3_gap_search.py --run sela-v3-gap-search-v1.0 build|screen`); this run never rewrites them",
+    "run_dir": "data/research/v3_gap_search/2026-10-26",
+    "run_version": "sela-v3-gap-search-v1.0"
+  },
+  "window_rule": "cutoff_date <= first publication date <= freeze_date (inclusive; partial dates must fit)",
+  "year_buckets": [
+    "2021-10-26..2021-12-31",
+    "2022-01-01..2022-12-31",
+    "2023-01-01..2023-12-31",
+    "2024-01-01..2024-12-31",
+    "2025-01-01..2025-12-31",
+    "2026-01-01..2026-10-26"
+  ]
+}

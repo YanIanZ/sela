@@ -10,6 +10,11 @@
       },
       "feature": "Filter biaya/waktu, opsi privasi dan langkah praktis",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R019": "review_eligibility_adults_only",
+        "R098": "adults_only_explicit"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R019": "included_title_abstract_v0",
         "R098": "included_title_abstract_v0"
@@ -18,7 +23,9 @@
         "R019",
         "R098"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 1,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -32,6 +39,11 @@
       },
       "feature": "Satu next step, ekspektasi konsultasi dan navigasi jelas",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R012": "adults_only_explicit",
+        "R038": "conflicting_explicit_ranges"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R012": "included_title_abstract_v0",
         "R038": "included_title_abstract_v0"
@@ -40,7 +52,9 @@
         "R012",
         "R038"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 2,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -54,13 +68,19 @@
       },
       "feature": "Handoff sampai ada respons dan recovery bila gagal",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R023": "adults_indexed_or_named_only"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R023": "included_title_abstract_v0"
       },
       "r_ids": [
         "R023"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 3,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -74,13 +94,19 @@
       },
       "feature": "Uji jalur pengguna; jangan wajibkan warm handoff untuk semua",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R027": "minors_possible_unverified"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R027": "included_title_abstract_v0"
       },
       "r_ids": [
         "R027"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 4,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -94,13 +120,19 @@
       },
       "feature": "Jangan berhenti pada edukasi; ukur penyelesaian langkah",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R047": "minors_possible_unverified"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R047": "included_title_abstract_v0"
       },
       "r_ids": [
         "R047"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 5,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -114,6 +146,11 @@
       },
       "feature": "Catatan bisa diperiksa, dikoreksi dan dibahas",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R031": "adults_only_explicit",
+        "R035": "includes_15_17_explicit"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R031": "included_title_abstract_v0",
         "R035": "included_title_abstract_v0"
@@ -122,7 +159,9 @@
         "R031",
         "R035"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 6,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -136,6 +175,11 @@
       },
       "feature": "Grant per penerima/versi/field; preview dan revoke",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R043": "not_stated",
+        "R045": "not_stated"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R043": "included_title_abstract_v0",
         "R045": "included_title_abstract_v0"
@@ -144,7 +188,9 @@
         "R043",
         "R045"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 7,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -158,6 +204,11 @@
       },
       "feature": "Eval ID/EN serta code-switching; sumber asli berdampingan",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R057": "not_stated",
+        "R058": "adults_indexed_or_named_only"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R057": "included_title_abstract_v0",
         "R058": "included_title_abstract_v0"
@@ -166,7 +217,9 @@
         "R057",
         "R058"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 8,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -180,6 +233,11 @@
       },
       "feature": "Grounding, pemeriksaan negasi dan human approval",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R065": "adults_indexed_or_named_only",
+        "R096": "not_stated"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R065": "needs_check",
         "R096": "included_title_abstract_v0"
@@ -188,9 +246,13 @@
         "R065",
         "R096"
       ],
+      "relies_on_needs_check_documented": [
+        "R065"
+      ],
       "relies_on_non_included": [
         "R065"
       ],
+      "relies_on_study_type_caution": [],
       "row": 9,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -204,6 +266,11 @@
       },
       "feature": "Rubrik completeness, correctness, clarity, utility; cek safety terpisah",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R068": "not_stated",
+        "R069": "not_stated"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R068": "included_title_abstract_v0",
         "R069": "included_title_abstract_v0"
@@ -212,7 +279,9 @@
         "R068",
         "R069"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 10,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -226,13 +295,19 @@
       },
       "feature": "Sederhanakan perjalanan; jangan memaksa AI atau delapan sesi",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R087": "includes_15_17_explicit"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R087": "included_title_abstract_v0"
       },
       "r_ids": [
         "R087"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 11,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -246,6 +321,11 @@
       },
       "feature": "Ukur task completion dan koreksi, bukan waktu chat",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R090": "not_stated",
+        "R092": "adults_indexed_or_named_only"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R090": "included_title_abstract_v0",
         "R092": "included_title_abstract_v0"
@@ -254,7 +334,9 @@
         "R090",
         "R092"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 12,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -268,6 +350,12 @@
       },
       "feature": "Batasi model sebagai drafting/navigation assistant",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R075": "adults_indexed_or_named_only",
+        "R081": "not_stated",
+        "R099": "not_stated"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R075": "included_title_abstract_v0",
         "R081": "included_title_abstract_v0",
@@ -278,7 +366,9 @@
         "R081",
         "R099"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 13,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -292,6 +382,11 @@
       },
       "feature": "Tetap evaluasi dan jangan menolak AI tanpa bukti",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R097": "not_stated",
+        "R100": "not_stated"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R097": "included_title_abstract_v0",
         "R100": "needs_check"
@@ -300,9 +395,13 @@
         "R097",
         "R100"
       ],
+      "relies_on_needs_check_documented": [
+        "R100"
+      ],
       "relies_on_non_included": [
         "R100"
       ],
+      "relies_on_study_type_caution": [],
       "row": 14,
       "section": "Peta bukti → keputusan produk",
       "source_doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md"
@@ -317,6 +416,12 @@
       },
       "feature": "Story Ledger and Meaning Lock",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R065": "adults_indexed_or_named_only",
+        "R069": "not_stated",
+        "R096": "not_stated"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R065": "needs_check",
         "R069": "included_title_abstract_v0",
@@ -327,9 +432,13 @@
         "R069",
         "R096"
       ],
+      "relies_on_needs_check_documented": [
+        "R065"
+      ],
       "relies_on_non_included": [
         "R065"
       ],
+      "relies_on_study_type_caution": [],
       "row": 1,
       "section": "Claim-to-feature evidence gate",
       "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
@@ -344,6 +453,14 @@
       },
       "feature": "Practical Next Step",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R012": "adults_only_explicit",
+        "R019": "review_eligibility_adults_only",
+        "R038": "conflicting_explicit_ranges",
+        "R047": "minors_possible_unverified",
+        "R098": "adults_only_explicit"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R012": "included_title_abstract_v0",
         "R019": "included_title_abstract_v0",
@@ -358,7 +475,9 @@
         "R047",
         "R098"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 2,
       "section": "Claim-to-feature evidence gate",
       "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
@@ -373,6 +492,12 @@
       },
       "feature": "Controlled disclosure",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R031": "adults_only_explicit",
+        "R043": "not_stated",
+        "R045": "not_stated"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R031": "included_title_abstract_v0",
         "R043": "included_title_abstract_v0",
@@ -383,7 +508,9 @@
         "R043",
         "R045"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 3,
       "section": "Claim-to-feature evidence gate",
       "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
@@ -398,6 +525,12 @@
       },
       "feature": "Handoff Receipt",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R023": "adults_indexed_or_named_only",
+        "R027": "minors_possible_unverified",
+        "R035": "includes_15_17_explicit"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R023": "included_title_abstract_v0",
         "R027": "included_title_abstract_v0",
@@ -408,7 +541,9 @@
         "R027",
         "R035"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 4,
       "section": "Claim-to-feature evidence gate",
       "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
@@ -423,6 +558,11 @@
       },
       "feature": "Bilingual parity",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R057": "not_stated",
+        "R058": "adults_indexed_or_named_only"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R057": "included_title_abstract_v0",
         "R058": "included_title_abstract_v0"
@@ -431,7 +571,9 @@
         "R057",
         "R058"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 5,
       "section": "Claim-to-feature evidence gate",
       "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
@@ -446,6 +588,12 @@
       },
       "feature": "Safety boundary",
       "missing_r_ids": [],
+      "r_id_age_band": {
+        "R075": "adults_indexed_or_named_only",
+        "R081": "not_stated",
+        "R099": "not_stated"
+      },
+      "r_id_reviewer_date_override": {},
       "r_id_screening_status": {
         "R075": "included_title_abstract_v0",
         "R081": "included_title_abstract_v0",
@@ -456,7 +604,9 @@
         "R081",
         "R099"
       ],
+      "relies_on_needs_check_documented": [],
       "relies_on_non_included": [],
+      "relies_on_study_type_caution": [],
       "row": 6,
       "section": "Claim-to-feature evidence gate",
       "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
@@ -577,10 +727,11 @@
     "source_doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
   },
   "inputs": {
-    "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md": "df41203c2c4fe643b3ddce07a2cd5cc4263ef3d417a2cd739759084b7ae7d199",
-    "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md": "6e115896fdd35a368cafa95bbe9e06b35447ad4790fabe735e27925cd34e5521"
+    "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md": "5e24acb7108de0d06f530788574bef211b9d7c4d1efd68d64013ee0fea07701a",
+    "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md": "6fdcc948cab6aee7ec77596235da569a02484da3dad2d68698b7e54c5afae13d"
   },
   "missing_r_ids": [],
   "note": "Design hypotheses copied from our own docs; mapping a paper to a feature is not causal validation of Sela.",
-  "pipeline_version": "1.1.0"
+  "pipeline_version": "1.2.0",
+  "v3_note": "age bands and cautions are machine-derived and unreviewed; a row backed only by adult evidence says nothing about ages 15-17"
 }

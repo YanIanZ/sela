@@ -1,0 +1,62 @@
+{
+  "abstracts_used": false,
+  "clinical_evidence_quality_evaluated": false,
+  "family_counts": {
+    "adjacent_methods_or_access": 412,
+    "ai_for_mental_health": 368,
+    "broad_search_not_prioritized": 3104,
+    "cross_domain_ai_methods": 75,
+    "indonesia_mental_health": 112,
+    "mental_health_care_pathway": 424,
+    "other_mental_health_context": 3074,
+    "privacy_in_mental_health": 11
+  },
+  "full_text_used": false,
+  "index_sha256": "33af6a6c5a1461da63dc13b482fcffffaf919788a2b8ea158622e80a878bcd59",
+  "limitations": [
+    "Relevance signals are heuristic lexical clues from title only; false positives and false negatives are expected.",
+    "High priority is not evidence quality, human approval, clinical safety or permission for model training.",
+    "The underlying 7580 candidates have strong 2025–2026 recency bias.",
+    "Only licensed full-text sources may later enter a content-based RAG index, after human appraisal."
+  ],
+  "llm_used": false,
+  "priority_counts": {
+    "deferred": 6218,
+    "high": 803,
+    "medium": 559
+  },
+  "queue_count": 400,
+  "queue_family_counts": {
+    "ai_for_mental_health": 75,
+    "cross_domain_ai_methods": 2,
+    "indonesia_mental_health": 8,
+    "mental_health_care_pathway": 288,
+    "other_mental_health_context": 27
+  },
+  "queue_priority_counts": {
+    "high": 363,
+    "medium": 37
+  },
+  "queue_sha256": "ab6040f881b044be32285e71c4496757659ee655c18e6dd72ddb0cf68e2a3d00",
+  "queue_year_counts": {
+    "2022": 1,
+    "2023": 7,
+    "2024": 63,
+    "2025": 180,
+    "2026": 149
+  },
+  "review_worksheet_count": 400,
+  "review_worksheet_sha256": "447ca9a4eae22cde1b2d0dd466c009af101974e79e3661e8fdbaad892157d059",
+  "screening_unit": "publication title only (plus year/identifiers for queue)",
+  "screening_version": "sela-title-screen-v1.0",
+  "source_count": 7580,
+  "source_file": "sela_research_candidates_7580.jsonl",
+  "source_sha256": "027644e28ffe2aa232397f328d4162efcb3347a5fb4423cf302d6aebb40cea31",
+  "year_counts": {
+    "2022": 3,
+    "2023": 25,
+    "2024": 185,
+    "2025": 2814,
+    "2026": 4553
+  }
+}

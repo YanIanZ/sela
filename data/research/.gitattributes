@@ -1,0 +1,12 @@
+# Research outputs are hashed over the exact bytes written with LF line endings
+# (screening manifest, corpus manifest, v3 gap-search manifest). Keep them LF on
+# every checkout so the recorded SHA-256 values verify (audit P1).
+*.csv   text eol=lf
+*.json  text eol=lf
+*.jsonl text eol=lf
+*.md    text eol=lf
+# Frozen copies of snapshot inputs: exact bytes, never converted on checkout.
+*.frozen -text
+# Compressed outputs (the v3 gap-search candidates.jsonl.gz, storage sela-jsonl-gzip-v1): exact bytes,
+# hashed as committed; never converted, diffed or merged as text.
+*.gz    binary

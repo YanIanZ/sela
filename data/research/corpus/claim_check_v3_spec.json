@@ -1,0 +1,1245 @@
+{
+  "authored_by": "AI research agent, 2026-10-26; unreviewed decomposition of doc 07/10 statements into checkable assertions. Revised 2026-10-26 after review: terms are matched in the public title as well as the abstract, and the 07-r11 wording issue was withdrawn (R087's title calls it a 'Termination Report').",
+  "how_to_read": "Each assertion lists terms that must all occur in a cited source's public title or abstract (case-insensitive regular expressions). support_mode 'any' = at least one cited source; 'all' = every cited source. expect 'absent' = the claim is that the sources do NOT cover something. agent_reading is a reading note written by the AI agent; it is not a human appraisal.",
+  "spec_version": "sela-claim-check-v3.1-spec",
+  "statements": [
+    {
+      "agent_reading": "Consistent. R098: qualitative interviews, 90 people aged 18-32 with depression, anxiety or bipolar disorder in Indonesia. R019: systematic review with narrative synthesis, ASEAN, participants 18 and over. Adults only.",
+      "assertions": [
+        {
+          "claim_part": "access is a barrier",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "access/availability",
+              "pattern": "\\baccess\\w*\\b|\\bavailability\\b"
+            },
+            {
+              "label": "barrier",
+              "pattern": "\\bbarriers?\\b"
+            }
+          ]
+        },
+        {
+          "claim_part": "cost is a barrier",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "cost/affordability",
+              "pattern": "\\bcosts?\\b|\\bexpensive\\b|\\baffordab\\w*"
+            }
+          ]
+        },
+        {
+          "claim_part": "stigma is a barrier",
+          "expect": "present",
+          "id": "a3",
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "stigma",
+              "pattern": "\\bstigma\\w*"
+            }
+          ]
+        },
+        {
+          "claim_part": "social factors",
+          "expect": "present",
+          "id": "a4",
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "social",
+              "pattern": "\\bsocial\\b"
+            }
+          ]
+        },
+        {
+          "claim_part": "design reports perceived barriers (not measured effects)",
+          "expect": "present",
+          "id": "a5",
+          "sources": [
+            "R098",
+            "R019"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "qualitative or narrative synthesis",
+              "pattern": "qualitative|narrative synthesis"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R098",
+        "R019"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r01",
+      "location": "table row 1",
+      "statement": "Akses, biaya, stigma dan faktor sosial memengaruhi pencarian bantuan",
+      "wording_issue": "'memengaruhi' (influence) reads as a causal effect; both sources report perceived barriers (qualitative interviews; a narrative-synthesis review). Suggested wording: 'dilaporkan sebagai hambatan'."
+    },
+    {
+      "agent_reading": "Consistent. R012: thematic analysis of open survey answers from university students in Ireland. R038: three usability-testing cycles with 26 participants. Neither measures help-seeking behaviour. University students (adults).",
+      "assertions": [
+        {
+          "claim_part": "people need a way into services",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R012",
+            "R038"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "how to access / entrance / finding support",
+              "pattern": "how to access|gaining entrance|find (?:appropriate )?support|access to suitable services"
+            }
+          ]
+        },
+        {
+          "claim_part": "understandable information about services",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R012"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "what to expect",
+              "pattern": "what to expect"
+            },
+            {
+              "label": "literacy",
+              "pattern": "literacy"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R012",
+        "R038"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r02",
+      "location": "table row 2",
+      "statement": "Pengguna membutuhkan cara masuk layanan dan informasi yang dapat dipahami"
+    },
+    {
+      "agent_reading": "Consistent, and doc 07's 'berasosiasi' is the correct reading. The abstract's conclusion says navigation 'improved' utilization and 'reduced' depression and anxiety, but the design is a retrospective, propensity-matched cohort of an employer-sponsored benefit described by the platform; that causal wording must not be quoted. Sponsorship and conflicts are not assessed here.",
+      "assertions": [
+        {
+          "claim_part": "care navigation associated with utilization/retention",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R023"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "care navigation",
+              "pattern": "care navigation"
+            },
+            {
+              "label": "associated",
+              "pattern": "\\bassociated\\b"
+            },
+            {
+              "label": "utilization/retention",
+              "pattern": "utili[sz]ation|retention"
+            }
+          ]
+        },
+        {
+          "claim_part": "US cohort",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R023"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "cohort",
+              "pattern": "\\bcohort\\b"
+            },
+            {
+              "label": "US",
+              "pattern": "\\bUS\\b|United States"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R023"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r03",
+      "location": "table row 3",
+      "statement": "Care navigation berasosiasi dengan penggunaan/retensi layanan lebih baik dalam kohort AS"
+    },
+    {
+      "agent_reading": "Consistent (OR 0.34, 95% CI 0.13-0.88, N=145; mixed-methods case study). The authors still conclude that the findings support warm handoffs, which is not the same reading. Ages are not stated in the abstract (MeSH: Adolescent); not evidence for adults.",
+      "assertions": [
+        {
+          "claim_part": "lower odds of attendance after in-person warm handoff vs traditional in-house referral",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R027"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "warm handoff",
+              "pattern": "warm handoff"
+            },
+            {
+              "label": "decreased odds",
+              "pattern": "decreased odds"
+            },
+            {
+              "label": "attendance",
+              "pattern": "attendance"
+            },
+            {
+              "label": "traditional in-house referral",
+              "pattern": "traditional in-house referral"
+            }
+          ]
+        },
+        {
+          "claim_part": "adolescent study",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R027"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "adolescents",
+              "pattern": "adolescen"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R027"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r04",
+      "location": "table row 4",
+      "statement": "Warm handoff tatap muka dikaitkan dengan odds attendance lebih rendah daripada referral internal tradisional pada studi remaja"
+    },
+    {
+      "agent_reading": "Consistent. N=130 Indonesian undergraduate students; the abstract states no ages, and the record's machine age band is minors_possible_unverified (MeSH also tags Adolescent), so this is not adult-only evidence by itself and not evidence for ages 15-17. Null for help-seeking intention and symptoms; acceptability high, feasibility lower.",
+      "assertions": [
+        {
+          "claim_part": "pilot RCT in Indonesia",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R047"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "pilot RCT",
+              "pattern": "pilot randomi[sz]ed controlled trial"
+            },
+            {
+              "label": "Indonesia",
+              "pattern": "Indonesia"
+            }
+          ]
+        },
+        {
+          "claim_part": "mental health literacy improved vs control",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R047"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "literacy improved more",
+              "pattern": "improved significantly more in mental health literacy"
+            }
+          ]
+        },
+        {
+          "claim_part": "no improvement in help-seeking intention vs control",
+          "expect": "present",
+          "id": "a3",
+          "sources": [
+            "R047"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "did not improve more: help-seeking",
+              "pattern": "did not improve more in[^.]*help-seeking intention"
+            }
+          ]
+        },
+        {
+          "claim_part": "no improvement in symptoms vs control",
+          "expect": "present",
+          "id": "a4",
+          "sources": [
+            "R047"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "did not improve more: symptoms",
+              "pattern": "did not improve more in[^.]*(?:PTSD|depression|anxiety)"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R047"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r05",
+      "location": "table row 5",
+      "statement": "Pilot RCT Indonesia memperbaiki literasi tetapi tidak memperbaiki help-seeking intention atau outcome gejala dibanding kontrol"
+    },
+    {
+      "agent_reading": "Partly. R031 (mixed methods, 18 young adults, mean age 21.7) supports it. R035 (co-design workshops, 24 people aged 16-31) supports the shared decision-making part, not engagement. R031's title says measurement-based care 'enhances engagement' on the basis of n=18 perceptions; that is not an effect.",
+      "assertions": [
+        {
+          "claim_part": "collaborative data review is a facilitator",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R031"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "collaborative data review",
+              "pattern": "collaborative data review"
+            }
+          ]
+        },
+        {
+          "claim_part": "understanding the purpose of collected data",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R031",
+            "R035"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "comprehension of data purpose",
+              "pattern": "comprehension of how collected data|understanding of why"
+            }
+          ]
+        },
+        {
+          "claim_part": "linked to engagement",
+          "expect": "present",
+          "id": "a3",
+          "note": "R035 links measurement-based care with shared decision-making, not with engagement",
+          "sources": [
+            "R031",
+            "R035"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "engagement",
+              "pattern": "\\bengag\\w*"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R031",
+        "R035"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r06",
+      "location": "table row 6",
+      "statement": "Pemahaman tujuan data dan review kolaboratif penting bagi keterlibatan"
+    },
+    {
+      "agent_reading": "Consistent. R045 is a system description (no users studied). R043 is a cross-sectional review of 115 Chinese apps' privacy policies; its conclusion that better compliance 'can significantly improve app quality and user engagement' rests on a correlation (r=0.354) and must not be reused as a causal claim.",
+      "assertions": [
+        {
+          "claim_part": "consent / user-controlled sharing",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R045",
+            "R043"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "consent or confirmation",
+              "pattern": "\\bconsent\\b|active user confirmation"
+            }
+          ]
+        },
+        {
+          "claim_part": "transparency",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R045",
+            "R043"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "transparency",
+              "pattern": "transparen"
+            }
+          ]
+        },
+        {
+          "claim_part": "concrete implementation",
+          "expect": "present",
+          "id": "a3",
+          "sources": [
+            "R045",
+            "R043"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "implementation",
+              "pattern": "implement\\w*"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R045",
+        "R043"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r07",
+      "location": "table row 7",
+      "statement": "Transparansi dan consent sharing memerlukan implementasi konkret"
+    },
+    {
+      "agent_reading": "Consistent. R057: Korean vs English psychiatric notes (one 7B model); R058: English, Spanish and Dutch. Neither covers Bahasa Indonesia or code-switching.",
+      "assertions": [
+        {
+          "claim_part": "performance differs by language",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R057",
+            "R058"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "language difference",
+              "pattern": "varied[^.]*language|by language|across languages"
+            }
+          ]
+        },
+        {
+          "claim_part": "demographic bias",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R058"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "age/gender",
+              "pattern": "age and gender|\\bgender\\b"
+            }
+          ]
+        },
+        {
+          "claim_part": "languages studied are not Indonesian",
+          "expect": "absent",
+          "id": "a3",
+          "sources": [
+            "R057",
+            "R058"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "Indonesian / Malay",
+              "pattern": "Indonesia|Bahasa|Malay"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R057",
+        "R058"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r08",
+      "location": "table row 8",
+      "statement": "Performa dan bias berubah menurut bahasa dan demografi"
+    },
+    {
+      "agent_reading": "Consistent. Both are clinician-facing summaries of EHR text (R096: radiology reports, patient questions, progress notes, dialogue; R065: hospital discharge summaries, 100 encounters, cross-sectional) judged by physicians. Nothing about summaries people write about themselves for a consultation. R065 is needs_check (date documented, inside window).",
+      "assertions": [
+        {
+          "claim_part": "promising (comparable or better than clinicians)",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R096",
+            "R065"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "equivalent/superior/comparable",
+              "pattern": "equivalent|superior|comparable"
+            }
+          ]
+        },
+        {
+          "claim_part": "errors / fabricated information",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R096",
+            "R065"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "errors or fabrication",
+              "pattern": "\\berrors?\\b|fabricat|hallucinat"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R096",
+        "R065"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r09",
+      "location": "table row 9",
+      "statement": "Summarization menjanjikan tetapi dapat menghasilkan error/confabulation"
+    },
+    {
+      "agent_reading": "Consistent. R069 validates PDSQI-9 with 7 physician raters (factors: organization, clarity, accuracy, utility). R068 is a scoping review of 30 retrospective studies. Doc 07's rubric names (completeness, correctness, clarity, utility) mix R096's and R069's dimensions; an adapted rubric is not a validated instrument.",
+      "assertions": [
+        {
+          "claim_part": "structured instrument or framework",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R069",
+            "R068"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "instrument/framework",
+              "pattern": "instrument|framework"
+            }
+          ]
+        },
+        {
+          "claim_part": "clinical (human) rating",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R069",
+            "R068"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "physician raters / human evaluation",
+              "pattern": "physician raters|human evaluation"
+            }
+          ]
+        },
+        {
+          "claim_part": "current evaluation is heterogeneous",
+          "expect": "present",
+          "id": "a3",
+          "sources": [
+            "R068"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "heterogeneous",
+              "pattern": "heterogeneous|inconsistent"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R069",
+        "R068"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r10",
+      "location": "table row 10",
+      "statement": "Evaluasi kualitas ringkasan perlu struktur dan penilaian klinis"
+    },
+    {
+      "agent_reading": "Consistent. The title calls the paper a 'Randomized Controlled Study Termination Report', so 'dihentikan' (stopped) is accurate; the abstract adds that of 96 eligible youths 8 expressed interest and 3 consented, and all 3 withdrew or were excluded, so no data could be evaluated. The authors offer possible reasons (perceived irrelevance of digital tools, complex protocols, privacy concerns); these are suggestions, not tested causes. Ages 12-18, Japan: one of the few register records whose accepted age range explicitly includes 15-17.",
+      "assertions": [
+        {
+          "claim_part": "no evaluable data",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R087"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "no evaluable data",
+              "pattern": "no evaluable data"
+            },
+            {
+              "label": "waiting list",
+              "pattern": "waiting"
+            }
+          ]
+        },
+        {
+          "claim_part": "engagement / recruitment problem",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R087"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "engagement",
+              "pattern": "engagement"
+            },
+            {
+              "label": "withdrew",
+              "pattern": "withdrew"
+            }
+          ]
+        },
+        {
+          "claim_part": "adolescents in Japan",
+          "expect": "present",
+          "id": "a3",
+          "sources": [
+            "R087"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "aged 12-18",
+              "pattern": "12-18"
+            },
+            {
+              "label": "Japan",
+              "pattern": "Japan"
+            }
+          ]
+        },
+        {
+          "claim_part": "the trial was stopped (termination report)",
+          "expect": "present",
+          "id": "a4",
+          "sources": [
+            "R087"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "termination",
+              "pattern": "\\bterminat\\w*"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R087"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r11",
+      "location": "table row 11",
+      "statement": "Trial chatbot waiting-list dihentikan tanpa data evaluable karena engagement/rekrutmen"
+    },
+    {
+      "agent_reading": "Consistent. R090 is a consensus statement with a systematic review; R092 is a secondary analysis of two smartphone RCTs (2,201 adults) and reports associations between symptom trajectory and adherence, not effects.",
+      "assertions": [
+        {
+          "claim_part": "engagement linked to outcomes",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R090",
+            "R092"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "engagement and outcomes",
+              "pattern": "engagement[^.]{0,80}outcomes?|outcomes?[^.]{0,80}engagement"
+            }
+          ]
+        },
+        {
+          "claim_part": "adherence/retention indicators",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R092"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "adherence/retention",
+              "pattern": "adherence|retention"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R090",
+        "R092"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r12",
+      "location": "table row 12",
+      "statement": "Engagement harus dikaitkan dengan tujuan dan outcomes"
+    },
+    {
+      "agent_reading": "Consistent. Vignette and simulated-scenario studies of model responses (R099 also a mapping review), not user outcomes; none in Indonesian or with code-switching.",
+      "assertions": [
+        {
+          "claim_part": "inappropriate or inadequate responses",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R099",
+            "R075",
+            "R081"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "inappropriate/inadequate/unsuitable",
+              "pattern": "inappropriate|inadequate|unsuitab"
+            }
+          ]
+        },
+        {
+          "claim_part": "in risky situations (crisis, suicidal, delusion)",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R099",
+            "R075",
+            "R081"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "crisis/suicidal/delusional",
+              "pattern": "crisis|suicid|delusion"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R099",
+        "R075",
+        "R081"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r13",
+      "location": "table row 13",
+      "statement": "Chatbot dapat gagal dalam respons berisiko dan praktik terapeutik"
+    },
+    {
+      "agent_reading": "R097 (meta-analysis of 15 RCTs) shows symptom reduction (depression g 0.64, distress g 0.70) but no significant change in overall well-being; effects were larger in elderly populations, which is a signal for older adults, not evidence about Sela. R100 could not be checked against an open abstract.",
+      "assertions": [
+        {
+          "claim_part": "benefit signal",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R097",
+            "R100"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "reduced depression symptoms",
+              "pattern": "significantly reduce symptoms of depression|reduc\\w* (?:in )?(?:depressi|symptom)"
+            }
+          ]
+        },
+        {
+          "claim_part": "nuance: no well-being effect in the meta-analysis",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R097"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "no significant well-being improvement",
+              "pattern": "no significant improvement in overall psychological well-being"
+            }
+          ]
+        },
+        {
+          "claim_part": "R100 abstract checked",
+          "expect": "present",
+          "id": "a3",
+          "note": "no open abstract (NEJM AI not in Europe PMC; no Crossref abstract; landing page blocked)",
+          "sources": [
+            "R100"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "randomized",
+              "pattern": "randomi[sz]ed"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R097",
+        "R100"
+      ],
+      "doc": "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md",
+      "id": "07-r14",
+      "location": "table row 14",
+      "statement": "Ada sinyal manfaat pada intervensi terstruktur yang diteliti"
+    },
+    {
+      "agent_reading": "Consistent (R065 counts omissions and hallucinations; R096 categorises fabricated information). 'Synthetic texts differ from live care' is a design caution, not a finding of these sources.",
+      "assertions": [
+        {
+          "claim_part": "omissions",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R065",
+            "R069",
+            "R096"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "omission",
+              "pattern": "omission|omit"
+            }
+          ]
+        },
+        {
+          "claim_part": "hallucination / fabrication",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R065",
+            "R069",
+            "R096"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "hallucination/fabrication",
+              "pattern": "hallucinat|fabricat"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R065",
+        "R069",
+        "R096"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g1",
+      "location": "claim-to-feature gate: Story Ledger and Meaning Lock",
+      "statement": "Summaries can omit details and hallucinate; synthetic texts differ from live care"
+    },
+    {
+      "agent_reading": "Consistent (R047).",
+      "assertions": [
+        {
+          "claim_part": "literacy improved, help-seeking intention did not",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R047"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "literacy improved",
+              "pattern": "improve mental health literacy|improved significantly more in mental health literacy"
+            },
+            {
+              "label": "help-seeking not improved",
+              "pattern": "did not improve more in[^.]*help-seeking"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R012",
+        "R019",
+        "R038",
+        "R047",
+        "R098"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g2",
+      "location": "claim-to-feature gate: Practical Next Step",
+      "statement": "Literacy gains may not translate to help-seeking"
+    },
+    {
+      "agent_reading": "Not supported by the cited sources: the statement is a sound design caution, but none of R031, R043 or R045 measures whether people understand consent. R043 reports that 26% of 115 apps did not require active confirmation of the privacy policy. Treat as a declared evidence gap.",
+      "assertions": [
+        {
+          "claim_part": "a cited source measures consent comprehension",
+          "expect": "present",
+          "id": "a1",
+          "note": "none of the cited sources measures consent comprehension",
+          "sources": [
+            "R031",
+            "R043",
+            "R045"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "consent comprehension",
+              "pattern": "consent comprehension|comprehension of (?:the )?consent|understand\\w* (?:of )?(?:the )?consent"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R031",
+        "R043",
+        "R045"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g3",
+      "location": "claim-to-feature gate: Controlled disclosure",
+      "statement": "Consent comprehension is not established by checking a box"
+    },
+    {
+      "agent_reading": "Consistent: R023 (US employer-benefit cohort, association) and R027 (adolescent clinic, lower attendance after warm handoff). Different populations and settings.",
+      "assertions": [
+        {
+          "claim_part": "a positive association",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R023"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "increased utilization",
+              "pattern": "increased therapy utili[sz]ation|improved mental healthcare utili[sz]ation"
+            }
+          ]
+        },
+        {
+          "claim_part": "a negative finding",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R027"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "decreased odds of attendance",
+              "pattern": "decreased odds of attendance"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R023",
+        "R027",
+        "R035"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g4",
+      "location": "claim-to-feature gate: Handoff Receipt",
+      "statement": "Referral studies have mixed results and specific care contexts"
+    },
+    {
+      "agent_reading": "Consistent. R058 adds English, Spanish and Dutch (not Korean).",
+      "assertions": [
+        {
+          "claim_part": "English/Korean evidence",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R057"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "Korean",
+              "pattern": "Korean"
+            },
+            {
+              "label": "English",
+              "pattern": "English"
+            }
+          ]
+        },
+        {
+          "claim_part": "no Indonesian-language evidence in the cited sources",
+          "expect": "absent",
+          "id": "a2",
+          "sources": [
+            "R057",
+            "R058"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "Indonesian / Malay",
+              "pattern": "Indonesia|Bahasa|Malay"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R057",
+        "R058"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g5",
+      "location": "claim-to-feature gate: Bilingual parity",
+      "statement": "Evidence from English/Korean may not transfer to Bahasa Indonesia"
+    },
+    {
+      "agent_reading": "The model-safety part is consistent. 'Deterministic checks miss some variants' describes Sela's own lexicon, which these sources do not test.",
+      "assertions": [
+        {
+          "claim_part": "model safety not established",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R075",
+            "R081",
+            "R099"
+          ],
+          "support_mode": "all",
+          "terms": [
+            {
+              "label": "safety not established",
+              "pattern": "has not been evaluated|underexplored|unsuitab|may not address|should not replace"
+            }
+          ]
+        },
+        {
+          "claim_part": "deterministic checks miss variants",
+          "expect": "present",
+          "id": "a2",
+          "note": "this part is about Sela's own rules, not a finding of these sources",
+          "sources": [
+            "R075",
+            "R081",
+            "R099"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "rule/keyword detection misses",
+              "pattern": "keyword|rule-based|lexicon"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R075",
+        "R081",
+        "R099"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-g6",
+      "location": "claim-to-feature gate: Safety boundary",
+      "statement": "Deterministic checks miss some variants; model safety is not proven"
+    },
+    {
+      "agent_reading": "Consistent (R019 is this review; DOI 10.1177/00207640251367289).",
+      "assertions": [
+        {
+          "claim_part": "three barrier groups",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "R019"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "social and cultural",
+              "pattern": "social and cultural"
+            },
+            {
+              "label": "personal",
+              "pattern": "personal factors"
+            },
+            {
+              "label": "structural",
+              "pattern": "structural factors"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "R019"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-c1",
+      "location": "design conclusion 1",
+      "statement": "The ASEAN-focused systematic review by Syafitri et al. describes social/cultural, personal and structural barriers"
+    },
+    {
+      "agent_reading": "Consistent. The npj Digital Medicine scoping review (16 studies) is out of the register; the World Psychiatry review is register record R070 (160 studies, 2020-2024), which doc 10 cites by DOI without its R-id. Both DOIs resolve.",
+      "assertions": [
+        {
+          "claim_part": "non-standardised evaluation (npj Digital Medicine scoping review)",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "npj_dm_scoping_review"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "non-standardized / ad-hoc",
+              "pattern": "non-standardized|ad-hoc"
+            }
+          ]
+        },
+        {
+          "claim_part": "few clinical efficacy tests (World Psychiatry review = register record R070, cited by DOI only)",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R070"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "only 16% of LLM studies efficacy-tested",
+              "pattern": "only 16% of LLM studies"
+            },
+            {
+              "label": "critical gap",
+              "pattern": "critical gap"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "npj_dm_scoping_review",
+        "R070"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-c2",
+      "location": "design conclusion 2",
+      "statement": "Reviews of generative LLMs in mental-health contexts describe sparse reliable clinical evaluation and notable gaps"
+    },
+    {
+      "agent_reading": "Consistent. The Stanford item is a news story, not peer reviewed; cite R099 instead. The Nature Medicine audit used simulated users with frontier chatbots (including Claude, ChatGPT, Gemini, Grok, Llama); it reports that concerning behaviour was widespread, though reduced in newer models, and accumulated over turns.",
+      "assertions": [
+        {
+          "claim_part": "multi-turn, cumulative risk (Nature Medicine 2026)",
+          "expect": "present",
+          "id": "a1",
+          "sources": [
+            "nature_medicine_2026_audit"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "multi-turn",
+              "pattern": "multi-turn"
+            },
+            {
+              "label": "accumulated over turns",
+              "pattern": "accumulated over turns"
+            }
+          ]
+        },
+        {
+          "claim_part": "failure modes in therapy chatbots (peer-reviewed paper behind the Stanford news item)",
+          "expect": "present",
+          "id": "a2",
+          "sources": [
+            "R099"
+          ],
+          "support_mode": "any",
+          "terms": [
+            {
+              "label": "stigma / inappropriate responses",
+              "pattern": "stigma|inappropriately"
+            }
+          ]
+        }
+      ],
+      "cited": [
+        "nature_medicine_2026_audit",
+        "R099"
+      ],
+      "doc": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md",
+      "id": "10-c5",
+      "location": "design conclusion 5",
+      "statement": "A 2026 Nature Medicine study on auditing chatbot behavior emphasizes cumulative interactions, and a 2025 Stanford investigation documents failure modes in AI therapy chatbots"
+    }
+  ]
+}
