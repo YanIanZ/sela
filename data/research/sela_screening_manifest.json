@@ -45,6 +45,8 @@
     "2025": 180,
     "2026": 149
   },
+  "review_worksheet_count": 400,
+  "review_worksheet_sha256": "447ca9a4eae22cde1b2d0dd466c009af101974e79e3661e8fdbaad892157d059",
   "screening_unit": "publication title only (plus year/identifiers for queue)",
   "screening_version": "sela-title-screen-v1.0",
   "source_count": 7580,
