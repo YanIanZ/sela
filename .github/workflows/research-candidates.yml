@@ -1,0 +1,33 @@
+name: Sela research candidate collection
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/research/collect_europepmc.py'
+      - 'tests/research/test_collect_europepmc.py'
+      - '.github/workflows/research-candidates.yml'
+permissions:
+  contents: read
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test collector (offline fixtures only)
+        run: python -m unittest discover -s tests/research -p 'test_*.py'
+      - name: Collect 5000 unreviewed bibliographic candidates
+        run: python scripts/research/collect_europepmc.py --target 5000 --page-size 100 --pause 0.5
+      - name: Upload collection data and manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sela-research-candidates
+          path: |
+            data/research/sela_candidates.jsonl
+            data/research/sela_candidates_manifest.json
+          if-no-files-found: warn
+          retention-days: 14
