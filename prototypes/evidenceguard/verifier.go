@@ -19,51 +19,51 @@ const Model = "claude-sonnet-5-5"
 const apiURL = "https://api.anthropic.com/v1/messages"
 
 var (
-	ErrInvalidInput = errors.New("evidenceguard: invalid synthetic input or consent")
-	ErrUnavailable = errors.New("evidenceguard: verifier unavailable")
+	ErrInvalidInput    = errors.New("evidenceguard: invalid synthetic input or consent")
+	ErrUnavailable     = errors.New("evidenceguard: verifier unavailable")
 	ErrInvalidResponse = errors.New("evidenceguard: invalid verifier response")
 )
 
 type Evidence struct {
-	ID string `json:"id"`
+	ID    string `json:"id"`
 	Quote string `json:"quote"`
 }
 
 type Claim struct {
-	ID string `json:"id"`
-	Text string `json:"text"`
+	ID          string   `json:"id"`
+	Text        string   `json:"text"`
 	EvidenceIDs []string `json:"evidence_ids"`
 }
 
 type Input struct {
-	Synthetic bool `json:"synthetic"`
-	VerificationConsent bool `json:"verification_consent"`
-	FixtureVersion string `json:"fixture_version"`
-	BriefVersion int `json:"brief_version"`
-	Evidence []Evidence `json:"evidence"`
-	Claims []Claim `json:"claims"`
+	Synthetic           bool       `json:"synthetic"`
+	VerificationConsent bool       `json:"verification_consent"`
+	FixtureVersion      string     `json:"fixture_version"`
+	BriefVersion        int        `json:"brief_version"`
+	Evidence            []Evidence `json:"evidence"`
+	Claims              []Claim    `json:"claims"`
 }
 
 type Finding struct {
-	ClaimID string `json:"claim_id"`
-	Status string `json:"status"` // supported | contradicted | insufficient_evidence
+	ClaimID     string   `json:"claim_id"`
+	Status      string   `json:"status"` // supported | contradicted | insufficient_evidence
 	EvidenceIDs []string `json:"evidence_ids"`
-	Reason string `json:"reason"`
+	Reason      string   `json:"reason"`
 }
 
 type Report struct {
-	Provider string `json:"provider"`
-	Model string `json:"model"`
-	FixtureVersion string `json:"fixture_version"`
-	BriefVersion int `json:"brief_version"`
-	ReviewStatus string `json:"review_status"` // model_supported | needs_human_review
-	Findings []Finding `json:"findings"`
+	Provider       string    `json:"provider"`
+	Model          string    `json:"model"`
+	FixtureVersion string    `json:"fixture_version"`
+	BriefVersion   int       `json:"brief_version"`
+	ReviewStatus   string    `json:"review_status"` // model_supported | needs_human_review
+	Findings       []Finding `json:"findings"`
 	// A "model_supported" report is NOT independent verification of clinical truth.
 }
 
 type Client struct {
-	apiKey string
-	endpoint string
+	apiKey     string
+	endpoint   string
 	httpClient *http.Client
 }
 
@@ -72,10 +72,10 @@ func New(apiKey string) (*Client, error) {
 		return nil, ErrUnavailable
 	}
 	return &Client{
-		apiKey: apiKey,
+		apiKey:   apiKey,
 		endpoint: apiURL,
 		httpClient: &http.Client{
-			Timeout: 12 * time.Second,
+			Timeout:       12 * time.Second,
 			CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 		},
 	}, nil
@@ -116,18 +116,18 @@ func validate(in Input) error {
 
 func responseSchema() map[string]any {
 	finding := map[string]any{
-		"type": "object",
+		"type":                 "object",
 		"additionalProperties": false,
 		"properties": map[string]any{
-			"claim_id": map[string]any{"type": "string"},
-			"status": map[string]any{"type": "string", "enum": []string{"supported", "contradicted", "insufficient_evidence"}},
+			"claim_id":     map[string]any{"type": "string"},
+			"status":       map[string]any{"type": "string", "enum": []string{"supported", "contradicted", "insufficient_evidence"}},
 			"evidence_ids": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-			"reason": map[string]any{"type": "string"},
+			"reason":       map[string]any{"type": "string"},
 		},
 		"required": []string{"claim_id", "status", "evidence_ids", "reason"},
 	}
 	return map[string]any{
-		"type": "object",
+		"type":                 "object",
 		"additionalProperties": false,
 		"properties": map[string]any{
 			"findings": map[string]any{"type": "array", "items": finding},
@@ -159,10 +159,10 @@ func (c *Client) Verify(ctx context.Context, in Input) (Report, error) {
 		return Report{}, ErrInvalidInput
 	}
 	payload := map[string]any{
-		"model": Model,
+		"model":      Model,
 		"max_tokens": 1000,
-		"system": systemPrompt,
-		"messages": []map[string]string{{"role": "user", "content": string(userJSON)}},
+		"system":     systemPrompt,
+		"messages":   []map[string]string{{"role": "user", "content": string(userJSON)}},
 		"output_config": map[string]any{
 			"format": map[string]any{"type": "json_schema", "schema": responseSchema()},
 		},
@@ -188,9 +188,9 @@ func (c *Client) Verify(ctx context.Context, in Input) (Report, error) {
 		return Report{}, fmt.Errorf("%w: HTTP %d", ErrUnavailable, resp.StatusCode)
 	}
 	var message struct {
-		Model string `json:"model"`
+		Model      string `json:"model"`
 		StopReason string `json:"stop_reason"`
-		Content []struct {
+		Content    []struct {
 			Type string `json:"type"`
 			Text string `json:"text"`
 		} `json:"content"`
@@ -215,7 +215,9 @@ func (c *Client) Verify(ctx context.Context, in Input) (Report, error) {
 	knownClaims := make(map[string]map[string]bool)
 	for _, claim := range in.Claims {
 		refs := make(map[string]bool)
-		for _, id := range claim.EvidenceIDs { refs[id] = true }
+		for _, id := range claim.EvidenceIDs {
+			refs[id] = true
+		}
 		knownClaims[claim.ID] = refs
 	}
 	seen := make(map[string]bool)
@@ -228,7 +230,9 @@ func (c *Client) Verify(ctx context.Context, in Input) (Report, error) {
 		}
 		switch f.Status {
 		case "supported":
-			if len(f.EvidenceIDs) < 1 { return Report{}, ErrInvalidResponse }
+			if len(f.EvidenceIDs) < 1 {
+				return Report{}, ErrInvalidResponse
+			}
 		case "contradicted", "insufficient_evidence":
 			state = "needs_human_review"
 		default:
@@ -236,17 +240,19 @@ func (c *Client) Verify(ctx context.Context, in Input) (Report, error) {
 		}
 		referenced := make(map[string]bool)
 		for _, id := range f.EvidenceIDs {
-			if !refs[id] || referenced[id] { return Report{}, ErrInvalidResponse }
+			if !refs[id] || referenced[id] {
+				return Report{}, ErrInvalidResponse
+			}
 			referenced[id] = true
 		}
 		seen[f.ClaimID] = true
 	}
 	return Report{
-		Provider: "anthropic",
-		Model: Model,
+		Provider:       "anthropic",
+		Model:          Model,
 		FixtureVersion: in.FixtureVersion,
-		BriefVersion: in.BriefVersion,
-		ReviewStatus: state,
-		Findings: draft.Findings,
+		BriefVersion:   in.BriefVersion,
+		ReviewStatus:   state,
+		Findings:       draft.Findings,
 	}, nil
 }
