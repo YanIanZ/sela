@@ -35,6 +35,9 @@ type clause struct {
 	scopes   []span // text attributed to a third party
 	hidden   []span // frames and attributed text, sorted and merged
 	shared   bool   // "juga"/"too" inside attributed indirect speech
+	// lastShared holds, per segment, the start of its last "juga"/"too"
+	// (-1: none); filled in lazily by shape.sharedAfter.
+	lastShared []int
 }
 
 // denialSpan is a segment recognised as an explicit whole-clause denial.
@@ -58,6 +61,20 @@ type shape struct {
 
 	adoptionKnown bool
 	adoption      bool
+	// markers caches markersApply: 0 unknown, 1 no, 2 yes.
+	markers uint8
+}
+
+// markersApply reports whether context markers may discard matches in this
+// text (see the package function markersApply).
+func (c *shape) markersApply() bool {
+	if c.markers == 0 {
+		c.markers = 1
+		if markersApply(c.text) {
+			c.markers = 2
+		}
+	}
+	return c.markers == 2
 }
 
 func analyse(text string) *shape {
@@ -103,14 +120,331 @@ func (c *shape) adopted() bool {
 		}
 		for _, seg := range cl.segments {
 			masked := strings.TrimSpace(maskSpans(c.text, seg, cl.hidden))
-			if masked != "" && adoptionRe.MatchString(masked) {
+			if masked != "" && adopts(masked) {
 				c.adoption = true
+				return true
+			}
+		}
+		// "i do, too" and "me, too" put a comma inside the form.
+		if len(cl.segments) > 1 && commaAdoptionRe.MatchString(maskSpans(c.text, cl.span, cl.hidden)) {
+			c.adoption = true
+			return true
+		}
+	}
+	return false
+}
+
+// adopts reports whether the speaker's own words s (one comma segment with
+// attributed text masked) take up reported risk language: a full form of
+// adoptionRe ("me too", "same here", "pengen nyusul", "kepikiran buat
+// ngelakuin hal yang sama", "I want to too"), or a short form of
+// adoptionCoreRe that its continuation keeps one (see adoptionTail):
+//   - "aku juga", "gw jg", "aku pun", "saya juga" are adoption unless an
+//     ordinary continuation follows ("aku juga nonton beritanya", "aku pun
+//     kaget"; see ordinaryAfterJuga): the words also mean "I also ...", so
+//     an unlisted continuation takes the safer path;
+//   - "aku sama", "so am I", "I'm the same", "me to", "same" opening its
+//     segment and an elliptical wish ("aku pengen", "I want to") are
+//     adoption when nothing but trailing words follows them (laughter,
+//     emoticons, emoji, particles, time and degree adverbs: "aku sama
+//     wkwk", "so am I :(", "aku pengen banget"; see trailingWords), a listed
+//     follower ("aku sama kayak dia"), or for the English forms a
+//     preposition or conjunction ("so am I at night"); before any other
+//     word they are ordinary ("aku sama dia", "I'm the same age", "aku
+//     pengen makan"). A negated wish is never adoption ("aku nggak pengen").
+//
+// Each tail scan stops at the first content word, so the work is linear.
+func adopts(s string) bool {
+	if adoptionRe.MatchString(s) {
+		return true
+	}
+	for _, loc := range adoptionCoreRe.FindAllStringIndex(s, -1) {
+		m := s[loc[0]:loc[1]]
+		kind := coreKind(m)
+		if kind == coreWish && negatedWish(s, loc[0]) {
+			continue // "aku nggak pengen", "I don't want to"
+		}
+		if adoptionTail(s[loc[1]:], kind) {
+			return true
+		}
+	}
+	for _, loc := range adoptionTrailRe.FindAllStringIndex(s, -1) {
+		if adoptionTail(s[loc[1]:], coreTrail) {
+			return true
+		}
+	}
+	return false
+}
+
+// adoptionStart returns the offset in unquoted direct speech s of the first
+// adoption form after its opening (see adopts), or -1: "me too", "so do I"
+// or "aku juga wkwk" after the quoted words are the speaker's ("lirik
+// lagunya: aku ingin mati so do i lol"). An elliptical wish is left to the
+// quoted person ("temanku bilang: aku capek pengen").
+func adoptionStart(s string) int {
+	best := -1
+	for _, loc := range adoptionRe.FindAllStringIndex(s, -1) {
+		if loc[0] > 0 {
+			best = loc[0]
+			break
+		}
+	}
+	for _, loc := range adoptionCoreRe.FindAllStringIndex(s, -1) {
+		if best >= 0 && loc[0] >= best {
+			break
+		}
+		kind := coreKind(s[loc[0]:loc[1]])
+		if loc[0] > 0 && kind != coreWish && adoptionTail(s[loc[1]:], kind) {
+			best = loc[0]
+			break
+		}
+	}
+	for _, loc := range adoptionTrailRe.FindAllStringIndex(s, -1) {
+		if best >= 0 && loc[0] >= best {
+			break
+		}
+		if loc[0] > 0 && adoptionTail(s[loc[1]:], coreTrail) {
+			return loc[0]
+		}
+	}
+	return best
+}
+
+// The kinds of short adoption forms (see adopts).
+const (
+	coreJuga    = iota // "aku juga", "aku pun"
+	coreSama           // "aku sama", "aku juga sama"
+	coreEnglish        // "so am I", "I'm the same", "me to", "same"
+	coreWish           // an elliptical "aku pengen", "I want to"
+	coreTrail          // "gw banget", "kayak aku", "big mood", "I'm next": trailing words only
+)
+
+func coreKind(m string) int {
+	w := firstWord(m)
+	switch {
+	case speechWishes[w] || w == "want":
+		return coreWish
+	case strings.HasSuffix(m, "sama"):
+		return coreSama
+	case corePronouns[w]:
+		return coreJuga
+	}
+	for p := range corePronouns {
+		if rest, ok := strings.CutPrefix(w, p); ok && (rest == "juga" || rest == "jg" || rest == "jga" || rest == "pun") {
+			return coreJuga // "akupun"
+		}
+	}
+	return coreEnglish
+}
+
+// corePronouns are the first-person pronouns of the Indonesian short forms,
+// chat spellings included ("aq juga", "ak juga", "w juga", "sy juga").
+var corePronouns = setOf("aku saya gue gua gw ane ku aq ak w sy gwe")
+
+// negatedWish reports whether a negator comes right before the wish at i
+// ("aku nggak pengen", "i don't want to", "i do not wanna").
+func negatedWish(s string, i int) bool {
+	w, ws := tokenBefore(s, i)
+	if w == "i" {
+		w, ws = tokenBefore(s, ws)
+	}
+	switch {
+	case idNegators[w], w == "don't", w == "dont", w == "never", w == "not", w == "didn't", w == "won't",
+		w == "doesn't", w == "no", w == "jangan", w == "bukan":
+		return true
+	case w == "do" || w == "did":
+		n, _ := tokenBefore(s, ws)
+		return n == "not"
+	}
+	return false
+}
+
+// adoptionTail reports whether the text after a short adoption form of the
+// given kind keeps it adoption (see adopts). Laughter, an emoticon, an
+// emoji, a dash or a time adverb right after the form closes it, so any
+// words after that are a new thought ("so am i lol idk what to do", "i'm the
+// same :( aku juga udah tahu", "so am I lately ..."), and so does a pronoun
+// after an English form ("so am i i guess") or an Indonesian pronoun after a
+// trailing-only form ("gw banget aku juga ..."); an elliptical wish is not
+// closed this way ("aku pengen banget bantu dia" has an object).
+func adoptionTail(rest string, kind int) bool {
+	if kind == coreJuga {
+		return jugaTail(rest)
+	}
+	closed := false
+	for i := 0; i < len(rest); {
+		if !isLetter(rest[i]) {
+			closed = closed || closesForm(rest[i])
+			i++
+			continue
+		}
+		j := i
+		for j < len(rest) && (isLetter(rest[j]) || rest[j] == '\'' || rest[j] == '-') {
+			j++
+		}
+		w := rest[i:j]
+		switch {
+		case laughter(w), laughterWords[w], closingAdverbs[w]:
+			closed = true
+			i = j
+			continue
+		case trailingWords[w]:
+			i = j
+			continue
+		case closed && kind != coreWish:
+			return true
+		case kind == coreSama:
+			return samaFollowers[w]
+		case kind == coreEnglish:
+			return englishContinuations[w] || corePronouns[w] || w == "i"
+		case kind == coreTrail:
+			// An Indonesian pronoun starts a new clause ("gw banget aku
+			// juga ..."); "i feel that i should help her" is an opinion.
+			return idPronounsNew[w]
+		}
+		return false
+	}
+	return true
+}
+
+// closesForm reports whether byte c, after a short adoption form, closes it:
+// an emoticon, an emoji, a dash or other symbol, not a space or an
+// apostrophe. (A hyphen inside a word is read with the word.)
+func closesForm(c byte) bool { return strings.IndexByte(" \t\n'", c) < 0 }
+
+// idPronounsNew are the Indonesian first-person pronouns that start a new
+// clause after a trailing-only form.
+var idPronounsNew = setOf("aku saya gue gua gw ane aq ak sy gwe")
+
+// closingAdverbs are the time adverbs that close a short adoption form.
+var closingAdverbs = setOf("sekarang skrg skrng akhir-akhir belakangan lately rn now today tonight kemarin kemaren " +
+	"tadi sometimes kadang kadang-kadang")
+
+// laughterWords are written laughter and sighs that laughter does not
+// recognise by shape.
+var laughterWords = setOf("lol lmao lmfao rofl haha hehe huhu hiks hix xixi wkwk hmm huft hufft")
+
+// jugaTail reports whether the text after "aku juga"/"aku pun" keeps it
+// adoption. Only an ordinary word right after the form makes it an ordinary
+// "I also ..." ("aku juga nonton beritanya", "aku pun kaget"; see
+// ordinaryAfterJuga): particles and laughter are skipped, but after an
+// aspect, time or degree word ("udah", "lagi", "kadang") only a knowing or
+// perceiving verb is ordinary ("aku juga udah tahu"), and after a negator or
+// limiter ("nggak", "cuma", "ada", "punya", "baru") only one that such a
+// verb follows ("aku juga nggak tahu"). A continuation with a wish, thought,
+// intent, hopelessness or death word is never ordinary ("aku juga udah
+// nggak sanggup", "aku juga takut aku bakal begitu", "aku juga punya
+// rencana"; only the next jugaWindow bytes are read, so a segment with many
+// forms stays linear). Any other word takes the safer path.
+func jugaTail(rest string) bool {
+	if jugaRiskRe.MatchString(rest[:min(len(rest), jugaWindow)]) {
+		return true
+	}
+	adverb, closed := false, false
+	for i := 0; i < len(rest); {
+		if !isLetter(rest[i]) {
+			closed = closed || closesForm(rest[i])
+			i++
+			continue
+		}
+		j := i
+		for j < len(rest) && (isLetter(rest[j]) || rest[j] == '\'' || rest[j] == '-') {
+			j++
+		}
+		w := rest[i:j]
+		i = j
+		switch {
+		case laughter(w), laughterWords[w]:
+			closed = true
+			continue
+		case jugaParticles[w]:
+			continue
+		case closed:
+			return true // "aku juga wkwk", then a new thought
+		case trailingWords[w]:
+			adverb = true
+			continue
+		case jugaLimiters[w]:
+			return !knowingVerbs[nextWord(rest, j)]
+		case adverb:
+			return !knowingVerbs[w]
+		}
+		return !ordinaryAfterJuga[w]
+	}
+	return true
+}
+
+// jugaWindow bounds, in bytes, the continuation jugaTail reads for a risk
+// word.
+const jugaWindow = 80
+
+// laughter reports whether w is written laughter ("wkwk", "wkwkwk",
+// "awokwok", "hahaha", "hehe", "huhu", "xixi").
+func laughter(w string) bool {
+	if len(w) < 4 {
+		return false
+	}
+	if strings.Trim(w, "wk") == "" || (w[0] == 'a' && strings.Trim(w[1:], "wok") == "") {
+		return strings.Contains(w, "w") && strings.Contains(w, "k")
+	}
+	for _, u := range []string{"ha", "he", "hi", "hu", "xi"} {
+		if strings.Count(w, u) >= 2 {
+			if r := strings.ReplaceAll(w, u, ""); r == "" || r == "h" || r == "a" {
 				return true
 			}
 		}
 	}
 	return false
 }
+
+var (
+	// ordinaryAfterJuga continue "aku juga"/"aku pun" as an ordinary "I
+	// also ...": perceiving, knowing, reacting, telling, helping and
+	// everyday activities, right after the form (see jugaTail). Negators
+	// and limiters are not ordinary on their own (jugaLimiters), and a
+	// preposition is not one ("aku juga dari dulu" is adoption).
+	ordinaryAfterJuga = setOf("nonton menonton baca membaca lihat liat ngeliat melihat denger dengar mendengar " +
+		"ngedenger tahu tau ngerti mengerti paham kenal ingat inget lupa sadar nyadar percaya yakin heran ragu " +
+		"kaget terkejut panik takut khawatir kuatir cemas bingung sedih nangis menangis syok shock kasihan " +
+		"prihatin peduli sayang cinta marah kesal kesel emosi malu senang seneng kecewa setuju bangga bilang " +
+		"ngomong bicara nanya tanya bertanya jawab cerita curhat ngabarin kasih kasi ngasih nelpon telpon nelfon " +
+		"chat ngechat ngajak minta nyuruh ngelarang nasehatin nasihatin bantu membantu nolong menolong nemenin " +
+		"menemani temenin jagain menjaga jaga peluk meluk dukung mendukung doain mendoakan berdoa nyemangatin " +
+		"semangatin kerja bekerja kuliah sekolah tinggal pulang datang dateng " +
+		"langsung segera buru-buru tetap tetep temannya temennya sahabatnya pacarnya sibuk makan minum masak beli " +
+		"main jalan nyari cari dapet dapat nemu kirim ngirim nulis ngetik nunggu nungguin")
+	// jugaLimiters after "aku juga" keep it ordinary only before a knowing
+	// or perceiving verb ("aku juga nggak tahu", "aku juga baru denger").
+	jugaLimiters = setOf("nggak ga gak tidak enggak engga ngga gk tak bukan jangan nggk ndak belum baru cuma hanya " +
+		"ada punya masih sempat")
+	// knowingVerbs are the knowing and perceiving verbs (see jugaTail).
+	knowingVerbs = setOf("tahu tau ngerti mengerti paham kenal ingat inget lupa sadar nyadar nyangka menyangka " +
+		"percaya yakin denger dengar mendengar ngedenger lihat liat ngeliat melihat nonton menonton baca membaca")
+	// jugaParticles are skipped after "aku juga" (see jugaTail).
+	jugaParticles = setOf("sih kok deh ya yah yaa yaaa lho loh nih dong tuh kan lah ah eh oh")
+	// jugaRiskRe: a wish, thought, intent, hopelessness or death word after
+	// "aku juga" keeps it adoption.
+	jugaRiskRe = mustGuarded(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw|keinginan|pikiran|kepikiran|` +
+		`mikir|mikirin|kebayang|niat|berniat|rencana|berencana|bakal|akan|nekat|mati|meninggal|bunuh|hidup|idup|kuat|` +
+		`sanggup|tahan|capek|cape|lelah|nyerah|menyerah|putus\s+asa|selesai|ngilang|menghilang|lenyap|want|wanna|` +
+		`die|dead|suicide|kill|tired|thinking|thought)\b`)
+	// samaFollowers continue "aku sama" as "I'm the same" ("aku sama kayak
+	// dia"); any other word makes it "me and ..." or "with".
+	samaFollowers = setOf("persis kayak kaya kek kyk seperti gitu gtu begitu gini begini aja saja kok sih deh " +
+		"banget bgt juga jg")
+	// englishContinuations continue an English short form as adoption: a
+	// preposition or conjunction opens an adverbial ("so am I at night").
+	englishContinuations = setOf("at in on when while like by with during after before since as because " +
+		"cause sometimes too also lately rn now right")
+	// trailingWords carry no content after a short adoption form: particles,
+	// laughter spelt as a word, time and degree adverbs and address terms.
+	trailingWords = setOf("sih kok deh ya yah yaa yaaa lho loh nih dong tuh kan lah ah eh oh aja saja banget bgt " +
+		"juga jg jga pun kali kayaknya sekarang skrg skrng akhir-akhir belakangan ini hari malam beneran " +
+		"bener serius sumpah jujur sebenernya sebenarnya emang memang lagi udah tbh honestly fr ngl too also " +
+		"sometimes kadang kadang-kadang actually literally really so bro sis guys lately rn now right today " +
+		"tonight kemarin kemaren tadi tho though lowkey lol lmao lmfao rofl haha hehe huhu hiks hix xixi " +
+		"wkwk wkwkwk hmm huft hufft")
+)
 
 // quotesIn returns the quotations inside cl, in order.
 func (c *shape) quotesIn(cl *clause) []span {
@@ -179,8 +513,9 @@ func (c *shape) analyseClause(cl *clause) {
 			// reply ("aku jawab ...") or the start of the speaker's own words
 			// after its opening words (see colonSpeechEnd: "mama bilang:
 			// makan dulu aku mau mati", "makan dulu rasanya pengen mati",
-			// "stop crying wanna die"): an unquoted quotation has no visible
-			// end, so what follows takes the safer path.
+			// "stop crying wanna die"; see adoptionStart: "... me too"): an
+			// unquoted quotation has no visible end, so what follows takes
+			// the safer path.
 			sc := span{fEnd, segs[j].end}
 			if end, ok := c.quotedReport(allQuotes, fEnd, sc.end); ok {
 				sc.end = end
@@ -190,8 +525,19 @@ func (c *shape) analyseClause(cl *clause) {
 				sc.end = sc.start + loc[0]
 				masked = masked[:loc[0]]
 			}
+			end := len(masked)
 			if k := colonSpeechEnd(masked); k >= 0 {
-				sc.end = sc.start + k
+				end = k
+			}
+			if k := adoptionStart(masked); k > 0 && k < end {
+				end = k // "lirik lagunya: aku ingin mati me too :("
+			}
+			sc.end = sc.start + end
+			if media[k] {
+				// Song lyrics after a colon end, like any media report, at
+				// a subjectless wish after the risk phrase ("lirik lagunya:
+				// aku ingin mati pengen ngelakuin itu juga").
+				sc = cutAtOwnWish(t, sc, allQuotes)
 			}
 			if sc = trimSpan(t, sc); sc.start < sc.end {
 				cl.scopes = append(cl.scopes, sc)
@@ -222,7 +568,10 @@ func (c *shape) analyseClause(cl *clause) {
 				void = true // the speaker is part of the reported content
 				break
 			}
-			shared = shared || sharedRe.MatchString(masked) // "dia mau mati juga"
+			// "dia mau mati juga", or doing "the same" as the reported
+			// act ("dia mau bunuh diri kepikiran buat ngelakuin hal yg
+			// sama"): only the speaker can copy it.
+			shared = shared || sharedRe.MatchString(masked) || sameActRe.MatchString(masked)
 		}
 		if void {
 			continue
@@ -389,8 +738,10 @@ func colonSpeechEnd(s string) int {
 			return end
 		case n >= 1 && breakerRe.MatchString(w) && !thirdPronouns[nextWord(s, j)]:
 			cut(i)
-		case n >= 2 && speechWishes[w]:
-			cut(i)
+		case n >= 1 && (w == "makes" || w == "made" || w == "making") && nextWord(s, j) == "me":
+			cut(i) // "stop crying makes me want to die" (review finding)
+		case n >= 2 && (speechWishes[w] || (w == "want" && nextWord(s, j) == "to")):
+			cut(i) // "stop crying want to die" (review finding)
 		}
 		n++
 		i = j
@@ -402,8 +753,9 @@ func colonSpeechEnd(s string) int {
 var speechWishes = setOf("pengen pgn pingin pengin kepengen kepingin mau mw ingin wanna")
 
 // cutAtOwnWish shortens the reported content of a media frame at a
-// subjectless wish that follows a complete risk phrase ("aku baca berita ada
-// mahasiswa bunuh diri pengen nyusul"): the wish is the speaker's reaction.
+// subjectless wish or thought that follows a complete risk phrase ("aku baca
+// berita ada mahasiswa bunuh diri pengen nyusul"): the wish is the speaker's
+// reaction.
 // A wish before the risk phrase ("ada mahasiswa mau bunuh diri") or tied to
 // the reported person ("yang pengen", "dia pengen", "karena pengen") stays
 // in the report.
@@ -421,7 +773,7 @@ func cutAtOwnWish(t string, sp span, quoted []span) span {
 			j++
 		}
 		w := masked[i:j]
-		if risk && speechWishes[w] && !wishOwners[prev] {
+		if risk && (speechWishes[w] || reactionWishes[w]) && !wishOwners[prev] {
 			return trimSpan(t, span{sp.start, sp.start + i})
 		}
 		risk = risk || riskEnds[w]
@@ -432,7 +784,11 @@ func cutAtOwnWish(t string, sp span, quoted []span) span {
 }
 
 var (
-	riskEnds   = setOf("diri mati meninggal tewas hidupnya gedung jembatan atap lantai himself herself themselves life dead")
+	// reactionWishes also start the speaker's reaction after a reported act
+	// ("... bunuh diri kepikiran buat ngelakuin hal yang sama").
+	reactionWishes = setOf("kepikiran mikir kebayang berniat niat pengennya want thinking")
+	riskEnds       = setOf("diri mati meninggal tewas hidupnya gedung jembatan atap lantai himself herself themselves life dead " +
+		"die suicide bridge building roof cliff window balcony train tracks")
 	wishOwners = setOf("yang dia ia mereka beliau doi who that he she they karena soalnya because since biar supaya untuk buat")
 )
 
@@ -634,9 +990,9 @@ func frameFindBranch(s string) ([]int, int) {
 }
 
 // mediaBranches are the frameRe branches of media frames: "dalam film itu
-// tokoh ...", "in the movie, the character ..." and the speaker reading or
-// watching a report about someone else.
-var mediaBranches = map[int]bool{0: true, 1: true, 8: true}
+// tokoh ...", "in the movie, the character ...", the speaker reading or
+// watching a report about someone else, and song lyrics before a colon.
+var mediaBranches = map[int]bool{0: true, 1: true, 8: true, 9: true}
 
 // frameOpens[i] reports whether branch i of frameRe can begin with word w.
 // TestFrameDispatch checks it against trying every branch.
@@ -979,6 +1335,13 @@ func (g guarded) FindStringIndex(s string) []int {
 	return g.re.FindStringIndex(s)
 }
 
+func (g guarded) FindAllStringIndex(s string, n int) [][]int {
+	if g.f != nil && !g.f.match(s) {
+		return nil
+	}
+	return g.re.FindAllStringIndex(s, n)
+}
+
 // altGuarded is an alternation split into one expression per branch. Small
 // expressions let RE2 use its fast backtracker. FindStringIndex returns the
 // first branch (in order) that matches.
@@ -1246,32 +1609,87 @@ var (
 	// sharing it ("tokohnya bunuh diri, jadi pengen mati juga").
 	sharedRe = regexp.MustCompile(`\b(?:juga|jg|too|as\s+well)\b`)
 
+	// sameActRe: doing "the same" inside reported content is the speaker
+	// copying the reported act.
+	sameActRe = regexp.MustCompile(`\b(?:ngelakuin|nglakuin|lakuin|ngelakukan|melakukan|lakukan|doing|do|did)\s+(?:(?:hal\s+)?y(?:an)?g\s+sama|the\s+same)\b`)
+
 	// adoptionRe: the speaker takes up the reported risk ("aku juga", "me too").
 	adoptionRe = mustGuarded(`` +
-		`\b(?:aku|saya|gue|gua|gw|ane|ku)\s+(?:juga|jg|jga)\b(?:\s*$|\s+(?:mau|mw|pengen|pgn|pingin|ingin|kepengen|kepikiran|mikir|merasa|ngerasa|rasa|rasanya|gitu|gtu|begitu|gini|begini|sama|sih|kok|lho|loh|deh|nih|banget|bgt|kadang|sering|pernah|lagi|udah|sudah|ya|kayaknya|kayak|kaya|kek|capek|cape|lelah|masih|suka|bahkan|tiap|setiap)\b)` +
-		`|\bsama\s+(?:aku|gue|saya|gw)\s+(?:juga|jg)\b` +
+		`\bsama\s+(?:aku|gue|saya|gw)\s+(?:juga|jg)\b` +
 		`|\b(?:aku|gue|saya|gw)\s+(?:juga\s+)?(?:ngerasa|merasa|ngerasain|merasakan|ngalamin|mengalami)\s+(?:hal\s+yang\s+sama|yang\s+sama|gitu|begitu|hal\s+serupa|sama)\b` +
-		`|\b(?:aku|saya|gue|gua|gw|ane|ku)\s*pun\b(?:\s*$|\s+(?:mau|mw|pengen|pgn|pingin|ingin|kepengen|kepikiran|mikir|merasa|ngerasa|rasa|rasanya|gitu|gtu|begitu|gini|begini|sama|sih|kok|lho|loh|deh|nih|banget|bgt|kadang|sering|pernah|lagi|udah|sudah|ya|kayaknya|kayak|kaya|kek|capek|cape|lelah|masih|suka|bahkan|tiap|setiap)\b)` +
-		`|\bme\s+(?:too|as\s+well|neither|also)\b|\bme\s+to(?:\s*$|\s+(?:lol|lmao|tbh|honestly|fr|ngl|haha|bro|sis)\b)` +
-		`|\bso\s+(?:do|am|did|have|would)\s+i(?:\s*$|\s+(?:lol|tbh|honestly|too|fr|ngl|sometimes|lately)\b)` +
+		`|\bme{1,2}\s+(?:too|as\s+well|neither|also)\b` +
+		`|\bso\s+do\s+i\b` +
 		`|\bsame\s+(?:here|for\s+me|tbh|honestly|lol|lmao|lmfao|fr|ngl|bro|sis|tho|though)\b` +
-		`|\b(?:i'?m|i\s+am)\s+the\s+same(?:\s*$|\s+(?:way|lol|tbh|honestly|too|fr)\b)` +
-		`|\bi\s+(?:do|did|feel|felt|want|wanted|think|am|have)\s+(?:(?:the\s+)?same\s+|that\s+|it\s+|so\s+)?(?:too|as\s+well)\b` +
-		`|\bi\s+(?:feel|felt)\s+(?:the\s+same|that\s+way|like\s+that)\b` +
+		`|\b(?:i'?m|i\s+am)\s+the\s+same\s+(?:way|too)\b` +
+		`|\bi\s+(?:(?:kinda|really|totally|honestly|also|lowkey|sometimes|literally|actually|so|definitely)\s+)*(?:do|did|feel|felt|want|wanted|think|am|have)\s+(?:(?:the\s+)?same\s+|that\s+|it\s+|so\s+)?(?:too|as\s+well)\b` +
+		`|\bi(?:'?ve|\s+have)?\s+(?:(?:been|also|kinda|really|lowkey|always)\s+)*(?:feel|feeling|felt)\s+(?:the\s+same|that\s+way|like\s+that|it\s+too|that\s+too)\b` +
+		// "i've thought about it too", "i think about it too".
+		`|\bi(?:'?ve|\s+have)?\s+(?:(?:also|kinda|sometimes|often|been|lowkey|really|honestly|always)\s+)*(?:think|thought|thinking)\s+(?:about|of)\s+(?:it|that|this|doing\s+(?:it|that|the\s+same))\s+(?:too|as\s+well|also|sometimes|a\s+lot|every\s+day|all\s+the\s+time|lately|before)\b` +
 		`|\bi\s+(?:can\s+|totally\s+|really\s+)?relate\b|\brelat(?:able|e\s+(?:banget|bgt|sih|deh|parah))\b` +
 		`|\b(?:i\s+(?:said|say|replied|answered|was\s+like)|lol|honestly|tbh|ngl|literally|fr|omg|ugh|so|lmao|damn|oh|yeah|yes|ya|bruh)\s+"?\s*(?:same|me\s+too)\b` +
 		`|\bliterally\s+me\b|\bthat'?s\s+(?:so\s+|literally\s+|exactly\s+|just\s+)?(?:me|how\s+i\s+feel)\b` +
-		`|\b(?:aku|gue|gw|gua|saya)\s+(?:juga\s+)?sama(?:\s*$|\s+(?:aja|kok|sih|deh|banget|bgt|persis|kayak\s+dia|kaya\s+dia|kek\s+dia)\b)` +
+		`|\b(?:aku|gue|gw|gua|saya)\s+(?:juga\s+)?sama\s+(?:persis|kayak\s+dia|kaya\s+dia|kek\s+dia)\b` +
 		`|\bsama\s+(?:kayak|kaya|kek|kyk|seperti|dengan|dgn|ama)\s+(?:aku|gue|gw|gua|saya)\b` +
 		// Imitation of the reported act ("pengen nyusul", "aku pengen kayak
 		// dia", "kok aku iri", "I want to try it").
-		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin)\s+(?:nyusul|ikutan|nyoba(?:in)?|mencoba(?:nya)?|ngikutin)\b` +
+		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin|kepikiran|mikir)\s+(?:(?:buat|untuk)\s+)?(?:nyusul(?:in|nya)?|menyusul(?:nya)?|ikutan|nyoba(?:in)?|mencoba(?:nya)?|ngikutin)\b` +
+		// A wish or a thought that refers back to the reported act ("jadi
+		// pengen ngelakuin juga", "kepikiran buat ngelakuin hal yg sama",
+		// "I'm thinking of doing the same", "I want to too"), with at most
+		// 40 bytes in between.
+		`|\b(?:pengen|pgn|pingin|pengin|kepengen|kepingin|mau|mw|ingin|kepikiran|mikir|mikirin|kebayang|berniat|niat|pengennya|want|wanna|wanted|thinking|considering|tempted|gonna|planning)\b[^,.!?;:\n"]{0,40}?\b(?:juga|jg|too|as\s+well|(?:hal\s+)?y(?:an)?g\s+sama|the\s+same|same\s+thing)\b` +
+		`|\b(?:ngelakuin|nglakuin|lakuin|ngelakukan|melakukan|lakukan)\s+(?:(?:hal\s+)?itu\s+)?(?:juga|jg)\b` +
+		`|\bi\s+(?:did|do|have\s+done|will\s+do|did\s+it|do\s+it)\s+(?:the\s+same|it\s+too|that\s+too|too)\b` +
 		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin)\s+(?:ikut|ngikut)(?:\s*$|\s+(?:aja|juga|jg|deh|sih|ya|lho|loh|kok|dia|mereka|nih|lah|dong|rasanya|mati|bunuh|banget|bgt|kayaknya)\b)` +
 		`|\b(?:pengen|pgn|pingin|pengin|kepengen|mau|mw|ingin)\s+(?:jadi\s+)?(?:kayak|kaya|kek|kyk|seperti)\s+(?:dia|gitu|mereka|itu)\b` +
 		`|\b(?:aku|gue|gw|gua|saya)\s+(?:jadi\s+|kok\s+|agak\s+|sedikit\s+)?iri\b` +
-		`|\b(?:ngelakuin|melakukan|lakuin|ngelakukan|lakukan)\s+(?:hal\s+)?yang\s+sama\b` +
+		`|\b(?:ngelakuin|nglakuin|melakukan|lakuin|ngelakukan|lakukan)\s+(?:hal\s+)?y(?:an)?g\s+sama\b` +
 		`|\b(?:want|wanna|wanted)\s+(?:to\s+)?(?:try\s+(?:it|that)|do\s+(?:the\s+same|that|it)|join\s+(?:him|her|them)|follow\s+(?:him|her|them)|be\s+(?:next|like\s+(?:him|her|them)))\b` +
 		`|\bi(?:'m|\s+am|m)\s+(?:so\s+|kinda\s+|a\s+bit\s+)?jealous\b|\bi\s+envy\s+(?:him|her|them)\b` +
 		`|\b(?:aku|gue|saya|gw)\s+(?:bilang|jawab|balas)\s+"?\s*(?:sama|aku\s+juga|gue\s+juga)\b` +
+		// "aku relate", "sama aja aku" (same for me).
+		`|\b(?:aku|gue|gw|gua|saya|aq|ak|sy|w)\s+(?:juga\s+|jg\s+|sangat\s+|bener-bener\s+|beneran\s+)?relate\b` +
+		`|^sama\s+(?:(?:aja|saja|kayak|kaya|kek|kyk|kok|sih|deh|juga|jg|dengan|dgn|ama)\s+)*(?:aku|gue|gw|gua|saya|aq|ak|sy)\b` +
+		// A wish or envy the speaker attaches to the reported act, or the
+		// speaker next in line: "I wish that was me", "andai itu aku",
+		// "semoga aku berikutnya", "I wish I had the guts", "pengen punya
+		// keberanian kayak dia", "kenapa bukan aku", "why not me", "itu yang
+		// aku mau", "that's what I want".
+		`|\b(?:i\s+)?(?:just\s+|really\s+)?wish\s+(?:that|it)\s+(?:was|were|had\s+been|could\s+(?:have\s+)?been)\s+me\b` +
+		`|\bi\s+(?:just\s+|really\s+)?wish\s+i\s+(?:was|were|could\s+be)\s+(?:as\s+|so\s+)?(?:brave|strong|lucky|free|fearless)\s+(?:like|as)\s+(?:her|him|them)\b` +
+		`|\blucky\s+(?:her|him|them|bastard|girl|guy)\b|\b(?:she|he|they)(?:'s|'re|\s+is|\s+was|\s+are|\s+were)\s+(?:so\s+)?lucky\b` +
+		`|\b(?:andai|andaikan|seandainya|coba|kalo\s+aja|kalau\s+saja|kalau\s+aja)\s+(?:itu|yang\s+itu|yg\s+itu|dia\s+itu)\s+(?:aku|gue|gw|gua|saya|aq)\b` +
+		`|\b(?:semoga|moga|mudah-mudahan)\s+(?:aku|gue|gw|gua|saya|aq)\s+(?:yang\s+|yg\s+)?(?:berikutnya|selanjutnya|next|nyusul)\b` +
+		`|\bi\s+(?:just\s+|really\s+)?wish\s+i\s+(?:had|have|could\s+find|could\s+have)\s+(?:the\s+)?(?:guts|courage|balls|nerve|strength|bravery)\b` +
+		`|\b(?:pengen|pgn|pingin|pengin|kepengen|ingin|mau|mw)\s+(?:punya\s+)?(?:keberanian|nyali|berani)\s+(?:kayak|kaya|kek|kyk|seperti|kaya\s+gitu|kayak\s+gitu|gitu|begitu)\b` +
+		`|\b(?:kenapa|knp|kok)\s+(?:bukan|ga|gak|nggak|enggak)\s+(?:aku|gue|gw|gua|saya|aq)\b|\bwhy\s+(?:not|wasn'?t\s+it|couldn'?t\s+it\s+(?:have\s+)?been|isn'?t\s+it)\s+me\b` +
+		`|\bitu\s+(?:yang|yg)\s+(?:aku|gue|gw|gua|saya|aq)\s+(?:mau|pengen|pgn|ingin|cari|butuh)(?:in)?\b|\bthat'?s\s+(?:what|all)\s+i\s+(?:want|wanna|need|wanted|needed)\b` +
 		`|^(?:same|relate|relatable|sama|me|aku\s+banget|gue\s+banget)$`)
+
+	// adoptionTrailRe: short adoption forms that only trailing words may
+	// follow (see adopts): "gw banget", "kayak aku", "metoo", "me 2", "big
+	// mood", "felt", "this is me", "i feel that", "I'm next", "aku
+	// selanjutnya". Before any other word they are ordinary ("this is me at
+	// the beach", "I'm next to her").
+	adoptionTrailRe = mustGuarded(`` +
+		`\b(?:aku|gue|gw|gua|saya|aq|w)\s+(?:banget|bgt|bngt)\b` +
+		`|^(?:kayak|kaya|kek|kyk|seperti|persis\s+kayak)\s+(?:aku|gue|gw|gua|saya|aq)\b` +
+		`|\bmetoo\b|\bme\s*2\b` +
+		`|^(?:big\s+|such\s+a\s+|huge\s+|a\s+)?mood\b|^felt\b(?:\s+(?:that|this|it))?` +
+		`|\bthis\s+(?:is|was)\s+(?:so\s+|literally\s+|exactly\s+|just\s+)?me\b` +
+		`|\bi\s+(?:(?:really|totally|so|kinda|lowkey|honestly|deeply)\s+)*feel\s+(?:that|this|it|u|you|her|him|them)\b` +
+		`|\b(?:i'?m|i\s+am|im)\s+(?:the\s+)?next\b|\b(?:aku|gue|gw|gua|saya|aq)\s+(?:yang\s+|yg\s+)?(?:berikutnya|selanjutnya)\b`)
+
+	// commaAdoptionRe: adoption forms with a comma inside ("i do, too",
+	// "me, too"), matched on the whole clause (see shape.adopted).
+	commaAdoptionRe = regexp.MustCompile(`\bi\s+(?:(?:kinda|really|totally|honestly|also|lowkey|sometimes|literally|actually|so)\s+)*(?:do|did|am|have|feel|want|was)\s*,\s*(?:too|as\s+well|also)\b|\bme\s*,\s*(?:too|as\s+well)\b`)
+
+	// adoptionCoreRe: short adoption forms that are also ordinary phrases
+	// ("aku juga", "so am I", an elliptical "aku pengen"); see adopts.
+	adoptionCoreRe = mustGuarded(`` +
+		`\b(?:aku|saya|gue|gua|gw|ane|ku|aq|ak|w|sy|gwe)\s*(?:(?:sih|tuh|mah|sendiri|pribadi)\s+)?(?:juga|jg|jga|pun)\b` +
+		`|\b(?:aku|gue|gw|gua|saya|aq|ak|sy)\s+(?:juga\s+)?sama\b|^sama\b` +
+		`|\bso\s+(?:am|did|have|would)\s+i\b|\bme\s+to\b|\b(?:i'?m|i\s+am)\s+the\s+same\b` +
+		`|^(?:(?:omg|ugh|lol|honestly|tbh|ngl|literally|fr|so|lmao|damn|oh|yeah|yes|ya|bruh|same|lowkey|highkey|kinda|also|big)\s+)*same\b` +
+		`|\b(?:pengen|pgn|pingin|pengin|kepengen|kepingin|ingin|want\s+to|wanna)\b`)
 )

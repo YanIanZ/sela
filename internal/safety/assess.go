@@ -26,8 +26,10 @@ func Assess(text string) Assessment { return assess(text, true) }
 // assess matches every variant of text (see variants) and folds the
 // outcomes. With skip, a derived variant only re-matches its context units
 // that differ from the canonical form's (see contextUnits): every other unit
-// has exactly the same matches and dispositions there. TestSkipEquivalence
-// checks this against assess(text, false).
+// has exactly the same matches and dispositions there, unless the whole-text
+// denial or the context-marker gate (see markersApply) differs, in which
+// case it is matched in full. TestSkipEquivalence checks this against
+// assess(text, false).
 func assess(text string, skip bool) Assessment {
 	vs := variants(text)
 	acc := &accumulator{states: make([]state, len(catalogue)), attributed: make([]bool, len(catalogue))}
@@ -46,7 +48,7 @@ func assess(text string, skip bool) Assessment {
 				for _, u := range units {
 					known[u.key] = true
 				}
-			case sh.wholeDenial == acc.shapes[0].wholeDenial:
+			case sh.wholeDenial == acc.shapes[0].wholeDenial && sh.markersApply() == acc.shapes[0].markersApply():
 				sentences = changedSentences(sentences, units, known)
 			}
 		}
@@ -71,11 +73,13 @@ type accumulator struct {
 }
 
 // hit is one accepted match of catalogue[rule]. third is set when the
-// pattern's attribution check names someone else's act ("bom bunuh diri").
+// pattern's attribution check names someone else's act ("bom bunuh diri"),
+// marked when its context marker suggests a benign reading ("I cut myself
+// shaving"; see markersApply).
 type hit struct {
 	rule int
 	span
-	third bool
+	third, marked bool
 }
 
 // evaluate matches every rule against the given sentences of one normalised
@@ -83,6 +87,9 @@ type hit struct {
 func (acc *accumulator) evaluate(c *shape, sentences []span) {
 	hits := matchAll(c, sentences)
 	for _, h := range hits {
+		if h.marked && c.markersApply() {
+			continue
+		}
 		r := &catalogue[h.rule]
 		d := c.dispose(r, h.span, h.third)
 		if d == stateDenied || d == stateHedged {
@@ -131,8 +138,8 @@ func matchAll(c *shape, sentences []span) []hit {
 				if p.filter != nil && p.filter.op != 'a' && !p.filter.match(chunk) {
 					continue
 				}
-				p.each(chunk, func(start, end int, third bool) bool {
-					hits = append(hits, hit{i, span{sent.start + start, sent.start + end}, third})
+				p.each(chunk, func(start, end int, third, marked bool) bool {
+					hits = append(hits, hit{i, span{sent.start + start, sent.start + end}, third, marked})
 					return p.maximal
 				})
 			}
@@ -245,13 +252,25 @@ func (c *shape) dispose(r *rule, m span, third bool) state {
 // sharedAfter reports whether "juga"/"too" follows the match m in its comma
 // segment ("honestly my friend said she wants to die too"): the speaker
 // shares a third-person wish even when no frame was recognised around it.
+// The last "juga"/"too" of each segment is found once per clause (see
+// clause.lastShared), so many matches in one segment stay linear.
 func (c *shape) sharedAfter(m span) bool {
 	lo, hi := c.overlapping(m)
 	for i := lo; i < hi; i++ {
-		segs := c.clauses[i].segments
+		cl := &c.clauses[i]
+		segs := cl.segments
 		k := sort.Search(len(segs), func(n int) bool { return segs[n].end >= m.end })
 		if k < len(segs) && segs[k].start <= m.end {
-			return sharedRe.MatchString(c.text[m.end:segs[k].end])
+			if cl.lastShared == nil {
+				cl.lastShared = make([]int, len(segs))
+				for n, seg := range segs {
+					cl.lastShared[n] = -1
+					for _, loc := range sharedRe.FindAllStringIndex(c.text[seg.start:seg.end], -1) {
+						cl.lastShared[n] = seg.start + loc[0]
+					}
+				}
+			}
+			return cl.lastShared[k] >= m.end
 		}
 	}
 	return false
@@ -303,6 +322,11 @@ func contextUnits(c *shape) []unit {
 	q, first := 0, 0 // q: quotation at or after i; first: first one of the unit
 	start := 0
 	var key []byte
+	// next is the first byte at or after the last unit end that is not
+	// punctuation or space (see skipPunct). Unit ends increase, so
+	// it only moves forward: rescanning a run of punctuation from each of
+	// its marks made "... ... ..." quadratic (review finding).
+	next := 0
 	emit := func(end int) {
 		key = append(key[:0], t[start:end]...)
 		key = append(key, 0)
@@ -312,7 +336,10 @@ func contextUnits(c *shape) []unit {
 			key = strconv.AppendInt(key, int64(c.quotes[first].end-start), 10)
 			key = append(key, ' ')
 		}
-		if conjunctionFollows(t, end) {
+		if next < end {
+			next = skipPunct(t, end)
+		}
+		if conjunctionAt(t, next) {
 			key = append(key, 0, 'c')
 		}
 		out = append(out, unit{span{start, end}, string(key)})
@@ -334,13 +361,19 @@ func contextUnits(c *shape) []unit {
 	return out
 }
 
-// conjunctionFollows reports whether a contrastive conjunction follows
-// position i of t with only punctuation and spaces in between, which is what
+// skipPunct returns the first index >= i of t that is not punctuation or
+// space. A contrastive conjunction there (see conjunctionAt) follows
+// position i with only punctuation and spaces in between, which is what
 // marks the clause before it contrastNext in splitClauses.
-func conjunctionFollows(t string, i int) bool {
+func skipPunct(t string, i int) int {
 	for i < len(t) && strings.IndexByte(" \t\n,.!?;", t[i]) >= 0 {
 		i++
 	}
+	return i
+}
+
+// conjunctionAt reports whether a contrastive conjunction starts at t[i].
+func conjunctionAt(t string, i int) bool {
 	j := i
 	for j < len(t) && isWordByte(t[j]) {
 		j++
@@ -459,9 +492,10 @@ func compactInts(s []int) []int {
 
 // each calls fn for every accepted match in s, including overlapping ones,
 // until fn returns true. Patterns start with \b, so searching again from a
-// word start keeps the boundary semantics of the full string. third reports
-// the pattern's attribution check (see pattern.third).
-func (p *pattern) each(s string, fn func(start, end int, third bool) bool) {
+// word start keeps the boundary semantics of the full string. third and
+// marked report the pattern's attribution and context-marker checks (see
+// pattern.third and pattern.marker).
+func (p *pattern) each(s string, fn func(start, end int, third, marked bool) bool) {
 	for pos := 0; pos <= len(s); {
 		loc := p.re.FindStringIndex(s[pos:])
 		if loc == nil {
@@ -469,7 +503,8 @@ func (p *pattern) each(s string, fn func(start, end int, third bool) bool) {
 		}
 		start, end := pos+loc[0], pos+loc[1]
 		if p.reject == nil || !p.reject(s, start, end) {
-			if fn(start, end, p.third != nil && p.third(s, start, end)) {
+			third := p.third != nil && p.third(s, start, end)
+			if fn(start, end, third, p.marker != nil && p.marker(s, start, end)) {
 				return
 			}
 		}

@@ -152,15 +152,20 @@ func TestLexicalVariant(t *testing.T) {
 		"pengen bunuuh diri":     "pengen bunuh diri",
 		"i want to kiill myself": "i want to kill myself",
 		"i want to diieee":       "i want to die",
-		"aku pengen... 😭 mati":   "aku pengen mati",
-		"aku pengen…😭mati":       "aku pengen mati",
-		"i want to . . . die":    "i want to die",
-		"i want to — die":        "i want to die",
-		"aku pengen - mati":      "aku pengen mati",
-		"hp-ku mati":             "hp-ku mati",
-		"i wana die":             "i want to die",
-		"pngen mati":             "pengen mati",
-		"good coffee":            "good coffee",
+		// A dot pause or a pause with a newline keeps the canonical
+		// form's clause boundary as a newline, which the patterns' \s*
+		// crosses.
+		"aku pengen... 😭 mati": "aku pengen\nmati",
+		"aku pengen…😭mati":     "aku pengen\nmati",
+		"i want to . . . die":  "i want to\ndie",
+		"aku pengen...\nmati":  "aku pengen\nmati",
+		"aku pengen —\nmati":   "aku pengen\nmati",
+		"i want to — die":      "i want to die",
+		"aku pengen - mati":    "aku pengen mati",
+		"hp-ku mati":           "hp-ku mati",
+		"i wana die":           "i want to die",
+		"pngen mati":           "pengen mati",
+		"good coffee":          "good coffee",
 	}
 	for in, want := range lex {
 		if got := lexical(prepare(in)); got != want {
@@ -168,13 +173,16 @@ func TestLexicalVariant(t *testing.T) {
 		}
 	}
 	alt := map[string]string{
-		"$u1c1d3":       "suicide",
-		"$u1c1d@l":      "suicidal",
-		"k1ll my$3lf":   "kill myself",
-		"pengen m@t1":   "pengen mati",
-		"bunuh d!r1":    "bunuh diri",
-		"ki11 myself":   "kill myself",
-		"i w@nt t0 d1e": "i want to die",
+		"$u1c1d3":     "suicide",
+		"$u1c1d@l":    "suicidal",
+		"k1ll my$3lf": "kill myself",
+		"pengen m@t1": "pengen mati",
+		// A final "!" after a whole word is punctuation (review finding).
+		"pengen m@ti! lampu kamar mati": "pengen mati! lampu kamar mati",
+		"m@t!":                          "mati",
+		"bunuh d!r1":                    "bunuh diri",
+		"ki11 myself":                   "kill myself",
+		"i w@nt t0 d1e":                 "i want to die",
 	}
 	for in, want := range alt {
 		if got := lexical(prepareAlt(in)); got != want {

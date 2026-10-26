@@ -40,6 +40,13 @@ type pattern struct {
 	// act ("bom bunuh diri", "suicide bomber"): it is attributed to a third
 	// party like third-person wording. Same contract as reject.
 	third func(s string, start, end int) bool
+	// marker, when set, reports a context marker next to an accepted match
+	// that suggests a benign reading ("I cut myself shaving", "like the
+	// doctor said", "surat wasiat yang sah"). Unlike reject, it discards the
+	// match only when the whole text is short, carries no risk signal and
+	// has no word outside a closed benign vocabulary (see markersApply).
+	// Same contract as reject.
+	marker func(s string, start, end int) bool
 	// maximal patterns are evaluated on their first match per sentence only.
 	// The expression must be such that this match contains every other match
 	// in the sentence (TestMaximalPatterns) and that no match can lie inside
@@ -69,6 +76,13 @@ func patReject(expr string, reject func(s string, start, end int) bool) *pattern
 func patCheck(expr string, reject, third func(s string, start, end int) bool) *pattern {
 	p := patReject(expr, reject)
 	p.third = third
+	return p
+}
+
+// patMarker is a pattern with an optional post-check and a context marker.
+func patMarker(expr string, reject, marker func(s string, start, end int) bool) *pattern {
+	p := patReject(expr, reject)
+	p.marker = marker
 	return p
 }
 
@@ -119,19 +133,23 @@ var catalogue = []rule{
 		patReject(`\b(pengen\s*mati|mau\s*mati|ingin\s*mati|mati\s*aja|mending\s*mati|lebih\s*baik\s*mati)\b`, idiomaticDeath)),
 	v1Rule("no-will-to-live", CategorySuicide, LevelCrisis,
 		pat(`\b(g(a|ak|k)\s*mau\s*hidup\s*lagi|tidak\s*mau\s*hidup\s*lagi|capek\s*hidup\s*pengen\s*ngilang\s*selamanya)\b`)),
-	// Post-check (new): a legal will ("cara bikin surat wasiat yang sah",
-	// "kakek bikin surat wasiat untuk pembagian warisan") is not a farewell
-	// note (see legalWill).
+	// Post-check (new): a relative's will ("kakek bikin surat wasiat untuk
+	// pembagian warisan") is not the speaker's farewell note (see
+	// relativeWill). Context marker (new): a legal will ("cara bikin surat
+	// wasiat yang sah") is not one either when the rest of the text is
+	// benign (see legalWill and markersApply).
 	v1Rule("farewell-will-phrase", CategoryHopelessness, LevelCrisis,
-		patReject(`\b(surat\s*wasiat|pamit\s*selamanya|selamat\s*tinggal\s*semuanya|titip\s*pesan\s*terakhir|dunia\s*lebih\s*baik\s*tanpa(ku|aku))\b`, legalWill)),
+		patMarker(`\b(surat\s*wasiat|pamit\s*selamanya|selamat\s*tinggal\s*semuanya|titip\s*pesan\s*terakhir|dunia\s*lebih\s*baik\s*tanpa(ku|aku))\b`, relativeWill, legalWill)),
 
 	// ---- v1: Indonesian, acute self-harm and lethal means ----
-	// The cutting rules reject a cut hand that an accident marker right next
-	// to it explains ("nggak sengaja ngiris tangan pas potong bawang"), never
-	// nadi, urat, lengan, leher or a wrist, nor a phrase with an intent,
-	// modal or habit word (see accidental).
+	// Context marker (new): the cutting rules discard a sliced hand that an
+	// accident marker right next to it explains ("nggak sengaja ngiris
+	// tangan pas potong bawang") when the rest of the text is benign (see
+	// markersApply); never
+	// nadi, urat, lengan, leher or a wrist, nor "sayat"/"silet" (see
+	// accidental).
 	v1Rule("self-cutting", CategorySelfHarm, LevelCrisis,
-		patReject(`\b(sayat|nyayat|iris)\s*(tangan|nadi|lengan|urat|leher)\b`, accidental)),
+		patMarker(`\b(sayat|nyayat|iris)\s*(tangan|nadi|lengan|urat|leher)\b`, nil, accidental)),
 	v1Rule("self-harm-intent", CategorySelfHarm, LevelCrisis,
 		pat(`\b(?:menyakiti|melukai|mencelakai)\s*diri(?:ku| sendiri)?\b`)),
 	v1Rule("first-person-euphemism", CategorySuicide, LevelCrisis,
@@ -151,7 +169,7 @@ var catalogue = []rule{
 	v1Rule("overdose-intent", CategorySelfHarm, LevelCrisis,
 		pat(`\b(?:(?:mau|ingin|pengen|akan|udah|sudah|berencana)\s*overdosis|overdosis\s*obat|minum\s*obat\s*(?:sebanyak\s*(?:mungkin|mungkin\s*biar)|banyak\s*banget\s*biar|segenggam|sekaligus\s*(?:semua|sebotol))|nelen\s*obat\s*(?:semua|sebotol|segenggam))\b`)),
 	v1Rule("self-cutting-affixed", CategorySelfHarm, LevelCrisis,
-		patReject(`\b(?:menyayat|nyayat|sayat|mengiris|ngiris|iris|nyilet|menyilet|silet)\s*(?:pergelangan\s*)?(?:tangan|nadi|lengan|urat|leher|paha)(?:ku|nya)?\b`, accidental)),
+		patMarker(`\b(?:menyayat|nyayat|sayat|mengiris|ngiris|iris|nyilet|menyilet|silet)\s*(?:pergelangan\s*)?(?:tangan|nadi|lengan|urat|leher|paha)(?:ku|nya)?\b`, nil, accidental)),
 	v1Rule("life-not-worth-living", CategorySuicide, LevelCrisis,
 		pat(`\b(?:hidup(?:ku)?\s*(?:ini\s*)?(?:tidak|gak|ga|nggak|enggak)\s*layak\s*(?:dijalani|untuk\s*dijalani)|(?:gak|ga|nggak|tidak)\s*ada\s*gunanya\s*(?:aku\s*)?hidup|buat\s*apa\s*(?:aku\s*)?hidup\s*lagi)\b`)),
 
@@ -187,12 +205,13 @@ var catalogue = []rule{
 	v1Rule("en-death-wish", CategorySuicide, LevelCrisis,
 		patReject(`\b(?:(?:want|wanna|wish|wished|wanted|hope|hoping)\s*(?:to\s*)?(?:be\s*)?(?:die|dead|to\s*die)|wish\s*i\s*(?:was|were|had)\s*(?:dead|never\s*born)|better\s*off\s*dead|rather\s*be\s*dead|(?:don'?t|do\s*not)\s*(?:want|wanna)\s*to\s*(?:live|be\s*alive|exist|wake\s*up)(?:\s*anymore)?|no\s*reason\s*to\s*(?:live|go\s*on|keep\s*going)|can'?t\s*go\s*on\s*(?:living|anymore)|ready\s*to\s*die)\b`, dyeObject)),
 	// Post-checks (new): fixed idioms ("burning myself out", "cut myself off
-	// from", "cutting myself some slack") and explicit accidents ("I cut
-	// myself shaving", "I accidentally cut myself", "I hurt myself at the
-	// gym") are rejected (see selfHarmIdiom); wrists, veins, arms and an
-	// intent, modal or habit word never are.
+	// from", "cutting myself some slack") are rejected (see selfHarmIdiom).
+	// Context marker (new): an explicit past accident ("I cut myself
+	// shaving", "I accidentally cut myself", "I hurt myself at the gym") is
+	// discarded when the rest of the text is benign (see accidental and
+	// markersApply); wrists, veins and arms never are.
 	v1Rule("en-self-harm", CategorySelfHarm, LevelCrisis,
-		patReject(`\b(?:(?:hurt(?:ing)?|harm(?:ing)?|cut(?:ting)?|burn(?:ing)?|injur(?:e|ing)|punish(?:ing)?)\s*myself|self[\s-]*harm(?:ing)?|self[\s-]*injur(?:y|ing)|slit(?:ting)?\s*my\s*wrists?|cut(?:ting)?\s*my\s*(?:wrists?|arms?|veins?|thighs?))\b`, selfHarmIdiom)),
+		patMarker(`\b(?:(?:hurt(?:ing)?|harm(?:ing)?|cut(?:ting)?|burn(?:ing)?|injur(?:e|ing)|punish(?:ing)?)\s*myself|self[\s-]*harm(?:ing)?|self[\s-]*injur(?:y|ing)|slit(?:ting)?\s*my\s*wrists?|cut(?:ting)?\s*my\s*(?:wrists?|arms?|veins?|thighs?))\b`, selfHarmIdiom, accidental)),
 	// Post-checks (new): "shooting myself in the foot" and "drown myself in
 	// work" are idioms when no intent, modal or habit word comes with them;
 	// drowning in water of any kind is not (see lethalIdiom).
@@ -211,12 +230,13 @@ var catalogue = []rule{
 		pat(`\b(?:end(?:ing)?\s*(?:it|everything|things|my\s*pain\s*for\s*good)\s*(?:all|tonight|today|now|for\s*good|soon)|(?:want|wanna|going\s*to|gonna|plan(?:ning)?\s*to|ready\s*to|about\s*to|decided\s*to)\s*end\s*everything|(?:want|wanna)\s*to\s*stop\s*(?:existing|living|being\s*alive)|(?:don'?t|do\s*not|can'?t)\s*see\s*(?:the|any)\s*point\s*(?:in|of)\s*(?:living|life|being\s*alive|going\s*on|staying\s*alive)|life\s*(?:is\s*)?not\s*worth\s*living|(?:nobody|no\s*one|no-one)\s*would\s*(?:miss|care\s*about|notice)\s*(?:me\s*)?if\s*i\s*(?:was|were|died|disappeared|(?:was|were)\s*gone|killed\s*myself))\b`),
 		patMaximal(`\bhopeless[^.!?]*\b(?:want|wanna)\s*to\s*end\s*it\b`),
 		patReject(`\b(?:i'?m|im|i\s*am)\s*(?:(?:so|just|really|honestly|literally|completely|totally|kinda|truly)\s*)*done\s*with\s*(?:life|living|being\s*alive)\b`, followedByAdmin)),
-	// Post-check (new): taking medication as prescribed ("I took all my pills
-	// like the doctor said") is rejected (see asPrescribed). A bare time
-	// ("this morning", "today") is not enough: overdose disclosures carry one
-	// too, so those stay crisis.
+	// Context marker (new): taking medication as prescribed ("I took all my
+	// pills like the doctor said") is discarded when the rest of the text is
+	// benign (see asPrescribed and markersApply). A bare time ("this morning", "on
+	// time") is not enough: overdose disclosures carry one too, so those
+	// stay crisis.
 	v1Rule("en-overdose-means", CategorySelfHarm, LevelCrisis,
-		patReject(`\b(?:(?:plan(?:ning)?\s*to|going\s*to|gonna|want\s*to|wanna|will|about\s*to|ready\s*to|trying\s*to)\s*(?:overdose|od\b)|(?:took|taken|swallowed|just\s*took)\s*(?:a\s*lot\s*of|all\s*(?:of\s*)?(?:my|the)|too\s*many|a\s*bunch\s*of|so\s*many|a\s*whole\s*(?:bottle|pack)\s*of|handfuls?\s*of)\s*(?:pills|meds|tablets|medication|medicine|sleeping\s*pills|painkillers)|(?:bought|got|have|found|made|tied)\s*(?:a\s*)?(?:rope|noose)\b|\bnoose\b|(?:stockpil\w*|saving\s*up|hoarding)\s*(?:my\s*)?(?:pills|meds|tablets|medication))\b`, asPrescribed)),
+		patMarker(`\b(?:(?:plan(?:ning)?\s*to|going\s*to|gonna|want\s*to|wanna|will|about\s*to|ready\s*to|trying\s*to)\s*(?:overdose|od\b)|(?:took|taken|swallowed|just\s*took)\s*(?:a\s*lot\s*of|all\s*(?:of\s*)?(?:my|the)|too\s*many|a\s*bunch\s*of|so\s*many|a\s*whole\s*(?:bottle|pack)\s*of|handfuls?\s*of)\s*(?:pills|meds|tablets|medication|medicine|sleeping\s*pills|painkillers)|(?:bought|got|have|found|made|tied)\s*(?:a\s*)?(?:rope|noose)\b|\bnoose\b|(?:stockpil\w*|saving\s*up|hoarding)\s*(?:my\s*)?(?:pills|meds|tablets|medication))\b`, nil, asPrescribed)),
 	// Post-check (new): "cutting" completed by an everyday object or a fixed
 	// idiom ("been cutting carbs", "started cutting back on coffee", "keep
 	// cutting corners", "cutting in line") is not self-harm; "cutting in high
@@ -317,7 +337,9 @@ var catalogue = []rule{
 	// ke jurang", "mau lompat ke sungai") is as often a game, so it needs a
 	// wish or intent word right before the verb.
 	newRule("id-jumping-colloquial", CategorySuicide, LevelCrisis,
-		patReject(`\b(?:(?:lompat|melompat|terjun|nerjun|meloncat|nyebur)\s*dari\s*(?:atas\s*)?|loncat\s*dari\s*atas\s*)(?:gedung|jembatan|lantai|atap|tebing|apartemen|rooftop|menara|flyover)\b`, jumpNotSpeaker),
+		// "dr" is the chat spelling of "dari"; a window or balcony is a
+		// height too (review finding).
+		patReject(`\b(?:(?:lompat|melompat|terjun|nerjun|meloncat|nyebur)\s*(?:dari|dr)\s*(?:atas\s*)?|loncat\s*(?:dari\s*atas|dr(?:\s*atas)?)\s*)(?:gedung|jembatan|lantai|atap|tebing|apartemen|rooftop|menara|flyover|jendela|balkon)\b|\bloncat\s*dari\s*(?:tebing|apartemen|rooftop|menara|flyover|jendela|balkon)\b`, jumpNotSpeaker),
 		patReject(`\b(?:pengen|pgn|pingin|pengin|kepengen|kepingin|mau|mw|ingin|akan|mending|mendingan|hampir|nyaris|coba|nyoba|mencoba|berniat|niat|rasanya)\s+(?:(?:aja|saja|mau|pengen|ingin|udah|sudah|hampir|nyaris|coba|akan|bakal|tinggal)\s+){0,2}(?:lompat|melompat|terjun|nerjun|meloncat|nyebur|loncat)\s*ke\s*(?:dalam\s*)?(?:jurang|sungai|laut|rel|kali|danau|waduk|bendungan|sumur)\b`, thingSubject)),
 	// "pengen tidur selamanya" without a pronoun, or with gua/ku: v1
 	// first-person-euphemism needs aku/saya/gue/gw and counts those itself
@@ -326,7 +348,14 @@ var catalogue = []rule{
 		patReject(`\b(?:ingin|mau|mw|pengen|pgn|pingin|pengin|kepengen|akan)\s*(?:tidur\s*(?:untuk\s*)?selamanya|(?:ga|gak|nggak|ngga|tidak|tak|enggak)\s*bangun\s*lagi)\b`, ownEuphemism),
 		// "pengen tidur dan ga bangun lagi", "pengen tidur terus ga usah bangun
 		// lagi" (review finding).
-		pat(`\b(?:ingin|mau|mw|pengen|pgn|pingin|pengin|kepengen)\s*tidur\s*(?:(?:aja|saja|dan|terus|trus|lalu|abis\s*itu)\s*)*(?:ga|gak|gk|nggak|ngga|tidak|tak|enggak)\s*(?:usah\s*|perlu\s*)?bangun\s*(?:lagi|lg)\b`)),
+		pat(`\b(?:ingin|mau|mw|pengen|pgn|pingin|pengin|kepengen|semoga|moga|moga-moga|mudah-mudahan|berharap)\s*(?:(?:aku|saya|gue|gw|gua|ku)\s*)?tidur\s*(?:(?:aja|saja|dan|terus|trus|lalu|abis\s*itu)\s*)*(?:ga|gak|gk|nggak|ngga|tidak|tak|enggak)\s*(?:usah\s*|perlu\s*)?bangun\s*(?:lagi|lg)\b`),
+		// A hope: "semoga aku ga bangun lagi besok", "berharap tidur
+		// selamanya" (review finding). "bangun kesiangan lagi" (oversleeping
+		// again) does not match.
+		pat(`\b(?:semoga|moga|moga-moga|mudah-mudahan|berharap|harap(?:nya)?)\s*`+idHopeTime+`(?:(?:aku|saya|gue|gw|gua|ku)\s*)?`+idHopeTime+
+			`(?:(?:ga|gak|gk|nggak|ngga|tidak|tak|enggak|engga)\s*(?:usah\s*|perlu\s*)?bangun(?:[\s-]*bangun)?\s*(?:lagi|lg|besok|esok|selamanya)|tidur\s*(?:untuk\s*)?selamanya)\b`),
+		// "semoga tidurku malam ini yang terakhir" (review finding).
+		pat(`\b(?:semoga|moga|moga-moga|mudah-mudahan|berharap|harap(?:nya)?)\s*tidur(?:ku|\s*(?:aku|saya|gue|gw|gua))?\s*`+idHopeTime+`(?:ini\s*)?(?:yang|yg|jadi|menjadi|adalah)\s*(?:yang\s*|yg\s*)?(?:terakhir|penghabisan)\b`)),
 	// "aku ingin meninggal saja": the formal verb. A wish (pengen/ingin) is
 	// counted with any subject; "mau meninggal" ("about to die") only with a
 	// first-person subject or "aja" ("rasanya mau meninggal aja"), since
@@ -347,8 +376,66 @@ var catalogue = []rule{
 	// "I want to sleep and never wake up": v1 en-farewell-note only has
 	// "want to never wake up" right after the verb.
 	newRule("en-sleep-forever", CategorySuicide, LevelCrisis,
-		pat(`\b(?:want|wanna|wish|hope|like|ready)\s*(?:to\s*)?(?:(?:just|go\s*to|fall)\s*)*(?:sleep|asleep)\s*(?:and|&|then|n)\s*(?:never|not|don'?t)\s*wake\s*(?:up)?\b`)),
+		// "I hope I fall asleep and never wake up", "I hope I sleep and
+		// never wake up" (review finding).
+		pat(`\b(?:want|wanna|wish|hope|hoping|like|ready|pray|praying)\s*(?:that\s*)?(?:i(?:'ll)?\s*(?:(?:can|could|will|would|just|finally)\s*)*)?(?:to\s*)?(?:(?:just|go\s*to|fall|falls|fell)\s*)*(?:sleep|asleep)\s*(?:tonight\s*)?(?:and|&|then|n)\s*(?:never|not|don'?t|won'?t|wouldn'?t)\s*(?:ever\s*)?wake\s*(?:up)?\b`),
+		// "I hope I never wake up", "I wish I wouldn't wake up" (review
+		// finding). A routine ("I hope I don't wake up late") is rejected
+		// (see wakeRoutine).
+		// "I hope I sleep forever", "I wish I could sleep forever".
+		pat(`\b(?:hope|hoping|hopefully|wish|wishing|pray|praying)\s*(?:that\s*)?i(?:'ll)?\s*(?:(?:can|could|will|would|just)\s*)*(?:sleep|go\s*to\s*sleep|fall\s*asleep)\s*(?:and\s*never\s*wake\s*up\s*)?forever\b`),
+		// A time word may come first: "I hope tonight I don't wake up".
+		patReject(`\b(?:hope|hoping|hopefully|wish|wishing|pray|praying)\s*(?:that\s*)?(?:(?:tonight|tomorrow|today|someday|one\s*day|this\s*time)\s*)?(?:i|i'?ll)\s*(?:just\s*)?(?:never|don'?t|do\s*not|won'?t|will\s*not|wouldn'?t|would\s*not|didn'?t)\s*(?:ever\s*)?wake\s*(?:up)?\b`, wakeRoutine)),
+
+	// Past and other forms of en-self-harm's "<verb> myself" ("I burned
+	// myself on purpose", "I harmed myself last night", "I want to stab
+	// myself"), a relapse ("I relapsed last night and cut again", "I cut
+	// again"). Same idiom and accident checks as en-self-harm (review
+	// finding: v1 none).
+	newRule("en-self-harm-verbs", CategorySelfHarm, LevelCrisis,
+		patMarker(`\b(?:harm(?:ed|s)|burn(?:ed|t|s)|injur(?:ed|es)|punish(?:ed|es)|stab(?:bed|bing|s)?)\s*myself\b`, selfHarmIdiom, accidental),
+		pat(`\bi\s*(?:(?:just|literally|finally|then|have|had|did)\s*)?cut\s*again\b|\brelaps(?:e|ed|ing)\b(?:\s+(?:last|night|today|yesterday|this|morning|evening|week|again|and|then|i|just|finally))*\s+(?:cut|cutting|burned|burnt|burning|self[\s-]*harmed|self[\s-]*harming|hurt\s*myself)\b`),
+		// Hitting oneself: "I hit myself", "I keep punching myself", "I bang
+		// my head against the wall until it bleeds", "I scratch myself until
+		// I bleed" (review finding: v1 none). Banging one's head and
+		// scratching are everyday idioms or itches on their own, so they
+		// need the injury.
+		pat(`\b(?:hit(?:s|ting)?|punch(?:es|ed|ing)?|slap(?:s|ped|ping)?|smack(?:s|ed|ing)?)\s*myself\b|\b(?:bang(?:s|ed|ing)?|hit(?:s|ting)?|slam(?:s|med|ming)?|smash(?:es|ed|ing)?)\s*my\s*head\s*(?:(?:against|on|into)\s*(?:the\s*|a\s*)?(?:wall|walls|floor|desk|table|door|mirror)\s*)?(?:until|till|til|so\s*hard\s*(?:that\s*)?)\s*(?:it|i)\s*(?:bleed|bleeds|bled|bleeding|bruise|bruised|passed?\s*out)\b|\bscratch(?:es|ed|ing)?\s*myself\s*(?:raw|bloody|(?:until|till|til)\s*(?:i|it)\s*(?:bleed|bleeds|bled|bleeding))\b`)),
+	// Past hanging and vehicles: "I hanged myself but the rope broke", "I
+	// want to jump in front of a train", "throw myself under a bus" (review
+	// finding: v1 none).
+	newRule("en-lethal-means-forms", CategorySelfHarm, LevelCrisis,
+		pat(`\b(?:hanged|hung)\s*myself\b|\b(?:step(?:ped|ping|s)?|jump(?:ed|ing|s)?|(?:throw(?:ing|n|s)?|threw)\s*myself)\s*in\s*front\s*of\s*(?:a|an|the|some)?\s*(?:(?:moving|speeding|oncoming)\s*)?(?:train|truck|car|bus|lorry|subway|tram|vehicle)s?\b|\b(?:throw(?:ing|n|s)?|threw)\s*myself\s*(?:under|onto|on\s*to)\s*(?:a|an|the)?\s*(?:train|truck|car|bus|lorry|subway|tram|tracks)\b|\bjump(?:ed|ing|s)?\s*(?:onto|on\s*to|into)\s*(?:the\s*)?(?:train\s*|subway\s*|railway\s*)?tracks\b`)),
+	// Colloquial "menyakiti/melukai diri": "nyakitin diri sendiri",
+	// "ngelukain diri" (review finding: v1 none).
+	newRule("id-self-harm-colloquial", CategorySelfHarm, LevelCrisis,
+		pat(`\b(?:nyakitin|nyakiti|ngelukain|ngelukai|lukain|ngelukaiin|nyelakain|celakain)\s*diri(?:ku|\s*sendiri)?\b`),
+		// Hitting oneself: "aku mukul diriku sendiri", "aku sering mukulin
+		// diri sendiri", "mukulin kepalaku sendiri sampai berdarah" (review
+		// finding: v1 none). A head needs "-ku" or "sendiri" ("mukul kepala
+		// adikku" is someone else's).
+		pat(`\b(?:mukul|mukulin|memukul|memukuli|mukulan|nonjok|nonjokin|ninju|ninjuin|nampar|namparin|menampar)\s*(?:diri(?:ku)?(?:\s*sendiri)?|kepala(?:ku|\s*(?:aku|gue|gw|saya))(?:\s*sendiri)?|kepala\s*sendiri)\b`)),
+	// A wish to be hit by a vehicle: "pengen ditabrak kereta aja",
+	// "pengen ketabrak truk aja biar selesai". "mau" ("about to": "tadi
+	// mau ketabrak mobil") counts only with "aja" after the vehicle (review
+	// finding: v1 none).
+	newRule("id-vehicle-death-wish", CategorySuicide, LevelCrisis,
+		pat(`\b(?:(?:pengen|pgn|pingin|pengin|kepengen|kepingin|ingin|mending|mendingan)|(?:semoga|moga|moga-moga|mudah-mudahan|berharap)\s*`+idHopeTime+`(?:(?:aku|saya|gue|gw|gua|ku)\s*)?`+idHopeTime+`)\s*(?:(?:aja|saja)\s*)?(?:ditabrak|ketabrak|tertabrak|dilindes|kelindes|dilindas|kelindas|terlindas)\s*(?:(?:sama|oleh)\s*)?(?:kereta(?:\s*api)?|krl|mrt|truk|truck|mobil|bus|bis|motor)\b|\b(?:mau|mw)\s*(?:ditabrak|ketabrak|tertabrak|dilindes|kelindes|dilindas|kelindas|terlindas)\s*(?:(?:sama|oleh)\s*)?(?:kereta(?:\s*api)?|krl|mrt|truk|truck|mobil|bus|bis|motor)\s*(?:aja|saja|ajah)\b`)),
+	// The English counterpart of id-vehicle-death-wish: "I want to get hit by
+	// a car", "I want to get run over by a truck", "i wish a car would hit
+	// me", "i hope a bus hits me tomorrow" (review finding: v1 none). A
+	// negated hope ("I hope a car doesn't hit me") does not match.
+	newRule("en-vehicle-death-wish", CategorySuicide, LevelCrisis,
+		pat(`\b(?:want|wanna|wish|wished|hope|hoping|hopefully|pray|praying|would\s*love|love|ready)\s*(?:to\s*)?(?:that\s*)?(?:i(?:'d|'ll|\s*would|\s*could|\s*will|\s*can|\s*just)*\s*)?(?:just\s*)?(?:get|be|getting|being)\s*(?:hit|run\s*over|ran\s*over|struck|killed|flattened|crushed|mowed\s*down)\s*by\s*(?:a|an|the|some)?\s*(?:(?:moving|speeding|passing|oncoming)\s*)?(?:train|truck|car|bus|lorry|vehicle|semi|tram|subway|motorbike|motorcycle)s?\b`),
+		pat(`\b(?:wish|wished|hope|hoping|pray|praying)\s*(?:that\s*)?(?:a|an|the|some)\s*(?:(?:moving|speeding|passing|oncoming)\s*)?(?:train|truck|car|bus|lorry|vehicle|semi|tram|subway|motorbike|motorcycle)\s*(?:would\s*|will\s*|could\s*|just\s*)*(?:(?:hit|hits|run\s*over|runs\s*over|ran\s*over|kill|kills|crush|crushes)\s*me|(?:run|runs|ran)\s*me\s*over|mows?\s*me\s*down)\b`),
+		// "i want a car to hit me".
+		pat(`\b(?:want|wanted|need)\s*(?:a|an|the|some)\s*(?:train|truck|car|bus|lorry|vehicle|semi|tram|subway)\s*to\s*(?:(?:hit|run\s*over|kill|crush)\s*me|run\s*me\s*over)\b`)),
 }
+
+// idHopeTime is an optional time word in the Indonesian hope patterns of
+// id-sleep-forever; it may stand before or after the pronoun ("semoga besok
+// aku ga bangun lagi", "semoga aku besok ga bangun lagi").
+const idHopeTime = `(?:(?:besok(?:\s*pagi)?|esok|nanti(?:\s*malam)?|malam\s*ini|pagi\s*ini|hari\s*ini)\s*)?`
 
 // ruleIndex maps rule ids to catalogue positions.
 var ruleIndex = func() map[string]int {
@@ -361,6 +448,106 @@ var ruleIndex = func() map[string]int {
 	}
 	return m
 }()
+
+// wakeRoutine rejects a hope not to wake up that names a routine as a whole
+// phrase: "I hope I don't wake up late", "... too early", "... before my
+// alarm", "... at 3am", "... with a headache", "... hungover", "... during
+// the night". Only listed trailing words may follow the routine in its
+// clause ("late tomorrow", "early again", "early for work"). A bare or final
+// "too", "at all", "again", "ever", "sick" or "with this pain" is not a
+// routine ("I hope I don't wake up at all", "I hope I never wake up sick
+// again"), and an intent, modal or habit word or a death word anywhere else
+// in the sentence keeps the match ("I hope I don't wake up during the night,
+// I want it to be over", "... before my alarm so I can die in my sleep").
+// Like every post-check it reads at most checkWindow bytes on either side of
+// the match.
+func wakeRoutine(s string, start, end int) bool {
+	lo, hi := max(0, start-checkWindow), min(len(s), end+checkWindow)
+	if hasRiskWord(s[lo:start]) || wakeDeathRe.MatchString(s[lo:hi]) {
+		return false
+	}
+	var w []string // the words of the clause after the match
+	clauseEnd := hi
+	for i := end; i < hi && len(w) < 12; {
+		c := s[i]
+		switch {
+		case strings.IndexByte(",;:\n", c) >= 0:
+			clauseEnd = i
+			i = hi
+		case isAlnum(c):
+			j := i
+			for j < hi && (isAlnum(s[j]) || s[j] == '\'') {
+				j++
+			}
+			w = append(w, s[i:j])
+			i = j
+		default:
+			i++
+		}
+	}
+	at := func(k int) string {
+		if k < len(w) {
+			return w[k]
+		}
+		return ""
+	}
+	k := 0 // words of the routine phrase
+	switch t := at(0); {
+	case t == "late" || t == "early" || wakeStates[t]:
+		k = 1
+	case t == "too" && (at(1) == "early" || at(1) == "late" || at(1) == "tired"):
+		k = 2
+	case t == "before" || t == "until" || t == "till" || t == "at" || t == "by":
+		if n := wakeTime(w[1:]); n > 0 {
+			k = 1 + n
+		}
+	case t == "with" && (at(1) == "a" || at(1) == "an" || at(1) == "my") && wakeAilments[at(2)]:
+		k = 3
+	case t == "during" && at(1) == "the" && at(2) == "night":
+		k = 3
+	case t == "in" && at(1) == "the" && at(2) == "middle" && at(3) == "of" && at(4) == "the" && at(5) == "night":
+		k = 6
+	}
+	if k == 0 || len(w) == 12 || hasRiskWord(s[clauseEnd:hi]) {
+		return false
+	}
+	for _, x := range w[k:] {
+		if !wakeTrail[x] && x != "again" {
+			return false
+		}
+	}
+	return true
+}
+
+// wakeTime returns the number of words of a time at the start of w ("3am",
+// "6", "6 am", "noon", "my alarm", "the morning"), or 0.
+func wakeTime(w []string) int {
+	if len(w) == 0 {
+		return 0
+	}
+	switch {
+	case isDigit(w[0][0]):
+		if len(w) > 1 && (w[1] == "am" || w[1] == "pm" || w[1] == "o'clock") {
+			return 2
+		}
+		return 1
+	case wakeTimes[w[0]]:
+		return 1
+	case (w[0] == "my" || w[0] == "the") && len(w) > 1 && (w[1] == "alarm" || wakeTimes[w[1]]):
+		return 2
+	}
+	return 0
+}
+
+var (
+	wakeStates   = setOf("hungover groggy cranky grumpy sore tired exhausted")
+	wakeAilments = setOf("headache hangover migraine cold fever sore stiff")
+	wakeTimes    = setOf("noon midnight dawn sunrise sunset morning alarm six seven eight nine ten five four")
+	// wakeTrail may follow the routine phrase in its clause.
+	wakeTrail = setOf("tomorrow today for work school class the exam test interview lol haha lmao pls please ugh tbh")
+	// wakeDeathRe: a death or finality word in the sentence keeps the match.
+	wakeDeathRe = mustGuarded(`\b(?:die|dies|died|dying|dead|death|kill|killed|suicide|suicidal|forever|over|end|ending|gone|at\s+all|ever|anymore|mati|meninggal)\b`)
+)
 
 // placeNotWorld re-expresses the v1 lookahead (?!\s+(?:di|dalam)\s+(?!dunia)):
 // the match is rejected when it is followed by "di"/"dalam" and a place that
@@ -449,8 +636,8 @@ func innerSubject(s string, start int) bool {
 	}
 	det, ds := tokenBefore(s, ps)
 	switch {
-	case innerSelf[prev] && det == "my":
-		return true
+	case innerSelf[prev] && (det == "my" || det == "this"):
+		return true // "my soul", "this body" (review finding)
 	case innerSelf[prev] && (det == "whole" || det == "inner" || det == "own"):
 		mine, _ := tokenBefore(s, ds)
 		return mine == "my"
@@ -473,6 +660,11 @@ func innerSubject(s string, start int) bool {
 func innerMe(s string, at int) bool {
 	w1, p1 := tokenBefore(s, at)
 	switch {
+	case w1 == "about":
+		// "everything about me wants to die" (review finding); "the guy
+		// who talks about me" is an object.
+		w0, _ := tokenBefore(s, p1)
+		return innerAbout[w0]
 	case w1 == "of":
 		w0, _ := tokenBefore(s, p1)
 		return innerParts[w0]
@@ -483,6 +675,10 @@ func innerMe(s string, at int) bool {
 	}
 	return true
 }
+
+// innerAbout are the subjects of "<x> about me" that are the speaker's
+// whole self ("everything about me").
+var innerAbout = setOf("everything something all part parts most rest every")
 
 var (
 	innerParts = setOf("part parts piece pieces half rest all most bit bits side sides version corner fraction some much " +
@@ -575,7 +771,16 @@ func idiomaticDeath(s string, start, end int) bool {
 
 // thingBefore reports whether the subject before s[start:] is a thing (see
 // idiomaticDeath).
-func thingBefore(s string, start int) bool {
+func thingBefore(s string, start int) bool { return subjectIs(s, start, isThing) }
+
+// animalBefore reports whether the subject before s[start:] is an animal:
+// only an animal can be the subject of a jump ("kucingku loncat dari atap";
+// "mati lampu mau loncat dari gedung" is the speaker's).
+func animalBefore(s string, start int) bool { return subjectIs(s, start, isAnimal) }
+
+// subjectIs reports whether the subject before s[start:] is a noun that is
+// accepts (see idiomaticDeath for the subject forms).
+func subjectIs(s string, start int, is func(string) bool) bool {
 	prev, ps := tokenBefore(s, start)
 	for n := 0; n < 2 && aspectWords[prev]; n++ {
 		prev, ps = tokenBefore(s, ps)
@@ -583,17 +788,21 @@ func thingBefore(s string, start int) bool {
 	if prev == "" {
 		return false
 	}
-	if isThing(prev) {
-		gov, _ := tokenBefore(s, ps)
-		return !deviceGovernors[gov]
+	if is(prev) {
+		gov, gs := tokenBefore(s, ps)
+		return !deviceGovernors[gov] && !numberBefore(s, gs)
 	}
 	if possessive[prev] {
+		// "hp gue mau mati": a bare thing noun and a possessive pronoun. A
+		// noun that already has a possessive suffix ("kucingku aku mau
+		// mati", "hp-ku aku mau mati aja") is followed by the speaker as a
+		// new subject (review finding).
 		dev, ds := tokenBefore(s, ps)
-		if !isThing(dev) {
+		if !is(dev) || !things[dev] {
 			return false
 		}
 		before, _ := tokenBefore(s, ds)
-		return before == "" || isThing(before) || deviceLeadIns[before]
+		return before == "" || is(before) || deviceLeadIns[before]
 	}
 	// A species or owner after its kind: "bunga mawarnya", "kucing tetangga".
 	kind, ks := tokenBefore(s, ps)
@@ -604,9 +813,12 @@ func thingBefore(s string, start int) bool {
 	return false
 }
 
-// thingSubject is the subject check of the jumping rules: an animal or
-// device subject ("kucingku loncat dari atap", "kucingku mau loncat") is not
-// the speaker. Wishes between the subject and the verb are skipped.
+// thingSubject is the subject check of the jumping rules: an animal
+// subject ("kucingku loncat dari atap", "kucingku mau loncat") is not the
+// speaker. Wishes between the subject and the verb are skipped. A device,
+// power or a plant cannot jump, so a noun such as "lampu" before the verb
+// belongs to another phrase ("mati lampu mau loncat dari gedung" counts;
+// review sweep).
 func thingSubject(s string, start, _ int) bool {
 	p := start
 	for n := 0; n < 2; n++ {
@@ -616,7 +828,7 @@ func thingSubject(s string, start, _ int) bool {
 		}
 		p = ws
 	}
-	return thingBefore(s, p)
+	return animalBefore(s, p)
 }
 
 var wishWords = setOf("pengen pgn pingin pengin kepengen ingin mau mw")
@@ -669,7 +881,8 @@ var deathIdioms = setOf("lampu listrik gaya kutu suri ketawa penasaran angin lan
 
 var rasaFollow = setOf("aja saja sama ke terhadap dengan dgn sih deh lah banget bgt kok ya nih dong tuh juga jg doang")
 
-var matianAfter = regexp.MustCompile(`^[\s-]*matian\b`)
+// matianAfter does not cross a newline: "mati\n-matian" is two lines.
+var matianAfter = regexp.MustCompile(`^[ \t-]*matian\b`)
 
 // particles may stand between "mati aja" and the device it is about ("mati
 // aja lah hp-ku").
@@ -682,7 +895,19 @@ var aspectWords = setOf("mau mw udah udh sudah hampir bakal akan lagi lg keburu 
 // subject of "mau mati" ("nunggu wifi mau mati", "di depan laptop").
 var deviceGovernors = setOf("di depan dari ke sama dengan dgn pake pakai make nunggu nungguin menunggu main maen " +
 	"mainin gara-gara garagara gegara karena karna krn liat lihat ngeliat ngeliatin natap natapin menatap scroll " +
-	"buka ngecek cek benerin ngurus ngurusin ngadep ngadepin")
+	"buka ngecek cek benerin ngurus ngurusin ngadep ngadepin " +
+	// A quantity word makes "jam" a unit of time ("tiap jam mau mati
+	// rasanya"; review finding).
+	"tiap setiap per beberapa berapa satu dua tiga empat lima sejam")
+
+// numberBefore reports whether a number ends just before s[i:], past
+// spaces ("2 jam mau mati": a duration, not a clock).
+func numberBefore(s string, i int) bool {
+	for i > 0 && s[i-1] == ' ' {
+		i--
+	}
+	return i > 0 && isDigit(s[i-1])
+}
 
 // deviceLeadIns may open a clause before "<device> <pronoun> mau mati".
 var deviceLeadIns = setOf("eh duh aduh waduh haduh yah yaah wah anjir njir anjay astaga btw mana terus trus lalu tapi tp dan")
@@ -713,6 +938,27 @@ var things = setOf("hp hape handphone henpon ponsel smartphone iphone android ta
 	// animals
 	"kucing anjing ikan cupang koi lele guppy burung ayam bebek hamster kelinci kura-kura kura marmut sapi kambing " +
 	"kuda babi tikus ular monyet kenari lovebird perkutut hewan peliharaan anabul")
+
+// animals are the animal nouns of things.
+var animals = setOf("kucing anjing ikan cupang koi lele guppy burung ayam bebek hamster kelinci kura-kura kura " +
+	"marmut sapi kambing kuda babi tikus ular monyet kenari lovebird perkutut hewan peliharaan anabul")
+
+// isAnimal reports whether tok, without a possessive suffix, is an animal
+// noun (see isThing).
+func isAnimal(tok string) bool {
+	if !isThing(tok) {
+		return false
+	}
+	if animals[tok] {
+		return true
+	}
+	for _, suf := range []string{"-nya", "-ku", "-mu", "nya", "ku", "mu"} {
+		if b, ok := strings.CutSuffix(tok, suf); ok && animals[b] {
+			return true
+		}
+	}
+	return false
+}
 
 // thingKinds name a kind before a species or an owner ("bunga mawarnya",
 // "kucing tetangga").

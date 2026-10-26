@@ -34,6 +34,8 @@ var goldenRuleIDs = []string{
 	// added in sela-safety-2026.10.26-3
 	"id-suicide-colloquial", "id-hanging-colloquial", "id-jumping-colloquial", "id-sleep-forever",
 	"id-death-wish-formal", "mixed-death-wish", "en-tired-of-living", "en-sleep-forever",
+	"en-self-harm-verbs", "en-lethal-means-forms", "id-self-harm-colloquial", "id-vehicle-death-wish",
+	"en-vehicle-death-wish",
 }
 
 func TestRuleIDsStableAndUnique(t *testing.T) {
@@ -93,10 +95,10 @@ func TestCatalogueShape(t *testing.T) {
 			if p.anchored != strings.HasPrefix(src, "^") || (!p.anchored && !strings.HasPrefix(src, `\b`)) {
 				t.Errorf("%s: pattern must start with \\b (or ^ when anchored): %s", r.id, src)
 			}
-			if p.anchored && p.reject != nil {
+			if p.anchored && (p.reject != nil || p.marker != nil || p.third != nil) {
 				t.Errorf("%s: anchored patterns cannot have post-checks", r.id)
 			}
-			if p.maximal && (p.anchored || p.reject != nil) {
+			if p.maximal && (p.anchored || p.reject != nil || p.marker != nil || p.third != nil) {
 				t.Errorf("%s: maximal patterns cannot be anchored or have post-checks", r.id)
 			}
 			// Normalised text is lowercase, so a literal capital never matches.
@@ -440,6 +442,14 @@ func TestPostChecks(t *testing.T) {
 		// A swear word is a thing only with a possessive suffix.
 		{"anjing aku mau mati aja", "mau mati", false},
 		{"anjingku udah mau mati", "mau mati", true},
+		// "<thing>-ku aku" is the speaker as a new subject, and "tiap jam"
+		// is a time (round-3 review finding).
+		{"kucingku aku mau mati", "mau mati", false},
+		{"hp-ku aku mau mati aja", "mau mati", false},
+		{"tiap jam mau mati rasanya", "mau mati", false},
+		{"setiap jam mau mati aja", "mau mati", false},
+		{"2 jam mau mati", "mau mati", false},
+		{"jam mau mati", "mau mati", true},
 	})
 	selfCases := []tc{
 		{"part of me wants to die", "wants to die", true},
@@ -465,6 +475,9 @@ func TestPostChecks(t *testing.T) {
 		{"the real me wants to die", "wants to die", true},
 		{"my inner child wants to die", "wants to die", true},
 		{"my inner self wants to die", "wants to die", true},
+		{"everything about me wants to die", "wants to die", true},
+		{"this body wants to die", "wants to die", true},
+		{"the guy who talks about me wants to die", "wants to die", false},
 		{"my friend wants to die", "wants to die", false},
 		{"she wants to die", "wants to die", false},
 		{"his body wants to die", "wants to die", false},
@@ -508,6 +521,10 @@ func TestPostChecks(t *testing.T) {
 		{"honestly kms anak-anak", "kms", false},
 		{"kms anak saya hilang", "kms", true},
 		{"how many kms is it", "kms", true},
+		// A number after a time word is a time (round-3 review finding).
+		{"exam at 8 kms", "kms", false},
+		{"meeting jam 9 kms", "kms", false},
+		{"i ran 5 kms today", "kms", true},
 	})
 	run("suicideCompound", suicideCompound, []tc{
 		{"gol bunuh diri bikin kalah", "bunuh diri", true},
@@ -525,6 +542,18 @@ func TestPostChecks(t *testing.T) {
 		{"aku mau bunuh diri karier aku hancur", "bunuh diri", false},
 		{"aku mau bunuh diri karier", "bunuh diri", false},
 		{"i want to watch suicide squad", "suicide", true},
+		{"aku mau nonton suicide squad", "suicide", true},
+		// An intent word or a first-person subject that governs the
+		// compound keeps it, past articles and light verbs (review finding).
+		{"aku mau jalanin misi bunuh diri biar mati", "bunuh diri", false},
+		{"i want to go on a suicide mission and never come back", "suicide", false},
+		{"i'm planning a suicide run tonight", "suicide", false},
+		{"bek itu cetak gol bunuh diri", "bunuh diri", true},
+		{"i'd commit career suicide", "suicide", true},
+		{"i want to commit career suicide", "suicide", false},
+		{"i'm on a suicide mission at work lol", "suicide", true},
+		{"aku jalanin misi bunuh diri di game", "bunuh diri", true},
+		{"aku bunuh diri karier", "bunuh diri", false},
 	})
 	run("suicideNews", suicideNews, []tc{
 		{"bom bunuh diri di gereja", "bunuh diri", true},
@@ -532,11 +561,38 @@ func TestPostChecks(t *testing.T) {
 		{"the suicide bomber", "suicide", true},
 		{"aku mau bunuh diri", "bunuh diri", false},
 		{"suicide is not the answer", "suicide", false},
+		{"aku baca berita bom bunuh diri di gereja", "bunuh diri", true},
+		{"my brother is a suicide bomber", "suicide", true},
+		// The speaker's own plan is not someone else's act (review finding).
+		{"aku mau bom bunuh diri", "bunuh diri", false},
+		{"aku pengen jadi pelaku bom bunuh diri", "bunuh diri", false},
+		{"aku mau ngelakuin serangan bunuh diri", "bunuh diri", false},
+		{"i want to be a suicide bomber", "suicide", false},
+		{"i'm going to wear a suicide vest tomorrow", "suicide", false},
+		{"i am a suicide bomber", "suicide", false},
 	})
-	run("legalWill", legalWill, []tc{
-		{"gimana cara bikin surat wasiat yang sah", "surat wasiat", true},
+	// A context marker discards a match only in a short text with no risk
+	// signal (see markersApply); the test text stands for the whole text.
+	marker := func(fn func(s string, start, end int) bool) func(s string, start, end int) bool {
+		return func(s string, start, end int) bool { return fn(s, start, end) && markersApply(s) }
+	}
+	run("relativeWill", relativeWill, []tc{
 		{"kakek bikin surat wasiat untuk pembagian warisan", "surat wasiat", true},
 		{"nenek ninggalin surat wasiat", "surat wasiat", true},
+		{"kakek mau bikin surat wasiat untuk pembagian warisan", "surat wasiat", true},
+		{"kakek bikin surat wasiat terakhirku", "surat wasiat", false},
+		{"aku sama kakek bikin surat wasiat", "surat wasiat", false},
+		{"gimana cara bikin surat wasiat yang sah", "surat wasiat", false},
+	})
+	run("legalWill", marker(legalWill), []tc{
+		{"gimana cara bikin surat wasiat yang sah", "surat wasiat", true},
+		{"notaris bantu bikin surat wasiat", "surat wasiat", true},
+		{"cara bikin surat wasiat", "surat wasiat", true},
+		// A risk signal anywhere keeps the match (review finding).
+		{"lagi bikin surat wasiat yang sah, abis ini aku pamit", "surat wasiat", false},
+		{"udah bikin surat wasiat yang sah buat keluarga, selamat tinggal", "surat wasiat", false},
+		{"surat wasiat udah sah, besok aku pergi selamanya", "surat wasiat", false},
+		{"cara bikin surat wasiat yang sah? soalnya aku mau pergi", "surat wasiat", false},
 		{"ini surat wasiat terakhirku", "surat wasiat", false},
 		{"surat wasiat terakhirku tolong bagi harta ke adik", "surat wasiat", false},
 		{"aku nulis surat wasiat buat keluargaku", "surat wasiat", false},
@@ -548,9 +604,9 @@ func TestPostChecks(t *testing.T) {
 		{"cut myself off from them", "cut myself", true},
 		{"cutting myself some slack", "cutting myself", true},
 		{"i cut myself a break", "cut myself", true},
-		{"i cut myself shaving", "cut myself", true},
-		{"i accidentally cut myself", "cut myself", true},
-		{"i hurt myself at the gym", "hurt myself", true},
+		{"i burned myself out", "burned myself", true},
+		// Accidents are a context marker, not an idiom (see accidental).
+		{"i cut myself shaving", "cut myself", false},
 		{"i cut myself", "cut myself", false},
 		{"i hurt myself out of anger", "hurt myself", false},
 		{"i cut myself on purpose", "cut myself", false},
@@ -559,10 +615,36 @@ func TestPostChecks(t *testing.T) {
 		{"i want to hurt myself off and on", "hurt myself", false},
 		{"i've been cutting myself off and on", "cutting myself", false},
 	})
-	run("accidental", accidental, []tc{
+	run("accidental", marker(accidental), []tc{
 		{"nggak sengaja ngiris tangan pas potong bawang", "ngiris tangan", true},
 		{"i accidentally cut myself while cooking", "cut myself", true},
 		{"i hurt myself playing football", "hurt myself", true},
+		{"i cut myself shaving", "cut myself", true},
+		{"i accidentally cut myself", "cut myself", true},
+		{"i hurt myself at the gym", "hurt myself", true},
+		{"i cut myself when i was cooking", "cut myself", true},
+		{"i burned myself on the stove", "burned myself", true},
+		{"i injured myself at practice", "injured myself", true},
+		// Round-2 review regressions: a purpose, motive, feeling or habit
+		// word anywhere in the text, after a comma, a clause word or a full
+		// stop, keeps the match; so does a habitual verb form, a bare
+		// "lagi" (again) after the injury, or a method word.
+		{"aku ngiris tangan lagi bikin aku tenang", "ngiris tangan", false},
+		{"aku iris tangan pas lagi masak, biar sakitnya pindah", "iris tangan", false},
+		{"aku ngiris tangan pas potong bawang terus rasanya lega", "ngiris tangan", false},
+		{"aku iris tanganku waktu cukur karena aku mau", "iris tangan", false},
+		{"i cut myself while cooking because i wanted to", "cut myself", false},
+		{"i cut myself while cooking to feel better", "cut myself", false},
+		{"i cut myself shaving and i liked it", "cut myself", false},
+		{"i cut myself shaving. i liked it.", "cut myself", false},
+		{"i hurt myself at the gym so i would feel something", "hurt myself", false},
+		{"i burn myself on the stove", "burn myself", false},
+		{"i burned myself on the stove when i'm sad", "burned myself", false},
+		{"i hurt myself running into traffic", "hurt myself", false},
+		{"i cut myself by accident and i want to do it again", "cut myself", false},
+		{"i hurt myself working out because i deserve it", "hurt myself", false},
+		{"i'm cutting myself while cooking", "cutting myself", false},
+		{"aku nyayat tangan pas masak", "nyayat tangan", false},
 		{"aku sengaja nyayat tanganku", "nyayat tangan", false},
 		// The review regressions: an intent, modal or habit word, a
 		// self-directed method, a deliberate or negating word, or a marker
@@ -614,11 +696,21 @@ func TestPostChecks(t *testing.T) {
 		{"i started cutting up again", "started cutting", false},
 		{"i've been cutting off and on for years", "been cutting", false},
 	})
-	run("asPrescribed", asPrescribed, []tc{
+	run("asPrescribed", marker(asPrescribed), []tc{
 		{"i took all my pills like the doctor said", "took all my pills", true},
 		{"i took all my meds as prescribed", "took all my meds", true},
 		{"i took all my pills", "took all my pills", false},
 		{"i took all my meds this morning", "took all my meds", false},
+		// A time is not a marker, and a risk signal anywhere keeps the
+		// match (review finding).
+		{"i took all my pills on time", "took all my pills", false},
+		{"i took all my pills like the doctor said, all of them at once so i won't wake up", "took all my pills", false},
+		{"i took all my pills as prescribed, then i swallowed the rest", "took all my pills", false},
+		{"i took all my meds as prescribed. i'm done", "took all my meds", false},
+		// Only "all my pills" is an adherence report (review sweep).
+		{"i took a lot of pills like the doctor said", "took a lot of pills", false},
+		{"i took a whole bottle of pills as prescribed", "took a whole bottle of pills", false},
+		{"just took all of my meds as prescribed", "just took all of my meds", true},
 	})
 	run("dyeObject", dyeObject, []tc{
 		{"i need to die my hair black", "i need to die", true},
@@ -649,6 +741,10 @@ func TestPostChecks(t *testing.T) {
 	run("thingSubject", thingSubject, []tc{
 		{"kucingku loncat dari atap", "loncat dari atap", true},
 		{"kucingku mau loncat dari atap", "loncat dari atap", true},
+		{"kucingku lompat dari jendela", "lompat dari jendela", true},
+		// Only an animal can jump (review sweep).
+		{"mati lampu mau loncat dari gedung", "loncat dari gedung", false},
+		{"hp-ku mau loncat dari gedung", "loncat dari gedung", false},
 		{"aku pengen loncat dari gedung", "loncat dari gedung", false},
 		{"pengen lompat dari gedung", "lompat dari gedung", false},
 	})
@@ -662,7 +758,7 @@ func TestPostChecks(t *testing.T) {
 		{"tired of living in pain", "tired of living", false},
 		{"tired of living with this depression", "tired of living", false},
 	})
-	run("asPrescribed", asPrescribed, []tc{
+	run("asPrescribed", marker(asPrescribed), []tc{
 		{"i took all my pills on purpose like the doctor said", "took all my pills", false},
 	})
 	run("leisureJump", leisureJump, []tc{
@@ -677,7 +773,56 @@ func TestPostChecks(t *testing.T) {
 		{"mau die cast mobil mainan", "mau die", true},
 		{"pengen die hard fans", "pengen die", true},
 		{"pengen die aja", "pengen die", false},
+		{"hp-ku mau die", "mau die", true},
+		// A device cannot "unalive" (review sweep).
+		{"mati lampu mau unalive aja", "mau unalive", false},
 	})
+	run("wakeRoutine", wakeRoutine, []tc{
+		{"i hope i don't wake up late tomorrow", "hope i don't wake up", true},
+		{"i hope i never wake up early again", "hope i never wake up", true},
+		{"i hope i never wake up", "hope i never wake up", false},
+		{"i hope i don't wake up tomorrow", "hope i don't wake up", false},
+		// Only a whole routine phrase, with no risk or death word in the
+		// sentence (round-3 review finding).
+		{"i hope i don't wake up too early", "hope i don't wake up", true},
+		{"i hope i don't wake up with a headache", "hope i don't wake up", true},
+		{"i hope i don't wake up before my alarm", "hope i don't wake up", true},
+		{"i hope i don't wake up at 3 am", "hope i don't wake up", true},
+		{"i hope i don't wake up during the night", "hope i don't wake up", true},
+		{"i hope i dont wake up at all", "hope i dont wake up", false},
+		{"honestly i hope i don't wake up too", "hope i don't wake up", false},
+		{"i hope i don't wake up early, or at all", "hope i don't wake up", false},
+		{"i hope i never wake up with this pain again", "hope i never wake up", false},
+		{"i hope i never wake up sick again", "hope i never wake up", false},
+		{"i hope i don't wake up during the night, i want it to be over", "hope i don't wake up", false},
+		{"i hope i never wake up before my alarm so i can die in my sleep", "hope i never wake up", false},
+		{"i hope i don't wake up late lol bye forever", "hope i don't wake up", false},
+	})
+	// The context-marker gate is closed by default: every word outside the
+	// marker patterns' matches must be benign (round-3 review finding).
+	gate := map[string]bool{
+		"i cut myself shaving":                                                true,
+		"i cut myself shaving this morning":                                   true,
+		"i accidentally cut myself while cooking, not a big deal":             true,
+		"nggak sengaja ngiris tangan pas lagi potong bawang":                  true,
+		"gimana cara bikin surat wasiat yang sah?":                            true,
+		"i took all my pills like the doctor said":                            true,
+		"i cut myself shaving, it helped":                                     false,
+		"i cut myself shaving. it was worth it":                               false,
+		"i cut myself shaving 😅":                                              false,
+		"i 'accidentally' cut myself while cooking":                           false,
+		"nggak sengaja ngiris tangan pas potong bawang, bikin nagih":          false,
+		"nggak sengaja ngiris tangan lagi":                                    false,
+		"i took all my pills like the doctor said, all 30 of them":            false,
+		"i took all my pills like the doctor said lol bye":                    false,
+		"lagi bikin surat wasiat yang sah, udah waktunya":                     false,
+		"nggak sengaja ngiris tangan pas potong bawang, sebenernya disengaja": false,
+	}
+	for in, want := range gate {
+		if got := markersApply(in); got != want {
+			t.Errorf("markersApply(%q) = %v, want %v", in, got, want)
+		}
+	}
 	run("circumstantialLife", circumstantialLife, []tc{
 		{"capek hidup kayak gini terus", "capek hidup", true},
 		{"capek hidup di jakarta", "capek hidup", true},

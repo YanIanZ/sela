@@ -25,9 +25,10 @@ import (
 //     ("killll myselfff" → "kill myself", "matii" → "mati", "pengeen" →
 //     "pengen", "kiill" → "kill"), fused spaced-out words split ("akumaumati"
 //     → "aku mau mati"), symbols, emoji, emphasis marks and pauses between
-//     words read as spaces ("aku pengen... mati", "aku pengen... 😭 mati",
-//     "I want to . . . die", "aku pengen - mati", "I want to *die*", "bunuh
-//     🙂 diri"), contractions and common misspellings spelt out ("wanna" →
+//     words read as gaps ("aku pengen... mati", "aku pengen... 😭 mati",
+//     "I want to . . . die", "aku pengen - mati", "aku pengen...\nmati", "I
+//     want to *die*", "bunuh 🙂 diri"; a dot pause becomes a newline, see
+//     symbolGaps), contractions and common misspellings spelt out ("wanna" →
 //     "want to", "wana" → "want to", "my self" → "myself", "sucidal" →
 //     "suicidal", "pngen" → "pengen", "bunuh dri" → "bunuh diri", "want 2
 //     die" → "want to die"), and the pronoun reading of "1";
@@ -37,7 +38,7 @@ import (
 //     a capital I inside a lowercase word is l, and each 1 or | is i or l,
 //     whichever spells a vocabulary word ("ki11", "kiII", "suicidaI", "m@t!",
 //     "$uicide", "$u1c1d3", "k1ll my$3lf", "m@t1"); a final "!" stays a mark
-//     after a whole word ("$u1c1d3!").
+//     after a whole word ("$u1c1d3!", "m@ti! lampu kamar mati").
 func variants(text string) []string {
 	base := prepare(text)
 	primary := finish(base, 1)
@@ -265,15 +266,20 @@ func segment(w string) string {
 // symbolGaps reads symbols, emoji, emphasis marks and brackets as spaces
 // ("aku pengen😭mati", "I want to *die*", "aku pengen (mati)"), drops the
 // quotation marks around a single word ("I want to \"die\""), and reads a
-// run of two or more dots between two words as a space ("aku pengen...
+// pause between two words as a gap the patterns' \s* crosses ("aku pengen...
 // mati"). Sentence and clause punctuation, apostrophes, hyphens and the
 // quotation marks of longer quotations are kept, so frames and quotations
 // keep their meaning.
 //
 // Symbols are read first, so a pause that an emoji follows is still seen
-// between two words ("aku pengen... 😭 mati"). A pause is a run of dots and
-// spaces with two or more dots ("...", ". . .") or a dash with spaces on both
-// sides (" - ", " -- "; em dashes are folded to '-').
+// between two words ("aku pengen... 😭 mati"). A pause is a run of dots,
+// spaces and newlines with two or more dots ("...", ". . .", "...\n"), or a
+// dash with a space before it and a space or newline after it (" - ", " --
+// ", " -\n"; em dashes are folded to '-'). A dot pause, and any pause with a
+// newline, becomes a newline: the canonical form ends a sentence or clause
+// there, so the variant keeps that clause boundary for context ("Mama
+// bilang sabar... pengen bunuh 🙂 diri": the wish is the speaker's) while
+// matching still crosses it. A dash pause between words becomes a space.
 func symbolGaps(s string) string {
 	s = symbolSpaces(s)
 	var b strings.Builder
@@ -283,30 +289,38 @@ func symbolGaps(s string) string {
 		size := 1
 		if c == '.' || (c == '-' && i > 0 && s[i-1] == ' ') {
 			j, dots, dashes := i, 0, 0
-			for j < len(s) && strings.IndexByte(". -", s[j]) >= 0 {
+			newline := false
+			for j < len(s) && strings.IndexByte(". -\n", s[j]) >= 0 {
 				switch s[j] {
 				case '.':
 					dots++
 				case '-':
 					dashes++
+				case '\n':
+					newline = true
 				}
 				j++
 			}
-			pause := dots >= 2 || (dots == 0 && dashes > 0 && s[j-1] == ' ')
+			pause := dots >= 2 || (dots == 0 && dashes > 0 && (s[j-1] == ' ' || s[j-1] == '\n'))
 			if pause && wordBefore(s, i) && wordAfter(s, j) {
 				if !changed {
 					b.Grow(len(s))
 					b.WriteString(s[:i])
 					changed = true
 				}
-				b.WriteByte(' ')
+				if dots >= 2 || newline {
+					b.WriteByte('\n')
+				} else {
+					b.WriteByte(' ')
+				}
 				i = j
 				continue
 			}
-			size = max(1, j-i)
-			if c == '-' {
-				size = 1
-			}
+			// No suffix of a run that is not a pause can be one (its
+			// first byte follows a dot or dash, not a word), so the whole
+			// run is copied in one step: rescanning from each dash made
+			// "- - - ..." quadratic (review finding).
+			size = j - i
 		}
 		if changed {
 			b.WriteString(s[i : i+size])
@@ -316,7 +330,7 @@ func symbolGaps(s string) string {
 	if !changed {
 		return s
 	}
-	return strings.TrimSpace(collapseSpaces(b.String()))
+	return strings.TrimSpace(strings.ReplaceAll(collapseSpaces(b.String()), " \n", "\n"))
 }
 
 // symbolSpaces is the first step of symbolGaps: symbols, emoji, emphasis
@@ -596,9 +610,11 @@ func leetAlt(s string) string {
 			}
 			resolveAmbiguous(b[i:e], ambiguous, i)
 			switch {
-			case trailing > i && !vocabulary[resolveWord(string(b[i:e]))]:
-				// The final "!" may be punctuation after a whole word
-				// ("$u1c1d3!"): keep it when the word before it is one.
+			case trailing > i:
+				// The final "!" is punctuation after a whole word
+				// ("$u1c1d3!", "m@ti! Lampu kamar mati": reading it as i
+				// would join the sentences and make "mati lampu"; review
+				// finding): keep it when the word before it is one.
 				b[trailing] = '!'
 				resolveAmbiguous(b[i:trailing], ambiguous, i)
 				if !vocabulary[resolveWord(string(b[i:trailing]))] {
@@ -701,7 +717,7 @@ func buildVocabulary() (map[string]bool, int) {
 			addExpr(p.re.String())
 		}
 	}
-	for _, re := range []*regexp.Regexp{denialRe.re, adoptionRe.re, sharedRe, firstPersonRe, breakerRe, thirdPronounRe, ownFrameRe} {
+	for _, re := range []*regexp.Regexp{denialRe.re, adoptionRe.re, adoptionCoreRe.re, adoptionTrailRe.re, commaAdoptionRe, sharedRe, firstPersonRe, breakerRe, thirdPronounRe, ownFrameRe} {
 		addExpr(re.String())
 	}
 	for _, g := range frameRe.alts {

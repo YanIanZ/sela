@@ -266,12 +266,50 @@ func TestAdoption(t *testing.T) {
 		"temanku bilang dia mau bunuh diri, aku mau ikut", "aku liat berita ada orang loncat, aku pengen kayak dia",
 		"aku baca berita ada anak bunuh diri, kok aku iri ya", "kepikiran buat ngelakuin hal yang sama",
 		"i watched a video of a guy jumping off a bridge, i want to try it",
+		// Round-2 review findings: trailing laughter, emoticons and adverbs,
+		// "aku juga/pun" before an unlisted word, references back to the
+		// act, elliptical wishes, and "so do i" before anything.
+		"temanku bilang dia mau bunuh diri. aku juga wkwk", "temanku bilang dia mau bunuh diri. gw jg :(",
+		"temanku bilang dia mau bunuh diri. aku pun hiks", "temanku bilang dia mau bunuh diri. saya juga huhu",
+		"temanku bilang dia mau bunuh diri. aku sama hehe", "temanku bilang dia mau bunuh diri. aku juga sebenernya",
+		"temanku bilang dia mau bunuh diri. kalau aku sih juga", "temanku bilang dia mau bunuh diri. aku juga dari dulu",
+		"temanku bilang dia mau bunuh diri, aku juga sempat", "temanku bilang dia mau bunuh diri, aku pengen juga",
+		"my friend said she wants to die. so do i haha", "my friend said she wants to die. so do i right now",
+		"my friend said she wants to die. so am i :(", "my friend said she wants to die. i'm the same :(",
+		"my friend said she wants to die. i want to too", "my friend said she wants to die. i kinda want to too",
+		"my friend said she wants to die. honestly i want to", "temanku bilang dia mau bunuh diri. aku pengen banget",
+		"aku baca berita ada mahasiswa bunuh diri, jadi pengen ngelakuin juga",
+		"aku baca berita ada mahasiswa bunuh diri, kepikiran buat ngelakuin hal yg sama",
+		"aku baca berita ada mahasiswa bunuh diri kepikiran buat ngelakuin hal yang sama",
+		"aku nonton video orang gantung diri. pengen ngelakuin itu juga",
+		"i read about a student who killed himself, i'm thinking of doing the same",
+		// The doubled variant of "meee tooo".
+		"my friend said she wants to die. mee too shaving",
+		// Round-3 review findings: chat pronouns, more short forms, comma
+		// forms, attached envy, a closed short form, and "aku juga" before
+		// an aspect word and a non-knowing continuation.
+		"temanku bilang dia mau bunuh diri. aq juga", "temanku bilang dia mau bunuh diri. gw banget",
+		"temanku bilang dia mau bunuh diri. sama aja aku", "my friend said she wants to die. metoo",
+		"my friend said she wants to die. big mood", "my friend said she wants to die. i do, too",
+		"my friend said she wants to die. i've thought about it too", "my friend said she wants to die. so am i lol idk",
+		"aku baca berita ada mahasiswa bunuh diri, kenapa bukan aku", "i read about a student who killed himself. i wish that was me",
+		"temanku bilang dia mau bunuh diri. aku juga udah nggak sanggup", "temanku bilang dia mau bunuh diri. aku juga punya rencana",
 	}
 	no := []string{
 		"temanku bilang dia mau mati. aku khawatir.", "my friend said she wants to die. what do i do",
 		"temanku bilang dia mau mati. aku juga nonton beritanya.", "the same thing happened",
 		"temanku bilang dia mau mati. besok aku mau ikut nemenin dia", "temanku bilang dia mau mati. aku sama dia sahabatan",
 		"she gave it to me to keep",
+		// An ordinary continuation, a comparison, a negated wish or a wish
+		// with an object is not adoption.
+		"temanku bilang dia mau mati, aku juga panik", "temanku bilang dia mau mati, aku pun langsung nelpon dia",
+		"temanku bilang dia mau mati, aku juga nggak tau harus ngapain", "my friend said she wants to die. i'm the same age",
+		"my friend said she wants to die. every day it's the same", "temanku bilang dia mau mati. aku nggak pengen",
+		"my friend said she wants to die. i don't want to", "temanku bilang dia mau mati, aku pengen bantu dia",
+		"aku baca berita ada mahasiswa bunuh diri, pengen nangis", "she asked me to come",
+		"my friend said she wants to die. this is me at the beach", "my friend said she wants to die. i'm next to her now",
+		"my friend said she wants to die. i feel that she needs help", "temanku bilang dia mau bunuh diri. aku juga udah tahu",
+		"temanku bilang dia mau bunuh diri. aku juga nggak nyangka",
 	}
 	for _, s := range yes {
 		if !analyse(s).adopted() {
@@ -419,4 +457,40 @@ func indexOf(t *testing.T, s, sub string) int {
 		t.Fatalf("%q not in %q", sub, s)
 	}
 	return i
+}
+
+// TestAdoptionCrossProduct checks every combination of a reported wish, a
+// short Indonesian adoption form, an aspect word and a continuation, and of
+// a media or lyric frame with an attached wish or envy (round-3 review
+// findings: 144 and 132 inputs; vectors.json holds a sample of each).
+func TestAdoptionCrossProduct(t *testing.T) {
+	check := func(s string) {
+		t.Helper()
+		if a := Assess(s); a.Level != LevelCrisis {
+			t.Errorf("Assess(%q) = %s %v, want crisis", s, a.Level, a.RuleIDs)
+		}
+	}
+	for _, report := range []string{"temanku bilang dia mau bunuh diri. ", "my friend said she wants to die. "} {
+		for _, form := range []string{"aku juga", "gw jg", "aku pun", "saya juga"} {
+			for _, aspect := range []string{"udah", "lagi", "kadang"} {
+				for _, tail := range []string{"nggak sanggup", "nggak kuat", "ga kuat lagi", "nggak pengen hidup",
+					"cuma pengen pergi", "ada pikiran itu"} {
+					check(report + form + " " + aspect + " " + tail)
+				}
+			}
+		}
+	}
+	frames := []string{"aku baca berita ada mahasiswa bunuh diri", "aku nonton video orang gantung diri",
+		"I watched a video of a guy jumping off a bridge", "I read a news article about a student who killed himself",
+		"Lirik lagunya: aku ingin mati", `the lyrics say "I want to die"`}
+	forms := []string{"I wish that was me", "andai itu aku", "semoga aku berikutnya", "I'm next", "aku selanjutnya",
+		"I wish I had the guts", "pengen punya keberanian kayak dia", "kenapa bukan aku", "why not me",
+		"itu yang aku mau", "that's what I want"}
+	for _, f := range frames {
+		for _, form := range forms {
+			for _, join := range []string{", ", ". "} {
+				check(f + join + form)
+			}
+		}
+	}
 }

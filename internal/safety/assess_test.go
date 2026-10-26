@@ -321,6 +321,25 @@ func adversarialInputs() map[string]string {
 		"kms":          repeat("kms "),
 		"media-report": repeat("aku baca berita ada mahasiswa bunuh diri pengen nyusul "),
 		"elongated":    repeat("pengeen maati meee tooo "),
+		// Runs of pause marks and sentence punctuation, and many shared
+		// third-person wishes in one segment, were quadratic (review
+		// finding).
+		"dash-pauses": repeat("- - "),
+		"dot-runs":    repeat("... "),
+		"bangs":       repeat("!!!! "),
+		"shared-wish": repeat("she wants to kill herself "),
+		"said-wish":   repeat("my friend said she wants to die "),
+		"adoption":    repeat("temanku bilang dia mau bunuh diri. aku juga wkwk "),
+		"news-intent": repeat("aku mau bom bunuh diri "),
+		"wish-tail":   repeat("my friend said she wants to die. pengen "),
+		// Round 3: the wake-routine check, "aku juga" tails, trailing-only
+		// forms and the new self-harm and vehicle patterns, all many times
+		// in one sentence.
+		"wake-routine": repeat("i hope i don't wake up late "),
+		"juga-tails":   repeat("aku juga udah aku pun lagi "),
+		"trail-forms":  repeat("gw banget metoo big mood i'm next "),
+		"hit-myself":   repeat("I hit myself "),
+		"vehicle-wish": repeat("i hope a car hits me "),
 	}
 }
 
@@ -380,6 +399,12 @@ func TestLinearTime(t *testing.T) {
 		"spaced-phrase": "a k u  m a u  m a t i  ", "leet": "k1ll m@t! $uicide kiII ",
 		"mixed-quotes": `'a' "b" `, "legal-will": "surat wasiat ", "gym": "I hurt myself at the gym ",
 		"media-report": "aku baca berita ada mahasiswa bunuh diri pengen nyusul ", "elongated": "pengeen maati meee tooo ",
+		"dash-pauses": "- - ", "dot-runs": "... ", "bangs": "!!!! ", "shared-wish": "she wants to kill herself ",
+		"said-wish": "my friend said she wants to die ", "adoption": "temanku bilang dia mau bunuh diri. aku juga wkwk ",
+		"news-intent": "aku mau bom bunuh diri ", "wish-tail": "my friend said she wants to die. pengen ",
+		"wake-routine": "i hope i don't wake up late ", "juga-tails": "aku juga udah aku pun lagi ",
+		"trail-forms": "gw banget metoo big mood i'm next ", "hit-myself": "I hit myself ",
+		"vehicle-wish": "i hope a car hits me ",
 	}
 	fastest := func(in string) time.Duration {
 		best := time.Duration(1<<63 - 1)
@@ -481,7 +506,12 @@ func TestSkipEquivalence(t *testing.T) {
 		"i wanna die", "she wants to die tooo", "aku pun", "same lol", "a k u  m a u  m a t i", "k|ll myself",
 		"meee tooo", "pengeen maati", "$u1c1d3", "aku pengen... 😭 mati", "I want to . . . die", "aku pengen - mati",
 		"pengen nyusul", "aku sama", "omg same", "Mama bilang: makan dulu", "Nyokap ngomong gt", "lirik lagunya:",
-		"kms", "5 kms", "I cut myself shaving", "at the gym", "dari sosmed", "mati rasa", "my uncle killed himself too")
+		"kms", "5 kms", "I cut myself shaving", "at the gym", "dari sosmed", "mati rasa", "my uncle killed himself too",
+		// Round 2: the context-marker gate, adoption tails and compounds.
+		"because I wanted to", "I liked it", "biar lega", "like the doctor said", "surat wasiat yang sah",
+		"aku juga wkwk", "so do i haha", "aku pengen", "I want to", "pengen ngelakuin juga", "aku mau bom bunuh diri",
+		"I want to be a suicide bomber", "misi bunuh diri", "nggak sengaja ngiris tangan pas potong bawang",
+		"aku juga panik", "wanna", "aku baca berita ada mahasiswa bunuh diri", "jadi pengen ngelakuin juga")
 	seps := []string{". ", ".\n", "! ", "? ", ", ", " ", "... ", "\n", " tapi ", "; "}
 	rng := rand.New(rand.NewSource(5))
 	n := 8000
