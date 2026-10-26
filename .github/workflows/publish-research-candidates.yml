@@ -1,0 +1,75 @@
+name: Publish Sela Europe PMC metadata snapshot
+
+on:
+  push:
+    branches:
+      - data/add-europepmc-7580-candidates
+    paths:
+      - '.github/workflows/publish-research-candidates.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    name: Recover, validate and commit 7580 metadata candidates
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Download archived 5000-candidate batch
+        uses: actions/download-artifact@v4
+        with:
+          name: sela-research-candidates
+          run-id: 40251550092
+          github-token: ${{ github.token }}
+          path: artifacts/recent
+
+      - name: Download archived 3000-candidate batch
+        uses: actions/download-artifact@v4
+        with:
+          name: sela-research-historical-candidates
+          run-id: 40251929177
+          github-token: ${{ github.token }}
+          path: artifacts/historical
+
+      - name: Reconstruct and audit dataset
+        run: |
+          python3 scripts/research/publish_candidates_from_artifacts.py \
+            --recent artifacts/recent \
+            --historical artifacts/historical \
+            --output data/research
+
+      - name: Verify metadata integrity
+        run: |
+          python3 - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          base=Path("data/research")
+          metadata=json.loads((base/"sela_research_candidates_manifest.json").read_text())
+          content=(base/metadata["data_file"]).read_bytes()
+          assert len(content.splitlines()) == 7580
+          assert hashlib.sha256(content).hexdigest() == metadata["data_sha256"]
+          assert metadata["raw_records"] == 8000
+          assert metadata["duplicate_records_merged"] == 420
+          assert not metadata["includes_full_text"] and not metadata["includes_abstracts"]
+          print("Validated 7,580 metadata-only candidates")
+          PY
+
+      - name: Commit dataset into the research branch
+        run: |
+          git config user.name "YanIanZ"
+          git config user.email "194694347+YanIanZ@users.noreply.github.com"
+          git add data/research/sela_research_candidates_7580.jsonl data/research/sela_research_candidates_manifest.json
+          if git diff --cached --quiet; then
+            echo "Dataset already committed"
+          else
+            git commit -m "data(research): publish 7580 Europe PMC metadata candidates"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi

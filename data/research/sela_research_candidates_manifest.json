@@ -1,0 +1,59 @@
+{
+  "dataset_name": "Sela Europe PMC bibliographic candidates",
+  "date_window": [
+    "2021-10-27",
+    "2026-10-26"
+  ],
+  "generated_utc": "2026-10-26T01:25:07.554298+00:00",
+  "source": "Europe PMC REST API",
+  "source_batches": [
+    {
+      "name": "recent_2021_2026",
+      "record_count": 5000,
+      "source_generated_utc": "2026-10-26T00:56:46.184210+00:00"
+    },
+    {
+      "name": "historical_2022_2025",
+      "record_count": 3000,
+      "source_generated_utc": "2026-10-26T01:01:07.251028+00:00"
+    }
+  ],
+  "data_file": "sela_research_candidates_7580.jsonl",
+  "data_sha256": "027644e28ffe2aa232397f328d4162efcb3347a5fb4423cf302d6aebb40cea31",
+  "record_count": 7580,
+  "raw_records": 8000,
+  "duplicate_records_merged": 420,
+  "records_with_doi": 7551,
+  "excluded_curated_count": 100,
+  "publication_year_distribution": {
+    "2022": 3,
+    "2023": 25,
+    "2024": 185,
+    "2025": 2814,
+    "2026": 4553
+  },
+  "theme_record_counts": {
+    "ai_mental_health": 426,
+    "ai_safety": 723,
+    "bilingual_health": 499,
+    "care_navigation": 836,
+    "clinical_summarization": 413,
+    "continuity_handoff": 438,
+    "cultural_equity": 490,
+    "digital_engagement": 663,
+    "digital_mental_health": 415,
+    "health_privacy": 539,
+    "indonesia_asean": 383,
+    "mental_health_help_seeking": 965,
+    "primary_care_integration": 279,
+    "psychological_services": 264,
+    "shared_decision": 399,
+    "stigma_barriers": 1294,
+    "user_experience": 302,
+    "youth_students": 449
+  },
+  "review_status": "candidate_metadata_only_unreviewed",
+  "includes_full_text": false,
+  "includes_abstracts": false,
+  "limitations": "Unreviewed metadata. Strong recency and selection bias; title/abstract screening and full-text appraisal pending. Not a clinical evidence corpus."
+}
