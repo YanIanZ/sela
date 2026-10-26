@@ -1,9 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
+import { Root } from './App';
 import { I18nProvider } from './i18n';
 import { RouterProvider } from './lib/router';
-import { SessionProvider } from './lib/session';
+import { CatalogProvider } from './lib/catalog';
 import './styles.css';
 
 const root = document.getElementById('root');
@@ -12,9 +12,9 @@ if (root) {
     <StrictMode>
       <I18nProvider>
         <RouterProvider>
-          <SessionProvider>
-            <App />
-          </SessionProvider>
+          <CatalogProvider>
+            <Root />
+          </CatalogProvider>
         </RouterProvider>
       </I18nProvider>
     </StrictMode>,

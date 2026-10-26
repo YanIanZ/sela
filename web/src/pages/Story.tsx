@@ -28,7 +28,7 @@ export function StoryPage() {
     try {
       const res = await run((version) => request<StoryResult>('/story', { method: 'PUT', body: { expectedVersion: version, ...body } }));
       setSession(res.session);
-      if (res.safety === 'crisis') navigate('/help');
+      if (res.safety === 'crisis' || res.session.safety.interrupted) navigate('/help');
       else if (res.safety === 'elevated') setNotice(res.session.safety.thirdParty ? 'thirdParty' : 'elevated');
       else navigate('/ledger');
     } catch (err) {

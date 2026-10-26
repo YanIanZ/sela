@@ -47,6 +47,10 @@ export type Projection = {
   items: ProjectedItem[];
   unknowns?: UnknownField[];
   opening?: string[];
+  /** Who wrote the shared opening lines; set whenever the opening is shared. */
+  openingProvenance?: Provenance;
+  /** True when the user wrote or edited the shared opening lines themselves. */
+  openingUserEdited?: boolean;
   preferences?: Preferences;
   displayName?: string;
   ageRange?: string;

@@ -14,6 +14,11 @@ const AXE = readFileSync(require.resolve('axe-core/axe.min.js', { paths: [join(R
 const PORT = Number(process.env.E2E_PORT ?? 18099);
 const LLM_PORT = Number(process.env.E2E_LLM_PORT ?? 18090);
 const BASE = `http://127.0.0.1:${PORT}`;
+// A second server whose test double never answers (fakellm -fault stall),
+// for the checks that need an AI step to stay running.
+const STALL_PORT = PORT + 1;
+const STALL_LLM_PORT = LLM_PORT + 1;
+const STALL_BASE = `http://127.0.0.1:${STALL_PORT}`;
 const CANARY = `CANARY${Math.random().toString(36).slice(2, 10)}`;
 const results = [];
 let serverLog = '';
@@ -81,9 +86,9 @@ async function noHorizontalScroll(page, label) {
 
 let lastPage = null;
 
-async function startSession(page, { english = false, ai = true, scanConsent = false } = {}) {
+async function startSession(page, { english = false, ai = true, scanConsent = false, base = BASE } = {}) {
   lastPage = page;
-  await page.goto(`${BASE}/`);
+  await page.goto(`${base}/`);
   if (english) await page.getByRole('button', { name: 'English' }).click();
   await page.getByRole('link', { name: english ? 'Take a first step' : 'Mulai pelan-pelan' }).click();
   await page.getByLabel(english ? /I am 18 or older/ : /Saya berusia 18 tahun/).check();
@@ -110,22 +115,62 @@ async function confirmAll(page, label) {
   }
 }
 
-async function chooseAndShare(page, { english = false, quotes = true } = {}) {
-  await page.locator('#pref-language').selectOption(english ? 'en' : 'id');
-  await page.getByLabel('Format', { exact: true }).selectOption('online');
+const TEST_DOUBLE = { id: 'TEST DOUBLE — bukan Meta, hanya untuk pengujian', en: 'TEST DOUBLE — not Meta, for testing only' };
+const OPENING_DRAFT = {
+  id: 'Saran kalimat pembuka yang disetujui pengguna (bukan tulisan pengguna sendiri)',
+  en: 'Suggested opening lines the user approved (not written by the user)',
+};
+const OPENING_OWN = { id: 'Kalimat pembuka yang ditulis pengguna sendiri', en: "The user's own opening lines" };
+const OPENING_TEMPLATE = {
+  id: 'Kalimat pembuka yang disusun Sela dari rumusan catatan yang disetujui (bukan tulisan pengguna sendiri)',
+  en: 'Opening lines Sela built from the wording of the approved note (not written by the user)',
+};
+
+// assertOpeningDraft checks that test-double opening lines in a projection
+// carry their own TEST DOUBLE badge and are never titled the user's own.
+async function assertOpeningDraft(scope, lang, label) {
+  await scope.getByRole('heading', { name: OPENING_DRAFT[lang] }).waitFor();
+  await scope.locator('.opening-provenance').getByText(TEST_DOUBLE[lang], { exact: true }).waitFor();
+  assert((await scope.getByRole('heading', { name: OPENING_OWN[lang] }).count()) === 0, `${label}: AI-drafted opening lines titled as the user's own`);
+}
+
+async function chooseAndShare(page, { english = false, quotes = true, opening = false, option = 0, setPrefs = true } = {}) {
+  if (setPrefs) {
+    await page.locator('#pref-language').selectOption(english ? 'en' : 'id');
+    await page.getByLabel('Format', { exact: true }).selectOption('online');
+  }
   await page.getByRole('button', { name: english ? 'Show options' : 'Tampilkan pilihan' }).click();
-  const choose = page.getByRole('button', { name: english ? /^Choose / : /^Pilih / }).first();
+  const choose = page.locator('article.option').nth(option).getByRole('button', { name: english ? /^Choose / : /^Pilih / }).first();
   await choose.waitFor();
   await choose.click();
   await page.waitForURL('**/share**');
   if (quotes) await page.getByLabel(english ? 'My original words next to each item' : 'Kata-kataku asli di samping tiap butir').check();
   await page.getByText(english ? 'Preview for the recipient' : 'Pratinjau untuk penerima').waitFor();
+  if (opening) {
+    await page.getByLabel(english ? 'Opening lines' : 'Kalimat pembuka', { exact: true }).check();
+    await assertOpeningDraft(page.locator('.projection'), english ? 'en' : 'id', 'share preview');
+  }
   await page.getByLabel(english ? /^I allow Sela to share/ : /^Saya mengizinkan Sela/).check();
   await page.getByRole('button', { name: english ? 'Share this note' : 'Bagikan catatan ini' }).click();
   await page.getByText(english ? 'Simulated request sent' : 'Permintaan simulasi terkirim').waitFor();
   const link = await page.getByLabel(english ? 'Link for the recipient' : 'Tautan untuk penerima').inputValue();
   const code = await page.getByLabel(english ? 'Access code' : 'Kode akses').inputValue();
   return { link, code };
+}
+
+// openNote submits the access code on the recipient page. Sign-ins share a
+// small per-address rate limit (several checks sign in from 127.0.0.1), so a
+// rate-limited attempt waits for the bucket to refill and tries again.
+async function openNote(r, code, button) {
+  await r.locator('#access-code').fill(code);
+  for (let i = 0; i < 4; i++) {
+    await r.getByRole('button', { name: button }).click();
+    const limited = r.getByRole('alert').filter({ hasText: /Too many requests|Terlalu banyak permintaan/ });
+    await Promise.race([r.locator('#req-title').waitFor(), limited.waitFor()]);
+    if ((await r.locator('#req-title').count()) > 0) return r.locator('#req-title').innerText();
+    await r.waitForTimeout(7000);
+  }
+  throw new Error('recipient sign-in stayed rate-limited');
 }
 
 async function main() {
@@ -140,9 +185,21 @@ async function main() {
     SELA_LLM_BASE_URL: `http://127.0.0.1:${LLM_PORT}`,
     SELA_RESEARCH_KB: join(ROOT, 'data', 'research', 'corpus', 'knowledge_base.jsonl'),
   });
+  const stallFake = startProcess(join(ROOT, 'build', 'fakellm'), ['-addr', `127.0.0.1:${STALL_LLM_PORT}`, '-fault', 'stall'], {});
+  const stallSela = startProcess(join(ROOT, 'build', 'sela'), [], {
+    SELA_ENV: 'test',
+    SELA_ADDR: `127.0.0.1:${STALL_PORT}`,
+    SELA_WEB_DIR: join(ROOT, 'web', 'dist'),
+    SELA_SECURE_COOKIES: 'false',
+    SELA_LLM_MODE: 'test_double',
+    SELA_ALLOW_TEST_DOUBLE: 'true',
+    SELA_LLM_BASE_URL: `http://127.0.0.1:${STALL_LLM_PORT}`,
+  });
   try {
     await waitFor(`http://127.0.0.1:${LLM_PORT}/health`);
     await waitFor(`${BASE}/api/v2/ready`);
+    await waitFor(`http://127.0.0.1:${STALL_LLM_PORT}/health`);
+    await waitFor(`${STALL_BASE}/api/v2/ready`);
     const browser = await chromium.launch();
 
     await check('ID journey: AI draft (test double) → review → approve → share → recipient ack → complete → follow-up → revoke', async () => {
@@ -173,7 +230,7 @@ async function main() {
       const mentioned = page.locator('h3', { hasText: 'Sudah kamu sebut' }).locator('xpath=following-sibling::ul[1]/li');
       await mentioned.first().waitFor();
       await page.goto(`${BASE}/next`);
-      const { link, code } = await chooseAndShare(page);
+      const { link, code } = await chooseAndShare(page, { opening: true });
       await axe(page, 'share-receipt');
       assert(link.includes('/r#t=') && /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code), `bad link/code: ${link} ${code}`);
 
@@ -190,6 +247,7 @@ async function main() {
       await r.getByRole('button', { name: 'Buka catatan' }).click();
       await r.getByText('Perspektif penerima (fiktif)').waitFor();
       await r.getByText(/Catatan yang disetujui \(versi/).waitFor();
+      await assertOpeningDraft(r.locator('.projection'), 'id', 'recipient view');
       await axe(r, 'recipient-view');
       await r.getByRole('button', { name: 'Konfirmasi diterima' }).click();
       await r.getByLabel('Rencana tindak lanjut (fixture)').selectOption('plan-psychologist-followup');
@@ -232,9 +290,20 @@ async function main() {
       const { link, code } = await chooseAndShare(page, { english: true, quotes: false });
       const rctx = await browser.newContext({ locale: 'id-ID' });
       const r = await rctx.newPage();
+      // The fixture catalog is down for the recipient at first: the view
+      // says so and offers a retry instead of a blank page.
+      let catalogDown = true;
+      await r.route('**/api/v2/catalog', (route) =>
+        catalogDown ? route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":{"code":"capacity"}}' }) : route.continue(),
+      );
       await r.goto(link);
       await r.locator('#access-code').fill(code);
       await r.getByRole('button', { name: 'Buka catatan' }).click();
+      await r.getByRole('heading', { name: 'Sela belum bisa memuat isi demo' }).waitFor();
+      await r.getByRole('alert').filter({ hasText: 'Demo sedang penuh' }).waitFor();
+      catalogDown = false;
+      await r.getByRole('button', { name: 'Coba lagi' }).click();
+      await r.locator('#req-title').waitFor();
       await r.getByText('Perspektif penerima (fiktif)').waitFor();
       assert((await r.getByText('Kata-kata asli').count()) === 0, 'quotes leaked although not selected');
       await page.goto(`${BASE}/journey`);
@@ -260,6 +329,218 @@ async function main() {
       assert(session.safety.interrupted === true && session.ops.length === 0 && !session.story, `crisis state wrong: ${JSON.stringify(session.safety)}`);
       await page.goto(`${BASE}/ledger`);
       await page.getByRole('alert').filter({ hasText: 'Alur biasa dihentikan' }).waitFor();
+      await page.getByRole('heading', { name: 'Alur biasa dihentikan untuk sesi ini' }).waitFor();
+      assert((await page.getByRole('button', { name: 'Bantu susun catatan dengan AI' }).count()) === 0, 'journey controls offered on an interrupted session');
+      await ctx.close();
+    });
+
+    await check('Crisis language in a ledger wording edit routes to immediate help and stops the journey', async () => {
+      const ctx = await browser.newContext({ locale: 'id-ID' });
+      const page = await ctx.newPage();
+      await startSession(page, { english: true });
+      await useScenario(page, 'Sam: rotating shifts and broken sleep');
+      await page.waitForURL('**/ledger');
+      await page.getByText('Build it manually from your sentences').click();
+      await page.getByRole('button', { name: 'Add', exact: true }).first().click();
+      await page.getByText('In the note').first().waitFor();
+      await page.getByRole('button', { name: 'Change wording' }).first().click();
+      await page.getByLabel('Your wording for this item').fill('aku mau bunuh diri');
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
+      await page.waitForURL('**/help');
+      await page.getByText(/ordinary journey has stopped for this session/).first().waitFor();
+      const session = await page.evaluate(async () => (await (await fetch('/api/v2/session')).json()).data);
+      assert(session.safety.interrupted === true && !session.ledger, `crisis edit did not interrupt: ${JSON.stringify(session.safety)}`);
+      // Every journey page now shows the interrupted state, never its controls.
+      await page.getByRole('navigation').getByRole('link', { name: 'Settings' }).waitFor();
+      assert((await page.getByRole('navigation').getByRole('link', { name: 'My story' }).count()) === 0, 'story link still offered after a crisis');
+      await page.goto(`${BASE}/story`);
+      await page.getByRole('heading', { name: 'The ordinary journey has stopped for this session' }).waitFor();
+      assert((await page.getByRole('button', { name: 'Use this story' }).count()) === 0, 'a new story can be chosen after a crisis');
+      await ctx.close();
+    });
+
+    await check('Recipient: a second link opened in the same tab asks for its own code', async () => {
+      const ctx = await browser.newContext({ locale: 'id-ID' });
+      const page = await ctx.newPage();
+      await startSession(page, { english: true, ai: false });
+      await useScenario(page, 'Sam: rotating shifts and broken sleep');
+      await page.waitForURL('**/ledger');
+      await page.getByText('Build it manually from your sentences').click();
+      await page.getByRole('button', { name: 'Add', exact: true }).first().click();
+      await page.getByText('In the note').first().waitFor();
+      await page.getByRole('button', { name: /Approve note version/ }).click();
+      await page.getByText(/Approved: version/).waitFor();
+      await page.getByRole('button', { name: 'Continue to a practical step' }).click();
+      await page.waitForURL('**/next');
+      const first = await chooseAndShare(page, { english: true, quotes: false });
+      await page.goto(`${BASE}/next`);
+      const second = await chooseAndShare(page, { english: true, quotes: false, option: 1, setPrefs: false });
+      // The demo's own path: the recipient perspective in the owner's browser.
+      const r = await ctx.newPage();
+      const posted = [];
+      const ownerWrites = [];
+      r.on('request', (q) => {
+        if (q.url().endsWith('/recipient/sessions')) posted.push(JSON.parse(q.postData()).token);
+        if (q.url().endsWith('/api/v2/session')) ownerWrites.push(q.method());
+      });
+      lastPage = r;
+      await r.goto(first.link);
+      const title1 = await openNote(r, first.code, 'Open the note');
+      // Paste the second link into the same tab.
+      await r.goto(second.link);
+      await r.getByRole('heading', { name: 'Enter the access code' }).waitFor();
+      assert(!r.url().includes('#t='), 'second token left in the address bar');
+      assert((await r.locator('#req-title').count()) === 0, 'the first request is still shown for the second link');
+      const title2 = await openNote(r, second.code, 'Open the note');
+      assert(title1 !== title2, `second link shows the first request: ${title2}`);
+      const t1 = first.link.split('#t=')[1];
+      const t2 = second.link.split('#t=')[1];
+      const order = posted.map((t) => (t === t1 ? '1' : t === t2 ? '2' : '?')).join('');
+      assert(/^1+2+$/.test(order), `the second sign-in did not use the second link token: ${order}`);
+      // Outside the owner session: no owner expiry, and a local-only language switch.
+      assert(!(await r.locator('footer').innerText()).includes('Session ends'), 'owner session expiry shown to the recipient');
+      await r.getByRole('button', { name: 'Indonesia' }).click();
+      await r.getByRole('heading', { name: 'Perspektif penerima (fiktif)' }).waitFor();
+      assert(ownerWrites.length === 0, `recipient perspective called the owner session: ${ownerWrites.join(',')}`);
+      const owner = await page.evaluate(async () => (await (await fetch('/api/v2/session')).json()).data);
+      assert(owner.language === 'en', `recipient language switch changed the owner session: ${owner.language}`);
+      await ctx.close();
+    });
+
+    await check('Practice: an AI opening draft is resumed after navigation and can be stopped', async () => {
+      const ctx = await browser.newContext({ locale: 'id-ID' });
+      const page = await ctx.newPage();
+      await startSession(page, { english: true, base: STALL_BASE });
+      await useScenario(page, 'Sam: rotating shifts and broken sleep');
+      await page.waitForURL('**/ledger');
+      await page.getByText('Build it manually from your sentences').click();
+      await page.getByRole('button', { name: 'Add', exact: true }).first().click();
+      await page.getByText('In the note').first().waitFor();
+      await page.getByRole('button', { name: /Approve note version/ }).click();
+      await page.getByText(/Approved: version/).waitFor();
+      await page.goto(`${STALL_BASE}/practice`);
+      await page.getByRole('button', { name: 'Draft with AI' }).click();
+      const stop = page.locator('.op-panel').getByRole('button', { name: 'Stop' });
+      await stop.waitFor();
+      // Leave and come back: the running draft is followed again, not lost.
+      await page.getByRole('navigation').getByRole('link', { name: 'Next step' }).click();
+      await page.waitForURL('**/next');
+      await page.getByRole('link', { name: 'Practise an opening line first' }).click();
+      await page.waitForURL('**/practice');
+      await stop.waitFor();
+      await stop.click();
+      await page.getByText('The AI step was stopped. Nothing was saved.').first().waitFor();
+      assert((await stop.count()) === 0, 'Stop still shown after stopping');
+      const session = await page.evaluate(async () => (await (await fetch('/api/v2/session')).json()).data);
+      const ops = session.ops.filter((o) => o.kind === 'opening_draft').map((o) => o.state);
+      assert(ops.length === 1 && ops[0] === 'canceled' && !session.opening, `opening draft not canceled: ${JSON.stringify(ops)}`);
+      // A new draft can start at once: nothing is left blocking it.
+      await page.getByRole('button', { name: 'Draft with AI' }).click();
+      await stop.waitFor();
+      await stop.click();
+      await page.getByText('The AI step was stopped. Nothing was saved.').first().waitFor();
+      await ctx.close();
+    });
+
+    await check('Ledger: an AI step whose event stream is refused stays followable and stoppable', async () => {
+      const ctx = await browser.newContext({ locale: 'id-ID' });
+      const page = await ctx.newPage();
+      // Every events request is refused (e.g. a 429 from a proxy) while the step runs.
+      await page.route('**/api/v2/operations/*/events', (route) => route.fulfill({ status: 429, contentType: 'application/json', body: '{"error":{"code":"rate_limited"}}' }));
+      await startSession(page, { english: true, base: STALL_BASE });
+      await useScenario(page, 'Sam: rotating shifts and broken sleep');
+      await page.waitForURL('**/ledger');
+      await page.getByRole('button', { name: 'Help draft my note with AI' }).click();
+      const panel = page.locator('.op-panel');
+      await panel.getByText('Reconnecting to the AI step…').waitFor();
+      assert((await page.getByRole('alert').filter({ hasText: 'AI model is unavailable' }).count()) === 0, 'a refused stream was reported as the model being unavailable');
+      assert((await page.getByRole('button', { name: /^(Try again|Help draft my note with AI)$/ }).count()) === 0, 'a second AI step offered while one still runs');
+      await panel.getByRole('button', { name: 'Stop' }).click();
+      await page.getByText('The AI step was stopped. Nothing was saved.').first().waitFor();
+      const session = await page.evaluate(async () => (await (await fetch('/api/v2/session')).json()).data);
+      const ops = session.ops.filter((o) => o.kind === 'ledger_draft').map((o) => o.state);
+      assert(ops.length === 1 && ops[0] === 'canceled', `ledger draft not canceled: ${JSON.stringify(ops)}`);
+      await ctx.close();
+    });
+
+    await check('Share: a no-AI opening over AI-drafted wording keeps that wording labelled; a failed preview can be retried', async () => {
+      const ctx = await browser.newContext({ locale: 'id-ID' });
+      const page = await ctx.newPage();
+      await startSession(page, { english: true });
+      await useScenario(page, 'Sam: rotating shifts and broken sleep');
+      await page.waitForURL('**/ledger');
+      await page.getByRole('button', { name: 'Help draft my note with AI' }).click();
+      await page.getByText(/Draft ready:/).waitFor({ timeout: 15000 });
+      await confirmAll(page, 'Looks right');
+      await page.getByRole('button', { name: /Approve note version/ }).click();
+      await page.getByText(/Approved: version/).waitFor();
+      await page.goto(`${BASE}/practice`);
+      await page.getByRole('button', { name: 'Draft without AI' }).click();
+      const lines = page.getByRole('region', { name: 'Opening lines' });
+      await lines.locator('ol.lines').waitFor();
+      // Sela's template strings together the test double's wording.
+      await lines.getByText(TEST_DOUBLE.en, { exact: true }).waitFor();
+      assert((await lines.getByText('Manual, no AI', { exact: true }).count()) === 0, 'Practice: template over AI wording badged "Manual, no AI"');
+      await page.goto(`${BASE}/next`);
+      await page.locator('#pref-language').selectOption('en');
+      await page.getByLabel('Format', { exact: true }).selectOption('online');
+      await page.getByRole('button', { name: 'Show options' }).click();
+      const choose = page.locator('article.option').first().getByRole('button', { name: /^Choose / }).first();
+      await choose.waitFor();
+      await choose.click();
+      await page.waitForURL('**/share**');
+      await page.locator('.projection').waitFor();
+      // The preview for the new selection fails once (connection reset).
+      let failNext = true;
+      await page.route('**/api/v2/handoffs/preview', (route) => {
+        if (!failNext) return route.continue();
+        failNext = false;
+        return route.abort('connectionreset');
+      });
+      await page.getByLabel('Opening lines', { exact: true }).check();
+      await page.getByRole('alert').filter({ hasText: 'Cannot reach the server' }).waitFor();
+      assert(!(await page.getByLabel(/^I allow Sela to share/).isEnabled()), 'consent offered without a preview of the current selection');
+      await page.getByRole('button', { name: 'Try again' }).click();
+      const projection = page.locator('.projection');
+      await projection.getByRole('heading', { name: OPENING_TEMPLATE.en }).waitFor();
+      await projection.locator('.opening-provenance').getByText(TEST_DOUBLE.en, { exact: true }).waitFor();
+      assert((await projection.getByRole('heading', { name: OPENING_OWN.en }).count()) === 0, "share preview: template opening titled as the user's own");
+      assert((await projection.getByText('Manual, no AI', { exact: true }).count()) === 0, 'share preview: AI wording badged "Manual, no AI"');
+      await page.getByLabel(/^I allow Sela to share/).check();
+      assert(await page.getByRole('button', { name: 'Share this note' }).isEnabled(), 'sharing still blocked after the preview arrived');
+      await ctx.close();
+    });
+
+    await check('A session deleted and started again in another tab replaces the old tab view', async () => {
+      const ctx = await browser.newContext({ locale: 'id-ID' });
+      const a = await ctx.newPage();
+      await startSession(a, { english: true, ai: false });
+      await useScenario(a, 'Sam: rotating shifts and broken sleep');
+      await a.waitForURL('**/ledger');
+      await a.getByText('Build it manually from your sentences').click();
+      for (let i = 0; i < 3; i++) {
+        await a.getByRole('button', { name: 'Add', exact: true }).first().click();
+        await a.waitForTimeout(120);
+      }
+      await a.getByText('In the note').first().waitFor();
+      const b = await ctx.newPage();
+      lastPage = b;
+      await b.goto(`${BASE}/settings`);
+      await b.getByRole('button', { name: 'Delete all data now' }).click();
+      await b.getByRole('button', { name: 'Delete all data now' }).click();
+      await b.getByText('All session data has been deleted.').waitFor();
+      await b.getByRole('button', { name: 'Start a new session' }).click();
+      await b.waitForURL('**/start');
+      await b.getByLabel(/I am 18 or older|Saya berusia 18 tahun/).check();
+      await b.getByRole('button', { name: /I understand, continue|Saya mengerti, lanjutkan/ }).click();
+      await b.waitForURL('**/consent');
+      // Back in tab A: returning to the tab reloads the view, which is now
+      // the new session (a lower version), never the deleted one.
+      lastPage = a;
+      await a.bringToFront();
+      await a.evaluate(() => window.dispatchEvent(new Event('focus')));
+      await a.getByText(/There is no story yet|Belum ada cerita/).waitFor();
+      assert((await a.locator('.ledger-item').count()) === 0, "the deleted session's note is still shown");
       await ctx.close();
     });
 
@@ -323,8 +604,7 @@ async function main() {
 
     await browser.close();
   } finally {
-    sela.kill('SIGTERM');
-    fake.kill('SIGTERM');
+    for (const p of [sela, fake, stallSela, stallFake]) p.kill('SIGTERM');
     await new Promise((r) => setTimeout(r, 300));
   }
   await check('Operational logs contain no story canary, tokens or codes', async () => {

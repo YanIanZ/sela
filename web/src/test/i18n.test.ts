@@ -23,7 +23,7 @@ describe('i18n dictionaries', () => {
       'ai_busy', 'ai_model_mismatch', 'ai_invalid_output', 'ai_ungrounded', 'stale_result', 'canceled', 'operation_in_progress',
       'invalid_transition', 'idempotency_conflict', 'idempotency_key_required', 'capacity', 'contact_details_detected',
       'policy_outdated', 'access_ended', 'handoff_exists', 'slot_unavailable', 'story_required', 'adult_attestation_required',
-      'too_large', 'cross_origin', 'network', 'internal', 'research_unavailable',
+      'too_large', 'cross_origin', 'network', 'internal', 'research_unavailable', 'limit_reached',
     ];
     for (const c of codes) expect(Object.keys(id), c).toContain(`error.${c}`);
   });

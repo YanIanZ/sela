@@ -1,13 +1,14 @@
-import { useId, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
 import { useI18n, type MessageKey } from '../i18n';
 import type { Provenance, Qualifiers } from '../lib/types';
 import { ApiError } from '../lib/api';
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'quiet' | 'danger'; busy?: boolean };
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'quiet' | 'danger'; busy?: boolean; ref?: Ref<HTMLButtonElement> };
 
-export function Button({ variant = 'primary', busy, children, disabled, className, ...rest }: ButtonProps) {
+export function Button({ variant = 'primary', busy, children, disabled, className, ref, ...rest }: ButtonProps) {
   return (
     <button
+      ref={ref}
       type="button"
       className={`btn btn-${variant}${className ? ` ${className}` : ''}`}
       disabled={disabled || busy}
@@ -71,7 +72,7 @@ export function QualifierChips({ q }: { q: Qualifiers }) {
   if (q.certainty === 'hypothetical') chips.push('ledger.q.hypothetical');
   if (chips.length === 0) return null;
   return (
-    <ul className="chips" aria-label={t('ledger.item.kindLabel')}>
+    <ul className="chips" aria-label={t('ledger.q.label')}>
       {chips.map((c) => (
         <li key={c} className="chip">
           {t(c)}
@@ -107,13 +108,30 @@ export function CopyField({ label, value, mono }: { label: string; value: string
   );
 }
 
-/** ConfirmButton asks for an inline second confirmation for destructive actions. */
+/** ConfirmButton asks for an inline second confirmation for destructive
+ * actions. Focus never drops to the page: Cancel returns it to the trigger,
+ * and so does confirming while the trigger is still shown (the caller moves
+ * it to the result when the action removes the button). */
 export function ConfirmButton({ label, confirmText, onConfirm, busy }: { label: string; confirmText: string; onConfirm: () => void; busy?: boolean }) {
   const { t } = useI18n();
   const [asking, setAsking] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const refocus = useRef(false);
+  useEffect(() => {
+    if (!asking && refocus.current) {
+      refocus.current = false;
+      trigger.current?.focus();
+    }
+  }, [asking]);
+  const close = () => {
+    refocus.current = true;
+    setAsking(false);
+  };
   if (!asking) {
     return (
-      <Button variant="danger" onClick={() => setAsking(true)} busy={busy}>
+      // aria-disabled rather than disabled while busy: a disabled button
+      // cannot hold the focus returned to it.
+      <Button ref={trigger} variant="danger" onClick={() => { if (!busy) setAsking(true); }} aria-disabled={busy || undefined} aria-busy={busy || undefined}>
         {label}
       </Button>
     );
@@ -122,10 +140,10 @@ export function ConfirmButton({ label, confirmText, onConfirm, busy }: { label: 
     <div className="confirm" role="group" aria-label={label}>
       <p>{confirmText}</p>
       <div className="row">
-        <Button variant="danger" onClick={() => { setAsking(false); onConfirm(); }} autoFocus>
+        <Button variant="danger" onClick={() => { close(); onConfirm(); }} autoFocus>
           {label}
         </Button>
-        <Button variant="quiet" onClick={() => setAsking(false)}>
+        <Button variant="quiet" onClick={close}>
           {t('app.cancel')}
         </Button>
       </div>

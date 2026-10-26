@@ -17,7 +17,7 @@ export function Start() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   useEffect(() => {
-    if (session) navigate(session.stage === 'crisis' ? '/help' : '/story', { replace: true });
+    if (session) navigate(session.safety.interrupted || session.stage === 'crisis' ? '/help' : '/story', { replace: true });
   }, [session, navigate]);
   if (!catalog || session) return null;
   const policy = catalog.policies.privacy;
@@ -29,8 +29,10 @@ export function Start() {
         method: 'POST',
         body: { language: lang, identity: mode === 'pseudonym' ? { mode, pseudonym } : { mode }, adultAttested: adult, privacyPolicy: policy.version },
       });
+      // A crisis pseudonym creates the session already interrupted:
+      // setSession routes it to Immediate help, never to the journey.
       setSession(v);
-      navigate('/consent');
+      if (!v.safety.interrupted) navigate('/consent');
     } catch (err) {
       setError(err);
     } finally {

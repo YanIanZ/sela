@@ -1,23 +1,22 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useI18n } from '../i18n';
 import { Link, useRouter } from '../lib/router';
-import { useSession } from '../lib/session';
-import { request } from '../lib/api';
-import type { Lang, SessionView } from '../lib/types';
+import { useOptionalSession } from '../lib/session';
+import { useOnline } from '../lib/online';
+import type { Lang } from '../lib/types';
 
-function LanguageSwitch() {
+// LanguageSwitch changes the interface language. For the owner it is also
+// saved to the session; on the recipient perspective (no owner session
+// context) it is local only and never touches the owner's session.
+function LanguageSwitch({ onNotSaved }: { onNotSaved: (failed: boolean) => void }) {
   const { lang, setLang, t } = useI18n();
-  const { session, run, setSession } = useSession();
+  const owner = useOptionalSession();
   const change = async (l: Lang) => {
-    setLang(l);
-    if (session && session.language !== l) {
-      try {
-        const v = await run((version) => request<SessionView>('/session', { method: 'PATCH', body: { expectedVersion: version, language: l } }));
-        setSession(v);
-      } catch {
-        // The interface language already changed locally; the server keeps the previous one.
-      }
+    if (!owner) {
+      setLang(l);
+      return;
     }
+    onNotSaved(!(await owner.changeLanguage(l)));
   };
   return (
     <div className="lang-switch" role="group" aria-label={t('app.language')}>
@@ -30,18 +29,26 @@ function LanguageSwitch() {
   );
 }
 
-const NAV: { to: string; key: Parameters<ReturnType<typeof useI18n>['t']>[0] }[] = [
+const NAV: { to: string; key: Parameters<ReturnType<typeof useI18n>['t']>[0]; whileInterrupted?: boolean }[] = [
   { to: '/story', key: 'app.nav.story' },
   { to: '/ledger', key: 'app.nav.ledger' },
   { to: '/next', key: 'app.nav.next' },
-  { to: '/journey', key: 'app.nav.journey' },
-  { to: '/settings', key: 'app.nav.settings' },
+  { to: '/journey', key: 'app.nav.journey', whileInterrupted: true },
+  { to: '/settings', key: 'app.nav.settings', whileInterrupted: true },
 ];
 
-export function Layout({ children, bare }: { children: ReactNode; bare?: boolean }) {
+/** Layout is the page frame. `bare` hides the owner navigation; `recipient`
+ * renders the fictional recipient's perspective, which shows nothing derived
+ * from an owner session (no expiry, no crisis banner, no navigation). */
+export function Layout({ children, bare, recipient }: { children: ReactNode; bare?: boolean; recipient?: boolean }) {
   const { t, dateTime } = useI18n();
   const { path } = useRouter();
-  const { session, online, ai } = useSession();
+  const owner = useOptionalSession();
+  const online = useOnline();
+  const [langNotSaved, setLangNotSaved] = useState(false);
+  const session = recipient ? null : (owner?.session ?? null);
+  const ai = recipient ? null : (owner?.ai ?? null);
+  const interrupted = session?.safety.interrupted === true;
   const mode = ai?.provider.mode ?? 'disabled';
   const aiLine =
     mode === 'modal'
@@ -61,12 +68,12 @@ export function Layout({ children, bare }: { children: ReactNode; bare?: boolean
             <span className="brand-name">{t('app.name')}</span>
           </Link>
           <span className="badge badge-demo">{t('app.demoBadge')}</span>
-          <LanguageSwitch />
+          <LanguageSwitch onNotSaved={setLangNotSaved} />
         </div>
-        {session && !bare ? (
+        {session && !bare && !recipient ? (
           <nav aria-label={t('app.nav.label')} className="mainnav">
             <ul>
-              {NAV.map((n) => (
+              {NAV.filter((n) => !interrupted || n.whileInterrupted).map((n) => (
                 <li key={n.to}>
                   <Link to={n.to} aria-current={path.startsWith(n.to) ? 'page' : undefined}>
                     {t(n.key)}
@@ -82,14 +89,19 @@ export function Layout({ children, bare }: { children: ReactNode; bare?: boolean
           </nav>
         ) : null}
       </header>
-      <div className="banners">
+      <div className="banners" role="region" aria-label={t('app.notices')}>
         <p className="banner banner-demo">{t('app.demoBanner')}</p>
         {!online ? (
           <p className="banner banner-warn" role="status">
             {t('app.offline')}
           </p>
         ) : null}
-        {session?.safety.interrupted && path !== '/help' ? (
+        {langNotSaved ? (
+          <p className="banner banner-warn" role="status">
+            {t('app.language.notSaved')}
+          </p>
+        ) : null}
+        {interrupted && path !== '/help' ? (
           <p className="banner banner-alert" role="alert">
             <Link to="/help">{t('app.crisisBanner')}</Link>
           </p>
@@ -100,7 +112,7 @@ export function Layout({ children, bare }: { children: ReactNode; bare?: boolean
       </main>
       <footer className="footer">
         <p>{t('app.footer.notService')}</p>
-        <p>{aiLine}</p>
+        {recipient ? null : <p>{aiLine}</p>}
         <p>{t('app.footer.provenance')}</p>
         {session ? <p>{t('app.expires', { time: dateTime(session.expiresAt) })}</p> : null}
         <p className="footer-links">

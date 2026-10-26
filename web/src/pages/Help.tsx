@@ -1,14 +1,23 @@
 import { useI18n, type MessageKey } from '../i18n';
 import { useRouter } from '../lib/router';
 import { useSession } from '../lib/session';
+import { useCatalog } from '../lib/catalog';
 import { request } from '../lib/api';
+import type { HelpResource, Text } from '../lib/types';
 import { Button, Notice, PageHeader } from '../components/ui';
+import fallbackJSON from '../data/help.fallback.json';
+
+/** The verified help list bundled with the page (a byte-identical copy of
+ * internal/fixtures/data/help.json, checked by help.test.ts), shown whenever
+ * the catalog cannot be loaded: Immediate help never depends on that call. */
+export const helpFallback = fallbackJSON as unknown as { helpNotice: Text; help: HelpResource[] };
 
 export function HelpPage() {
   const { t, tx, date } = useI18n();
   const { navigate } = useRouter();
-  const { session, catalog, markEnded } = useSession();
-  if (!catalog) return null;
+  const { session, markEnded } = useSession();
+  const { catalog, retry } = useCatalog();
+  const help = catalog ?? helpFallback;
   const crisis = session?.safety.interrupted;
   const restart = async () => {
     try {
@@ -22,9 +31,17 @@ export function HelpPage() {
   return (
     <div className="stack">
       <PageHeader title={t('help.title')} lead={crisis ? t('help.crisisLead') : t('help.lead')} />
-      <Notice tone={crisis ? 'alert' : 'info'}>{tx(catalog.helpNotice)}</Notice>
+      <Notice tone={crisis ? 'alert' : 'info'}>{tx(help.helpNotice)}</Notice>
+      {!catalog ? (
+        <p className="muted small">
+          {t('help.fallback')}{' '}
+          <Button variant="quiet" onClick={retry}>
+            {t('app.retry')}
+          </Button>
+        </p>
+      ) : null}
       <ul className="help-list">
-        {catalog.help.map((h) => (
+        {help.help.map((h) => (
           <li key={h.id} className="card">
             <h2>{h.name}</h2>
             <p className="muted">{t('help.region', { region: tx(h.regionName) })}</p>

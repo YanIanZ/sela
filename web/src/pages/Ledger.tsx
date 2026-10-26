@@ -3,7 +3,7 @@ import { useI18n, type MessageKey } from '../i18n';
 import { useRouter } from '../lib/router';
 import { useSession } from '../lib/session';
 import { request } from '../lib/api';
-import { useOperation } from '../lib/operation';
+import { isActive, useOperation } from '../lib/operation';
 import { KINDS, type Item, type Kind, type OpRecord, type SessionView } from '../lib/types';
 import { Badge, Button, Card, ErrorNotice, Notice, PageHeader, ProvenanceBadge, QualifierChips, Spinner } from '../components/ui';
 
@@ -121,9 +121,11 @@ function AIDraft({ session }: { session: SessionView }) {
   const [opId, setOpId] = useState<string | null>(running?.id ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const op = useOperation(opId, () => {
-    void refresh();
-  });
+  const op = useOperation(
+    opId,
+    () => void refresh().catch(() => undefined),
+    session.ops.find((o) => o.id === opId),
+  );
   const consent = session.consents.ai_processing?.granted === true;
   const available = session.ai.available;
   const start = async () => {
@@ -148,7 +150,7 @@ function AIDraft({ session }: { session: SessionView }) {
       setError(err);
     }
   };
-  const active = op.phase === 'queued' || op.phase === 'warming' || op.phase === 'running' || op.phase === 'validating';
+  const active = isActive(op);
   if (!available) return <Notice>{t('ledger.ai.disabled')}</Notice>;
   if (!consent) return <Notice>{t('ledger.ai.noConsent')}</Notice>;
   const rejected = op.done?.rejected as Record<string, number> | undefined;
@@ -168,7 +170,9 @@ function AIDraft({ session }: { session: SessionView }) {
                   ? t('ledger.op.validating')
                   : op.phase === 'queued'
                     ? t('ledger.op.queued')
-                    : t('ledger.op.running')
+                    : op.phase === 'reconnecting'
+                      ? t('ledger.op.reconnecting')
+                      : t('ledger.op.running')
             }
           />
           {op.previews.length > 0 ? (
@@ -185,6 +189,15 @@ function AIDraft({ session }: { session: SessionView }) {
             {t('ledger.op.cancel')}
           </Button>
         </div>
+      ) : op.stoppable ? (
+        // The stream is lost but the step may still run: it can be stopped,
+        // and starting another one would be refused until it ends.
+        <div className="op-panel" aria-live="polite">
+          <Notice tone="warning">{t('ledger.op.lost')}</Notice>
+          <Button variant="secondary" onClick={cancel}>
+            {t('ledger.op.cancel')}
+          </Button>
+        </div>
       ) : (
         <Button onClick={start} busy={busy}>
           {op.phase === 'error' ? t('app.retry') : t('ledger.ai.start')}
@@ -196,7 +209,7 @@ function AIDraft({ session }: { session: SessionView }) {
           {rejectedCount > 0 ? ` ${t('ledger.op.rejected', { count: rejectedCount })}` : ''}
         </Notice>
       ) : null}
-      {op.phase === 'error' ? <ErrorNotice code={op.errorCode ?? 'ai_unavailable'} /> : null}
+      {op.phase === 'error' && !op.stoppable ? <ErrorNotice code={op.errorCode ?? 'ai_unavailable'} /> : null}
     </div>
   );
 }

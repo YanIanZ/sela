@@ -1,20 +1,33 @@
 import { useEffect, useState } from 'react';
 import { useI18n, type MessageKey } from '../i18n';
-import { useSession } from '../lib/session';
+import { useCatalog } from '../lib/catalog';
 import { ApiError, request } from '../lib/api';
 import type { RecipientHandoff } from '../lib/types';
 import { Badge, Button, Card, ErrorNotice, Notice, PageHeader, Select, Spinner } from '../components/ui';
 import { ProjectionView } from '../components/Projection';
+import { CatalogUnavailable } from './Misc';
 
-function readToken(): string | null {
-  const m = /[#&]t=([A-Za-z0-9_-]{20,100})/.exec(window.location.hash);
+/** readToken extracts the share token from a link fragment (#t=...). */
+export function readToken(hash: string): string | null {
+  const m = /[#&]t=([A-Za-z0-9_-]{20,100})/.exec(hash);
   return m?.[1] ?? null;
 }
 
+/** scrubLink removes the capability token from the address bar and history. */
+function scrubLink() {
+  if (window.location.hash) window.history.replaceState(null, '', '/r');
+}
+
+/** A link opened in this tab: its token and a sequence number, so opening
+ * the same link again also restarts at the code prompt. */
+type LinkState = { token: string | null; seq: number };
+
 export function RecipientPage() {
-  const { t, tx } = useI18n();
-  const { catalog } = useSession();
-  const [token] = useState<string | null>(readToken);
+  const { t, tx, dateTime } = useI18n();
+  const { catalog, error: catalogError } = useCatalog();
+  // Only the current link's token is kept, in memory only.
+  const [link, setLink] = useState<LinkState>(() => ({ token: readToken(window.location.hash), seq: 0 }));
+  const token = link.token;
   const [state, setState] = useState<'loading' | 'code' | 'view' | 'ended' | 'notoken'>('loading');
   const [handoff, setHandoff] = useState<RecipientHandoff | null>(null);
   const [code, setCode] = useState('');
@@ -23,16 +36,55 @@ export function RecipientPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
+  // A second link pasted into this tab (or reached with back/forward) is a
+  // new link: read and scrub its token, and start over at its code prompt.
   useEffect(() => {
-    // Remove the capability token from the address bar and history.
-    if (window.location.hash) window.history.replaceState(null, '', '/r');
-    request<RecipientHandoff>('/recipient/handoff')
-      .then((h) => {
-        setHandoff(h);
-        setState('view');
-      })
-      .catch(() => setState(token ? 'code' : 'notoken'));
-  }, [token]);
+    scrubLink();
+    const onNav = () => {
+      const next = readToken(window.location.hash);
+      if (!next) return;
+      scrubLink();
+      setLink((l) => ({ token: next, seq: l.seq + 1 }));
+    };
+    window.addEventListener('hashchange', onNav);
+    window.addEventListener('popstate', onNav);
+    return () => {
+      window.removeEventListener('hashchange', onNav);
+      window.removeEventListener('popstate', onNav);
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setHandoff(null);
+    setCode('');
+    setError(null);
+    setState('loading');
+    if (token) {
+      // A link never reuses a recipient sign-in made for another link: the
+      // browser may still be signed in for a different share. Sign out, then
+      // ask for this link's code.
+      request('/recipient/session', { method: 'DELETE' })
+        .catch(() => undefined)
+        .then(() => {
+          if (active) setState('code');
+        });
+    } else {
+      // No link token (e.g. a reload after signing in): the sign-in cookie decides.
+      request<RecipientHandoff>('/recipient/handoff')
+        .then((h) => {
+          if (!active) return;
+          setHandoff(h);
+          setState('view');
+        })
+        .catch(() => {
+          if (active) setState('notoken');
+        });
+    }
+    return () => {
+      active = false;
+    };
+  }, [token, link.seq]);
 
   const signIn = async () => {
     if (!token) return;
@@ -60,8 +112,13 @@ export function RecipientPage() {
         setHandoff(null);
         setState('ended');
       } else if (err instanceof ApiError && err.code === 'stale_version') {
-        setHandoff(await request<RecipientHandoff>('/recipient/handoff'));
         setError(err);
+        try {
+          setHandoff(await request<RecipientHandoff>('/recipient/handoff'));
+        } catch {
+          setHandoff(null);
+          setState('ended');
+        }
       } else setError(err);
     } finally {
       setBusy(false);
@@ -95,6 +152,11 @@ export function RecipientPage() {
           </Button>
         </Card>
       ) : null}
+      {state === 'view' && handoff && !catalog ? (
+        // The view needs the fixture catalog (recipient name, reasons, plans):
+        // while it cannot be loaded, say so and offer a retry, never a blank page.
+        catalogError ? <CatalogUnavailable /> : <Spinner label={t('app.loading')} />
+      ) : null}
       {state === 'view' && handoff && catalog ? (
         <>
           <Card labelledBy="req-title">
@@ -102,6 +164,7 @@ export function RecipientPage() {
             <p>
               <Badge>{t(`journey.status.${handoff.status}` as MessageKey)}</Badge>
             </p>
+            <p className="muted">{t('recipient.expires', { time: dateTime(handoff.expiresAt) })}</p>
             <ProjectionView p={handoff.projection} />
           </Card>
           <Card labelledBy="actions-title">
@@ -157,10 +220,12 @@ export function RecipientPage() {
               <p>{t('recipient.done', { status: t(`journey.status.${handoff.status}` as MessageKey) })}</p>
             )}
           </Card>
-          <Button variant="quiet" onClick={signOut}>
-            {t('recipient.signOut')}
-          </Button>
         </>
+      ) : null}
+      {state === 'view' && handoff ? (
+        <Button variant="quiet" onClick={signOut}>
+          {t('recipient.signOut')}
+        </Button>
       ) : null}
     </div>
   );

@@ -4,7 +4,7 @@ import { Link, useRouter } from '../lib/router';
 import { useSession } from '../lib/session';
 import { newIdempotencyKey, request } from '../lib/api';
 import type { HandoffCreated, Projection } from '../lib/types';
-import { Button, Card, CopyField, ErrorNotice, Notice, PageHeader } from '../components/ui';
+import { Button, Card, CopyField, ErrorNotice, Notice, PageHeader, Spinner } from '../components/ui';
 import { ProjectionView } from '../components/Projection';
 
 const OPTIONAL = ['quotes', 'unknowns', 'opening', 'preferences', 'display_name', 'age_range', 'language'] as const;
@@ -18,28 +18,58 @@ export function SharePage() {
   const [fields, setFields] = useState<string[]>(['items']);
   const [duration, setDuration] = useState(24);
   const [consent, setConsent] = useState(false);
-  const [preview, setPreview] = useState<Projection | null>(null);
+  // The preview is kept with the exact selection it was made for.
+  const [preview, setPreview] = useState<{ key: string; p: Projection } | null>(null);
   const [previewError, setPreviewError] = useState<unknown>(null);
+  // Bumped to ask for the same preview again after a failed request.
+  const [previewAttempt, setPreviewAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [created, setCreated] = useState<HandoffCreated | null>(null);
-  const payloadKey = JSON.stringify({ proId, slotId, fields, duration, v: session?.ledger?.version });
+  const previewKey = JSON.stringify({ proId, slotId, fields, v: session?.ledger?.version, o: session?.opening?.lines.map((l) => l.text) });
+  const payloadKey = JSON.stringify({ previewKey, duration });
   // One idempotency key per exact payload: retries of the same click reuse it.
   const idemKey = useMemo(() => newIdempotencyKey(), [payloadKey]);
 
   useEffect(() => {
     setConsent(false);
-    if (!proId || !slotId) return;
-    request<Projection>('/handoffs/preview', { method: 'POST', body: { professionalId: proId, slotId, fields } })
+  }, [payloadKey]);
+  const ledgerVersion = session?.ledger?.version;
+  useEffect(() => {
+    if (!proId || !slotId || ledgerVersion === undefined) return;
+    // Only the response for the current selection may become the preview:
+    // an earlier request answered late must never replace it.
+    const ctrl = new AbortController();
+    setPreviewError(null);
+    request<Projection>('/handoffs/preview', { method: 'POST', body: { professionalId: proId, slotId, fields }, signal: ctrl.signal })
       .then((p) => {
-        setPreview(p);
-        setPreviewError(null);
+        if (ctrl.signal.aborted) return;
+        setPreview({ key: previewKey, p });
       })
       .catch((e: unknown) => {
+        if (ctrl.signal.aborted) return;
         setPreview(null);
         setPreviewError(e);
       });
-  }, [proId, slotId, payloadKey]);
+    return () => ctrl.abort();
+    // previewKey covers proId, slotId, fields and the shared content.
+  }, [previewKey, previewAttempt]);
+  // Sharing needs a preview of the current selection: after a failed
+  // request it is asked again when the connection comes back or the visitor
+  // returns to the tab (and from the retry button).
+  const failed = previewError !== null;
+  useEffect(() => {
+    if (!failed) return;
+    const again = () => setPreviewAttempt((n) => n + 1);
+    window.addEventListener('online', again);
+    window.addEventListener('focus', again);
+    return () => {
+      window.removeEventListener('online', again);
+      window.removeEventListener('focus', again);
+    };
+  }, [failed]);
+  /** The preview shown, only when it matches what would be shared now. */
+  const current = preview && preview.key === previewKey ? preview.p : null;
 
   if (!session || !catalog) return null;
   const prof = catalog.professionals.find((p) => p.id === proId);
@@ -149,17 +179,22 @@ export function SharePage() {
       <Card labelledBy="preview-title">
         <h2 id="preview-title">{t('share.preview')}</h2>
         <ErrorNotice error={previewError} />
-        {preview ? <ProjectionView p={preview} /> : null}
+        {previewError ? (
+          <Button variant="secondary" onClick={() => setPreviewAttempt((n) => n + 1)}>
+            {t('app.retry')}
+          </Button>
+        ) : null}
+        {current ? <ProjectionView p={current} /> : previewError ? null : <Spinner label={t('share.previewLoading')} />}
       </Card>
       <Card>
         <Notice tone="warning">{t('share.cannotRecall')}</Notice>
         <p className="muted">{t('share.notCare')}</p>
         <div className="checkbox">
-          <input id="share-consent" type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+          <input id="share-consent" type="checkbox" checked={consent && !!current} disabled={!current} onChange={(e) => setConsent(e.target.checked)} />
           <label htmlFor="share-consent">{t('share.consent', { version: ledger.version, recipient: prof.name, duration: durationLabel })}</label>
         </div>
         <ErrorNotice error={error} />
-        <Button onClick={submit} busy={busy} disabled={!consent || !preview}>
+        <Button onClick={submit} busy={busy} disabled={!consent || !current}>
           {t('share.submit')}
         </Button>
       </Card>

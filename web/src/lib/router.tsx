@@ -20,7 +20,10 @@ export function RouterProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
   const navigate = useCallback((to: string, opts?: { replace?: boolean }) => {
-    if (opts?.replace) window.history.replaceState(null, '', to);
+    // Navigating to the page already shown (e.g. two code paths sending the
+    // visitor to Immediate help) does not add a history entry.
+    const same = to === window.location.pathname + window.location.search;
+    if (opts?.replace || same) window.history.replaceState(null, '', to);
     else window.history.pushState(null, '', to);
     setRoute(current());
     window.scrollTo({ top: 0 });

@@ -3,9 +3,10 @@ import { useI18n } from '../i18n';
 import { Link, useRouter } from '../lib/router';
 import { useSession } from '../lib/session';
 import { request } from '../lib/api';
-import { useOperation } from '../lib/operation';
+import { isActive, useOperation } from '../lib/operation';
 import type { OpRecord, SessionView } from '../lib/types';
 import { Button, Card, ErrorNotice, Notice, PageHeader, ProvenanceBadge, RadioGroup, Spinner } from '../components/ui';
+import { itemsProvenance, openingOrigin } from '../components/Projection';
 
 type Coverage = { mentioned: string[]; notMentioned: string[] };
 
@@ -14,14 +15,21 @@ export function PracticePage() {
   const { query } = useRouter();
   const { session, run, setSession, refresh } = useSession();
   const [recipient, setRecipient] = useState(query.get('recipient') === 'trusted_person' ? 'trusted_person' : 'professional');
-  const [opId, setOpId] = useState<string | null>(null);
+  // A draft still running from an earlier visit is resumed, so it can be
+  // followed and stopped instead of blocking the next one.
+  const running = session?.ops.find((o) => o.kind === 'opening_draft' && (o.state === 'queued' || o.state === 'running'));
+  const [opId, setOpId] = useState<string | null>(running?.id ?? null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [editing, setEditing] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
   const [attempt, setAttempt] = useState('');
   const [coverage, setCoverage] = useState<Coverage | null>(null);
-  const op = useOperation(opId, () => void refresh());
+  const op = useOperation(
+    opId,
+    () => void refresh().catch(() => undefined),
+    session?.ops.find((o) => o.id === opId),
+  );
   if (!session) return null;
   const approved = !!session.ledger?.approved && session.ledger.approved.version === session.ledger.version;
   if (!approved) {
@@ -66,6 +74,11 @@ export function PracticePage() {
       setEditing(false);
     }
   };
+  const cancel = async () => {
+    if (!opId) return;
+    const v = await call('cancel', () => request<SessionView>(`/operations/${opId}`, { method: 'DELETE' }));
+    if (v) setSession(v);
+  };
   const practice = async () => {
     const res = await call('practice', () => request<{ coverage: Coverage; safety: string }>('/opening/practice', { method: 'POST', body: { attempt } }));
     if (res) {
@@ -74,7 +87,10 @@ export function PracticePage() {
     }
   };
   const opening = session.opening;
-  const active = op.phase === 'queued' || op.phase === 'warming' || op.phase === 'running' || op.phase === 'validating';
+  // A "Draft without AI" opening is built from the approved items' wording,
+  // so it carries their provenance (an AI-drafted note stays labelled AI).
+  const openingBadge = opening ? openingOrigin(opening.provenance, opening.userEdited, itemsProvenance(items.map((i) => i.provenance))).provenance : undefined;
+  const active = isActive(op);
   const aiOk = session.ai.available && session.consents.ai_processing?.granted;
   return (
     <div className="stack">
@@ -92,7 +108,7 @@ export function PracticePage() {
         />
         <div className="row">
           {aiOk ? (
-            <Button onClick={draft} busy={busy === 'draft' || active}>
+            <Button onClick={draft} busy={busy === 'draft' || active} disabled={op.stoppable}>
               {t('practice.ai')}
             </Button>
           ) : null}
@@ -100,8 +116,28 @@ export function PracticePage() {
             {t('practice.template')}
           </Button>
         </div>
-        {active ? <Spinner label={op.phase === 'warming' ? t('ledger.op.warming', { minutes: Math.max(1, Math.round((op.coldStartMs ?? 180000) / 60000)) }) : t('ledger.op.running')} /> : null}
-        {op.phase === 'error' ? <ErrorNotice code={op.errorCode ?? 'ai_unavailable'} /> : null}
+        {op.stoppable ? (
+          <div className="op-panel" aria-live="polite">
+            {active ? (
+              <Spinner
+                label={
+                  op.phase === 'warming'
+                    ? t('ledger.op.warming', { minutes: Math.max(1, Math.round((op.coldStartMs ?? 180000) / 60000)) })
+                    : op.phase === 'reconnecting'
+                      ? t('ledger.op.reconnecting')
+                      : t('ledger.op.running')
+                }
+              />
+            ) : (
+              // The stream is lost but the draft may still run: it stays stoppable.
+              <Notice tone="warning">{t('ledger.op.lost')}</Notice>
+            )}
+            <Button variant="secondary" onClick={cancel} busy={busy === 'cancel'}>
+              {t('ledger.op.cancel')}
+            </Button>
+          </div>
+        ) : null}
+        {op.phase === 'error' && !op.stoppable ? <ErrorNotice code={op.errorCode ?? 'ai_unavailable'} /> : null}
         <ErrorNotice error={error} />
       </Card>
       <Card labelledBy="lines-title">
@@ -109,7 +145,7 @@ export function PracticePage() {
         {!opening ? <p className="muted">{t('practice.empty')}</p> : null}
         {opening && !editing ? (
           <>
-            <ProvenanceBadge provenance={opening.provenance} />
+            {openingBadge ? <ProvenanceBadge provenance={openingBadge} /> : null}
             <ol className="lines">
               {opening.lines.map((l, i) => (
                 <li key={i}>
