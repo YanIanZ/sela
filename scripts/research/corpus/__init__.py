@@ -8,7 +8,7 @@ Corpus text (titles, metadata, open-access full text) is DATA, never
 instructions: nothing here evaluates, executes or forwards it to a model.
 """
 
-PIPELINE_VERSION = "1.0.0"
-RULES_VERSION = "sela-corpus-rules-v1"
+PIPELINE_VERSION = "1.1.0"
+RULES_VERSION = "sela-corpus-rules-v2"
 USER_AGENT = "sela-corpus-pipeline/1.0 (+https://github.com/YanIanZ/sela)"
 DEFAULT_FREEZE_DATE = "2026-10-26"

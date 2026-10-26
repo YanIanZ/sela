@@ -20,6 +20,8 @@ on:
       - 'docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md'
       - 'docs/research/sela-relay/09_RESEARCH_REGISTER.md'
       - 'docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md'
+      # the offline tests scan the UI copy with the claim gates (expects 0 hits)
+      - 'web/src/i18n/**'
       - '.github/workflows/research-corpus.yml'
   workflow_dispatch:
     inputs:

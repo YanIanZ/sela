@@ -10,7 +10,9 @@ import json
 import shutil
 import sys
 import tempfile
+import time
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from urllib.error import HTTPError
 
@@ -27,6 +29,7 @@ from corpus import extract as X  # noqa: E402
 from corpus import fetch as F  # noqa: E402
 from corpus import ids  # noqa: E402
 from corpus import ingest as IN  # noqa: E402
+from corpus import records as R  # noqa: E402
 from corpus import rights as RT  # noqa: E402
 from corpus import verify as V  # noqa: E402
 
@@ -485,6 +488,77 @@ class PopulationTests(unittest.TestCase):
         # 'as' in English prose is not the Indonesian abbreviation for the United States
         self.assertIsNone(X.match_terms({"title": "Chatbots as companions", "note": ""}, X.COUNTRY_TERMS))
 
+    def test_negated_or_transfer_note_clauses_are_skipped(self):
+        c = X.match_country("Regulation of apps in South Africa",
+                            "Analisis regulasi Afrika Selatan; bukan panduan hukum Indonesia.")
+        self.assertEqual(c["labels"], ["South Africa"])
+        self.assertEqual([(s["term"], s["reason"]) for s in c["skipped"]],
+                         [("Indonesia", "note clause has negation marker 'bukan'")])
+        self.assertEqual(c["skipped"][0]["clause"], "bukan panduan hukum Indonesia")
+        p = X.match_population("Mental health among adolescents with HIV",
+                               "Studi remaja; relevansi target dewasa bersifat tidak langsung.")
+        self.assertEqual(p["labels"], ["adolescents"])
+        self.assertEqual([s["term"] for s in p["skipped"]], ["dewasa"])
+        # transfer and Sela-context clauses without a negation word are skipped too
+        for note, kind in (("Populasinya berbeda dari populasi Indonesia.", "transfer_or_difference"),
+                           ("Hasil ini berlaku untuk mahasiswa Indonesia.", "transfer_or_difference"),
+                           ("Konteks awal Sela adalah Indonesia.", "sela_context"),
+                           ("Jika diterapkan di Indonesia, perlu uji lokal.", "transfer_or_difference"),
+                           ("Seandainya diterapkan di Indonesia.", "conditional")):
+            got = X.match_country("", note)
+            self.assertEqual(got["labels"], [], note)
+            self.assertIn(f"has {kind} marker", got["skipped"][0]["reason"], note)
+        # an affirmative clause in the same note still counts; a contrastive conjunction starts a new clause
+        r = X.match_country("", "Pilot RCT Indonesia meningkatkan literasi tetapi tidak mengungguli kontrol di India.")
+        self.assertEqual(r["labels"], ["Indonesia"])
+        self.assertEqual([s["term"] for s in r["skipped"]], ["India"])
+        only_skipped = X.match_country("", "bukan Indonesia")
+        self.assertEqual(only_skipped["labels"], [])  # record field becomes null, the skip stays visible
+
+    def test_compounds_are_not_labels(self):
+        p = X.match_population("Comparing Physician- and Model-Generated Responses", "relasi dokter-pasien")
+        self.assertEqual(p["labels"], [])
+        self.assertEqual(sorted(s["term"] for s in p["skipped"]), ["Physician", "pasien"])
+        self.assertEqual(X.match_population("Patient-reported outcomes in college students", "")["labels"],
+                         ["college or university students"])
+        c = X.match_country("Non-English Records and English Translations", "")
+        self.assertEqual(c["labels"], ["English (language)"])
+        self.assertEqual([s["reason"] for s in c["skipped"]], ["negated by prefix 'non-'"])
+        self.assertEqual(X.match_country("Support for Chinese-Speaking students", "")["labels"],
+                         ["Chinese (language/nationality)"])  # language modifiers stay labels
+
+    def test_real_register_regressions(self):
+        """Reviewer-reported records, using the real register titles and annotations."""
+        papers = {p["id"]: p for p in P.load_papers(P.Inputs(REPO))}
+
+        def labels(rid):
+            p = papers[rid]
+            title = " ".join(p["title"].split())
+            return ((X.match_country(title, p["abstract_based_note_id"]) or {}).get("labels") or None,
+                    (X.match_population(title, p["abstract_based_note_id"]) or {}).get("labels") or None)
+
+        self.assertEqual(labels("R041")[0], ["South Africa"])
+        self.assertEqual(labels("R044")[0], ["India"])
+        self.assertEqual(labels("R057")[0], ["English (language)", "Korean (language/nationality)"])
+        self.assertEqual(labels("R054"), (["Indonesia"], ["adolescents"]))
+        self.assertEqual(labels("R011")[1], ["international students"])
+        self.assertIsNone(labels("R065")[1])
+        indonesian = sorted(rid for rid in papers if "Indonesia" in (labels(rid)[0] or []))
+        self.assertEqual(indonesian, ["R047", "R048", "R049", "R050", "R051", "R052", "R053", "R054", "R098"])
+
+    def test_population_flag_follows_filtered_labels(self):
+        def flags(country):
+            ctx = {"register_review_status": "title_abstract_screened", "study_type": {"labels": []},
+                   "country": country, "population": None, "discrepancies": [],
+                   "retraction": {"status": "none"}, "doi_resolvable": True, "epmc": {},
+                   "licence": {"id": "CC-BY-4.0", "redistribution_allowed": True, "sources_disagree": False},
+                   "fulltext_processed": False, "sample": None, "pmid_mismatch": False, "within": True}
+            return {f["id"] for f in R.assign_flags(ctx)}
+        note = "Review aplikasi pasar India; hasil satu negara tidak otomatis berlaku untuk katalog Indonesia."
+        self.assertIn("population_not_indonesian", flags(X.match_country("Apps for Indian Users", note)))
+        self.assertIn("population_country_not_stated", flags(X.match_country("", "bukan Indonesia")))
+        self.assertNotIn("population_not_indonesian", flags(X.match_country("Studi di Indonesia", "")))
+
 
 class ExportAndVerifyTests(BuildCase):
     def test_build_statuses_and_schema(self):
@@ -640,6 +714,91 @@ class ClaimGateTests(unittest.TestCase):
         self.assertTrue(C.scan_text("SELA TERBUKTI SECARA KLINIS"))
         self.assertTrue(C.scan_text("Sela Reduces Depression"))
         self.assertEqual(C.scan_text("Sela bukan terapis, tidak mendiagnosis, dan tidak menilai risiko."), [])
+
+    # Reviewer-reported false positives: disclaimers, including real product copy.
+    DISCLAIMERS = (
+        "A sent request does not mean you have received care.",
+        "Sent or acknowledged does not mean you have received care. All of this is simulated.",
+        "Permintaan yang terkirim belum berarti kamu sudah mendapat perawatan.",
+        "Terkirim atau diterima belum berarti kamu sudah mendapat perawatan. Semua ini simulasi.",
+        "Sela is a bridge to professional support, not an AI therapist.",
+        "Sela is not a diagnostic tool.",
+        "Sela is not a substitute for a therapist.",
+        "Sela doesn't replace your psychologist.",
+        "Sela doesn’t replace your psychologist.",
+        "Sela cannot assess your suicide risk.",
+        "We make no claim that Sela is clinically validated.",
+        "Kami tidak mengklaim Sela terbukti efektif.",
+        "Sela does not diagnose, treat or prescribe medication.",
+        "Sela is a non-diagnostic tool.",
+    )
+    # Reviewer-reported false negatives plus scope cases that must still hit.
+    CLAIMS = (
+        ("Sela adalah terapis", "therapy_or_counselling"),
+        ("Sela adalah psikolog AI", "therapy_or_counselling"),
+        ("Sela membantu mengatasi depresi", "reduces_symptoms"),
+        ("Sela is an evidence-based therapist", "therapy_or_counselling"),
+        ("Sela is an evidence-based therapist", "evidence_count_overclaim"),
+        ("Sela is not a chatbot but an AI therapist.", "therapy_or_counselling"),       # scope breaker
+        ("Sela bukan aplikasi biasa, melainkan terapis AI.", "therapy_or_counselling"),
+        ("No waiting list. Sela provides therapy.", "therapy_or_counselling"),            # clause boundary
+        ("Don't wait — get your diagnosis today.", "diagnosis"),
+        ("Don't wait - get your diagnosis today.", "diagnosis"),
+        ("No sign-up needed and the app also provides therapy.", "therapy_or_counselling"),  # cue > 6 tokens back
+        ("Sela is 'clinically validated'.", "clinical_validation"),                       # quoted claim
+    )
+
+    def test_disclaimers_pass_and_affirmative_claims_hit(self):
+        for text in self.DISCLAIMERS:
+            self.assertEqual(C.scan_text(text), [], text)
+        for text, gate in self.CLAIMS:
+            self.assertIn(gate, {h["gate"] for h in C.scan_text(text)}, text)
+        self.assertEqual(C.scan_text("Sela adalah jembatan menuju psikolog."), [])   # navigation, not a claim
+        self.assertEqual(C.scan_text("Share this note with your therapist."), [])
+
+    def test_apostrophe_cannot_split_a_negation(self):
+        # 'doesn' + 't' would evade the cue if tokens could end inside a word
+        self.assertEqual(C.scan_text("Sela doesn't provide therapy."), [])
+        self.assertEqual(C.scan_text("It isn’t a diagnostic tool."), [])
+
+    def test_hit_reports_claim_span_and_negated_mentions(self):
+        hits = C.scan_text("Intro text. Sela provides therapy.")
+        self.assertEqual([(h["match"], h["start"]) for h in hits], [("provides therapy", 17)])
+        neg = C.scan_text("Sela does not provide therapy.", include_negated=True)
+        self.assertEqual([(h["gate"], h["match"], h["negated"]) for h in neg],
+                         [("therapy_or_counselling", "provide therapy", True)])
+
+    def test_patterns_are_portable_and_linear(self):
+        doc = C.export_document()
+        for gate in doc["gates"]:
+            self.assertEqual(len(gate["patterns"]), len(gate["claim_patterns"]))
+            for p in gate["patterns"]:
+                for python_only in ("(?P", "(?#", "(?>", "(?i", "\\A", "\\Z", "\\w", "\\W"):
+                    self.assertNotIn(python_only, p)  # Python-only syntax, or \\w (Unicode in Python, ASCII in JS)
+                self.assertTrue(p.startswith(C.NEGATION_PREFIX))
+        start = time.perf_counter()
+        for line in ("| --- | --- |" * 300, "-" * 4000, "a-" * 1500 + " provides therapy"):
+            C.scan_text(line)
+        self.assertLess(time.perf_counter() - start, 10.0)  # no exponential backtracking on separator runs
+
+    def test_scan_claims_cli_counts_only_hits(self):
+        with tempfile.TemporaryDirectory() as td:
+            copy = Path(td) / "copy.txt"
+            copy.write_text("Sela is not an AI therapist.\nKamu sudah mendapat perawatan.\n", encoding="utf-8")
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = P.main(["scan-claims", "--show-negated", str(copy)])
+            self.assertEqual(code, 1)
+            self.assertIn("scan-claims: 1 hit(s); 1 negated mention(s) not counted", out.getvalue())
+
+    @unittest.skipUnless((REPO / "web" / "src" / "i18n" / "en.ts").exists(), "web/ i18n copy not present")
+    def test_product_copy_has_no_forbidden_claims(self):
+        """The real UI copy (web/src/i18n/*.ts) must give 0 hits, line by line as scan-claims reads it."""
+        problems = []
+        for path in sorted((REPO / "web" / "src" / "i18n").glob("*.ts")):
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                problems.extend(f"{path.name}:{lineno} [{h['gate']}] {line.strip()}" for h in C.scan_text(line))
+        self.assertEqual(problems, [])
 
 
 class FetchClientTests(unittest.TestCase):

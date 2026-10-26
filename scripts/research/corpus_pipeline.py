@@ -415,6 +415,8 @@ def main(argv=None):
     sub.add_parser("verify", help="re-hash outputs and check invariants (exit 1 on violation)")
     ps = sub.add_parser("scan-claims", help="scan product copy files for forbidden claims")
     ps.add_argument("files", nargs="+", type=Path)
+    ps.add_argument("--show-negated", action="store_true",
+                    help="also list claim wordings suppressed by the negation window (informational)")
     args = p.parse_args(argv)
     out = args.out or (args.root / DEFAULT_OUT)
     cache = args.cache or (out / ".cache")
@@ -449,13 +451,18 @@ def main(argv=None):
         print(f"verify: {len(violations)} violation(s), {len(warnings)} warning(s)")
         return 1 if violations else 0
     if args.command == "scan-claims":
-        total = 0
+        total = negated = 0
         for path in args.files:
             for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-                for hit in C.scan_text(line):
+                for hit in C.scan_text(line, include_negated=args.show_negated):
+                    if hit.get("negated"):
+                        negated += 1
+                        print(f"{path}:{lineno}: negated, not counted: {hit['gate']}: {hit['match']!r}")
+                        continue
                     total += 1
                     print(f"{path}:{lineno}: {hit['gate']}: {hit['match']!r}")
-        print(f"scan-claims: {total} hit(s)")
+        extra = f"; {negated} negated mention(s) not counted" if args.show_negated else ""
+        print(f"scan-claims: {total} hit(s){extra}")
         return 1 if total else 0
     return 2
 

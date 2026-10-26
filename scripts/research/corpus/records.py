@@ -95,7 +95,8 @@ def assign_flags(ctx):
         add("conference_or_preprint", "conference paper or preprint type")
     countries = set((ctx["country"] or {}).get("labels", []))
     if not countries:
-        add("population_country_not_stated", "no explicit country/language term in title or register annotation")
+        add("population_country_not_stated", "no explicit country/language term in the title or in an affirmative "
+                                              "register-annotation clause")
     elif "Indonesia" not in countries:
         add("population_not_indonesian", "explicit country/language terms found and none is Indonesia")
     pops = set((ctx["population"] or {}).get("labels", []))
@@ -190,8 +191,8 @@ def build_record(paper, envs, freeze_date, cutoff_date, features_by_rid, fulltex
     resolvable, resolvable_basis = doi_resolution(handle_env, cr_env)
     stype = X.study_type(((epmc or {}).get("pubTypeList") or {}).get("pubType"), (cr or {}).get("type"),
                          title, paper.get("publication_types_from_index"))
-    population = X.match_terms({"title": title, "note": note}, X.POPULATION_TERMS)
-    country = X.match_terms({"title": title, "note": note}, X.COUNTRY_TERMS)
+    population = X.match_population(title, note)
+    country = X.match_country(title, note)
 
     ft_env = envs.get("fulltext")
     fulltext_processed = False
@@ -260,8 +261,8 @@ def build_record(paper, envs, freeze_date, cutoff_date, features_by_rid, fulltex
         "retraction_status": _prov(",".join(retraction["sources_consulted"]) or None,
                                    rule="Crossref updated-by/update-to/relation, OpenAlex is_retracted, Europe PMC"),
         "study_type": _prov("derived", rule=stype["rule"]),
-        "population": _prov("derived", rule="explicit-term lexicon (title + register note)"),
-        "country_or_language": _prov("derived", rule="explicit-term lexicon (title + register note)"),
+        "population": _prov("derived", rule="explicit-term lexicon (title + affirmative register-note clauses)"),
+        "country_or_language": _prov("derived", rule="explicit-term lexicon (title + affirmative register-note clauses)"),
         "sample_size": (_prov("europepmc_fulltext", ft_env, rule=sample.get("rule")) if fulltext_processed
                         else _prov(None, rule="not extracted")),
         "screening_status": _prov("derived", rule=RULES_VERSION),
@@ -287,9 +288,9 @@ def build_record(paper, envs, freeze_date, cutoff_date, features_by_rid, fulltex
         "index_url": paper.get("index_url"),
         "study_type": stype["primary"],
         "study_type_detail": stype,
-        "population": population["labels"] if population else None,
+        "population": (population or {}).get("labels") or None,
         "population_detail": population,
-        "country_or_language": country["labels"] if country else None,
+        "country_or_language": (country or {}).get("labels") or None,
         "country_or_language_detail": country,
         "sample_size": sample["value"],
         "sample_size_detail": sample,

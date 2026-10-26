@@ -24,6 +24,14 @@ these patterns. Token characters are spelled out explicitly (ASCII letters,
 digits, '_' and U+00C0-U+024F) instead of ``\\w`` because ``\\w`` is Unicode in
 Python but ASCII in JavaScript.
 
+Engine facts checked 2026-10-26: Python lookbehind "must only match strings of
+some fixed length" (https://docs.python.org/3/library/re.html); JavaScript
+lookbehind is supported and may be variable-length
+(https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Lookbehind_assertion);
+RE2 lists (?=re) (?!re) (?<=re) (?<!re) as NOT SUPPORTED
+(https://github.com/google/re2/wiki/Syntax). Compilation and examples were also
+run in Node 22 with new RegExp(p, 'iu').
+
 A match is a prompt for human review of the copy, not an automatic verdict.
 Known blind spot: a negation word within six tokens that belongs to a
 different idea ("Never feel alone with your AI therapist") suppresses the hit.
