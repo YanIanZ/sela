@@ -8,11 +8,11 @@ Sela prepares and simulates a handoff to **fictional** professionals. It does no
 
 ## Deterministic safety routing
 
-`internal/safety` assesses **every user-authored text before it is stored or sent to a model**: the story (as a whole and per sentence), clarification answers, wording edits, opening lines and rehearsal attempts. It is a lexicon ported from the Dengar.in crisis engine with the same rule ids, extended for clause-level explicit denial ("aku tidak mau bunuh diri" alone does not count, but "… tapi aku ingin mengakhiri hidupku" does), quotations and third-party framing (routed to *elevated* support information rather than ignored), slang, leetspeak and code-switching, and documented idiom exceptions. Ambiguity takes the safer path. Its limitations are listed in the package documentation and the test vectors.
+`internal/safety` assesses **every user-authored text before any other check, before it is stored and before it is sent to a model**: the story (as a whole and per sentence, in any mode), clarification answers, wording edits, opening lines, rehearsal attempts and pseudonyms. Length limits, contact-detail checks and approval requirements never pre-empt the crisis route. It is a lexicon ported from the Dengar.in crisis engine with the same rule ids, extended for clause-level explicit denial ("aku tidak mau bunuh diri" alone does not count, but "… tapi aku ingin mengakhiri hidupku" does), quotations and third-party framing (routed to *elevated* support information rather than ignored), slang, leetspeak and code-switching, and documented idiom exceptions. Ambiguity takes the safer path. Its limitations are listed in the package documentation and the test vectors.
 
-- **crisis** → the session is interrupted: the triggering text and the draft are discarded, running AI operations are canceled, and no further model call, approval, share, recipient transition, check-in or plan display is possible. The help page lists verified Indonesian services with region, sources and verification dates and says that language does not determine jurisdiction. "Delete this session and start again" is offered.
+- **crisis** → the session is interrupted: the triggering text and the draft are discarded, running AI operations are canceled and their event logs reduced to a content-free terminal event, and no further story, model call, approval, share, recipient transition, check-in or plan display is possible. The UI goes to Immediate help and every session page shows the interrupted state; revoking access and deleting data stay available. The help page lists verified Indonesian services with region, sources and verification dates and says that language does not determine jurisdiction. "Delete this session and start again" is offered.
 - **elevated** → the journey continues and support information is shown.
-- Routing outcomes are counted (content-free counters), never logged per request.
+- Routing outcomes are counted (content-free counters), never logged per request; the counters are operator-only (`SELA_METRICS_TOKEN`), so a visitor cannot watch them change in real time.
 
 No ML classifier is used (D-017); the model never decides routing.
 
@@ -30,6 +30,6 @@ Four independent, versioned, server-enforced decisions: AI processing, storage (
 
 ## Abuse and cost bounds
 
-Per-address token buckets for session creation, AI starts, recipient sign-in and other requests; per-session AI operation limit; global admission semaphore; Modal proxy authentication before any GPU starts; at most one GPU container; scale to zero after five minutes.
+Per-address token buckets (IPv6 by /64, least-recently-used eviction, never failing closed) for session creation, AI starts, recipient sign-in and other requests; at most 50 live sessions per address by default; per-session caps on ledger items, story size and handoffs; at most 3 recipient principals per handoff; per-session AI operation limit; global admission semaphore; Modal proxy authentication before any GPU starts; at most one GPU container; scale to zero after five minutes.
 
 Tests demonstrate this software behaviour on synthetic data only. Private security reports: [SECURITY.md](../SECURITY.md).

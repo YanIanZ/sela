@@ -30,7 +30,7 @@ One Go binary (`cmd/sela`) serves `/api/v2` and the built frontend (`SELA_WEB_DI
 | `internal/safety` | Deterministic ID/EN/code-switched crisis lexicon (ported from Dengar.in) with clause-level denial, quotation and third-party handling | Logging, network |
 | `internal/ledger` | Sentence segmentation, strict model-draft parsing, Meaning Lock (quote grounding, negation/subject/time/certainty, diagnosis/medication/number checks), opening-line validation and templates, practice coverage, JSON Schemas | Storage |
 | `internal/llm` | Provider interface, OpenAI-compatible streaming client (retries before first token only, timeouts, cancellation, output bound, model-name check), admission semaphore, test-double handler | Any non-Meta provider, prompt content |
-| `internal/store` | Per-session-locked memory store, share-token and recipient indexes, expiry and bounded eviction | Persistence |
+| `internal/store` | Per-session-locked memory store, share-token and recipient indexes (at most 3 principals per handoff), expiry, bounded eviction that spares recently active retained or shared sessions, a per-client live-session cap, and a purge hook that lets the journey cancel operations of purged sessions | Persistence |
 | `internal/fixtures` | Embedded, validated synthetic catalogue (scenarios with gold annotations, fictional professionals/slots/plans, options, verified help resources, versioned policy texts) | Real data |
 | `internal/research` | BM25 search over the exported research knowledge base | Session data, model calls |
 

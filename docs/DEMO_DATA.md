@@ -21,4 +21,4 @@ Besides the fixtures, a user may write a fictional practice story (D-003): 20–
 
 ## Isolation
 
-All session state is per visitor, in memory, under the retention policy; reset, deletion and expiry purge it with its shares and recipient principals. Fictional recipients are instantiated per owner session, so no cross-visitor inbox or directory exists. A stale model result (changed story, ledger or consent) is discarded.
+All session state is per visitor, in memory, under the retention policy; reset, deletion, expiry and capacity eviction purge it with its shares, recipient principals and operation logs at once. Fictional recipients are instantiated per owner session, so no cross-visitor inbox or directory exists. A stale model result (changed story, ledger, approval, clarification, opening or consent) is discarded.

@@ -53,8 +53,10 @@ The v1 checks (`npm test`, `npm run lint`, …) still apply to the inherited Nex
 | `SELA_WEB_DIR` | `web/dist` | Built frontend |
 | `SELA_PUBLIC_ORIGIN` | (request host) | Exact origin accepted for mutations, e.g. `https://sela.example` |
 | `SELA_SECURE_COOKIES` | `true` in production | Set `false` only for plain-HTTP local runs |
-| `SELA_TRUST_PROXY` | `false` | Use the last `X-Forwarded-For` hop for rate limiting (only behind a trusted proxy) |
-| `SELA_MAX_SESSIONS` | `500` | Memory bound; idle sessions are evicted only after 10 minutes |
+| `SELA_TRUST_PROXY` | `false` | Use the last `X-Forwarded-For` element (across all header lines) for rate limiting; only behind a proxy that appends it |
+| `SELA_MAX_SESSIONS` | `500` | Memory bound. When full, an ordinary session idle for 10 minutes is evicted first; a session with storage consent or an active share only after 30 idle minutes; otherwise new visitors get 503 `capacity` |
+| `SELA_MAX_SESSIONS_PER_CLIENT` | `50` | Live sessions per client address (IPv6 /64); more → 429. Raise it if many demo visitors share one NAT |
+| `SELA_METRICS_TOKEN` | — | Optional operator bearer token (≥16 characters, no spaces) for `GET /api/v2/metrics`; unset means the route does not exist |
 | `SELA_RESEARCH_KB` | `data/research/corpus/knowledge_base.jsonl` | Reviewer corpus index |
 | `SELA_LLM_MODE` | `disabled` | `disabled`, `modal` or `test_double` |
 | `SELA_LLM_BASE_URL` | — | Modal server URL (https) or test double URL |
@@ -64,7 +66,7 @@ The v1 checks (`npm test`, `npm run lint`, …) still apply to the inherited Nex
 | `SELA_LLM_MODEL_ID` | — | `meta-models/Muse-Glimmer-30B` |
 | `SELA_LLM_MODEL_REVISION` | — | `cec94fcfd6512f2cfe708138c32533b346ea4f69` |
 | `SELA_LLM_CONCURRENCY` | `2` | Concurrent model calls (admission) |
-| `SELA_LLM_OP_TIMEOUT` | `6m` | Whole AI operation budget, including a cold start |
+| `SELA_LLM_OP_TIMEOUT` | `6m` | Whole AI operation budget, including a cold start (maximum 15m; warm the model with the smoke test before a demo) |
 | `SELA_LLM_WARM_WINDOW` | `5m` | Assumed warm time after a live call (= Modal scale-down) |
 | `SELA_LLM_COLD_START_ESTIMATE` | `4m` | Shown to users while the model starts |
 | `SELA_MAX_AI_OPS_PER_SESSION` | `8` | Per-session AI operations per 10 minutes |
@@ -78,7 +80,7 @@ docker build -f deploy/v2/Dockerfile --build-arg VERSION=$(git rev-parse --short
 docker run --rm -p 8080:8080 -e SELA_SECURE_COOKIES=false sela:v2
 ```
 
-Deploy as **one instance** (sessions live in process memory; several instances would split them). Put HTTPS in front, set `SELA_PUBLIC_ORIGIN`, keep `SELA_SECURE_COOKIES=true`, and set `SELA_TRUST_PROXY=true` only behind a proxy that overwrites `X-Forwarded-For`. A restart erases all sessions, which the UI explains. **Not run:** no hosting account was available (B-3).
+Deploy as **one instance** (sessions live in process memory; several instances would split them). Put HTTPS in front, set `SELA_PUBLIC_ORIGIN`, keep `SELA_SECURE_COOKIES=true`, and set `SELA_TRUST_PROXY=true` only behind a proxy that overwrites `X-Forwarded-For`. A restart erases all sessions, which the UI explains. On SIGTERM/SIGINT the server ends open event streams with a final content-free event and exits cleanly; a second signal forces exit. **Not run:** no hosting account was available (B-3).
 
 ## 5. Meta model on Modal
 
