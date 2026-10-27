@@ -65,7 +65,7 @@ New v3 codes (messages to add to `internal/httpapi/errors.go`; every code needs 
 | `not_signed_in` | 401 | No, unknown, expired or revoked session on a route that needs one; the cookie is cleared | Kamu belum masuk atau sesimu sudah berakhir. Silakan masuk lagi. | You are not signed in, or your session has ended. Please sign in again. |
 | `invalid_credentials` | 401 | Login with an unknown username or a wrong password (identical for both) | Nama pengguna atau kata sandi tidak cocok. | The username or password does not match. |
 | `recovery_failed` | 401 | Recovery with an unknown username, a wrong code or a used code (identical) | Nama pengguna atau kode pemulihan tidak cocok, atau kode itu sudah pernah dipakai. | The username or recovery code does not match, or that code was already used. |
-| `current_password_incorrect` | 403 | Reauth, password change or code regeneration with a wrong current password (session stays valid) | Kata sandi saat ini tidak cocok. | The current password does not match. |
+| `current_password_incorrect` | 403 | Reauth, password change or code regeneration with a wrong current password (session stays valid), or a code regeneration whose password was replaced while it was checked | Kata sandi saat ini tidak cocok. | The current password does not match. |
 | `reauth_required` | 403 | Export or deletion without a recent password proof | Untuk melindungi datamu, masukkan kata sandimu sekali lagi. | To protect your data, enter your password once more. |
 | `account_required` | 403 | A guest calls a password route | Langkah ini memerlukan akun. Simpan data tamumu ke akun terlebih dahulu. | This step needs an account. Save your guest data to an account first. |
 | `password_login_disabled` | 403 | 100 consecutive failed sign-ins; recovery is the way back | Masuk dengan kata sandi dinonaktifkan sementara karena terlalu banyak percobaan. Pakai kode pemulihan untuk membuat kata sandi baru. | Password sign-in is disabled after too many attempts. Use a recovery code to set a new password. |
@@ -191,7 +191,7 @@ Retry: if the response was lost, a retry gets `409 username_taken`; the client s
 
 ### `POST /api/v3/auth/login`
 
-`{"username", "password", "rememberDevice": false}` → **200** `{"user", "session"}`, cookie set (rotation: any existing cookie's session is revoked). A successful login resets the failure counter and re-hashes the password if its parameters differ from the current configuration.
+`{"username", "password", "rememberDevice": false}` → **200** `{"user", "session"}`, cookie set (rotation: any existing cookie's session is revoked). A successful login resets the failure counter and re-hashes the password if its parameters differ from the current configuration. A password that a password change or a recovery replaced while it was being checked is a wrong password: `401 invalid_credentials`, recorded as a failed attempt, no session and no re-hash. Rarely, the right password gets the same answer once: when another sign-in of the account re-hashed it while it was being checked (after a parameter change; ADR-0002 §9, residual); signing in again succeeds.
 Errors: `401 invalid_credentials` (identical for unknown user and wrong password, same work done), `403 password_login_disabled`, `429 rate_limited` (also for backoff), `503 server_busy | store_unavailable`.
 
 ### `POST /api/v3/auth/logout`
@@ -238,7 +238,7 @@ Retry: a lost response means the password already changed; sign in with the new 
 
 ### `POST /api/v3/auth/recovery-codes`
 
-`{"password"}` → **200** `{"recoveryCodes": [10], "generatedAt"}`; every previous code is invalid; `recovery.regenerated`; acknowledgement reset to `false`. Errors: `401 not_signed_in`, `403 account_required | current_password_incorrect | password_login_disabled`, `429`, `503 server_busy | store_unavailable`. Retry: regenerate again (the earlier batch is already invalid).
+`{"password"}` → **200** `{"recoveryCodes": [10], "generatedAt"}`; every previous code is invalid; `recovery.regenerated`; acknowledgement reset to `false`. A password that a recovery or a password change (from another session) replaced while it was being checked gets `403 current_password_incorrect`, recorded as a failed attempt, and the codes stay as they are; so does, once, the right password when a sign-in of the account re-hashed it meanwhile (ADR-0002 §9, residual; sending it again succeeds). Errors: `401 not_signed_in`, `403 account_required | current_password_incorrect | password_login_disabled`, `429`, `503 server_busy | store_unavailable`. Retry: regenerate again (the earlier batch is already invalid).
 
 ## 6. The signed-in user (`/me`)
 
@@ -259,7 +259,7 @@ All routes need a session (`401 not_signed_in` otherwise).
 | `DELETE /api/v3/me/guardian-consent` | — | **200** `{"active": null}`; withdraws the active record; `guardian_consent.withdrawn`. Idempotent |
 | `GET /api/v3/me/audit?limit=&cursor=` | — | **200** `{"events": [Audit event…], "nextCursor"}`; own events only |
 | `GET /api/v3/me/export?format=json\|html\|md&lang=id\|en` | — | **200** file download (below). Accounts need a recent reauth (`403 reauth_required`). `400 invalid_input` (`field: "format"`), `429`. Writes `export.created` (`format`) |
-| `DELETE /api/v3/me` | `{"confirm": true}` | **200** `{"deleted": true, "keysUnrecoverableBy": "<now + 7 days>", "backupsExpireBy": "<now + 30 days>"}`; cookie cleared. Accounts need a recent reauth (`403 reauth_required`); guests do not. `confirm` missing or false → `400 invalid_input` (`field: "confirm"`). Retry after success → `401 not_signed_in`, which the client treats as done |
+| `DELETE /api/v3/me` | `{"confirm": true}` | **200** `{"deleted": true, "keysUnrecoverableBy": "<now + 7 days>", "backupsExpireBy": "<now + 30 days>"}`; cookie cleared. Accounts need a recent reauth (`403 reauth_required`); guests do not. A password change or recovery in progress for the account is waited for; it revokes the session, so the deletion then answers `401 not_signed_in` and deletes nothing. `confirm` missing or false → `400 invalid_input` (`field: "confirm"`). Retry after success → `401 not_signed_in`, which the client treats as done |
 
 ### Export format
 

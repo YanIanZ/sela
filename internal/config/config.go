@@ -132,6 +132,15 @@ func envBool(key string, def bool) (bool, error) {
 	return b, nil
 }
 
+// Bounds of SELA_DB_MAX_CONNS. One connection is enough for the server
+// and its background jobs: a request holds at most one connection at a
+// time, and a job runs every statement on the connection that holds its
+// advisory lock (db.WithJobLock), so it never waits for a second one.
+const (
+	MinDBMaxConns = 1
+	MaxDBMaxConns = 200
+)
+
 func envInt(key string, def, min, max int) (int, error) {
 	v := env(key, "")
 	if v == "" {
@@ -288,7 +297,7 @@ func loadV3(c *Config, mode Mode, public bool, add func(error)) {
 	c.DatabaseURL = env("SELA_DATABASE_URL", "")
 	c.DBAutoMigrate, err = envBool("SELA_DB_AUTO_MIGRATE", false)
 	add(err)
-	c.DBMaxConns, err = envInt("SELA_DB_MAX_CONNS", 10, 1, 200)
+	c.DBMaxConns, err = envInt("SELA_DB_MAX_CONNS", 10, MinDBMaxConns, MaxDBMaxConns)
 	add(err)
 	c.DBStatementTimeout, err = envDuration("SELA_DB_STATEMENT_TIMEOUT", 30*time.Second, time.Second, 10*time.Minute)
 	add(err)

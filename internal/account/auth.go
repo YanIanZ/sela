@@ -377,7 +377,15 @@ func (s *Store) credentialByUser(ctx context.Context, q db.DBTX, owner UserID, l
 // stored. On success the session rotates (any cookie already present is
 // revoked), counters reset (refused if password sign-in was disabled while
 // the proof ran) and a hash whose parameters differ from the configured
-// ones, lower or higher, is replaced.
+// ones, lower or higher, is replaced. The success transaction first locks
+// the credentials row and checks that it still holds the hash the password
+// was verified against (lockProof): when a password change or a recovery
+// replaced it while argon2id ran, nothing is committed and the attempt
+// ends like a wrong password (the failure statement, ErrInvalidCredentials).
+// So does, once, a sign-in that overlaps another one which re-hashed the
+// password (lockProof's residual). That happens only after a successful
+// verification, so the failure paths of known and unknown usernames stay
+// the same.
 func (s *Store) Login(ctx context.Context, in LoginInput) (AuthResult, error) {
 	key, username, valid := usernameKey(s.throttleSecret, in.Username)
 	pw := norm.NFKC.String(in.Password)
@@ -419,6 +427,9 @@ func (s *Store) Login(ctx context.Context, in LoginInput) (AuthResult, error) {
 	err = s.tx(ctx, func(tx pgx.Tx) error {
 		now := s.clock()
 		// Credentials first, then the throttle row (lock order, throttle.go).
+		if err := lockProof(ctx, tx, c); err != nil {
+			return err
+		}
 		if err := s.resetFailures(ctx, tx, c.user, c.username); err != nil {
 			return err
 		}
@@ -447,6 +458,13 @@ func (s *Store) Login(ctx context.Context, in LoginInput) (AuthResult, error) {
 		res.Profile, err = s.profile(ctx, tx, c.user)
 		return err
 	})
+	if errors.Is(err, errStaleProof) {
+		// The password proven is no longer the account's: a failed attempt.
+		if err := s.recordFailure(ctx, username, nil); err != nil {
+			return AuthResult{}, err
+		}
+		return AuthResult{}, ErrInvalidCredentials
+	}
 	if err != nil {
 		return AuthResult{}, err
 	}
@@ -460,7 +478,10 @@ func (s *Store) Login(ctx context.Context, in LoginInput) (AuthResult, error) {
 // username and a known one with a wrong or used code send the same
 // statements (begin, the credentials lock, the code update, rollback): for
 // an unknown username the update runs against a random user id and
-// matches nothing.
+// matches nothing. The code is checked and consumed in the transaction
+// that replaces the password, under the credentials row lock, so unlike a
+// password proof it cannot go stale before it commits (the argon2id work
+// before the transaction hashes the new password and proves nothing).
 func (s *Store) Recover(ctx context.Context, in RecoveryInput) (AuthResult, error) {
 	username, uerr := NormalizeUsername(in.Username)
 	pwUser := username
@@ -559,7 +580,14 @@ func (s *Store) requireAccount(ctx context.Context, q db.DBTX, owner UserID) (*c
 // login backoff and the 100-attempt disable, and concurrent proofs cannot
 // pass one backoff step together. The caller's success transaction must
 // call resetFailures (or check the disable itself) under the credentials
-// row lock.
+// row lock, and must commit nothing when the password proven stopped being
+// the current one while argon2id ran (a password change or a recovery
+// committed meanwhile): RegenerateRecoveryCodes checks the hash
+// (lockProof); Reauthenticate and ChangePassword commit only while the
+// current session is live, which suffices because every password change
+// and every recovery revokes every session of the user, the current one
+// included (ChangePassword rotates it), in the transaction that replaces
+// the hash.
 func (s *Store) proveCurrent(ctx context.Context, owner UserID, current SessionID, password string) (*credential, string, error) {
 	acct, err := s.requireAccount(ctx, s.pool, owner)
 	if err != nil {
@@ -708,7 +736,13 @@ func (s *Store) ChangePassword(ctx context.Context, owner UserID, current Sessio
 // locked first, so overlapping regenerations (and a recovery) of one
 // account serialise: under READ COMMITTED the second DELETE would
 // otherwise not see the first one's new codes, and both batches would
-// stay valid.
+// stay valid. The lock also checks that the password proven is still the
+// account's (lockProof): the transaction does not check that the session
+// is live, so without it a recovery or a password change that committed
+// during the verification left the old password's holder with a fresh
+// batch of codes (ErrCurrentPasswordIncorrect, the attempt recorded as
+// failed). A regeneration that overlaps a sign-in which re-hashed the
+// password is refused the same way, once (lockProof's residual).
 func (s *Store) RegenerateRecoveryCodes(ctx context.Context, owner UserID, current SessionID, password string) ([]string, time.Time, error) {
 	c, _, err := s.proveCurrent(ctx, owner, current, password)
 	if err != nil {
@@ -720,17 +754,12 @@ func (s *Store) RegenerateRecoveryCodes(ctx context.Context, owner UserID, curre
 	}
 	now := s.clock()
 	err = s.tx(ctx, func(tx pgx.Tx) error {
-		var disabled bool
-		err := tx.QueryRow(ctx, `SELECT password_login_disabled_at IS NOT NULL FROM credentials WHERE user_id = $1 FOR UPDATE`, owner).Scan(&disabled)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrAccountRequired
-		}
-		if err != nil {
+		// Refused when password sign-in was disabled, or the password
+		// replaced (a recovery, or a change from another session), while the
+		// password was verified: new codes for a password that is no longer
+		// current would let the holder of the old one recover the account.
+		if err := lockProof(ctx, tx, c); err != nil {
 			return err
-		}
-		if disabled {
-			// Password sign-in was disabled while the password was verified.
-			return ErrPasswordLoginDisabled
 		}
 		if _, err := tx.Exec(ctx, `DELETE FROM recovery_codes WHERE user_id = $1`, owner); err != nil {
 			return err
@@ -747,6 +776,13 @@ func (s *Store) RegenerateRecoveryCodes(ctx context.Context, owner UserID, curre
 		}
 		return s.audit(ctx, tx, owner, &current, "recovery.regenerated", actorUser, map[string]any{"count": len(codes)})
 	})
+	if errors.Is(err, errStaleProof) {
+		// A failed attempt, as in Login.
+		if err := s.recordFailure(ctx, c.username, &current); err != nil {
+			return nil, time.Time{}, err
+		}
+		return nil, time.Time{}, ErrCurrentPasswordIncorrect
+	}
 	if err != nil {
 		return nil, time.Time{}, err
 	}

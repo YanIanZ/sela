@@ -285,8 +285,12 @@ func (s *Store) clock() time.Time { return s.now().UTC().Truncate(time.Microseco
 // transaction body builds its results from scratch. The row locks are
 // taken in one order (credentials, then login_throttle, then sessions;
 // throttle.go), so this is a backstop that DeadlockRetries makes visible.
-func (s *Store) tx(ctx context.Context, fn func(pgx.Tx) error) error {
-	return db.Retry(ctx, s.onDeadlock, func() error { return db.InTx(ctx, s.pool, fn) })
+func (s *Store) tx(ctx context.Context, fn func(pgx.Tx) error) error { return s.txOn(ctx, s.pool, fn) }
+
+// txOn is tx on b instead of the pool: a background job runs its
+// transactions on the connection that holds its lock (db.WithJobLock).
+func (s *Store) txOn(ctx context.Context, b db.Beginner, fn func(pgx.Tx) error) error {
+	return db.Retry(ctx, s.onDeadlock, func() error { return db.InTx(ctx, b, fn) })
 }
 
 func (s *Store) onDeadlock() { s.deadlocks.Add(1) }

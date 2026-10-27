@@ -343,6 +343,11 @@ type Hasher struct {
 	hashes        atomic.Uint64
 	verifications atomic.Uint64
 	byParams      sync.Map // HashParams -> *atomic.Uint64
+
+	// afterVerify, when set, runs once, in the next Verify of a stored hash
+	// after the comparison and before Verify returns (tests only:
+	// HoldNextVerify in testhooks_internal_test.go).
+	afterVerify atomic.Pointer[func()]
 }
 
 // NewHasher validates the parameters and prepares the dummy hash used for
@@ -500,7 +505,13 @@ func (h *Hasher) Verify(ctx context.Context, password string, stored *PasswordHa
 	if stored == nil {
 		return h.VerifyUnknown(ctx, password, [32]byte{})
 	}
-	return h.verify(ctx, password, stored)
+	ok, err := h.verify(ctx, password, stored)
+	if err == nil && h.afterVerify.Load() != nil {
+		if hook := h.afterVerify.Swap(nil); hook != nil {
+			(*hook)()
+		}
+	}
+	return ok, err
 }
 
 // VerifyUnknown runs the verification of a username without an account

@@ -238,10 +238,22 @@ var ErrJobLocked = errors.New("db: job lock held by another instance")
 // lock, so parallel test schemas never contend.
 const jobLockKey = `hashtextextended('sela.job:' || $1::text || ':' || current_schema(), 0)`
 
+// JobConn is the connection a background job runs on (WithJobLock): it
+// sends statements and starts transactions.
+type JobConn interface {
+	DBTX
+	Beginner
+}
+
 // WithJobLock runs fn while holding the session-level advisory lock of a
-// background job on a dedicated connection. When another instance holds
-// it, fn does not run and ErrJobLocked is returned.
-func WithJobLock(ctx context.Context, pool *pgxpool.Pool, job string, fn func(ctx context.Context) error) error {
+// background job on a dedicated connection, and hands fn that connection:
+// the job runs its statements and transactions on it and takes no other
+// connection from the pool, so it never waits for one and every pool size
+// works, one included (a job that queried through the pool while this
+// connection held the lock waited forever at SELA_DB_MAX_CONNS=1). When
+// another instance holds the lock, fn does not run and ErrJobLocked is
+// returned.
+func WithJobLock(ctx context.Context, pool *pgxpool.Pool, job string, fn func(ctx context.Context, conn JobConn) error) error {
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
 		return err
@@ -262,7 +274,7 @@ func WithJobLock(ctx context.Context, pool *pgxpool.Pool, job string, fn func(ct
 			_ = conn.Conn().Close(uctx)
 		}
 	}()
-	return fn(ctx)
+	return fn(ctx, conn)
 }
 
 // HoldJobLock takes a job lock and keeps it until release is called; tests

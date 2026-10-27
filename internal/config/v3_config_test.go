@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -304,6 +305,31 @@ func TestDatabaseTLSUsesEffectiveSettings(t *testing.T) {
 					t.Fatalf("error leaks the connection settings: %v", err)
 				}
 			})
+		}
+	}
+}
+
+// PR #9 review, F2: every pool size from MinDBMaxConns on is accepted (one
+// connection is enough: a background job runs on the connection that
+// holds its lock, db.WithJobLock), and the error names the bounds.
+func TestDBMaxConnsBounds(t *testing.T) {
+	if MinDBMaxConns != 1 || MaxDBMaxConns != 200 {
+		t.Fatalf("bounds [%d, %d]; update RUNBOOK §3 and this test together", MinDBMaxConns, MaxDBMaxConns)
+	}
+	for v, want := range map[string]int{"": 10, strconv.Itoa(MinDBMaxConns): MinDBMaxConns, "2": 2, strconv.Itoa(MaxDBMaxConns): MaxDBMaxConns} {
+		valid(t, "production")
+		t.Setenv("SELA_DB_MAX_CONNS", v)
+		c, err := Load()
+		if err != nil || c.DBMaxConns != want {
+			t.Fatalf("SELA_DB_MAX_CONNS=%q: %d, %v; want %d", v, c.DBMaxConns, err, want)
+		}
+	}
+	for _, v := range []string{strconv.Itoa(MinDBMaxConns - 1), "-1", strconv.Itoa(MaxDBMaxConns + 1), "ten"} {
+		valid(t, "production")
+		t.Setenv("SELA_DB_MAX_CONNS", v)
+		_, err := Load()
+		if err == nil || !strings.Contains(err.Error(), "SELA_DB_MAX_CONNS: must be an integer in [1, 200]") {
+			t.Fatalf("SELA_DB_MAX_CONNS=%q: %v, want the bounds error", v, err)
 		}
 	}
 }

@@ -89,10 +89,18 @@ func (s *Store) requireRecentProof(ctx context.Context, q db.DBTX, owner UserID,
 
 // DeleteAccount deletes the owner and everything they own, crypto-shreds
 // their key and drops its cached copy. Accounts need a recent password
-// proof.
+// proof. The credentials row (none for a guest) is locked before the proof
+// is checked: a password change or a recovery revokes every session of
+// the user under that lock, so it either commits before the check, which
+// then refuses, or waits until the deletion has committed; checked without
+// the lock, a change that committed between the check and the delete left
+// a deletion by a session it had just revoked.
 func (s *Store) DeleteAccount(ctx context.Context, owner UserID, current SessionID) (DeletionReceipt, error) {
 	now := s.clock()
 	err := s.tx(ctx, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, `SELECT 1 FROM credentials WHERE user_id = $1 FOR UPDATE`, owner); err != nil {
+			return err
+		}
 		if err := s.requireRecentProof(ctx, tx, owner, current); err != nil {
 			return err
 		}
@@ -115,12 +123,13 @@ func (s *Store) DeleteAccount(ctx context.Context, owner UserID, current Session
 // PurgeGuests deletes, under the job advisory lock, up to PurgeBatch
 // guests inactive beyond the inactive TTL or past their maximum age,
 // through the deletion path. It returns db.ErrJobLocked when another
-// instance is running it.
+// instance is running it. Every statement runs on the lock's connection,
+// so the job needs no other one (db.WithJobLock).
 func (s *Store) PurgeGuests(ctx context.Context) (int, error) {
 	n := 0
-	err := db.WithJobLock(ctx, s.pool, JobGuestPurge, func(ctx context.Context) error {
+	err := db.WithJobLock(ctx, s.pool, JobGuestPurge, func(ctx context.Context, conn db.JobConn) error {
 		now := s.clock()
-		rows, err := s.pool.Query(ctx, `SELECT id FROM users WHERE kind = 'guest' AND (last_active_at < $1 OR guest_expires_at < $2)
+		rows, err := conn.Query(ctx, `SELECT id FROM users WHERE kind = 'guest' AND (last_active_at < $1 OR guest_expires_at < $2)
 			ORDER BY last_active_at LIMIT $3`, now.Add(-s.cfg.GuestInactiveTTL), now, PurgeBatch)
 		if err != nil {
 			return err
@@ -131,7 +140,7 @@ func (s *Store) PurgeGuests(ctx context.Context) (int, error) {
 		}
 		for _, id := range ids {
 			var deleted bool
-			err := s.tx(ctx, func(tx pgx.Tx) error {
+			err := s.txOn(ctx, conn, func(tx pgx.Tx) error {
 				// Re-check under the row lock: activity since the scan keeps the guest.
 				var still UserID
 				err := tx.QueryRow(ctx, `SELECT id FROM users WHERE id = $1 AND kind = 'guest'
@@ -171,23 +180,23 @@ type RetentionReport struct {
 
 // Retention deletes ended sessions older than EndedSessionRetention, key
 // tombstones older than TombstoneRetention and login throttle rows without
-// a failure for ThrottleQuiet, under the job lock.
+// a failure for ThrottleQuiet, under the job lock, on the lock's connection.
 func (s *Store) Retention(ctx context.Context) (RetentionReport, error) {
 	var rep RetentionReport
-	err := db.WithJobLock(ctx, s.pool, JobRetention, func(ctx context.Context) error {
+	err := db.WithJobLock(ctx, s.pool, JobRetention, func(ctx context.Context, conn db.JobConn) error {
 		cut := s.clock().Add(-EndedSessionRetention)
-		tag, err := s.pool.Exec(ctx, `DELETE FROM sessions WHERE revoked_at < $1 OR absolute_expires_at < $1
+		tag, err := conn.Exec(ctx, `DELETE FROM sessions WHERE revoked_at < $1 OR absolute_expires_at < $1
 			OR last_seen_at + make_interval(secs => idle_timeout_seconds) < $1`, cut)
 		if err != nil {
 			return err
 		}
 		rep.Sessions = int(tag.RowsAffected())
-		tag, err = s.pool.Exec(ctx, `DELETE FROM user_data_keys WHERE destroyed_at < $1`, s.clock().Add(-TombstoneRetention))
+		tag, err = conn.Exec(ctx, `DELETE FROM user_data_keys WHERE destroyed_at < $1`, s.clock().Add(-TombstoneRetention))
 		if err != nil {
 			return err
 		}
 		rep.Tombstones = int(tag.RowsAffected())
-		tag, err = s.pool.Exec(ctx, `DELETE FROM login_throttle WHERE last_failed_at < $1`, s.clock().Add(-ThrottleQuiet))
+		tag, err = conn.Exec(ctx, `DELETE FROM login_throttle WHERE last_failed_at < $1`, s.clock().Add(-ThrottleQuiet))
 		if err != nil {
 			return err
 		}

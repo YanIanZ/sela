@@ -1,7 +1,9 @@
 package account
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -26,7 +28,9 @@ import (
 // that passed before the 100th failure was recorded still signed in
 // afterwards (review round 3, R3-3). A success undoes the count in its own
 // transaction, after checking under the credentials row lock that
-// password sign-in is still enabled.
+// password sign-in is still enabled and, for a sign-in and a code
+// regeneration, that the hash it proved is still the stored one
+// (lockProof; PR #9 review, F1).
 //
 // Lock order (review round 3, R3-2): every statement and transaction that
 // touches both locks the account's credentials row before the username
@@ -311,4 +315,53 @@ func (s *Store) resetFailures(ctx context.Context, q db.DBTX, owner UserID, user
 		return ErrPasswordLoginDisabled
 	}
 	return clearThrottle(ctx, q, s.UsernameKey(username))
+}
+
+// errStaleProof means a password proof was verified against a hash that
+// the account no longer has (lockProof).
+var errStaleProof = errors.New("account: the proven password is no longer current")
+
+// lockProof is the first statement of a password proof's success
+// transaction: it locks the account's credentials row (credentials first,
+// as above) and checks that the row still holds the hash the proof was
+// verified against (c.hash, read by reserveSQL, so its tag and salt). The
+// argon2id work runs outside any lock; a password change or a recovery
+// that commits meanwhile replaces the hash, and the proof is then for a
+// password that is no longer current: errStaleProof, and the caller
+// commits nothing (no session, no re-hash, no reset) and ends the attempt
+// as a failed one (recordFailure; its reservation is not undone), so the
+// old password neither signs in past the change's session revocation nor
+// overwrites the new hash. A deleted account is stale too. With the hash
+// current, it refuses with ErrPasswordLoginDisabled when password sign-in
+// was disabled meanwhile.
+//
+// Residual (ADR-0002 §9): the check compares hashes, not passwords, so a
+// re-hash looks like a replacement. A proof of the right, current
+// password that overlaps a sign-in which re-hashes the stored hash (after
+// a parameter change, or while instances run with different parameters)
+// is refused once, whether or not it would re-hash itself: a sign-in gets
+// ErrInvalidCredentials and a code regeneration
+// ErrCurrentPasswordIncorrect. Each writes the coalesced auth.login_failed
+// (recordFailure) although the password was right; no counter is raised,
+// because the re-hashing sign-in reset them after this proof's
+// reservation. Sent again, the proof succeeds
+// (TestPR9RehashOverlapRefusesCurrentProofOnce). Telling the two apart
+// would need a password version: password_changed_at is a time, which a
+// fixed clock (or a change within the same microsecond) leaves equal.
+func lockProof(ctx context.Context, q db.DBTX, c *credential) error {
+	var tag, salt []byte
+	var disabled bool
+	err := q.QueryRow(ctx, `SELECT password_hash, password_salt, password_login_disabled_at IS NOT NULL FROM credentials
+		WHERE user_id = $1 FOR UPDATE`, c.user).Scan(&tag, &salt, &disabled)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return errStaleProof
+	case err != nil:
+		return err
+	case !bytes.Equal(tag, c.hash.Tag) || !bytes.Equal(salt, c.hash.Salt):
+		return errStaleProof
+	case disabled:
+		return ErrPasswordLoginDisabled
+	}
+	return nil
 }
