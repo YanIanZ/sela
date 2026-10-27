@@ -98,6 +98,21 @@ def build_evidence_map(doc07_name, doc07_text, doc10_name, doc10_text, corpus_id
     }
 
 
+def annotate_v3(emap, records_by_id):
+    """v3: show which feature rows lean on records with a design-label caution, a
+    needs_check date or adult-only / unverified-age populations (no row changes)."""
+    for e in emap["entries"]:
+        recs = [records_by_id[r] for r in e["r_ids"] if r in records_by_id]
+        e["relies_on_study_type_caution"] = sorted(r["id"] for r in recs if r.get("study_type_caution"))
+        e["relies_on_needs_check_documented"] = sorted(r["id"] for r in recs if r.get("needs_check_evidence"))
+        e["r_id_age_band"] = {r["id"]: r["age_band"]["summary"] for r in recs}
+        e["r_id_reviewer_date_override"] = {r["id"]: r["publication_date_reviewer_override"]["date"]
+                                            for r in recs if r.get("publication_date_reviewer_override")}
+    emap["v3_note"] = ("age bands and cautions are machine-derived and unreviewed; a row backed only by adult "
+                       "evidence says nothing about ages 15-17")
+    return emap
+
+
 _YEAR_CLAIM = re.compile(r"\|\s*First-publication year\s*\|\s*([^|]+)\|")
 
 

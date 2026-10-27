@@ -1,0 +1,454 @@
+{
+  "schema": "reading_item.schema.json",
+  "content_set": "sela-reading-v1",
+  "file_id": "cards_safety_plan",
+  "description": "The 2 Dengar.in v1 safety-plan cards that describe the structure of the Stanley & Brown (2012) Safety Planning Intervention. Shown only on the Immediate help page, below the contacts, never offered by the model.",
+  "file_licence": {
+    "text_licence": "MIT (repository licence) for the Dengar.in team's own description",
+    "notice": "Structure only: the article is paywalled and the form is copyright Stanley & Brown; no text or form is reproduced. Commercial use needs legal confirmation."
+  },
+  "items": [
+    {
+      "id": "rencana-keselamatan-enam-langkah",
+      "version": 2,
+      "kind": "safety_plan",
+      "topics": [
+        "safety_plan"
+      ],
+      "surfaces": [
+        "help_page"
+      ],
+      "ai_may_offer": false,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Deskripsi bahasa Indonesia oleh tim Dengar.in v1 dengan kata-kata sendiri.",
+        "en": "English description by the Dengar.in v1 team in its own words."
+      },
+      "audience": "adult",
+      "audience_basis": "Stanley & Brown describe a clinical intervention built with a professional; the v1 cards describe its structure for adults 18+. Not reviewed for 15-17.",
+      "content": {
+        "title": {
+          "id": "Rencana keselamatan: enam langkah",
+          "en": "Safety plan: six steps"
+        },
+        "summary": {
+          "id": "Rencana tertulis yang kamu siapkan saat tenang, berisi tanda peringatan, cara menenangkan diri, orang yang bisa dihubungi, dan cara membuat lingkungan lebih aman.",
+          "en": "A written plan prepared while calm, listing warning signs, ways to steady yourself, people to contact, and ways to make your surroundings safer."
+        },
+        "steps": {
+          "id": [
+            "Tanda peringatan: tulis pikiran, perasaan, atau situasi yang biasanya mendahului krisis, dengan kata-katamu sendiri.",
+            "Cara menenangkan diri sendiri: dua atau tiga hal yang bisa kamu lakukan tanpa orang lain, misalnya grounding, jalan kaki, atau musik.",
+            "Orang dan tempat yang bisa mengalihkan perhatianmu: siapa yang bisa kamu temui, dan tempat umum yang aman untuk didatangi.",
+            "Orang yang bisa kamu mintai tolong: keluarga atau teman yang bisa kamu hubungi dan beri tahu bahwa kamu sedang kesulitan.",
+            "Bantuan profesional dan darurat: nama layanan, nomor 119 ext 8, dan IGD terdekat, lengkap dengan alamatnya.",
+            "Lingkungan yang lebih aman: cara menjauhkan atau menitipkan benda yang bisa membahayakan, idealnya dibantu orang yang dipercaya."
+          ],
+          "en": [
+            "Warning signs: write the thoughts, feelings, or situations that usually come before a crisis, in your own words.",
+            "Ways to steady yourself alone: two or three things you can do without anyone else, such as grounding, a walk, or music.",
+            "People and places that distract you: who you can spend time with, and safe public places you can go to.",
+            "People you can ask for help: family or friends you can contact and tell that you are struggling.",
+            "Professional and emergency help: service names, 119 ext 8, and the nearest emergency department with its address.",
+            "A safer environment: how to move away or hand over anything that could harm you, ideally with someone you trust."
+          ]
+        },
+        "why": {
+          "id": "Rencana keselamatan dikembangkan Stanley dan Brown sebagai intervensi singkat yang disusun bersama tenaga profesional.",
+          "en": "The safety plan was developed by Stanley and Brown as a brief intervention built together with a professional."
+        },
+        "seek_help_when": {
+          "id": "Kalau saat ini kamu berpikir untuk mengakhiri hidup atau menyakiti diri, jangan menunggu: hubungi 119 ext 8, pergi ke IGD terdekat, atau minta orang yang dipercaya menemanimu sekarang.",
+          "en": "If you are thinking of ending your life or hurting yourself right now, do not wait: call 119 ext 8, go to the nearest emergency department, or ask someone you trust to stay with you now."
+        },
+        "cautions": {
+          "id": "Rencana ini paling baik disusun bersama psikolog, dokter, atau konselor dan ditinjau ulang secara berkala. Kartu ini hanya menjelaskan strukturnya; formulir asli berhak cipta Stanley dan Brown.",
+          "en": "This plan is best built with a psychologist, doctor, or counsellor and reviewed regularly. This card only describes the structure; the original form is copyrighted by Stanley and Brown."
+        }
+      },
+      "reading_time_minutes": {
+        "id": 2,
+        "en": 2
+      },
+      "source": {
+        "source_ids": [
+          "stanley-brown-2012",
+          "sprc-safety-planning-guide-2008"
+        ],
+        "relation": "structure_only",
+        "locator": "The six-step structure (described, not reproduced): SPRC quick guide, steps 1-6 (PDF p. 2)"
+      },
+      "licence": {
+        "source_licence": "Paywalled article; form copyright Stanley & Brown 2008, 2021",
+        "item_text_licence": "MIT (repository licence); the Dengar.in team's own description",
+        "commercial_use": "needs_legal_confirmation",
+        "share_alike": false,
+        "attribution_required": true,
+        "adaptation_notice_required": false,
+        "note": "Structure (a method) only; the form needs written permission for changes or electronic use. Legal confirmation before any commercial use."
+      },
+      "attribution": {
+        "id": "Struktur rencana keselamatan dari Stanley & Brown (2012), dijelaskan dengan kata-kata sendiri. Formulir aslinya berhak cipta dan tidak disalin.",
+        "en": "Safety plan structure from Stanley & Brown (2012), described in our own words. The original form is copyrighted and not copied."
+      },
+      "adaptation_note": "Structure described in the v1 team's own words (2026-10-15); no text or form reproduced. Shown only on the Immediate help page, below the contacts, after human review. Migrated to Sela v3 on 2026-10-26. Changed in version 2 (2026-10-26, machine draft, unreviewed), after a review found that the card titled 'six steps' listed five: v1 step 3 merged two steps of the original. Checked against the openly available SPRC quick guide, version 2 splits it into step 3 (people and places that distract) and step 4 (people you can ask for help, whom you tell that you are struggling), so the card follows the six steps in order. Version 2 also drops v1's claim that the structure is widely used by crisis services in many countries, which no source that was read supports. Every other field is the v1 text; origin.v1_text_sha256 keeps the v1 hash.",
+      "contacts": [
+        {
+          "values": [
+            "119 ext 8"
+          ],
+          "catalogue_id": "healing119-kemenkes",
+          "source_ids": [
+            "kemenkes-healing119-2025",
+            "healing119-site"
+          ],
+          "checked_on": "2026-10-26",
+          "reverify_by": "2027-01-14"
+        }
+      ],
+      "evidence_note": "Peer-reviewed description of the Safety Planning Intervention; listed as a best practice by the US Suicide Prevention Resource Center and tested in subsequent controlled studies. Describe structure only; it is not a self-help exercise.",
+      "source_claims": [
+        {
+          "path": "content.why",
+          "names": [
+            "Stanley & Brown"
+          ],
+          "source_ids": [
+            "stanley-brown-2012",
+            "sprc-safety-planning-guide-2008"
+          ],
+          "locator": "Article title, from the DOI record (stanley-brown-2012); quick guide, authors and developing the plan with the patient (SPRC PDF p. 1)",
+          "source_says": "Stanley and Brown wrote the quick guide, which tells clinicians to work out the safety plan together with the patient. The title of their 2012 article, read from its DOI record, describes the Safety Planning Intervention as a brief intervention.",
+          "support": "supported",
+          "note": "The paywalled article itself was not read; only its title is used.",
+          "quote_check": {
+            "method": "sela-verbatim-overlap-v1",
+            "compared_with": [
+              "sprc-safety-planning-guide-2008"
+            ],
+            "longest_shared_run_words": 3,
+            "checked_on": "2026-10-26",
+            "status": "machine_checked_unreviewed"
+          },
+          "status": "machine_checked_unreviewed",
+          "editor_confirmation": {
+            "status": "pending",
+            "editor": null,
+            "confirmed_on": null,
+            "confirmed_text_sha256": null
+          }
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 11,
+              "words": 199,
+              "avg_words_per_sentence": 18.1,
+              "max_words_per_sentence": 28,
+              "sentences_over_20_words": 3,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 11,
+              "words": 221,
+              "avg_words_per_sentence": 20.1,
+              "max_words_per_sentence": 36,
+              "sentences_over_20_words": 3,
+              "fk_grade": 9.5
+            }
+          },
+          "flags": [
+            "id:sentence_over_20_words:content.summary.id:23",
+            "id:sentence_over_20_words:content.seek_help_when.id:28",
+            "id:sentence_over_20_words:content.steps.id[1]:21",
+            "id:avg_words_per_sentence_over_15:18.1",
+            "en:sentence_over_20_words:content.summary.en:23",
+            "en:sentence_over_20_words:content.seek_help_when.en:36",
+            "en:sentence_over_20_words:content.steps.en[1]:22",
+            "en:avg_words_per_sentence_over_15:20.1",
+            "en:fk_grade_over_8:9.5"
+          ],
+          "result": "needs_editor"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1",
+            "dengarin-v1-forbidden-terms"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": [
+            {
+              "path": "content.steps",
+              "issue": "source_mismatch",
+              "detail": "v1 was titled 'six steps' but listed five: its step 3 merged the guide's Step 3 (social contacts and settings that distract) and Step 4 (family or friends who may help, whom the person tells about the crisis). Version 2 splits them in Sela's own words (applied 2026-10-26, machine draft, unreviewed). The editor confirms the new steps 3 and 4, or reverts and retitles the card.",
+              "source_id": "sprc-safety-planning-guide-2008",
+              "locator": "Implementing the Safety Plan: 6 Step Process, Steps 3 and 4 (PDF p. 2)",
+              "status": "open"
+            },
+            {
+              "path": "content.why",
+              "issue": "other",
+              "detail": "v1 also said that the structure 'is widely used by crisis services in many countries'. No source that was read supports this: the 2012 article was not accessed and the SPRC quick guide does not say it. Version 2 drops the clause (applied 2026-10-26, machine draft, unreviewed). Re-add it only with a cited source.",
+              "source_id": "stanley-brown-2012",
+              "status": "open"
+            }
+          ]
+        },
+        "source_fidelity": {
+          "status": "machine_spot_checked_unreviewed",
+          "note": "Compared on 2026-10-26 with the SPRC quick guide (PDF p. 2, the six-step process): 1 warning signs, 2 internal coping strategies, 3 social contacts and settings that distract, 4 family or friends who may help (unlike step 3, the person tells them about the crisis), 5 professionals and agencies, 6 making the environment safe. Version 2 follows this order; v1 had merged steps 3 and 4. Details for the editor: step 1 adds 'situations', which the guide's list of warning signs (thoughts, images, thinking processes, mood, behaviour) does not name; 'struggling' / 'sedang kesulitan' in step 4 is gentler than telling someone you are in crisis; the summary's 'prepared while calm' is not stated in the quick guide. The paywalled 2012 article was not accessed."
+        }
+      },
+      "origin": {
+        "kind": "migrated_v1",
+        "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
+        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "v1_id": "rencana-keselamatan-enam-langkah",
+        "v1_text_sha256": "83aa455e04c6e6d41071c46e48d0fbfb0de5178060cb09a97dda2d981e0e0ffb",
+        "v1_source": {
+          "title": "Stanley, B., & Brown, G. K. (2012). Safety Planning Intervention: A brief intervention to mitigate suicide risk. Cognitive and Behavioral Practice, 19(2), 256-264",
+          "publisher": "Elsevier (Cognitive and Behavioral Practice)",
+          "url": "https://doi.org/10.1016/j.cbpra.2011.01.001",
+          "license": "Artikel berbayar; hanya struktur enam langkah yang dideskripsikan (fakta/metode), tidak ada teks atau formulir yang direproduksi. Formulir © Stanley & Brown 2008, 2021",
+          "retrieved": "2026-10-15"
+        },
+        "v1_evidence_note": "Peer-reviewed description of the Safety Planning Intervention; listed as a best practice by the US Suicide Prevention Resource Center and tested in subsequent controlled studies. Describe structure only; it is not a self-help exercise.",
+        "text_changed": true,
+        "migrated_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "0ce1a8670dd571ff977ecce3dda8100a1c58a54a622d8d95e8a7ce9dd045d84d"
+    },
+    {
+      "id": "rencana-keselamatan-cara-menggunakan",
+      "version": 1,
+      "kind": "safety_plan",
+      "topics": [
+        "safety_plan"
+      ],
+      "surfaces": [
+        "help_page"
+      ],
+      "ai_may_offer": false,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Deskripsi bahasa Indonesia oleh tim Dengar.in v1 dengan kata-kata sendiri.",
+        "en": "English description by the Dengar.in v1 team in its own words."
+      },
+      "audience": "adult",
+      "audience_basis": "Stanley & Brown describe a clinical intervention built with a professional; the v1 cards describe its structure for adults 18+. Not reviewed for 15-17.",
+      "content": {
+        "title": {
+          "id": "Rencana keselamatan: menyusun dan memakainya",
+          "en": "Safety plan: building it and using it"
+        },
+        "summary": {
+          "id": "Rencana keselamatan bekerja paling baik kalau disusun saat tenang, mudah dijangkau, dan dipakai berurutan saat tanda peringatan muncul.",
+          "en": "A safety plan works best when written while calm, kept within reach, and used step by step when warning signs appear."
+        },
+        "steps": {
+          "id": [
+            "Susun saat kamu sedang tenang, idealnya bersama profesional atau orang yang kamu percaya.",
+            "Simpan di tempat yang mudah dijangkau: ponsel, dompet, atau dinding kamar.",
+            "Saat tanda peringatan muncul, mulai dari langkah pertama dan lanjut ke langkah berikutnya kalau belum membaik.",
+            "Tinjau ulang setelah dipakai atau setiap beberapa bulan; perbarui nomor dan nama kontak."
+          ],
+          "en": [
+            "Write it while you are calm, ideally with a professional or someone you trust.",
+            "Keep it within easy reach: phone, wallet, or bedroom wall.",
+            "When warning signs appear, start with step one and move to the next if things have not eased.",
+            "Review it after use or every few months; update contact names and numbers."
+          ]
+        },
+        "why": {
+          "id": "Dalam intervensi Stanley dan Brown, langkah-langkah dipakai berurutan, dan rencana ditinjau ulang agar tetap sesuai dengan keadaanmu.",
+          "en": "In the Stanley and Brown intervention, the steps are used in order, and the plan is reviewed so it stays relevant to your situation."
+        },
+        "seek_help_when": {
+          "id": "Kalau langkah-langkah di rencanamu tidak lagi membantu, atau dorongan untuk menyakiti diri terasa makin kuat, segera hubungi 119 ext 8 atau pergi ke IGD terdekat.",
+          "en": "If the steps in your plan no longer help, or the urge to hurt yourself is getting stronger, call 119 ext 8 or go to the nearest emergency department right away."
+        },
+        "cautions": {
+          "id": "Kartu ini bukan pengganti penilaian profesional. Layar bantuan segera di aplikasi selalu tersedia terlepas dari rencana apa pun.",
+          "en": "This card is not a substitute for professional assessment. The app's urgent-help screen is always available regardless of any plan."
+        }
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 1
+      },
+      "source": {
+        "source_ids": [
+          "stanley-brown-2012",
+          "sprc-safety-planning-guide-2008"
+        ],
+        "relation": "structure_only",
+        "locator": "Use principles (described, not reproduced): SPRC quick guide, use of the steps in order (PDF p. 2) and the steps after the plan is developed (PDF p. 1)"
+      },
+      "licence": {
+        "source_licence": "Paywalled article; form copyright Stanley & Brown 2008, 2021",
+        "item_text_licence": "MIT (repository licence); the Dengar.in team's own description",
+        "commercial_use": "needs_legal_confirmation",
+        "share_alike": false,
+        "attribution_required": true,
+        "adaptation_notice_required": false,
+        "note": "Structure (a method) only; the form needs written permission for changes or electronic use. Legal confirmation before any commercial use."
+      },
+      "attribution": {
+        "id": "Struktur rencana keselamatan dari Stanley & Brown (2012), dijelaskan dengan kata-kata sendiri. Formulir aslinya berhak cipta dan tidak disalin.",
+        "en": "Safety plan structure from Stanley & Brown (2012), described in our own words. The original form is copyrighted and not copied."
+      },
+      "adaptation_note": "Structure described in the v1 team's own words (2026-10-15), checked by that team against the SPRC clinician quick guide; no text or form reproduced. Shown only on the Immediate help page, below the contacts, after human review. Migrated to Sela v3 on 2026-10-26 without any text change.",
+      "contacts": [
+        {
+          "values": [
+            "119 ext 8"
+          ],
+          "catalogue_id": "healing119-kemenkes",
+          "source_ids": [
+            "kemenkes-healing119-2025",
+            "healing119-site"
+          ],
+          "checked_on": "2026-10-26",
+          "reverify_by": "2027-01-14"
+        }
+      ],
+      "evidence_note": "Peer-reviewed description of the Safety Planning Intervention; usage principles (sequential steps, rehearsal, periodic review) are also described in the openly available SPRC clinician quick guide (© 2008 Stanley & Brown, reprinted with permission).",
+      "source_claims": [
+        {
+          "path": "content.why",
+          "names": [
+            "Stanley & Brown"
+          ],
+          "source_ids": [
+            "stanley-brown-2012",
+            "sprc-safety-planning-guide-2008"
+          ],
+          "locator": "Quick guide: the steps in sequence (SPRC PDF p. 2); reviewing the plan (SPRC PDF p. 1)",
+          "source_says": "The quick guide has the person move on to the next step when the one before has not resolved the crisis, and asks for the plan to be reviewed from time to time as the person's circumstances or needs change.",
+          "support": "supported",
+          "note": "Checked against the open SPRC quick guide only; the paywalled 2012 article was not read.",
+          "quote_check": {
+            "method": "sela-verbatim-overlap-v1",
+            "compared_with": [
+              "sprc-safety-planning-guide-2008"
+            ],
+            "longest_shared_run_words": 2,
+            "checked_on": "2026-10-26",
+            "status": "machine_checked_unreviewed"
+          },
+          "status": "machine_checked_unreviewed",
+          "editor_confirmation": {
+            "status": "pending",
+            "editor": null,
+            "confirmed_on": null,
+            "confirmed_text_sha256": null
+          }
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 9,
+              "words": 131,
+              "avg_words_per_sentence": 14.6,
+              "max_words_per_sentence": 25,
+              "sentences_over_20_words": 1,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 9,
+              "words": 151,
+              "avg_words_per_sentence": 16.8,
+              "max_words_per_sentence": 31,
+              "sentences_over_20_words": 3,
+              "fk_grade": 7.7
+            }
+          },
+          "flags": [
+            "id:sentence_over_20_words:content.seek_help_when.id:25",
+            "en:sentence_over_20_words:content.summary.en:21",
+            "en:sentence_over_20_words:content.why.en:24",
+            "en:sentence_over_20_words:content.seek_help_when.en:31",
+            "en:avg_words_per_sentence_over_15:16.8"
+          ],
+          "result": "needs_editor"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1",
+            "dengarin-v1-forbidden-terms"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": []
+        },
+        "source_fidelity": {
+          "status": "machine_spot_checked_unreviewed",
+          "note": "Compared on 2026-10-26 with the SPRC quick guide: building the plan together with a clinician (PDF p. 1), using each step when the one before has not resolved the crisis (PDF p. 2), deciding where the plan is kept and how it is found in a crisis, and reviewing it when circumstances or needs change (PDF p. 1). Consistent. Details for the editor: 'while calm' and 'someone you trust' are not in the quick guide; 'after use or every few months' is more specific than the guide's 'when circumstances or needs change'; the summary's 'works best' is not stated in the guide. The paywalled 2012 article was not accessed."
+        }
+      },
+      "origin": {
+        "kind": "migrated_v1",
+        "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
+        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "v1_id": "rencana-keselamatan-cara-menggunakan",
+        "v1_text_sha256": "132d6a9c75244afe46c2e771ee7f945836b0772f6deed1ff47bc130a70988928",
+        "v1_source": {
+          "title": "Stanley, B., & Brown, G. K. (2012). Safety Planning Intervention: A brief intervention to mitigate suicide risk. Cognitive and Behavioral Practice, 19(2), 256-264",
+          "publisher": "Elsevier (Cognitive and Behavioral Practice)",
+          "url": "https://doi.org/10.1016/j.cbpra.2011.01.001",
+          "license": "Artikel berbayar; hanya struktur dan prinsip penggunaan yang dideskripsikan, tidak ada teks atau formulir yang direproduksi. Formulir © Stanley & Brown 2008, 2021",
+          "retrieved": "2026-10-15"
+        },
+        "v1_evidence_note": "Peer-reviewed description of the Safety Planning Intervention; usage principles (sequential steps, rehearsal, periodic review) are also described in the openly available SPRC clinician quick guide (© 2008 Stanley & Brown, reprinted with permission).",
+        "text_changed": false,
+        "migrated_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "132d6a9c75244afe46c2e771ee7f945836b0772f6deed1ff47bc130a70988928"
+    }
+  ]
+}

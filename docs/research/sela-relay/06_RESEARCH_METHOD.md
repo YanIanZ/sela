@@ -19,6 +19,8 @@ Ini **bukan systematic review atau meta-analysis baru**. Penelusuran tidak exhau
 
 Abstrak tidak cukup untuk memastikan seluruh comparator, conflict of interest, adverse events, validitas alat ukur, koreksi terbaru atau relevansi praktik Indonesia. Status indeks tidak menjamin mutu jurnal. DOI tercatat telah dicocokkan pada metadata; tidak semua DOI di-resolve ulang satu per satu terhadap halaman penerbit.
 
+> **Catatan pengganti (superseded note, 26 Oktober 2026, riset v3).** Kalimat terakhir di atas sudah tidak berlaku. Sejak 26 Oktober 2026 seluruh 100 DOI berhasil di-resolve melalui doi.org handle API, dan tanggal, lisensi, retraksi serta koreksi seluruh 100 record diverifikasi mesin terhadap Europe PMC, Crossref dan OpenAlex ([CORPUS_PIPELINE.md](../CORPUS_PIPELINE.md)). Ini verifikasi metadata oleh mesin, bukan telaah naskah: `reviewer_status` tetap `not_reviewed`. Bahasa publikasi kini dicatat (`publication_language`; 100 dari 100 berbahasa Inggris). Kalimat "Protokol ... dan correction/retraction ... tidak dimasukkan" berlaku untuk register 100; antrean judul 7.580 baru menyaringnya sejak `sela-title-screen-v1.1` (lihat catatan di [doc 14](14_METADATA_SCREENING_PROTOCOL.md)).
+
 Metadata `firstPublicationDate` digunakan untuk seleksi. Tanggal issue dapat berbeda. Therabot memakai tanggal publikasi penerbit 27 Maret 2025; halaman penulis menampilkan Januari 2025 sehingga perbedaan ini dicatat, bukan disembunyikan.
 
 ## Jangan hitung bukti dua kali

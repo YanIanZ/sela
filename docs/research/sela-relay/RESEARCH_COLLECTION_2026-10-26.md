@@ -25,6 +25,8 @@
 
 Combined candidate records have both source batch labels and topic tags. Merging reconciled DOI, PMID and title/year matches. The actual merged output and manifest were provided to the project owner as a downloaded ZIP; it is **not** silently committed to Git source control.
 
+> **Superseded note (2026-10-26, research v3).** The sentence above is out of date. The merged pool was later committed openly, through the publication workflow: commit `21c3551` ("data(research): publish 7580 Europe PMC metadata candidates") added [data/research/sela_research_candidates_7580.jsonl](../../../data/research/sela_research_candidates_7580.jsonl) and its manifest (SHA-256 checked), and commit `89ac3cf` added the title screening. Both are metadata only (no abstracts). The pool has no publication-language field; all 7,580 titles are English, because the search used English-language Europe PMC MEDLINE queries only. The v3 gap search (2026-10-26) adds Crossref and records the language: [V3_GAP_SEARCH.md](../V3_GAP_SEARCH.md).
+
 ## Important validity limitations
 
 1. The search strategy intentionally spans broad phrases and may return off-topic papers: every item still needs title/abstract eligibility screening.

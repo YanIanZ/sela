@@ -1,0 +1,42 @@
+{
+  "schema": "sela-register-review-v2",
+  "purpose": "Human reviewer decisions for the 100-record register. Read by scripts/research/corpus_pipeline.py build (pipeline 1.2.0+) and copied verbatim into reviewer_name, review_date, review_decision (the final decision), findings, appraisal_tool, reviewer_2_name, reviewer_2_decision, review_disagreement, adjudicated_by, study_type_reviewer_override, publication_date_reviewer_override and country_or_language_reviewer_promoted. Machine fields are never overwritten.",
+  "rules": [
+    "Only a person who actually read the source may add an entry, and every person block needs human_attestation: true. Names of AI tools, models or automation (Claude Opus, ChatGPT, Gemini, LLM, AI agent, pipeline, ...) and template placeholders are rejected; ordinary given names such as 'Ai' or 'Claude' in a full name are accepted.",
+    "One entry per R-id. For dual review (research audit R-5) record the second, independent person in reviewer_2. When the two decisions differ, an adjudication by a third person is required and its decision is final; when they agree, leave adjudication null.",
+    "review_level is title_abstract or full_text; findings may only be recorded with a full_text review.",
+    "A full_text review must name its appraisal_tool (RoB 2, ROBINS-I, AMSTAR 2, CASP, AXIS, MMAT, ...).",
+    "publication_date_override needs the https source the date was read from (for example the publisher landing page).",
+    "Do not paste abstracts or NC/ND text into findings or notes; write the finding in your own words.",
+    "This file is an input of the frozen corpus snapshots. Before editing it, copy its current bytes to data/research/register_inputs/frozen/<snapshot>/data/research/register_inputs/reviewer_decisions.json.frozen for every snapshot whose manifest records them, then rebuild a NEW snapshot version and commit only after verify passes."
+  ],
+  "entry_template": {
+    "id": "R000",
+    "reviewer_name": "Full Name",
+    "human_attestation": true,
+    "review_date": "YYYY-MM-DD",
+    "review_level": "title_abstract | full_text",
+    "decision": "include | exclude | uncertain",
+    "appraisal_tool": null,
+    "reviewer_2": {
+      "reviewer_name": "Second Person",
+      "human_attestation": true,
+      "review_date": "YYYY-MM-DD",
+      "decision": "include | exclude | uncertain"
+    },
+    "adjudication": null,
+    "study_type_override": null,
+    "publication_date_override": null,
+    "country_promoted": null,
+    "findings": null,
+    "notes": null
+  },
+  "adjudication_template": {
+    "adjudicated_by": "Third Person",
+    "human_attestation": true,
+    "adjudication_date": "YYYY-MM-DD",
+    "decision": "include | exclude | uncertain",
+    "notes": null
+  },
+  "reviews": []
+}

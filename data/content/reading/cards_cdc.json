@@ -1,0 +1,434 @@
+{
+  "schema": "reading_item.schema.json",
+  "content_set": "sela-reading-v1",
+  "file_id": "cards_cdc",
+  "description": "The 2 Dengar.in v1 sleep cards adapted from CDC 'About Sleep' (US public domain). Migrated without text changes, except that jadwal-tidur-konsisten has a version 2 'why' (content set 1.2.0).",
+  "file_licence": {
+    "text_licence": "MIT (repository licence) for the Dengar.in team's adaptation",
+    "notice": "CDC's page is a public-domain US government work: attribute CDC and imply no endorsement. One card also paraphrases Kemenkes Keslan and carries that card's legal-confirmation status."
+  },
+  "items": [
+    {
+      "id": "jadwal-tidur-konsisten",
+      "version": 2,
+      "kind": "exercise",
+      "topics": [
+        "sleep"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Adaptasi dan terjemahan bahasa Indonesia oleh tim Dengar.in v1; bukan terjemahan resmi CDC.",
+        "en": "English adaptation by the Dengar.in v1 team; not CDC's wording."
+      },
+      "audience": "adult",
+      "audience_basis": "CDC gives different durations by age (adults 18-60: 7 or more hours; teens 13-17: 8-10 hours); the card's figures and framing are for adults.",
+      "content": {
+        "title": {
+          "id": "Jam tidur dan bangun yang tetap",
+          "en": "Fixed bed and wake times"
+        },
+        "summary": {
+          "id": "Menjaga jam tidur dan bangun yang sama setiap hari membantu tubuh menemukan ritmenya kembali.",
+          "en": "Keeping the same bed and wake times every day helps your body find its rhythm again."
+        },
+        "steps": {
+          "id": [
+            "Tentukan jam bangun yang realistis dan pertahankan setiap hari, termasuk akhir pekan.",
+            "Hitung mundur sekitar 7 sampai 9 jam untuk menentukan jam mulai bersiap tidur.",
+            "Kalau belum mengantuk, lakukan kegiatan tenang dengan cahaya redup, lalu coba lagi.",
+            "Beri waktu satu sampai dua minggu; perubahan ritme tidur jarang terasa dalam semalam."
+          ],
+          "en": [
+            "Choose a realistic wake time and keep it every day, weekends included.",
+            "Count back about 7 to 9 hours to set the time you start winding down.",
+            "If you are not sleepy, do something calm in dim light, then try again.",
+            "Give it one to two weeks; sleep rhythms rarely shift overnight."
+          ]
+        },
+        "why": {
+          "id": "Jam tidur dan bangun yang sama setiap hari adalah kebiasaan pertama dalam daftar CDC untuk tidur yang lebih baik.",
+          "en": "A fixed bed and wake time, every day, is the first habit on the CDC's list for better sleep."
+        },
+        "seek_help_when": {
+          "id": "Kalau masalah tidur terjadi terus-menerus meski kebiasaan sudah diperbaiki, bicarakan dengan dokter; mencatat pola tidur beberapa minggu akan membantu konsultasi.",
+          "en": "If sleep problems persist despite better habits, talk to a doctor; a few weeks of sleep notes will help the consultation."
+        }
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 1
+      },
+      "source": {
+        "source_ids": [
+          "cdc-about-sleep"
+        ],
+        "relation": "adapted",
+        "locator": "'What to do' habits and the durations table"
+      },
+      "licence": {
+        "source_licence": "Public domain (US federal government work)",
+        "item_text_licence": "MIT (repository licence); the Dengar.in team's adaptation",
+        "commercial_use": "allowed",
+        "share_alike": false,
+        "attribution_required": true,
+        "adaptation_notice_required": false,
+        "note": "Public domain; attribute CDC and imply no endorsement."
+      },
+      "attribution": {
+        "id": "Diadaptasi dari CDC (Amerika Serikat), About Sleep (2024), karya domain publik. CDC tidak mendukung Sela.",
+        "en": "Adapted from CDC (United States), About Sleep (2024), a public-domain work. CDC does not endorse Sela."
+      },
+      "adaptation_note": "Adapted into steps by the Dengar.in v1 team (2026-10-15); the URL in the v1 brief (.../sleep-hygiene.html) was 404 and was replaced by About Sleep. Migrated to Sela v3 on 2026-10-26. Changed in version 2 (2026-10-26, machine draft, unreviewed), after a review found that the 'why' credited its source with something the source does not say: v1 added 'because the body clock works best with a regular pattern', a reason the CDC page does not give. Version 2 drops the clause. Version 2 rewords the 'why' to what the source says (see source_claims); every other field is the v1 text, and origin.v1_text_sha256 keeps the v1 hash. An open editor flag asks the human editor to confirm or revert the change.",
+      "contacts": [],
+      "evidence_note": "US public-health agency guidance (page dated 15 May 2024) summarising established sleep-hygiene recommendations.",
+      "source_claims": [
+        {
+          "path": "content.why",
+          "names": [
+            "CDC"
+          ],
+          "source_ids": [
+            "cdc-about-sleep"
+          ],
+          "locator": "'What to do', list of habits that can improve sleep (first item)",
+          "source_says": "CDC's list of sleep habits starts with a fixed time for going to bed and for waking up, every day. The page gives no reason for any of the habits.",
+          "support": "supported",
+          "note": "Version 2 text. The v1 'why' added 'because the body clock works best with a regular pattern', a reason the CDC page does not give; version 2 drops it.",
+          "quote_check": {
+            "method": "sela-verbatim-overlap-v1",
+            "compared_with": [
+              "cdc-about-sleep"
+            ],
+            "longest_shared_run_words": 4,
+            "checked_on": "2026-10-26",
+            "status": "machine_checked_unreviewed"
+          },
+          "status": "machine_checked_unreviewed",
+          "editor_confirmation": {
+            "status": "pending",
+            "editor": null,
+            "confirmed_on": null,
+            "confirmed_text_sha256": null
+          }
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 7,
+              "words": 103,
+              "avg_words_per_sentence": 14.7,
+              "max_words_per_sentence": 20,
+              "sentences_over_20_words": 0,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 7,
+              "words": 108,
+              "avg_words_per_sentence": 15.4,
+              "max_words_per_sentence": 21,
+              "sentences_over_20_words": 1,
+              "fk_grade": 5.9
+            }
+          },
+          "flags": [
+            "en:sentence_over_20_words:content.seek_help_when.en:21",
+            "en:avg_words_per_sentence_over_15:15.4"
+          ],
+          "result": "needs_editor"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1",
+            "dengarin-v1-forbidden-terms"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": [
+            {
+              "path": "content.steps.id[1]",
+              "issue": "source_mismatch",
+              "detail": "CDC gives '7 or more hours' for adults aged 18-60 (7-9 for 61-64, 7-8 for 65 and older). '7 sampai 9 jam' / '7 to 9 hours' matches Kemenkes Keslan (2025), not CDC. Not a claim-gate hit; the editor either cites Keslan as well or uses CDC's figure.",
+              "source_id": "cdc-about-sleep",
+              "locator": "Durations table",
+              "status": "open"
+            },
+            {
+              "path": "content.why",
+              "issue": "attribution_not_in_source",
+              "detail": "v1 'why': 'A consistent schedule is the first habit the CDC recommends, because the body clock works best with a regular pattern.' CDC About Sleep lists the habit first but gives no reason for it. Version 2 drops the 'because' clause (applied 2026-10-26, machine draft, unreviewed). The editor confirms version 2, or restores a reason as labelled general advice or with a source that gives it.",
+              "source_id": "cdc-about-sleep",
+              "locator": "'What to do', list of habits (first item)",
+              "status": "open"
+            },
+            {
+              "path": "content.summary",
+              "issue": "other",
+              "detail": "The summary's 'helps your body find its rhythm again' / 'membantu tubuh menemukan ritmenya kembali' is not stated on the CDC page, and it is not labelled as general advice. Found by the 2026-10-26 source check; not changed here, because the summary names no source. The editor keeps it as labelled general advice, rewords it or cites a source that says it.",
+              "source_id": "cdc-about-sleep",
+              "locator": "'What to do', list of habits",
+              "proposed_revision": {
+                "id": "Jam tidur dan bangun yang sama setiap hari termasuk kebiasaan yang disebut CDC untuk tidur yang lebih baik.",
+                "en": "Keeping the same bed and wake times every day is one of the habits CDC lists for better sleep."
+              },
+              "status": "open"
+            }
+          ]
+        },
+        "source_fidelity": {
+          "status": "machine_spot_checked_unreviewed",
+          "note": "Compared with CDC About Sleep: same bed and wake time is the first habit listed, and the page gives no reason for it, so version 2 drops v1's body-clock reason (see source_claims). The '7 sampai 9 jam' in step 2 is not CDC's adult figure, and the summary's rhythm rationale is not on the page (see editor_flags)."
+        }
+      },
+      "origin": {
+        "kind": "migrated_v1",
+        "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
+        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "v1_id": "jadwal-tidur-konsisten",
+        "v1_text_sha256": "85d16ea891d4317342f3ce24f2e4ac654cf2ebc1ee6f1b6ecba1c73b0cb9595f",
+        "v1_source": {
+          "title": "About Sleep",
+          "publisher": "Centers for Disease Control and Prevention (CDC), USA",
+          "url": "https://www.cdc.gov/sleep/about/index.html",
+          "license": "Public domain (karya pemerintah federal AS); atribusi ke CDC, tanpa klaim dukungan",
+          "retrieved": "2026-10-15"
+        },
+        "v1_evidence_note": "US public-health agency guidance (page dated 15 May 2024) summarising established sleep-hygiene recommendations.",
+        "text_changed": true,
+        "migrated_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "00d2a3a377e50e4e751970c51987cdeb974ce4d39439d187fa816b61df7175e8"
+    },
+    {
+      "id": "kamar-dan-layar-sebelum-tidur",
+      "version": 1,
+      "kind": "exercise",
+      "topics": [
+        "sleep"
+      ],
+      "surfaces": [
+        "reading"
+      ],
+      "ai_may_offer": true,
+      "languages": [
+        "id",
+        "en"
+      ],
+      "language_notes": {
+        "id": "Adaptasi dan terjemahan bahasa Indonesia oleh tim Dengar.in v1; bukan terjemahan resmi CDC.",
+        "en": "English adaptation by the Dengar.in v1 team; not CDC's wording."
+      },
+      "audience": "adult",
+      "audience_basis": "CDC gives different durations by age (adults 18-60: 7 or more hours; teens 13-17: 8-10 hours); the card's figures and framing are for adults.",
+      "content": {
+        "title": {
+          "id": "Siapkan kamar dan jauhkan layar",
+          "en": "Set up the room and put screens away"
+        },
+        "summary": {
+          "id": "Lingkungan yang gelap, tenang, dan sejuk serta jeda dari layar membantu tubuh bersiap tidur.",
+          "en": "A dark, quiet, cool room and a break from screens help the body get ready for sleep."
+        },
+        "steps": {
+          "id": [
+            "Buat kamar segelap, setenang, dan sesejuk yang bisa kamu atur.",
+            "Matikan ponsel, laptop, dan TV minimal 30 menit sebelum tidur.",
+            "Hindari makan besar dan alkohol menjelang tidur, dan kafein sejak sore.",
+            "Isi 30 menit terakhir dengan kegiatan tenang: membaca, peregangan ringan, atau napas lambat."
+          ],
+          "en": [
+            "Make the room as dark, quiet, and cool as you can.",
+            "Turn off phone, laptop, and TV at least 30 minutes before bed.",
+            "Avoid heavy meals and alcohol close to bedtime, and caffeine from the afternoon on.",
+            "Fill the last 30 minutes with something calm: reading, gentle stretching, or slow breathing."
+          ]
+        },
+        "why": {
+          "id": "Cahaya layar, kafein, dan perut penuh membuat tubuh tetap terjaga; menguranginya adalah saran dasar CDC dan Kemenkes.",
+          "en": "Screen light, caffeine, and a full stomach keep the body alert; reducing them is basic advice from both the CDC and Indonesia's Ministry of Health."
+        },
+        "seek_help_when": {
+          "id": "Kalau kamu mendengkur keras dengan napas terhenti, atau tetap sangat mengantuk di siang hari meski tidur cukup lama, periksakan ke dokter.",
+          "en": "If you snore loudly with pauses in breathing, or stay very sleepy in the day despite long sleep, see a doctor."
+        }
+      },
+      "reading_time_minutes": {
+        "id": 1,
+        "en": 1
+      },
+      "source": {
+        "source_ids": [
+          "cdc-about-sleep",
+          "kemenkes-keslan-tidur-2025"
+        ],
+        "relation": "adapted",
+        "locator": "'What to do' habits; sleep-problem signs from Kemenkes Keslan (2025)"
+      },
+      "licence": {
+        "source_licence": "Public domain (US federal government work)",
+        "item_text_licence": "MIT (repository licence); the Dengar.in team's adaptation",
+        "commercial_use": "needs_legal_confirmation",
+        "share_alike": false,
+        "attribution_required": true,
+        "adaptation_notice_required": false,
+        "note": "Also paraphrases Kemenkes Keslan (no licence statement), so commercial use needs the same legal confirmation as the Kemenkes cards."
+      },
+      "attribution": {
+        "id": "Diadaptasi dari CDC (Amerika Serikat), About Sleep (2024), karya domain publik. CDC tidak mendukung Sela.",
+        "en": "Adapted from CDC (United States), About Sleep (2024), a public-domain work. CDC does not endorse Sela."
+      },
+      "adaptation_note": "Adapted into steps by the Dengar.in v1 team (2026-10-15); the URL in the v1 brief (.../sleep-hygiene.html) was 404 and was replaced by About Sleep. Migrated to Sela v3 on 2026-10-26 without any text change.",
+      "contacts": [],
+      "evidence_note": "US public-health agency guidance (2024); the sleep-disorder warning signs are paraphrased from Kemenkes Ditjen Keslan (2025), see knowledge-base doc.",
+      "source_claims": [
+        {
+          "path": "content.why",
+          "names": [
+            "CDC",
+            "Kemenkes"
+          ],
+          "source_ids": [
+            "cdc-about-sleep",
+            "kemenkes-keslan-tidur-2025"
+          ],
+          "locator": "CDC: 'What to do', list of habits; Keslan: sleep-health strategies and causes of insomnia (text blocks 48 and 52 of the page)",
+          "source_says": "CDC lists turning screens and other devices off half an hour or more before bed, skipping big meals and alcohol close to bedtime, and no caffeine later in the day. The Keslan news item reports a hospital doctor's advice to avoid stimulants before sleep, and names too much caffeine and gadget use before bed among causes of insomnia. Neither page says how screens, caffeine or a full stomach act on the body.",
+          "support": "partly_supported",
+          "note": "The advice to cut these down is on both pages. 'Keep the body alert' is the v1 team's own explanation, placed next to the attribution, and neither source states it. The Kemenkes advice is a doctor's talk reported on the Ditjen Kesehatan Lanjutan site.",
+          "quote_check": {
+            "method": "sela-verbatim-overlap-v1",
+            "compared_with": [
+              "cdc-about-sleep",
+              "kemenkes-keslan-tidur-2025"
+            ],
+            "longest_shared_run_words": 3,
+            "checked_on": "2026-10-26",
+            "status": "machine_checked_unreviewed"
+          },
+          "status": "machine_checked_unreviewed",
+          "editor_confirmation": {
+            "status": "pending",
+            "editor": null,
+            "confirmed_on": null,
+            "confirmed_text_sha256": null
+          }
+        }
+      ],
+      "checks": {
+        "date_checked": "2026-10-26",
+        "plain_language": {
+          "status": "machine_checked_unreviewed",
+          "method": "sela-plain-language-v1",
+          "metrics": {
+            "id": {
+              "sentences": 7,
+              "words": 96,
+              "avg_words_per_sentence": 13.7,
+              "max_words_per_sentence": 21,
+              "sentences_over_20_words": 1,
+              "fk_grade": null
+            },
+            "en": {
+              "sentences": 7,
+              "words": 114,
+              "avg_words_per_sentence": 16.3,
+              "max_words_per_sentence": 25,
+              "sentences_over_20_words": 2,
+              "fk_grade": 6.8
+            }
+          },
+          "flags": [
+            "id:sentence_over_20_words:content.seek_help_when.id:21",
+            "en:sentence_over_20_words:content.why.en:25",
+            "en:sentence_over_20_words:content.seek_help_when.en:21",
+            "en:avg_words_per_sentence_over_15:16.3"
+          ],
+          "result": "needs_editor"
+        },
+        "claims": {
+          "status": "machine_checked_unreviewed",
+          "gate_sets": [
+            "sela-claim-gates-v2",
+            "sela-reading-content-gates-v1",
+            "dengarin-v1-forbidden-terms"
+          ],
+          "hits": [],
+          "result": "pass",
+          "editor_flags": [
+            {
+              "path": "content.why",
+              "issue": "source_mismatch",
+              "detail": "Both sources advise cutting down screens before bed, caffeine and heavy meals: CDC's habits list, and the Keslan news item, which reports a hospital doctor's advice to avoid stimulants and names caffeine and gadget use before bed among causes of insomnia. Neither says how these act on the body: 'keep the body alert' / 'membuat tubuh tetap terjaga' is the v1 team's explanation, placed next to the attribution. Found by the 2026-10-26 source check; not changed. The editor labels the clause as general advice, drops it, or cites a source.",
+              "source_id": "cdc-about-sleep",
+              "locator": "CDC 'What to do'; Keslan page text blocks 48 and 52",
+              "proposed_revision": {
+                "id": "Mematikan layar, menghindari makan besar dan alkohol menjelang tidur, serta menghindari kafein sejak sore ada dalam daftar kebiasaan tidur dari CDC.",
+                "en": "Turning screens off, skipping heavy meals and alcohol before bed, and avoiding caffeine later in the day are on CDC's list of sleep habits."
+              },
+              "status": "open"
+            }
+          ]
+        },
+        "source_fidelity": {
+          "status": "machine_spot_checked_unreviewed",
+          "note": "Compared with CDC About Sleep: quiet, relaxing, cool room; devices off at least 30 minutes before bed; no large meals or alcohol; no caffeine in the afternoon or evening. 'Dark' (step 1) is not in this CDC list. The snoring and daytime-sleepiness signs match Kemenkes Keslan (2025). The 'why' is only partly supported: neither source gives the body-alert explanation (see source_claims and editor_flags)."
+        }
+      },
+      "origin": {
+        "kind": "migrated_v1",
+        "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
+        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "v1_id": "kamar-dan-layar-sebelum-tidur",
+        "v1_text_sha256": "f992d2d13fd6398cd2ebe038c88a8ad578d3e4555de2e94b1a13b06712fe53ff",
+        "v1_source": {
+          "title": "About Sleep",
+          "publisher": "Centers for Disease Control and Prevention (CDC), USA",
+          "url": "https://www.cdc.gov/sleep/about/index.html",
+          "license": "Public domain (karya pemerintah federal AS); atribusi ke CDC, tanpa klaim dukungan",
+          "retrieved": "2026-10-15"
+        },
+        "v1_evidence_note": "US public-health agency guidance (2024); the sleep-disorder warning signs are paraphrased from Kemenkes Ditjen Keslan (2025), see knowledge-base doc.",
+        "text_changed": false,
+        "migrated_on": "2026-10-26"
+      },
+      "review": {
+        "status": "machine_drafted_unreviewed",
+        "human_editor": null,
+        "reviewed_on": null,
+        "approved_text_sha256": null,
+        "teen_review": "not_reviewed",
+        "verifier": {
+          "status": "not_run",
+          "note": "Authoring-time verification (SPEC V36) has not run: the Claude verifier needs blocker B-8. A verifier verdict would not replace human sign-off."
+        },
+        "publishable": false
+      },
+      "text_sha256": "f992d2d13fd6398cd2ebe038c88a8ad578d3e4555de2e94b1a13b06712fe53ff"
+    }
+  ]
+}

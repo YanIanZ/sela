@@ -22,16 +22,27 @@ Etiquette (checked 2026-10-26):
   open-access full text. Documented at https://europepmc.org/RestfulWebService
   (that page returned a Cloudflare 403 to this container; the endpoint
   behaviour was verified directly: HTTP 200 application/xml for an OA PMCID).
+- v3 (pipeline 1.2.0), only for records whose screening is needs_check:
+  * NCBI E-utilities efetch (db=pubmed, retmode=xml) for the public PubMed
+    date history; only dates, publication model and language are cached
+    (the abstract is dropped while parsing). <= 3 requests/s without an API
+    key: https://www.ncbi.nlm.nih.gov/books/NBK25497/
+  * the publisher landing page reached through https://doi.org/{doi}; only the
+    citation_*/dc/prism date meta tags and a tdm-reservation tag are cached,
+    never the page. A challenge page (HTTP 403/503) is recorded as blocked and
+    is NOT retried or bypassed; an HTML meta-refresh is never followed.
 """
 from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import html.parser
 import json
 import os
 import re
 import sys
 import time
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
@@ -44,6 +55,8 @@ EPMC_FULLTEXT = "https://www.ebi.ac.uk/europepmc/webservices/rest/{pmcid}/fullTe
 CROSSREF_WORK = "https://api.crossref.org/works/{doi}"
 OPENALEX_WORK = "https://api.openalex.org/works/doi:{doi}"
 DOI_HANDLE = "https://doi.org/api/handles/{doi}"
+PUBMED_EFETCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+LANDING = "https://doi.org/{doi}"
 
 ENDPOINTS = {
     "europepmc": EPMC_SEARCH,
@@ -51,8 +64,13 @@ ENDPOINTS = {
     "openalex": OPENALEX_WORK,
     "doi_handle": DOI_HANDLE,
     "fulltext": EPMC_FULLTEXT,
+    "pubmed_history": PUBMED_EFETCH,
+    "landing_meta": LANDING + " (publisher landing page, date meta tags only)",
+    "crossref_search": "https://api.crossref.org/works (query + filter search)",
+    "arxiv": "https://export.arxiv.org/api/query (id_list lookup)",
 }
-MIN_INTERVAL = {"europepmc": 0.5, "crossref": 0.5, "openalex": 0.5, "doi_handle": 0.5, "fulltext": 1.0}
+MIN_INTERVAL = {"europepmc": 0.5, "crossref": 0.5, "openalex": 0.5, "doi_handle": 0.5, "fulltext": 1.0,
+                "pubmed_history": 0.4, "landing_meta": 2.0, "crossref_search": 1.0, "arxiv": 3.0}
 RETRY_STATUS = {429, 500, 502, 503, 504}
 # Fields dropped before caching (data minimisation: abstracts and reference
 # lists are not needed by any pipeline step).
@@ -150,10 +168,11 @@ class Client:
         self.last = {}
         self.log = log or (lambda msg: print(msg, file=sys.stderr))
         self.requests = 0
+        self.last_url = None
 
     def _pace(self, service):
         interval = MIN_INTERVAL[service]
-        if service == "crossref" and self.mailto is None:
+        if service in ("crossref", "crossref_search") and self.mailto is None:
             interval = max(interval, 0.5)  # public pool: <= 2 req/s, well under its 5 req/s limit
         wait = self.last.get(service, 0) + interval - time.monotonic()
         if wait > 0:
@@ -165,17 +184,19 @@ class Client:
             text = text.replace(self.mailto, "<redacted>").replace(quote(self.mailto, safe=""), "<redacted>")
         return text
 
-    def get(self, service, url, accept="application/json"):
+    def get(self, service, url, accept="application/json", attempts=None):
         """Return (http_status, body_bytes, error). 404 is a definitive answer, not an error."""
+        attempts = attempts or self.attempts
         request_url = url
-        if service == "crossref" and self.mailto:
+        if service in ("crossref", "crossref_search") and self.mailto:
             request_url = url + ("&" if "?" in url else "?") + urlencode({"mailto": self.mailto})
         req = Request(request_url, headers={"User-Agent": USER_AGENT, "Accept": accept})
-        for attempt in range(self.attempts):
+        for attempt in range(attempts):
             self._pace(service)
             self.requests += 1
             try:
                 with self.opener(req, timeout=self.timeout) as resp:
+                    self.last_url = resp.geturl() if hasattr(resp, "geturl") else request_url
                     return resp.status, resp.read(), None
             except HTTPError as e:
                 if e.code == 404:
@@ -184,7 +205,7 @@ class Client:
                     except Exception:  # noqa: BLE001 - body is optional diagnostics
                         body = b""
                     return 404, body, None
-                if e.code not in RETRY_STATUS or attempt == self.attempts - 1:
+                if e.code not in RETRY_STATUS or attempt == attempts - 1:
                     return e.code, b"", self._redact(f"HTTP {e.code}")
                 retry_after = (e.headers or {}).get("Retry-After", "") if e.headers else ""
                 try:
@@ -194,7 +215,7 @@ class Client:
                 self.log(f"  {service}: HTTP {e.code}, retry in {delay:.0f}s")
                 self.sleep(delay)
             except (URLError, TimeoutError, ConnectionError, OSError) as e:
-                if attempt == self.attempts - 1:
+                if attempt == attempts - 1:
                     return None, b"", self._redact(f"{type(e).__name__}: {getattr(e, 'reason', e)}")
                 self.log(f"  {service}: {type(e).__name__}, retry in {2 ** attempt}s")
                 self.sleep(float(2 ** attempt))
@@ -229,6 +250,125 @@ def doi_handle_request(doi):
 
 def fulltext_request(pmcid):
     return pmcid, EPMC_FULLTEXT.format(pmcid=pmcid)
+
+
+def pubmed_history_request(pmid):
+    return "pmid:" + pmid, PUBMED_EFETCH + "?" + urlencode({"db": "pubmed", "id": pmid, "retmode": "xml",
+                                                              "tool": "sela-corpus-pipeline"})
+
+
+def landing_request(doi):
+    return doi, LANDING.format(doi=quote(doi, safe="/"))
+
+
+def _pm_date(el):
+    if el is None:
+        return None
+    y, m, d = el.findtext("Year"), el.findtext("Month"), el.findtext("Day")
+    if not y:
+        return el.findtext("MedlineDate")
+    months = {n: i for i, n in enumerate(("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
+                                           "nov", "dec"), start=1)}
+    if m and not m.isdigit():
+        m = str(months.get(m[:3].lower(), "")) or None
+    parts = [y] + ([f"{int(m):02d}"] if m else []) + ([f"{int(d):02d}"] if m and d else [])
+    return "-".join(parts)
+
+
+def parse_pubmed_history(xml_bytes, pmid):
+    """Dates only (abstract and author data are dropped here and never cached)."""
+    root = ET.fromstring(xml_bytes)
+    art = next((a for a in root.findall("PubmedArticle") if a.findtext("MedlineCitation/PMID") == pmid), None)
+    if art is None:
+        return None
+    article = art.find("MedlineCitation/Article")
+    return {
+        "pmid": pmid,
+        "article_dates": [{"type": d.get("DateType"), "date": _pm_date(d)}
+                          for d in (article.findall("ArticleDate") if article is not None else [])],
+        "journal_issue_date": _pm_date(article.find("Journal/JournalIssue/PubDate")) if article is not None else None,
+        "history": [{"status": d.get("PubStatus"), "date": _pm_date(d)}
+                    for d in art.findall("PubmedData/History/PubMedPubDate")],
+        "pub_model": article.get("PubModel") if article is not None else None,
+        "languages": [x.text for x in article.findall("Language")] if article is not None else [],
+    }
+
+
+def fetch_pubmed_history(client, cache, pmid, refresh=False):
+    key, url = pubmed_history_request(pmid)
+    cached = cache.get("pubmed_history", key)
+    if cached is not None and not refresh:
+        return cached, False
+    status, raw, error = client.get("pubmed_history", url, accept="application/xml")
+    fetched_at = utc_now()
+    if status == 200:
+        try:
+            body = parse_pubmed_history(raw, pmid)
+        except ET.ParseError as exc:
+            return {"fetch_error": f"invalid XML: {exc}"}, True
+        env = envelope("pubmed_history", key, url, fetched_at, 200, "ok" if body else "not_found", body=body)
+    elif status == 404:
+        env = envelope("pubmed_history", key, url, fetched_at, 404, "not_found")
+    else:
+        return {"fetch_error": error or f"HTTP {status}"}, True
+    cache.put("pubmed_history", key, env)
+    return env, True
+
+
+LANDING_META_NAMES = {"citation_online_date", "citation_publication_date", "citation_date", "dc.date",
+                      "prism.publicationdate", "article:published_time"}
+
+
+class _MetaParser(html.parser.HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.meta, self.tdm = {}, None
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() != "meta":
+            return
+        a = {k.lower(): (v or "") for k, v in attrs}
+        name = (a.get("name") or a.get("property") or "").strip().lower()
+        if name == "tdm-reservation":
+            self.tdm = a.get("content", "").strip()
+        elif name in LANDING_META_NAMES and a.get("content") and name not in self.meta:
+            self.meta[name] = a["content"].strip()[:40]
+
+
+def parse_landing_meta(html_bytes):
+    p = _MetaParser()
+    p.feed(html_bytes[:1_000_000].decode("utf-8", errors="replace"))
+    return dict(sorted(p.meta.items())), p.tdm
+
+
+def fetch_landing_meta(client, cache, doi, refresh=False):
+    """Date meta tags of the publisher landing page; blocked pages are recorded, never bypassed."""
+    key, url = landing_request(doi)
+    cached = cache.get("landing_meta", key)
+    if cached is not None and not refresh:
+        return cached, False
+    status, raw, error = client.get("landing_meta", url, accept="text/html", attempts=1)  # a challenge is final
+    fetched_at = utc_now()
+    final = client.last_url if status == 200 else None
+    if status == 200:
+        meta, tdm = parse_landing_meta(raw)
+        note = None
+        if tdm == "1":
+            note = "tdm-reservation=1: rights reserved; only this page's own meta tags were read, nothing followed"
+        if not meta:
+            note = (note + "; " if note else "") + "no date meta tags on the page reached via doi.org"
+        env = envelope("landing_meta", key, url, fetched_at, 200, "ok",
+                       body={"final_url": final, "meta": meta, "tdm_reservation": tdm, "note": note})
+    elif status in (401, 403, 429, 503):
+        env = envelope("landing_meta", key, url, fetched_at, status, "blocked",
+                       body={"final_url": None, "meta": {}, "tdm_reservation": None,
+                             "note": f"HTTP {status} (bot challenge or access control); not bypassed"})
+    elif status == 404:
+        env = envelope("landing_meta", key, url, fetched_at, 404, "not_found")
+    else:
+        return {"fetch_error": error or f"HTTP {status}"}, True
+    cache.put("landing_meta", key, env)
+    return env, True
 
 
 def fetch_json(client, cache, service, key, url, refresh=False, extra=None):

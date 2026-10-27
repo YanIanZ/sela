@@ -1,0 +1,154 @@
+{
+  "schema": "reading_item.schema.json#/$defs/setFile",
+  "content_set": "sela-reading-v1",
+  "version": "1.2.0",
+  "status": "machine_drafted_unreviewed: no item is publishable until a human editor approves its exact text (and the authoring-time verifier has run, V36)",
+  "created_on": "2026-10-26",
+  "description": "Reading and support content set v1 for the 'Bacaan & latihan kecil' surface (S20) and the static help-page section (S21). 30 migrated Dengar.in v1 cards plus 8 new guides.",
+  "changes": [
+    {
+      "version": "1.0.0",
+      "date": "2026-10-26",
+      "summary": [
+        "First draft: 30 migrated Dengar.in v1 cards (text unchanged) and 8 new Sela guides."
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "date": "2026-10-26",
+      "summary": [
+        "Licence: added LICENSE.md (CC BY-NC-SA 3.0 IGO notice for cards_who.json); each WHO card's attribution now gives the licence URI and its source's IRIS link; the validator requires both and the notice.",
+        "rencana-keselamatan-enam-langkah version 2: the 'six steps' card listed five, so v1 step 3 is split into the original steps 3 and 4 (checked against the SPRC quick guide), and the unsourced 'widely used by crisis services' clause is dropped; 2 editor flags opened.",
+        "Safety-plan cards: new source sprc-safety-planning-guide-2008 (source kind practice_guide, host sprc.org); both cards spot-checked against it.",
+        "Step counts: a safety plan may have 2-6 steps (exercises stay 2-5); a title or summary that states a step count must match it or carry an editor flag. Editor flags opened on masalah-uang-enam-langkah (title) and lepas-kaitan-sadari-namai-fokus (summary).",
+        "lepas-kaitan-sadari-namai-fokus: language_notes.en and adaptation_note now say that step 1 and one step 2 example keep WHO's wording (machine verbatim check).",
+        "Schema: set.json gains this changes list; sources gain the kind practice_guide."
+      ]
+    },
+    {
+      "version": "1.2.0",
+      "date": "2026-10-26",
+      "summary": [
+        "Source support of the 'why' (review finding): 6 migrated cards reworded to what their source says, each as version 2 with an open confirm-or-revert editor flag: gerak-tubuh-setelah-kerja (WHO made recommendation 8B for work outcomes; the mental-health findings did not turn out as expected), mulai-bergerak-lagi-sedikit-demi-sedikit (a PM+ rationale, not a finding), jadwal-tidur-konsisten (CDC gives no body-clock reason), khawatir-soal-tubuh-dan-kesehatan (the health-worker advice is not WHO's), bersikap-baik-pada-diri-sendiri ('help yourself' is not in the guide), kesepian-langkah-kecil-terhubung (the report describes associations with health, not effects).",
+        "source_claims: every summary or 'why' that names a source (WHO, CDC, Kemenkes, Stanley & Brown, 'health agencies') carries the source ids, a locator, a quote-free paraphrase of what the source says (sela-verbatim-overlap-v1, under 5 shared words) and a support verdict, pending a human editor's confirmation for the exact text. The validator requires them and blocks publishing until each is supported and confirmed.",
+        "Three more open editor flags where a named source only partly supports the text: kamar-dan-layar-sebelum-tidur ('why'), tidur-cukup-tujuh-sampai-sembilan-jam (summary) and jadwal-tidur-konsisten (summary). Texts unchanged.",
+        "verbatim_check per source in sources.json, with the reusable tool tests/content/verbatim_overlap.py (it reproduces the 1.1.0 WHO result exactly). Checked: the four WHO PDFs, CDC About Sleep, the Keslan page (longest shared run 3 words for its paraphrased card) and the SPRC guide. Not checked: the two Ayo Sehat pages (HTTP 503; the archived copy could not be reached), so their 3 cards keep needs_legal_confirmation and an open flag, and their 'no text copied' now says not yet verified; due by 2026-11-26.",
+        "butuh-bantuan-sekarang version 2: one English sentence reworded (same meaning) because the verbatim check found it shared a 6-word run with WHO's guide (DWMM PDF p. 11); the guides are Sela's own MIT text and reproduce no source wording.",
+        "Repository licence scan: the validator now fails when any repository file holds CC BY-NC-SA card text without the licence URI, the source's IRIS link and the adaptation notice. It fails on packages/config/src/selfHelpCards.v1.json until its owner acts (docs/content/READING_LIBRARY.md, open point 2).",
+        "A changed migrated card must keep an open editor flag until the editor confirms or reverts the change (now enforced).",
+        "Schema: items gain source_claims; sources gain verbatim_check; editor flags gain the issues attribution_not_in_source and causation_overstated."
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "cards_who.json",
+      "item_ids": [
+        "grounding-saat-badai-emosi",
+        "grounding-satu-menit-lima-indra",
+        "lepas-kaitan-sadari-namai-fokus",
+        "napas-lambat-tiga-hitungan",
+        "memberi-ruang-untuk-perasaan-sulit",
+        "pilah-yang-bisa-diubah",
+        "mulai-bergerak-lagi-sedikit-demi-sedikit",
+        "bertindak-sesuai-nilai",
+        "pecah-tugas-kuliah-jadi-langkah-kecil",
+        "beban-kerja-bicara-dan-atur-batas",
+        "gerak-tubuh-setelah-kerja",
+        "masalah-uang-enam-langkah",
+        "perkuat-dukungan-sosial",
+        "kesepian-langkah-kecil-terhubung",
+        "berduka-memberi-ruang-dan-berbaik-hati",
+        "berduka-tetap-terhubung-dan-rutinitas",
+        "jeda-dulu-sebelum-bicara",
+        "konflik-hubungan-pecah-jadi-bagian-kecil",
+        "konflik-keluarga-nilai-dan-satu-tindakan-baik",
+        "khawatir-soal-tubuh-dan-kesehatan",
+        "bersikap-baik-pada-diri-sendiri",
+        "kelelahan-kerja-kenali-dan-pulihkan"
+      ]
+    },
+    {
+      "path": "cards_kemenkes.json",
+      "item_ids": [
+        "kiat-harian-kelola-stres",
+        "tidur-cukup-tujuh-sampai-sembilan-jam",
+        "jeda-dan-batas-waktu-belajar",
+        "menerima-diri-dan-tujuan-realistis"
+      ]
+    },
+    {
+      "path": "cards_cdc.json",
+      "item_ids": [
+        "jadwal-tidur-konsisten",
+        "kamar-dan-layar-sebelum-tidur"
+      ]
+    },
+    {
+      "path": "cards_safety_plan.json",
+      "item_ids": [
+        "rencana-keselamatan-enam-langkah",
+        "rencana-keselamatan-cara-menggunakan"
+      ]
+    },
+    {
+      "path": "guides_sela.json",
+      "item_ids": [
+        "didengarkan-di-sela",
+        "menulis-catatan-dan-melihat-kembali",
+        "menyiapkan-konsultasi",
+        "apa-yang-terjadi-pada-yang-kamu-simpan",
+        "berbagi-dan-mencabut-akses",
+        "kerahasiaan-usia-16-17",
+        "butuh-bantuan-sekarang",
+        "tampilan-dan-aksesibilitas"
+      ]
+    }
+  ],
+  "counts": {
+    "items": 38,
+    "kind:exercise": 28,
+    "kind:guide": 8,
+    "kind:safety_plan": 2,
+    "audience:adult": 30,
+    "audience:15-17": 1,
+    "audience:all": 7,
+    "origin:migrated_v1": 30,
+    "origin:new_v3": 8,
+    "licence:CC BY-NC-SA 3.0 IGO": 22,
+    "commercial_use:blocked": 22,
+    "commercial_use:needs_legal_confirmation": 7,
+    "commercial_use:allowed": 9,
+    "review:machine_drafted_unreviewed": 38,
+    "review:human_changes_requested": 0,
+    "review:human_approved": 0,
+    "publishable": 0,
+    "claims:hits": 0,
+    "editor_flags:open": 17,
+    "plain_language:needs_editor": 28,
+    "source_claims": 18,
+    "source_claims:supported": 12,
+    "source_claims:partly_supported": 2,
+    "source_claims:not_supported": 0,
+    "source_claims:not_checked": 4,
+    "source_claims:editor_confirmed": 0,
+    "origin:text_changed": 7
+  },
+  "fingerprint": "f5a8a80f07542b02a7d038c623040eb6dbcde5586d0c3336587b3316758fa39c",
+  "methods": {
+    "reading_time": "ceil(words / 180) per language over all user-facing text (titles, headings and body); words = letter/digit runs, with inner apostrophes and hyphens",
+    "plain_language": "sela-plain-language-v1: body text split into sentences at . ! ? followed by space; flags any sentence over 20 words, an average over 15 words per sentence, and an English Flesch-Kincaid grade over 8 (syllables by a vowel-group heuristic). No validated Indonesian formula exists (docs/design/CONTENT_STYLE.md 3.2), so Indonesian gets sentence-length checks only; readers from the target groups must check it in owner testing",
+    "claims": "sela-claim-gates-v2 (13 gates, as published) plus sela-reading-content-gates-v1 (7 gates, same negation window) over user-facing text, notices and the internal evidence note; migrated cards also get the Dengar.in v1 forbidden-term list. Every hit needs an editor flag",
+    "text_sha256": "SHA-256 of the item's content object as canonical JSON (sorted keys, no spaces, UTF-8)",
+    "fingerprint": "SHA-256 of the canonical JSON list of [id, version, text_sha256], sorted by id",
+    "verbatim_overlap": "sela-verbatim-overlap-v1 (tests/content/verbatim_overlap.py): longest run of identical words (lower-cased letter/digit tokens; hyphens split words) between each text field of an item and a local copy of its source (PDF text layer or HTML text blocks), reported when 5 words or more with the PDF page or text block. Results are stored per source in sources.json verbatim_check (counts and locators only); the source copies are never committed, so the validator checks the stored results but cannot recompute them",
+    "source_claims": "For every summary or 'why' that names a source: the cited source ids and locator, Sela's own English paraphrase of what the passage says (quote-checked with sela-verbatim-overlap-v1: under 5 shared words, no quotation marks), and a machine support verdict (supported, partly_supported, not_supported, not_checked). Anything but 'supported' needs an open editor flag. A human editor confirms each entry for the exact current text (confirmed_text_sha256); publishing needs every entry supported and confirmed",
+    "licence_scan": "Every git-tracked or untracked, non-ignored text file in the repository (binary files and files over 32 MB are counted, not scanned) is tokenised; a file that shares an 8-word run with the current or v1 text of a CC BY-NC-SA card must contain the licence URI, the IRIS link of each such card's source, 'WHO' and the adaptation notice ('not responsible' / 'tidak bertanggung jawab'), or the validator fails"
+  },
+  "v1_baseline": {
+    "path": "packages/config/src/selfHelpCards.v1.json",
+    "sha256": "9a694aba57719c6954c2fb8ab88ddef2f418806d8a3ffaebb05c7bbcef606d48",
+    "commit": "7d898ae (this repository); 9ee21e0 (zlxrnn/dengar.in-2.0)",
+    "card_count": 30
+  }
+}

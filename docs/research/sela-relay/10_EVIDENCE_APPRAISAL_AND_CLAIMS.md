@@ -15,9 +15,13 @@ Source: [100-publication JSON](research_100.json), [annotated register](09_RESEA
 | Scope | Literature indexed under AI support, help-seeking, navigation, continuity, privacy, Indonesia, language equity, summarization, safety, engagement and anchor studies |
 | Review status | Metadata and available-abstract screening; full-text appraisal pending |
 
+> **Superseded note (2026-10-26, research v3; the table above is kept unchanged because the corpus pipeline parses it).** The "First-publication year" row counts the register's `publication_year` field, which is the print-issue year, not the year of first publication. The verified online-first dates give 2023: 2, 2024: 3, 2025: 90, 2026: 1, plus 4 records without a verified day-precision date (all dated 2025 by every source). Eight records counted as 2026 (R018, R019, R021, R022, R025, R026, R083, R089) were first published online in 2025. Source: `year_distribution_check` in [data/research/corpus/manifest.json](../../../data/research/corpus/manifest.json) and [CORPUS_PIPELINE.md](../CORPUS_PIPELINE.md).
+
 The above are **file-level integrity checks**, not an independent revalidation of every publisher record. The corpus is heavily skewed to 2025, includes different designs and overlapping systematic reviews, and cannot be called 100 independent demonstrations of efficacy. All first-publication dates in the local register fall within the requested five-year window on 26 October 2026. Any future addition must respect the 26 October 2021–26 October 2026 date window for this snapshot.
 
 Spot-checks against PubMed have corroborated the metadata of R001 (PMID 39839954, DOI 10.1177/20552076241313401) and R002 (PMID 40776275, DOI 10.3233/SHTI251258). This is not verification of the other 98 works.
+
+> **Superseded note (2026-10-26, research v3).** The two spot-checks above are no longer the only check. Since 2026-10-26 all 100 DOIs resolve through the doi.org handle API, and identifiers, dates, licences, retractions and corrections of all 100 records are machine-verified against Europe PMC, Crossref and OpenAlex ([CORPUS_PIPELINE.md](../CORPUS_PIPELINE.md)). This is machine verification of metadata. It is not a review of the papers: `reviewer_status` stays `not_reviewed` for every record. Four records (R002, R013, R065, R100) still have no day-precision primary date; their public PubMed and landing-page dates are documented in `needs_check_evidence` and all fall inside the window.
 
 ## Five design conclusions, and how to avoid overclaiming
 
@@ -26,6 +30,8 @@ Spot-checks against PubMed have corroborated the metadata of R001 (PMID 39839954
 3. **Source fidelity is a product property, not a prompt aspiration.** Link every drafted claim to a fixture evidence span and require a user confirmation step. Reject inserted diagnoses, inverted negation, wrong time period, wrong speaker and unsupported facts before publication or sharing. An approved version is immutable for sharing.
 4. **Handoff is not completed when a user clicks Send.** Proposal: a recipient-bound, version-bound receipt distinguishing submitted, acknowledged, clarification requested, declined, expired and revoked states. In this hackathon all actors and events remain **simulated**, not external referrals.
 5. **Safety failures can occur across multi-turn interactions.** A 2026 Nature Medicine study on auditing chatbot behavior emphasizes cumulative interactions, and a 2025 Stanford investigation documents failure modes in AI therapy chatbots. Sela should minimize unconstrained interaction and test state transitions and model outputs separately. These external evaluations **do not prove Sela is safe**.
+
+> **Superseded note (2026-10-26, research v3).** Cite the peer-reviewed paper behind the Stanford news item instead of the news item: R099 (FAccT 2025, DOI 10.1145/3715275.3732039; preprint arXiv 2504.18412). The sources of this section and every doc 07/10 row were machine-checked against their public titles and abstracts on 2026-10-26. Two of them are out of the register (the npj Digital Medicine scoping review and the Nature Medicine 2026 audit), plus the Stanford news item; the World Psychiatry review (DOI 10.1002/wps.21352) is register record R070, cited here by DOI only. The results and mismatches are in [claim_check_v3.json](../../../data/research/corpus/claim_check_v3.json) (`machine_checked_unreviewed`, not a human appraisal) and summarised in [EVIDENCE_MAP_V3.md](../EVIDENCE_MAP_V3.md).
 
 ## Claim-to-feature evidence gate
 
@@ -52,6 +58,8 @@ For each of R001–R100, future reviewers should record: full citation and stabl
 
 Use synthetic adults, fictional professionals and prepared outcomes for hackathon experiments. A small usability test with people evaluating a fictional task is not a clinical trial. Do not collect their mental-health histories, imply clinical benefit, or deploy autonomous clinical functions. Obtain appropriate consent and review if conducting human-subject research. Before moving beyond demo: establish licensed professional oversight, privacy/legal analysis, provider verification, redress, data-governance review and prospective safety evidence.
 
+> **Superseded note (2026-10-26, research v3).** "Use synthetic adults" described the v2 hackathon limit. Owner brief v3 and decision D-026 make Sela a real-use app for ages 15 to 50+ (ages 15-17 implemented but disabled in production until legal review, D-031); synthetic data stays for tests, evaluation and demo only. This paragraph is not rewritten here: the change needs the explicit SPEC/PM update that D-026 lists. For research, no adult evidence may be cited for users aged 15-17, and no evaluation persona yet covers 15-17 or 50+ ([EVIDENCE_MAP_V3.md](../EVIDENCE_MAP_V3.md)).
+
 ## Independent sources inspected for this refinement
 
 - PubMed R001: https://pubmed.ncbi.nlm.nih.gov/39839954/
@@ -61,5 +69,6 @@ Use synthetic adults, fictional professionals and prepared outcomes for hackatho
 - World Psychiatry review: https://doi.org/10.1002/wps.21352
 - 2026 clinical audit study: https://www.nature.com/articles/s41591-026-04577-2
 - Stanford summary of chatbot limitations: https://news.stanford.edu/stories/2025/06/ai-mental-health-care-tools-dangers-risks
+  - *Superseded note (2026-10-26):* a news item, not peer reviewed; cite R099 instead (see the note under conclusion 5).
 
 The register retains the canonical 100 IDs; this document does not silently add seven papers to that count.

@@ -1,0 +1,7 @@
+# The register documents under sela-relay/ (research_100.json, research_100.bib,
+# 07, 09 and 10) are inputs of the frozen corpus snapshots, whose manifests record
+# the SHA-256 of their exact LF bytes. Pin them to LF on every checkout, whatever
+# core.autocrlf says, so `corpus_pipeline.py verify` and `reproduce` keep matching
+# (same class of problem as research audit P1; data/research/ is pinned in
+# data/research/.gitattributes).
+sela-relay/** text eol=lf

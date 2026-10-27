@@ -4,6 +4,10 @@
   fetch   fill the local API cache (Europe PMC, Crossref, OpenAlex, doi.org;
           open-access full text only where a Creative Commons licence allows)
   build   offline: cache + register -> data/research/corpus/ outputs
+          (--pipeline-version 1.1.0 rebuilds the legacy schema of the frozen
+          2026-10-26 snapshot; the default is the current version)
+  reproduce  offline: rebuild a frozen snapshot into a scratch directory and
+          compare it byte for byte with the committed one (exit 1 on any difference)
   verify  offline: re-hash outputs and check schema/invariants (exit 1 on violation)
   scan-claims FILE...  report forbidden product claims (eval_fixtures/claim_gates.json)
 
@@ -20,12 +24,14 @@ import collections
 import datetime as dt
 import json
 import os
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from corpus import DEFAULT_FREEZE_DATE, PIPELINE_VERSION, RULES_VERSION  # noqa: E402
+from corpus import DEFAULT_FREEZE_DATE, PIPELINE_VERSION  # noqa: E402
 from corpus import claims as C  # noqa: E402
 from corpus import dates as D  # noqa: E402
 from corpus import evidence as EV  # noqa: E402
@@ -33,13 +39,21 @@ from corpus import export as E  # noqa: E402
 from corpus import fetch as F  # noqa: E402
 from corpus import ids  # noqa: E402
 from corpus import ingest as IN  # noqa: E402
+from corpus import profiles as PF  # noqa: E402
 from corpus import records as R  # noqa: E402
+from corpus import reviews as RV  # noqa: E402
+from corpus import snapshots as SN  # noqa: E402
 from corpus import rights as RT  # noqa: E402
 from corpus import verify as V  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 RELAY = Path("docs/research/sela-relay")
 DEFAULT_OUT = Path("data/research/corpus")
+REGISTER_INPUTS = Path("data/research/register_inputs")
+REVIEWER_FILE = REGISTER_INPUTS / "reviewer_decisions.json"
+# Frozen copies of inputs that changed after a snapshot was frozen, mirrored at
+# their repository-relative paths: FROZEN_INPUTS/<snapshot name>/<path>.
+FROZEN_INPUTS = SN.FROZEN_INPUTS
 
 
 class MissingCache(RuntimeError):
@@ -57,9 +71,14 @@ class Inputs:
         self.register_md = base / "09_RESEARCH_REGISTER.md"
         self.doc07 = base / "07_EVIDENCE_TO_FEATURE.md"
         self.doc10 = base / "10_EVIDENCE_APPRAISAL_AND_CLAIMS.md"
+        self.reviewer_file = self.root / REVIEWER_FILE
 
-    def all(self):
-        return [self.register_json, self.bib, self.register_md, self.doc07, self.doc10]
+    def all(self, profile=None):
+        """Inputs hashed into the manifest; the legacy profile keeps its original five."""
+        files = [self.register_json, self.bib, self.register_md, self.doc07, self.doc10]
+        if (profile or PF.CURRENT).v3:
+            files.append(self.reviewer_file)
+        return files
 
     def rel(self, path):
         try:
@@ -131,6 +150,29 @@ def cached_envs(cache, paper, freeze_date):
     return envs, xml, missing
 
 
+def needs_check_requests(paper, envs, freeze_date):
+    """v3: extra date lookups for records the legacy rules leave at needs_check."""
+    cutoff = D.cutoff_for(freeze_date)
+    rec = R.build_record(paper, envs, freeze_date, cutoff, {}, profile=PF.LEGACY)
+    if rec["screening_status"] != "needs_check":
+        return []
+    out = []
+    if rec["pmid"]:
+        out.append(("pubmed_history", "pubmed_history") + F.pubmed_history_request(rec["pmid"]) + (rec["pmid"],))
+    if rec["doi"]:
+        out.append(("landing_meta", "landing_meta") + F.landing_request(rec["doi"]) + (rec["doi"],))
+    return out
+
+
+def cached_v3_envs(cache, paper, envs, freeze_date):
+    missing = []
+    for slot, service, key, _url, _arg in needs_check_requests(paper, envs, freeze_date):
+        envs[slot] = cache.get(service, key)
+        if envs[slot] is None:
+            missing.append((paper["id"], service, key))
+    return missing
+
+
 # --- fetch --------------------------------------------------------------------
 
 def run_fetch(inputs, cache_dir, freeze_date, offline=False, refresh=False, only=None, client=None, log=print):
@@ -180,6 +222,18 @@ def run_fetch(inputs, cache_dir, freeze_date, offline=False, refresh=False, only
                     errors.append({"id": rid, "service": "fulltext", "key": key, "error": env["fetch_error"]})
                 elif did:
                     fetched["fulltext"] += 1
+        if all(envs.get(slot) is not None for slot, *_ in reqs):
+            for slot, service, key, url, arg in needs_check_requests(paper, envs, freeze_date):
+                if offline:
+                    if cache.get(service, key) is None:
+                        missing.append((rid, service, key))
+                    continue
+                fetcher = F.fetch_pubmed_history if service == "pubmed_history" else F.fetch_landing_meta
+                env, did = fetcher(client, cache, arg, refresh=refresh)
+                if "fetch_error" in env:
+                    errors.append({"id": rid, "service": service, "key": key, "error": env["fetch_error"]})
+                elif did:
+                    fetched[service] += 1
         if n % 10 == 0 or n == len(papers):
             log(f"[{n}/{len(papers)}] {rid} done; new responses this run: {dict(sorted(fetched.items()))}")
     report = {
@@ -234,8 +288,29 @@ def year_check(doc10_text, doc10_rel, papers, records):
     }
 
 
+def v3_counts(records, reviews):
+    return {
+        "schema_version": PF.CURRENT.schema_version,
+        "publication_language": _count(r["publication_language"] for r in records),
+        "publication_language_basis": _count(r["publication_language_detail"]["basis"] for r in records),
+        "age_range_extracted": sum(1 for r in records if r["age_range"] is not None),
+        "age_range_conflicting": sum(1 for r in records if r["age_range_detail"]["note"].startswith("conflicting")),
+        "age_groups_indexed_present": sum(1 for r in records if r["age_groups_indexed"]),
+        "age_band_summary": _count(r["age_band"]["summary"] for r in records),
+        "country_evidence_fulltext_with_candidates": sum(
+            1 for r in records if (r["country_evidence_fulltext"] or {}).get("candidates")),
+        "study_type_caution": sorted(r["id"] for r in records if r["study_type_caution"]),
+        "publication_type_eligibility": _count(r["publication_type_eligibility"]["status"] for r in records),
+        "needs_check_documented": sorted(r["id"] for r in records if r["needs_check_evidence"]),
+        "reviewer_status": _count(r["reviewer_status"] for r in records),
+        "reviewer_entries": len(reviews),
+        "findings_set": sum(1 for r in records if r["findings"] is not None),
+    }
+
+
 def make_manifest(inputs, freeze_date, cutoff, papers, records, public, kb_version, files, cross,
-                  dup_register, dup_enriched, emap, used_envs, year_info):
+                  dup_register, dup_enriched, emap, used_envs, year_info, profile=None, reviews=None):
+    profile = profile or PF.CURRENT
     discrepancies = [dict(d, id=r["id"]) for r in records for d in r["date_discrepancies"]]
     by_service = {}
     pools = collections.Counter()
@@ -283,11 +358,11 @@ def make_manifest(inputs, freeze_date, cutoff, papers, records, public, kb_versi
             1 for r in records if any(d["kind"] == "register" for d in r["date_discrepancies"])),
         "flags": _count(f["id"] for r in records for f in r["flags"]),
     }
-    return {
+    manifest = {
         "dataset": "Sela research corpus: 100-publication register re-verified against public metadata",
         "status": "machine_verified_metadata_not_reviewed",
-        "pipeline_version": PIPELINE_VERSION,
-        "rules_version": RULES_VERSION,
+        "pipeline_version": profile.pipeline_version,
+        "rules_version": profile.rules_version,
         "claim_gates_version": C.GATES_VERSION,
         "freeze_date": freeze_date,
         "cutoff_date": cutoff,
@@ -299,7 +374,7 @@ def make_manifest(inputs, freeze_date, cutoff, papers, records, public, kb_versi
                                 "month/year precision"),
         "index_version": kb_version,
         "index_version_basis": "first 16 hex of sha256(knowledge_base.jsonl rows serialised without index_version)",
-        "inputs": {inputs.rel(p): IN.sha256_file(p) for p in inputs.all()},
+        "inputs": {inputs.rel(p): IN.sha256_file(p) for p in inputs.all(profile)},
         "outputs": {name: E.sha256(data) for name, data in sorted(files.items())},
         "counts": counts,
         "date_discrepancies": sorted(discrepancies, key=lambda d: (d["id"], d["source"], d["type"])),
@@ -329,14 +404,40 @@ def make_manifest(inputs, freeze_date, cutoff, papers, records, public, kb_versi
             "Licence fields reflect metadata published by Crossref and Europe PMC, not legal advice.",
         ],
     }
+    if not profile.v3:
+        return manifest
+    manifest["schema_version"] = profile.schema_version
+    manifest["snapshot"] = f"snapshots/{profile.snapshot_name(freeze_date)}"
+    manifest["counts"]["v3"] = v3_counts(records, reviews or {})
+    manifest["reviewer_policy"] = (
+        "reviewer_name, review_date, review_decision, findings and the *_reviewer_* overrides are copied only from "
+        "human entries in data/research/register_inputs/reviewer_decisions.json; machine fields are never "
+        "overwritten; with no entry every reviewer field is null and reviewer_status is not_reviewed")
+    manifest["supersedes"] = {
+        "pipeline_version": PF.LEGACY.pipeline_version,
+        "snapshot": f"snapshots/{PF.LEGACY.snapshot_name(freeze_date)}",
+        "note": ("the 1.1.0 snapshot is frozen and still rebuilds byte for byte with "
+                 "`corpus_pipeline.py reproduce --snapshot " + PF.LEGACY.snapshot_name(freeze_date) + "`"),
+    }
+    manifest["limitations"] = manifest["limitations"] + [
+        "publication_language comes from index/publisher metadata (OpenAlex only as a flagged machine inference).",
+        "age_range, age_band and country_evidence_fulltext are pattern matches with locators, not verified "
+        "study populations; adult evidence is never generalised to ages 15-17.",
+        "needs_check_evidence documents public PubMed and landing-page dates; it does not change any status.",
+    ]
+    return manifest
 
 
-def run_build(inputs, cache_dir, out_dir, freeze_date, allow_missing=False):
+def run_build(inputs, cache_dir, out_dir, freeze_date, allow_missing=False, profile=None):
+    profile = profile or PF.CURRENT
     cutoff = D.cutoff_for(freeze_date)
     papers = load_papers(inputs)
     bib = IN.parse_bib(inputs.bib.read_text(encoding="utf-8"))
     md = IN.parse_register_md(inputs.register_md.read_text(encoding="utf-8"))
     cross = IN.cross_check(papers, bib, md)
+    reviews = {}
+    if profile.v3:
+        reviews = RV.load_reviews(inputs.reviewer_file.read_bytes(), [p["id"] for p in papers])
     dup_register = ids.find_duplicates([
         {"id": p["id"], "doi": p.get("doi"), "pmid": ids.pmid_from_url(p.get("index_url")),
          "title": p.get("title"), "year": p.get("publication_year")} for p in papers])
@@ -347,8 +448,11 @@ def run_build(inputs, cache_dir, out_dir, freeze_date, allow_missing=False):
     records, missing, used_envs = [], [], []
     for paper in papers:
         envs, xml, miss = cached_envs(cache, paper, freeze_date)
+        if profile.v3 and not miss:
+            miss += cached_v3_envs(cache, paper, envs, freeze_date)
         missing.extend(miss)
-        rec = R.build_record(paper, envs, freeze_date, cutoff, pre_map["features_by_r_id"], fulltext_xml=xml)
+        rec = R.build_record(paper, envs, freeze_date, cutoff, pre_map["features_by_r_id"], fulltext_xml=xml,
+                             profile=profile, review=reviews.get(paper["id"]))
         records.append(rec)
         for slot, env in sorted(envs.items()):
             if env and (slot != "fulltext" or rec["extraction_source"] != "metadata_only"):
@@ -360,11 +464,13 @@ def run_build(inputs, cache_dir, out_dir, freeze_date, allow_missing=False):
          "year": r["year"]} for r in records])
     emap = EV.build_evidence_map(inputs.rel(inputs.doc07), doc07, inputs.rel(inputs.doc10), doc10, rid_list,
                                  {r["id"]: r["screening_status"] for r in records})
-    emap["pipeline_version"] = PIPELINE_VERSION
+    emap["pipeline_version"] = profile.pipeline_version
     emap["inputs"] = {inputs.rel(inputs.doc07): IN.sha256_file(inputs.doc07),
                       inputs.rel(inputs.doc10): IN.sha256_file(inputs.doc10)}
+    if profile.v3:
+        EV.annotate_v3(emap, {r["id"]: r for r in records})
     public = [E.public_record(r) for r in records]
-    kb, version = E.with_index_version([E.kb_row(r) for r in public])
+    kb, version = E.with_index_version([E.kb_row(r, v3=profile.v3) for r in public])
     gates = C.export_document()
     files = {
         "records.jsonl": E.jsonl_bytes(public),
@@ -374,19 +480,95 @@ def run_build(inputs, cache_dir, out_dir, freeze_date, allow_missing=False):
     }
     year_info = year_check(doc10, inputs.rel(inputs.doc10), papers, records)
     manifest = make_manifest(inputs, freeze_date, cutoff, papers, records, public, version, files, cross,
-                             dup_register, dup_enriched, emap, used_envs, year_info)
+                             dup_register, dup_enriched, emap, used_envs, year_info, profile=profile, reviews=reviews)
     if missing:
         manifest["cache_missing"] = [list(m) for m in missing]
     manifest_bytes = E.json_bytes(manifest)
     out = Path(out_dir)
     snapshot = {"manifest.json": manifest_bytes, "records.jsonl": files["records.jsonl"]}
-    snap_dir = out / "snapshots" / freeze_date
+    snap_dir = out / "snapshots" / profile.snapshot_name(freeze_date)
     E.check_snapshot(snap_dir, snapshot)  # fail before writing anything
     for name, data in files.items():
         E.atomic_write(out / name, data)
     E.atomic_write(out / "manifest.json", manifest_bytes)
     E.write_snapshot(snap_dir, snapshot)
     return manifest
+
+
+# --- reproduce a frozen snapshot -------------------------------------------------
+
+class NotReproducible(RuntimeError):
+    pass
+
+
+resolve_frozen_inputs = SN.resolve_frozen_inputs
+
+
+def run_reproduce(root, out_dir, cache_dir, snapshot_name, keep=None, log=print):
+    """Rebuild ``snapshots/<snapshot_name>`` offline and compare byte for byte.
+
+    Returns a report dict; raises NotReproducible when inputs are unavailable.
+    """
+    out_dir = Path(out_dir)
+    snap = out_dir / "snapshots" / snapshot_name
+    manifest = json.loads((snap / "manifest.json").read_text(encoding="utf-8"))
+    profile = PF.for_version(manifest["pipeline_version"])
+    if profile.snapshot_name(manifest["freeze_date"]) != snapshot_name:
+        raise NotReproducible(f"snapshot directory {snapshot_name} does not match its manifest "
+                              f"(pipeline {profile.pipeline_version}, freeze {manifest['freeze_date']})")
+    found, problems = resolve_frozen_inputs(root, snapshot_name, manifest["inputs"])
+    if problems:
+        raise NotReproducible("; ".join(problems))
+    work = Path(keep) if keep else Path(tempfile.mkdtemp(prefix="sela-reproduce-"))
+    try:
+        stage = work / "root"
+        for rel, src in found.items():
+            dst = stage / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dst)
+        rebuilt = work / "out"
+        run_build(Inputs(stage), cache_dir, rebuilt, manifest["freeze_date"], profile=profile)
+        compared = {}
+        for name in sorted(p.name for p in snap.iterdir() if p.is_file()):
+            a, b = (snap / name).read_bytes(), (rebuilt / "snapshots" / snapshot_name / name).read_bytes()
+            compared[f"snapshots/{snapshot_name}/{name}"] = {"identical": a == b, "sha256": E.sha256(a),
+                                                             "rebuilt_sha256": E.sha256(b)}
+        for rel, digest in sorted(manifest.get("outputs", {}).items()):
+            got = E.sha256((rebuilt / rel).read_bytes())
+            compared[f"outputs/{rel} (sha256 recorded in the snapshot manifest)"] = {
+                "identical": got == digest, "sha256": digest, "rebuilt_sha256": got}
+        report = {"snapshot": snapshot_name, "pipeline_version": profile.pipeline_version,
+                  "freeze_date": manifest["freeze_date"],
+                  "inputs": {rel: ("live" if Path(src).resolve() == (Path(root) / rel).resolve() else "frozen copy")
+                             for rel, src in found.items()},
+                  "compared": compared, "identical": all(v["identical"] for v in compared.values())}
+        for key, v in compared.items():
+            log(f"{'IDENTICAL' if v['identical'] else 'DIFFERENT'}  {key}  {v['rebuilt_sha256']}")
+        return report
+    finally:
+        if not keep:
+            shutil.rmtree(work, ignore_errors=True)
+
+
+# --- v3 research outputs (gap search, screening, evidence map, claim check) ------
+
+def verify_v3_outputs(root, out):
+    """Run the v3 checks too when ``out`` is the repository's corpus directory and the files exist."""
+    root = Path(root)
+    if Path(out).resolve() != (root / DEFAULT_OUT).resolve():
+        return []
+    import v3_evidence as VE  # noqa: E402  (sibling scripts; imported lazily)
+    import v3_gap_search as G  # noqa: E402
+    problems = []
+    for freeze_dir in sorted((root / G.OUT_BASE).glob("*/manifest.json")):
+        problems += [f"v3 gap search {freeze_dir.parent.name}: {p}"
+                     for p in G.run_verify(root, freeze_dir.parent.name)]
+    if (root / VE.CLAIM_OUT).exists() or (root / VE.EMAP_OUT).exists():
+        problems += [f"v3 evidence: {p}" for p in VE.verify(root)]
+    import leak_check as LC  # noqa: E402  (CI half of the leak check: committed fingerprints, no cache needed)
+    if (root / LC.FINGERPRINTS).exists():
+        problems += [f"leak check: {p}" for p in LC.check_fingerprints(root)]
+    return problems
 
 
 # --- CLI ----------------------------------------------------------------------
@@ -412,6 +594,13 @@ def main(argv=None):
     pb = sub.add_parser("build", help="offline build from cache -> outputs")
     pb.add_argument("--freeze-date", type=_freeze, default=DEFAULT_FREEZE_DATE)
     pb.add_argument("--allow-missing", action="store_true", help="build even if cache entries are missing")
+    pb.add_argument("--pipeline-version", default=PIPELINE_VERSION, choices=sorted(PF.PROFILES),
+                    help="build profile (1.1.0 = legacy schema of the frozen 2026-10-26 snapshot)")
+    pr = sub.add_parser("reproduce", help="rebuild a frozen snapshot in a scratch dir and compare byte for byte")
+    pr.add_argument("--snapshot", default=PF.LEGACY.snapshot_name(DEFAULT_FREEZE_DATE),
+                    help="snapshot directory name under <out>/snapshots/ (default: the frozen 1.1.0 snapshot)")
+    pr.add_argument("--keep", type=Path, default=None, help="keep the rebuilt tree in this directory")
+    pr.add_argument("--report", type=Path, default=None, help="also write the comparison report (JSON) here")
     sub.add_parser("verify", help="re-hash outputs and check invariants (exit 1 on violation)")
     ps = sub.add_parser("scan-claims", help="scan product copy files for forbidden claims")
     ps.add_argument("files", nargs="+", type=Path)
@@ -424,10 +613,23 @@ def main(argv=None):
     if args.command == "fetch":
         only = {x.strip() for x in args.only.split(",") if x.strip()}
         return run_fetch(inputs, cache, args.freeze_date, offline=args.offline, refresh=args.refresh, only=only)
+    if args.command == "reproduce":
+        try:
+            report = run_reproduce(args.root, out, cache, args.snapshot, keep=args.keep)
+        except (MissingCache, NotReproducible, E.SnapshotConflict, OSError, ValueError) as exc:
+            print(f"reproduce failed: {exc}", file=sys.stderr)
+            return 1
+        if args.report:
+            args.report.write_text(json.dumps(report, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+        print(f"reproduce {args.snapshot} (pipeline {report['pipeline_version']}): "
+              f"{'BYTE-IDENTICAL' if report['identical'] else 'DIFFERENT'}; inputs: "
+              + ", ".join(f"{k}={v}" for k, v in sorted(report["inputs"].items())))
+        return 0 if report["identical"] else 1
     if args.command == "build":
         try:
-            m = run_build(inputs, cache, out, args.freeze_date, allow_missing=args.allow_missing)
-        except (MissingCache, E.SnapshotConflict) as exc:
+            m = run_build(inputs, cache, out, args.freeze_date, allow_missing=args.allow_missing,
+                          profile=PF.for_version(args.pipeline_version))
+        except (MissingCache, E.SnapshotConflict, RV.ReviewError) as exc:
             print(f"build failed: {exc}", file=sys.stderr)
             return 1
         c = m["counts"]
@@ -440,10 +642,14 @@ def main(argv=None):
             "access_status": c["access_status"], "fulltexts_processed": c["fulltexts_processed"],
             "sample_sizes_extracted": c["sample_sizes_extracted"],
             "year_check": m["year_distribution_check"].get("conclusion"),
+            "pipeline_version": m["pipeline_version"], "snapshot": m.get("snapshot",
+                                                                         f"snapshots/{m['freeze_date']}"),
+            "v3": c.get("v3"),
         }, indent=2, ensure_ascii=False))
         return 0
     if args.command == "verify":
-        violations, warnings = V.verify_outputs(out)
+        violations, warnings = V.verify_outputs(out, root=args.root)
+        violations += verify_v3_outputs(args.root, out)
         for w in warnings:
             print("WARNING:", w)
         for v in violations:

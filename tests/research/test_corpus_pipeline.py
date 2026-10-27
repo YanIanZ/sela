@@ -29,7 +29,10 @@ from corpus import extract as X  # noqa: E402
 from corpus import fetch as F  # noqa: E402
 from corpus import ids  # noqa: E402
 from corpus import ingest as IN  # noqa: E402
+from corpus import profiles as PF  # noqa: E402
 from corpus import records as R  # noqa: E402
+from corpus import reviews as RV  # noqa: E402
+from corpus import v3fields as V3  # noqa: E402
 from corpus import rights as RT  # noqa: E402
 from corpus import verify as V  # noqa: E402
 
@@ -37,6 +40,8 @@ FIX = HERE / "fixtures" / "corpus"
 MINI = FIX / "repo"
 FETCHED = "2026-10-26T00:00:00Z"
 FREEZE = "2026-10-26"
+SNAP = PF.CURRENT.snapshot_name(FREEZE)  # '2026-10-26_pipeline-1.2.0'
+LEGACY_SNAP = PF.LEGACY.snapshot_name(FREEZE)  # '2026-10-26' (frozen 1.1.0 schema)
 
 
 def load(name):
@@ -90,6 +95,15 @@ def make_cache(cache_dir):
                       "published-online": {"date-parts": [[2024, 3]]}, "license": nc_nd}},
          {"publication_date": "2024-03-01", "publication_year": 2024, "is_retracted": False}, None)
     meta("10.5555/sela-test-unresolvable", EMPTY_EPMC, None, None, None)
+    # v3 (pipeline 1.2.0): landing-page date evidence for the two needs_check records.
+    key, url = F.landing_request("10.5555/sela-test-month")
+    put(cache, "landing_meta", key, url, "ok", {"final_url": "https://publisher.example/10.5555/sela-test-month",
+                                                 "meta": {"citation_online_date": "2024/03/15"},
+                                                 "tdm_reservation": None, "note": None})
+    key, url = F.landing_request("10.5555/sela-test-unresolvable")
+    put(cache, "landing_meta", key, url, "blocked", {"final_url": None, "meta": {}, "tdm_reservation": None,
+                                                     "note": "HTTP 403 (bot challenge or access control); not bypassed"},
+        http=403)
     return cache
 
 
@@ -103,8 +117,8 @@ class BuildCase(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def build(self, out_name="out", freeze=FREEZE, inputs=None):
-        return P.run_build(inputs or self.inputs, self.cache_dir, self.tmp / out_name, freeze)
+    def build(self, out_name="out", freeze=FREEZE, inputs=None, profile=None):
+        return P.run_build(inputs or self.inputs, self.cache_dir, self.tmp / out_name, freeze, profile=profile)
 
     def records(self, out_name="out"):
         lines = (self.tmp / out_name / "records.jsonl").read_text(encoding="utf-8").splitlines()
@@ -582,7 +596,7 @@ class ExportAndVerifyTests(BuildCase):
         self.assertFalse(recs["R005"]["doi_resolvable"])
         for r in recs.values():
             self.assertEqual(r["reviewer_status"], "not_reviewed")
-            self.assertEqual(V.validate_record(r, FREEZE, m["cutoff_date"]), [])
+            self.assertEqual(V.validate_record(r, FREEZE, m["cutoff_date"], v3=True), [])
         self.assertEqual(m["duplicates"]["count"], 0)
         y = m["year_distribution_check"]
         self.assertTrue(y["vs_json_publication_year"]["matches_claim"])
@@ -606,11 +620,11 @@ class ExportAndVerifyTests(BuildCase):
         kb = [json.loads(x) for x in (self.tmp / "a" / "knowledge_base.jsonl").read_text().splitlines()]
         self.assertEqual(m["index_version"], E.index_version_of(kb))
         self.assertEqual(len(m["index_version"]), 16)
-        self.assertEqual(set(kb[0]), set(E.KB_FIELDS))
+        self.assertEqual(set(kb[0]), set(E.KB_FIELDS_V3))
 
     def test_snapshot_immutability(self):
         self.build()
-        snap = self.tmp / "out" / "snapshots" / FREEZE / "records.jsonl"
+        snap = self.tmp / "out" / "snapshots" / SNAP / "records.jsonl"
         before = snap.read_bytes()
         self.build()  # identical content: allowed
         changed = self.tmp / "changed"
@@ -625,7 +639,8 @@ class ExportAndVerifyTests(BuildCase):
         self.assertEqual(snap.read_bytes(), before)
         self.assertEqual((self.tmp / "out" / "records.jsonl").read_bytes(), records_before)
         self.build(inputs=P.Inputs(changed), freeze="2026-10-27")  # a new freeze date is a new snapshot
-        self.assertTrue((self.tmp / "out" / "snapshots" / "2026-10-27" / "manifest.json").exists())
+        self.assertTrue((self.tmp / "out" / "snapshots" / PF.CURRENT.snapshot_name("2026-10-27")
+                         / "manifest.json").exists())
 
     def test_rights_redaction_in_committed_outputs(self):
         self.build()
@@ -643,6 +658,7 @@ class ExportAndVerifyTests(BuildCase):
         bad = dict(recs["R001"])
         del bad["license"]
         self.assertTrue(V.validate_record(bad))
+        self.assertTrue(V.validate_record(dict(recs["R001"], reviewer_status="reviewed"), v3=True))
         self.assertTrue(V.validate_record(dict(recs["R001"], reviewer_status="reviewed")))
         self.assertTrue(V.validate_record(dict(recs["R001"], within_cutoff=False), FREEZE, "2021-10-26"))
         self.assertTrue(V.validate_record(dict(recs["R003"], screening_status="included_title_abstract_v0")))

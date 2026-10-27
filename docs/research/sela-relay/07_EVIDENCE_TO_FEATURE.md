@@ -22,6 +22,15 @@ Interpretasi produk di bawah adalah inferensi desain. Sumber tidak menguji Sela 
 | R099; R075; R081 | Chatbot dapat gagal dalam respons berisiko dan praktik terapeutik | Batasi model sebagai drafting/navigation assistant | Rule gate dan pembatasan scope bukan sertifikasi keselamatan |
 | R097; R100 | Ada sinyal manfaat pada intervensi terstruktur yang diteliti | Tetap evaluasi dan jangan menolak AI tanpa bukti | Efek produk lain tidak dapat diklaim sebagai efikasi Sela |
 
+> **Catatan pengganti (superseded note, 26 Oktober 2026, riset v3; tabel di atas tidak diubah karena dibaca oleh pipeline korpus).** Setiap baris tabel telah diperiksa mesin terhadap judul dan abstrak publik sumbernya (tugas audit R-9, `machine_checked_unreviewed`, bukan telaah manusia; hasil lengkap di [claim_check_v3.json](../../../data/research/corpus/claim_check_v3.json)). 12 dari 14 baris konsisten pada tingkat istilah. Catatan per baris:
+> - Baris 1: "memengaruhi" terbaca sebagai efek kausal. Kedua sumber melaporkan hambatan yang dirasakan (wawancara kualitatif dan sintesis naratif), jadi lebih tepat "dilaporkan sebagai hambatan". Keduanya hanya mencakup orang dewasa.
+> - Baris 6: R031 mendukung baris ini. R035 hanya mendukung bagian shared decision-making, bukan engagement.
+> - Baris 11: konsisten. Judul R087 menyebut makalah ini "Randomized Controlled Study Termination Report", jadi kata "dihentikan" tepat. Menurut abstraknya, dari 96 yang memenuhi syarat, 3 memberi consent dan ketiganya mundur atau dikeluarkan, sehingga tidak ada data yang dapat dievaluasi. Alasan engagement rendah hanya dugaan penulis, bukan sebab yang diuji.
+> - Baris 14: R100 tidak memiliki abstrak terbuka (tidak ada di Europe PMC, tidak ada abstrak di Crossref, halaman penerbit diblokir), jadi belum dapat diperiksa.
+> - Baris 9 dan 14 mengutip record `needs_check` (R065, R100). Tanggal keduanya kini terdokumentasi dan berada di dalam jendela, tetapi konfirmasi reviewer masih tertunda.
+>
+> Tabel ini dibuat untuk fitur Sela v2. Peta bukti untuk fitur v3 ada di [EVIDENCE_MAP_V3.md](../EVIDENCE_MAP_V3.md).
+
 ## Hipotesis yang dapat digugurkan
 
 H1: Story Ledger mengurangi fakta tidak didukung dan mempercepat koreksi dibanding ringkasan AI biasa. H2: Next Step membantu menyelesaikan tugas pencarian opsi dibanding direktori tanpa panduan. H3: Opening Practice meningkatkan kejelasan tujuan konsultasi yang dinilai dengan rubrik tugas. H4: Handoff Receipt meningkatkan pemahaman status dan penyelesaian langkah berikutnya pada simulasi.
