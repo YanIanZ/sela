@@ -2,7 +2,9 @@ name: Sela v2
 
 on:
   pull_request:
-    branches: [main]
+    # feat/sela-v3-pilot: the v3 delivery branch; the stacked v3 PRs (AI layer,
+    # listening, consultation and sharing) target it and need the same checks.
+    branches: [main, feat/sela-v3-pilot]
   push:
     branches: [main]
   workflow_dispatch:
