@@ -4,9 +4,15 @@
 // "test-double-not-meta" and the header "X-Sela-Test-Double: true" on every
 // response.
 //
+// It also serves labelled test doubles for internal/ai: an
+// Anthropic-compatible POST /v1/messages (model "test-double-not-claude",
+// never Claude) and a DeepSeek-compatible POST /chat/completions (model
+// "test-double-not-deepseek", never DeepSeek), with the faults selected by
+// -provider-fault.
+//
 // Usage:
 //
-//	fakellm [-addr 127.0.0.1:8090] [-api-key KEY] [-latency 0s] [-fault none] [-allow-fault-header]
+//	fakellm [-addr 127.0.0.1:8090] [-api-key KEY] [-latency 0s] [-fault none] [-provider-fault none] [-slow-delay 5s] [-allow-fault-header]
 //
 // It never logs or prints request content.
 package main
@@ -48,7 +54,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	apiKey := fs.String("api-key", "", "when set, require \"Authorization: Bearer <key>\" on /v1/*")
 	latency := fs.Duration("latency", 0, "delay before each streamed chunk")
 	faultName := fs.String("fault", string(fakellm.FaultNone), "fault for every chat completion: "+faultList())
-	allowHeader := fs.Bool("allow-fault-header", false, "let requests choose a fault with the "+fakellm.HeaderFault+" header")
+	providerFaultName := fs.String("provider-fault", string(fakellm.ProviderFaultNone), "fault for every /v1/messages and /chat/completions request: "+providerFaultList())
+	slowDelay := fs.Duration("slow-delay", 0, "delay of the slow and timeout faults (0 means the default)")
+	allowHeader := fs.Bool("allow-fault-header", false, "let requests choose a fault with the "+fakellm.HeaderFault+" and "+fakellm.HeaderProviderFault+" headers")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -59,8 +67,16 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("invalid -fault (want one of %s)", faultList())
 	}
+	providerFault, err := fakellm.ParseProviderFault(*providerFaultName)
+	if err != nil {
+		return fmt.Errorf("invalid -provider-fault (want one of %s)", providerFaultList())
+	}
+	if *slowDelay < 0 {
+		return errors.New("invalid -slow-delay")
+	}
 	handler, err := fakellm.NewHandler(fakellm.Config{
 		APIKey: *apiKey, Latency: *latency, Fault: fault, AllowFaultHeader: *allowHeader,
+		ProviderFault: providerFault, SlowDelay: *slowDelay,
 	})
 	if err != nil {
 		return err
@@ -73,8 +89,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	if *apiKey != "" {
 		auth = "bearer"
 	}
-	fmt.Fprintf(stdout, "fakellm: TEST DOUBLE (not Meta inference) model=%s fault=%s auth=%s listening on http://%s\n",
-		fakellm.ServedModel, fault, auth, ln.Addr())
+	fmt.Fprintf(stdout, "fakellm: TEST DOUBLE (not Meta inference) model=%s fault=%s auth=%s "+
+		"claude_double=%s deepseek_double=%s provider_fault=%s (not Claude, not DeepSeek) listening on http://%s\n",
+		fakellm.ServedModel, fault, auth, fakellm.AnthropicModel, fakellm.DeepSeekModel, providerFault, ln.Addr())
 
 	srv := &http.Server{
 		Handler: handler, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 2 * time.Minute,
@@ -99,6 +116,14 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	return nil
+}
+
+func providerFaultList() string {
+	names := make([]string, 0, len(fakellm.ProviderFaults()))
+	for _, f := range fakellm.ProviderFaults() {
+		names = append(names, string(f))
+	}
+	return strings.Join(names, ", ")
 }
 
 func faultList() string {
