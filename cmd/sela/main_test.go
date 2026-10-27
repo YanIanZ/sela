@@ -23,9 +23,11 @@ import (
 	"github.com/YanIanZ/sela/internal/fixtures"
 )
 
-// TestMain lets the subprocess tests run the real main() from this binary.
+// TestMain lets the subprocess tests run the real main() from this binary;
+// SELA_TEST_ARGS carries the subcommand and flags (space separated).
 func TestMain(m *testing.M) {
 	if os.Getenv("SELA_TEST_RUN_MAIN") == "1" {
+		os.Args = append([]string{os.Args[0]}, strings.Fields(os.Getenv("SELA_TEST_ARGS"))...)
 		main()
 		os.Exit(0)
 	}

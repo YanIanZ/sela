@@ -3,6 +3,8 @@
 *.sh text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+# Migration checksums are over LF bytes (ADR-0002 §4).
+*.sql text eol=lf
 *.svg text eol=lf
 *.png binary
 *.jpg binary

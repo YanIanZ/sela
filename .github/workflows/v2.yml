@@ -2,7 +2,9 @@ name: Sela v2
 
 on:
   pull_request:
-    branches: [main]
+    # feat/sela-v3-pilot: the v3 delivery branch; the stacked v3 PRs (AI layer,
+    # listening, consultation and sharing) target it and need the same checks.
+    branches: [main, feat/sela-v3-pilot]
   push:
     branches: [main]
   workflow_dispatch:
@@ -16,20 +18,72 @@ concurrency:
 
 jobs:
   go:
-    name: Go vet, format and race tests
+    name: Go vet, format and race tests (PostgreSQL 16)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sela
+          POSTGRES_PASSWORD: sela-dev-only
+          POSTGRES_DB: sela_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sela -d sela_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # Synthetic CI-only credentials for the throwaway service container.
+      SELA_TEST_DATABASE_URL: postgres://sela:sela-dev-only@127.0.0.1:5432/sela_test?sslmode=disable
+      # Database tests fail instead of skipping when the database is missing.
+      SELA_REQUIRE_DB_TESTS: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+      - name: PostgreSQL 16 client tools (pg_dump, pg_restore, psql)
+        run: |
+          if ! pg_dump --version 2>/dev/null | grep -q ' 16\.'; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16
+          fi
+          pg_dump --version && pg_restore --version && psql --version
       - name: gofmt
         run: test -z "$(gofmt -l cmd internal)" || (gofmt -l cmd internal && exit 1)
       - name: go vet
         run: go vet ./...
-      - name: go test (race)
+      - name: Direct module requirements are only the approved ones
+        run: |
+          go list -m -f '{{if not .Indirect}}{{.Path}} {{.Version}}{{end}}' all | sort | tee /tmp/direct.txt
+          diff <(printf '%s\n' 'github.com/YanIanZ/sela ' 'github.com/jackc/pgx/v5 v5.10.0' 'golang.org/x/crypto v0.57.0' 'golang.org/x/text v0.42.0' | sort) /tmp/direct.txt
+      - name: Migrations up, status, down-last (all), up
+        env:
+          SELA_ENV: test
+          SELA_DATA_KEK_ID: test-ci
+        run: |
+          go build -o build/sela ./cmd/sela
+          export SELA_DATA_KEK="$(./build/sela keys generate-kek --env test | sed -n 's/^SELA_DATA_KEK=//p')"
+          psql "$SELA_TEST_DATABASE_URL" -c 'CREATE DATABASE sela_ci_migrate'
+          export SELA_DATABASE_URL="${SELA_TEST_DATABASE_URL/sela_test/sela_ci_migrate}"
+          ./build/sela migrate status || test $? -eq 3
+          ./build/sela migrate dry-run
+          ./build/sela migrate up
+          ./build/sela migrate status
+          for v in $(./build/sela migrate status | awk '$4 == "applied" {print $1}' | sort -r); do
+            ./build/sela migrate down-last --confirm "$v"
+          done
+          ./build/sela migrate status || test $? -eq 3
+          ./build/sela migrate up
+          ./build/sela migrate status
+      - name: go test (race, database tests required)
         run: go test -race -count=1 ./...
+      - name: Restore drill (backup; deletion, sign-up and session revocation after it; restore with the newest key dump, status, reconcile, canary)
+        env:
+          SELA_DRILL_DATABASE_URL: ${{ env.SELA_TEST_DATABASE_URL }}
+        run: scripts/ops/restore-drill.sh --sela build/sela
 
   web:
     name: Frontend typecheck, unit tests and build
@@ -109,18 +163,48 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [go, web]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sela
+          POSTGRES_PASSWORD: sela-dev-only
+          POSTGRES_DB: sela_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sela -d sela_smoke"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v7
       - name: Build image
         run: docker build -f deploy/v2/Dockerfile -t sela-v2:ci .
-      - name: Start container (AI disabled)
-        run: docker run -d --name sela -p 8080:8080 -e SELA_SECURE_COOKIES=false sela-v2:ci
-      - name: Health, readiness and static frontend
+      - name: Production default refuses to start without its configuration
+        run: |
+          if docker run --rm sela-v2:ci > /tmp/refuse.txt 2>&1; then
+            echo "the production default started without a database, key or https origin"; exit 1
+          fi
+          cat /tmp/refuse.txt
+          grep -q 'SELA_DATABASE_URL' /tmp/refuse.txt
+      - name: Start container (development settings, synthetic CI database, AI disabled)
+        run: |
+          kek="$(docker run --rm sela-v2:ci keys generate-kek --env development | sed -n 's/^SELA_DATA_KEK=//p')"
+          docker run -d --name sela --network host \
+            -e SELA_ENV=development -e SELA_SECURE_COOKIES=false -e SELA_DB_AUTO_MIGRATE=true \
+            -e SELA_DATABASE_URL='postgres://sela:sela-dev-only@127.0.0.1:5432/sela_smoke?sslmode=disable' \
+            -e SELA_DATA_KEK="$kek" -e SELA_DATA_KEK_ID=dev-ci sela-v2:ci
+      - name: Health, readiness, static frontend and public /api/v3 routes
         run: |
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/api/v2/health && break; sleep 1; done
-          curl -fsS http://127.0.0.1:8080/api/v2/ready
+          curl -fsS http://127.0.0.1:8080/api/v2/ready | tee /tmp/ready.json
+          grep -q '"database":"ok"' /tmp/ready.json
+          grep -q '"schema":"current"' /tmp/ready.json
           curl -fsS http://127.0.0.1:8080/ | grep -q '<div id="root">'
           curl -fsS http://127.0.0.1:8080/api/v2/ai/status | grep -q '"mode":"disabled"'
+          curl -fsS -o /dev/null http://127.0.0.1:8080/api/v3/auth/options
+          curl -fsS -o /dev/null http://127.0.0.1:8080/api/v3/policies
       - name: Container logs
         if: always()
         run: docker logs sela

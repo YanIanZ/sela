@@ -15,15 +15,40 @@ func clean(t *testing.T) {
 		"SELA_MAX_AI_OPS_PER_SESSION", "SELA_ALLOW_TEST_DOUBLE", "SELA_METRICS_TOKEN", "SELA_MAX_SESSIONS_PER_CLIENT"} {
 		t.Setenv(k, "")
 	}
+	for _, k := range v3Keys {
+		t.Setenv(k, "")
+	}
+	// libpq variables pgx reads when it parses the database URL.
+	for _, k := range pgEnvKeys {
+		t.Setenv(k, "")
+	}
+}
+
+var pgEnvKeys = []string{"PGHOST", "PGPORT", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGPASSFILE", "PGSERVICE", "PGSERVICEFILE",
+	"PGSSLMODE", "PGSSLROOTCERT", "PGSSLCERT", "PGSSLKEY", "PGSSLSNI", "PGSSLNEGOTIATION", "PGTARGETSESSIONATTRS", "PGAPPNAME", "PGCONNECT_TIMEOUT"}
+
+// production sets a complete, valid production environment.
+func production(t *testing.T) {
+	t.Helper()
+	t.Setenv("SELA_ENV", "production")
+	t.Setenv("SELA_DATABASE_URL", "postgres://sela:secret-db-password@db.internal.example:5432/sela?sslmode=verify-full")
+	t.Setenv("SELA_DATA_KEK", testKEK)
+	t.Setenv("SELA_DATA_KEK_ID", "prod-2026-11")
+	t.Setenv("SELA_PUBLIC_ORIGIN", "https://sela.example")
 }
 
 func TestDefaultsAreProductionWithAIDisabled(t *testing.T) {
 	clean(t)
+	// Production without a database, KEK and https origin refuses to start.
+	if _, err := Load(); err == nil {
+		t.Fatal("production defaults loaded without a database, KEK or origin")
+	}
+	production(t)
 	c, err := Load()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.Env != "production" || c.LLMMode != "disabled" || !c.SecureCookies || c.MaxSessions != 500 {
+	if c.Env != "production" || c.LLMMode != "disabled" || !c.SecureCookies || c.MaxSessions != 500 || c.Store != "disabled" {
 		t.Fatalf("unexpected defaults: %+v", c)
 	}
 }
@@ -31,9 +56,12 @@ func TestDefaultsAreProductionWithAIDisabled(t *testing.T) {
 func TestTestDoubleIsRefusedInProductionAndWithoutOptIn(t *testing.T) {
 	clean(t)
 	t.Setenv("SELA_LLM_MODE", "test_double")
+	production(t)
 	if _, err := Load(); err == nil {
 		t.Fatal("test double accepted in production")
 	}
+	clean(t)
+	t.Setenv("SELA_LLM_MODE", "test_double")
 	t.Setenv("SELA_ENV", "development")
 	if _, err := Load(); err == nil {
 		t.Fatal("test double accepted without SELA_ALLOW_TEST_DOUBLE")
@@ -50,6 +78,7 @@ func TestTestDoubleIsRefusedInProductionAndWithoutOptIn(t *testing.T) {
 
 func TestModalNeedsHTTPSAndEveryCredential(t *testing.T) {
 	clean(t)
+	production(t)
 	t.Setenv("SELA_LLM_MODE", "modal")
 	t.Setenv("SELA_LLM_BASE_URL", "http://example.invalid")
 	t.Setenv("SELA_LLM_API_KEY", "k")
@@ -82,7 +111,7 @@ func TestModalNeedsHTTPSAndEveryCredential(t *testing.T) {
 
 func TestInvalidValuesAreRejected(t *testing.T) {
 	for k, v := range map[string]string{
-		"SELA_ENV":            "staging",
+		"SELA_ENV":            "qa",
 		"SELA_LLM_MODE":       "openai",
 		"SELA_MAX_SESSIONS":   "0",
 		"SELA_LLM_OP_TIMEOUT": "1s",
@@ -90,6 +119,10 @@ func TestInvalidValuesAreRejected(t *testing.T) {
 	} {
 		t.Run(k, func(t *testing.T) {
 			clean(t)
+			production(t)
+			if _, err := Load(); err != nil {
+				t.Fatalf("baseline: %v", err)
+			}
 			t.Setenv(k, v)
 			if _, err := Load(); err == nil {
 				t.Fatalf("%s=%s accepted", k, v)
@@ -100,6 +133,7 @@ func TestInvalidValuesAreRejected(t *testing.T) {
 
 func TestMetricsTokenIsOptionalStrongAndNeverPrinted(t *testing.T) {
 	clean(t)
+	production(t)
 	c, err := Load()
 	if err != nil || c.MetricsToken != "" {
 		t.Fatalf("metrics should be off by default: %q %v", c.MetricsToken, err)
