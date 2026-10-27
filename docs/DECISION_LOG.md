@@ -1,6 +1,6 @@
 # Decision log
 
-Chronological, append-only record of Sela decisions: v2 implementation decisions D-001 to D-025 (D-025 is main's merge of the owner's DeepSeek fallback), the v3 decisions D-026 to D-050 of 2026-10-26 (D-026 is owner direction, owner brief v3; D-027 to D-050 are PM decisions), the v3 engineering defaults D-051 and D-052, the merge record D-053, and the later v3 PM decisions from D-054 (D-054 the Go toolchain, D-055 the residual risks accepted for a controlled pilot, D-056 the PM confirmations of the integration pass). Authority: [SPEC.md](../SPEC.md); the [decision summary](DECISIONS.md) lists origins. Each entry states origin, the decision, why, and what it changes. Origins: **owner direction** (user-confirmed; changing it needs new owner direction), **PM decision** (taken by the delivery lead under the authority of owner brief v3; recorded as decided and revisable by the owner) and **engineering** (revisable with rationale). Conflicts that led to entries are in the [conflict matrix](CONFLICT_MATRIX.md).
+Chronological, append-only record of Sela decisions: v2 implementation decisions D-001 to D-025 (D-025 is main's merge of the owner's DeepSeek fallback), the v3 decisions D-026 to D-050 of 2026-10-26 (D-026 is owner direction, owner brief v3; D-027 to D-050 are PM decisions), the v3 engineering defaults D-051 and D-052, the merge record D-053, and the later v3 PM decisions from D-054 (D-054 the Go toolchain, D-055 the residual risks accepted for a controlled pilot, D-056 the PM confirmations of the integration pass, D-057 the P4 consultation and sharing defaults). Authority: [SPEC.md](../SPEC.md); the [decision summary](DECISIONS.md) lists origins. Each entry states origin, the decision, why, and what it changes. Origins: **owner direction** (user-confirmed; changing it needs new owner direction), **PM decision** (taken by the delivery lead under the authority of owner brief v3; recorded as decided and revisable by the owner) and **engineering** (revisable with rationale). Conflicts that led to entries are in the [conflict matrix](CONFLICT_MATRIX.md).
 
 Entries are never rewritten. When a later decision replaces an earlier one, the earlier entry keeps its text and gets a *Status* line that points to its replacement. Superseded decisions still describe the v2 code until that code changes.
 
@@ -268,3 +268,26 @@ Why: both are bounded, stated to users or operators, and outweighed for a contro
 5. **ADR-0002 §11 on guests,** written in the integration pass "for the backend owner to review", is accepted by the PM now; the backend owner may still refine its wording, and the meaning stays as item 2 states it.
 
 Why: the integration pass wrote these points from the code (`internal/account`) and from D-055 and left them open for the PM; these confirmations settle them. Not part of them: the SPEC §G foundation status note as a whole, which the PM still confirms or withdraws, and the milestones given to S-262 criterion 3 (the in-app notice in P2, the status-page post in P7). Nothing becomes implemented, verified live or ready for controlled pilot by this entry: S-262 criterion 3 stays planned; S-263 stays blocked externally (B-3, B-15); S-177 stays in progress (the Pasal 21 element test, the per-provider texts and the legal review, B-10); and the web parts of F-17 and F-33 are not done. Changes: the [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26) (implemented gate); the [decision summary](DECISIONS.md); [implementation status](IMPLEMENTATION_STATUS.md) §1 to §3; [traceability](REQUIREMENTS_TRACEABILITY.md) S-177 and DL-3; the [backlog](BACKLOG.md) S-002, S-177 and S-262; [ADR-0002](adr/ADR-0002-persistence-accounts-and-encryption.md) §1, §11, its consequences and F-46; the [development](DEVELOPMENT.md) guide; [runbook §8](RUNBOOK.md#8-backup-and-restore); the "ready for controlled pilot" gate in [roadmap §2](ROADMAP.md#2-release-ladder) and [blockers, Gates](BLOCKERS.md#gates); the status line of D-055. Closes [conflict matrix](CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 64.
+
+## D-057
+
+2026-10-27 · PM decision (P4 contract open points) · **Consultation summary and sharing defaults.** The PM settles the open points CS-OP-1 to CS-OP-28 of the [P4 contract](api/V3_CONSULTATION_AND_SHARING.md#13-open-points-for-the-pm):
+
+1. **The recommended defaults are adopted** as written in contract §13 for CS-OP-1 to CS-OP-24 and CS-OP-26 to CS-OP-28. In short:
+   - share durations of 24 hours, 3, 7 or 14 days with none pre-selected;
+   - the link and code shown once, with a sealed copy kept only for a 10-minute retry;
+   - reauthentication before an account creates a share;
+   - each share is its own consent record under a versioned `sharing` text, with no account-level purpose;
+   - only the person sets the consultation statuses;
+   - a crisis match never blocks and never triggers a share;
+   - rejected AI wording is never shown or stored;
+   - all six contact kinds are masked;
+   - no device data about a recipient;
+   - a restore revokes every active share;
+   - deleting a source ends every active share that quotes it;
+   - withdrawing guardian consent revokes a minor's shares;
+   - the purpose "Lainnya" has no free text.
+2. **CS-OP-25 (AT-4 drafting from whole selected sources) takes the narrower alternative for now.** Only `mode: "wording"` is offered: the person picks the quotes, and only those go to a provider. `mode: "sources"` may be built, but it stays behind a configuration switch that is off by default in every environment. It may be switched on only when three things hold: the legal review clears cross-border processing of that input (B-10, [D-049](#d-049)), the `ai_processing` and per-provider texts name it, and the PM records the change.
+3. **The points marked legal** (CS-OP-4, CS-OP-13, CS-OP-21, CS-OP-25, CS-OP-27) are adopted as the interim rule and wait for B-10 before real users. AT-4 and AT-5 abstain outside development and test until the combined `ai_processing` text is published (CS-OP-13).
+
+Why: the owner brief asks for sharing with consent per content, recipient and purpose, with expiry, revocation and an access audit. It also says to minimise what goes to providers and to process across providers only with consent. The recommended defaults follow the backlog criteria (S-090 to S-104, S-120, S-121, S-130, S-131), SPEC V30 to V34 and [D-041](#d-041) / [D-042](#d-042). Where a default sends more data across borders (CS-OP-25), the narrower option holds until the legal review. Nothing becomes implemented by this entry. Changes: the [P4 contract](api/V3_CONSULTATION_AND_SHARING.md) §13 marks each point decided; the P4 build follows it.
