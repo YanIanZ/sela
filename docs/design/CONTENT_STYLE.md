@@ -1,6 +1,6 @@
 # Sela v3 content style
 
-Status: **design decision** by the design lead, 2026-10-26, revised after review rounds 1 and 2 ([DESIGN_DIRECTION.md §11](DESIGN_DIRECTION.md#11-revision-log)). **Not implemented.**
+Status: **design decision** by the design lead, 2026-10-26, revised after review rounds 1 and 2 ([DESIGN_DIRECTION.md §11](DESIGN_DIRECTION.md#11-revision-log)). **Partially applied in the 2026-10-28 v3 frontend; no full copy audit or native-speaker review is claimed.**
 
 This guide covers:
 

@@ -10,28 +10,37 @@
 
 Sela is becoming a bilingual (Indonesian/English) listening and continuity app for people aged 15 to 50 and over (owner brief v3, 2026-10-26). A person can talk without filling in a form, keep personal notes under their control, see their own history, correct what Sela remembers, and — only if they want to — prepare a "Ringkasan untuk konsultasi" (summary for a consultation) to share with someone they invite. Sela does not diagnose, treat, triage or replace a professional, and it never contacts anyone on the user's behalf.
 
-**That is the plan, not yet the product.** The v3 backend foundation (accounts, guest mode, encrypted storage, export, deletion) is built and verified locally, and its CI run on draft PR #9 passed ([foundation status note](SPEC.md#foundation-status-note-2026-10-26)), but no v3 screen exists yet. What a person can use today is the **v2 demo**: synthetic adults, fictional professionals and simulated care. It books nothing real, contacts no one, and gives no diagnosis, prescription, triage or therapy. Crisis language stops the ordinary journey before any AI runs and shows verified Indonesian help services.
+**That is the plan, and the v3 frontend now exists for the parts whose services exist.** The v3 backend foundation (accounts, guest mode, encrypted storage, export, deletion) is built and verified locally, and the v3 frontend on `feat/v3-experience` implements the 28 screen groups to the extent their `/api/v3` routes exist. Memory, consultation summary/sharing/recipient/follow-up and reading are honest blocked states, not working mocks. Nothing is verified live, and the product is not pilot-ready. The **v2 demo** remains at `/demo` (fictional professionals and simulated care); it books nothing real, contacts no one, and gives no diagnosis, prescription, triage or therapy. Crisis language still stops the ordinary journey before any AI runs and shows verified Indonesian help services.
 
-## Status (26 October 2026)
+## Current local development increment (28 October 2026)
+
+The `feat/v3-experience` branch (stacked on the local `feat/v3-core-journey` work) delivers the full v3 frontend for the existing `/api/v3` routes: the design system and app shell, Introduction/About, onboarding, sign-in/recovery/guest upgrade, Home, Talk and the conversation room, notes, check-ins, timeline and patterns, Support, Immediate help, Privacy & data, Display & accessibility, Account and Policies. Personal records use PostgreSQL and per-user encryption. Memory, summaries, preparation, sharing, the v3 recipient page and reading are truthful unavailable states with their blockers named; the v2 synthetic recipient stays at `/r`.
+
+Evidence: [frontend validation](docs/V3_FRONTEND_VALIDATION.md) and the [owner acceptance guide](OWNER_TESTER.md). Still open: the missing v3 feature APIs, reading editorial review, manual screen-reader/usability review, and all release gates. No live, clinical or pilot claim is made.
+
+For the configured local Docker environment, run `bash scripts/run-local-v3.sh` and open http://localhost:8080. It reads only the ignored local `.env.docker-testing` and `.env.pg-testing` files; it never prints their contents. The default v3 UI needs the database; a no-database v2-only run can still use `/demo`.
+
+## Status (28 October 2026)
 
 [SPEC.md](SPEC.md) is the source of truth. Status words: planned → in progress → implemented → verified locally → verified live → ready for controlled pilot → public release, or blocked externally; [SPEC §G](SPEC.md#g-goal) defines them. Detailed status: [implementation status](docs/IMPLEMENTATION_STATUS.md) · [requirements traceability](docs/REQUIREMENTS_TRACEABILITY.md) · [backlog](docs/BACKLOG.md) · [blockers](docs/BLOCKERS.md).
 
-### Sela v3 (branch `feat/sela-v3-pilot`)
+### Sela v3 (local delivery branch `feat/v3-experience`)
 
-The branch was first stacked on PR #6, which was merged into main on 2026-10-26 (`7fc6678`). It is now open as draft PR #9 against main; safety ruleset `-5` is a WIP snapshot in draft PR #8 to main. Status words are those of [SPEC §G](SPEC.md#g-goal).
+The branch stacks the local `feat/v3-core-journey` work on merged main `e62506a` (PRs #9–#13; safety ruleset `-5` is a WIP snapshot in draft PR #8 to main, excluded). Status words are those of [SPEC §G](SPEC.md#g-goal).
 
 | Area | Status |
 | --- | --- |
 | Spec realignment, decisions D-026 to D-056, blockers, backlog, [Dengar.in feature matrix](docs/DENGARIN_FEATURE_MATRIX.md), ADR-0002, ADR-0003, API v3 foundation contract (P1) | In progress: documents written and committed, under review |
 | Foundation: PostgreSQL storage, per-user encryption, accounts, guest mode, recovery codes, consents, audit, export, deletion, backup and restore (`/api/v3`, P2) | **Verified locally, CI passed** (commit `0ff3341`, in draft PR #9 against main; [foundation status note](SPEC.md#foundation-status-note-2026-10-26)): every local suite passes on the commit — formatting, vet and the race tests against PostgreSQL 16, the migration round trip, the restore drill, and the web, e2e, Python and `sela-eval` suites — and `.github/workflows/v2.yml` run 40405475962 passed all five jobs on PR #9 (it has no `sela-eval` step; [implementation status](docs/IMPLEMENTATION_STATUS.md#1-where-v3-stands)); the restore announcement in the app and on a status page (backlog S-262) is planned; the hosted database, secret manager and backups are **blocked externally** (B-3, B-15) |
-| Design direction, information architecture, screens, content style, accessibility criteria (P2) | In progress: documents written and committed ([design](docs/design/DESIGN_DIRECTION.md)), PM review not recorded |
-| Frontend shell: design system, app shell with help and Quick Exit, sign-in, settings (P2) | In progress: uncommitted in the working tree of `feat/sela-v3-pilot`; no v3 screen is implemented |
-| Conversation room, journal, check-in, memory, timeline, home (P3) | In progress: the backend is being written on a separate branch, not merged; the screens are planned |
+| Design direction, information architecture, screens, content style, accessibility criteria (P2) | Documents committed; **implemented and locally checked** for the screens whose APIs exist ([frontend validation](docs/V3_FRONTEND_VALIDATION.md)); PM/browser review and manual accessibility audit remain open |
+| Frontend shell and screens (P2–P4) | **Implemented and verified locally** on `feat/v3-experience`: 28 screen groups accounted for; real APIs for accounts, records, listening, privacy, export/deletion and help. Automated and Chromium evidence: typecheck, 58 tests, 18 axe scans, 320px/desktop, 44/44 browser checks. Not verified live; manual screen-reader/usability review not done |
+| Conversation room, journal, check-in, timeline and home (P3) | **Implemented and verified locally** for save/don't-save, listening, note versions, check-ins with energy/tags, timeline and patterns. Corrections, reflection cards, memory proposals, hold-timeout warning and derived-item deletion remain open |
+| Memory, consultation summary, sharing, recipient and reading (P3–P6) | **Blocked surfaces**: honest unavailable states, no fake data; the APIs/editorial review are missing |
 | Consultation summary, sharing with purpose, invited recipient, follow-up (P4) | Planned |
 | AI routing: Meta on Modal primary, Claude Sonnet 5.5 verifier, DeepSeek fallback (P5) | In progress: committed on branch `feat/sela-v3-ai` and open as draft PR #10 against `feat/sela-v3-pilot`, not merged; nothing verified; live use **blocked externally** (B-1, B-8, B-9) |
 | Research and reading content (P6) | In progress: committed on branch `feat/sela-v3-research` and open as draft PR #11 against main, not merged; human appraisal **blocked externally** (B-4) |
 | Operations and compliance documents (P7) | In progress on a separate branch, not merged; deployment **blocked externally** (B-3, B-15) |
-| Ages 15–17 | The age band and the guardian consent record backend are verified locally (with the foundation); the rest is planned; production use **blocked externally** until a legal review (B-10) |
+| Ages 15–17 | Onboarding, confidentiality, guest-only start and guardian consent are implemented and locally checked; 15 and under-15 are blocked. The server still has one `15_17` band, and production use stays **blocked externally** until legal review (B-10) |
 | Controlled pilot with real users | **Not ready**: needs live providers, the legal review (B-10), hosting and region (B-3, B-15), re-verified help lines (B-5), owner testing and the restore announcement that the privacy text promises (S-262 criterion 3, S-263) |
 
 ### Sela v2 (PR #6, merged into main as `7fc6678`; the demo configuration)

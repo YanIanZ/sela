@@ -1,6 +1,6 @@
 # Sela v3 accessibility acceptance criteria
 
-Status: **design decision** by the design lead, 2026-10-26, revised after review rounds 1 and 2 ([DESIGN_DIRECTION.md §11](DESIGN_DIRECTION.md#11-revision-log)). **Not implemented and not yet verified.** No screen meets these criteria until the tests and manual reviews described here have been run and their results recorded (P7, P8).
+Status: **design decision** by the design lead, 2026-10-26, revised after review rounds 1 and 2 ([DESIGN_DIRECTION.md §11](DESIGN_DIRECTION.md#11-revision-log)). **Partially implemented and locally checked on 2026-10-28.** Automated axe WCAG 2.0/2.1/2.2 A/AA, keyboard/focus, 320px reflow, text size and the four schemes were checked; **no manual screen-reader or human usability audit has been performed**, so no screen is claimed as verified against every criterion. Evidence: [V3_FRONTEND_VALIDATION.md](../V3_FRONTEND_VALIDATION.md).
 
 ## 1. Target and sources
 
