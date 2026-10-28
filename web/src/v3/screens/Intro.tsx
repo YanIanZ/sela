@@ -6,6 +6,7 @@ import { useAnnounce, useWords } from "../shared";
 import { Icon } from "../icons";
 import {
   LinkButton,
+  MoodArt,
   Notice,
   PageHeader,
 } from "../ui";
@@ -43,14 +44,7 @@ export function IntroPage() {
             </p>
           </div>
         </div>
-        <img
-          className="n-brand-art"
-          fetchPriority="high"
-          src="/illustrations/sela-room.webp"
-          alt=""
-          width={1100}
-          height={825}
-        />
+        <MoodArt className="n-brand-art" priority />
       </section>
 
       <div className="n-intro-details">

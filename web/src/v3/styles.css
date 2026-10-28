@@ -87,7 +87,7 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 .n-welcome .s-btn--primary { min-height: 3.125rem; padding-inline: 1.25rem; gap: 1.5rem; }
 .n-welcome-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
 .n-welcome-actions + p, .n-welcome-copy > .s-hint { margin-top: 1rem; margin-bottom: 0; max-width: 31rem; font-size: var(--font-size-1); }
-.n-brand-art { display: block; width: 100%; max-width: 31rem; height: auto; aspect-ratio: 4 / 3; object-fit: contain; justify-self: center; }
+.n-brand-art { width: 100%; max-width: 31rem; justify-self: center; }
 
 /* Signed-in Home is continuity first: a compact thesis strip, then records. */
 /* Home (S07): a page header with the three actions, then the real records. */
@@ -267,7 +267,7 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
   .s-home-actions .s-btn { width: 100%; justify-content: center; }
   .s-shell .n-welcome h1 { max-width: 15ch; margin-bottom: 1.125rem; }
   .n-welcome-copy > p { margin-bottom: 1.25rem; }
-  .n-brand-art { max-width: 24rem; width: 100%; max-height: 18rem; }
+  .n-brand-art { max-width: 24rem; }
   .n-intro-details { grid-template-columns: minmax(0, 1fr); gap: 2rem; margin-top: 2rem; }
   .n-intro-controls { padding-top: 1.5rem; border-top: 1px solid var(--c-border-subtle); }
   .s-onboard, .s-auth-card { padding: 1.5rem; }

@@ -1017,6 +1017,21 @@ export function Divider() {
   return <hr className="s-divider" />;
 }
 
+/** The brand illustration, tinted toward the active colour mood (palettes.css). */
+export function MoodArt({ className = "", priority = false }: { className?: string; priority?: boolean }) {
+  return (
+    <span className={`s-mood-art ${className}`.trim()}>
+      <img
+        src="/illustrations/sela-room.webp"
+        alt=""
+        width={1100}
+        height={825}
+        fetchPriority={priority ? "high" : undefined}
+      />
+    </span>
+  );
+}
+
 export function ExternalLink({
   href,
   children,
