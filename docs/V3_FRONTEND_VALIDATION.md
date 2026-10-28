@@ -125,6 +125,17 @@ Run on 2026-10-28 in this workspace.
 
 ### Browser checks
 
+PR #14 re-verification (2026-10-28): `go vet ./...` and the full
+`SELA_REQUIRE_DB_TESTS=1 go test -race -count=1 ./...` passed in Docker with
+PostgreSQL 16. Frontend typecheck, all 58 tests and the production build passed.
+The image built from `10b3ec6` served a current schema and healthy database.
+The browser runner now exits nonzero for any failed check (SPEC BUG-3): an
+injected journey exception returned 0 before the fix and 1 after it. The normal
+44-check journey passed after the fix with exit status 0 and no browser errors. Docker browser checks use localhost
+in the application's network namespace and the installed system Chromium;
+HTTP container hostnames cause a browser secure-origin warning and are not
+used as the acceptance origin. No paid provider call is needed for this run.
+
 Runner: `npm install --no-save playwright && npx playwright install chromium`
 (the repository does not add Playwright as a dependency), then
 `E2E_BASE_URL=http://127.0.0.1:8080 node e2e/v3-frontend.e2e.mjs`. The script

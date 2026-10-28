@@ -227,4 +227,5 @@ try {
 } finally {
   writeFileSync(join(OUT, "results.json"), JSON.stringify({ results, errors }, null, 2));
   await browser.close();
+  process.exitCode = results.some((result) => !result.ok) ? 1 : 0;
 }
