@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/YanIanZ/sela/internal/account"
+	"github.com/YanIanZ/sela/internal/ai"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/research"
 )
@@ -36,6 +37,7 @@ const (
 
 // Options configures the HTTP layer.
 type Options struct {
+	AIRouter *ai.Router
 	// PublicOrigin, when set (e.g. https://sela.example), is the only Origin
 	// accepted for mutations; otherwise the request Host is used.
 	PublicOrigin string

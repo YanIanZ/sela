@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useI18n } from '../i18n';
-import { Link, useRouter } from '../lib/router';
+import { Link, useRouter, routeHref } from '../lib/router';
 import { useSession } from '../lib/session';
 import { useCatalog } from '../lib/catalog';
 import { Button, ErrorNotice, Notice, PageHeader } from '../components/ui';
@@ -29,7 +29,7 @@ export function SessionEnded() {
       <div className="stack">
         <PageHeader title={t('settings.delete.title')} />
         <Notice tone="success">{t('settings.delete.done')}</Notice>
-        <Button onClick={() => { window.location.assign('/start'); navigate('/start', { replace: true }); }}>{t('app.sessionEnded.restart')}</Button>
+        <Button onClick={() => { window.location.assign(routeHref('/start')); navigate('/start', { replace: true }); }}>{t('app.sessionEnded.restart')}</Button>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export function SessionEnded() {
     <div className="stack">
       <PageHeader title={t('app.sessionEnded.title')} />
       <Notice>{t('app.sessionEnded.body')}</Notice>
-      <Button onClick={() => { window.location.assign('/start'); navigate('/start', { replace: true }); }}>{t('app.sessionEnded.restart')}</Button>
+      <Button onClick={() => { window.location.assign(routeHref('/start')); navigate('/start', { replace: true }); }}>{t('app.sessionEnded.restart')}</Button>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import (
 // v3Messages are the localized messages of the codes /api/v3 adds
 // (API_SPEC_V3 §2). Shared codes keep their v2 messages.
 var v3Messages = map[string]message{
+	"storage_required":           {"Pilih simpan sebelum menyimpan catatan ini.", "Choose to save before storing this entry."},
 	"not_signed_in":              {"Kamu belum masuk atau sesimu sudah berakhir. Silakan masuk lagi.", "You are not signed in, or your session has ended. Please sign in again."},
 	"invalid_credentials":        {"Nama pengguna atau kata sandi tidak cocok.", "The username or password does not match."},
 	"recovery_failed":            {"Nama pengguna atau kode pemulihan tidak cocok, atau kode itu sudah pernah dipakai.", "The username or recovery code does not match, or that code was already used."},
@@ -35,7 +36,8 @@ var v3Messages = map[string]message{
 
 // v3Status is the documented HTTP status of every code /api/v3 returns.
 var v3Status = map[string]int{
-	"invalid_input": http.StatusBadRequest, "not_found": http.StatusNotFound, "method_not_allowed": http.StatusMethodNotAllowed,
+	"storage_required": http.StatusForbidden,
+	"invalid_input":    http.StatusBadRequest, "not_found": http.StatusNotFound, "method_not_allowed": http.StatusMethodNotAllowed,
 	"stale_version": http.StatusConflict, "invalid_transition": http.StatusConflict, "policy_outdated": http.StatusConflict,
 	"too_large": http.StatusRequestEntityTooLarge, "unsupported_media": http.StatusUnsupportedMediaType, "cross_origin": http.StatusForbidden,
 	"rate_limited": http.StatusTooManyRequests, "internal": http.StatusInternalServerError,

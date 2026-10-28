@@ -1,5 +1,7 @@
 # Sela product
 
+**2026-10-28 workspace update:** the v3 frontend is implemented and verified locally on `feat/v3-experience` against the existing `/api/v3` routes; default entry uses v3 and the synthetic v2 journey stays at `/demo`. Memory, consultation summary/sharing/recipient/follow-up and reading are honest blocked states named in the UI. See [implementation status](IMPLEMENTATION_STATUS.md) and [frontend validation](V3_FRONTEND_VALIDATION.md). The dated status paragraph below predates this work; no requirement changed.
+
 Status: **Sela v3 is planned.** No v3 surface is implemented yet; the backend foundation behind them (accounts, guest mode, encrypted storage, consents, export, deletion, backup and restore) is verified locally, and its CI run on draft PR #9 passed, with no screen yet ([SPEC](../SPEC.md) T14, [foundation status note](../SPEC.md#foundation-status-note-2026-10-26)). **The v2 demo journey is implemented and verified locally** in `web/` and `/api/v2` ([below](#v2-demo-journey-implemented-verified-locally)); see [implementation status](IMPLEMENTATION_STATUS.md). Authority: [SPEC](../SPEC.md) §G, C1–C26, I.web, V26–V42. Feature lineage from Dengar.in: [feature matrix](DENGARIN_FEATURE_MATRIX.md). Screen names below follow the [information architecture](design/INFORMATION_ARCHITECTURE.md) (design decision; the design lead may rename screens).
 
 ## What Sela is

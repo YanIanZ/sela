@@ -109,6 +109,7 @@ func (s *Server) v3Logout(w http.ResponseWriter, r *http.Request) {
 		p, err := s.opt.Accounts.Authenticate(r.Context(), tok)
 		switch {
 		case err == nil:
+			s.v3.listening.purge(p, false)
 			if err := s.opt.Accounts.Logout(r.Context(), p.UserID, p.SessionID); err != nil {
 				s.v3Error(w, r, err)
 				return
@@ -130,6 +131,11 @@ func (s *Server) v3LogoutAll(w http.ResponseWriter, r *http.Request, p account.P
 	}
 	if !decodeOptional(w, r, &in) {
 		return
+	}
+	if in.KeepCurrent {
+		s.v3.listening.purgeOthers(p)
+	} else {
+		s.v3.listening.purge(p, true)
 	}
 	n, err := s.opt.Accounts.LogoutAll(r.Context(), p.UserID, p.SessionID, in.KeepCurrent)
 	if err != nil {
@@ -184,6 +190,7 @@ func (s *Server) v3Upgrade(w http.ResponseWriter, r *http.Request, p account.Pri
 		s.v3Error(w, r, err)
 		return
 	}
+	s.v3.listening.purge(p, false)
 	s.signedIn(w, http.StatusOK, res, map[string]any{"recoveryCodes": res.RecoveryCodes})
 }
 
@@ -209,6 +216,9 @@ func (s *Server) v3Recovery(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.v3Error(w, r, err)
 		return
+	}
+	if id, e := account.ParseUUID(res.Profile.ID); e == nil {
+		s.v3.listening.purge(account.Principal{UserID: account.UserID(id)}, true)
 	}
 	s.signedIn(w, http.StatusOK, res, map[string]any{"remainingRecoveryCodes": res.RemainingRecoveryCodes})
 }
@@ -255,6 +265,7 @@ func (s *Server) v3ChangePassword(w http.ResponseWriter, r *http.Request, p acco
 		s.v3Error(w, r, err)
 		return
 	}
+	s.v3.listening.purgeOthers(p)
 	s.setAuthCookie(w, res.Token, res.CookieMaxAge)
 	writeData(w, http.StatusOK, map[string]any{"session": res.Session, "revokedSessions": res.RevokedSessions})
 }
@@ -343,6 +354,7 @@ func (s *Server) v3RevokeSession(w http.ResponseWriter, r *http.Request, p accou
 		s.v3Error(w, r, err)
 		return
 	}
+	s.v3.listening.purgeSession(p.UserID, account.SessionID(id))
 	if current {
 		s.clearAuthCookie(w)
 	}
@@ -370,10 +382,23 @@ func (s *Server) v3PutConsent(w http.ResponseWriter, r *http.Request, p account.
 		writeError(w, r, http.StatusBadRequest, "invalid_input", "granted")
 		return
 	}
+	s.v3.listening.mu.Lock()
+	defer s.v3.listening.mu.Unlock()
 	c, changed, err := s.opt.Accounts.SetConsent(r.Context(), p.UserID, p.SessionID, r.PathValue("purpose"), *in.Granted, in.PolicyVersion)
 	if err != nil {
 		s.v3Error(w, r, err)
 		return
+	}
+	if changed {
+		for _, room := range s.v3.listening.rooms {
+			if room.owner == p.UserID {
+				if room.cancel != nil {
+					room.cancel()
+				}
+				room.Version++
+				room.AIState = "consent_changed"
+			}
+		}
 	}
 	writeData(w, http.StatusOK, map[string]any{"consent": c, "changed": changed})
 }
@@ -528,6 +553,7 @@ func (s *Server) v3DeleteMe(w http.ResponseWriter, r *http.Request, p account.Pr
 		writeError(w, r, http.StatusBadRequest, "invalid_input", "confirm")
 		return
 	}
+	s.v3.listening.purge(p, true)
 	rec, err := s.opt.Accounts.DeleteAccount(r.Context(), p.UserID, p.SessionID)
 	if err != nil {
 		s.v3Error(w, r, err)

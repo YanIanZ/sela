@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/YanIanZ/sela/internal/account"
+	"github.com/YanIanZ/sela/internal/ai"
 	"github.com/YanIanZ/sela/internal/config"
 	"github.com/YanIanZ/sela/internal/db"
 	"github.com/YanIanZ/sela/internal/fixtures"
@@ -120,6 +121,17 @@ func run() error {
 		go runJobs(ctx, accounts, logger)
 	}
 
+	var aiRouter *ai.Router
+	if accounts != nil && cfg.LLMMode != "disabled" {
+		aiConfig, e := ai.LoadFromEnv(nil)
+		if e != nil {
+			return e
+		}
+		aiRouter, e = ai.Build(aiConfig, llm.Config{Mode: llm.Mode(cfg.LLMMode), BaseURL: cfg.LLMBaseURL, APIKey: cfg.LLMAPIKey, ModalKey: cfg.ModalKey, ModalSecret: cfg.ModalSecret, ServedModel: cfg.ServedModel, ModelID: cfg.ModelID, Revision: cfg.ModelRevision}, ai.Deps{Consent: accountAIConsent{accounts}, MetaAdmission: llm.NewAdmission(cfg.LLMConcurrency)})
+		if e != nil {
+			return e
+		}
+	}
 	st := store.NewMemory(store.Options{MaxSessions: cfg.MaxSessions, MaxSessionsPerClient: cfg.MaxSessionsPerClient})
 	svc := journey.New(journey.Config{
 		OpTimeout: cfg.OpTimeout, MaxOpsPerWindow: cfg.MaxOpsPerHour, WarmWindow: cfg.WarmWindow, ColdStartEstimate: cfg.ColdStart, Logger: logger,
@@ -127,7 +139,7 @@ func run() error {
 	handler := httpapi.New(svc, httpapi.Options{
 		PublicOrigin: cfg.PublicOrigin, SecureCookies: cfg.SecureCookies, TrustProxy: cfg.TrustProxy,
 		WebDir: cfg.WebDir, Research: index, Logger: logger, Version: version, MetricsToken: cfg.MetricsToken,
-		Accounts: accounts, AccountConfig: acctCfg, Database: dbStatus, DatabaseRequired: cfg.RequiresDatabase(),
+		AIRouter: aiRouter, Accounts: accounts, AccountConfig: acctCfg, Database: dbStatus, DatabaseRequired: cfg.RequiresDatabase(),
 		DisableV2Journey: cfg.Store != "memory", HSTS: cfg.Env == config.EnvProduction,
 	})
 

@@ -15,6 +15,7 @@ import (
 
 	"github.com/YanIanZ/sela/internal/account"
 	"github.com/YanIanZ/sela/internal/db/dbtest"
+	"github.com/YanIanZ/sela/internal/fixtures"
 	"github.com/YanIanZ/sela/internal/httpapi"
 )
 
@@ -247,7 +248,7 @@ func TestV3StoreUnavailable(t *testing.T) {
 	t.Parallel()
 	e := newV3(t, v3opt{noStore: true})
 	c := e.client()
-	if r := c.must(200, "GET", "/api/v3/policies", nil); len(r.data()["policies"].(map[string]any)) != 3 {
+	if r := c.must(200, "GET", "/api/v3/policies", nil); len(r.data()["policies"].(map[string]any)) != len(fixtures.V3PolicyVersions()) {
 		t.Fatalf("policies: %s", r.raw)
 	}
 	if o := c.must(200, "GET", "/api/v3/auth/options", nil).data(); o["guest"].(map[string]any)["available"] != false {
