@@ -878,55 +878,6 @@ export function DisplayPage() {
               ]}
             />
             <ChoiceGroup
-              legend={w("Suasana warna", "Colour mood")}
-              hint={w(
-                "Hanya mengubah warna dan kelengkungan sudut. Kontras tinggi tetap memakai warnanya sendiri.",
-                "Changes only colours and corner softness. High contrast keeps its own colours.",
-              )}
-              name="palette"
-              value={prefs.palette}
-              onChange={(v) => update("palette", v, w("Suasana warna diubah.", "Colour mood changed."))}
-              variant="rows"
-              options={[
-                {
-                  value: "sampul",
-                  label: w("Sampul (bawaan)", "Sampul (default)"),
-                  hint: w("Kertas hangat dengan sampul berwarna untuk tiap ruang, tenang dan mudah dibaca.", "Warm paper with a coloured cover for each space, calm and easy to read."),
-                  swatch: ["#F3EEE4", "#FBF8F2", "#2F3A63"],
-                },
-                {
-                  value: "embun",
-                  label: w("Embun", "Embun (dew)"),
-                  hint: w("Hijau eukaliptus yang tenang, seperti pagi yang belum terburu-buru.", "Calm eucalyptus green, like a morning that is not in a hurry."),
-                  swatch: ["#EDF3EE", "#FFFFFF", "#2E6A52"],
-                },
-                {
-                  value: "samudra",
-                  label: w("Samudra", "Samudra (sea)"),
-                  hint: w("Biru-hijau laut yang dalam, seirama napas yang pelan.", "Deep sea teal, in rhythm with a slow breath."),
-                  swatch: ["#EAF2F3", "#FFFFFF", "#1C636D"],
-                },
-                {
-                  value: "teduh",
-                  label: w("Teduh", "Teduh (shade)"),
-                  hint: w("Ungu senja yang lembut untuk waktu beristirahat.", "Soft dusk violet for winding down."),
-                  swatch: ["#F0EEF5", "#FFFFFF", "#594994"],
-                },
-                {
-                  value: "pasir",
-                  label: w("Pasir", "Pasir (sand)"),
-                  hint: w("Kertas hangat dengan biru laut dalam, membumi dan akrab.", "Warm paper with deep navy, grounded and familiar."),
-                  swatch: ["#F4EFE7", "#FFFDFA", "#2D4B6C"],
-                },
-                {
-                  value: "lipat",
-                  label: w("Lipat (asli)", "Lipat (original)"),
-                  hint: w("Biru kobalt yang jernih dari identitas awal Sela.", "The clear cobalt of Sela's first identity."),
-                  swatch: ["#EDF0F8", "#FFFFFF", "#3657C7"],
-                },
-              ]}
-            />
-            <ChoiceGroup
               legend={w("Kontras tinggi", "High contrast")}
               name="contrast"
               value={prefs.contrast}

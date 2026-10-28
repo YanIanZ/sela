@@ -11,7 +11,7 @@ import { HomePage } from "./screens/Home";
 import { DashboardPage } from "./screens/Dashboard";
 import { TalkPage } from "./screens/Talk";
 import { NotesPage } from "./screens/Notes";
-import { AboutPage } from "./screens/Intro";
+import { AboutPage } from "./screens/About";
 const SupportPage = lazy(() =>
   import("./screens/Support").then((m) => ({ default: m.SupportPage })),
 );

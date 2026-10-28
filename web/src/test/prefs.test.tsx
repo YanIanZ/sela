@@ -28,16 +28,16 @@ it("V13 follows system theme and contrast changes without changing saved prefere
   expect(window.localStorage.getItem("sela.prefs")).toBeNull();
 });
 
-it("applies the calm default palette, persists a chosen one and ignores unknown values", () => {
+it("drops a colour mood saved by an earlier build: Sampul is the only look", () => {
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
-  window.localStorage.setItem("sela.prefs", JSON.stringify({ palette: "neon" }));
-  function Pick() {
+  window.localStorage.setItem("sela.prefs", JSON.stringify({ palette: "teduh", textScale: "130" }));
+  function Read() {
     const { prefs, set } = usePrefs();
-    return <button onClick={() => set("palette", "teduh")}>{prefs.palette}</button>;
+    return <button onClick={() => set("spacing", "relaxed")}>{"palette" in prefs ? "has-palette" : prefs.textScale}</button>;
   }
-  render(<PrefsProvider><Pick /></PrefsProvider>);
-  expect(document.documentElement).toHaveAttribute("data-palette", "sampul");
+  render(<PrefsProvider><Read /></PrefsProvider>);
+  expect(screen.getByRole("button")).toHaveTextContent("130");
+  expect(document.documentElement).not.toHaveAttribute("data-palette");
   act(() => screen.getByRole("button").click());
-  expect(document.documentElement).toHaveAttribute("data-palette", "teduh");
-  expect(JSON.parse(window.localStorage.getItem("sela.prefs")!).palette).toBe("teduh");
+  expect(JSON.parse(window.localStorage.getItem("sela.prefs")!)).not.toHaveProperty("palette");
 });

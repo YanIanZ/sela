@@ -49,7 +49,6 @@
 /* The cover band: full-bleed colour with no horizontal overflow. */
 .s-shell:not(.s-shell--focused) main .s-page-header,
 .s-shell main .s-cover,
-.s-shell main .n-welcome,
 .s-shell main .s-emergency,
 .s-shell main .s-info-heading {
   position: relative;
@@ -66,21 +65,16 @@
 .s-shell main .s-info-heading p { color: var(--cover-muted); font-family: var(--font-display); font-size: var(--font-size-cover-lead); line-height: 1.4; max-width: 40ch; }
 .s-shell main .s-page-header .s-lead { margin-top: 0.85rem; }
 .s-shell:not(.s-shell--focused) main .s-page-header .s-page-actions { margin-top: 1.5rem; }
-.s-shell main .n-welcome { grid-template-columns: minmax(0, 1fr); border-radius: 0; }
-.s-shell main .n-welcome h1 { font-size: var(--font-size-display); max-width: 14ch; }
-.s-shell main .n-welcome .n-title-accent { color: var(--cover-muted); }
-.s-shell main .n-welcome-copy > p { color: var(--cover-muted); font-family: var(--font-display); font-size: var(--font-size-cover-lead); line-height: 1.4; max-width: 44ch; }
-.s-shell main .n-welcome .s-hint { color: var(--cover-muted); }
-.s-shell:not(.s-shell--focused) :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) a:not(.s-btn) { color: var(--cover-ink); }
-.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-back { color: var(--cover-ink); }
-.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) :focus-visible { outline-color: var(--cover-ink); }
-.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-btn--primary { background: var(--cover-ink); border-color: var(--cover-ink); color: var(--cover); }
-.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-btn--primary:hover { background: transparent; color: var(--cover-ink); }
-.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) :is(.s-btn--secondary, .s-btn:not([class*="s-btn--"])) { background: transparent; border-color: var(--cover-ink); color: var(--cover-ink); }
-.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) :is(.s-btn--secondary, .s-btn:not([class*="s-btn--"])):hover { background: var(--cover-ink); color: var(--cover); }
-.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-btn--quiet { color: var(--cover-ink); }
-.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-btn--quiet:hover { background: transparent; }
-.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-hint { color: var(--cover-muted); }
+.s-shell:not(.s-shell--focused) :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) a:not(.s-btn) { color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) .s-back { color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) :focus-visible { outline-color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) .s-btn--primary { background: var(--cover-ink); border-color: var(--cover-ink); color: var(--cover); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) .s-btn--primary:hover { background: transparent; color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) :is(.s-btn--secondary, .s-btn:not([class*="s-btn--"])) { background: transparent; border-color: var(--cover-ink); color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) :is(.s-btn--secondary, .s-btn:not([class*="s-btn--"])):hover { background: var(--cover-ink); color: var(--cover); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) .s-btn--quiet { color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) .s-btn--quiet:hover { background: transparent; }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) .s-hint { color: var(--cover-muted); }
 
 /* A sign-in or onboarding card is a small book: its cover is the card's top. */
 .s-shell main :is(.s-onboard, .s-auth-card) > .s-page-header { margin: -2rem -2rem 1.75rem; padding: 2rem; border-image: none; background: var(--cover); border-radius: var(--radius-4) var(--radius-4) 0 0; }
@@ -94,8 +88,8 @@
 /* Ruled pages: sections open on an ink rule; records read in the serif. */
 .s-shell main .s-section-title { align-items: baseline; }
 .s-shell .s-entry-list { border-top: 2px solid var(--c-text); border-radius: 0; background: transparent; padding-inline: 0; }
-.s-shell .s-entry-list > a, .s-shell .s-entry-row > a { padding-inline: 0.25rem; }
-.s-shell .s-entry-list > a:hover, .s-shell .s-entry-row > a:hover { background: var(--c-surface-quiet); }
+.s-shell .s-entry-list > a { padding-inline: 0.25rem; }
+.s-shell .s-entry-list > a:hover { background: var(--c-surface-quiet); }
 .s-shell .s-entry-list strong { font-size: var(--font-size-1); font-weight: 600; color: var(--c-muted); }
 .s-shell .s-entry-list span > strong:only-child { font-size: var(--font-size-2); color: var(--c-text); }
 .s-shell .s-entry-list small { font-family: var(--font-display); font-size: 1.0625rem; font-weight: 500; color: var(--c-text); margin-top: 0.15rem; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
@@ -125,13 +119,13 @@
 }
 
 /* High contrast keeps its own colours: covers become ruled headings. */
-:root[data-scheme^="contrast"] .s-shell :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) { border-image: none; background-color: transparent; border-bottom: 2px solid var(--c-text); }
+:root[data-scheme^="contrast"] .s-shell :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) { border-image: none; background-color: transparent; border-bottom: 2px solid var(--c-text); }
 @media (forced-colors: active) {
-  .s-shell :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) { border-image: none; background-color: Canvas; color: CanvasText; border-bottom: 2px solid CanvasText; }
+  .s-shell :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) { border-image: none; background-color: Canvas; color: CanvasText; border-bottom: 2px solid CanvasText; }
   .s-spine { background: CanvasText; }
 }
 @media print {
-  .s-shell :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) { border-image: none; background: none; color: black; }
+  .s-shell :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) { border-image: none; background: none; color: black; }
 }
 
 /* Lists, tabs and filters in the page's print vocabulary. */
@@ -166,7 +160,7 @@
 }
 
 /* Rhythm: a heading sits closer to what it introduces than to what came before. */
-.s-shell main :is(h2, h3) + :is(p, ul, ol, dl, fieldset, .s-field, .s-stack) { margin-top: 0.6rem; }
+.s-shell main :is(h2, h3) + :is(p, ul, ol, dl, fieldset, .s-field) { margin-top: 0.6rem; }
 .s-shell main .s-settings-section > h2 { margin-bottom: 0.75rem; }
 .s-shell .s-choice-group--chips .s-choice, .s-shell .s-lang-btn, .s-shell .s-lang { border-radius: var(--radius-2); }
 

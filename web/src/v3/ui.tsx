@@ -582,8 +582,6 @@ export function ChoiceGroup<T extends string>({
     label: string;
     hint?: string;
     disabled?: boolean;
-    /** Decorative preview colours: ground, surface, accent. */
-    swatch?: [string, string, string];
   }>;
   hint?: string;
   error?: string;
@@ -642,20 +640,6 @@ export function ChoiceGroup<T extends string>({
             />
             {variant === "chips" && value === o.value && (
               <Icon name="check" size={16} />
-            )}
-            {o.swatch && (
-              <span
-                className="s-swatch"
-                aria-hidden="true"
-                style={{
-                  ["--sw-bg" as string]: o.swatch[0],
-                  ["--sw-surface" as string]: o.swatch[1],
-                  ["--sw-accent" as string]: o.swatch[2],
-                }}
-              >
-                <span />
-                <span />
-              </span>
             )}
             <span className="s-choice-text">
               <span>{o.label}</span>

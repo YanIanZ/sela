@@ -1,5 +1,22 @@
 import fallback from "../data/help.fallback.json";
-import type { HelpResource } from "../lib/types";
+
+type Text = { id: string; en: string };
+
+export type HelpResource = {
+  id: string;
+  name: string;
+  region: string;
+  regionName: Text;
+  channels: { kind: "phone" | "whatsapp" | "web"; value: string }[];
+  hours: Text;
+  cost: Text;
+  description: Text;
+  sources: { label: string; url: string; accessedOn: string }[];
+  verificationStatus: string;
+  lastVerified: string;
+  verifiedBy: string;
+  reverifyBy: string;
+};
 
 export const helpData = fallback as unknown as {
   helpNotice: { id: string; en: string };

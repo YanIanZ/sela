@@ -17,14 +17,11 @@ export type TextScale = "100" | "115" | "130" | "150";
 export type Theme = "system" | "light" | "dark";
 export type Contrast = "system" | "more" | "less";
 export type Motion = "system" | "reduced" | "full";
-export type Palette = "sampul" | "embun" | "samudra" | "teduh" | "pasir" | "lipat";
-export const palettes: Palette[] = ["sampul", "embun", "samudra", "teduh", "pasir", "lipat"];
 
 export type Prefs = {
   textScale: TextScale;
   spacing: "normal" | "relaxed";
   theme: Theme;
-  palette: Palette;
   contrast: Contrast;
   motion: Motion;
   showRepliesAtOnce: boolean;
@@ -43,7 +40,6 @@ export const defaultPrefs: Prefs = {
   textScale: "100",
   spacing: "normal",
   theme: "system",
-  palette: "sampul",
   contrast: "system",
   motion: "system",
   showRepliesAtOnce: false,
@@ -66,7 +62,8 @@ function load(): Prefs {
     if (!raw) return defaultPrefs;
     const parsed = JSON.parse(raw) as Partial<Prefs>;
     const next = { ...defaultPrefs, ...parsed };
-    if (!palettes.includes(next.palette)) next.palette = defaultPrefs.palette;
+    // Retired colour-mood choice from earlier builds: Sampul is the only look.
+    delete (next as Partial<Prefs> & { palette?: unknown }).palette;
     return next;
   } catch {
     return defaultPrefs;
@@ -109,7 +106,6 @@ export function effectiveScheme(prefs: Prefs): string {
 function apply(prefs: Prefs) {
   const root = document.documentElement;
   root.setAttribute("data-scheme", effectiveScheme(prefs));
-  root.setAttribute("data-palette", prefs.palette);
   if (prefs.textScale === "100") root.removeAttribute("data-text-scale");
   else root.setAttribute("data-text-scale", prefs.textScale);
   if (prefs.spacing === "relaxed") root.setAttribute("data-spacing", "relaxed");

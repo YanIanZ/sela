@@ -36,7 +36,7 @@ docker run -d --name sela-v3-core-testing --network sela-testing --env-file .env
   -p 127.0.0.1:8080:8080 sela:v3-core >/dev/null
 for attempt in {1..30}; do
   if curl -fsS http://127.0.0.1:8080/api/v2/ready >/dev/null 2>&1; then
-    echo "Sela $build_version is ready: http://localhost:8080 (v2 demo: /demo)"
+    echo "Sela $build_version is ready: http://localhost:8080"
     exit 0
   fi
   sleep 1

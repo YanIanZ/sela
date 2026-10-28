@@ -145,10 +145,10 @@ Warm paper and ink with four flat cover colours and one indigo action voice.
 - **Hairline** (`hairline`): row dividers. **Control edge** (`control-edge`): input and secondary borders.
 
 ### Semantic
-- **Help** (`help` on `help-bg`), **Danger**, **Success**, **Warning** keep the same values in every colour mood so safety meaning never moves.
+- **Help** (`help` on `help-bg`), **Danger**, **Success**, **Warning** keep the same values in every scheme so safety meaning never moves.
 
-### Colour moods
-`prefs.palette` (Display & accessibility) defaults to `sampul`, the values above. `embun`, `samudra`, `teduh`, `pasir` and `lipat` (original cobalt) remap only the `--c-*` ground, text and accent roles in light and dark and soften radii to 6 / 10 / 14px; cover colours and semantic colours stay. High-contrast schemes keep their own values and turn covers into ruled headings. Dark mode deepens covers (brick `#8C3826`, forest `#25483D`, ochre `#B98A33` with dark text, indigo `#2C355A`) on a `#1A1613` ground.
+### Schemes
+Sampul is the only look; there are no alternative colour moods. Display & accessibility offers light, dark (or follow system) and high contrast. High-contrast schemes keep their own values and turn covers into ruled headings. Dark mode deepens covers (brick `#8C3826`, forest `#25483D`, ochre `#B98A33` with dark text, indigo `#2C355A`) on a `#1A1613` ground.
 
 **The Cover Is Not a Button Rule.** Cover colours never mark actions, status or categories of content; they only name the place. Actions stay indigo (or reverse to `on-cover` when sitting on a cover).
 
@@ -223,7 +223,7 @@ Four book spines of different heights in the four cover colours, the last leanin
 - **Do** open each non-focused page on its place's cover band, title in Literata.
 - **Do** keep one indigo primary action per view (reversed on covers).
 - **Do** divide sections with a 2px ink rule and rows with 1px hairlines.
-- **Do** keep Help and Quick exit top-right on every screen, and keep text resize, dark mode, high contrast and colour moods working.
+- **Do** keep Help and Quick exit top-right on every screen, and keep text resize, dark mode and high contrast working.
 - **Do** label synthetic data and unavailable features plainly.
 
 ### Don't:
@@ -231,4 +231,4 @@ Four book spines of different heights in the four cover colours, the last leanin
 - **Don't** put a kicker, date or all-caps eyebrow above a heading.
 - **Don't** add streaks, points, scores, badges or progress visuals.
 - **Don't** float static panels with shadows or nest cards.
-- **Don't** reintroduce the cobalt open-S identity outside the `lipat` colour mood.
+- **Don't** reintroduce the retired cobalt open-S identity or alternative colour moods.

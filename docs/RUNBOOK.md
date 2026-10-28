@@ -42,7 +42,7 @@ SELA_DRILL_DATABASE_URL="$SELA_TEST_DATABASE_URL" scripts/ops/restore-drill.sh  
 python3 -m unittest discover -s tests/research -p 'test_*.py'
 python3 -m unittest discover -s tests/modal -p 'test_*.py'
 python3 scripts/research/corpus_pipeline.py verify
-node e2e/journey.e2e.mjs                   # needs build/ binaries, web/dist and Playwright + Chromium
+E2E_BASE_URL=http://127.0.0.1:8080 node e2e/v3-frontend.e2e.mjs   # app + database running, Playwright + Chromium
 go run ./cmd/sela-eval -mode offline       # deterministic evaluation vs eval/thresholds.json
 go run ./cmd/sela-eval -mode test_double   # + pipeline and fault-injection runs (TEST DOUBLE)
 ```

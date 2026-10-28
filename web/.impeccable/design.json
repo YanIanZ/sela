@@ -270,7 +270,7 @@
       "**Do** open each non-focused page on its place's cover band, title in Literata.",
       "**Do** keep one indigo primary action per view (reversed on covers).",
       "**Do** divide sections with a 2px ink rule and rows with 1px hairlines.",
-      "**Do** keep Help and Quick exit top-right on every screen, and keep text resize, dark mode, high contrast and colour moods working.",
+      "**Do** keep Help and Quick exit top-right on every screen, and keep text resize, dark mode and high contrast working.",
       "**Do** label synthetic data and unavailable features plainly."
     ],
     "donts": [
@@ -278,7 +278,7 @@
       "**Don't** put a kicker, date or all-caps eyebrow above a heading.",
       "**Don't** add streaks, points, scores, badges or progress visuals.",
       "**Don't** float static panels with shadows or nest cards.",
-      "**Don't** reintroduce the cobalt open-S identity outside the `lipat` colour mood."
+      "**Don't** reintroduce the retired cobalt open-S identity or alternative colour moods."
     ]
   }
 }

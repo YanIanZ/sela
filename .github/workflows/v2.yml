@@ -120,44 +120,6 @@ jobs:
       - name: Verify committed research corpus
         run: python3 scripts/research/corpus_pipeline.py verify
 
-  e2e:
-    name: End-to-end journeys (test double, never Meta)
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    needs: [go, web]
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: go.mod
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: |
-            web/package-lock.json
-            e2e/package-lock.json
-      - name: Build Go binaries
-        run: |
-          mkdir -p build
-          go build -o build/sela ./cmd/sela
-          go build -o build/fakellm ./cmd/fakellm
-      - name: Build frontend
-        working-directory: web
-        run: npm ci && npm run build
-      - name: Install Playwright
-        working-directory: e2e
-        run: npm ci && npx playwright install --with-deps chromium
-      - name: Run journeys
-        run: node e2e/journey.e2e.mjs
-      - name: Upload report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: e2e-report
-          path: e2e/results/
-          retention-days: 7
-
   container:
     name: Container image builds and serves health
     runs-on: ubuntu-latest
@@ -205,6 +167,26 @@ jobs:
           curl -fsS http://127.0.0.1:8080/api/v2/ai/status | grep -q '"mode":"disabled"'
           curl -fsS -o /dev/null http://127.0.0.1:8080/api/v3/auth/options
           curl -fsS -o /dev/null http://127.0.0.1:8080/api/v3/policies
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            e2e/package-lock.json
+      - name: Install axe-core and Playwright
+        run: |
+          (cd web && npm ci)
+          (cd e2e && npm ci && npx playwright install --with-deps chromium)
+      - name: v3 browser journey (synthetic data, no AI consent, axe WCAG 2.2 AA)
+        run: E2E_BASE_URL=http://127.0.0.1:8080 node e2e/v3-frontend.e2e.mjs
+      - name: Upload journey report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report
+          path: e2e/results/
+          retention-days: 7
       - name: Container logs
         if: always()
         run: docker logs sela

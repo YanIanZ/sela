@@ -21,20 +21,15 @@
 }
 @media print { .s-shelf-bar { display: none !important; } }
 
-.s-design-preview-notice { position: relative; z-index: 5; margin: 0; padding: .7rem 1rem; background: var(--c-accent); color: var(--c-on-accent); font-size: var(--font-size-1); text-align: center; }
-.s-design-preview-notice--workspace { margin-left: 0; }
-
 /* One reading page across the journal, support, library and settings. */
 .s-workspace-page > .s-narrow { margin-inline: 0; }
 .s-workspace-page[data-space="notes"] > .s-entry-list { padding: 0 1.5rem; background: var(--c-surface); border-radius: var(--radius-3); }
 .s-workspace-page[data-space="notes"] .s-filters { margin-block: 1.5rem; }
-.s-workspace-page .s-settings-main { padding: 1.5rem; background: var(--c-surface); border-radius: var(--radius-3); border-top: 2px solid var(--c-text); }
 @media (min-width: 64em) {
  .s-workspace-page .c-support-intro { grid-template-columns: minmax(0, 1.8fr) minmax(12rem, 1fr); }
  .s-workspace-page .c-support-paths { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
  .s-workspace-page .c-support-paths > section:last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 40em) {
- .s-workspace-page .s-settings-main { padding: 1rem; }
  .s-workspace-page[data-space="notes"] > .s-entry-list { padding-inline: 1rem; }
 }
