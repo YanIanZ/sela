@@ -38,10 +38,10 @@ const (
 	// grants it (default OFF). Kept as "asr_meta" so existing decisions and
 	// the consent registry stay stable; the provider named in the policy text
 	// is what changed.
-	PolicyASRMeta = "asr_meta"
-	actorUser            = "user"
-	actorSystem          = "system"
-	recoveryLowMark      = 3
+	PolicyASRMeta   = "asr_meta"
+	actorUser       = "user"
+	actorSystem     = "system"
+	recoveryLowMark = 3
 )
 
 // Purpose is one consent purpose in the code registry.
