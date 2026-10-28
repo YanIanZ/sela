@@ -161,7 +161,8 @@ function Timeline({ user }: { user: Profile }) {
           { to: "/notes/memory", label: w("Yang Sela ingat", "What Sela remembers") },
         ]}
       />
-      <div className="s-filters" role="group" aria-label={w("Saring entri", "Filter entries")}>
+      <div className="s-filters" role="group" aria-labelledby="filters-label">
+        <span className="s-filters-label" id="filters-label">{w("Tampilkan saja", "Show only")}</span>
         {[
           { kind: "conversation", id: "Percakapan", en: "Conversations" },
           { kind: "note", id: "Catatan", en: "Notes" },
@@ -173,7 +174,7 @@ function Timeline({ user }: { user: Profile }) {
               checked={filters.includes(f.kind)}
               onChange={() => toggle(f.kind)}
             />
-            <Icon name={filters.includes(f.kind) ? "check" : "search"} size={16} />
+            {filters.includes(f.kind) && <Icon name="check" size={16} />}
             <span>{w(f.id, f.en)}</span>
           </label>
         ))}
@@ -333,7 +334,7 @@ function NoteEditor({ user }: { user: Profile }) {
   };
 
   return (
-    <div className="s-narrow">
+    <div className="s-write">
       <PageHeader
         back={{ to: "/notes", label: w("Catatanku", "My notes") }}
         title={w("Tulis catatan", "Write a note")}
@@ -351,7 +352,8 @@ function NoteEditor({ user }: { user: Profile }) {
       />
       <ErrorNotice error={error} />
       {savedAt && <StatusLine tone="success">{savedAt}</StatusLine>}
-      <form className="s-editor" onSubmit={(e) => void submit(e)}>
+      <form className="s-editor s-editor--page" onSubmit={(e) => void submit(e)}>
+        <div className="s-editor-main">
         <TextField
           label={w("Judul", "Title")}
           optional
@@ -368,23 +370,6 @@ function NoteEditor({ user }: { user: Profile }) {
           autoFocus
           onChange={(e) => setText(e.target.value)}
         />
-        <div className="s-actions" role="group" aria-label={w("Pancingan menulis", "Writing prompts")}>
-          <span className="s-small s-muted">{w("Butuh pancingan?", "Need a prompt?")}</span>
-          {([
-            ["Apa yang paling terasa hari ini?", "What feels strongest today?"],
-            ["Apa yang ingin kamu ingat?", "What do you want to remember?"],
-            ["Apa yang membantu, sekecil apa pun?", "What helped, however small?"],
-          ] as const).map(([id, en]) => (
-            <button
-              key={id}
-              type="button"
-              className={buttonClass("quiet")}
-              onClick={() => setText((t) => w(id, en) + "\n" + t)}
-            >
-              {w(id, en)}
-            </button>
-          ))}
-        </div>
         <CheckboxRow
           checked={save}
           onChange={setSave}
@@ -403,6 +388,31 @@ function NoteEditor({ user }: { user: Profile }) {
             {w("Batal", "Cancel")}
           </LinkButton>
         </div>
+        </div>
+        <aside className="s-editor-aside" aria-labelledby="prompts-title">
+          <h2 id="prompts-title">{w("Butuh pancingan?", "Need a prompt?")}</h2>
+          <p className="s-hint">
+            {w("Pilih satu; kalimatnya ditambahkan di awal tulisanmu.", "Pick one; it's added to the start of your writing.")}
+          </p>
+          <ul className="s-prompt-list">
+            {([
+              ["Apa yang paling terasa hari ini?", "What feels strongest today?"],
+              ["Apa yang ingin kamu ingat?", "What do you want to remember?"],
+              ["Apa yang membantu, sekecil apa pun?", "What helped, however small?"],
+            ] as const).map(([id, en]) => (
+              <li key={id}>
+                <button
+                  type="button"
+                  className="s-prompt"
+                  onClick={() => setText((t) => w(id, en) + "\n" + t)}
+                >
+                  <Icon name="plus" size={16} />
+                  <span>{w(id, en)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
       </form>
     </div>
   );
@@ -499,7 +509,7 @@ function CheckIn() {
         )}
       />
       <ErrorNotice error={error} />
-      <form className="s-editor" onSubmit={(e) => void submit(e)}>
+      <form className="s-editor s-editor--sheet" onSubmit={(e) => void submit(e)}>
         <ChoiceGroup
           legend={w("Bagaimana perasaanmu sekarang?", "How are you feeling right now?")}
           name="mood"

@@ -39,9 +39,15 @@ export function PageHeader({
           {back.label}
         </Link>
       )}
-      <h1 id="page-title">{title}</h1>
-      {lead && <p className="s-lead">{lead}</p>}
-      {actions && <div className="s-page-actions">{actions}</div>}
+      <div className="s-page-header-body">
+        <h1 id="page-title">{title}</h1>
+        {(lead || actions) && (
+          <div className="s-page-header-side">
+            {lead && <p className="s-lead">{lead}</p>}
+            {actions && <div className="s-page-actions">{actions}</div>}
+          </div>
+        )}
+      </div>
     </header>
   );
 }

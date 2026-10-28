@@ -76,6 +76,20 @@
 .s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) .s-btn--quiet:hover { background: transparent; }
 .s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .s-emergency, .s-info-heading) .s-hint { color: var(--cover-muted); }
 
+/* A cover wide enough reads like a paperback front: title on the left, the
+ * lead and actions set against it on the right. Sized by the header itself,
+ * so narrow pages (onboarding, consent, forms) keep the stacked cover. */
+.s-shell main .s-page-header { container-type: inline-size; }
+@container (min-width: 52rem) {
+  .s-shell:not(.s-shell--focused) main .s-page-header-body:has(.s-lead) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: clamp(2.5rem, 5vw, 5rem);
+    align-items: end;
+  }
+  .s-shell:not(.s-shell--focused) main .s-page-header-body:has(.s-lead) .s-lead { margin-top: 0; }
+}
+
 /* A sign-in or onboarding card is a small book: its cover is the card's top. */
 .s-shell main :is(.s-onboard, .s-auth-card) > .s-page-header { margin: -2rem -2rem 1.75rem; padding: 2rem; border-image: none; background: var(--cover); border-radius: var(--radius-4) var(--radius-4) 0 0; }
 .s-shell main :is(.s-onboard, .s-auth-card) { border: 1px solid var(--c-border-subtle); background: var(--c-surface); }
@@ -141,7 +155,7 @@
 .s-shell .s-subnav-link:hover { color: var(--c-text); background: var(--c-surface-quiet); }
 .s-shell .s-subnav-link[aria-current="page"] { background: transparent; color: var(--c-text); font-weight: 700; box-shadow: inset 0 -3px 0 var(--c-text); }
 .s-shell .s-filter { border-radius: var(--radius-2); }
-.s-shell .s-filter[aria-pressed="true"], .s-shell .s-filter input:checked + span { border-color: var(--c-text); background: var(--c-sunken); }
+.s-shell .s-filter[aria-pressed="true"], .s-shell .s-filter:has(input:checked) { border-color: var(--c-text); background: var(--c-sunken); }
 .s-shell .s-empty { background: var(--c-surface); border-top: 2px solid var(--c-text); border-radius: 0; }
 .s-shell .s-empty-mark { --mark-1: var(--place-home); --mark-2: var(--place-talk); --mark-3: var(--place-notes); --mark-4: var(--place-support); }
 
@@ -171,3 +185,89 @@
 /* Onboarding steps: the step count sits on the page, the cover runs edge to edge below it. */
 .s-shell main :is(.s-onboard, .s-auth-card) > .s-progress + .s-page-header { margin-top: 0; border-radius: 0; }
 .s-shell main :is(.s-onboard, .s-auth-card) > .s-progress { border-bottom: 0; margin-bottom: 1rem; padding-bottom: 0; }
+
+/* Alignment: lists that are rows, not prose, sit on the page edge; a quiet
+ * text-style action that opens a row starts on the same edge as the text. */
+.s-shell :is(.s-timeline, .s-entry-list, .s-tag-grid, .s-filters, .s-prompt-list) { padding-inline-start: 0; }
+.s-shell .s-actions > .s-btn--quiet:first-child { padding-inline-start: 0; }
+
+/* Writing a note: the page is the editor. A wide writing column, and beside
+ * it the prompts, set like marginalia. Stacks on narrow screens. */
+.s-write { max-width: 80rem; }
+.s-shell .s-editor--page { max-width: none; padding: 0; border: 0; background: none; border-radius: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+.s-editor--page .s-editor-main { display: grid; gap: 1.25rem; border-top: 2px solid var(--c-text); padding-top: 1.5rem; }
+.s-editor--page .s-editor-main > * { margin: 0; }
+.s-editor--page .s-textarea { min-height: 18rem; font-family: var(--font-display); font-size: 1.125rem; line-height: 1.6; padding: 1rem 1.1rem; }
+.s-editor--page .s-editor-main > .s-actions { padding-top: 0.25rem; }
+.s-editor-aside { align-self: start; border-top: 1px solid var(--c-border-subtle); padding-top: 1.25rem; }
+.s-shell .s-editor-aside h2 { font-size: 1.25rem; margin: 0 0 0.35rem; }
+.s-editor-aside .s-hint { margin: 0 0 0.85rem; }
+.s-prompt-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.s-prompt { display: flex; align-items: flex-start; gap: 0.6rem; width: 100%; min-height: var(--target-min); padding: 0.65rem 0.85rem; text-align: start; font: inherit; font-family: var(--font-display); font-size: 1rem; line-height: 1.4; color: var(--c-text); background: var(--c-surface); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-2); cursor: pointer; }
+.s-prompt .s-icon { flex: 0 0 auto; margin-top: 0.2rem; color: var(--place-notes-ink, var(--c-accent)); }
+.s-prompt:hover { border-color: var(--c-border-control); background: var(--c-surface-quiet); }
+.s-prompt:focus-visible { outline: var(--focus-width) solid var(--c-focus); outline-offset: var(--focus-offset); }
+@media (min-width: 64em) {
+  .s-shell .s-editor--page { grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem); gap: 3.5rem; }
+  .s-editor-aside { border-top: 2px solid var(--c-text); padding-top: 1.5rem; position: sticky; top: 1.5rem; }
+}
+
+/* Section rhythm: more air above a heading than below it, never touching. */
+.s-shell main .s-section > h2 { margin-bottom: 1rem; }
+.s-shell main .s-section > h2 + .s-hint { margin-top: -0.5rem; margin-bottom: 1rem; }
+.s-shell main .s-section > .s-filters { margin-top: 0; }
+
+/* Narrow reading pages keep a narrow text column, but their cover spans the
+ * page like every other cover (main is the size container). */
+.s-shell:not(.s-shell--focused) main { container: page / inline-size; }
+.s-shell:not(.s-shell--focused) main :is(.s-narrow, .s-narrow--start) > .s-page-header { width: 100cqw; max-width: none; margin-inline: calc((100% - 100cqw) / 2); }
+.s-shell:not(.s-shell--focused) main.s-workspace-page > :is(.s-narrow, .s-narrow--start) > .s-page-header { margin-inline: 0; }
+.s-shell main .s-section > .s-btn--quiet:first-of-type { padding-inline-start: 0; }
+
+/* A saved note reads as a page of the person's own writing. */
+.s-shell .s-record { border-top: 2px solid var(--c-text); border-bottom: 1px solid var(--c-border-subtle); padding: 1.25rem 0 1.75rem; margin-bottom: 1.25rem; }
+.s-shell .s-record .s-reading-body { margin: 1rem 0 0; max-width: 62ch; font-family: var(--font-display); font-size: 1.25rem; font-weight: 400; line-height: 1.6; color: var(--c-text); }
+
+/* A check-in is a single ruled sheet, not a boxed card. */
+.s-shell .s-editor--sheet { max-width: 46rem; padding: 1.5rem 0 0; border: 0; border-top: 2px solid var(--c-text); border-radius: 0; background: none; display: grid; gap: 1.5rem; }
+.s-shell .s-editor--sheet > * { margin: 0; }
+
+/* Tags are checkboxes: no radio circle; the check icon marks a chosen tag. */
+.s-tag-grid .s-choice::before { display: none; }
+.s-tag-grid .s-choice { align-items: center; }
+.s-tag-grid .s-choice input { left: 2px; }
+
+/* Definition lists: term and detail on one ruled row. */
+.s-dl { display: grid; border-top: 1px solid var(--c-border-subtle); }
+.s-dl > div { display: grid; grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr); gap: 0.25rem 1.5rem; padding: 0.7rem 0; border-bottom: 1px solid var(--c-border-subtle); }
+.s-dl dt { color: var(--c-muted); font-size: var(--font-size-1); font-weight: 600; }
+.s-dl dd { color: var(--c-text); }
+
+/* Audit trail and consent list: dated, ruled rows. */
+.s-shell :is(.s-audit, .s-consent-list) { list-style: none; margin: 0.75rem 0 0; padding: 0; border-top: 1px solid var(--c-border-subtle); }
+.s-audit li { display: grid; grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr); gap: 0.25rem 1.5rem; padding: 0.6rem 0; border-bottom: 1px solid var(--c-border-subtle); }
+.s-audit time { color: var(--c-muted); font-size: var(--font-size-1); font-variant-numeric: tabular-nums; }
+.s-consent-list li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1.5rem; padding: 0.65rem 0; border-bottom: 1px solid var(--c-border-subtle); }
+.s-consent-list li > strong { font-weight: 600; }
+@media (max-width: 47.99em) {
+  .s-dl > div, .s-audit li { grid-template-columns: minmax(0, 1fr); }
+}
+.s-shell .c-reading-list { border-bottom: 1px solid var(--c-border-subtle); }
+.s-shell .c-reading-list > .c-reading-source:first-child { border-top: 2px solid var(--c-text); }
+.s-shell .c-reading-source h2 a { text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+
+/* On wider screens a button keeps its own width inside grid panels; full-width
+ * bars are for phones only. */
+@media (min-width: 48em) {
+  .s-shell main .s-btn { justify-self: start; }
+  .s-shell main :is(.c-consent, .c-week-reflection, .c-summary-draft, .c-editor, .s-editor) > .s-btn,
+  .s-shell main :is(.c-consent, .c-week-reflection, .c-summary-draft, .c-editor, .s-editor) form > .s-btn { width: auto; min-width: 12rem; }
+}
+
+/* Notices sit on the paper: heading over body, a calm surface, the tone in
+ * the border and icon only (safety tones keep their own colours). */
+.s-shell .s-notice { display: grid; gap: 0.35rem; padding: 1rem 1.25rem; border-radius: var(--radius-2); }
+.s-shell .s-notice-head { flex: none; }
+.s-shell .s-notice-title { font-size: 1.125rem; margin: 0; }
+.s-shell .s-notice--info { background: var(--c-surface); border-color: var(--c-border-control); }
+.s-shell .s-notice--info .s-icon { color: var(--c-accent); }

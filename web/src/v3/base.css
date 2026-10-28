@@ -69,11 +69,27 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 .s-shell main { width: 100%; max-width: 90rem; margin: 0 auto; padding: 2rem 2.5rem 3rem; flex: 1 0 auto; min-width: 0; }
 .s-notices { width: 100%; max-width: 90rem; margin: 1rem auto 0; padding-inline: 2.5rem; display: grid; gap: 0.75rem; }
 .s-notices:empty { display: none; }
-.s-notices .s-banner--demo { background: transparent; border: 0; color: var(--c-muted); padding: 0; gap: 0.6rem; font-size: var(--font-size-1); }
-.s-banner--demo .s-chip { background: var(--c-surface); border-color: var(--c-border-subtle); font-size: var(--font-size-1); font-weight: 600; text-transform: none; }
-.s-footer { width: calc(100% - 5rem); max-width: 85rem; margin: auto auto 0; padding: 1.5rem 0 2rem; border-top: 1px solid var(--c-border-subtle); color: var(--c-muted); font-size: var(--font-size-1); }
-.s-footer nav { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; margin-top: 0.75rem; }
-.s-footer nav a { display: inline-flex; align-items: center; min-height: 1.5rem; }
+
+/* Demo edition strip: one quiet line between the bars and the cover. */
+.s-edition { background: var(--c-surface-quiet); border-bottom: 1px solid var(--c-border-subtle); }
+.s-edition-inner { width: calc(100% - 5rem); max-width: 85rem; margin-inline: auto; display: flex; align-items: center; gap: 0.75rem; min-height: 2.5rem; padding-block: 0.4rem; color: var(--c-muted); font-size: var(--font-size-1); }
+.s-edition-inner p { margin: 0; }
+.s-edition-stamp { flex: 0 0 auto; padding: 0.1rem 0.5rem; border: 1.5px solid var(--c-demo); border-radius: var(--radius-1); color: var(--c-demo); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.5; }
+
+/* Colophon: the last page of the book — what Sela is, where to go, where it came from. */
+.s-footer { width: calc(100% - 5rem); max-width: 85rem; margin: auto auto 0; padding: 2.25rem 0 2.5rem; border-top: 2px solid var(--c-text); color: var(--c-muted); font-size: var(--font-size-1); }
+.s-colophon { display: grid; grid-template-columns: minmax(0, 1.25fr) auto minmax(0, 1fr); gap: 1.5rem 3rem; align-items: start; }
+.s-colophon-brand { display: grid; gap: 0.6rem; max-width: 34ch; }
+.s-colophon-brand p { margin: 0; line-height: 1.5; }
+.s-colophon-mark { display: inline-flex; align-items: center; gap: 0.5rem; width: fit-content; color: var(--c-text); font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; text-decoration: none !important; --mark-1: var(--place-home); --mark-2: var(--place-talk); --mark-3: var(--place-notes); --mark-4: var(--place-support); }
+.s-footer nav { display: grid; gap: 0.15rem; }
+.s-footer nav a { display: inline-flex; align-items: center; min-height: 2rem; width: fit-content; color: var(--c-text); font-weight: 600; text-decoration: underline; text-decoration-color: var(--c-border-control); text-underline-offset: 0.25em; }
+.s-footer nav a:hover { text-decoration-color: currentColor; }
+.s-footer nav a.s-colophon-help { color: var(--c-help-text); }
+.s-attribution { display: grid; gap: 0.15rem; margin: 0; padding-left: 1rem; border-left: 1px solid var(--c-border-subtle); }
+.s-attribution-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.s-attribution-name { color: var(--c-text); font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+.s-attribution-note { line-height: 1.5; max-width: 32ch; }
 .s-attribution { font-size: var(--font-size-1); margin-top: 0.75rem; }
 
 /* Signed-in Home is continuity first: a compact thesis strip, then records. */
@@ -105,7 +121,7 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 .s-btn { transition: background-color var(--duration-quick) var(--ease-standard), color var(--duration-quick) var(--ease-standard), border-color var(--duration-quick) var(--ease-standard); }
 .s-btn--primary { border-color: var(--c-accent); }
 .s-btn--primary:hover { border-color: var(--c-accent-hover); }
-.s-empty { border: 0; background: var(--c-surface-quiet); border-radius: var(--radius-3); padding: 2rem; }
+.s-empty { border: 0; background: transparent; border-radius: 0; padding: 1.75rem 0 0.5rem; }
 .s-empty-mark { border: 0; background: transparent; width: 2.5rem; height: 2.5rem; margin-bottom: 0.5rem; }
 .s-empty h2 { font-size: var(--font-size-5); }
 .s-privacy-glance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--c-border-subtle); }
@@ -180,7 +196,9 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
   .s-header-actions .s-menu-button .s-icon { display: block; }
   .s-shell main { padding-inline: 1.5rem; }
   .s-notices { padding-inline: 1.5rem; }
-  .s-footer { width: calc(100% - 3rem); }
+  .s-footer, .s-edition-inner { width: calc(100% - 3rem); }
+  .s-colophon { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .s-colophon-brand { grid-column: 1 / -1; }
 }
 @media (max-width: 63.99em) {
   .n-desktop-nav { display: none; }
@@ -217,14 +235,19 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
   .s-header-actions { display: contents; }
   .s-header-actions .s-menu-button { grid-row: 1; grid-column: 2; justify-self: end; font-size: var(--font-size-1); }
   .s-header-actions .s-menu-button span { display: inline; }
-  .s-header-actions .s-btn--help-quiet { grid-row: 2; grid-column: 1; justify-self: start; justify-content: flex-start; white-space: normal; text-align: start; padding: 0; line-height: 1.3; }
+  .s-header { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .s-header-actions .s-btn--help-quiet { grid-row: 2; grid-column: 1; justify-self: stretch; justify-content: center; white-space: normal; text-align: center; line-height: 1.3; }
   .s-help-label-long { display: none; }
   .s-help-label-short { display: inline; }
-  .s-header-actions .s-exit-wrap { grid-row: 2; grid-column: 2; justify-self: end; }
+  .s-header-actions .s-exit-wrap { grid-row: 2; grid-column: 2; justify-self: stretch; display: grid; }
+  .s-header-actions .s-exit-wrap .s-btn { width: 100%; justify-content: center; }
   .s-header-actions .s-exit-wrap .s-btn { font-size: var(--font-size-1); }
   .s-shell main { padding: 1.25rem var(--gutter) 2rem; }
   .s-notices { padding-inline: var(--gutter); margin-top: 0.75rem; }
-  .s-footer { width: calc(100% - 2 * var(--gutter)); padding-block: 1.25rem; }
+  .s-footer, .s-edition-inner { width: calc(100% - 2 * var(--gutter)); }
+  .s-footer { padding-block: 1.75rem 2rem; }
+  .s-colophon { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+  .s-edition-inner { align-items: flex-start; }
   .s-shell .s-home-head { padding: 1.35rem; }
   .s-home-actions { flex-direction: column; align-items: stretch; }
   .s-home-actions .s-btn { width: 100%; justify-content: center; }

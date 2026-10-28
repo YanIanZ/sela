@@ -20,9 +20,11 @@ export function HelpPage() {
   const [channel, setChannel] = useState<string>("");
   const services = helpData.help;
   const urgent = services.slice(0, 2);
+  // The directory lists the remaining services; the two above are not repeated.
+  const others = services.slice(2);
   const filtered = channel
-    ? services.filter((s) => s.channels.some((c) => c.kind === channel))
-    : services;
+    ? others.filter((s) => s.channels.some((c) => c.kind === channel))
+    : others;
   const fromRoom = query.get("from") === "talk";
 
   return (
@@ -105,11 +107,20 @@ export function HelpPage() {
             </button>
           )}
         </div>
-        <div className="s-help-list">
-          {filtered.map((s) => (
-            <ServiceCard key={s.id} resource={s} />
-          ))}
-        </div>
+        {filtered.length === 0 ? (
+          <p className="s-hint">
+            {w(
+              "Tidak ada layanan lain dengan saluran ini. Layanan di atas tetap bisa dihubungi.",
+              "No other services use this channel. The services above can still be contacted.",
+            )}
+          </p>
+        ) : (
+          <div className="s-help-list">
+            {filtered.map((s) => (
+              <ServiceCard key={s.id} resource={s} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="s-section">

@@ -488,6 +488,16 @@
   transform: translateY(-50%);
 }
 
+/* Rows draw a radio circle: the real input lies over it. */
+.s-choice--rows input {
+  top: calc(var(--space-2) + 0.1rem);
+  left: var(--space-3);
+  width: 1.4rem;
+  height: 1.4rem;
+  transform: none;
+  cursor: pointer;
+}
+
 .s-choice::before {
   content: "";
   flex: 0 0 auto;
@@ -562,6 +572,7 @@
 }
 
 .s-check {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
@@ -576,11 +587,17 @@
   background: var(--c-sunken);
 }
 
+/* The real checkbox lies exactly over the drawn box. */
 .s-check input {
   position: absolute;
+  top: calc(var(--space-2) + 0.1rem);
+  left: var(--space-2);
+  z-index: 1;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
   opacity: 0;
-  width: 1px;
-  height: 1px;
+  cursor: pointer;
 }
 
 .s-check-box {
@@ -1390,11 +1407,20 @@
 .s-filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
   margin: var(--space-3) 0 var(--space-4);
 }
 
+.s-filters-label {
+  margin-right: var(--space-1);
+  color: var(--c-muted);
+  font-size: var(--font-size-1);
+  font-weight: 600;
+}
+
 .s-filter {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -1409,7 +1435,7 @@
 }
 
 .s-filter[aria-pressed="true"],
-.s-filter input:checked + span {
+.s-filter:has(input:checked) {
   border-color: var(--c-accent);
   background: var(--c-accent-soft);
   font-weight: var(--font-weight-medium);
@@ -1417,9 +1443,12 @@
 
 .s-filter input {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   opacity: 0;
-  width: 1px;
-  height: 1px;
+  cursor: pointer;
 }
 
 .s-filter:has(input:focus-visible) {

@@ -22,15 +22,15 @@
 
 /* The shelf: each room has a spine in its place colour. */
 .s-dashboard .c-home-continuity { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0; padding: 0; border-top: 2px solid var(--c-text); }
-.s-dashboard .c-home-continuity > a { position: relative; display: flex; align-items: center; gap: 1rem; padding: 1rem 0 1rem 1.6rem; background: none; border: 0; border-bottom: 1px solid var(--c-border-subtle); border-radius: 0; color: var(--c-text); text-decoration: none; }
-.s-dashboard .c-home-continuity > a::before, .s-dashboard .s-dash-index > a::before { content: ""; position: absolute; left: 0; top: 0.9rem; bottom: 0.9rem; width: 0.5rem; border-radius: var(--radius-1); background: var(--spine, var(--place-notes)); }
+.s-dashboard .c-home-continuity > a { position: relative; display: flex; align-items: center; gap: 1rem; padding: 1rem 0.5rem 1rem 1.6rem; background: none; border: 0; border-bottom: 1px solid var(--c-border-subtle); border-radius: 0; color: var(--c-text); text-decoration: none; }
+.s-dashboard .c-home-continuity > a::before, .s-dashboard .s-dash-index > a::before { content: ""; position: absolute; left: 0.25rem; top: 1.1rem; width: 0.45rem; height: 1.3rem; border-radius: var(--radius-1); background: var(--spine, var(--place-notes)); }
 .s-dashboard .c-home-continuity > a:nth-child(2) { --spine: var(--place-support); }
 .s-dashboard .c-home-continuity > a > span { flex: 1; min-width: 0; }
 .s-dashboard .c-home-continuity strong, .s-dashboard .c-home-continuity small { display: block; }
 .s-dashboard .c-home-continuity small { color: var(--c-muted); font-size: var(--font-size-1); margin-top: 0.2rem; }
 .s-dashboard .s-dash-index { padding: 0; }
 .s-dashboard .s-dash-index h2 { margin: 0; padding-bottom: 0.9rem; border-bottom: 2px solid var(--c-text); }
-.s-dashboard .s-dash-index > a { position: relative; display: flex; align-items: center; gap: 0.9rem; padding: 1rem 0 1rem 1.6rem; min-height: 44px; border-bottom: 1px solid var(--c-border-subtle); text-decoration: none; color: var(--c-text); }
+.s-dashboard .s-dash-index > a { position: relative; display: flex; align-items: center; gap: 0.9rem; padding: 1rem 0.5rem 1rem 1.6rem; min-height: 44px; border-bottom: 1px solid var(--c-border-subtle); text-decoration: none; color: var(--c-text); }
 .s-dashboard .s-dash-index > a > .s-icon:first-child { display: none; }
 .s-dashboard .s-dash-index > a:nth-of-type(1) { --spine: var(--place-notes); }
 .s-dashboard .s-dash-index > a:nth-of-type(2) { --spine: var(--place-support); }

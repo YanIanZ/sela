@@ -565,6 +565,19 @@ export function AppShell({
         </nav>
       )}
 
+      {user?.synthetic && user.environment !== "design-preview" && (
+        <div className="s-edition" role="note">
+          <div className="s-edition-inner">
+            <span className="s-edition-stamp">{w("Edisi demo", "Demo edition")}</span>
+            <p>
+              {w(
+                "Data sintetis; semua fitur berjalan sungguhan.",
+                "Synthetic data; every feature really works.",
+              )}
+            </p>
+          </div>
+        </div>
+      )}
       <section className="s-notices" aria-label={w("Pemberitahuan", "Notices")}>
         {expired && (
           <div className="s-banner s-banner--warning">
@@ -597,17 +610,6 @@ export function AppShell({
                 )}
               </p>
             </div>
-          </div>
-        )}
-        {user?.synthetic && user.environment !== "design-preview" && (
-          <div className="s-banner s-banner--demo">
-            <span className="s-chip">{w("Demo", "Demo")}</span>
-            <p>
-              {w(
-                "Data sintetis; fitur berjalan.",
-                "Synthetic data; features work.",
-              )}
-            </p>
           </div>
         )}
         {user?.actionsRequired?.includes("acknowledge_recovery_codes") && (
@@ -695,20 +697,35 @@ export function AppShell({
 
       {!focused && (
         <footer className="s-footer">
-          <p>
-            {w(
-              "Sela bukan layanan darurat dan tidak memberi diagnosis.",
-              "Sela is not an emergency service and gives no diagnosis.",
-            )}
-          </p>
-          <nav aria-label={w("Tautan kaki", "Footer links")}>
-            <Link to="/about">{w("Tentang Sela", "About Sela")}</Link>
-            <Link to="/policies">{w("Kebijakan", "Policies")}</Link>
-            <Link to="/help">{w("Butuh bantuan sekarang", "Need help now")}</Link>
-          </nav>
-          <p className="s-attribution">
-            {w("Diteruskan dari Dengar.in.", "Continues Dengar.in.")}
-          </p>
+          <div className="s-colophon">
+            <div className="s-colophon-brand">
+              <Link to="/about" className="s-colophon-mark" aria-label={w("Tentang Sela", "About Sela")}>
+                <Mark size={26} />
+                <span>{w("Sela", "Sela")}</span>
+              </Link>
+              <p>
+                {w(
+                  "Sela bukan layanan darurat dan tidak memberi diagnosis.",
+                  "Sela is not an emergency service and gives no diagnosis.",
+                )}
+              </p>
+            </div>
+            <nav aria-label={w("Tautan kaki", "Footer links")}>
+              <Link to="/about">{w("Tentang Sela", "About Sela")}</Link>
+              <Link to="/policies">{w("Kebijakan", "Policies")}</Link>
+              <Link to="/help" className="s-colophon-help">{w("Butuh bantuan sekarang", "Need help now")}</Link>
+            </nav>
+            <p className="s-attribution">
+              <span className="s-attribution-label">{w("Melanjutkan", "Continuing")}</span>
+              <span className="s-attribution-name">{w("Dengar.in", "Dengar.in")}</span>
+              <span className="s-attribution-note">
+                {w(
+                  "Dirintis tim Telkom University Surabaya; kreditnya tetap tercatat.",
+                  "Started by a Telkom University Surabaya team; its credits are kept.",
+                )}
+              </span>
+            </p>
+          </div>
         </footer>
       )}
 
