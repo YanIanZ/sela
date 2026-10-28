@@ -121,6 +121,7 @@ Run on 2026-10-28 in this workspace.
 | Go race (affected) | `SELA_REQUIRE_DB_TESTS=1 go test -race -count=1 ./internal/account ./internal/httpapi` | `ok` in both packages |
 | Browser journey + axe | `node e2e/v3-frontend.e2e.mjs` | **44/44 checks passed**, no console/page errors; see below |
 | v2 demo regression | `go build -o build/sela ./cmd/sela && go build -o build/fakellm ./cmd/fakellm && node e2e/journey.e2e.mjs` | **14/14 journeys passed**; test double only, no live provider |
+| CI | PR #14, head `0c7cbd0`: `v2.yml` run **40622842591**, Quality gate run **40622842602** | All jobs pass: Go format/vet/race with PostgreSQL 16, frontend, research/Modal offline, container image, e2e journeys, and the quality gate |
 
 ### Browser checks
 
