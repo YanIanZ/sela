@@ -211,19 +211,32 @@ afterEach(() => {
 });
 
 describe("public entry and onboarding", () => {
-  it("renders the introduction with the listening action and the safety controls", async () => {
-    mockApi({}, null);
+  it("opens the information dashboard without login before personal Home", async () => {
+    const calls = mockApi({}, null);
     renderPath("/");
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "Ruang sejenak untuk didengar.",
+        name: "Dashboard Sela",
       }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Butuh bantuan sekarang" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: /Keluar cepat/ }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: "Mulai" }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "Masuk ke Beranda" })).toHaveAttribute("href", "/start/age");
+    expect(screen.getByRole("heading", { name: "Jelajahi fitur" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Dari sini ke Beranda" })).toBeInTheDocument();
+    expect(calls.some(c => c.path === "/records" || c.path === "/conversations" || c.method !== "GET")).toBe(false);
     expect(screen.queryByText(/data sintetis/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps the information portal public in English at its own route", async () => {
+    const calls = mockApi({}, null);
+    renderPath("/dashboard", "en");
+    expect(await screen.findByRole("heading", { name: "Sela dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Continue to Home" })).toHaveAttribute("href", "/start/age");
+    expect(screen.getByRole("heading", { name: "You stay in control" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/dashboard");
+    expect(calls.some(c => c.path === "/records" || c.method !== "GET")).toBe(false);
   });
 
   it("blocks an under-15 age band before anything is created", async () => {
@@ -275,7 +288,7 @@ describe("public entry and onboarding", () => {
     mockApi({}, user);
     fireEvent.click(screen.getByRole("link", { name: "Lihat beranda dulu" }));
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Ada ruang untukmu hari ini." }),
+      await screen.findByRole("heading", { level: 1, name: "Beranda" }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /Mulai bercerita/ }).length).toBeGreaterThan(0);
   });
@@ -305,7 +318,7 @@ describe("accounts and errors", () => {
 });
 
 describe("home, notes and conversations", () => {
-  it("shows the latest saved note on Home without streaks or scores", async () => {
+  it("shows the greeting, three actions and the latest note without streaks or scores", async () => {
     const user = profile();
     const note = {
       id: "note-1",
@@ -327,9 +340,46 @@ describe("home, notes and conversations", () => {
       user,
     );
     renderPath("/home");
-    expect(await screen.findByRole("heading", { level: 1, name: "Ada ruang untukmu hari ini." })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Beranda" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/Selamat (pagi|siang|sore|malam)\. Apa yang ingin kamu lakukan sekarang\?/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Mulai bercerita/ })).toHaveAttribute("href", "/talk/new");
+    expect(within(screen.getByRole("main")).getByRole("link", { name: /Tulis catatan/ })).toHaveAttribute("href", "/notes/write");
+    expect(within(screen.getByRole("main")).getByRole("link", { name: /Cek perasaan/ })).toHaveAttribute("href", "/notes/check-in");
     expect(await screen.findByText("Isi catatan sintetis.")).toBeInTheDocument();
-    expect(screen.queryByText(/streak|beruntun|poin|skor/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Terbaru di Catatanku" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Buka" })).toHaveAttribute("href", "/notes/memory");
+    expect(screen.queryByText(/Tidak harus rapi/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/streak|beruntun|poin|skor|level|lencana|badge/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows one primary action and no record blocks on a first visit", async () => {
+    mockApi(
+      {
+        "GET /records": () => ({ data: { records: [] } }),
+        "GET /conversations": () => ({ data: { conversations: [] } }),
+      },
+      profile(),
+    );
+    renderPath("/home");
+    expect(await screen.findByRole("heading", { level: 1, name: "Beranda" })).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "Belum ada yang tersimpan. Apa pun yang kamu simpan akan muncul di Catatanku.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Terbaru di Catatanku" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Yang Sela ingat" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /Mulai bercerita/ })).toHaveLength(1);
   });
 
   it("saves a note only with the storage choice and opens its detail", async () => {
@@ -495,6 +545,24 @@ describe("accessibility smoke", () => {
     mockApi({}, null);
     const { container } = renderPath("/");
     await screen.findByRole("heading", { level: 1 });
+    const results = await axe.run(container, {
+      rules: { "color-contrast": { enabled: false } },
+    });
+    expect(
+      results.violations.filter((v) => ["serious", "critical"].includes(v.impact ?? "")),
+    ).toEqual([]);
+  });
+
+  it("has no serious or critical axe findings on home", async () => {
+    mockApi(
+      {
+        "GET /records": () => ({ data: { records: [] } }),
+        "GET /conversations": () => ({ data: { conversations: [] } }),
+      },
+      profile(),
+    );
+    const { container } = renderPath("/home");
+    await screen.findByRole("heading", { level: 1, name: "Beranda" });
     const results = await axe.run(container, {
       rules: { "color-contrast": { enabled: false } },
     });

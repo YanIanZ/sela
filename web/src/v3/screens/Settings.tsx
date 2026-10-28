@@ -397,17 +397,7 @@ export function PrivacyPage({
 
           <section className="s-settings-section" id="memori" aria-labelledby="memory-title">
             <h2 id="memory-title">{w("Memori", "Memory")}</h2>
-            <UnavailableFeature
-              title={w("Yang Sela ingat belum tersedia", "What Sela remembers isn't available yet")}
-              body={w(
-                "Sela belum menyimpan memory apa pun. Tidak ada profil tersembunyi di luar layar Yang Sela ingat.",
-                "Sela doesn't keep any memory yet. There is no hidden profile outside What Sela remembers.",
-              )}
-              dependency={w(
-                "Persetujuan personal_memory dan API memori belum ada.",
-                "The personal_memory consent and the memory API don't exist yet.",
-              )}
-            />
+            <p>{w("Memori hanya menyimpan konteks yang kamu tulis sendiri setelah izin terpisah. Tidak ada pengambilan cerita otomatis dan memori tidak dikirim ke AI. Aktifkan, perbaiki, matikan, atau hapus dari halaman Yang Sela ingat.", "Memory only stores context you write yourself after separate permission. Stories are not collected automatically and memory is not sent to AI. Enable, edit, turn off, or delete it from What Sela remembers.")}</p>
             <div className="s-actions">
               <LinkButton to="/notes/memory" variant="secondary">
                 {w("Buka Yang Sela ingat", "Open What Sela remembers")}
@@ -465,7 +455,7 @@ export function PrivacyPage({
                     </p>
                     <div className="s-actions">
                       <Button
-                        variant={granted ? "secondary" : "primary"}
+                        variant="secondary"
                         disabled={busy}
                         onClick={() => void updateConsent(c, !granted)}
                       >
@@ -700,8 +690,8 @@ export function PrivacyPage({
             <h2 id="delete-title">{w("Hapus data", "Delete data")}</h2>
             <p>
               {w(
-                "Yang dihapus: semua catatan, percakapan, cek perasaan, sesi, persetujuan dan riwayat akunmu. Ringkasan dan berbagi belum tersedia, jadi belum ada data di sana.",
-                "What is deleted: every note, conversation, check-in, session, consent and account event. Summaries and sharing aren't available yet, so no data exists there.",
+                "Yang dihapus: semua catatan, percakapan, cek perasaan, sesi, persetujuan dan riwayat akunmu. Memori, ringkasan, persiapan dan tindak lanjut yang tersimpan ikut dihapus.",
+                "What is deleted: every note, conversation, check-in, session, consent and account event. Saved memories, summaries, preparation and follow-up notes are also deleted.",
               )}
             </p>
             <p className="s-hint">
@@ -1035,7 +1025,7 @@ export function DisplayPage() {
           </div>
         </div>
         <aside className="s-preview-box" aria-label={w("Pratinjau", "Preview")}>
-          <p className="s-overline">{w("Pratinjau", "Preview")}</p>
+          <p className="s-label">{w("Pratinjau", "Preview")}</p>
           <div className="s-preview-turn">
             <span className="s-turn-author">{w("Kamu", "You")}</span>
             <p className="s-turn-body">
@@ -1240,19 +1230,21 @@ export function AccountPage({
 
   return (
     <>
-      <PageHeader
-        title={w("Akun", "Account")}
-        lead={w(
-          user.kind === "guest"
-            ? "Mode tamu dengan data di server Sela."
-            : `Masuk sebagai ${user.username}.`,
-          user.kind === "guest"
-            ? "Guest mode, with your data on Sela's server."
-            : `Signed in as ${user.username}.`,
-        )}
-      />
-      <ErrorNotice error={error} />
-      {notice && <StatusLine tone="success">{notice}</StatusLine>}
+      <div className="s-narrow">
+        <PageHeader
+          title={w("Akun", "Account")}
+          lead={w(
+            user.kind === "guest"
+              ? "Mode tamu dengan data di server Sela."
+              : `Masuk sebagai ${user.username}.`,
+            user.kind === "guest"
+              ? "Guest mode, with your data on Sela's server."
+              : `Signed in as ${user.username}.`,
+          )}
+        />
+        <ErrorNotice error={error} />
+        {notice && <StatusLine tone="success">{notice}</StatusLine>}
+      </div>
       <div className="s-narrow">
         {user.kind === "guest" ? (
           <>

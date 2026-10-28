@@ -73,6 +73,20 @@ func (s *Server) v3Routes() {
 		{method: "PATCH", path: "/api/v3/records/{id}", mutation: true, owner: s.v3UpdateRecord},
 		{method: "DELETE", path: "/api/v3/records/{id}", mutation: true, owner: s.v3DeleteRecord},
 		{method: "GET", path: "/api/v3/records/{id}/versions", owner: s.v3RecordHistory},
+
+		{method: "GET", path: "/api/v3/memory", owner: s.v3Memory},
+		{method: "POST", path: "/api/v3/memory", mutation: true, owner: s.v3CreateMemory},
+		{method: "PATCH", path: "/api/v3/memory/{id}", mutation: true, owner: s.v3UpdateMemory},
+		{method: "DELETE", path: "/api/v3/memory/{id}", mutation: true, owner: s.v3DeleteMemory},
+		{method: "GET", path: "/api/v3/consultation-summaries", owner: s.v3Summaries},
+		{method: "POST", path: "/api/v3/consultation-summaries", mutation: true, owner: s.v3CreateSummary},
+		{method: "GET", path: "/api/v3/consultation-summaries/{id}", owner: s.v3Summary},
+		{method: "PATCH", path: "/api/v3/consultation-summaries/{id}", mutation: true, owner: s.v3UpdateSummary},
+		{method: "DELETE", path: "/api/v3/consultation-summaries/{id}", mutation: true, owner: s.v3DeleteSummary},
+		{method: "POST", path: "/api/v3/consultation-summaries/{id}/approve", mutation: true, owner: s.v3ApproveSummary},
+		{method: "POST", path: "/api/v3/consultation-summaries/{id}/followups", mutation: true, owner: s.v3CreateFollowup},
+		{method: "GET", path: "/api/v3/consultation-summaries/{id}/followups", owner: s.v3Followups},
+
 		{method: "GET", path: "/api/v3/policies", public: true, h: s.v3Policies},
 		{method: "GET", path: "/api/v3/auth/options", public: true, h: s.v3AuthOptions},
 

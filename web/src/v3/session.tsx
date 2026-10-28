@@ -147,6 +147,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
+// A static provider for the separate development preview entry. It never
+// initializes authentication, touches account storage, or calls the API.
+export function DesignPreviewSession({ children, profile }: { children: ReactNode; profile: Profile | null }) {
+  const value: SessionValue = {
+    user: profile, setUser: () => {}, policies: {}, options: null,
+    loading: false, error: null, expired: false, dismissExpired: () => {},
+    refresh: async () => profile, reload: async () => {}, signOut: async () => {},
+  };
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+}
+
 export function useSession(): SessionValue {
   const v = useContext(SessionContext);
   if (!v) throw new Error("useSession outside SessionProvider");

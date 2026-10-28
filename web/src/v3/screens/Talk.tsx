@@ -14,7 +14,6 @@ import {
   InlineConfirm,
   LinkButton,
   Loading,
-  Notice,
   PageHeader,
   StatusLine,
   TextArea,
@@ -132,7 +131,6 @@ function TalkList() {
   return (
     <>
       <PageHeader
-        eyebrow={w("RUANG CERITA", "SPACE TO TALK")}
         title={w("Cerita", "Talk")}
         lead={w(
           "Ceritakan apa saja. Kamu yang menentukan apakah percakapan disimpan.",
@@ -300,7 +298,6 @@ function NewRoom({ user }: { user: Profile }) {
     <div className="s-narrow">
       <PageHeader
         back={{ to: "/talk", label: w("Cerita", "Talk") }}
-        eyebrow={w("RUANG CERITA", "SPACE TO TALK")}
         title={
           recordId
             ? w("Lanjutkan percakapanmu", "Continue your conversation")
@@ -864,6 +861,9 @@ function RoomPage({ id }: { id: string }) {
   return (
     <>
       <div className="s-room-toolbar">
+        <h1 id="page-title" className="sr-only">
+          {w("Ruang cerita", "A quiet room")}
+        </h1>
         <div className="s-room-topline">
           <Link to="/talk" className="s-back">
             <Icon name="arrow-left" size={18} />
@@ -888,34 +888,32 @@ function RoomPage({ id }: { id: string }) {
             </Button>
           )}
         </div>
-        <div className="s-room-title-row">
-          <h1 id="page-title">{w("Ruang cerita", "A quiet room")}</h1>
-          <Button variant="quiet" onClick={() => setDetail(true)}>
-            {w("Detail", "Detail")}
-          </Button>
-        </div>
+        {!showEnd && (
+          <p className="s-room-mode">
+            <span className="s-room-mode-label">
+              {w("Mendengarkan", "Listening")}
+              {": "}
+            </span>
+            <strong>
+              {intents.find((i) => i.value === intent)?.[document.documentElement.lang === "en" ? "en" : "id"]}
+            </strong>
+            <span aria-hidden="true"> · </span>
+            <button
+              type="button"
+              className="s-text-button"
+              aria-label={w("Atur percakapan", "Conversation settings")}
+              onClick={() => setDetail(true)}
+            >
+              {w("Atur", "Adjust")}
+            </button>
+          </p>
+        )}
       </div>
 
       <ErrorNotice error={error} />
 
       <div className="s-room-layout">
         <div>
-          {!showEnd && (
-            <p className="s-room-mode">
-              <span className="s-room-mode-label">
-                {w("Cara Sela mendengarkan", "How Sela listens")}
-                {": "}
-              </span>
-              <strong>
-                {intents.find((i) => i.value === intent)?.[document.documentElement.lang === "en" ? "en" : "id"]}
-              </strong>
-              {" · "}
-              <button type="button" className="s-text-button" onClick={() => setDetail(true)}>
-                {w("Ubah", "Change")}
-              </button>
-            </p>
-          )}
-
           <section aria-labelledby="transcript-title">
             <h2 id="transcript-title" className="sr-only">
               {w("Isi percakapan", "Conversation")}
@@ -1150,36 +1148,33 @@ function RoomPage({ id }: { id: string }) {
             ["not_consented", "unavailable", "rate_limited", "storage_unavailable"].includes(
               room.aiState,
             ) && (
-              <Notice
-                tone="info"
-                title={
-                  room.aiState === "not_consented"
-                    ? w("Balasan AI tidak diizinkan", "AI replies aren't allowed")
-                    : w("Sela belum bisa membalas sekarang", "Sela can't reply right now")
-                }
-                actions={
-                  <LinkButton to="/settings/privacy#ai" variant="quiet">
-                    {w("Pengaturan AI", "AI settings")}
-                  </LinkButton>
-                }
-              >
+              <div className="s-room-ai-state">
+                <Icon name="info" size={18} />
                 <p>
+                  <strong>
+                    {room.aiState === "not_consented"
+                      ? w("Balasan AI tidak diizinkan.", "AI replies aren't allowed.")
+                      : w("Sela belum bisa membalas sekarang.", "Sela can't reply right now.")}
+                  </strong>{" "}
                   {room.aiState === "not_consented"
                     ? w(
-                        "Tulisanmu tetap di sini. Kamu bisa terus menulis.",
-                        "Your writing stays here. You can keep writing.",
+                        "Tulisanmu tetap di sini; kamu bisa terus menulis.",
+                        "Your writing stays here; you can keep writing.",
                       )
                     : room.aiState === "rate_limited"
                       ? w(
-                          "Batas balasan AI untuk saat ini sudah tercapai. Tulisanmu tetap di sini, dan kamu bisa melanjutkan nanti.",
-                          "The AI reply limit has been reached for now. Your writing stays here, and you can continue later.",
+                          "Batas balasan AI tercapai. Tulisanmu tetap di sini.",
+                          "The AI reply limit is reached. Your writing stays here.",
                         )
                       : w(
-                          "Tulisanmu tetap di sini (dan tersimpan, kalau kamu memilih menyimpan). Coba lagi nanti, atau terus menulis tanpa balasan.",
-                          "Your writing stays here (and is saved, if you chose to save it). Try again later, or keep writing without a reply.",
+                          "Tulisanmu tetap di sini. Coba lagi nanti, atau terus menulis.",
+                          "Your writing stays here. Try again later, or keep writing.",
                         )}
                 </p>
-              </Notice>
+                <Link to="/settings/privacy#ai" className="s-text-button">
+                  {w("Pengaturan AI", "AI settings")}
+                </Link>
+              </div>
             )}
           {!showEnd && (
             <>
@@ -1295,8 +1290,8 @@ function RoomPage({ id }: { id: string }) {
           </p>
           <p className="s-small s-muted">
             {w(
-              "Yang Sela ingat belum tersedia di versi ini.",
-              "What Sela remembers isn't available in this build.",
+              "Konteks pilihanmu ada di Yang Sela ingat; memori tidak dikirim ke AI.",
+              "Your chosen context is in What Sela remembers; memory is not sent to AI.",
             )}
           </p>
           <LinkButton to="/help" variant="help" icon="help">

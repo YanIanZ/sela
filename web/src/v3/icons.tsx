@@ -279,23 +279,23 @@ export function Icon({
   );
 }
 
-/** The Sela mark: two curved strokes that almost meet, a space held open. */
+/** An open S: a little room between two continuous folds. */
 export function Mark({ size = 32 }: { size?: number }) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 40 40"
+      viewBox="0 0 40 42"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="6.5"
       strokeLinecap="round"
       aria-hidden="true"
       focusable="false"
       className="s-mark"
     >
-      <path d="M15.5 7C10 9.8 6.5 14.3 6.5 20s3.5 10.2 9 13" />
-      <path d="M24.5 7c5.5 2.8 9 7.3 9 13s-3.5 10.2-9 13" />
+      <path d="M29 8C10 0 3 17 18 20" />
+      <path d="M11 34C30 42 37 25 22 22" />
     </svg>
   );
 }

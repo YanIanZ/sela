@@ -1,197 +1,297 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "../../lib/router";
-import { useI18n } from "../../i18n";
 import { api, type Entry, type Profile, type Room } from "../api";
 import { usePrefs } from "../prefs";
 import { useSession } from "../session";
 import { useLocale, useWords } from "../shared";
 import { Icon } from "../icons";
-import { Loading, ErrorNotice, EmptyState, LinkButton } from "../ui";
+import { entryRoute } from "./Continuity";
+import { Loading, ErrorNotice, LinkButton } from "../ui";
+import { moodLabel } from "./Notes";
 
-function greeting(lang: string): string {
-  const h = new Date().getHours();
-  if (lang === "id") {
-    if (h < 11) return "Selamat pagi.";
-    if (h < 15) return "Selamat siang.";
-    if (h < 19) return "Selamat sore.";
-    return "Selamat malam.";
-  }
-  if (h < 12) return "Good morning.";
-  if (h < 18) return "Good afternoon.";
-  return "Good evening.";
+// The server sweeps unsaved rooms after 30 minutes without activity; a saved
+// conversation stays reachable for 12 hours (S07, docs/design/SCREENS.md).
+const UNSAVED_WINDOW_MS = 30 * 60_000;
+const SAVED_WINDOW_MS = 12 * 3600_000;
+
+function lastActivity(room: Room): number {
+  const last = room.turns.at(-1)?.createdAt;
+  return last ? Date.parse(last) : 0;
 }
 
-export function HomePage({ user }: { user: Profile }) {
+export function HomePage({ user, previewEntries }: { user: Profile; previewEntries?: Entry[] }) {
   const w = useWords();
-  const { lang } = useI18n();
   const loc = useLocale();
   const { prefs } = usePrefs();
   const { refresh } = useSession();
-  const [entries, setEntries] = useState<Entry[] | null>(null);
-  const [rooms, setRooms] = useState<Room[] | null>(null);
-  const [error, setError] = useState<unknown>(null);
+  const [entries, setEntries] = useState<Entry[] | null>(previewEntries ?? null);
+  const [entriesError, setEntriesError] = useState<unknown>(null);
+  const [rooms, setRooms] = useState<Room[] | null>(previewEntries ? [] : null);
+  const [roomsError, setRoomsError] = useState<unknown>(null);
+  const [ageBusy, setAgeBusy] = useState(false);
+  const [ageError, setAgeError] = useState(false);
 
-  const load = () => {
-    setError(null);
-    Promise.all([
-      api<{ records: Entry[] }>("/records"),
-      api<{ conversations: Room[] }>("/conversations"),
-    ])
-      .then(([r, c]) => {
-        setEntries(r.records);
-        setRooms(c.conversations);
-      })
+  const loadEntries = () => {
+    if (previewEntries) return;
+    setEntriesError(null);
+    api<{ records: Entry[] }>("/records")
+      .then((r) => setEntries(r.records))
       .catch((e) => {
-        setError(e);
-        // Keep null so the cards show a retryable failure, not an empty state.
+        setEntriesError(e);
+        // Keep null so the card shows a retryable failure, not an empty state.
       });
   };
-  useEffect(load, []);
+  const loadRooms = () => {
+    if (previewEntries) return;
+    setRoomsError(null);
+    api<{ conversations: Room[] }>("/conversations")
+      .then((r) => setRooms(r.conversations))
+      .catch((e) => {
+        setRoomsError(e);
+      });
+  };
+  useEffect(loadEntries, []);
+  useEffect(loadRooms, []);
 
-  const openRoom = rooms?.find((r) => !r.save) ?? rooms?.[0];
-  const recentConversation =
-    entries
-      ?.filter((r) => r.kind === "conversation")
-      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0] ?? null;
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    const part =
+      hour < 11
+        ? w("Selamat pagi.", "Good morning.")
+        : hour < 15
+          ? w("Selamat siang.", "Good afternoon.")
+          : hour < 19
+            ? w("Selamat sore.", "Good afternoon.")
+            : w("Selamat malam.", "Good evening.");
+    return part + w(" Apa yang ingin kamu lakukan sekarang?", " What would you like to do now?");
+  }, [w]);
+
+  const sortedRooms = useMemo(
+    () => [...(rooms ?? [])].sort((a, b) => lastActivity(b) - lastActivity(a)),
+    [rooms],
+  );
+  const openRoom = sortedRooms.find((r) => !r.save);
+  const savedRoom = sortedRooms.find((r) => r.save);
   const continueRoom =
-    openRoom &&
-    (!openRoom.recordId ||
-      Date.now() - Date.parse(openRoom.turns.at(-1)?.createdAt ?? new Date().toISOString()) <
-        12 * 3600_000)
+    openRoom && Date.now() - lastActivity(openRoom) < UNSAVED_WINDOW_MS
       ? openRoom
-      : null;
+      : savedRoom && Date.now() - lastActivity(savedRoom) < SAVED_WINDOW_MS
+        ? savedRoom
+        : null;
+  const recentConversation =
+    entries?.find((r) => r.kind === "conversation") ?? null;
   const continueSaved =
     !continueRoom &&
     recentConversation &&
-    Date.now() - Date.parse(recentConversation.updatedAt) < 12 * 3600_000
+    Date.now() - Date.parse(recentConversation.updatedAt) < SAVED_WINDOW_MS
       ? recentConversation
       : null;
+  const continueRecord = continueRoom?.recordId
+    ? entries?.find((e) => e.id === continueRoom.recordId) ?? null
+    : null;
   const latest = (entries ?? []).slice(0, 3);
   const ageConfirm = user.actionsRequired?.includes("confirm_age_band");
+  // A first visit has no conversation and nothing saved: the page shows the
+  // greeting, the three actions and one empty sentence (S07 empty state).
+  const firstVisit =
+    entries !== null &&
+    entries.length === 0 &&
+    !continueRoom &&
+    !continueSaved &&
+    !entriesError;
 
-  return (
-    <div className="s-home">
-      <header className="s-home-head">
-        <p className="s-overline">{loc.date(new Date().toISOString())}</p>
-        <h1 id="page-title">{w("Ada ruang untukmu hari ini.", "There is room for you today.")}</h1>
-        <p className="s-home-lead">
+  const dashboardHeading = (<>
+      <section className="s-home-head" aria-labelledby="page-title">
+        <h1 id="page-title">{w("Beranda", "Home")}</h1>
+        <p className="s-home-lead">{greeting}</p>
+      </section>
+  </>);
+  const dashboardErrors = (<>
+      {roomsError != null && (
+        <p className="s-home-inline-error">
+          {w("Belum bisa memuat percakapan.", "Couldn't load conversations.")}{" "}
+          <button type="button" className="s-text-button" onClick={loadRooms}>
+            {w("Coba lagi", "Try again")}
+          </button>
+        </p>
+      )}
+
+
+  </>);
+  const dashboardContinue = (<>
+      {(continueRoom || continueSaved) && (
+        <section className="s-section" aria-labelledby="continue-title">
+          <div className="s-section-title">
+            <h2 id="continue-title">{w("Lanjutkan", "Continue")}</h2>
+          </div>
+          <div className="s-entry-list">
+            {continueRoom ? (
+              <Link to={"/talk/" + continueRoom.id}>
+                <span className="s-entry-date">
+                  {loc.shortDate(
+                    continueRoom.turns.at(-1)?.createdAt ?? new Date().toISOString(),
+                  )}
+                </span>
+                <span>
+                  <strong>
+                    {continueRecord && !prefs.hidePreviews
+                      ? continueRecord.title || w("Percakapan", "Conversation")
+                      : continueRoom.save
+                        ? w("Percakapan tersimpan", "Saved conversation")
+                        : w(
+                            "Percakapan yang sedang berjalan (tidak disimpan)",
+                            "Conversation in progress (not saved)",
+                          )}
+                  </strong>
+                  <small>
+                    {continueRoom.turns.length
+                      ? `${continueRoom.turns.length} ${w("pesan", "messages")} · `
+                      : ""}
+                    {loc.dateTime(
+                      continueRoom.turns.at(-1)?.createdAt ?? new Date().toISOString(),
+                    )}
+                  </small>
+                </span>
+                <Icon name="arrow-right" />
+              </Link>
+            ) : continueSaved ? (
+              <Link to={"/talk?record=" + continueSaved.id}>
+                <span className="s-entry-date">{loc.shortDate(continueSaved.updatedAt)}</span>
+                <span>
+                  <strong>
+                    {prefs.hidePreviews
+                      ? w("Percakapan", "Conversation")
+                      : continueSaved.title || w("Percakapan", "Conversation")}
+                  </strong>
+                  <small>
+                    {w("Terakhir aktif ", "Last active ")}
+                    {loc.dateTime(continueSaved.updatedAt)}
+                  </small>
+                </span>
+                <Icon name="arrow-right" />
+              </Link>
+            ) : null}
+          </div>
+        </section>
+      )}
+
+
+  </>);
+  const dashboardHistory = (<>
+      {firstVisit ? (
+        <p className="s-home-empty">
           {w(
-            `${greeting(lang)} Apa yang paling terasa hari ini?`,
-            `${greeting(lang)} What feels most present today?`,
+            "Belum ada yang tersimpan. Apa pun yang kamu simpan akan muncul di Catatanku.",
+            "Nothing saved yet. Anything you save will appear in My notes.",
           )}
         </p>
-      </header>
+      ) : (
+        <>
+          {entriesError != null && (
+            <section className="s-section" aria-labelledby="latest-title">
+              <div className="s-section-title">
+                <h2 id="latest-title">{w("Terbaru di Catatanku", "Latest in My notes")}</h2>
+              </div>
+              <ErrorNotice
+                error={entriesError}
+                title={w("Belum bisa memuat yang terbaru", "Couldn't load the latest")}
+                onRetry={loadEntries}
+              />
+            </section>
+          )}
 
-      {error != null && (
-        <ErrorNotice
-          error={error}
-          title={w("Sebagian belum bisa dimuat", "Some of this couldn't load")}
-          onRetry={load}
-        />
+          {entries === null && entriesError == null && (
+            <section className="s-section" aria-labelledby="latest-title">
+              <div className="s-section-title">
+                <h2 id="latest-title">{w("Terbaru di Catatanku", "Latest in My notes")}</h2>
+              </div>
+              <Loading label={w("Memuat yang tersimpan…", "Loading what you've saved…")} />
+            </section>
+          )}
+
+          {entries !== null && entries.length > 0 && (
+            <section className="s-section" aria-labelledby="latest-title">
+              <div className="s-section-title">
+                <h2 id="latest-title">{w("Terbaru di Catatanku", "Latest in My notes")}</h2>
+                <Link to="/notes">{w("Lihat semua", "See all")}</Link>
+              </div>
+              <div className="s-entry-list">
+                {latest.map((r) => (
+                  <Link
+                    key={r.id}
+                    to={entryRoute(r)}
+                  >
+                    <span className="s-entry-date">{loc.shortDate(r.updatedAt)}</span>
+                    <span>
+                      <strong>
+                        {r.kind === "conversation"
+                          ? w("Percakapan", "Conversation")
+                          : r.kind === "checkin"
+                            ? w("Cek perasaan", "Check-in")
+                            : r.kind === "summary" ? w("Ringkasan", "Summary")
+                            : r.kind === "memory" ? w("Memori", "Memory")
+                            : r.kind === "followup" ? w("Tindak lanjut", "Follow-up")
+                            : w("Catatan", "Note")}
+                      </strong>
+                      {!prefs.hidePreviews && (
+                        <small>
+                          {r.kind === "conversation"
+                            ? r.title || w("Percakapan tersimpan", "Saved conversation")
+                            : r.kind === "checkin"
+                              ? r.mood
+                                ? moodLabel(r.mood, loc.lang)
+                                : ""
+                              : r.text.slice(0, 120) || w("Tanpa teks", "No text")}
+                        </small>
+                      )}
+                    </span>
+                    <Icon name="arrow-right" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {!firstVisit && (
+            <section className="s-section s-home-memory" aria-labelledby="memory-title">
+              <div className="s-section-title">
+                <h2 id="memory-title">{w("Yang Sela ingat", "What Sela remembers")}</h2>
+                <Link to="/notes/memory">{w("Buka", "Open")}</Link>
+              </div>
+              <p className="s-small s-muted">
+                {w(
+                  "Simpan konteks yang kamu pilih sendiri. Perbaiki atau hapus kapan saja; tidak ada pengambilan otomatis.",
+                  "Keep context you choose yourself. Edit or delete it any time; nothing is collected automatically.",
+                )}
+              </p>
+            </section>
+          )}
+        </>
       )}
 
-      <section className="s-room-invite" aria-labelledby="home-start-title">
-        <div>
-          <p className="s-overline">{w("RUANG CERITA", "SPACE TO TALK")}</p>
-          <h2 id="home-start-title">
-            {w("Ceritakan apa yang sedang kamu bawa.", "Talk about what's on your mind.")}
-          </h2>
-          <p>
-            {w(
-              "Tidak perlu rapi atau lengkap. Sela mendengarkan lebih dulu.",
-              "It doesn't have to be tidy or complete. Sela listens first.",
-            )}
-          </p>
-          <LinkButton to="/talk/new" variant="primary" icon="send">
-            {w("Mulai bercerita", "Start talking")}
-          </LinkButton>
-          <p className="s-hint">
-            {w(
-              "Bisa juga tanpa balasan AI. Kamu yang memilih apa yang disimpan.",
-              "It can work without AI replies too. You choose what is kept.",
-            )}
-          </p>
-        </div>
-        <div className="s-room-edge" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-          <i />
-          <span />
-          <span />
-        </div>
+
+  </>);
+  const dashboardTools = (<>
+      <section className="c-home-continuity" aria-label={w("Lanjutkan dengan caramu", "Continue your way")}>
+        <Link to="/notes/weekly"><span><strong>{w("Lihat minggu ini", "Look back at this week")}</strong><small>{w("Tulisanmu, tanpa kesimpulan otomatis.", "Your writing, without automatic conclusions.")}</small></span><Icon name="arrow-right" /></Link>
+        <Link to="/support/summaries"><span><strong>{w("Bawa yang penting", "Bring what matters")}</strong><small>{w("Ringkasan dari cerita yang kamu pilih.", "A summary from the stories you choose.")}</small></span><Icon name="arrow-right" /></Link>
       </section>
 
-      <div className="s-quick-actions">
-        <Link to="/notes/write">
-          <Icon name="notes" />
-          <span>
-            <strong>{w("Tulis catatan", "Write a note")}</strong>
-            <small>{w("Dengan kata-katamu sendiri.", "In your own words.")}</small>
-          </span>
-          <Icon name="arrow-right" />
-        </Link>
-        <Link to="/notes/check-in">
-          <Icon name="interpretation" />
-          <span>
-            <strong>{w("Cek perasaan", "Check in")}</strong>
-            <small>{w("Sejenak, mengenali perasaanmu.", "A moment to notice how you feel.")}</small>
-          </span>
-          <Icon name="arrow-right" />
-        </Link>
-      </div>
-
-      {continueRoom && (
-        <section className="s-section" aria-labelledby="continue-title">
-          <div className="s-section-title">
-            <h2 id="continue-title">{w("Lanjutkan", "Continue")}</h2>
-          </div>
-          <Link
-            className="s-support-card"
-            to={"/talk/" + continueRoom.id}
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
-            <strong>
-              {continueRoom.save
-                ? w("Percakapan tersimpan", "Saved conversation")
-                : w("Percakapan yang sedang berjalan (tidak disimpan)", "Conversation in progress (not saved)")}
-            </strong>
-            <span className="s-muted s-small">
-              {w("Terakhir aktif ", "Last active ")}
-              {loc.dateTime(
-                continueRoom.turns.at(-1)?.createdAt ?? new Date().toISOString(),
-              )}
-              {continueRoom.turns.length
-                ? ` · ${continueRoom.turns.length} ${w("pesan", "messages")}`
-                : ""}
-            </span>
-          </Link>
-        </section>
+  </>);
+  const dashboardRetention = (<>
+      {user.kind === "guest" && user.guest && (
+        <p className="s-retention">
+          {w("Mode tamu · dihapus otomatis jika ", "Guest mode · deleted automatically after ")}
+          {Math.floor(user.guest.inactiveTtlHours / 24)}
+          {w(" hari tidak aktif, paling lambat ", " inactive days, at the latest ")}
+          {loc.date(user.guest.maxAgePurgeAt)} ·{" "}
+          <Link to="/settings/account/upgrade">{w("Simpan ke akun", "Save to an account")}</Link>
+        </p>
       )}
 
-      {!continueRoom && continueSaved && (
-        <section className="s-section" aria-labelledby="continue-title">
-          <div className="s-section-title">
-            <h2 id="continue-title">{w("Lanjutkan", "Continue")}</h2>
-          </div>
-          <Link
-            to={"/talk?record=" + continueSaved.id}
-            className="s-support-card"
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
-            <strong>
-              {prefs.hidePreviews
-                ? w("Percakapan", "Conversation")
-                : continueSaved.title || w("Percakapan", "Conversation")}
-            </strong>
-            <span className="s-muted s-small">
-              {w("Terakhir aktif ", "Last active ")}
-              {loc.dateTime(continueSaved.updatedAt)}
-            </span>
-          </Link>
-        </section>
-      )}
 
+  </>);
+  const dashboardAge = (<>
       {ageConfirm && (
         <section className="s-section" aria-labelledby="age-check">
           <div className="s-support-card">
@@ -206,7 +306,10 @@ export function HomePage({ user }: { user: Profile }) {
               <button
                 type="button"
                 className="s-btn s-btn--secondary"
+                disabled={ageBusy}
                 onClick={async () => {
+                  setAgeBusy(true);
+                  setAgeError(false);
                   try {
                     await api<Profile>(
                       "/me",
@@ -215,7 +318,8 @@ export function HomePage({ user }: { user: Profile }) {
                     );
                     await refresh();
                   } catch {
-                    // The banner stays; the person can try again.
+                    setAgeError(true);
+                    setAgeBusy(false);
                   }
                 }}
               >
@@ -225,89 +329,57 @@ export function HomePage({ user }: { user: Profile }) {
                 {w("Ubah usia di Akun", "Change age in Account")}
               </LinkButton>
             </div>
+            {ageError && (
+              <p className="s-small s-muted" role="alert">
+                {w(
+                  "Belum bisa menyimpan. Coba lagi.",
+                  "Couldn't save that. Please try again.",
+                )}
+              </p>
+            )}
           </div>
         </section>
       )}
 
-      <section className="s-section" aria-labelledby="latest-title">
-        <div className="s-section-title">
-          <h2 id="latest-title">{w("Terbaru di Catatanku", "Latest in My notes")}</h2>
-          <Link to="/notes">{w("Lihat semua", "See all")}</Link>
+  </>);
+  const dashboardStart = <section className="s-dash-start">
+    <h2>{w("Ruang untuk apa pun yang terasa.", "Room for whatever you feel.")}</h2>
+    <p>{w("Tidak perlu merangkai cerita yang sempurna. Mulai dari yang paling mudah untukmu.", "Your story does not need to be perfect. Start wherever feels easiest.")}</p>
+        <div className="s-home-actions">
+          <LinkButton to="/talk/new" variant="primary" icon="send">
+            {w("Mulai bercerita", "Start talking")}
+          </LinkButton>
+          <LinkButton to="/notes/write" variant="secondary" icon="pencil">
+            {w("Tulis catatan", "Write a note")}
+          </LinkButton>
+          <LinkButton to="/notes/check-in" variant="secondary" icon="check">
+            {w("Cek perasaan", "Check in")}
+          </LinkButton>
         </div>
-        {entries === null ? (
-          error ? (
-            <p className="s-muted">
-              {w(
-                "Belum bisa memuat yang tersimpan. Aksi di atas tetap bisa dipakai.",
-                "Couldn't load what you've saved. The actions above still work.",
-              )}
-            </p>
-          ) : (
-            <Loading label={w("Memuat yang tersimpan…", "Loading what you've saved…")} />
-          )
-        ) : latest.length === 0 ? (
-          <EmptyState
-            title={w("Belum ada yang tersimpan.", "Nothing saved yet.")}
-            body={w(
-              "Apa pun yang kamu simpan akan muncul di Catatanku. Tidak ada target atau kewajiban.",
-              "Anything you save will appear in My notes. No targets. No obligations.",
-            )}
-            actions={
-              <>
-                <LinkButton to="/talk/new" variant="secondary">
-                  {w("Mulai bercerita", "Start talking")}
-                </LinkButton>
-                <LinkButton to="/notes/write" variant="secondary">
-                  {w("Tulis catatan", "Write a note")}
-                </LinkButton>
-              </>
-            }
-            mark
-          />
-        ) : (
-          <div className="s-entry-list">
-            {latest.map((r) => (
-              <Link
-                key={r.id}
-                to={
-                  r.kind === "conversation"
-                    ? "/talk?record=" + r.id
-                    : "/notes/" + r.id
-                }
-              >
-                <span className="s-entry-date">{loc.shortDate(r.updatedAt)}</span>
-                <span>
-                  <strong>
-                    {r.kind === "conversation"
-                      ? w("Percakapan", "Conversation")
-                      : r.kind === "checkin"
-                        ? w("Cek perasaan", "Check-in")
-                        : w("Catatan", "Note")}
-                  </strong>
-                  {!prefs.hidePreviews && (
-                    <small>
-                      {r.kind === "conversation"
-                        ? r.title || w("Percakapan tersimpan", "Saved conversation")
-                        : r.text.slice(0, 120) || w("Tanpa teks", "No text")}
-                    </small>
-                  )}
-                </span>
-                <Icon name="arrow-right" />
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {user.kind === "guest" && user.guest && (
-        <p className="s-retention">
-          {w("Mode tamu · dihapus otomatis jika ", "Guest mode · deleted automatically after ")}
-          {Math.floor(user.guest.inactiveTtlHours / 24)}
-          {w(" hari tidak aktif, paling lambat ", " inactive days, at the latest ")}
-          {loc.date(user.guest.maxAgePurgeAt)} ·{" "}
-          <Link to="/settings/account/upgrade">{w("Simpan ke akun", "Save to an account")}</Link>
+        <p className="s-hint">
+          {w(
+            "Kamu menentukan apa yang disimpan dan apakah balasan AI diizinkan.",
+            "You decide what is kept and whether AI replies are allowed.",
+          )}
         </p>
-      )}
+  </section>;
+  const dashboardIndex = <section className="s-dash-index" aria-label={w("Ruang lainnya", "More spaces")}>
+    <h2>{w("Sesuai kebutuhanmu", "At your own pace")}</h2>
+    <Link to="/notes/memory"><Icon name="bookmark" /><span><strong>{w("Memori pilihanmu", "Memory you choose")}</strong><small>{w("Konteks yang kamu simpan sendiri", "Context you choose to keep")}</small></span><Icon name="arrow-right" /></Link>
+    <Link to="/support/prepare"><Icon name="support" /><span><strong>{w("Siapkan bantuan", "Prepare for support")}</strong><small>{w("Tujuan, pertanyaan, dan catatan", "Goals, questions, and notes")}</small></span><Icon name="arrow-right" /></Link>
+    <Link to="/support/after"><Icon name="calendar" /><span><strong>{w("Tindak lanjut", "Follow-up")}</strong><small>{w("Langkah yang kamu tentukan", "Steps you decide on")}</small></span><Icon name="arrow-right" /></Link>
+    <Link to="/reading"><Icon name="notes" /><span><strong>{w("Bacaan untuk jeda", "A moment to read")}</strong><small>{w("Sumber yang bisa kamu telusuri", "Sources you can explore")}</small></span><Icon name="arrow-right" /></Link>
+  </section>;
+  return (
+    <div className="s-home s-dashboard s-dashboard--today">
+      {dashboardHeading}
+      <div className="s-dash-stage">
+        {dashboardStart}
+        <aside className="s-dash-side">{dashboardTools}{dashboardIndex}</aside>
+      </div>
+      {dashboardErrors}{dashboardContinue}
+      <div className="s-dash-history">{dashboardHistory}</div>
+      {dashboardRetention}{dashboardAge}
     </div>
   );
 }

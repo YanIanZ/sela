@@ -43,16 +43,21 @@ var (
 	ErrAgeBandNotEnabled        = &Error{Code: "age_band_not_enabled", Field: "ageBand"}
 	ErrNotGuest                 = &Error{Code: "not_guest"}
 	ErrRequiredConsent          = &Error{Code: "required_consent"}
-	ErrUsernameInvalid          = &Error{Code: "username_invalid", Field: "username"}
-	ErrUsernameTaken            = &Error{Code: "username_taken", Field: "username"}
-	ErrPasswordTooShort         = &Error{Code: "password_too_short"}
-	ErrPasswordTooLong          = &Error{Code: "password_too_long"}
-	ErrPasswordWeak             = &Error{Code: "password_weak"}
-	ErrServerBusy               = &Error{Code: "server_busy", RetryAfter: 5 * time.Second}
-	ErrPolicyOutdated           = &Error{Code: "policy_outdated"}
-	ErrStaleVersion             = &Error{Code: "stale_version"}
-	ErrInvalidTransition        = &Error{Code: "invalid_transition"}
-	ErrRateLimited              = &Error{Code: "rate_limited"}
+	// ErrConsentRequired gates a feature whose own consent is off (here:
+	// personal memory). It reuses the existing consent_required code and
+	// message; it is deliberately not listed in Codes(), whose v3 entries
+	// are checked against the API spec table by TestV3ErrorMessagesComplete.
+	ErrConsentRequired   = &Error{Code: "consent_required", Field: "personalMemory"}
+	ErrUsernameInvalid   = &Error{Code: "username_invalid", Field: "username"}
+	ErrUsernameTaken     = &Error{Code: "username_taken", Field: "username"}
+	ErrPasswordTooShort  = &Error{Code: "password_too_short"}
+	ErrPasswordTooLong   = &Error{Code: "password_too_long"}
+	ErrPasswordWeak      = &Error{Code: "password_weak"}
+	ErrServerBusy        = &Error{Code: "server_busy", RetryAfter: 5 * time.Second}
+	ErrPolicyOutdated    = &Error{Code: "policy_outdated"}
+	ErrStaleVersion      = &Error{Code: "stale_version"}
+	ErrInvalidTransition = &Error{Code: "invalid_transition"}
+	ErrRateLimited       = &Error{Code: "rate_limited"}
 )
 
 func invalid(field string) *Error { return &Error{Code: ErrInvalidInput.Code, Field: field} }

@@ -1,0 +1,49 @@
+/* Shared application structure; the public introduction keeps its own frame. */
+.s-workspace-rail, .s-workspace-context { display: none; }
+@media (min-width: 64em) {
+ .s-shell--workspace .s-shell-inner { padding-left: 15rem; }
+ .s-workspace-rail { position: fixed; z-index: var(--z-sticky); inset: 0 auto 0 0; width: 15rem; display: flex; flex-direction: column; gap: 1.75rem; padding: 1.4rem 1.1rem; background: var(--c-surface); border-right: 1px solid var(--c-border-subtle); overflow-y: auto; overscroll-behavior: contain; }
+ .s-workspace-rail > .s-brand { padding-inline: 0.8rem; align-self: start; }
+ .s-shell .s-workspace-rail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; }
+ .s-shell .s-workspace-rail nav a { display: flex; align-items: center; gap: 0.75rem; min-height: var(--target-min); padding: 0.75rem 0.8rem; color: var(--c-muted); text-decoration: none; border-radius: var(--radius-2); font-size: var(--font-size-1); line-height: 1.4; }
+ .s-shell .s-workspace-rail nav a:hover { background: var(--c-surface-quiet); color: var(--c-text); }
+ .s-shell .s-workspace-rail nav a[aria-current="page"] { background: var(--c-accent-soft); color: var(--c-accent); font-weight: 700; }
+ .s-workspace-rail .s-icon { width: 1.2rem; height: 1.2rem; flex-shrink: 0; }
+ .s-rail-label { margin: 1.5rem 0 0.6rem !important; padding-inline: 0.8rem; font-size: var(--font-size-1); color: var(--c-muted); }
+ .s-workspace-rail .s-rail-personal { display: grid; gap: 0.2rem; margin-top: auto; padding-top: 1.25rem; border-top: 1px solid var(--c-border-subtle); }
+ .s-shell--workspace .s-header { min-height: 5rem; padding: 1rem 2rem; justify-content: space-between; }
+ .s-shell--workspace .s-header > .s-brand, .s-shell--workspace .n-desktop-nav { display: none; }
+ .s-shell--workspace .s-workspace-context { display: block; color: var(--c-muted); font-size: var(--font-size-2); }
+ .s-shell--workspace main { max-width: 79rem; padding-inline: 2rem; }
+ .s-shell--workspace .s-notices { padding-inline: 2rem; }
+ .s-shell--workspace .s-footer { width: calc(100% - 4rem); }
+ .s-shell--workspace .s-shell-inner { padding-bottom: 0; }
+}
+@media (min-width: 64em) and (max-height: 44em) {
+ .s-workspace-rail { gap: 1rem; padding-block: 1rem; }
+ .s-shell .s-workspace-rail nav a { padding-block: 0.55rem; }
+ .s-rail-label { margin-top: 1rem !important; }
+}
+@media print { .s-workspace-rail, .s-workspace-context { display: none !important; } .s-shell--workspace .s-shell-inner { padding-left: 0; } }
+
+.s-design-preview-notice { position: relative; z-index: 5; margin: 0; padding: .7rem 1rem; background: var(--s-accent, #3657c7); color: white; font-size: .8rem; text-align: center; }
+
+/* A consistent reading desk across the journal, support, library and settings. */
+.s-workspace-page > .s-narrow { margin-inline: 0; }
+.s-workspace-page .s-page-header { max-width: none; padding-bottom: 1.5rem; border-bottom: 1px solid var(--c-border-subtle); }
+.s-workspace-page[data-space="notes"] > .s-entry-list { padding: 0 1.5rem; background: var(--c-surface); border-radius: 12px; }
+.s-workspace-page[data-space="notes"] .s-filters { margin-block: 1.5rem; }
+.s-workspace-page .s-settings-main { padding: 1.5rem; background: var(--c-surface); border-radius: 12px; }
+.s-workspace-page .c-reading-intro { padding-bottom: 2rem; border-bottom: 1px solid var(--c-border-subtle); }
+.s-workspace-context strong { color: var(--c-text); font-weight: 600; }
+@media (min-width: 64em) {
+ .s-workspace-page .c-support-intro { grid-template-columns: minmax(0, 1.8fr) minmax(12rem, 1fr); }
+ .s-workspace-page .c-support-paths { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+ .s-workspace-page .c-support-paths > section:last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 40em) {
+ .s-workspace-page .s-settings-main { padding: 1rem; }
+ .s-workspace-page[data-space="notes"] > .s-entry-list { padding-inline: 1rem; }
+}
+
+@media (min-width: 64em) { .s-design-preview-notice--workspace { margin-left: 15rem; } }

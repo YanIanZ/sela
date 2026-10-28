@@ -124,7 +124,7 @@ const PrefsContext = createContext<PrefsValue | null>(null);
 export function PrefsProvider({ children }: { children: ReactNode }) {
   const [prefs, setPrefs] = useState<Prefs>(load);
   const [persisted, setPersisted] = useState(true);
-  const [, setSystemTick] = useState(0);
+  const [systemTick, setSystemTick] = useState(0);
 
   const set = useCallback(<K extends keyof Prefs>(key: K, value: Prefs[K]) => {
     setPrefs((p) => {
@@ -141,7 +141,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     apply(prefs);
-  }, [prefs]);
+  }, [prefs, systemTick]);
 
   useEffect(() => {
     let dark: MediaQueryList | null = null;
@@ -163,7 +163,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<PrefsValue>(
     () => ({ prefs, set, reset, persisted, scheme: effectiveScheme(prefs) }),
-    [prefs, set, reset, persisted],
+    [prefs, set, reset, persisted, systemTick],
   );
   return <PrefsContext.Provider value={value}>{children}</PrefsContext.Provider>;
 }

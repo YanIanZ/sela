@@ -25,3 +25,6 @@ tests
 scripts
 supabase
 README.md
+
+# Design decisions and review captures are development-only.
+**/.impeccable

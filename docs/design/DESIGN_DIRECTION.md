@@ -1,5 +1,7 @@
 # Sela v3 design direction
 
+**Current local checkpoint — 2026-10-28:** the owner requested a replacement visual identity and Dengar.in continuity features. The current UI authority is [web/DESIGN.md](../../web/DESIGN.md), with the task-first Home and cobalt/open-S identity. Manual memory, weekly reflection, source-bound manual summaries, preparation and follow-ups are now connected locally; recipient sharing and editorial clinical cards remain unavailable. See [continuity validation](../V3_CONTINUITY_VALIDATION.md). Earlier dated implementation/visual prose below is historical and does not override that checkpoint.
+
 Status: **design decision** by the design lead, 2026-10-26, revised the same day after review rounds 1 and 2, and on 2026-10-28 after the implementation refinement ([§11](#11-revision-log)). **Implemented in `web/src/v3/` on 2026-10-28, except the surfaces whose APIs or editorial review are missing (memory, summaries, sharing, recipient, reading).** The implementation and local evidence are in [V3_FRONTEND_VALIDATION.md](../V3_FRONTEND_VALIDATION.md). This folder (`docs/design/**`) is owned by the design lead; code, API and other docs are owned by other roles and are only referenced here.
 
 Labels used in all design documents:

@@ -18,7 +18,7 @@ The `feat/v3-experience` branch (stacked on the local `feat/v3-core-journey` wor
 
 Evidence: [frontend validation](docs/V3_FRONTEND_VALIDATION.md) and the [owner acceptance guide](OWNER_TESTER.md). Still open: the missing v3 feature APIs, reading editorial review, manual screen-reader/usability review, and all release gates. No live, clinical or pilot claim is made.
 
-For the configured local Docker environment, run `bash scripts/run-local-v3.sh` and open http://localhost:8080. It reads only the ignored local `.env.docker-testing` and `.env.pg-testing` files; it never prints their contents. The default v3 UI needs the database; a no-database v2-only run can still use `/demo`.
+For the configured local Docker environment, run `bash scripts/run-local-v3.sh` and open http://localhost:8080. It reads only the ignored local `.env.docker-testing` and `.env.pg-testing` files; it never prints their contents. `docker compose up --build` starts the same single-binary image with PostgreSQL 16 on http://localhost:8080 (`SELA_PORT` overrides the port), and `docker compose --profile web-test run --rm web-test` runs the web typecheck, tests and build in Node 22. The default v3 UI needs the database; a no-database v2-only run can still use `/demo`.
 
 ## Status (28 October 2026)
 

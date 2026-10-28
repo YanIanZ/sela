@@ -10,6 +10,8 @@ import {
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon } from "../icons";
+import { MemoryPage, entryRoute } from "./Continuity";
+import { WeeklyPage } from "./Weekly";
 import { helpData } from "../helpdata";
 import {
   Button,
@@ -27,7 +29,6 @@ import {
   Subnav,
   TextArea,
   TextField,
-  UnavailableFeature,
   buttonClass,
 } from "../ui";
 
@@ -81,7 +82,8 @@ export function NotesPage({ user, path }: { user: Profile; path: string }) {
   if (path === "/notes/write") return <NoteEditor user={user} />;
   if (path === "/notes/check-in") return <CheckIn />;
   if (path === "/notes/patterns") return <Patterns />;
-  if (path === "/notes/memory") return <MemoryBlocked />;
+  if (path === "/notes/weekly") return <WeeklyPage />;
+  if (path === "/notes/memory") return <MemoryPage />;
   const id = path.startsWith("/notes/") ? path.slice("/notes/".length) : "";
   if (id) return <EntryDetail id={id} />;
   return <Timeline user={user} />;
@@ -134,7 +136,6 @@ function Timeline({ user }: { user: Profile }) {
   return (
     <>
       <PageHeader
-        eyebrow={w("CATATANKU", "MY NOTES")}
         title={w("Catatan pribadiku", "My personal notes")}
         lead={w(
           "Semua yang kamu simpan, dari yang terbaru. Hanya kamu yang bisa melihatnya.",
@@ -156,6 +157,7 @@ function Timeline({ user }: { user: Profile }) {
         current="/notes"
         items={[
           { to: "/notes", label: w("Linimasa", "Timeline") },
+          { to: "/notes/weekly", label: w("Refleksi mingguan", "Weekly reflection") },
           { to: "/notes/memory", label: w("Yang Sela ingat", "What Sela remembers") },
         ]}
       />
@@ -222,11 +224,7 @@ function Timeline({ user }: { user: Profile }) {
               {entries.map((r) => (
                 <li key={r.id}>
                   <Link
-                    to={
-                      r.kind === "conversation"
-                        ? "/talk?record=" + r.id
-                        : "/notes/" + r.id
-                    }
+                    to={entryRoute(r)}
                   >
                     <Icon
                       name={
@@ -243,6 +241,9 @@ function Timeline({ user }: { user: Profile }) {
                           ? w("Percakapan", "Conversation")
                           : r.kind === "checkin"
                             ? w("Cek perasaan", "Check-in")
+                            : r.kind === "summary" ? w("Ringkasan", "Summary")
+                            : r.kind === "memory" ? w("Memori", "Memory")
+                            : r.kind === "followup" ? w("Tindak lanjut", "Follow-up")
                             : w("Catatan", "Note")}
                         {r.kind === "checkin" && r.mood ? " · " + moodLabel(r.mood, lang) : ""}
                       </span>
@@ -271,9 +272,10 @@ function Timeline({ user }: { user: Profile }) {
       </div>
       <p className="s-hint" style={{ marginTop: "var(--space-2)" }}>
         {w(
-          "Ringkasan untuk konsultasi belum tersambung di versi ini. Catatanmu tetap bisa dibuka dan diekspor.",
-          "Summary for a consultation isn't connected in this version. Your notes can still be opened and exported.",
+          "Pilih catatan yang ingin kamu bawa, susun ringkasan, lalu periksa sebelum mengunduhnya.",
+          "Choose the notes you want to bring, build a summary, then review it before downloading.",
         )}
+        {" "}<Link to="/support/summaries">{w("Buka ringkasan", "Open summaries")}</Link>
       </p>
       {user.kind === "guest" && user.guest && (
         <p className="s-retention">
@@ -783,9 +785,10 @@ function EntryDetail({ id }: { id: string }) {
       {!isCheckin && (
         <p className="s-hint" style={{ marginTop: "var(--space-3)" }}>
           {w(
-            "Ringkasan untuk konsultasi belum tersambung di versi ini.",
-            "Summary for a consultation isn't connected in this version.",
+            "Kamu bisa memilih catatan ini saat menyusun ringkasan untuk konsultasi.",
+            "You can choose this note when building a summary for a consultation.",
           )}
+          {" "}<Link to="/support/summaries">{w("Buka ringkasan", "Open summaries")}</Link>
         </p>
       )}
       {versions && versions.length > 0 && (
@@ -793,7 +796,7 @@ function EntryDetail({ id }: { id: string }) {
           <h2>{w("Riwayat versi", "Version history")}</h2>
           {versions.map((v) => (
             <article className="s-history" key={v.version}>
-              <p className="s-overline">
+              <p className="s-label">
                 {w("VERSI ", "VERSION ")}
                 {v.version} · {loc.dateTime(v.updatedAt)}
               </p>
@@ -978,38 +981,6 @@ function Patterns() {
           </Button>
         </>
       )}
-    </>
-  );
-}
-
-function MemoryBlocked() {
-  const w = useWords();
-  return (
-    <>
-      <PageHeader
-        back={{ to: "/notes", label: w("Catatanku", "My notes") }}
-        title={w("Yang Sela ingat", "What Sela remembers")}
-        lead={w(
-          "Semua yang Sela boleh pakai di percakapan berikutnya, di satu tempat.",
-          "Everything Sela may use in later conversations, in one place.",
-        )}
-      />
-      <UnavailableFeature
-        title={w("Yang Sela ingat belum tersedia", "What Sela remembers isn't available yet")}
-        body={w(
-          "Memory masih menunggu layanan penyimpanan, persetujuan, dan pemeriksaan yang terpisah. Sela tidak menyimpan apa pun di balik layar, dan tidak ada profil tersembunyi.",
-          "Memory is waiting for its storage, consent and checking services. Sela keeps nothing behind the scenes, and there is no hidden profile.",
-        )}
-        dependency={w(
-          "API memori dan persetujuan personal_memory belum ada di /api/v3.",
-          "The memory API and the personal_memory consent are not part of /api/v3 yet.",
-        )}
-      />
-      <div className="s-actions">
-        <LinkButton to="/settings/privacy#memori" variant="secondary">
-          {w("Buka Privasi & data", "Open Privacy & data")}
-        </LinkButton>
-      </div>
     </>
   );
 }

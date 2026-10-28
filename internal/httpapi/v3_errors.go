@@ -37,6 +37,7 @@ var v3Messages = map[string]message{
 // v3Status is the documented HTTP status of every code /api/v3 returns.
 var v3Status = map[string]int{
 	"storage_required": http.StatusForbidden,
+	"consent_required": http.StatusForbidden,
 	"invalid_input":    http.StatusBadRequest, "not_found": http.StatusNotFound, "method_not_allowed": http.StatusMethodNotAllowed,
 	"stale_version": http.StatusConflict, "invalid_transition": http.StatusConflict, "policy_outdated": http.StatusConflict,
 	"too_large": http.StatusRequestEntityTooLarge, "unsupported_media": http.StatusUnsupportedMediaType, "cross_origin": http.StatusForbidden,

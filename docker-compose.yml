@@ -1,24 +1,80 @@
-# Dengar.in: menjalankan dan menguji aplikasi di Docker (jalankan dari root repo).
+# Sela: local Docker stack for the current v3 app.
 #
-#   docker compose up --build                 # web (http://localhost:3000) + Redis
-#   docker compose --profile test run --rm test   # unit test CareBridge di container
-#   docker compose down -v                    # hentikan dan hapus volume
+#   docker compose up --build                  # app on http://localhost:8080
+#   docker compose --profile web-test run --rm web-test   # typecheck + test + build
+#   docker compose --profile legacy up -d      # inherited v1 Next.js demo on :3000
+#   docker compose --profile test run --rm test           # legacy CareBridge suite
+#   docker compose down                        # keep the database volume
+#   docker compose down -v                     # also drop the database volume
 #
-# Secret dibaca dari .env.local saat RUNTIME dan tidak masuk image (.dockerignore).
-# Tanpa DATABASE_URL, aplikasi memakai fallback in-memory (data hilang saat restart).
-name: dengarin
+# Configuration is read at runtime from the gitignored local files:
+#   .env.docker-testing  app (SELA_*), including SELA_DATABASE_URL and the KEK
+#   .env.pg-testing      PostgreSQL 16 credentials
+# Nothing secret is baked into an image (.dockerignore excludes .env*).
+#
+# The app image is the single Go binary from deploy/v2/Dockerfile that serves
+# web/dist plus /api/v2 and /api/v3. SELA_DB_AUTO_MIGRATE in .env.docker-testing
+# applies pending migrations in development; production runs `sela migrate up`.
+name: sela
 
 services:
-  redis:
-    image: redis:7-alpine
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - .env.pg-testing
+    # The local SELA_DATABASE_URL names this host, so the compose network keeps
+    # the same alias the run-local-v3 script uses.
+    networks:
+      default:
+        aliases:
+          - sela-postgres-testing
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 20
 
-  web:
+  app:
+    build:
+      context: .
+      dockerfile: deploy/v2/Dockerfile
+      args:
+        VERSION: ${SELA_VERSION:-dev}
+    image: sela:v3
+    ports:
+      - "${SELA_PORT:-8080}:8080"
+    env_file:
+      - .env.docker-testing
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend checks in the version CI uses (.nvmrc: 22). The whole tree is
+  # mounted because two suites read repo-root fixtures; `vite build` writes
+  # web/dist back to the host.
+  web-test:
+    profiles: ["web-test"]
+    image: node:22-alpine
+    working_dir: /app/web
+    environment:
+      CI: "true"
+    volumes:
+      - .:/app
+      - web_node_modules:/app/web/node_modules
+      - npm_cache:/root/.npm
+    command: >
+      sh -c "npm ci --no-audit --no-fund &&
+             npm run typecheck &&
+             npm test &&
+             npm run build"
+
+  # Inherited v1 Next.js app (apps/web). Not part of the v3 binary; kept behind
+  # a profile until the drawdown in SPEC T9.
+  legacy:
+    profiles: ["legacy"]
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -29,18 +85,26 @@ services:
       - path: .env.local
         required: false
     environment:
-      # Menimpa REDIS_URL kosong di .env.local; nama host `redis` = service di atas.
+      # Overrides an empty REDIS_URL in .env.local; `redis` is the service below.
       REDIS_URL: redis://redis:6379
-    # Agar AMD_BASE_URL=http://host.docker.internal:8000/v1 menjangkau SSH tunnel
-    # di host (127.0.0.1 di dalam container adalah container itu sendiri).
     extra_hosts:
+      # Lets AMD_BASE_URL=http://host.docker.internal:8000/v1 reach an SSH tunnel.
       - "host.docker.internal:host-gateway"
     depends_on:
       redis:
         condition: service_healthy
 
-  # Hanya jalan dengan `--profile test`. Memasang source ke container karena
-  # .dockerignore sengaja membuang tests/ dan scripts/ dari image web.
+  redis:
+    profiles: ["legacy"]
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Legacy CareBridge suite; mounts the tree because .dockerignore drops tests.
   test:
     profiles: ["test"]
     image: node:22-alpine
@@ -49,7 +113,6 @@ services:
       CI: "true"
     volumes:
       - .:/app
-      # node_modules Linux terpisah dari node_modules macOS di host.
       - node_modules_root:/app/node_modules
       - node_modules_web:/app/apps/web/node_modules
     command: >
@@ -58,6 +121,8 @@ services:
              npm run test:carebridge"
 
 volumes:
+  pgdata:
+  web_node_modules:
+  npm_cache:
   node_modules_root:
   node_modules_web:
-

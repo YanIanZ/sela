@@ -19,18 +19,22 @@ import (
 
 // Age bands. "under_15" is accepted as input only and always refused.
 const (
-	AgeBand15to17   = "15_17"
-	AgeBand18Plus   = "18_plus"
-	AgeBandUnknown  = "unknown"
-	AgeBandUnder15  = "under_15"
-	KindGuest       = "guest"
-	KindAccount     = "account"
-	PolicyTerms     = "terms_privacy"
-	PolicyGuest     = "guest_storage"
-	PolicyGuardian  = "guardian_information"
-	actorUser       = "user"
-	actorSystem     = "system"
-	recoveryLowMark = 3
+	AgeBand15to17  = "15_17"
+	AgeBand18Plus  = "18_plus"
+	AgeBandUnknown = "unknown"
+	AgeBandUnder15 = "under_15"
+	KindGuest      = "guest"
+	KindAccount    = "account"
+	PolicyTerms    = "terms_privacy"
+	PolicyGuest    = "guest_storage"
+	PolicyGuardian = "guardian_information"
+	// PolicyPersonalMemory gates the explicit, user-created memory items.
+	// It is not part of FoundationPurposes: it is optional and off until
+	// the owner grants it (default OFF).
+	PolicyPersonalMemory = "personal_memory"
+	actorUser            = "user"
+	actorSystem          = "system"
+	recoveryLowMark      = 3
 )
 
 // Purpose is one consent purpose in the code registry.
@@ -126,6 +130,19 @@ type OwnerStore interface {
 	RecordHistory(context.Context, UserID, string) ([]PersonalRecord, error)
 	UpdateRecord(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
 	DeleteRecord(context.Context, UserID, string, int) error
+
+	Memory(context.Context, UserID) (MemoryView, error)
+	CreateMemory(context.Context, UserID, RecordInput) (PersonalRecord, error)
+	UpdateMemory(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
+	DeleteMemory(context.Context, UserID, string, int) error
+	Summaries(context.Context, UserID) ([]PersonalRecord, error)
+	Summary(context.Context, UserID, string) (PersonalRecord, error)
+	CreateSummary(context.Context, UserID, RecordInput) (PersonalRecord, error)
+	UpdateSummary(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
+	ApproveSummary(context.Context, UserID, string, int) (PersonalRecord, error)
+	DeleteSummary(context.Context, UserID, string, int) error
+	CreateFollowup(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
+	Followups(context.Context, UserID, string) ([]PersonalRecord, error)
 
 	Profile(ctx context.Context, owner UserID) (Profile, error)
 	UpdateProfile(ctx context.Context, owner UserID, current SessionID, in ProfileUpdate) (Profile, error)

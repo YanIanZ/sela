@@ -156,7 +156,7 @@ The registry lives in code with a policy text per purpose (served by `GET /polic
 | `terms_privacy` | Yes (cannot be withdrawn; `409 required_consent`) | guests and accounts | Service terms and privacy notice |
 | `guest_storage` | Yes for guests (moot after upgrade, kept in history) | guests | Where and how long guest data is kept, cookie dependency, no absolute anonymity |
 
-Reserved names for later milestones (not listed by `GET /me/consents` until active): `ai_processing` (Meta model on Modal, P3/P5), `ai_provider_anthropic` (Claude verifier, P5), `ai_provider_deepseek` (DeepSeek fallback, P5), `personal_memory` (P3).
+Reserved names for later milestones (not listed by `GET /me/consents` until active): `ai_processing` (Meta model on Modal, P3/P5), `ai_provider_anthropic` (Claude verifier, P5), `ai_provider_deepseek` (DeepSeek fallback, P5), `personal_memory` (now active for explicit manual memory; see continuity increment in §6).
 
 ## 4. Public routes (no session)
 
@@ -314,6 +314,38 @@ All routes below require the owner cookie and normal same-origin mutation guards
 | `DELETE /api/v3/conversations/{id}` | End; purge the hold and cancel inference. A deliberately saved snapshot remains in owned records |
 
 `storage_required` is 403. Unsaved turns never enter PostgreSQL or exports. Holds expire after 30 inactive minutes or 2 hours total; sign-out purges them. Every user-authored entry is screened; crisis text is kept, inline help shown, and room AI paused. Later turns do not erase the user's choice to continue. Provider consent changes invalidate running results. `ai_processing`, `ai_provider_anthropic` and `ai_provider_deepseek` are independent versioned consent purposes; DeepSeek remains default-off and synthetic-only. These routes and screens are local development work, not pilot or public-release approval.
+
+### Manual continuity increment (2026-10-28)
+
+Migration 0300 adds encrypted `memory`, `summary`, and `followup` record kinds.
+No AI generation, automatic extraction, or recipient sharing is enabled by this increment.
+The existing cookie principal, mutation guards, ownership, export, revisions, and deletion rules apply.
+
+| Route | Request / response |
+| --- | --- |
+| `GET /api/v3/memory` | `{enabled,items}`; disabled and empty until current `personal_memory` consent |
+| `POST /api/v3/memory` | `{title,text,storageGranted:true,sourceRefs?:[]}` → personal record |
+| `PATCH /api/v3/memory/{id}` | Same, plus `expectedVersion` |
+| `DELETE /api/v3/memory/{id}` | `{expectedVersion}`; also allowed after consent withdrawal |
+| `GET /api/v3/consultation-summaries` | `{summaries}` |
+| `POST /api/v3/consultation-summaries` | `{title,text,sourceRefs,prepared?,storageGranted:true}` → personal record |
+| `GET /api/v3/consultation-summaries/{id}` | Personal record with effective `summaryState` |
+| `PATCH /api/v3/consultation-summaries/{id}` | Creation fields plus `expectedVersion`; approval resets |
+| `DELETE /api/v3/consultation-summaries/{id}` | `{expectedVersion}`; summary and attached follow-ups cascade |
+| `POST /api/v3/consultation-summaries/{id}/approve` | `{expectedVersion}`; approval binds exact content version |
+| `POST /api/v3/consultation-summaries/{id}/followups` | `{title,text,storageGranted:true}` → personal follow-up record |
+| `GET /api/v3/consultation-summaries/{id}/followups` | `{followups}` |
+
+`sourceRefs` is an array of `{recordId,version}`, maximum 12, minimum one for a summary.
+Sources must be current, owner-owned notes/check-ins/conversations. Derived records cannot be sources.
+A source edit or deletion demotes the effective approval on subsequent reads and exports.
+`prepared` holds optional `goal`, `questions`, and `bring` text. All such content and source links are encrypted.
+Memory is explicit, defaults off, and is never sent to AI. Withdrawal hides memory from normal record reads;
+owner export and deletion remain available. The generic records PATCH additionally accepts an existing
+`followup` for corrections, retaining its parent; generic creation still accepts only notes/check-ins.
+Weekly reflection is computed in the browser from original creation dates/check-in local days;
+a reflection is saved only after permission as an ordinary encrypted note.
+
 
 ## 7. Guest and account differences (foundation)
 

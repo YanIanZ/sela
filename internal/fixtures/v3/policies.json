@@ -102,6 +102,27 @@
       }
     ]
   },
+  "personal_memory": {
+    "version": "personal-memory-2026-11-01.1",
+    "title": {
+      "id": "Ingatan pribadi",
+      "en": "Personal memory"
+    },
+    "body": [
+      {
+        "id": "Sela hanya menyimpan hal yang kamu tulis sendiri sebagai ingatan, dan hanya jika kamu menyalakannya. Tidak ada ingatan yang dibuat otomatis, ditambang dari percakapan, atau disimpan tanpa kamu lihat.",
+        "en": "Sela keeps only items you write yourself as memory, and only when you turn this on. Nothing is captured automatically, mined from conversations, or stored without you seeing it."
+      },
+      {
+        "id": "Kamu dapat mengubah atau menghapus setiap ingatan, dan mematikan ingatan kapan saja. Saat dimatikan, Sela tidak membaca atau memakai ingatanmu; isinya tetap tersimpan sampai kamu menghapusnya.",
+        "en": "You can edit or delete each memory item and turn memory off at any time. While it is off, Sela does not read or use your memory; the items stay stored until you delete them."
+      },
+      {
+        "id": "Ingatan disimpan terenkripsi seperti catatanmu dan tidak dikirim ke penyedia AI mana pun pada langkah ini. Ingatan tidak dipakai untuk membalas percakapan sampai kamu menyalakannya secara terpisah nanti.",
+        "en": "Memory is stored encrypted like your notes and is not sent to any AI provider in this step. Memory is not used to answer a conversation until you enable that separately later."
+      }
+    ]
+  },
   "ai_processing": {
     "version": "ai-meta-2026-10-27.1",
     "title": {

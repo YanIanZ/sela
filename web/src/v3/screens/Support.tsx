@@ -3,100 +3,13 @@ import { LinkButton, PageHeader, UnavailableFeature } from "../ui";
 
 export function SupportPage() {
   const w = useWords();
-  return (
-    <>
-      <PageHeader
-        eyebrow={w("DUKUNGAN", "SUPPORT")}
-        title={w("Dukungan", "Support")}
-        lead={w(
-          "Hal-hal yang bisa membantu di luar percakapan. Semuanya pilihan.",
-          "Things that can help beyond talking. All of it is optional.",
-        )}
-      />
-      <div className="s-support-grid">
-        <section className="s-support-card s-support-live" aria-labelledby="services-title">
-          <p className="s-status-chip s-status-chip--confirmed">
-            {w("Tersedia sekarang", "Available now")}
-          </p>
-          <h2 id="services-title">{w("Layanan bantuan", "Support services")}</h2>
-          <p>
-            {w(
-              "Daftar layanan yang sudah diverifikasi, dengan sumber dan tanggal pemeriksaan. Bisa dibuka tanpa akun dan tanpa jaringan.",
-              "A verified list of services, with sources and verification dates. It opens without an account or a network.",
-            )}
-          </p>
-          <div className="s-actions">
-            <LinkButton to="/help" variant="help" icon="help">
-              {w("Lihat layanan bantuan", "See support services")}
-            </LinkButton>
-          </div>
-        </section>
-
-        <section className="s-support-card" aria-labelledby="summary-title">
-          <h2 id="summary-title">{w("Ringkasan untuk konsultasi", "Summary for a consultation")}</h2>
-          <p>
-            {w(
-              "Kalau kamu ingin bicara dengan profesional, misalnya di Puskesmas atau dengan psikolog, Sela bisa membantumu menyiapkan ringkasan dari yang kamu pilih di Catatanku.",
-              "If you want to talk with a professional, for example at a Puskesmas or with a psychologist, Sela can help you prepare a summary from what you choose in My notes.",
-            )}
-          </p>
-          <p className="s-status">
-            <strong>{w("Belum tersedia.", "Not available yet.")}</strong>{" "}
-            {w(
-              "Penyusunan, persetujuan, berbagi, dan tindak lanjut belum tersambung. Tidak ada ringkasan contoh atau tautan berbagi yang ditampilkan.",
-              "Building, approving, sharing and follow-up aren't connected. No example summary or share link is shown.",
-            )}
-          </p>
-          <div className="s-actions">
-            <LinkButton to="/support/summaries/new" variant="secondary">
-              {w("Kenapa belum tersedia?", "Why isn't it available?")}
-            </LinkButton>
-          </div>
-        </section>
-
-        <section className="s-support-card" aria-labelledby="reading-title">
-          <h2 id="reading-title">{w("Bacaan & latihan kecil", "Reading & small exercises")}</h2>
-          <p>
-            {w(
-              "Bacaan singkat dan latihan kecil yang bisa kamu coba kapan saja. Tanpa hitungan hari dan tanpa nilai.",
-              "Short reads and small exercises you can try any time. No day counts and no scores.",
-            )}
-          </p>
-          <p className="s-status">
-            <strong>{w("Belum bisa dibuka.", "Can't open yet.")}</strong>{" "}
-            {w(
-              "Setiap bacaan menunggu tinjauan editor manusia sebelum ditampilkan.",
-              "Every reading item awaits a human editor's review before it is shown.",
-            )}
-          </p>
-          <LinkButton to="/reading" variant="quiet">
-            {w("Tentang bacaan & latihan kecil", "About reading & small exercises")}
-          </LinkButton>
-        </section>
-
-        <section className="s-support-card" aria-labelledby="prepare-title">
-          <h2 id="prepare-title">{w("Persiapan & setelah konsultasi", "Preparation & after a consultation")}</h2>
-          <p>
-            {w(
-              "Persiapan konsultasi dan catatan setelah konsultasi akan mengikuti ringkasan yang kamu buat. Keduanya belum tersedia.",
-              "Preparing for a consultation and writing afterwards will follow the summary you make. Neither is available yet.",
-            )}
-          </p>
-          <div className="s-actions">
-            <LinkButton to="/support/summaries/new?step=prepare" variant="quiet">
-              {w("Kenapa belum tersedia?", "Why isn't it available?")}
-            </LinkButton>
-          </div>
-        </section>
-      </div>
-      <p className="s-hint" style={{ marginTop: "var(--space-5)" }}>
-        {w(
-          "Mencari bantuan profesional selalu pilihanmu. Sela tidak menghubungi siapa pun dan tidak menilai apakah kamu perlu bantuan.",
-          "Seeking professional help is always your choice. Sela contacts no one and doesn't judge whether you need help.",
-        )}
-      </p>
-    </>
-  );
+  return <div className="c-support"><PageHeader title={w("Dukungan, dengan caramu", "Support, your way")} lead={w("Untuk saat kamu ingin membawa cerita lebih jauh. Pilih yang berguna bagimu.", "For when you want to take your story further. Choose what is useful to you.")} />
+    <section className="c-support-intro"><div><h2>{w("Kamu yang menentukan ceritanya.", "You decide what to share.")}</h2><p>{w("Pilih bagian dari Catatanku, susun dengan kata-katamu, dan periksa sebelum kamu membawanya ke percakapan dengan orang lain.", "Choose parts of My notes, arrange them in your words, and review them before taking them into a conversation with someone else.")}</p><LinkButton to="/support/summaries/new" variant="primary">{w("Susun ringkasan", "Build a summary")}</LinkButton><LinkButton to="/support/summaries" variant="quiet">{w("Lihat ringkasanku", "My summaries")}</LinkButton></div><img src="/illustrations/sela-room.webp" alt="" width="1100" height="825" /></section>
+    <div className="c-support-paths"><section><h2>{w("Sebelum dan setelahnya", "Before and afterwards")}</h2><p>{w("Simpan tujuan, pertanyaan, dan hal yang ingin dibawa bersama ringkasanmu. Sesudahnya, catat yang penting dengan kata-katamu sendiri.", "Keep your goals, questions, and things to bring with your summary. Afterwards, note what matters in your own words.")}</p><LinkButton to="/support/summaries" variant="secondary">{w("Buka persiapanku", "Open my preparation")}</LinkButton></section>
+    <section><h2>{w("Jeda untuk membaca", "A pause to read")}</h2><p>{w("Temukan panduan dari WHO dan NHS langsung di sumber resminya. Kartu latihan Sela akan tersedia setelah tinjauan editor.", "Find WHO and NHS guides at their official sources. Sela exercise cards will be available after editorial review.")}</p><LinkButton to="/reading" variant="secondary">{w("Jelajahi sumber bacaan", "Explore reading sources")}</LinkButton></section>
+    <section><h2>{w("Bantuan manusia", "Human support")}</h2><p>{w("Layanan bantuan dengan sumber dan tanggal verifikasi. Bisa dibuka tanpa akun.", "Support services with sources and verification dates. Available without an account.")}</p><LinkButton to="/help" variant="help" icon="help">{w("Lihat layanan bantuan", "See support services")}</LinkButton></section></div>
+    <p className="s-hint c-product-boundary">{w("Sela tidak menghubungi siapa pun. Mencari bantuan profesional selalu pilihanmu. Tautan berbagi dengan penerima dan kode akses belum tersedia; kamu dapat mengunduh ringkasan yang sudah disetujui.", "Sela contacts no one. Seeking professional help is always your choice. Recipient links with access codes are not available yet; you can download an approved summary.")}</p>
+  </div>;
 }
 
 export function SupportFeaturePage({ feature }: { feature: string }) {
@@ -154,8 +67,8 @@ export function SupportFeaturePage({ feature }: { feature: string }) {
         title={w("Belum tersedia", "Not available yet")}
         body={w(c.bodyId, c.bodyEn)}
         dependency={w(
-          "API ringkasan dan berbagi belum ada di /api/v3. Tidak ada data contoh atau tautan palsu.",
-          "The summary and sharing APIs aren't part of /api/v3 yet. No sample data or fake link is shown.",
+          "Tautan berbagi, kode akses penerima, dan pencabutan akses belum tersedia. Ringkasan manual bisa disetujui dan diunduh dari halaman Ringkasan.",
+          "Share links, recipient access codes, and access revocation are not available yet. Manual summaries can be approved and downloaded from Summaries.",
         )}
       />
       <div className="s-actions">

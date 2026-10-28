@@ -1,45 +1,22 @@
-/*
- * Sela v3 design tokens (reference sheet).
- *
- * Status: design decision by the design lead, 2026-10-26. Not implemented:
- * the frontend copies this file to web/src/styles/tokens.css when it builds
- * the v3 design system. docs/design/tools/contrast.py reads the colour
- * blocks below (between "@scheme <name>" and "@end" markers) and computes
- * every WCAG contrast pair listed in DESIGN_DIRECTION.md.
- *
- * Rules
- * - Sizes are rem or em only (no vw/vh in type), so browser zoom, text-only
- *   zoom and Sela's own text-size setting all scale every text token.
- * - Colour is set on :root by scheme. The boot script (web/public/boot.js,
- *   same-origin, no inline script because the CSP is script-src 'self')
- *   writes data-scheme, data-text-scale, data-spacing and data-motion on
- *   <html> before the stylesheet is applied. Without the script, the light
- *   scheme applies, or the dark one through the prefers-color-scheme
- *   fallback at the end of this file.
- * - Components never use raw hex values; they use these roles.
- */
-
+/* Sela — Tidak harus rapi. Color roles cover light, dark and high contrast. */
 :root {
-  /* ---------- Typography ---------- */
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
-  /* Display type is a serif shipped with the operating system (Iowan Old
-     Style, Palatino, Georgia or Noto Serif). No font file is downloaded;
-     added in the 2026-10-28 implementation refinement. */
-  --font-display:
-    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia,
-    "Noto Serif", "Times New Roman", serif;
-  --font-mono: ui-monospace, "SFMono-Regular", "Roboto Mono", "Noto Sans Mono", Menlo, Consolas, monospace;
 
-  --font-size-1: 0.875rem;   /* 14px: timestamps and footnotes only. Never smaller, and never for
-                                labels that carry meaning (provenance badges, status chips, meta-line
-                                actions and navigation labels use --font-size-2). */
-  --font-size-2: 1rem;       /* 16px: buttons, chips, labels, badges, status chips, navigation labels */
-  --font-size-3: 1.0625rem;  /* 17px: body text */
-  --font-size-4: 1.125rem;   /* 18px: transcript, journal and reading text */
-  --font-size-5: 1.3125rem;  /* 21px: h3, card titles */
-  --font-size-6: 1.5rem;     /* 24px: h2 */
-  --font-size-7: 1.75rem;    /* 28px: h1 in compact layouts */
-  --font-size-8: 2.125rem;   /* 34px: h1 in wide layouts, intro title */
+  --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --font-display: "Manrope", system-ui, sans-serif;
+  --font-mono:
+    ui-monospace, "SFMono-Regular", "Roboto Mono", "Noto Sans Mono", Menlo,
+    Consolas, monospace;
+
+  --font-size-1: 0.875rem;
+  --font-size-2: 1rem;
+  --font-size-3: 1rem;
+  --font-size-4: 1.125rem;
+  --font-size-5: 1.5rem;
+  --font-size-6: 1.5rem;
+  --font-size-7: 1.75rem;
+  --font-size-page: clamp(2rem, 1.5rem + 1.5vw, 2.5rem);
+  --font-size-display: clamp(1.75rem, 1rem + 3vw, 3.625rem);
 
   --line-height-body: 1.6;
   --line-height-heading: 1.3;
@@ -53,11 +30,10 @@
   --font-weight-medium: 600;
   --font-weight-bold: 700;
 
-  --measure: 38rem;          /* about 65 characters at --font-size-4 */
-  --measure-wide: 52rem;     /* forms with two columns, settings */
-  --shell-max: 80rem;
+  --measure: 38rem;
+  --measure-wide: 76rem;
+  --shell-max: 90rem;
 
-  /* ---------- Space (4px grid) ---------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -66,54 +42,41 @@
   --space-6: 2rem;
   --space-7: 3rem;
   --space-8: 4rem;
-  --gutter: 1rem;            /* side gutter at every width below 40em */
-  --stack-gap: 1.25rem;      /* default vertical rhythm between blocks */
+  --gutter: 1.125rem;
+  --stack-gap: 1.25rem;
 
-  /* ---------- Shape ---------- */
-  --radius-1: 4px;           /* provenance badges, status chips, code */
-  --radius-2: 8px;           /* buttons, inputs, notices */
-  --radius-3: 12px;          /* cards, panels, transcript blocks */
-  --radius-4: 20px;          /* sheet top corners, dialogs */
-  --radius-pill: 999px;      /* choice chips only (shape means "a choice") */
+  --radius-1: 4px;
+  --radius-2: 8px;
+  --radius-3: 12px;
+  --radius-4: 16px;
+  --radius-pill: 999px;
 
   --border-width: 1px;
   --border-width-strong: 2px;
-  --rule-width: 4px;         /* "your words" rule */
+  --rule-width: 1px;
 
-  /* ---------- Size ---------- */
-  --target-min: 2.75rem;     /* 44px minimum for every pointer target except inline links */
-  --target-gap: 0.5rem;      /* minimum gap between adjacent targets */
-  --icon-size: 1.25rem;      /* 20px; icons scale with text */
+  --target-min: 2.75rem;
+  --target-gap: 0.5rem;
+  --icon-size: 1.25rem;
   --icon-size-large: 1.5rem;
-  --bar-min-height: 3.5rem;  /* minimum height of one row of the top bar or bottom bar; bars grow
-                                with their content and wrap to more rows (never a fixed height) */
-  --strip-pad: 0.375rem;     /* 6px of --c-bg around the fixed help control, so its offset focus ring
-                                (2px offset + 3px width) is drawn on the strip, never clipped by the
-                                viewport edge and never on the control's own fill */
-  --room-reading-min: 5.4rem;    /* three transcript lines (3 x 1.6 x --font-size-4; 86px at 100% text).
-                                    While typing in the room on a phone, if the help strip and the sticky
-                                    composer would leave less than this, the composer joins the page flow */
-  --room-reading-target: 7.2rem; /* four transcript lines (115px at 100% text): the target the scripted
-                                    typing checks assert while the composer is sticky */
-  /* --vvh (set by the shell script from visualViewport.height, in px) caps the room's layers:
-     the focused text area at 25% of --vvh while typing, the sticky composer at 50% of --vvh. */
+  --bar-min-height: 3.5rem;
+  --strip-pad: 0.375rem;
+  --room-reading-min: 5.4rem;
+  --room-reading-target: 7.2rem;
 
-  /* ---------- Focus ---------- */
+
   --focus-width: 3px;
   --focus-offset: 2px;
 
-  /* ---------- Elevation ---------- */
-  --shadow-1: 0 1px 2px rgb(30 28 25 / 0.10);
-  --shadow-2: 0 8px 24px rgb(30 28 25 / 0.18);
+  --shadow-1: 0 1px 2px rgb(23 35 58 / 0.08);
+  --shadow-2: 0 8px 24px rgb(23 35 58 / 0.18);
 
-  /* ---------- Motion ---------- */
-  --duration-quick: 120ms;   /* hover, press, colour changes */
-  --duration-gentle: 200ms;  /* sheet and dialog entry, disclosure */
-  --reveal-step: 180ms;      /* delay between sentences when a released reply is revealed (full motion only) */
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --duration-quick: 120ms;
+  --duration-gentle: 200ms;
+  --reveal-step: 180ms;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* ---------- Layers ---------- */
-  --z-sticky: 10;            /* top bar, bottom navigation, composer */
+  --z-sticky: 10;
   --z-sheet: 30;
   --z-dialog: 40;
   --z-skip: 50;
@@ -122,148 +85,151 @@
   font-size: 100%;
 }
 
-/* ---------- Colour schemes ---------- */
+
 
 /* @scheme light */
 :root,
 :root[data-scheme="light"] {
   color-scheme: light;
-  --c-bg: #FAF7F2;             /* kertas (paper) */
-  --c-surface: #FFFFFF;
-  --c-surface-quiet: #F5F0E8;
-  --c-sunken: #F1ECE4;
-  --c-text: #1E1C19;           /* tinta (ink) */
-  --c-muted: #575249;
-  --c-border-subtle: #E3DCD0;  /* decorative separators only */
-  --c-border-control: #7B7368; /* inputs, chips, checkboxes */
-  --c-accent: #1D5C57;         /* laut (deep sea teal) */
-  --c-accent-hover: #154743;
-  --c-on-accent: #FFFFFF;
-  --c-accent-soft: #DDEBE8;
-  --c-link: #1B5A55;
-  --c-focus: #2747C9;
-  --c-user: #9A5A00;           /* kunyit (turmeric): the user's own words */
-  --c-user-bg: #FBF0DF;
-  --c-user-text: #6E4100;
-  --c-ai: #5048A8;             /* nila (indigo): anything an AI wrote */
-  --c-ai-bg: #EFEEF9;
-  --c-ai-text: #3E378F;
-  --c-help: #A1351E;           /* mengkudu (noni red): help entry points only */
-  --c-help-hover: #852A16;      /* help hover and pressed: darker in light schemes, lighter in dark ones */
-  --c-on-help: #FFFFFF;
-  --c-help-bg: #FBE9E4;
-  --c-help-text: #8C2C17;
-  --c-danger: #A3271F;
-  --c-danger-bg: #FCE9E7;
-  --c-success: #23683C;
-  --c-success-bg: #E6F2E9;
+  --c-bg: #EDF0F8;
+  --c-surface: #ffffff;
+  --c-surface-quiet: #F3F5FB;
+  --c-sunken: #E7ECF6;
+  --c-text: #17233A;
+  --c-muted: #52617B;
+  --c-border-subtle: #D3DBEA;
+  --c-border-control: #72809B;
+  --c-accent: #3657C7;
+  --c-accent-hover: #2844A5;
+  --c-on-accent: #ffffff;
+  --c-accent-soft: #E7ECFD;
+  --c-link: #2E4DB3;
+  --c-focus: #3657C7;
+  --c-user: #3657C7;
+  --c-user-bg: #E9EEFF;
+  --c-user-text: #28459E;
+  --c-ai: #6650A8;
+  --c-ai-bg: #F1EDFC;
+  --c-ai-text: #51398F;
+  --c-help: #a1351e;
+  --c-help-hover: #852a16;
+  --c-on-help: #ffffff;
+  --c-help-bg: #fbe9e4;
+  --c-help-text: #8c2c17;
+  --c-danger: #a3271f;
+  --c-danger-bg: #fce9e7;
+  --c-success: #23683c;
+  --c-success-bg: #e6f2e9;
   --c-warning: #875200;
-  --c-warning-bg: #FCF1D9;
-  --c-warning-border: #A86E00;
-  --c-info: #1F5788;
-  --c-info-bg: #E7F0F8;
-  --c-demo: #5E4A99;
-  --c-demo-bg: #EEE9F8;
-  --c-test: #7A5600;
-  --c-test-bg: #FFF1C7;
-  --c-overlay: rgb(20 19 17 / 0.5);
+  --c-warning-bg: #fcf1d9;
+  --c-warning-border: #a86e00;
+  --c-info: #1f5788;
+  --c-info-bg: #e7f0f8;
+  --c-demo: #5e4a99;
+  --c-demo-bg: #eee9f8;
+  --c-test: #7a5600;
+  --c-test-bg: #fff1c7;
+  --c-overlay: rgb(17 24 39 / 0.5);
 }
 /* @end */
+
 
 /* @scheme dark */
 :root[data-scheme="dark"] {
   color-scheme: dark;
-  --c-bg: #141311;
-  --c-surface: #1D1B18;
-  --c-surface-quiet: #1A1815;
-  --c-sunken: #25221E;
-  --c-text: #F2EEE7;
-  --c-muted: #BCB4A7;
-  --c-border-subtle: #35312B;
-  --c-border-control: #8E8679;
-  --c-accent: #7FC6BC;
-  --c-accent-hover: #9BD5CD;
-  --c-on-accent: #0C1D1B;
-  --c-accent-soft: #1F3532;
-  --c-link: #8ED2C8;
-  --c-focus: #94B2FF;
-  --c-user: #E2A24C;
-  --c-user-bg: #2C2317;
-  --c-user-text: #F0C27E;
-  --c-ai: #ABA6F2;
-  --c-ai-bg: #232139;
-  --c-ai-text: #C4C0FA;
-  --c-help: #F2917A;
-  --c-help-hover: #F7AE9C;
-  --c-on-help: #2B0E07;
-  --c-help-bg: #36211B;
-  --c-help-text: #F6AE9C;
-  --c-danger: #F38E85;
-  --c-danger-bg: #3A1C19;
-  --c-success: #83CC9B;
-  --c-success-bg: #18301F;
-  --c-warning: #F1C46F;
-  --c-warning-bg: #352A12;
-  --c-warning-border: #D9A440;
-  --c-info: #90C3F0;
-  --c-info-bg: #172A3B;
-  --c-demo: #C6B6F2;
-  --c-demo-bg: #2A2340;
-  --c-test: #F2C94C;
-  --c-test-bg: #352B0E;
+  --c-bg: #111827;
+  --c-surface: #192235;
+  --c-surface-quiet: #151E30;
+  --c-sunken: #232E44;
+  --c-text: #F0F3FB;
+  --c-muted: #B4C0D8;
+  --c-border-subtle: #36425B;
+  --c-border-control: #8494B2;
+  --c-accent: #A4B8FF;
+  --c-accent-hover: #C2CFFF;
+  --c-on-accent: #101A36;
+  --c-accent-soft: #28375D;
+  --c-link: #B3C3FF;
+  --c-focus: #B3C3FF;
+  --c-user: #A4B8FF;
+  --c-user-bg: #233252;
+  --c-user-text: #BFCEFF;
+  --c-ai: #C5B4FF;
+  --c-ai-bg: #312849;
+  --c-ai-text: #D3C6FF;
+  --c-help: #f2917a;
+  --c-help-hover: #f7ae9c;
+  --c-on-help: #2b0e07;
+  --c-help-bg: #36211b;
+  --c-help-text: #f6ae9c;
+  --c-danger: #f38e85;
+  --c-danger-bg: #3a1c19;
+  --c-success: #83cc9b;
+  --c-success-bg: #18301f;
+  --c-warning: #f1c46f;
+  --c-warning-bg: #352a12;
+  --c-warning-border: #d9a440;
+  --c-info: #90c3f0;
+  --c-info-bg: #172a3b;
+  --c-demo: #c6b6f2;
+  --c-demo-bg: #2a2340;
+  --c-test: #f2c94c;
+  --c-test-bg: #352b0e;
   --c-overlay: rgb(0 0 0 / 0.6);
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.5);
   --shadow-2: 0 8px 24px rgb(0 0 0 / 0.6);
 }
 /* @end */
 
+
 /* @scheme contrast-light */
 :root[data-scheme="contrast-light"] {
   color-scheme: light;
-  --c-bg: #FFFFFF;
-  --c-surface: #FFFFFF;
-  --c-surface-quiet: #FFFFFF;
-  --c-sunken: #FFFFFF;
+  --c-bg: #ffffff;
+  --c-surface: #ffffff;
+  --c-surface-quiet: #ffffff;
+  --c-sunken: #ffffff;
   --c-text: #000000;
-  --c-muted: #1F1F1F;
+  --c-muted: #1f1f1f;
   --c-border-subtle: #000000;
   --c-border-control: #000000;
-  --c-accent: #00403B;
-  --c-accent-hover: #002B28;
-  --c-on-accent: #FFFFFF;
-  --c-accent-soft: #FFFFFF;
-  --c-link: #003A99;
-  --c-focus: #0033CC;
-  --c-user: #6B3500;
-  --c-user-bg: #FFFFFF;
-  --c-user-text: #4D2600;
-  --c-ai: #2A2283;
-  --c-ai-bg: #FFFFFF;
-  --c-ai-text: #2A2283;
-  --c-help: #7E1A07;
-  --c-help-hover: #5E1205;
-  --c-on-help: #FFFFFF;
-  --c-help-bg: #FFFFFF;
-  --c-help-text: #7E1A07;
-  --c-danger: #8B0F08;
-  --c-danger-bg: #FFFFFF;
-  --c-success: #0B4A22;
-  --c-success-bg: #FFFFFF;
-  --c-warning: #5C3700;
-  --c-warning-bg: #FFFFFF;
-  --c-warning-border: #5C3700;
-  --c-info: #0B3A66;
-  --c-info-bg: #FFFFFF;
-  --c-demo: #3B2475;
-  --c-demo-bg: #FFFFFF;
-  --c-test: #4F3800;
-  --c-test-bg: #FFFFFF;
+  --c-accent: #193378;
+  --c-accent-hover: #102555;
+  --c-on-accent: #ffffff;
+  --c-accent-soft: #ffffff;
+  --c-link: #003a99;
+  --c-focus: #0033cc;
+  --c-user: #6b3500;
+  --c-user-bg: #ffffff;
+  --c-user-text: #4d2600;
+  --c-ai: #2a2283;
+  --c-ai-bg: #ffffff;
+  --c-ai-text: #2a2283;
+  --c-help: #7e1a07;
+  --c-help-hover: #5e1205;
+  --c-on-help: #ffffff;
+  --c-help-bg: #ffffff;
+  --c-help-text: #7e1a07;
+  --c-danger: #8b0f08;
+  --c-danger-bg: #ffffff;
+  --c-success: #0b4a22;
+  --c-success-bg: #ffffff;
+  --c-warning: #5c3700;
+  --c-warning-bg: #ffffff;
+  --c-warning-border: #5c3700;
+  --c-info: #0b3a66;
+  --c-info-bg: #ffffff;
+  --c-demo: #3b2475;
+  --c-demo-bg: #ffffff;
+  --c-test: #4f3800;
+  --c-test-bg: #ffffff;
   --c-overlay: rgb(0 0 0 / 0.7);
   --shadow-1: none;
   --shadow-2: none;
   --border-width: 2px;
 }
 /* @end */
+
 
 /* @scheme contrast-dark */
 :root[data-scheme="contrast-dark"] {
@@ -272,39 +238,39 @@
   --c-surface: #000000;
   --c-surface-quiet: #000000;
   --c-sunken: #000000;
-  --c-text: #FFFFFF;
-  --c-muted: #E8E8E8;
-  --c-border-subtle: #FFFFFF;
-  --c-border-control: #FFFFFF;
-  --c-accent: #A6F2E8;
-  --c-accent-hover: #C8F8F1;
+  --c-text: #ffffff;
+  --c-muted: #e8e8e8;
+  --c-border-subtle: #ffffff;
+  --c-border-control: #ffffff;
+  --c-accent: #C4D1FF;
+  --c-accent-hover: #E0E7FF;
   --c-on-accent: #000000;
   --c-accent-soft: #000000;
-  --c-link: #A6F2E8;
-  --c-focus: #FFE14D;
-  --c-user: #FFB85C;
+  --c-link: #C4D1FF;
+  --c-focus: #ffe14d;
+  --c-user: #ffb85c;
   --c-user-bg: #000000;
-  --c-user-text: #FFC97F;
-  --c-ai: #CFCBFF;
+  --c-user-text: #ffc97f;
+  --c-ai: #cfcbff;
   --c-ai-bg: #000000;
-  --c-ai-text: #CFCBFF;
-  --c-help: #FFA28D;
-  --c-help-hover: #FFC2B3;
+  --c-ai-text: #cfcbff;
+  --c-help: #ffa28d;
+  --c-help-hover: #ffc2b3;
   --c-on-help: #000000;
   --c-help-bg: #000000;
-  --c-help-text: #FFB4A3;
-  --c-danger: #FF9C94;
+  --c-help-text: #ffb4a3;
+  --c-danger: #ff9c94;
   --c-danger-bg: #000000;
-  --c-success: #8FE3AA;
+  --c-success: #8fe3aa;
   --c-success-bg: #000000;
-  --c-warning: #FFD27A;
+  --c-warning: #ffd27a;
   --c-warning-bg: #000000;
-  --c-warning-border: #FFD27A;
-  --c-info: #A3D2FF;
+  --c-warning-border: #ffd27a;
+  --c-info: #a3d2ff;
   --c-info-bg: #000000;
-  --c-demo: #D9CCFF;
+  --c-demo: #d9ccff;
   --c-demo-bg: #000000;
-  --c-test: #FFDA66;
+  --c-test: #ffda66;
   --c-test-bg: #000000;
   --c-overlay: rgb(0 0 0 / 0.8);
   --shadow-1: none;
@@ -313,50 +279,50 @@
 }
 /* @end */
 
-/* CSS-only fallback when the boot script did not run: follow the system
-   dark preference. Values must equal the "dark" block (contrast.py checks). */
+
+
 /* @scheme dark-fallback */
 @media (prefers-color-scheme: dark) {
   :root:not([data-scheme]) {
     color-scheme: dark;
-    --c-bg: #141311;
-    --c-surface: #1D1B18;
-    --c-surface-quiet: #1A1815;
-    --c-sunken: #25221E;
-    --c-text: #F2EEE7;
-    --c-muted: #BCB4A7;
-    --c-border-subtle: #35312B;
-    --c-border-control: #8E8679;
-    --c-accent: #7FC6BC;
-    --c-accent-hover: #9BD5CD;
-    --c-on-accent: #0C1D1B;
-    --c-accent-soft: #1F3532;
-    --c-link: #8ED2C8;
-    --c-focus: #94B2FF;
-    --c-user: #E2A24C;
-    --c-user-bg: #2C2317;
-    --c-user-text: #F0C27E;
-    --c-ai: #ABA6F2;
-    --c-ai-bg: #232139;
-    --c-ai-text: #C4C0FA;
-    --c-help: #F2917A;
-    --c-help-hover: #F7AE9C;
-    --c-on-help: #2B0E07;
-    --c-help-bg: #36211B;
-    --c-help-text: #F6AE9C;
-    --c-danger: #F38E85;
-    --c-danger-bg: #3A1C19;
-    --c-success: #83CC9B;
-    --c-success-bg: #18301F;
-    --c-warning: #F1C46F;
-    --c-warning-bg: #352A12;
-    --c-warning-border: #D9A440;
-    --c-info: #90C3F0;
-    --c-info-bg: #172A3B;
-    --c-demo: #C6B6F2;
-    --c-demo-bg: #2A2340;
-    --c-test: #F2C94C;
-    --c-test-bg: #352B0E;
+    --c-bg: #111827;
+    --c-surface: #192235;
+    --c-surface-quiet: #151E30;
+    --c-sunken: #232E44;
+    --c-text: #F0F3FB;
+    --c-muted: #B4C0D8;
+    --c-border-subtle: #36425B;
+    --c-border-control: #8494B2;
+    --c-accent: #A4B8FF;
+    --c-accent-hover: #C2CFFF;
+    --c-on-accent: #101A36;
+    --c-accent-soft: #28375D;
+    --c-link: #B3C3FF;
+    --c-focus: #B3C3FF;
+    --c-user: #A4B8FF;
+    --c-user-bg: #233252;
+    --c-user-text: #BFCEFF;
+    --c-ai: #C5B4FF;
+    --c-ai-bg: #312849;
+    --c-ai-text: #D3C6FF;
+    --c-help: #f2917a;
+    --c-help-hover: #f7ae9c;
+    --c-on-help: #2b0e07;
+    --c-help-bg: #36211b;
+    --c-help-text: #f6ae9c;
+    --c-danger: #f38e85;
+    --c-danger-bg: #3a1c19;
+    --c-success: #83cc9b;
+    --c-success-bg: #18301f;
+    --c-warning: #f1c46f;
+    --c-warning-bg: #352a12;
+    --c-warning-border: #d9a440;
+    --c-info: #90c3f0;
+    --c-info-bg: #172a3b;
+    --c-demo: #c6b6f2;
+    --c-demo-bg: #2a2340;
+    --c-test: #f2c94c;
+    --c-test-bg: #352b0e;
     --c-overlay: rgb(0 0 0 / 0.6);
     --shadow-1: 0 1px 2px rgb(0 0 0 / 0.5);
     --shadow-2: 0 8px 24px rgb(0 0 0 / 0.6);
@@ -364,14 +330,18 @@
 }
 /* @end */
 
-/* ---------- Display preferences (set by the user in Tampilan & aksesibilitas) ---------- */
 
-:root[data-text-scale="115"] { font-size: 115%; }
-:root[data-text-scale="130"] { font-size: 130%; }
-:root[data-text-scale="150"] { font-size: 150%; }
 
-/* "Jarak teks lebih lega" (relaxed spacing). Stays within WCAG 1.4.12 values,
-   which the layout must also survive when a user stylesheet applies them. */
+:root[data-text-scale="115"] {
+  font-size: 115%;
+}
+:root[data-text-scale="130"] {
+  font-size: 130%;
+}
+:root[data-text-scale="150"] {
+  font-size: 150%;
+}
+
 :root[data-spacing="relaxed"] {
   --line-height-body: 1.8;
   --line-height-ui: 1.5;
@@ -380,12 +350,6 @@
   --paragraph-gap: 1.25em;
 }
 
-/* Reduced motion: the system setting applies unless the user chose "full";
-   the Sela setting "reduced" applies regardless of the system.
-   Durations become 0.01ms, not 0ms: a transition whose combined duration is
-   zero never starts and fires no transitionend. Components must still never
-   wait for transitionend or animationend to finish a state change (remove a
-   sheet, finish a disclosure, reveal a reply); they set the end state directly. */
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion="full"]) {
     --duration-quick: 0.01ms;

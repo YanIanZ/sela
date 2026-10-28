@@ -1,5 +1,7 @@
 # Implementation status
 
+**Current local checkpoint — 2026-10-28:** the owner requested a replacement visual identity and Dengar.in continuity features. The current UI authority is [web/DESIGN.md](../web/DESIGN.md), with the task-first Home and cobalt/open-S identity. Manual memory, weekly reflection, source-bound manual summaries, preparation and follow-ups are now connected locally; recipient sharing and editorial clinical cards remain unavailable. See [continuity validation](V3_CONTINUITY_VALIDATION.md). Earlier dated implementation/visual prose below is historical and does not override that checkpoint.
+
 ## Local v3 frontend delivery — 2026-10-28
 
 Current workspace: `feat/v3-experience`, stacked on the local

@@ -21,13 +21,11 @@ import { useWords } from "./shared";
 /* ------------------------------------------------------------------ */
 
 export function PageHeader({
-  eyebrow,
   title,
   lead,
   back,
   actions,
 }: {
-  eyebrow?: string;
   title: string;
   lead?: string;
   back?: { to: string; label: string };
@@ -41,7 +39,6 @@ export function PageHeader({
           {back.label}
         </Link>
       )}
-      {eyebrow && <p className="s-overline">{eyebrow}</p>}
       <h1 id="page-title">{title}</h1>
       {lead && <p className="s-lead">{lead}</p>}
       {actions && <div className="s-page-actions">{actions}</div>}
@@ -63,10 +60,6 @@ export function StatusLine({
       {children}
     </p>
   );
-}
-
-export function Overline({ children }: { children: ReactNode }) {
-  return <p className="s-overline">{children}</p>;
 }
 
 /* ------------------------------------------------------------------ */
