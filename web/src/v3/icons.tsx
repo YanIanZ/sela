@@ -279,23 +279,21 @@ export function Icon({
   );
 }
 
-/** An open S: a little room between two continuous folds. */
 export function Mark({ size = 32 }: { size?: number }) {
+  // Four spines on a shelf, one per place: Beranda, Cerita, Catatanku, Dukungan.
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 40 42"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="6.5"
-      strokeLinecap="round"
+      viewBox="0 0 32 32"
       aria-hidden="true"
       focusable="false"
       className="s-mark"
     >
-      <path d="M29 8C10 0 3 17 18 20" />
-      <path d="M11 34C30 42 37 25 22 22" />
+      <rect x="2" y="7" width="5" height="22" rx="1" style={{ fill: "var(--mark-1, currentColor)" }} />
+      <rect x="8.5" y="3" width="5" height="26" rx="1" style={{ fill: "var(--mark-2, currentColor)" }} />
+      <rect x="15" y="9" width="5" height="20" rx="1" style={{ fill: "var(--mark-3, currentColor)" }} />
+      <rect x="22" y="5" width="5" height="24" rx="1" transform="rotate(8 24.5 29)" style={{ fill: "var(--mark-4, currentColor)" }} />
     </svg>
   );
 }

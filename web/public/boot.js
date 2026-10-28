@@ -8,11 +8,11 @@
   try {
     var lang = window.localStorage.getItem("sela.lang");
     if (lang === "id" || lang === "en") root.lang = lang;
-    root.setAttribute("data-palette", "embun");
+    root.setAttribute("data-palette", "sampul");
     var raw = window.localStorage.getItem("sela.prefs");
     if (!raw) return;
     var prefs = JSON.parse(raw);
-    if (/^(embun|samudra|teduh|pasir|lipat)$/.test(prefs.palette))
+    if (/^(sampul|embun|samudra|teduh|pasir|lipat)$/.test(prefs.palette))
       root.setAttribute("data-palette", prefs.palette);
     if (prefs.theme && prefs.theme !== "system")
       root.setAttribute("data-scheme", prefs.theme);

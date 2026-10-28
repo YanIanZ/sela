@@ -1,9 +1,9 @@
-/* Sela — Tidak harus rapi. Color roles cover light, dark and high contrast. */
+/* Sela — Sampul Buku. Colour roles cover light, dark and high contrast. */
 :root {
 
-  --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --font-display: "Manrope", system-ui, sans-serif;
+  --font-display: "Literata", "Iowan Old Style", Georgia, serif;
   --font-mono:
     ui-monospace, "SFMono-Regular", "Roboto Mono", "Noto Sans Mono", Menlo,
     Consolas, monospace;
@@ -15,8 +15,9 @@
   --font-size-5: 1.5rem;
   --font-size-6: 1.5rem;
   --font-size-7: 1.75rem;
-  --font-size-page: clamp(2rem, 1.5rem + 1.5vw, 2.5rem);
-  --font-size-display: clamp(1.75rem, 1rem + 3vw, 3.625rem);
+  --font-size-page: clamp(2.25rem, 1.4rem + 3vw, 4.25rem);
+  --font-size-display: clamp(2.25rem, 1.2rem + 4vw, 4.75rem);
+  --font-size-cover-lead: clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
 
   --line-height-body: 1.6;
   --line-height-heading: 1.3;
@@ -45,10 +46,10 @@
   --gutter: 1.125rem;
   --stack-gap: 1.25rem;
 
-  --radius-1: 4px;
-  --radius-2: 8px;
-  --radius-3: 12px;
-  --radius-4: 16px;
+  --radius-1: 2px;
+  --radius-2: 4px;
+  --radius-3: 6px;
+  --radius-4: 8px;
   --radius-pill: 999px;
 
   --border-width: 1px;
@@ -68,8 +69,8 @@
   --focus-width: 3px;
   --focus-offset: 2px;
 
-  --shadow-1: 0 1px 2px rgb(23 35 58 / 0.08);
-  --shadow-2: 0 8px 24px rgb(23 35 58 / 0.18);
+  --shadow-1: 0 1px 2px rgb(35 28 23 / 0.08);
+  --shadow-2: 0 12px 32px rgb(35 28 23 / 0.2);
 
   --duration-quick: 120ms;
   --duration-gentle: 200ms;
@@ -91,26 +92,26 @@
 :root,
 :root[data-scheme="light"] {
   color-scheme: light;
-  --c-bg: #EDF0F8;
-  --c-surface: #ffffff;
-  --c-surface-quiet: #F3F5FB;
-  --c-sunken: #E7ECF6;
-  --c-text: #17233A;
-  --c-muted: #52617B;
-  --c-border-subtle: #D3DBEA;
-  --c-border-control: #72809B;
-  --c-accent: #3657C7;
-  --c-accent-hover: #2844A5;
-  --c-on-accent: #ffffff;
-  --c-accent-soft: #E7ECFD;
-  --c-link: #2E4DB3;
-  --c-focus: #3657C7;
-  --c-user: #3657C7;
-  --c-user-bg: #E9EEFF;
-  --c-user-text: #28459E;
-  --c-ai: #6650A8;
-  --c-ai-bg: #F1EDFC;
-  --c-ai-text: #51398F;
+  --c-bg: #F3EEE4;
+  --c-surface: #FBF8F2;
+  --c-surface-quiet: #F7F2E9;
+  --c-sunken: #EBE3D5;
+  --c-text: #231C17;
+  --c-muted: #5C5047;
+  --c-border-subtle: #DCD2C2;
+  --c-border-control: #85776A;
+  --c-accent: #2F3A63;
+  --c-accent-hover: #212A4A;
+  --c-on-accent: #FBF8F2;
+  --c-accent-soft: #E8E3E8;
+  --c-link: #2F3A63;
+  --c-focus: #2F3A63;
+  --c-user: #2F3A63;
+  --c-user-bg: #ECE7F0;
+  --c-user-text: #2A3459;
+  --c-ai: #2E5A4C;
+  --c-ai-bg: #E6EDE7;
+  --c-ai-text: #24493D;
   --c-help: #a1351e;
   --c-help-hover: #852a16;
   --c-on-help: #ffffff;
@@ -137,26 +138,26 @@
 /* @scheme dark */
 :root[data-scheme="dark"] {
   color-scheme: dark;
-  --c-bg: #111827;
-  --c-surface: #192235;
-  --c-surface-quiet: #151E30;
-  --c-sunken: #232E44;
-  --c-text: #F0F3FB;
-  --c-muted: #B4C0D8;
-  --c-border-subtle: #36425B;
-  --c-border-control: #8494B2;
-  --c-accent: #A4B8FF;
-  --c-accent-hover: #C2CFFF;
-  --c-on-accent: #101A36;
-  --c-accent-soft: #28375D;
-  --c-link: #B3C3FF;
-  --c-focus: #B3C3FF;
-  --c-user: #A4B8FF;
-  --c-user-bg: #233252;
-  --c-user-text: #BFCEFF;
-  --c-ai: #C5B4FF;
-  --c-ai-bg: #312849;
-  --c-ai-text: #D3C6FF;
+  --c-bg: #1A1613;
+  --c-surface: #231E1A;
+  --c-surface-quiet: #1F1A17;
+  --c-sunken: #2D2621;
+  --c-text: #F3EBE1;
+  --c-muted: #C3B6A7;
+  --c-border-subtle: #3E352E;
+  --c-border-control: #9C8E80;
+  --c-accent: #B4BDE8;
+  --c-accent-hover: #CDD3F2;
+  --c-on-accent: #171B30;
+  --c-accent-soft: #2D3150;
+  --c-link: #BCC4EC;
+  --c-focus: #C6CDF4;
+  --c-user: #B4BDE8;
+  --c-user-bg: #2B2C42;
+  --c-user-text: #CDD3F2;
+  --c-ai: #9FD0BB;
+  --c-ai-bg: #1F3029;
+  --c-ai-text: #B5DCCB;
   --c-help: #f2917a;
   --c-help-hover: #f7ae9c;
   --c-on-help: #2b0e07;
@@ -177,7 +178,7 @@
   --c-test-bg: #352b0e;
   --c-overlay: rgb(0 0 0 / 0.6);
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.5);
-  --shadow-2: 0 8px 24px rgb(0 0 0 / 0.6);
+  --shadow-2: 0 12px 32px rgb(0 0 0 / 0.6);
 }
 /* @end */
 
@@ -285,26 +286,26 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-scheme]) {
     color-scheme: dark;
-    --c-bg: #111827;
-    --c-surface: #192235;
-    --c-surface-quiet: #151E30;
-    --c-sunken: #232E44;
-    --c-text: #F0F3FB;
-    --c-muted: #B4C0D8;
-    --c-border-subtle: #36425B;
-    --c-border-control: #8494B2;
-    --c-accent: #A4B8FF;
-    --c-accent-hover: #C2CFFF;
-    --c-on-accent: #101A36;
-    --c-accent-soft: #28375D;
-    --c-link: #B3C3FF;
-    --c-focus: #B3C3FF;
-    --c-user: #A4B8FF;
-    --c-user-bg: #233252;
-    --c-user-text: #BFCEFF;
-    --c-ai: #C5B4FF;
-    --c-ai-bg: #312849;
-    --c-ai-text: #D3C6FF;
+    --c-bg: #1A1613;
+    --c-surface: #231E1A;
+    --c-surface-quiet: #1F1A17;
+    --c-sunken: #2D2621;
+    --c-text: #F3EBE1;
+    --c-muted: #C3B6A7;
+    --c-border-subtle: #3E352E;
+    --c-border-control: #9C8E80;
+    --c-accent: #B4BDE8;
+    --c-accent-hover: #CDD3F2;
+    --c-on-accent: #171B30;
+    --c-accent-soft: #2D3150;
+    --c-link: #BCC4EC;
+    --c-focus: #C6CDF4;
+    --c-user: #B4BDE8;
+    --c-user-bg: #2B2C42;
+    --c-user-text: #CDD3F2;
+    --c-ai: #9FD0BB;
+    --c-ai-bg: #1F3029;
+    --c-ai-text: #B5DCCB;
     --c-help: #f2917a;
     --c-help-hover: #f7ae9c;
     --c-on-help: #2b0e07;
@@ -361,4 +362,49 @@
   --duration-quick: 0.01ms;
   --duration-gentle: 0.01ms;
   --reveal-step: 0ms;
+}
+
+/* Cover colours: each place is a book with its own flat cover. They name
+ * where you are; actions keep the accent so nothing relies on colour alone. */
+:root {
+  --place-home: #B4472F;
+  --place-talk: #2E5A4C;
+  --place-notes: #D6A23E;
+  --place-support: #2F3A63;
+  --place-quiet: #3B322C;
+  --on-place: #FFF8F1;
+  --on-place-muted: #FBEDE6;
+  --on-place-notes: #231C17;
+}
+:root[data-scheme="dark"] {
+  --place-home: #8C3826;
+  --place-talk: #25483D;
+  --place-notes: #B98A33;
+  --place-support: #2C355A;
+  --place-quiet: #342C26;
+  --on-place: #F6ECE2;
+  --on-place-muted: #E3D3C6;
+  --on-place-notes: #1A1613;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-scheme]) {
+    --place-home: #8C3826;
+    --place-talk: #25483D;
+    --place-notes: #B98A33;
+    --place-support: #2C355A;
+    --place-quiet: #342C26;
+    --on-place: #F6ECE2;
+    --on-place-muted: #E3D3C6;
+    --on-place-notes: #1A1613;
+  }
+}
+:root[data-scheme^="contrast"] {
+  --place-home: var(--c-bg);
+  --place-talk: var(--c-bg);
+  --place-notes: var(--c-bg);
+  --place-support: var(--c-bg);
+  --place-quiet: var(--c-bg);
+  --on-place: var(--c-text);
+  --on-place-muted: var(--c-text);
+  --on-place-notes: var(--c-text);
 }

@@ -1,13 +1,13 @@
 /*
  * Sela well-being palettes. Each one remaps only the colour roles of the light
  * and dark schemes plus a softer radius; high-contrast schemes keep their own
- * values on purpose. The cobalt "Lipat" world in tokens.css stays the base.
+ * values on purpose. The warm-paper "Sampul" world in tokens.css is the base.
  * Generated pairs are checked for WCAG AA (text 4.5:1, controls/focus 3:1).
  */
-:root[data-palette]:not([data-palette="lipat"]):not([data-scheme^="contrast"]) {
-  --radius-2: 10px;
-  --radius-3: 14px;
-  --radius-4: 20px;
+:root[data-palette]:not([data-palette="sampul"]):not([data-scheme^="contrast"]) {
+  --radius-2: 6px;
+  --radius-3: 10px;
+  --radius-4: 14px;
 }
 
 /* Embun — morning dew. Eucalyptus green on a misted ground; restorative, unhurried. */
@@ -275,25 +275,73 @@
   }
 }
 
-/*
- * Brand illustration: the artwork keeps its shapes and light, and each mood
- * washes its paper colours toward the mood accent. The wash is masked by the
- * artwork itself, so transparent margins stay transparent. Lipat (the original
- * palette) and the high-contrast schemes show the artwork unchanged.
- */
-.s-mood-art { position: relative; display: block; isolation: isolate; aspect-ratio: 4 / 3; }
-.s-mood-art img { display: block; width: 100%; height: 100%; object-fit: contain; }
-:root[data-palette]:not([data-palette="lipat"]):not([data-scheme^="contrast"]) .s-mood-art::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--c-accent);
-  mix-blend-mode: color;
-  opacity: 0.62;
-  pointer-events: none;
-  -webkit-mask: url("/illustrations/sela-room.webp") center / contain no-repeat;
-  mask: url("/illustrations/sela-room.webp") center / contain no-repeat;
+/* Lipat — Sela's original cobalt identity on cool paper. */
+:root[data-palette="lipat"]:not([data-scheme]),
+:root[data-palette="lipat"][data-scheme="light"] {
+  --c-bg: #EDF0F8;
+  --c-surface: #ffffff;
+  --c-surface-quiet: #F3F5FB;
+  --c-sunken: #E7ECF6;
+  --c-text: #17233A;
+  --c-muted: #52617B;
+  --c-border-subtle: #D3DBEA;
+  --c-border-control: #72809B;
+  --c-accent: #3657C7;
+  --c-accent-hover: #2844A5;
+  --c-on-accent: #ffffff;
+  --c-accent-soft: #E7ECFD;
+  --c-link: #2E4DB3;
+  --c-focus: #3657C7;
+  --c-user: #3657C7;
+  --c-user-bg: #E9EEFF;
+  --c-user-text: #28459E;
+  --c-ai: #6650A8;
+  --c-ai-bg: #F1EDFC;
+  --c-ai-text: #51398F;
 }
-@media (forced-colors: active) {
-  .s-mood-art::after { display: none; }
+:root[data-palette="lipat"][data-scheme="dark"] {
+  --c-bg: #111827;
+  --c-surface: #192235;
+  --c-surface-quiet: #151E30;
+  --c-sunken: #232E44;
+  --c-text: #F0F3FB;
+  --c-muted: #B4C0D8;
+  --c-border-subtle: #36425B;
+  --c-border-control: #8494B2;
+  --c-accent: #A4B8FF;
+  --c-accent-hover: #C2CFFF;
+  --c-on-accent: #101A36;
+  --c-accent-soft: #28375D;
+  --c-link: #B3C3FF;
+  --c-focus: #B3C3FF;
+  --c-user: #A4B8FF;
+  --c-user-bg: #233252;
+  --c-user-text: #BFCEFF;
+  --c-ai: #C5B4FF;
+  --c-ai-bg: #312849;
+  --c-ai-text: #D3C6FF;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="lipat"]:not([data-scheme]) {
+    --c-bg: #111827;
+    --c-surface: #192235;
+    --c-surface-quiet: #151E30;
+    --c-sunken: #232E44;
+    --c-text: #F0F3FB;
+    --c-muted: #B4C0D8;
+    --c-border-subtle: #36425B;
+    --c-border-control: #8494B2;
+    --c-accent: #A4B8FF;
+    --c-accent-hover: #C2CFFF;
+    --c-on-accent: #101A36;
+    --c-accent-soft: #28375D;
+    --c-link: #B3C3FF;
+    --c-focus: #B3C3FF;
+    --c-user: #A4B8FF;
+    --c-user-bg: #233252;
+    --c-user-text: #BFCEFF;
+    --c-ai: #C5B4FF;
+    --c-ai-bg: #312849;
+    --c-ai-text: #D3C6FF;
+  }
 }

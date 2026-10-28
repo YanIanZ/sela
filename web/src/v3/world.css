@@ -1,0 +1,179 @@
+/*
+ * Sampul Buku. Each place is a book you own: a flat cover colour names where
+ * you are, and a warm ruled page underneath holds your own words. Covers are
+ * wayfinding only; actions keep the accent and every state keeps its label.
+ */
+
+/* Type: Literata titles, Hanken Grotesk for everything you operate. */
+.s-shell h1, .s-shell h2, .s-shell h3 { font-family: var(--font-display); font-weight: 600; font-optical-sizing: auto; }
+.s-shell h1 { font-size: var(--font-size-page); letter-spacing: -0.03em; line-height: 1.02; }
+.s-shell h2 { font-size: 1.625rem; letter-spacing: -0.02em; line-height: 1.2; }
+.s-shell h3 { font-size: 1.25rem; letter-spacing: -0.01em; line-height: 1.3; }
+.s-shell h4 { font-family: var(--font-sans); font-weight: 700; }
+.s-shell .s-label, .s-shell .s-legend { font-weight: 700; }
+.s-shell .s-lead { font-family: var(--font-display); line-height: 1.4; }
+.s-shell .s-btn { font-weight: 700; border-width: 1.5px; letter-spacing: 0; }
+.s-shell .s-btn.s-btn--secondary { border-width: 1.5px; }
+.s-shell :is(.s-input, .s-select, .s-textarea) { background: var(--c-surface); }
+.s-shell ::selection { background: color-mix(in srgb, var(--place-home) 22%, transparent); color: var(--c-text); }
+.s-shell input, .s-shell textarea { caret-color: var(--place-home); }
+.s-shell table { font-variant-numeric: tabular-nums; }
+
+/* Top bar: wordmark, four place tabs with their spines, then help and exit. */
+.s-shell .s-header { --mark-1: var(--place-home); --mark-2: var(--place-talk); --mark-3: var(--place-notes); --mark-4: var(--place-support); min-height: 4.75rem; padding-block: 0.75rem; background: var(--c-surface); border-bottom: 1px solid var(--c-border-subtle); }
+.s-shell a.s-brand { color: var(--c-text); font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; text-transform: none; gap: 0.55rem; }
+.s-shell .s-brand .s-mark { width: 1.85rem; height: 1.85rem; }
+.s-shell .n-desktop-nav { gap: 0.25rem; align-self: stretch; margin-block: -0.75rem calc(-0.75rem - 1px); }
+.s-shell .n-desktop-nav a { gap: 0.6rem; padding: 0 1rem; min-height: 100%; font-size: var(--font-size-2); font-weight: 600; color: var(--c-muted); border-bottom: 4px solid transparent; position: relative; z-index: 1; }
+.s-shell .n-desktop-nav a:hover { color: var(--c-text); border-color: var(--c-border-subtle); background: var(--c-surface-quiet); }
+.s-shell .n-desktop-nav a[aria-current="page"] { color: var(--c-text); font-weight: 700; border-color: var(--place, var(--c-text)); }
+.s-spine { display: inline-block; width: 0.5rem; height: 1.35rem; border-radius: var(--radius-1); background: var(--place, var(--c-text)); flex-shrink: 0; }
+[data-place="home"] { --place: var(--place-home); }
+[data-place="talk"] { --place: var(--place-talk); }
+[data-place="notes"] { --place: var(--place-notes); }
+[data-place="support"] { --place: var(--place-support); }
+.s-shell .s-header-actions { gap: 0.5rem; }
+.s-shell .s-header-actions .s-btn--help-quiet { background: var(--c-help-bg); border: 1.5px solid var(--c-help); color: var(--c-help-text); font-weight: 700; }
+.s-shell .s-header-actions .s-btn--help-quiet:hover { background: var(--c-help); color: var(--c-on-help); }
+.s-shell .s-header-actions .s-exit-wrap .s-btn--quiet { border: 1.5px solid var(--c-text); color: var(--c-text); text-decoration: none; font-weight: 700; }
+.s-shell .s-header-actions .s-exit-wrap .s-btn--quiet:hover { background: var(--c-text); color: var(--c-surface); }
+
+/* Cover colours by place. */
+.s-shell main { --cover: var(--place-quiet); --cover-ink: var(--on-place); --cover-muted: var(--on-place-muted); --main-pt: 2rem; padding-top: var(--main-pt); }
+.s-shell main:is([data-space=""], [data-space="home"], [data-space="dashboard"]) { --cover: var(--place-home); }
+.s-shell main:is([data-space="talk"], [data-space="start"], [data-space="signin"], [data-space="register"], [data-space="recover"]) { --cover: var(--place-talk); }
+.s-shell main[data-space="notes"] { --cover: var(--place-notes); --cover-ink: var(--on-place-notes); --cover-muted: var(--on-place-notes); }
+.s-shell main:is([data-space="support"], [data-space="reading"]) { --cover: var(--place-support); }
+.s-shell main[data-space="help"] { --cover: var(--c-help-bg); --cover-ink: var(--c-help-text); --cover-muted: var(--c-text); }
+
+/* The cover band: full-bleed colour with no horizontal overflow. */
+.s-shell:not(.s-shell--focused) main .s-page-header,
+.s-shell main .s-cover,
+.s-shell main .n-welcome,
+.s-shell main .s-emergency,
+.s-shell main .s-info-heading {
+  position: relative;
+  max-width: none;
+  margin: calc(-1 * var(--main-pt)) 0 2.5rem;
+  padding: 3rem 0 2.75rem;
+  color: var(--cover-ink);
+  background-color: var(--cover);
+  border: 0;
+  border-image: conic-gradient(var(--cover) 0 0) fill 0 / 0 / 0 100vmax;
+}
+.s-shell:not(.s-shell--focused) main .s-page-header h1 { max-width: 20ch; }
+.s-shell:not(.s-shell--focused) main .s-page-header .s-lead,
+.s-shell main .s-info-heading p { color: var(--cover-muted); font-family: var(--font-display); font-size: var(--font-size-cover-lead); line-height: 1.4; max-width: 40ch; }
+.s-shell main .s-page-header .s-lead { margin-top: 0.85rem; }
+.s-shell:not(.s-shell--focused) main .s-page-header .s-page-actions { margin-top: 1.5rem; }
+.s-shell main .n-welcome { grid-template-columns: minmax(0, 1fr); border-radius: 0; }
+.s-shell main .n-welcome h1 { font-size: var(--font-size-display); max-width: 14ch; }
+.s-shell main .n-welcome .n-title-accent { color: var(--cover-muted); }
+.s-shell main .n-welcome-copy > p { color: var(--cover-muted); font-family: var(--font-display); font-size: var(--font-size-cover-lead); line-height: 1.4; max-width: 44ch; }
+.s-shell main .n-welcome .s-hint { color: var(--cover-muted); }
+.s-shell:not(.s-shell--focused) :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) a:not(.s-btn) { color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-back { color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) :focus-visible { outline-color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-btn--primary { background: var(--cover-ink); border-color: var(--cover-ink); color: var(--cover); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-btn--primary:hover { background: transparent; color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) :is(.s-btn--secondary, .s-btn:not([class*="s-btn--"])) { background: transparent; border-color: var(--cover-ink); color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) :is(.s-btn--secondary, .s-btn:not([class*="s-btn--"])):hover { background: var(--cover-ink); color: var(--cover); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-btn--quiet { color: var(--cover-ink); }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-btn--quiet:hover { background: transparent; }
+.s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) .s-hint { color: var(--cover-muted); }
+
+/* A sign-in or onboarding card is a small book: its cover is the card's top. */
+.s-shell main :is(.s-onboard, .s-auth-card) > .s-page-header { margin: -2rem -2rem 1.75rem; padding: 2rem; border-image: none; background: var(--cover); border-radius: var(--radius-4) var(--radius-4) 0 0; }
+.s-shell main :is(.s-onboard, .s-auth-card) { border: 1px solid var(--c-border-subtle); background: var(--c-surface); }
+.s-shell main :is(.s-onboard, .s-auth-card) > .s-page-header h1 { font-size: clamp(1.875rem, 1.4rem + 1.6vw, 2.75rem); }
+
+/* Focused rooms stay quiet: a thin spine replaces the cover. */
+.s-shell--focused main .s-page-header { padding-top: 1rem; border-top: 4px solid var(--cover); }
+.s-shell--focused main .s-page-header h1 { font-size: clamp(2rem, 1.5rem + 1.6vw, 3rem); }
+
+/* Ruled pages: sections open on an ink rule; records read in the serif. */
+.s-shell main .s-section-title { align-items: baseline; }
+.s-shell .s-entry-list { border-top: 2px solid var(--c-text); border-radius: 0; background: transparent; padding-inline: 0; }
+.s-shell .s-entry-list > a, .s-shell .s-entry-row > a { padding-inline: 0.25rem; }
+.s-shell .s-entry-list > a:hover, .s-shell .s-entry-row > a:hover { background: var(--c-surface-quiet); }
+.s-shell .s-entry-list strong { font-size: var(--font-size-1); font-weight: 600; color: var(--c-muted); }
+.s-shell .s-entry-list span > strong:only-child { font-size: var(--font-size-2); color: var(--c-text); }
+.s-shell .s-entry-list small { font-family: var(--font-display); font-size: 1.0625rem; font-weight: 500; color: var(--c-text); margin-top: 0.15rem; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.s-shell .s-entry-date { font-size: var(--font-size-1); }
+.s-workspace-page[data-space="notes"] > .s-entry-list { padding: 0; background: transparent; border-radius: 0; }
+
+/* Bottom places on phones carry their spines. */
+@media (max-width: 63.99em) {
+  .s-shell .s-place-nav { border-top: 0; box-shadow: 0 -1px 0 var(--c-border-subtle); }
+  .s-shell .s-place-nav a { position: relative; color: var(--c-muted); }
+  .s-shell .s-place-nav a::after { content: ""; position: absolute; top: 0; left: 30%; right: 30%; height: 4px; border-radius: 0 0 2px 2px; background: var(--place); opacity: 0.35; }
+  .s-shell .s-place-nav a[aria-current="page"] { color: var(--c-text); background: var(--c-surface-quiet); }
+  .s-shell .s-place-nav a[aria-current="page"]::after { opacity: 1; left: 15%; right: 15%; }
+}
+@media (max-width: 74.99em) {
+  .s-shell .n-desktop-nav a { padding-inline: 0.7rem; }
+}
+@media (max-width: 47.99em) {
+  .s-shell main { --main-pt: 1.25rem; }
+  .s-shell a.s-brand { font-size: 1.5rem; }
+  .s-shell .s-header { padding-block: 0.6rem; }
+  .s-shell .s-header-actions :is(.s-btn--help-quiet, .s-exit-wrap .s-btn) { min-height: 2.75rem; padding: 0.4rem 0.75rem; }
+  .s-shell:not(.s-shell--focused) main .s-page-header,
+  .s-shell main .s-cover,
+  .s-shell main .s-info-heading { padding: 1.75rem 0 1.75rem; margin-bottom: 1.75rem; }
+  .s-shell main :is(.s-onboard, .s-auth-card) > .s-page-header { margin: -1.5rem -1.5rem 1.5rem; padding: 1.5rem; }
+}
+
+/* High contrast keeps its own colours: covers become ruled headings. */
+:root[data-scheme^="contrast"] .s-shell :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) { border-image: none; background-color: transparent; border-bottom: 2px solid var(--c-text); }
+@media (forced-colors: active) {
+  .s-shell :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) { border-image: none; background-color: Canvas; color: CanvasText; border-bottom: 2px solid CanvasText; }
+  .s-spine { background: CanvasText; }
+}
+@media print {
+  .s-shell :is(.s-page-header, .s-cover, .n-welcome, .s-emergency, .s-info-heading) { border-image: none; background: none; color: black; }
+}
+
+/* Lists, tabs and filters in the page's print vocabulary. */
+.s-shell .s-timeline { border-top: 2px solid var(--c-text); }
+.s-shell .s-timeline a { text-decoration: none; color: var(--c-text); }
+.s-shell .s-timeline a:hover { background: var(--c-surface-quiet); }
+.s-shell .s-timeline .s-icon { color: var(--c-muted); }
+.s-shell .s-timeline-type { font-size: var(--font-size-1); font-weight: 600; color: var(--c-muted); }
+.s-shell .s-timeline-preview { font-family: var(--font-display); font-size: 1.0625rem; font-weight: 500; color: var(--c-text); white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.s-shell .s-timeline-day h2 { font-size: var(--font-size-5); color: var(--c-text); font-weight: 600; margin-bottom: 0.75rem; }
+.s-shell .s-subnav { gap: 0.25rem; padding-bottom: 0; border-bottom: 1px solid var(--c-border-subtle); }
+.s-shell .s-subnav-link { border-radius: 0; padding-inline: 0.85rem; color: var(--c-muted); text-decoration: none; box-shadow: inset 0 -3px 0 transparent; }
+.s-shell .s-subnav-link:hover { color: var(--c-text); background: var(--c-surface-quiet); }
+.s-shell .s-subnav-link[aria-current="page"] { background: transparent; color: var(--c-text); font-weight: 700; box-shadow: inset 0 -3px 0 var(--c-text); }
+.s-shell .s-filter { border-radius: var(--radius-2); }
+.s-shell .s-filter[aria-pressed="true"], .s-shell .s-filter input:checked + span { border-color: var(--c-text); background: var(--c-sunken); }
+.s-shell .s-empty { background: var(--c-surface); border-top: 2px solid var(--c-text); border-radius: 0; }
+.s-shell .s-empty-mark { --mark-1: var(--place-home); --mark-2: var(--place-talk); --mark-3: var(--place-notes); --mark-4: var(--place-support); }
+
+/* Support and portal panels: ruled pages, not floating cards. */
+.s-shell .c-support-intro { grid-template-columns: minmax(0, 1fr); padding: 1.75rem 0 0; background: none; border-top: 2px solid var(--c-text); border-radius: 0; }
+.s-shell .c-support-intro > div { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+.s-shell .c-support-intro > div > :is(h2, p) { flex: 1 0 100%; margin-bottom: 0; }
+.s-shell .c-support-paths section { border-top: 2px solid var(--c-text); }
+.s-shell :is(.s-info-features, .s-info-reading, .s-info-path, .s-info-control) { background: none; border-radius: 0; padding: 1.25rem 0 0; border-top: 2px solid var(--c-text); }
+.s-shell .s-info-welcome { background: var(--c-surface); border-radius: 0; border-top: 2px solid var(--c-text); }
+.s-shell .s-info-facts { border-block-color: var(--c-text) var(--c-border-subtle); border-top-width: 2px; }
+.s-shell .s-info-facts .s-icon, .s-shell .s-info-feature-groups .s-icon { color: var(--c-text); }
+.s-shell .s-info-path li::marker { color: var(--c-text); font-family: var(--font-display); }
+@media (min-width: 64em) and (max-width: 95.99em) {
+  .s-shelf-bar .s-workspace-context, .s-shelf-bar .s-rail-label { display: none; }
+}
+
+/* Rhythm: a heading sits closer to what it introduces than to what came before. */
+.s-shell main :is(h2, h3) + :is(p, ul, ol, dl, fieldset, .s-field, .s-stack) { margin-top: 0.6rem; }
+.s-shell main .s-settings-section > h2 { margin-bottom: 0.75rem; }
+.s-shell .s-choice-group--chips .s-choice, .s-shell .s-lang-btn, .s-shell .s-lang { border-radius: var(--radius-2); }
+
+.s-shell main .s-emergency { border-radius: 0; }
+.s-shell main .s-emergency > .s-page-header { margin: 0 0 1.25rem; padding: 0; border-image: none; }
+.s-shell main .s-emergency > p { max-width: 60ch; }
+.s-shell main .s-emergency .s-hint { color: var(--c-muted); }
+/* Onboarding steps: the step count sits on the page, the cover runs edge to edge below it. */
+.s-shell main :is(.s-onboard, .s-auth-card) > .s-progress + .s-page-header { margin-top: 0; border-radius: 0; }
+.s-shell main :is(.s-onboard, .s-auth-card) > .s-progress { border-bottom: 0; margin-bottom: 1rem; padding-bottom: 0; }

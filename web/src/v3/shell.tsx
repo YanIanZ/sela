@@ -456,30 +456,6 @@ export function AppShell({
       <a href="#main" className="s-skip">
         {w("Lewati ke konten", "Skip to content")}
       </a>
-      {user && !focused && (
-        <aside className="s-workspace-rail" aria-label={w("Ruang Sela", "Sela workspace")}>
-          <Link to="/home" className="s-brand"><Mark size={30} /><span>{w("Sela", "Sela")}</span></Link>
-          <nav aria-label={w("Navigasi ruang pribadi", "Personal workspace navigation")}>
-            <ul className="s-rail-places"><li><Link to="/dashboard" aria-current={path === "/dashboard" ? "page" : undefined}><Icon name="calendar" /><span>{w("Dashboard", "Dashboard")}</span></Link></li>{places.map(p => <li key={p.to}>
-              <Link to={p.to} aria-current={isPlace(path, p.to) ? "page" : undefined}><Icon name={p.icon} /><span>{w(p.label[0], p.label[1])}</span></Link>
-            </li>)}</ul>
-            <p className="s-rail-label">{w("Untuk harimu", "For your day")}</p>
-            <ul>{([
-              ["/notes/check-in", "interpretation", "Cek perasaan", "Check in"],
-              ["/notes/write", "pencil", "Tulis catatan", "Write a note"],
-              ["/notes/weekly", "calendar", "Refleksi mingguan", "Weekly reflection"],
-              ["/notes/memory", "bookmark", "Yang Sela ingat", "What Sela remembers"],
-              ["/support/summaries", "notes", "Ringkasan konsultasi", "Consultation summaries"],
-              ["/reading", "support", "Bacaan", "Reading"],
-            ] as const).map(([to, icon, id, en]) => <li key={to}><Link to={to} aria-current={path === to || (to === "/support/summaries" && path.startsWith(to + "/")) ? "page" : undefined}><Icon name={icon} /><span>{w(id, en)}</span></Link></li>)}</ul>
-          </nav>
-          <nav className="s-rail-personal" aria-label={w("Pengaturan pribadi", "Personal settings")}>
-            <Link to="/settings/privacy" aria-current={path === "/settings/privacy" ? "page" : undefined}><Icon name="shield" /><span>{w("Privasi & data", "Privacy & data")}</span></Link>
-            <Link to="/settings/display" aria-current={path === "/settings/display" ? "page" : undefined}><Icon name="settings" /><span>{w("Tampilan", "Display")}</span></Link>
-            <Link to="/settings/account" aria-current={path.startsWith("/settings/account") ? "page" : undefined}><Icon name="user" /><span>{w("Akun", "Account")}</span></Link>
-          </nav>
-        </aside>
-      )}
       <div className="s-shell-inner">
       {room && (
         <a href="#composer" className="s-skip s-skip--second">
@@ -487,7 +463,6 @@ export function AppShell({
         </a>
       )}
       <header className="s-header">
-        {user && !focused && <span className="s-workspace-context">{w("Ruang pribadimu", "Your personal space")}<span aria-hidden="true"> / </span><strong>{title}</strong></span>}
         <Link to={user ? "/home" : "/"} className="s-brand">
           <Mark size={30} />
           <span>{"Sela"}</span>
@@ -495,7 +470,8 @@ export function AppShell({
         {!focused && (
           <nav className="n-desktop-nav" aria-label={w("Navigasi utama", "Main navigation")}>
             {user ? places.map((p) => (
-              <Link key={p.to} to={p.to} aria-current={isPlace(path, p.to) ? "page" : undefined}>
+              <Link key={p.to} to={p.to} data-place={p.to.slice(1)} aria-current={isPlace(path, p.to) ? "page" : undefined}>
+                <span className="s-spine" aria-hidden="true" />
                 {w(p.label[0], p.label[1])}
               </Link>
             )) : (
@@ -548,12 +524,36 @@ export function AppShell({
       </header>
 
       {user && !focused && (
+        <div className="s-shelf-bar">
+          <span className="s-workspace-context">{w("Ruang pribadimu", "Your personal space")}<span aria-hidden="true"> / </span><strong>{title}</strong></span>
+          <nav aria-label={w("Navigasi ruang pribadi", "Personal workspace navigation")}>
+            <p className="s-rail-label">{w("Untuk harimu", "For your day")}</p>
+            <ul>{([
+              ["/dashboard", "Dashboard", "Dashboard"],
+              ["/notes/check-in", "Cek perasaan", "Check in"],
+              ["/notes/write", "Tulis catatan", "Write a note"],
+              ["/notes/weekly", "Refleksi mingguan", "Weekly reflection"],
+              ["/notes/memory", "Yang Sela ingat", "What Sela remembers"],
+              ["/support/summaries", "Ringkasan konsultasi", "Consultation summaries"],
+              ["/reading", "Bacaan", "Reading"],
+            ] as const).map(([to, id, en]) => <li key={to}><Link to={to} aria-current={path === to || (to === "/support/summaries" && path.startsWith(to + "/")) ? "page" : undefined}>{w(id, en)}</Link></li>)}</ul>
+          </nav>
+          <nav className="s-rail-personal" aria-label={w("Pengaturan pribadi", "Personal settings")}>
+            <Link to="/settings/privacy" aria-current={path === "/settings/privacy" ? "page" : undefined}><Icon name="shield" /><span>{w("Privasi & data", "Privacy & data")}</span></Link>
+            <Link to="/settings/display" aria-current={path === "/settings/display" ? "page" : undefined}><Icon name="settings" /><span>{w("Tampilan", "Display")}</span></Link>
+            <Link to="/settings/account" aria-current={path.startsWith("/settings/account") ? "page" : undefined}><Icon name="user" /><span>{w("Akun", "Account")}</span></Link>
+          </nav>
+        </div>
+      )}
+
+      {user && !focused && (
         <nav className="s-place-nav" aria-label={w("Navigasi utama", "Main navigation")}>
           <ul>
             {places.map((p) => (
               <li key={p.to}>
                 <Link
                   to={p.to}
+                  data-place={p.to.slice(1)}
                   aria-current={isPlace(path, p.to) ? "page" : undefined}
                 >
                   <Icon name={p.icon} size={22} />

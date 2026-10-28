@@ -36,7 +36,7 @@ it("applies the calm default palette, persists a chosen one and ignores unknown 
     return <button onClick={() => set("palette", "teduh")}>{prefs.palette}</button>;
   }
   render(<PrefsProvider><Pick /></PrefsProvider>);
-  expect(document.documentElement).toHaveAttribute("data-palette", "embun");
+  expect(document.documentElement).toHaveAttribute("data-palette", "sampul");
   act(() => screen.getByRole("button").click());
   expect(document.documentElement).toHaveAttribute("data-palette", "teduh");
   expect(JSON.parse(window.localStorage.getItem("sela.prefs")!).palette).toBe("teduh");

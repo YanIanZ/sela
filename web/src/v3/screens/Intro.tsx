@@ -6,7 +6,6 @@ import { useAnnounce, useWords } from "../shared";
 import { Icon } from "../icons";
 import {
   LinkButton,
-  MoodArt,
   Notice,
   PageHeader,
 } from "../ui";
@@ -44,7 +43,6 @@ export function IntroPage() {
             </p>
           </div>
         </div>
-        <MoodArt className="n-brand-art" priority />
       </section>
 
       <div className="n-intro-details">

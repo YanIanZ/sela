@@ -1,137 +1,191 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-28T13:54:04.812913+00:00",
+  "generatedAt": "2026-10-28T16:43:15.175415+00:00",
   "title": "Design System: Sela",
   "extensions": {
     "colorMeta": {
-      "cobalt": {
-        "role": "primary",
-        "displayName": "Cobalt Signal",
-        "canonical": "#3657C7",
-        "tonalRamp": [
-          "#E7ECFD",
-          "#A4B8FF",
-          "#3657C7",
-          "#2844A5",
-          "#193378"
-        ]
-      },
-      "ground": {
+      "paper": {
         "role": "neutral",
-        "displayName": "Cool Paper",
-        "canonical": "#EDF0F8",
+        "displayName": "Paper",
         "tonalRamp": [
-          "#FFFFFF",
-          "#F3F5FB",
-          "#EDF0F8",
-          "#E7ECF6",
-          "#D3DBEA"
+          "#2A241E",
+          "#4A4036",
+          "#6D6153",
+          "#93856F",
+          "#B8AA92",
+          "#D6CBB6",
+          "#EBE3D5",
+          "#F7F2E9"
         ]
       },
       "ink": {
         "role": "neutral",
         "displayName": "Ink",
-        "canonical": "#17233A",
         "tonalRamp": [
-          "#52617B",
-          "#36425B",
-          "#17233A",
-          "#111827",
-          "#000000"
+          "#140F0C",
+          "#231C17",
+          "#3B322C",
+          "#5C5047",
+          "#85776A",
+          "#ADA092",
+          "#D6CCC0",
+          "#F1ECE6"
         ]
       },
-      "coral": {
+      "indigo": {
+        "role": "primary",
+        "displayName": "Bound Indigo",
+        "tonalRamp": [
+          "#141A30",
+          "#212A4A",
+          "#2F3A63",
+          "#47548A",
+          "#6E79AA",
+          "#9CA4C8",
+          "#C9CDE2",
+          "#E8E3E8"
+        ]
+      },
+      "cover-brick": {
         "role": "secondary",
-        "displayName": "Fold Coral",
-        "canonical": "#F49B87",
+        "displayName": "Brick cover (Beranda)",
         "tonalRamp": [
-          "#FBE9E4",
-          "#F49B87",
-          "#A1351E",
-          "#8C2C17",
-          "#7E1A07"
+          "#3E1810",
+          "#6B2A1C",
+          "#8C3826",
+          "#B4472F",
+          "#CB6E59",
+          "#DD9888",
+          "#EDC3B9",
+          "#FBEDE6"
         ]
       },
-      "lilac": {
-        "role": "tertiary",
-        "displayName": "Fold Lilac",
-        "canonical": "#C3C9EF",
+      "cover-forest": {
+        "role": "secondary",
+        "displayName": "Forest cover (Cerita)",
         "tonalRamp": [
-          "#F1EDFC",
-          "#C3C9EF",
-          "#6650A8",
-          "#51398F",
-          "#2A2283"
+          "#0F1F1A",
+          "#1B3830",
+          "#25483D",
+          "#2E5A4C",
+          "#4F7D6E",
+          "#7EA296",
+          "#B4CBC2",
+          "#E6EDE7"
+        ]
+      },
+      "cover-ochre": {
+        "role": "secondary",
+        "displayName": "Ochre cover (Catatanku)",
+        "tonalRamp": [
+          "#3A2A0C",
+          "#614617",
+          "#8A6420",
+          "#B98A33",
+          "#D6A23E",
+          "#E3BE73",
+          "#EFD9AE",
+          "#FAF1E0"
+        ]
+      },
+      "cover-indigo": {
+        "role": "secondary",
+        "displayName": "Indigo cover (Dukungan)",
+        "tonalRamp": [
+          "#141A30",
+          "#212A4A",
+          "#2C355A",
+          "#2F3A63",
+          "#4E5A88",
+          "#7D87AE",
+          "#B3B9D3",
+          "#E4E6F0"
         ]
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Thesis Display",
-        "purpose": "Public Introduction thesis; Home uses a compact page headline."
+        "displayName": "Display",
+        "purpose": "Beranda and public introduction cover titles."
       },
       "headline": {
-        "displayName": "Page Headline",
-        "purpose": "One h1 per page."
+        "displayName": "Headline",
+        "purpose": "All other cover titles."
       },
       "title": {
-        "displayName": "Section Title",
-        "purpose": "Section headings and record titles."
+        "displayName": "Title",
+        "purpose": "Section headings above ink rules."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Sentence under a cover title."
+      },
+      "record": {
+        "displayName": "Record",
+        "purpose": "The person's saved words in lists."
       },
       "body": {
-        "displayName": "Reading Body",
-        "purpose": "Long-form copy with a 65–75ch measure."
+        "displayName": "Body",
+        "purpose": "Instructions and reading copy."
       },
       "label": {
-        "displayName": "Control Label",
-        "purpose": "Field, menu and metadata labels in sentence case."
+        "displayName": "Label",
+        "purpose": "Field labels, kind labels, metadata."
       }
     },
     "shadows": [
       {
-        "name": "lift",
-        "value": "0 1px 2px rgb(23 35 58 / 0.08)",
-        "purpose": "A slight lift for small floating surfaces."
+        "name": "shadow-1",
+        "value": "0 1px 2px rgb(35 28 23 / 0.08)",
+        "purpose": "Slight lift for floating controls."
       },
       {
-        "name": "sheet",
-        "value": "0 8px 24px rgb(23 35 58 / 0.18)",
-        "purpose": "Menu sheets and dialogs only; removed in high-contrast schemes."
+        "name": "shadow-2",
+        "value": "0 12px 32px rgb(35 28 23 / 0.2)",
+        "purpose": "Menu sheet and dialogs only."
       }
     ],
     "motion": [
       {
         "name": "ease-standard",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "State transitions and the brief open-S focus response."
+        "purpose": "State transitions on buttons and links."
       },
       {
-        "name": "quick",
+        "name": "duration-quick",
         "value": "120ms",
-        "purpose": "Hover and pressed-state colour changes."
+        "purpose": "Hover and press."
       },
       {
-        "name": "gentle",
+        "name": "duration-gentle",
         "value": "200ms",
-        "purpose": "The one authored mark response; disabled under reduced motion."
+        "purpose": "Larger state changes; reduced-motion collapses both."
       }
     ],
     "breakpoints": [
       {
-        "name": "desktop-wide",
-        "value": "1200px"
+        "name": "phone-narrow",
+        "value": "24em"
+      },
+      {
+        "name": "phone",
+        "value": "48em"
+      },
+      {
+        "name": "split",
+        "value": "54em"
       },
       {
         "name": "desktop",
-        "value": "1024px"
+        "value": "64em"
       },
       {
-        "name": "tablet",
-        "value": "768px"
+        "name": "wide",
+        "value": "75em"
       },
       {
-        "name": "small-phone",
-        "value": "384px"
+        "name": "tool-strip-context",
+        "value": "96em"
       }
     ]
   },
@@ -140,119 +194,91 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The single next action on a view; cobalt with white text.",
+      "description": "The one main action per view.",
       "html": "<button class=\"ds-btn-primary\">Mulai bercerita</button>",
-      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:0.5rem; min-height:2.75rem; padding:0.55rem 0.9rem; border:1px solid var(--c-accent); border-radius:8px; background:var(--c-accent); color:var(--c-on-accent); font-weight:600; text-decoration:none; } .ds-btn-primary:hover { background:var(--c-accent-hover); border-color:var(--c-accent-hover); } .ds-btn-primary:focus-visible { outline:3px solid var(--c-accent); outline-offset:2px; } .ds-btn-primary:focus-visible { outline:var(--focus-width) solid var(--c-focus); outline-offset:var(--focus-offset); } .ds-btn-primary:active { transform:translateY(1px); }"
+      "css": ".ds-btn-primary{background:var(--c-accent,#2F3A63);color:var(--c-on-accent,#FBF8F2);border:1.5px solid var(--c-accent,#2F3A63);border-radius:4px;padding:.55rem .9rem;min-height:44px;font:700 1rem/1.4 'Hanken Grotesk',system-ui,sans-serif;transition:background 120ms cubic-bezier(.16,1,.3,1)}.ds-btn-primary:hover{background:var(--c-accent-hover,#212A4A)}.ds-btn-primary:focus-visible{outline:3px solid var(--c-focus,#2F3A63);outline-offset:2px}"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "The alternative action beside a primary, or a reversible choice.",
+      "description": "Second action in a row.",
       "html": "<button class=\"ds-btn-secondary\">Tulis catatan</button>",
-      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; min-height:2.75rem; padding:0.55rem 0.9rem; border:2px solid var(--c-accent); border-radius:8px; background:var(--c-surface); color:var(--c-accent); font-weight:600; } .ds-btn-secondary:hover { background:var(--c-accent-soft); } .ds-btn-secondary:focus-visible { outline:var(--focus-width) solid var(--c-focus); outline-offset:var(--focus-offset); } .ds-btn-secondary:active { transform:translateY(1px); }"
+      "css": ".ds-btn-secondary{background:var(--c-surface,#FBF8F2);color:var(--c-accent,#2F3A63);border:1.5px solid var(--c-accent,#2F3A63);border-radius:4px;padding:.55rem .9rem;min-height:44px;font:700 1rem/1.4 'Hanken Grotesk',system-ui,sans-serif}.ds-btn-secondary:hover{background:var(--c-accent-soft,#E8E3E8)}.ds-btn-secondary:focus-visible{outline:3px solid var(--c-focus,#2F3A63);outline-offset:2px}"
+    },
+    {
+      "name": "Cover Band",
+      "kind": "custom",
+      "refersTo": "cover-band",
+      "description": "Full-bleed place colour with serif title, lead and reversed actions.",
+      "html": "<header class=\"ds-cover\"><h1>Beranda</h1><p>Selamat malam. Apa yang ingin kamu lakukan sekarang?</p><button class=\"ds-cover-btn\">Mulai bercerita</button></header>",
+      "css": ".ds-cover{background:#B4472F;color:#FFF8F1;padding:3rem 2.5rem 2.75rem}.ds-cover h1{font:600 clamp(2.25rem,1.2rem + 4vw,4.75rem)/.98 Literata,Georgia,serif;letter-spacing:-.03em;margin:0}.ds-cover p{font:400 1.25rem/1.4 Literata,Georgia,serif;color:#FBEDE6;margin:.85rem 0 1.25rem;max-width:28ch}.ds-cover-btn{background:#FFF8F1;color:#B4472F;border:1.5px solid #FFF8F1;border-radius:4px;padding:.55rem .9rem;min-height:44px;font:700 1rem 'Hanken Grotesk',sans-serif}.ds-cover-btn:hover{background:transparent;color:#FFF8F1}.ds-cover-btn:focus-visible{outline:3px solid #FFF8F1;outline-offset:2px}"
+    },
+    {
+      "name": "Place Tabs",
+      "kind": "nav",
+      "refersTo": "top-bar",
+      "description": "Top-bar navigation with cover-colour spines.",
+      "html": "<nav class=\"ds-tabs\"><a aria-current=\"page\" style=\"--p:#B4472F\"><i></i>Beranda</a><a style=\"--p:#2E5A4C\"><i></i>Cerita</a><a style=\"--p:#D6A23E\"><i></i>Catatanku</a><a style=\"--p:#2F3A63\"><i></i>Dukungan</a></nav>",
+      "css": ".ds-tabs{display:flex;gap:4px;background:#FBF8F2;border-bottom:1px solid #DCD2C2;font:600 1rem 'Hanken Grotesk',sans-serif}.ds-tabs a{display:flex;align-items:center;gap:.6rem;padding:1.5rem 1rem 1.25rem;color:#5C5047;border-bottom:4px solid transparent;cursor:pointer}.ds-tabs a:hover{color:#231C17;background:#F7F2E9}.ds-tabs a[aria-current]{color:#231C17;font-weight:700;border-color:var(--p)}.ds-tabs i{width:.5rem;height:1.35rem;border-radius:1px;background:var(--p)}"
     },
     {
       "name": "Record Row",
       "kind": "card",
-      "refersTo": "entry-row",
-      "description": "A real saved note, check-in or conversation with its date and a single destination.",
-      "html": "<a class=\"ds-entry\" href=\"/notes\"><span>28 Okt</span><span><strong>Catatan</strong><small>Contoh tampilan catatan</small></span><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></a>",
-      "css": ".ds-entry { display:grid; grid-template-columns:3.2rem minmax(0,1fr) auto; gap:0.75rem; align-items:start; padding:1.125rem 0.25rem; border-bottom:1px solid var(--c-border-subtle); color:var(--c-text); text-decoration:none; } .ds-entry span:first-child { color:var(--c-muted); font-size:1rem; white-space:nowrap; } .ds-entry small { display:block; color:var(--c-muted); } .ds-entry:hover { background:var(--c-sunken); } .ds-entry:focus-visible { outline:var(--focus-width) solid var(--c-focus); outline-offset:var(--focus-offset); }"
+      "refersTo": "record",
+      "description": "Saved writing in a ruled list.",
+      "html": "<div class=\"ds-records\"><a><time>28 Okt</time><span><b>Catatan</b><em>Capek tapi lega. Banyak nama baru.</em></span></a></div>",
+      "css": ".ds-records{border-top:2px solid #231C17}.ds-records a{display:grid;grid-template-columns:3.2rem 1fr;gap:.75rem;padding:1.1rem .25rem;border-bottom:1px solid #DCD2C2;color:#231C17;text-decoration:none}.ds-records a:hover{background:#F7F2E9}.ds-records time,.ds-records b{font:600 .875rem 'Hanken Grotesk',sans-serif;color:#5C5047}.ds-records em{display:block;font:500 1.0625rem/1.45 Literata,Georgia,serif;font-style:normal}"
     },
     {
-      "name": "Mobile Place Navigation",
-      "kind": "nav",
-      "description": "Four fixed places at the bottom on phones; the header keeps Help and Quick exit above it.",
-      "html": "<nav class=\"ds-places\"><a aria-current=\"page\" href=\"/home\">Home</a><a href=\"/talk\">Talk</a><a href=\"/notes\">My notes</a><a href=\"/support\">Support</a></nav>",
-      "css": ".ds-places { position:fixed; inset:auto 0 0; display:grid; grid-template-columns:repeat(4,1fr); background:var(--c-surface); border-top:1px solid var(--c-border-subtle); padding-bottom:env(safe-area-inset-bottom); } .ds-places a { min-height:3.75rem; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--c-muted); text-decoration:none; font-weight:600; } .ds-places a[aria-current=\"page\"] { color:var(--c-accent); background:var(--c-accent-soft); } .ds-places a:hover { background:var(--c-surface-quiet); } .ds-places a:focus-visible { outline:var(--focus-width) solid var(--c-focus); outline-offset:var(--focus-offset); } @media(max-width:24em) { .ds-places { grid-template-columns:repeat(2,1fr); } }"
-    },
-    {
-      "name": "Quiet Button",
-      "kind": "button",
-      "description": "A reversible inline edit or secondary text action.",
-      "html": "<button class=\"ds-quiet\">Perbaiki kata-kata</button>",
-      "css": ".ds-quiet { min-height:var(--target-min); padding:0.55rem 0.5rem; border:1px solid transparent; border-radius:var(--radius-2); background:transparent; color:var(--c-link); text-decoration:underline; text-underline-offset:0.18em; font-weight:600; } .ds-quiet:hover { background:var(--c-sunken); text-decoration-thickness:2px; } .ds-quiet:focus-visible { outline:var(--focus-width) solid var(--c-focus); outline-offset:var(--focus-offset); } .ds-quiet:active { transform:translateY(1px); }",
-      "refersTo": "button-quiet"
-    },
-    {
-      "name": "Labelled Field",
+      "name": "Field",
       "kind": "input",
-      "description": "Label and plain control used by memory, source search and summary wording.",
-      "html": "<label class=\"ds-field\">Judul<input class=\"ds-input\" type=\"text\" value=\"Yang ingin kubawa\"></label>",
-      "css": ".ds-field { display:grid; gap:0.5rem; color:var(--c-text); font-weight:600; } .ds-input { min-height:var(--target-min); padding:0.5rem 0.75rem; border:var(--border-width) solid var(--c-border-control); border-radius:var(--radius-2); background:var(--c-surface); color:var(--c-text); } .ds-input:focus-visible { outline:var(--focus-width) solid var(--c-focus); outline-offset:var(--focus-offset); } .ds-input[aria-invalid=\"true\"] { border-color:var(--c-danger); box-shadow:inset 0 0 0 1px var(--c-danger); }",
-      "refersTo": "field"
-    },
-    {
-      "name": "Status Badge",
-      "kind": "chip",
-      "description": "A plain text status, never an achievement or score.",
-      "html": "<span class=\"ds-badge\">Draf untuk diperiksa</span>",
-      "css": ".ds-badge { display:inline-flex; gap:0.3rem; padding:0.12rem 0.45rem; border:1px solid var(--c-border-control); border-radius:var(--radius-1); background:var(--c-surface); color:var(--c-text); font-size:var(--font-size-1); font-weight:600; line-height:var(--line-height-ui); }"
-    },
-    {
-      "name": "Continuity Editor Panel",
-      "kind": "card",
-      "description": "The existing flat white form surface shared by consent, manual editors and weekly reflection.",
-      "html": "<section class=\"ds-editor\"><h2>Draf milikmu</h2><p>Pilih sumber, lalu periksa kata-katanya.</p></section>",
-      "css": ".ds-editor { display:grid; gap:1.25rem; padding:1.5rem; border-radius:var(--radius-4); background:var(--c-surface); color:var(--c-text); } .ds-editor h2,.ds-editor p { margin:0; } .ds-editor h2 { font-size:var(--font-size-5); font-weight:650; line-height:var(--line-height-heading); } @media(max-width:48em) { .ds-editor { padding:1.25rem; } }"
-    },
-    {
-      "name": "Weekly Day",
-      "kind": "custom",
-      "description": "A calendar day marks writing presence in words and tint, without counts or a score.",
-      "html": "<div class=\"ds-day\" data-filled=\"true\"><time datetime=\"2026-10-28\">Rab</time><span>28</span><small>Ada tulisan</small></div>",
-      "css": ".ds-day { display:flex; flex-direction:column; align-items:center; gap:0.5rem; padding:1rem 0.5rem; border-radius:var(--radius-3); background:var(--c-surface); color:var(--c-muted); text-align:center; } .ds-day[data-filled=\"true\"] { background:var(--c-accent-soft); color:var(--c-accent); } .ds-day span { font-size:var(--font-size-5); font-weight:650; font-variant-numeric:tabular-nums; } .ds-day small { font-size:var(--font-size-1); }"
-    },
-    {
-      "name": "Desktop Workspace Navigation",
-      "kind": "nav",
-      "description": "Fixed desktop rail for primary places, daily tools and personal settings; mobile uses the separate bottom places.",
-      "html": "<nav class=\"ds-workspace\"><a href=\"/home\" aria-current=\"page\">Beranda</a><a href=\"/notes\">Catatanku</a><a href=\"/notes/weekly\">Refleksi mingguan</a><a href=\"/settings/privacy\">Privasi &amp; data</a></nav>",
-      "css": ".ds-workspace { display:flex; flex-direction:column; gap:0.2rem; width:15rem; padding:1.4rem 1.1rem; background:var(--c-surface); border-right:1px solid var(--c-border-subtle); } .ds-workspace a { display:flex; align-items:center; min-height:var(--target-min); padding:0.75rem 0.8rem; border-radius:var(--radius-2); color:var(--c-muted); text-decoration:none; } .ds-workspace a[aria-current=\"page\"] { background:var(--c-accent-soft); color:var(--c-accent); font-weight:700; } .ds-workspace a:hover { background:var(--c-surface-quiet); color:var(--c-text); } .ds-workspace a:focus-visible { outline:var(--focus-width) solid var(--c-focus); outline-offset:var(--focus-offset); }"
+      "refersTo": "field",
+      "description": "Text input.",
+      "html": "<input class=\"ds-field\" placeholder=\"Tulis di sini\">",
+      "css": ".ds-field{background:#FBF8F2;color:#231C17;border:1px solid #85776A;border-radius:4px;padding:.5rem .75rem;min-height:44px;font:400 1rem 'Hanken Grotesk',sans-serif;caret-color:#B4472F}.ds-field:focus-visible{outline:3px solid #2F3A63;outline-offset:2px}"
     }
   ],
   "narrative": {
-    "northStar": "The Open Fold",
-    "overview": "Sela is a working room, not a brochure about feeling better. White surfaces and a cool blue-grey ground keep the interface quiet; a cobalt open S and a sculptural paper-fold illustration carry the identity. The folds do not resolve into a tidy shape, which is the point: there is room for a story that is not finished.\n\nThe system is compact and legible. It uses one humanist sans, a small radius scale, hairline divisions and only two elevation levels. Coral, lilac and sage appear in the illustration, not as UI status colours. Nothing assesses the person: no scores, progress rings, streaks or before-and-after language.",
+    "northStar": "Sampul Buku",
+    "overview": "Each place in Sela is a book the person owns. A flat cover colour, printed edge to edge like an Indonesian paperback of the 1970s and 80s, says where they are; underneath, a warm paper page holds their own words in a calm serif, divided by ink rules rather than boxes. The interface is professional the way a well-made book is: quiet, legible, sure of its structure, with colour used to orient rather than decorate.\n\nThe system is flat and print-like. One serif (Literata) carries titles, leads and the person's saved writing; one grotesk (Hanken Grotesk) carries every control, label and paragraph of instruction. Actions speak in a single deep indigo. Nothing assesses the person: no scores, progress, streaks or before/after language.",
     "keyCharacteristics": [
-      "Flat white reading surfaces on a cool `#EDF0F8` ground.",
-      "Cobalt is the single action and identity colour.",
-      "Flat surfaces separated by 1px rules; shadows only for sheets and dialogs.",
-      "Four-place navigation on mobile; a fixed workspace rail on desktop.",
-      "Real states, honest blocked states, and the Help / Quick exit pair always present."
+      "Warm paper ground (`paper`) with a lighter page surface for bars, panels and fields.",
+      "Four cover colours as wayfinding: brick Beranda, forest Cerita, ochre Catatanku, indigo Dukungan.",
+      "Full-bleed cover band at the top of every non-focused page; focused rooms get a 4px spine instead.",
+      "Sections open on a 2px ink rule; rows divide on 1px hairlines.",
+      "Help and Quick exit always in the top-right of the bar, in the same order."
     ],
     "rules": [
       {
-        "name": "The One Voice Rule",
-        "body": "Cobalt is the only action and identity accent. The accepted dashboard invitation may carry the accent as a surface; surrounding reading and feature areas stay quiet.",
+        "name": "The Cover Is Not a Button Rule",
+        "body": "Cover colours never mark actions, status or categories of content; they only name the place. Actions stay indigo (or reverse to `on-cover` when sitting on a cover).",
         "section": "colors"
       },
       {
-        "name": "The No Kicker Rule",
-        "body": "A heading carries its own weight. Do not place an eyebrow, date, section number or category label above it.",
+        "name": "The Serif Is Theirs Rule",
+        "body": "Literata is for titles and the person's own words; instructions, buttons and labels are always Hanken Grotesk.",
         "section": "typography"
       },
       {
-        "name": "The Flat-By-Default Rule",
-        "body": "If a surface is not floating above the page, it gets a rule or a tint, never a shadow.",
+        "name": "The Print Rule",
+        "body": "If it is not floating above the page, it gets a rule or a tint, never a shadow.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep the page ground cool and the welcome surface white.",
-      "Do use cobalt for exactly one primary action per view.",
-      "Do self-host Manrope and keep text resize, dark mode and high contrast working.",
-      "Do state unavailable features and provider limits plainly.",
-      "Do keep Help and Quick exit in the same header position on every screen."
+      "**Do** open each non-focused page on its place's cover band, title in Literata.",
+      "**Do** keep one indigo primary action per view (reversed on covers).",
+      "**Do** divide sections with a 2px ink rule and rows with 1px hairlines.",
+      "**Do** keep Help and Quick exit top-right on every screen, and keep text resize, dark mode, high contrast and colour moods working.",
+      "**Do** label synthetic data and unavailable features plainly."
     ],
     "donts": [
-      "Don't reintroduce a serif, paper texture or warm editorial costume.",
-      "Don't put a kicker, date or all-caps eyebrow above a heading.",
-      "Don't add streaks, points, scores, badges, rating stars or healing promises.",
-      "Don't use coral, lilac or sage for UI status; they belong to the illustration.",
-      "Don't nest cards, add gradient text/glass, or mix a border with a wide shadow.",
-      "Don't present AI as a clinician or imply automatic memory, recipient sharing, appointments or provider readiness that the build does not support."
+      "**Don't** use cover colours for actions, statuses or content categories.",
+      "**Don't** put a kicker, date or all-caps eyebrow above a heading.",
+      "**Don't** add streaks, points, scores, badges or progress visuals.",
+      "**Don't** float static panels with shadows or nest cards.",
+      "**Don't** reintroduce the cobalt open-S identity outside the `lipat` colour mood."
     ]
   }
 }

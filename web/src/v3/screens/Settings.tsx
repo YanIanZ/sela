@@ -889,6 +889,12 @@ export function DisplayPage() {
               variant="rows"
               options={[
                 {
+                  value: "sampul",
+                  label: w("Sampul (bawaan)", "Sampul (default)"),
+                  hint: w("Kertas hangat dengan sampul berwarna untuk tiap ruang, tenang dan mudah dibaca.", "Warm paper with a coloured cover for each space, calm and easy to read."),
+                  swatch: ["#F3EEE4", "#FBF8F2", "#2F3A63"],
+                },
+                {
                   value: "embun",
                   label: w("Embun", "Embun (dew)"),
                   hint: w("Hijau eukaliptus yang tenang, seperti pagi yang belum terburu-buru.", "Calm eucalyptus green, like a morning that is not in a hurry."),

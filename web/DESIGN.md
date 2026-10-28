@@ -2,61 +2,73 @@
 name: Sela
 description: A calm, honest place to talk, write and check in — not therapy.
 colors:
-  ground: "#EDF0F8"
-  surface: "#FFFFFF"
-  surface-quiet: "#F3F5FB"
-  sunken: "#E7ECF6"
-  ink: "#17233A"
-  muted: "#52617B"
-  border-subtle: "#D3DBEA"
-  border-control: "#72809B"
-  cobalt: "#3657C7"
-  cobalt-hover: "#2844A5"
-  cobalt-soft: "#E7ECFD"
-  link: "#2E4DB3"
+  paper: "#F3EEE4"
+  page: "#FBF8F2"
+  page-quiet: "#F7F2E9"
+  sunken: "#EBE3D5"
+  ink: "#231C17"
+  muted-ink: "#5C5047"
+  hairline: "#DCD2C2"
+  control-edge: "#85776A"
+  indigo: "#2F3A63"
+  indigo-deep: "#212A4A"
+  indigo-soft: "#E8E3E8"
+  cover-brick: "#B4472F"
+  cover-forest: "#2E5A4C"
+  cover-ochre: "#D6A23E"
+  cover-indigo: "#2F3A63"
+  cover-ink: "#3B322C"
+  on-cover: "#FFF8F1"
+  on-cover-muted: "#FBEDE6"
   help: "#A1351E"
   help-bg: "#FBE9E4"
   danger: "#A3271F"
   success: "#23683C"
   warning: "#875200"
-  coral: "#F49B87"
-  lilac: "#C3C9EF"
-  sage: "#6F8B7A"
 typography:
   display:
-    fontFamily: "Manrope, system-ui, sans-serif"
-    fontSize: "clamp(1.75rem, 1rem + 3vw, 3.625rem)"
-    fontWeight: 650
-    lineHeight: 1.1
-    letterSpacing: "-0.035em"
+    fontFamily: "Literata, Iowan Old Style, Georgia, serif"
+    fontSize: "clamp(2.25rem, 1.2rem + 4vw, 4.75rem)"
+    fontWeight: 600
+    lineHeight: 0.98
+    letterSpacing: "-0.03em"
   headline:
-    fontFamily: "Manrope, system-ui, sans-serif"
-    fontSize: "clamp(2rem, 1.5rem + 1.5vw, 2.5rem)"
-    fontWeight: 650
-    lineHeight: 1.13
-    letterSpacing: "-0.035em"
+    fontFamily: "Literata, Iowan Old Style, Georgia, serif"
+    fontSize: "clamp(2.25rem, 1.4rem + 3vw, 4.25rem)"
+    fontWeight: 600
+    lineHeight: 1.02
+    letterSpacing: "-0.03em"
   title:
-    fontFamily: "Manrope, system-ui, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 650
-    lineHeight: 1.3
-    letterSpacing: "-0.025em"
+    fontFamily: "Literata, Iowan Old Style, Georgia, serif"
+    fontSize: "1.625rem"
+    fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: "-0.02em"
+  lead:
+    fontFamily: "Literata, Iowan Old Style, Georgia, serif"
+    fontSize: "clamp(1.125rem, 1rem + 0.6vw, 1.5rem)"
+    fontWeight: 400
+    lineHeight: 1.4
+  record:
+    fontFamily: "Literata, Iowan Old Style, Georgia, serif"
+    fontSize: "1.0625rem"
+    fontWeight: 500
+    lineHeight: 1.45
   body:
-    fontFamily: "Manrope, system-ui, sans-serif"
+    fontFamily: "Hanken Grotesk, system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.6
-    letterSpacing: "normal"
   label:
-    fontFamily: "Manrope, system-ui, sans-serif"
+    fontFamily: "Hanken Grotesk, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: "normal"
 rounded:
-  sm: "8px"
-  md: "12px"
-  lg: "16px"
+  hairline: "2px"
+  control: "4px"
+  panel: "6px"
+  card: "8px"
   pill: "999px"
 spacing:
   xs: "4px"
@@ -67,192 +79,156 @@ spacing:
   xxl: "48px"
 components:
   button-primary:
-    backgroundColor: "{colors.cobalt}"
-    textColor: "{colors.surface}"
-    rounded: "{rounded.sm}"
+    backgroundColor: "{colors.indigo}"
+    textColor: "{colors.page}"
+    rounded: "{rounded.control}"
     padding: "0.55rem 0.9rem"
   button-primary-hover:
-    backgroundColor: "{colors.cobalt-hover}"
-    textColor: "{colors.surface}"
-    rounded: "{rounded.sm}"
-    padding: "0.55rem 0.9rem"
+    backgroundColor: "{colors.indigo-deep}"
+    textColor: "{colors.page}"
+    rounded: "{rounded.control}"
   button-secondary:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.cobalt}"
-    rounded: "{rounded.sm}"
+    backgroundColor: "{colors.page}"
+    textColor: "{colors.indigo}"
+    rounded: "{rounded.control}"
     padding: "0.55rem 0.9rem"
-  button-quiet:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.link}"
-    rounded: "{rounded.sm}"
-    padding: "0.55rem 0.5rem"
+  button-on-cover:
+    backgroundColor: "{colors.on-cover}"
+    textColor: "{colors.cover-brick}"
+    rounded: "{rounded.control}"
+    padding: "0.55rem 0.9rem"
   field:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.page}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.control}"
     padding: "0.5rem 0.75rem"
-  hero-panel:
-    backgroundColor: "{colors.surface}"
+  cover-band:
+    backgroundColor: "{colors.cover-brick}"
+    textColor: "{colors.on-cover}"
+    padding: "3rem 0 2.75rem"
+  top-bar:
+    backgroundColor: "{colors.page}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.lg}"
-    padding: "2.25rem"
-  entry-row:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: "1.125rem 0.75rem"
+    height: "4.75rem"
 ---
 
 # Design System: Sela
 
 ## Overview
 
-**Creative North Star: "The Open Fold"**
+**Creative North Star: "Sampul Buku"**
 
-Sela is a working room, not a brochure about feeling better. White surfaces and a cool blue-grey ground keep the interface quiet; a cobalt open S and a sculptural paper-fold illustration carry the identity. The folds do not resolve into a tidy shape, which is the point: there is room for a story that is not finished.
+Each place in Sela is a book the person owns. A flat cover colour, printed edge to edge like an Indonesian paperback of the 1970s and 80s, says where they are; underneath, a warm paper page holds their own words in a calm serif, divided by ink rules rather than boxes. The interface is professional the way a well-made book is: quiet, legible, sure of its structure, with colour used to orient rather than decorate.
 
-The system is compact and legible. It uses one humanist sans, a small radius scale, hairline divisions and only two elevation levels. Coral, lilac and sage appear in the illustration, not as UI status colours. Nothing assesses the person: no scores, progress rings, streaks or before-and-after language.
+The system is flat and print-like. One serif (Literata) carries titles, leads and the person's saved writing; one grotesk (Hanken Grotesk) carries every control, label and paragraph of instruction. Actions speak in a single deep indigo. Nothing assesses the person: no scores, progress, streaks or before/after language.
 
 **Key Characteristics:**
-- Flat white reading surfaces on a cool `#EDF0F8` ground.
-- Cobalt is the single action and identity colour.
-- Flat surfaces separated by 1px rules; shadows only for sheets and dialogs.
-- Four-place navigation on mobile; a fixed workspace rail on desktop.
-- Real states, honest blocked states, and the Help / Quick exit pair always present.
+- Warm paper ground (`paper`) with a lighter page surface for bars, panels and fields.
+- Four cover colours as wayfinding: brick Beranda, forest Cerita, ochre Catatanku, indigo Dukungan.
+- Full-bleed cover band at the top of every non-focused page; focused rooms get a 4px spine instead.
+- Sections open on a 2px ink rule; rows divide on 1px hairlines.
+- Help and Quick exit always in the top-right of the bar, in the same order.
 
 ## Colors
 
-A cool, high-clarity neutral field with one saturated cobalt voice and warm illustration accents.
+Warm paper and ink with four flat cover colours and one indigo action voice.
 
 ### Primary
-- **Cobalt Signal** (`#3657C7`): primary actions, current navigation, links, focus rings and the open-S mark. Hover deepens to `#2844A5`; the soft tint `#E7ECFD` marks selected rows and quiet selected states.
-- **Coral / Lilac / Sage** (`#F49B87`, `#C3C9EF`, `#6F8B7A`): illustration and identity only. They are never repurposed as success, warning or category colours.
+- **Bound Indigo** (`indigo`): primary buttons, links, focus rings, selected tool/chip states (`indigo-soft`). Hover deepens to `indigo-deep`.
+
+### Secondary
+- **Cover colours** (`cover-brick`, `cover-forest`, `cover-ochre`, `cover-indigo`, `cover-ink`): place identity only — the cover band, the tab underline of the current place, nav spines, shelf spines, the bottom-bar marks and the four-spine logo. Text on covers is `on-cover` / `on-cover-muted`, except ochre, which takes `ink`. Settings, About and Policies use `cover-ink`; Help uses `help-bg` with help text; sign-up and onboarding use forest.
 
 ### Neutral
-- **Cool Paper** (`#EDF0F8`): page ground behind white content.
-- **Clean Sheet** (`#FFFFFF`): welcome panel, forms, menu sheet, entry lists.
-- **Quiet Sheet** (`#F3F5FB`) and **Sunken** (`#E7ECF6`): hover and inset states.
-- **Ink** (`#17233A`): primary text.
-- **Muted Ink** (`#52617B`): leads, metadata, hints and secondary copy.
-- **Hairline** (`#D3DBEA`): dividers; **Control Edge** (`#72809B`) for input and secondary-button borders.
+- **Paper** (`paper`): page ground. **Page** (`page`): top bar, tool strip, fields, panels. **Quiet page** / **Sunken**: hover and pressed.
+- **Ink** (`ink`): text and section rules. **Muted ink** (`muted-ink`): metadata, kind labels, hints.
+- **Hairline** (`hairline`): row dividers. **Control edge** (`control-edge`): input and secondary borders.
 
 ### Semantic
-- **Help** (`#A1351E` on `#FBE9E4`) for crisis and help affordances.
-- **Danger** (`#A3271F`), **Success** (`#23683C`), **Warning** (`#875200`) follow the same light-tint pattern.
+- **Help** (`help` on `help-bg`), **Danger**, **Success**, **Warning** keep the same values in every colour mood so safety meaning never moves.
 
-**The One Voice Rule.** Cobalt is the only action and identity accent. The accepted dashboard invitation may carry the accent as a surface; surrounding reading and feature areas stay quiet.
+### Colour moods
+`prefs.palette` (Display & accessibility) defaults to `sampul`, the values above. `embun`, `samudra`, `teduh`, `pasir` and `lipat` (original cobalt) remap only the `--c-*` ground, text and accent roles in light and dark and soften radii to 6 / 10 / 14px; cover colours and semantic colours stay. High-contrast schemes keep their own values and turn covers into ruled headings. Dark mode deepens covers (brick `#8C3826`, forest `#25483D`, ochre `#B98A33` with dark text, indigo `#2C355A`) on a `#1A1613` ground.
 
-### Well-being palettes (2026-10-28)
-The person chooses a colour mood under Display & accessibility (`prefs.palette`, stored with the other non-sensitive display choices and applied before first paint by `boot.js` as `data-palette`). `src/v3/palettes.css` remaps only the `--c-*` roles of the light and dark schemes and softens radii to 10 / 14 / 20px; high-contrast schemes keep their own values. Each palette keeps one accent voice, and every text pair passes 4.5:1 and controls/focus 3:1 in both schemes.
-
-| Palette | Mood | Light ground / accent | Dark accent |
-| --- | --- | --- | --- |
-| **Embun** (default) | Morning dew, restorative | `#EDF3EE` / `#2E6A52` | `#8ECBAD` |
-| **Samudra** | Calm sea, slow breath | `#EAF2F3` / `#1C636D` | `#7ECDD6` |
-| **Teduh** | Evening shade, rest | `#F0EEF5` / `#594994` (replies take sage `#3D6A5F`) | `#BAADF1` |
-| **Pasir** | Warm sand, grounded | `#F4EFE7` / `#2D4B6C` | `#9CBADC` |
-| **Lipat** | Original cobalt identity | `#EDF0F8` / `#3657C7` | `#A4B8FF` |
-
-Help, danger, success and warning stay identical across palettes so safety affordances never change meaning. In dark schemes the Home invitation sinks into `--c-accent-soft` instead of a pale accent slab.
+**The Cover Is Not a Button Rule.** Cover colours never mark actions, status or categories of content; they only name the place. Actions stay indigo (or reverse to `on-cover` when sitting on a cover).
 
 ## Typography
 
-**Display Font:** Manrope (self-hosted `manrope-latin.ttf`, with system-ui fallback)
-**Body Font:** Manrope (same file and fallback)
+**Display Font:** Literata (self-hosted `literata-latin.woff2`, variable 400–700 with optical sizing; Georgia fallback)
+**Body Font:** Hanken Grotesk (self-hosted `hanken-grotesk-latin.woff2`, 400–700; system-ui fallback)
 
-**Character:** A humanist sans with open counters and a slightly technical edge. Headlines are tight and confident; body copy stays plain and roomy.
+**Character:** A bookish, open serif for what the person reads and writes, paired with a plain, slightly warm grotesk for everything they operate.
 
 ### Hierarchy
-- **Display** (650, `clamp(1.75rem, 1rem + 3vw, 3.625rem)`, 1.1): Intro thesis and other display moments.
-- **Headline** (650, `clamp(2rem, 1.5rem + 1.5vw, 2.5rem)`, 1.13): page titles.
-- **Title** (650, 1.5rem, 1.3): section headings and record titles.
-- **Body** (400, 1rem, 1.6): reading copy, 65–75ch measure, `text-wrap: pretty`.
-- **Label** (600, 0.875rem, normal, sentence case): field labels, menu group labels and metadata. No all-caps kickers above headings.
+- **Display** (600, `clamp(2.25rem, 1.2rem + 4vw, 4.75rem)`, 0.98): Beranda and the public introduction cover titles.
+- **Headline** (600, `clamp(2.25rem, 1.4rem + 3vw, 4.25rem)`, 1.02): every other cover title; focused rooms cap at 3rem.
+- **Title** (600, 1.625rem / h3 1.25rem): section headings above ink rules.
+- **Lead** (Literata 400, 1.125–1.5rem, 1.4): the sentence under a cover title.
+- **Record** (Literata 500, 1.0625rem, two-line clamp): previews of saved notes, check-ins and conversations in lists.
+- **Body** (Hanken 400, 1rem, 1.6, 65–75ch) and **Label** (Hanken 600–700, 0.875rem, sentence case).
 
-The scale has five fixed steps (0.875, 1, 1.125, 1.5, 1.75rem) plus two responsive ramps: page headline 2–2.5rem and display 1.75–3.625rem. At 320px with text scale 130–150%, display caps at 1.75rem.
-
-### Named Rules
-**The No Kicker Rule.** A heading carries its own weight. Do not place an eyebrow, date, section number or category label above it.
+**The Serif Is Theirs Rule.** Literata is for titles and the person's own words; instructions, buttons and labels are always Hanken Grotesk.
 
 ## Layout
 
-The shell is a 90rem maximum canvas with 2.5rem desktop gutters, narrowing to 1.5rem and then `1.125rem` on phones. Reading content uses a 38rem measure; settings use a 12rem section rail plus a flexible column.
+A centred 90rem canvas with 2.5rem desktop gutters (1.5rem below 75em, 1.125rem on phones). Every non-focused page opens with a full-bleed cover band (3rem / 2.75rem padding; 1.75rem on phones) that sits flush under the bar, then content follows 2.5rem below.
 
-The public entry (`/` and `/dashboard`) is an information portal before login, separate from the personal Home page. It uses a compact title/action row, a ruled facts strip, and a `2.3fr / 1fr` information/sidebar grid with 1.5rem gaps. The main area contains a soft-accent introduction, six feature rows in two semantic groups, and three reading topics; the sidebar explains the start flow, data choices and service limits. At48em it becomes one column, and at35em feature groups and reading topics also stack. The public portal loads no personal records, shows no personal usage statistics, and routes its main action into the normal age/guest/account/consent flow. Authenticated, non-focused workspaces use a fixed 15rem left rail at 64em and wider; the content flow offsets by 15rem, with 2rem gutters and a context/help/Quick exit header. The journal, weekly reflection, memory, summaries, reading and settings share this frame. Focused writing and listening retain their existing room frame.
+Desktop (≥64em) shell: a 4.75rem top bar (wordmark, four place tabs, Help, Quick exit, Menu) and, for signed-in workspaces, a 3rem tool strip with context, daily tools and personal settings (context and the "Untuk harimu" label hide below 96em). Below 64em the place tabs move to a fixed four-place bottom bar (2×2 at 320px or at 130–150% text) and the header becomes two rows: brand + Menu, then Help + Quick exit.
 
-The accepted Home composition opens with a compact white title/greeting panel followed by a `1.6fr / 1fr` split at 54em: a cobalt invitation with talk/note/check-in actions, and a continuation rail containing weekly/summary links plus a ruled feature index. Real continuation and saved-record sections follow; loading, retry, empty, retention and age states remain real. The split becomes one column below 54em. Invitation padding is 2rem, grouping gaps 1.5–2rem; panels use 12–16px radii. Home has no illustration, activity score or mission completion claim. Actions stack full-width on phones.
+Beranda: cover split `1.15fr / 1fr` at ≥54em (title + greeting left; invitation, three actions and storage hint right), then a ruled page `1.45fr / 1fr` (continuation, recent records and memory left; the shelf of other rooms right). Everything stacks below 54em and actions go full width below 48em. Onboarding and sign-in cards carry their cover as the card's top edge. Reading measure stays 38–40rem; settings keep their section index.
 
-The four-place bottom navigation stays on mobile, switching to 2×2 at 320px or at 130–150% on narrow phones. Settings keep their section index and place the reading/form column on a white surface. Journal rows sit on one shared white sheet; editors align with the content start. Support keeps the original fold illustration beside its summary invitation, then uses two resource columns and a full-width help section on desktop. Reading separates the title/search introduction from ruled publisher rows.
-
-Continuity keeps the existing source/editor and calendar primitives: summary creation has a `0.85fr / 1.4fr` split; weekly records and reflection use equal columns. At 48em these become one column. The seven-day strip reflows to four columns without horizontal scrolling. Reading uses a 68rem maximum width. Consent panels, editors and reflection forms use 1.5rem padding, reducing to 1.25rem at 48em; the summary reading sheet uses 1.75rem before that reduction.
-
-A separate development-only preview starts on the public information portal with no session profile. Its Dashboard–Home navigation switches views in tab memory; Home then uses clearly labelled synthetic in-memory records. Other product actions are disabled, no account is created, and no API or AI request is made. Only the personal workspace notice offsets with the desktop rail. The preview HTML is excluded from the default production entry.
-
-Spacing follows a 4 / 8 / 16 / 24 / 32 / 48 scale. Tight groups sit close; sections are separated by 2–2.5rem and a hairline.
+Spacing follows 4 / 8 / 16 / 24 / 32 / 48; groups of related sections are 2.5rem apart, with more space above a heading than below it.
 
 ## Elevation & Depth
 
-The interface is flat at rest. Depth comes from surface change and 1px borders, not from stacked cards. Two shadows exist for overlays only: `0 1px 2px rgb(23 35 58 / 0.08)` for a slight lift and `0 8px 24px rgb(23 35 58 / 0.18)` for the menu sheet and dialogs. High-contrast schemes remove both shadows and thicken borders to 2px.
+Flat. Depth is the change from cover to page and from paper to page surface, plus ink rules. The only shadows belong to floating layers: `shadow-1` for a slight lift and `shadow-2` (`0 12px 32px rgb(35 28 23 / 0.2)`) for the menu sheet and dialogs; high contrast removes both.
 
-**The Flat-By-Default Rule.** If a surface is not floating above the page, it gets a rule or a tint, never a shadow.
+**The Print Rule.** If it is not floating above the page, it gets a rule or a tint, never a shadow.
 
 ## Shapes
 
-Corners are restrained: 8px for controls, 12px for entry rows and compact panels, 16px for the welcome panel and menu sheet. Pills are reserved for small status chips and the language switch. Borders are 1px; selected or important controls may use 2px. No cut corners, blobs or decorative geometry.
+Small, printed corners: 2px for spines, 4px for controls, 6px for panels and service cards, 8px for onboarding cards and the menu sheet. Cover bands are square and full-bleed. Pills remain only for status chips. Borders are 1px hairlines; sections open on a 2px ink rule; buttons use 1.5px strokes.
 
 ## Components
 
 ### Buttons
-- **Shape:** 8px radius, minimum 44px target, `0.55rem 0.9rem` padding.
-- **Primary:** cobalt ground, white text; hover deepens the cobalt.
-- **Secondary:** white ground, 2px cobalt border, cobalt text; hover uses the soft cobalt tint.
-- **Quiet:** transparent, underlined link colour; used for the second action in a row.
-- **Help:** the semantic help colour; reserved for “Butuh bantuan sekarang”.
-
-### Chips
-- **Style:** 0.875rem, pill or 4px radius, tinted background plus a matching text colour; icons accompany state, never colour alone.
-
-### Cards / Containers
-- **Corner Style:** 12–16px only for genuine panels; list rows use 12px with hairline separators.
-- **Background:** white on the cool ground; quiet and sunken tints for hover.
-- **Shadow Strategy:** see Elevation; no shadow on static cards.
-- **Border:** 1px `#D3DBEA`; avoid border plus wide shadow on the same card.
-- **Internal Padding:** 1–1.5rem; never nest a card inside an equal card.
-
-### Inputs / Fields
-- **Style:** white ground, 1px control edge, 8px radius, 44px minimum height.
-- **Focus:** 3px cobalt outline with 2px offset.
-- **Error:** danger border plus inset 1px danger ring; the message names the problem and recovery.
+- **Shape:** 4px radius, 44px minimum target, 1.5px border, Hanken 700.
+- **Primary:** indigo with page-coloured text; hover deepens.
+- **Secondary:** page ground, indigo stroke and text.
+- **On a cover:** primary reverses to `on-cover` fill with the cover colour as text; secondaries become transparent with an `on-cover` stroke; focus rings take the cover's ink.
+- **Help (top bar):** help-bg fill, help stroke and text; hover fills with help. **Quick exit:** ink stroke; hover inverts.
 
 ### Navigation
-- **Desktop workspace (≥64em):** fixed 15rem white rail with the open-S mark and Sela wordmark, four places, daily tools and personal settings; current links use the soft cobalt tint. Context, Help and Quick exit stay in the top header. Public and focused screens keep their existing header.
-- **Mobile:** two-row header (brand + Menu; Help + Quick exit) and a fixed four-place bottom bar with icons and labels.
-- **Menu sheet:** 30rem wide, scrollable, Help / Quick exit first, then places, settings, language and About.
+- **Top bar:** four tabs, each with a 0.5rem × 1.35rem spine in its cover colour; the current place is bold with a 4px underline in its own colour.
+- **Tool strip:** text links with 4px-radius hover; current link takes `indigo-soft`.
+- **Bottom bar (phones):** icon + label; a 4px cover-colour mark on top, faint at rest and full width on the current place.
+- **Subnav tabs:** muted text; current is ink, bold, with a 3px inset ink underline.
 
-### Signature: Open Fold
-The public information portal uses typography and structured information rather than the earlier large illustration hero. The open-S mark carries the shared identity. Support retains the original paper-fold illustration beside the manual-summary invitation, decorative (`alt=""`) and never implying an AI persona or clinical outcome. Personal Home uses the accepted cobalt invitation and feature rail described in Layout.
+### Lists
+- **Records and timeline:** 2px ink rule on top, hairline rows; date and kind label in muted Hanken, preview in the Literata record style; hover tints the row.
+- **Shelf rows:** a 0.5rem cover-colour spine at the left of each room link, title + one-line description, arrow at the end.
 
-### Continuity surfaces
-- **Memory:** a white consent panel when off; when on, a ruled state row, white editor and separate ruled entries with edit/delete controls. Personal-memory consent is separate and off by default. Only explicit user writing is saved; no automatic extraction or AI injection. Withdrawal hides normal reads while owner export/deletion remains possible.
-- **Weekly:** a local Monday–Sunday strip marks only whether writing exists, with text as well as tint. Records use creation dates, or a check-in's chosen day, rather than edit timestamps. The adjacent optional reflection saves as an ordinary note; there is no score or inferred conclusion.
-- **Manual summaries:** choose 1–12 current owned note, check-in or conversation versions. The browser copies user-authored conversation turns only into editable wording. Search and “show more” keep the source list manageable. Goal, questions and things to bring sit in an optional disclosure. The detail view separates wording, source references, exact-version approval, download and follow-up with rules. A source or wording change invalidates approval; changed sources show a warning and rebuild action. Download requires approval and a fresh server check. Follow-ups are ordinary editable/deletable owner records tied to the summary; deleting the summary removes its follow-ups.
-- **Support and reading:** three ruled Support paths lead to preparation/follow-up, official reading sources and human-help services. `/support/prepare` and `/support/after` open the real summary list; recipient sharing and `/support/shares` remain explicitly unavailable. Reading is a searchable catalogue of four official WHO/NHS links opening with no referrer. It does not release the editorially gated Sela exercise cards.
+### Inputs / Fields
+- Page ground, 1px control edge, 4px radius, 44px minimum; 3px indigo focus ring with 2px offset; errors keep the danger border plus message.
 
-**Implementation checkpoint (2026-10-28):** these are local, uncommitted workspace implementations, not a live release, user-research result or clinical approval. The incumbent tokens and chosen visual world remain unchanged.
+### Signature: Cover Band
+Full-bleed place colour behind the page header (`.s-page-header`, Beranda `.s-cover`, the portal heading, the public introduction and the Help emergency block). Implemented with `background-color` plus a `border-image` fill outset so it bleeds to the viewport without horizontal overflow. In high contrast and forced colours it becomes a ruled heading.
+
+### Mark
+Four book spines of different heights in the four cover colours, the last leaning; it replaces the open S and doubles as the favicon.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep the page ground cool and the welcome surface white.
-- **Do** use cobalt for exactly one primary action per view.
-- **Do** self-host Manrope and keep text resize, dark mode and high contrast working.
-- **Do** state unavailable features and provider limits plainly.
-- **Do** keep Help and Quick exit in the same header position on every screen.
+- **Do** open each non-focused page on its place's cover band, title in Literata.
+- **Do** keep one indigo primary action per view (reversed on covers).
+- **Do** divide sections with a 2px ink rule and rows with 1px hairlines.
+- **Do** keep Help and Quick exit top-right on every screen, and keep text resize, dark mode, high contrast and colour moods working.
+- **Do** label synthetic data and unavailable features plainly.
 
 ### Don't:
-- **Don't** reintroduce a serif, paper texture or warm editorial costume.
+- **Don't** use cover colours for actions, statuses or content categories.
 - **Don't** put a kicker, date or all-caps eyebrow above a heading.
-- **Don't** add streaks, points, scores, badges, rating stars or healing promises.
-- **Don't** use coral, lilac or sage for UI status; they belong to the illustration.
-- **Don't** nest cards, add gradient text/glass, or mix a border with a wide shadow.
-- **Don't** present AI as a clinician or imply automatic memory, recipient sharing, appointments or provider readiness that the build does not support.
+- **Don't** add streaks, points, scores, badges or progress visuals.
+- **Don't** float static panels with shadows or nest cards.
+- **Don't** reintroduce the cobalt open-S identity outside the `lipat` colour mood.

@@ -372,13 +372,16 @@ export function HomePage({ user, previewEntries }: { user: Profile; previewEntri
   </section>;
   return (
     <div className="s-home s-dashboard s-dashboard--today">
-      {dashboardHeading}
-      <div className="s-dash-stage">
+      <div className="s-cover s-dash-stage">
+        {dashboardHeading}
         {dashboardStart}
+      </div>
+      <div className="s-dash-page">
+        <div className="s-dash-history">
+          {dashboardErrors}{dashboardContinue}{dashboardHistory}
+        </div>
         <aside className="s-dash-side">{dashboardTools}{dashboardIndex}</aside>
       </div>
-      {dashboardErrors}{dashboardContinue}
-      <div className="s-dash-history">{dashboardHistory}</div>
       {dashboardRetention}{dashboardAge}
     </div>
   );

@@ -34,7 +34,6 @@
 .c-week-records li { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; justify-content: space-between; padding-block: 1rem; border-bottom: 1px solid var(--c-border-subtle); }
 .c-week-records time { color: var(--c-muted); }
 .c-support-intro { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: center; gap: 2rem; padding: 2rem; background: var(--c-surface); border-radius: var(--radius-4); }
-.c-support-intro .s-mood-art { width: 100%; }
 .c-support-intro h2 { max-width: 22ch; font-size: var(--font-size-7); margin-bottom: 1rem; }
 .c-support-intro p { max-width: 60ch; margin-bottom: 1.25rem; }
 .c-support-paths { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; margin-top: 2.5rem; }
@@ -49,7 +48,6 @@
 .c-editorial-status { max-width: 65ch; padding-top: 2rem; margin-top: 2rem; border-top: 1px solid var(--c-border-subtle); display: grid; gap: 1rem; }
 @media(max-width: 48em) {
  .c-summary-grid, .c-week-content, .c-support-intro, .c-support-paths, .c-reading-intro { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
- .c-support-intro .s-mood-art { max-width: 17rem; justify-self: center; }
  .c-summary-draft, .c-paper, .c-consent, .c-editor, .c-week-reflection, .c-support-intro { padding: 1.25rem; }
  .c-week-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
  .c-reading-source { grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem; }

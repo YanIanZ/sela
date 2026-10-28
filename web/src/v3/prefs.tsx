@@ -17,8 +17,8 @@ export type TextScale = "100" | "115" | "130" | "150";
 export type Theme = "system" | "light" | "dark";
 export type Contrast = "system" | "more" | "less";
 export type Motion = "system" | "reduced" | "full";
-export type Palette = "embun" | "samudra" | "teduh" | "pasir" | "lipat";
-export const palettes: Palette[] = ["embun", "samudra", "teduh", "pasir", "lipat"];
+export type Palette = "sampul" | "embun" | "samudra" | "teduh" | "pasir" | "lipat";
+export const palettes: Palette[] = ["sampul", "embun", "samudra", "teduh", "pasir", "lipat"];
 
 export type Prefs = {
   textScale: TextScale;
@@ -43,7 +43,7 @@ export const defaultPrefs: Prefs = {
   textScale: "100",
   spacing: "normal",
   theme: "system",
-  palette: "embun",
+  palette: "sampul",
   contrast: "system",
   motion: "system",
   showRepliesAtOnce: false,
