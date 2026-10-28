@@ -98,3 +98,6 @@ __pycache__/
 
 # Go test binaries (go test -c)
 *.test
+
+# Ultracode run artifacts are local only.
+.workflow/

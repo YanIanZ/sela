@@ -88,7 +88,7 @@ let lastPage = null;
 
 async function startSession(page, { english = false, ai = true, scanConsent = false, base = BASE } = {}) {
   lastPage = page;
-  await page.goto(`${base}/`);
+  await page.goto(`${base}/demo/`);
   if (english) await page.getByRole('button', { name: 'English' }).click();
   await page.getByRole('link', { name: english ? 'Take a first step' : 'Mulai pelan-pelan' }).click();
   await page.getByLabel(english ? /I am 18 or older/ : /Saya berusia 18 tahun/).check();
@@ -200,7 +200,7 @@ async function main() {
     await waitFor(`${BASE}/api/v2/ready`);
     await waitFor(`http://127.0.0.1:${STALL_LLM_PORT}/health`);
     await waitFor(`${STALL_BASE}/api/v2/ready`);
-    const browser = await chromium.launch();
+    const browser = await chromium.launch(process.env.CHROMIUM_PATH ? {executablePath:process.env.CHROMIUM_PATH,args:["--no-sandbox","--disable-dev-shm-usage"]} : {});
 
     await check('ID journey: AI draft (test double) → review → approve → share → recipient ack → complete → follow-up → revoke', async () => {
       const ctx = await browser.newContext({ locale: 'id-ID' });
@@ -221,7 +221,7 @@ async function main() {
       await page.waitForURL('**/next');
       await axe(page, 'next-step');
       // Opening Practice: AI draft grounded in the approved note, then a rehearsal.
-      await page.goto(`${BASE}/practice`);
+      await page.goto(`${BASE}/demo/practice`);
       await page.getByRole('button', { name: 'Susun dengan AI' }).click();
       await page.getByText(/Berdasarkan:/).first().waitFor({ timeout: 15000 });
       await axe(page, 'practice');
@@ -229,7 +229,7 @@ async function main() {
       await page.getByRole('button', { name: 'Lihat bagian yang sudah tersebut' }).click();
       const mentioned = page.locator('h3', { hasText: 'Sudah kamu sebut' }).locator('xpath=following-sibling::ul[1]/li');
       await mentioned.first().waitFor();
-      await page.goto(`${BASE}/next`);
+      await page.goto(`${BASE}/demo/next`);
       const { link, code } = await chooseAndShare(page, { opening: true });
       await axe(page, 'share-receipt');
       assert(link.includes('/r#t=') && /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code), `bad link/code: ${link} ${code}`);
@@ -254,7 +254,7 @@ async function main() {
       await r.getByRole('button', { name: 'Selesaikan konsultasi simulasi' }).click();
       await r.getByText(/Status: Konsultasi simulasi selesai/).waitFor();
 
-      await page.goto(`${BASE}/journey`);
+      await page.goto(`${BASE}/demo/journey`);
       await page.getByText('Konsultasi simulasi selesai').first().waitFor();
       await page.getByText('Rencana tindak lanjut (fiktif)').waitFor();
       await page.getByText('Terkirim atau diterima belum berarti kamu sudah mendapat perawatan. Semua ini simulasi.').waitFor();
@@ -306,7 +306,7 @@ async function main() {
       await r.locator('#req-title').waitFor();
       await r.getByText('Perspektif penerima (fiktif)').waitFor();
       assert((await r.getByText('Kata-kata asli').count()) === 0, 'quotes leaked although not selected');
-      await page.goto(`${BASE}/journey`);
+      await page.goto(`${BASE}/demo/journey`);
       await page.getByRole('button', { name: 'Revoke access' }).click();
       await page.getByRole('button', { name: 'Revoke access' }).click();
       await page.getByText('Access revoked').first().waitFor();
@@ -327,7 +327,7 @@ async function main() {
       await axe(page, 'help-crisis');
       const session = await page.evaluate(async () => (await (await fetch('/api/v2/session')).json()).data);
       assert(session.safety.interrupted === true && session.ops.length === 0 && !session.story, `crisis state wrong: ${JSON.stringify(session.safety)}`);
-      await page.goto(`${BASE}/ledger`);
+      await page.goto(`${BASE}/demo/ledger`);
       await page.getByRole('alert').filter({ hasText: 'Alur biasa dihentikan' }).waitFor();
       await page.getByRole('heading', { name: 'Alur biasa dihentikan untuk sesi ini' }).waitFor();
       assert((await page.getByRole('button', { name: 'Bantu susun catatan dengan AI' }).count()) === 0, 'journey controls offered on an interrupted session');
@@ -353,7 +353,7 @@ async function main() {
       // Every journey page now shows the interrupted state, never its controls.
       await page.getByRole('navigation').getByRole('link', { name: 'Settings' }).waitFor();
       assert((await page.getByRole('navigation').getByRole('link', { name: 'My story' }).count()) === 0, 'story link still offered after a crisis');
-      await page.goto(`${BASE}/story`);
+      await page.goto(`${BASE}/demo/story`);
       await page.getByRole('heading', { name: 'The ordinary journey has stopped for this session' }).waitFor();
       assert((await page.getByRole('button', { name: 'Use this story' }).count()) === 0, 'a new story can be chosen after a crisis');
       await ctx.close();
@@ -373,7 +373,7 @@ async function main() {
       await page.getByRole('button', { name: 'Continue to a practical step' }).click();
       await page.waitForURL('**/next');
       const first = await chooseAndShare(page, { english: true, quotes: false });
-      await page.goto(`${BASE}/next`);
+      await page.goto(`${BASE}/demo/next`);
       const second = await chooseAndShare(page, { english: true, quotes: false, option: 1, setPrefs: false });
       // The demo's own path: the recipient perspective in the owner's browser.
       const r = await ctx.newPage();
@@ -418,7 +418,7 @@ async function main() {
       await page.getByText('In the note').first().waitFor();
       await page.getByRole('button', { name: /Approve note version/ }).click();
       await page.getByText(/Approved: version/).waitFor();
-      await page.goto(`${STALL_BASE}/practice`);
+      await page.goto(`${STALL_BASE}/demo/practice`);
       await page.getByRole('button', { name: 'Draft with AI' }).click();
       const stop = page.locator('.op-panel').getByRole('button', { name: 'Stop' });
       await stop.waitFor();
@@ -474,14 +474,14 @@ async function main() {
       await confirmAll(page, 'Looks right');
       await page.getByRole('button', { name: /Approve note version/ }).click();
       await page.getByText(/Approved: version/).waitFor();
-      await page.goto(`${BASE}/practice`);
+      await page.goto(`${BASE}/demo/practice`);
       await page.getByRole('button', { name: 'Draft without AI' }).click();
       const lines = page.getByRole('region', { name: 'Opening lines' });
       await lines.locator('ol.lines').waitFor();
       // Sela's template strings together the test double's wording.
       await lines.getByText(TEST_DOUBLE.en, { exact: true }).waitFor();
       assert((await lines.getByText('Manual, no AI', { exact: true }).count()) === 0, 'Practice: template over AI wording badged "Manual, no AI"');
-      await page.goto(`${BASE}/next`);
+      await page.goto(`${BASE}/demo/next`);
       await page.locator('#pref-language').selectOption('en');
       await page.getByLabel('Format', { exact: true }).selectOption('online');
       await page.getByRole('button', { name: 'Show options' }).click();
@@ -525,7 +525,7 @@ async function main() {
       await a.getByText('In the note').first().waitFor();
       const b = await ctx.newPage();
       lastPage = b;
-      await b.goto(`${BASE}/settings`);
+      await b.goto(`${BASE}/demo/settings`);
       await b.getByRole('button', { name: 'Delete all data now' }).click();
       await b.getByRole('button', { name: 'Delete all data now' }).click();
       await b.getByText('All session data has been deleted.').waitFor();
@@ -563,7 +563,7 @@ async function main() {
       const ctx = await browser.newContext({ locale: 'id-ID' });
       const page = await ctx.newPage();
       await startSession(page);
-      await page.goto(`${BASE}/settings`);
+      await page.goto(`${BASE}/demo/settings`);
       await axe(page, 'settings');
       await page.getByRole('button', { name: 'Hapus semua data sekarang' }).click();
       await page.getByRole('button', { name: 'Hapus semua data sekarang' }).click();
@@ -577,7 +577,7 @@ async function main() {
       const ctx = await browser.newContext({ locale: 'id-ID', viewport: { width: 390, height: 844 } });
       const page = await ctx.newPage();
       for (const path of ['/', '/start', '/privacy', '/help', '/research']) {
-        await page.goto(`${BASE}${path}`);
+        await page.goto(`${BASE}/demo${path}`);
         await page.locator('main h1').first().waitFor();
         await axe(page, `public${path}`);
         await noHorizontalScroll(page, path);
@@ -590,7 +590,8 @@ async function main() {
     await check('Keyboard-only start: skip link, checkbox and submit', async () => {
       const ctx = await browser.newContext({ locale: 'id-ID' });
       const page = await ctx.newPage();
-      await page.goto(`${BASE}/start`);
+      await page.goto(`${BASE}/demo/start`);
+      await page.getByRole('link',{name:'Lewati ke isi utama'}).waitFor();
       await page.keyboard.press('Tab');
       const skip = await page.evaluate(() => document.activeElement?.textContent ?? '');
       assert(skip.includes('Lewati ke isi utama'), `first tab stop is not the skip link: ${skip}`);
