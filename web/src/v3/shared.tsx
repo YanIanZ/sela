@@ -21,6 +21,20 @@ export function useWords() {
   );
 }
 
+/** policyVersionLabel turns "terms-privacy-2026-11-01.2" into a date a
+ * person can read. The exact version stays visible on the policy page. */
+export function policyVersionLabel(version: string, lang: string): string {
+  const match = version.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return version;
+  const date = new Date(`${match[1]}-${match[2]}-${match[3]}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return version;
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 export function useLocale() {
   const { lang } = useI18n();
   const locale = lang === "id" ? "id-ID" : "en-GB";

@@ -13,7 +13,7 @@ import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { V3Error } from "./api";
 import { errorCopy } from "./errors";
-import { Icon, type IconName } from "./icons";
+import { Icon, Mark, type IconName } from "./icons";
 import { useWords } from "./shared";
 
 /* ------------------------------------------------------------------ */
@@ -264,7 +264,11 @@ export function EmptyState({
 }) {
   return (
     <div className="s-empty">
-      {mark && <div className="s-empty-mark" aria-hidden="true" />}
+      {mark && (
+        <span className="s-empty-mark" aria-hidden="true">
+          <Mark size={30} />
+        </span>
+      )}
       <h2>{title}</h2>
       {body && <p>{body}</p>}
       {actions && <div className="s-actions">{actions}</div>}

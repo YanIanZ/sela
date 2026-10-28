@@ -7,6 +7,14 @@ Current workspace: `feat/v3-experience`, stacked on the local
 **Status: implemented and verified locally for the screens whose APIs exist;
 nothing is verified live and no pilot or public-release claim is made.**
 
+**Refinement pass, 2026-10-28:** a rendered-screen review at 1365, 390 and
+320 px fixed the leaked v2 stylesheet, a text-fading route animation, the
+pre-commit scroll reset, the phone first viewport, and the 320 px conversation
+room. The display face is now a system serif. Evidence and the deliberate
+deviations are in [the validation record](V3_FRONTEND_VALIDATION.md#refinement-pass-2026-10-28)
+and [DESIGN_DIRECTION §11](design/DESIGN_DIRECTION.md#11-revision-log). No API,
+consent, storage or safety contract changed.
+
 The default frontend now implements the 28 screen groups in
 [`docs/design/SCREENS.md`](design/SCREENS.md) to the extent their APIs exist:
 the app shell and design system, Introduction/About, onboarding (18+ guest and

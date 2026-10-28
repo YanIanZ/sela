@@ -214,6 +214,74 @@ not claimed. The automated axe result is necessary but not sufficient.
   and sharing principals are not imitated.
 - No engagement counts, streaks, scores or notifications were added.
 
+## Refinement pass (2026-10-28)
+
+A second design review of the delivered screens at 1365×900, 390×844 and
+320×700 CSS px, with axe (WCAG 2.2 AA), keyboard and layout checks, found and
+fixed these issues. This pass is presentation and interaction only; no route,
+API, storage rule, consent purpose or data-lifecycle contract changed.
+
+### What the review found
+
+- **The v2 stylesheet leaked into v3.** `web/src/styles.css` was imported by
+  `main.tsx` after the v3 styles, so its global `main { max-width: 72rem }`,
+  paragraph margins and heading rules overrode the new layout. It now loads
+  only with the lazy `/demo` and `/r` chunk.
+- **Every route faded in from `opacity: 0`.** The 260 ms arrival animation made
+  axe report blended colours (for example 2.0:1 buttons) and made a screenshot
+  of the age step look blank. The animation was removed. If motion is wanted
+  later, it must not animate text opacity.
+- **Scroll and focus ran before the lazy route committed.** A new onboarding
+  step could open scrolled past its heading. The shell now scrolls to the top
+  after the route commits; the first paint still leaves the skip link as the
+  first Tab stop.
+- **The phone first viewport was chrome, not the task.** The header was three
+  rows, the bottom bar became a 2×2 block, and Home repeated the word
+  "Beranda". Home now opens with "Ada ruang untukmu hari ini." and the
+  "Mulai bercerita" action above the fold; the header is two rows and the
+  bottom bar always has four places.
+- **The room did not fit a phone.** The composer was 241 px tall, the
+  transcript was not its own scroll region, a permanent side panel held almost
+  nothing, and at 320×700 the writing box was below the viewport. The room is
+  now one centred column with a scrollable transcript, a compact toolbar, the
+  intent picker in the Detail sheet and a visible composer.
+- **Consent could be skipped by a fast tap.** "Mulai bercerita" was enabled
+  while the consent cards were still loading or saving. It now waits.
+- **Unavailable features had calls to action.** Timeline and note screens
+  linked to a summary builder that does not exist. Those links became plain
+  status lines; one "Kenapa belum tersedia?" route remains to explain the
+  blocker. Raw policy IDs in consent labels became readable dates.
+- **Very short viewports.** At 320×180 the viewport-height room could not hold
+  its toolbar, transcript and composer. The room now returns to the page flow
+  below 30em; the header stays sticky so help, Quick exit and Menu remain
+  reachable, and the bottom navigation moves into the Menu sheet.
+
+### What changed visually
+
+- Display serif for `h1`/`h2` (system-installed, no download), interface sans
+  unchanged; see DESIGN_DIRECTION §4.2.
+- Fewer bordered cards, more rules and margin; a compact demo banner; a
+  three-fact "at a glance" privacy summary; the live help directory first in
+  the support hub; a "page edge" motif on Home; the room title, intent line and
+  composer aligned to one reading column.
+- New evidence screenshots:
+  [`docs/evidence/v3-frontend/refinement`](evidence/v3-frontend/refinement/).
+
+### Re-run evidence (same day, current working tree)
+
+| Check | Result |
+| --- | --- |
+| `cd web && npm run typecheck` | exit 0 |
+| `cd web && npm test` | 58 tests in 11 files passed |
+| `cd web && npm run build` | exit 0; initial JS 117.31 KB gzip; Settings 11.68 KB; Onboarding 8.05 KB; CSS unchanged in kind |
+| `node e2e/v3-frontend.e2e.mjs` | **44/44 checks passed, 0 failed**, including 18 axe scans (WCAG 2.0/2.1/2.2 AA), 320 px overflow checks, keyboard skip link, menu focus order and guest deletion |
+| `python3 docs/design/tools/contrast.py` | all four schemes pass; lowest text pair 5.78:1 (light) and 6.63:1 (dark) |
+
+**Not re-verified in this pass:** live provider calls, Go tests, a human
+screen-reader session, Safari/Firefox/Android/iOS, owner testing, and Back
+scroll restoration. The delivered validation above remains the record for the
+pre-refinement head.
+
 ## Known gaps and owner decisions
 
 1. Legal review (B-10), hosting/region (B-3, B-15), live provider access and

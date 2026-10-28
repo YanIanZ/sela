@@ -14,6 +14,24 @@ export function SupportPage() {
         )}
       />
       <div className="s-support-grid">
+        <section className="s-support-card s-support-live" aria-labelledby="services-title">
+          <p className="s-status-chip s-status-chip--confirmed">
+            {w("Tersedia sekarang", "Available now")}
+          </p>
+          <h2 id="services-title">{w("Layanan bantuan", "Support services")}</h2>
+          <p>
+            {w(
+              "Daftar layanan yang sudah diverifikasi, dengan sumber dan tanggal pemeriksaan. Bisa dibuka tanpa akun dan tanpa jaringan.",
+              "A verified list of services, with sources and verification dates. It opens without an account or a network.",
+            )}
+          </p>
+          <div className="s-actions">
+            <LinkButton to="/help" variant="help" icon="help">
+              {w("Lihat layanan bantuan", "See support services")}
+            </LinkButton>
+          </div>
+        </section>
+
         <section className="s-support-card" aria-labelledby="summary-title">
           <h2 id="summary-title">{w("Ringkasan untuk konsultasi", "Summary for a consultation")}</h2>
           <p>
@@ -31,7 +49,7 @@ export function SupportPage() {
           </p>
           <div className="s-actions">
             <LinkButton to="/support/summaries/new" variant="secondary">
-              {w("Lihat status fitur ringkasan", "See the summary feature status")}
+              {w("Kenapa belum tersedia?", "Why isn't it available?")}
             </LinkButton>
           </div>
         </section>
@@ -56,21 +74,6 @@ export function SupportPage() {
           </LinkButton>
         </section>
 
-        <section className="s-support-card" aria-labelledby="services-title">
-          <h2 id="services-title">{w("Layanan bantuan", "Support services")}</h2>
-          <p>
-            {w(
-              "Daftar layanan yang sudah diverifikasi, dengan sumber dan tanggal pemeriksaan. Bisa dibuka tanpa akun dan tanpa jaringan.",
-              "A verified list of services, with sources and verification dates. It opens without an account or a network.",
-            )}
-          </p>
-          <div className="s-actions">
-            <LinkButton to="/help" variant="help" icon="help">
-              {w("Lihat layanan bantuan", "See support services")}
-            </LinkButton>
-          </div>
-        </section>
-
         <section className="s-support-card" aria-labelledby="prepare-title">
           <h2 id="prepare-title">{w("Persiapan & setelah konsultasi", "Preparation & after a consultation")}</h2>
           <p>
@@ -81,10 +84,7 @@ export function SupportPage() {
           </p>
           <div className="s-actions">
             <LinkButton to="/support/summaries/new?step=prepare" variant="quiet">
-              {w("Status persiapan", "Preparation status")}
-            </LinkButton>
-            <LinkButton to="/support/summaries/new?step=after" variant="quiet">
-              {w("Status setelah konsultasi", "After-consultation status")}
+              {w("Kenapa belum tersedia?", "Why isn't it available?")}
             </LinkButton>
           </div>
         </section>

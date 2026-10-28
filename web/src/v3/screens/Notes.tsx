@@ -268,10 +268,13 @@ function Timeline({ user }: { user: Profile }) {
         <LinkButton to="/notes/patterns" variant="quiet">
           {w("Lihat pola cek perasaan", "See patterns in your check-ins")}
         </LinkButton>
-        <LinkButton to="/support" variant="quiet">
-          {w("Buat ringkasan untuk konsultasi", "Make a summary for a consultation")}
-        </LinkButton>
       </div>
+      <p className="s-hint" style={{ marginTop: "var(--space-2)" }}>
+        {w(
+          "Ringkasan untuk konsultasi belum tersambung di versi ini. Catatanmu tetap bisa dibuka dan diekspor.",
+          "Summary for a consultation isn't connected in this version. Your notes can still be opened and exported.",
+        )}
+      </p>
       {user.kind === "guest" && user.guest && (
         <p className="s-retention">
           {w("Mode tamu · dihapus otomatis jika ", "Guest mode · deleted automatically after ")}
@@ -357,7 +360,7 @@ function NoteEditor({ user }: { user: Profile }) {
         <TextArea
           label={w("Catatanmu", "Your note")}
           value={text}
-          rows={12}
+          rows={8}
           maxLength={6000}
           required
           autoFocus
@@ -680,7 +683,7 @@ function EntryDetail({ id }: { id: string }) {
   const energyLabel = record.energy ? energies.find((e) => e.value === record.energy) : null;
 
   return (
-    <div className="s-narrow">
+    <div className="s-narrow s-narrow--start">
       <PageHeader
         back={{ to: "/notes", label: w("Catatanku", "My notes") }}
         title={
@@ -760,11 +763,6 @@ function EntryDetail({ id }: { id: string }) {
             {w("Lihat versi sebelumnya", "See earlier versions")}
           </Button>
         )}
-        {!isCheckin && (
-          <LinkButton to="/support" variant="quiet">
-            {w("Buat ringkasan dari catatan ini", "Make a summary from this note")}
-          </LinkButton>
-        )}
         {isCheckin && (
           <LinkButton to="/notes/check-in" variant="quiet">
             {w("Cek perasaan lagi", "Check in again")}
@@ -782,6 +780,14 @@ function EntryDetail({ id }: { id: string }) {
           busy={busy}
         />
       </div>
+      {!isCheckin && (
+        <p className="s-hint" style={{ marginTop: "var(--space-3)" }}>
+          {w(
+            "Ringkasan untuk konsultasi belum tersambung di versi ini.",
+            "Summary for a consultation isn't connected in this version.",
+          )}
+        </p>
+      )}
       {versions && versions.length > 0 && (
         <section className="s-section">
           <h2>{w("Riwayat versi", "Version history")}</h2>

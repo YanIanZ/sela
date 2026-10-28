@@ -272,6 +272,35 @@ export function PrivacyPage({
           "Every choice about your data is here. You can change any of them at any time.",
         )}
       />
+      <dl className="s-privacy-glance">
+        <div>
+          <dt>{w("Yang disimpan", "What is kept")}</dt>
+          <dd>
+            {w(
+              "Hanya catatan dan percakapan yang kamu pilih untuk disimpan.",
+              "Only the notes and conversations you choose to save.",
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>{w("Terlindungi", "Protected")}</dt>
+          <dd>
+            {w(
+              "Terenkripsi per orang di server Sela. Sela dapat membukanya untuk menampilkan fitur yang kamu pilih.",
+              "Encrypted per person on Sela's server. Sela can open it to show the features you choose.",
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>{w("Kendalimu", "Your control")}</dt>
+          <dd>
+            {w(
+              "Ubah izin, ekspor, atau hapus data kapan saja.",
+              "Change permissions, export or delete your data at any time.",
+            )}
+          </dd>
+        </div>
+      </dl>
       <ErrorNotice error={error} onRetry={load} />
       {notice && <StatusLine tone="success">{notice}</StatusLine>}
       <div className="s-settings-layout">
@@ -814,7 +843,7 @@ export function DisplayPage() {
       <div className="s-settings-layout">
         <div>
           <section className="s-display-group" aria-labelledby="text-title">
-            <h2 id="text-title">{w("Teks", "Text")}</h2>
+            <h2 id="text-title">{w("Tampilan teks", "Text display")}</h2>
             <ChoiceGroup
               legend={w("Ukuran teks", "Text size")}
               name="text-scale"
@@ -843,7 +872,7 @@ export function DisplayPage() {
             />
           </section>
           <section className="s-display-group" aria-labelledby="colour-title">
-            <h2 id="colour-title">{w("Warna", "Colour")}</h2>
+            <h2 id="colour-title">{w("Warna & kontras", "Colour & contrast")}</h2>
             <ChoiceGroup
               legend={w("Tema", "Theme")}
               name="theme"
@@ -878,7 +907,7 @@ export function DisplayPage() {
             />
           </section>
           <section className="s-display-group" aria-labelledby="motion-title">
-            <h2 id="motion-title">{w("Gerakan", "Motion")}</h2>
+            <h2 id="motion-title">{w("Gerakan & balasan", "Motion & replies")}</h2>
             <ChoiceGroup
               legend={w("Kurangi gerakan", "Reduce motion")}
               name="motion"
@@ -1017,8 +1046,8 @@ export function DisplayPage() {
             <span className="s-turn-author">{"Sela"}</span>
             <p className="s-turn-body">
               {w(
-                "Aku mendengar bahwa ini tidak mudah untuk ditulis. Kamu bisa mulai dari bagian yang paling terasa.",
-                "I hear that this isn't easy to write. You can start with the part that feels strongest.",
+                "Ini contoh balasan. Teks asli muncul di ruang cerita, bukan di sini.",
+                "This is a sample reply. Your real conversation stays in the talking room, not here.",
               )}
             </p>
           </div>
@@ -1028,7 +1057,13 @@ export function DisplayPage() {
           </div>
           <p className="s-hint">
             {w("Tema aktif: ", "Active scheme: ")}
-            {scheme}
+            {scheme === "dark"
+              ? w("Gelap", "Dark")
+              : scheme === "contrast-dark"
+                ? w("Gelap, kontras tinggi", "Dark, high contrast")
+                : scheme === "contrast-light"
+                  ? w("Terang, kontras tinggi", "Light, high contrast")
+                  : w("Terang", "Light")}
           </p>
         </aside>
       </div>

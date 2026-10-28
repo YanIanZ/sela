@@ -344,9 +344,12 @@ export function AppShell({
   }, [clear, path, prefs.hidePreviews, prefs.neutralTitles, title, user]);
 
   useEffect(() => {
-    // The router moves focus on its own navigations; this covers browser Back
-    // and direct entry. The first paint keeps the skip link as the first Tab
-    // stop instead of jumping straight into <main>.
+    // Reset the window after a route change. The lazy route chunk can arrive
+    // after the router's own scroll call, which used to leave a new page
+    // scrolled past its heading.
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    // The first paint keeps the skip link as the first Tab stop instead of
+    // jumping straight into <main>.
     if (firstPath.current) {
       firstPath.current = false;
       return;
@@ -363,6 +366,19 @@ export function AppShell({
     const measure = () => {
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(() => {
+        const active = document.activeElement;
+        const typing =
+          active instanceof HTMLElement &&
+          (active.tagName === "TEXTAREA" ||
+            active.tagName === "INPUT" ||
+            active.tagName === "SELECT" ||
+            active.isContentEditable);
+        if (!typing) {
+          const rootFont = Number.parseFloat(getComputedStyle(root).fontSize) || 16;
+          const short = window.innerHeight < 30 * rootFont;
+          if (short) root.setAttribute("data-viewport", "short");
+          else root.removeAttribute("data-viewport");
+        }
         const header = document.querySelector<HTMLElement>(".s-header");
         const nav = document.querySelector<HTMLElement>(".s-place-nav");
         const composer = document.getElementById("composer");
@@ -435,7 +451,7 @@ export function AppShell({
     !guestDismissed;
 
   return (
-    <div className={`s-shell${focused ? " s-shell--focused" : ""}${room ? " s-shell--room" : ""}`}>
+    <div className={`s-shell${user ? "" : " s-shell--public"}${focused ? " s-shell--focused" : ""}${room ? " s-shell--room" : ""}`}>
       <div className="s-shell-inner">
       <a href="#main" className="s-skip">
         {w("Lewati ke konten", "Skip to content")}
@@ -582,8 +598,8 @@ export function AppShell({
             <span className="s-chip">{w("Demo", "Demo")}</span>
             <p>
               {w(
-                "Semua data di sini sintetis. Fitur berjalan sungguhan.",
-                "All data here is synthetic. Features really run.",
+                "Data sintetis; fitur berjalan.",
+                "Synthetic data; features work.",
               )}
             </p>
           </div>

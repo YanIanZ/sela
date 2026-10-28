@@ -864,30 +864,36 @@ function RoomPage({ id }: { id: string }) {
   return (
     <>
       <div className="s-room-toolbar">
-        <Link to="/talk" className="s-back">
-          <Icon name="arrow-left" size={18} />
-          {w("Cerita", "Talk")}
-        </Link>
-        {!showEnd && (
-          <Button variant="secondary" onClick={() => void end()}>
-            {w("Akhiri percakapan", "End conversation")}
+        <div className="s-room-topline">
+          <Link to="/talk" className="s-back">
+            <Icon name="arrow-left" size={18} />
+            {w("Cerita", "Talk")}
+          </Link>
+          <span
+            className={
+              "s-room-status " +
+              (room.save ? "s-room-status--saved" : "s-room-status--unsaved")
+            }
+          >
+            <Icon name={room.save ? "bookmark" : "bookmark-x"} size={16} />
+            {room.save ? w("Disimpan", "Saved") : w("Tidak disimpan", "Not saved")}
+          </span>
+          {!showEnd && (
+            <Button
+              variant="quiet"
+              className="s-room-end"
+              onClick={() => void end()}
+            >
+              {w("Akhiri percakapan", "End conversation")}
+            </Button>
+          )}
+        </div>
+        <div className="s-room-title-row">
+          <h1 id="page-title">{w("Ruang cerita", "A quiet room")}</h1>
+          <Button variant="quiet" onClick={() => setDetail(true)}>
+            {w("Detail", "Detail")}
           </Button>
-        )}
-        <h1 id="page-title">
-          {room.save ? w("Percakapan", "Conversation") : w("Percakapan baru", "New conversation")}
-        </h1>
-        <span
-          className={
-            "s-room-status " +
-            (room.save ? "s-room-status--saved" : "s-room-status--unsaved")
-          }
-        >
-          <Icon name={room.save ? "bookmark" : "bookmark-x"} size={16} />
-          {room.save ? w("Disimpan", "Saved") : w("Tidak disimpan", "Not saved")}
-        </span>
-        <Button variant="quiet" onClick={() => setDetail(true)}>
-          {w("Detail", "Detail")}
-        </Button>
+        </div>
       </div>
 
       <ErrorNotice error={error} />
@@ -895,54 +901,19 @@ function RoomPage({ id }: { id: string }) {
       <div className="s-room-layout">
         <div>
           {!showEnd && (
-            <section className="s-conversation-strip" aria-label={w("Pilihan percakapan", "Conversation choices")}>
-              {room.turns.length === 0 ? (
-                <>
-                  <p>
-                    {room.save
-                      ? w(
-                          "Percakapan ini akan disimpan di Catatanku.",
-                          "This conversation will be saved to My notes.",
-                        )
-                      : w(
-                          "Percakapan ini tidak disimpan.",
-                          "This conversation isn't saved.",
-                        )}{" "}
-                    <button type="button" className={buttonClass("quiet")} onClick={() => setDetail(true)}>
-                      {w("Ubah", "Change")}
-                    </button>
-                  </p>
-                  <p className="s-hint">
-                    {w(
-                      "Tulis apa saja yang ada di pikiranmu. Tidak perlu rapi. Sela akan mendengarkan dan membalas dengan singkat.",
-                      "Write whatever is on your mind. It doesn't need to be tidy. Sela will listen and reply briefly.",
-                    )}
-                  </p>
-                </>
-              ) : (
-                <p className="s-small">
-                  {intents.find((i) => i.value === intent)?.[document.documentElement.lang === "en" ? "en" : "id"]}
-                  {" · "}
-                  {room.save ? w("Disimpan", "Saved") : w("Tidak disimpan", "Not saved")}
-                  {" · "}
-                  <button type="button" className={buttonClass("quiet")} onClick={() => setDetail(true)}>
-                    {w("Ubah", "Change")}
-                  </button>
-                </p>
-              )}
-              <ChoiceGroup
-                legend={w("Hari ini kamu ingin…", "What would help today?")}
-                name="intent"
-                value={intent}
-                onChange={setIntent}
-                optional
-                variant="chips"
-                options={intents.map((i) => ({
-                  value: i.value,
-                  label: w(i.id, i.en),
-                }))}
-              />
-            </section>
+            <p className="s-room-mode">
+              <span className="s-room-mode-label">
+                {w("Cara Sela mendengarkan", "How Sela listens")}
+                {": "}
+              </span>
+              <strong>
+                {intents.find((i) => i.value === intent)?.[document.documentElement.lang === "en" ? "en" : "id"]}
+              </strong>
+              {" · "}
+              <button type="button" className="s-text-button" onClick={() => setDetail(true)}>
+                {w("Ubah", "Change")}
+              </button>
+            </p>
           )}
 
           <section aria-labelledby="transcript-title">
@@ -957,16 +928,11 @@ function RoomPage({ id }: { id: string }) {
             >
               {room.turns.length === 0 && pendingText === null && !showEnd && (
                 <div className="s-room-empty">
-                  <p>
-                    {w(
-                      "Ruang ini milikmu. Tidak perlu memperkenalkan diri atau menjelaskan semuanya sekaligus.",
-                      "This space is yours. You don't need to introduce yourself or explain everything at once.",
-                    )}
-                  </p>
+                  <p>{w("Ruang ini milikmu.", "This space is yours.")}</p>
                   <p className="s-hint">
                     {w(
-                      "Sela adalah AI, bukan psikolog. Kalau kamu dalam bahaya sekarang, tekan Butuh bantuan sekarang di atas.",
-                      "Sela is an AI, not a psychologist. If you're in danger right now, press Need help now above.",
+                      "Tidak perlu rapi. Sela adalah AI, bukan psikolog.",
+                      "It doesn't need to be tidy. Sela is an AI, not a psychologist.",
                     )}
                   </p>
                 </div>
@@ -1200,8 +1166,8 @@ function RoomPage({ id }: { id: string }) {
                 <p>
                   {room.aiState === "not_consented"
                     ? w(
-                        "Tulisanmu tetap di sini. Kamu bisa mengizinkan balasan AI di Privasi & data, atau terus menulis tanpa balasan.",
-                        "Your writing stays here. You can allow AI replies in Privacy & data, or keep writing without a reply.",
+                        "Tulisanmu tetap di sini. Kamu bisa terus menulis.",
+                        "Your writing stays here. You can keep writing.",
                       )
                     : room.aiState === "rate_limited"
                       ? w(
@@ -1251,7 +1217,7 @@ function RoomPage({ id }: { id: string }) {
                     "Ctrl atau Cmd+Enter untuk mengirim.",
                     "Ctrl or Cmd+Enter to send.",
                   )}
-                  rows={3}
+                  rows={2}
                   value={text}
                   maxLength={3000}
                   onChange={(e) => setText(e.target.value)}
@@ -1367,6 +1333,21 @@ function RoomPage({ id }: { id: string }) {
         sheet
       >
         <div className="s-room-detail">
+          <section>
+            <h3>{w("Cara Sela mendengarkan", "How Sela listens")}</h3>
+            <ChoiceGroup
+              legend={w("Hari ini kamu ingin…", "What would help today?")}
+              name="intent-detail"
+              value={intent}
+              onChange={setIntent}
+              optional
+              variant="chips"
+              options={intents.map((i) => ({
+                value: i.value,
+                label: w(i.id, i.en),
+              }))}
+            />
+          </section>
           <section>
             <h3>{w("Penyimpanan", "Storage")}</h3>
             <p className="s-small">

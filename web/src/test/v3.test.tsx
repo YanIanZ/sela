@@ -275,7 +275,7 @@ describe("public entry and onboarding", () => {
     mockApi({}, user);
     fireEvent.click(screen.getByRole("link", { name: "Lihat beranda dulu" }));
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Beranda" }),
+      await screen.findByRole("heading", { level: 1, name: "Ada ruang untukmu hari ini." }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /Mulai bercerita/ }).length).toBeGreaterThan(0);
   });
@@ -327,7 +327,7 @@ describe("home, notes and conversations", () => {
       user,
     );
     renderPath("/home");
-    expect(await screen.findByRole("heading", { level: 1, name: "Beranda" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Ada ruang untukmu hari ini." })).toBeInTheDocument();
     expect(await screen.findByText("Isi catatan sintetis.")).toBeInTheDocument();
     expect(screen.queryByText(/streak|beruntun|poin|skor/i)).not.toBeInTheDocument();
   });

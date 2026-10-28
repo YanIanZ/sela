@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useRouter } from "../../lib/router";
+import { Link } from "../../lib/router";
 import { usePrefs } from "../prefs";
 import { useSession } from "../session";
 import { useAnnounce, useWords } from "../shared";
@@ -8,7 +8,6 @@ import {
   LinkButton,
   Notice,
   PageHeader,
-  buttonClass,
 } from "../ui";
 import { LanguageSwitch } from "../shell";
 
@@ -17,88 +16,90 @@ export function IntroPage() {
   const { prefs, set } = usePrefs();
   const { announce } = useAnnounce();
   const { options } = useSession();
-  const { navigate } = useRouter();
 
   return (
     <div className="s-intro">
-      <section className="s-intro-copy">
-        <div style={{ color: "var(--c-accent)", marginBottom: "var(--space-3)" }}>
-          <Mark size={44} />
-        </div>
-        <p className="s-overline">{w("SEJENAK, UNTUK DIRIMU", "A MOMENT, JUST FOR YOU")}</p>
-        <h1 id="page-title">
-          {w("Ruang sejenak untuk didengar.", "A little space to feel heard.")}
-        </h1>
-        <p className="s-intro-lead">
-          {w(
-            "Ceritakan apa yang sedang kamu rasakan. Sela mendengarkan, membantumu melihat kembali ceritamu, dan kalau kamu mau, membantumu bersiap bicara dengan profesional.",
-            "Talk about what's on your mind. Sela listens, helps you look back at what you said and, if you want, helps you get ready to talk with a professional.",
-          )}
-        </p>
-        <div className="s-intro-preferences">
-          <div>
-            <p className="s-label">{w("Bahasa", "Language")}</p>
-            <LanguageSwitch />
+      <div className="s-intro-main">
+        <section className="s-intro-copy">
+          <div className="s-intro-mark">
+            <Mark size={46} />
           </div>
-          <div>
-            <p className="s-label">{w("Ukuran teks", "Text size")}</p>
-            <div className="s-textsize" role="group" aria-label={w("Ukuran teks", "Text size")}>
-              {(["100", "115", "130", "150"] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  aria-pressed={prefs.textScale === s}
-                  onClick={() => {
-                    set("textScale", s);
-                    announce(
-                      "status",
-                      w("Ukuran teks: ", "Text size: ") + s + "%",
-                    );
-                  }}
-                >
-                  {`Aa ${s}%`}
-                </button>
-              ))}
+          <p className="s-overline">{w("SEJENAK, UNTUK DIRIMU", "A MOMENT, JUST FOR YOU")}</p>
+          <h1 id="page-title">
+            {w("Ruang sejenak untuk didengar.", "A little space to feel heard.")}
+          </h1>
+          <p className="s-intro-lead">
+            {w(
+              "Ceritakan apa yang sedang kamu rasakan. Sela mendengarkan, membantumu melihat kembali ceritamu, dan kalau kamu mau, membantumu bersiap bicara dengan profesional.",
+              "Talk about what's on your mind. Sela listens, helps you look back at what you said and, if you want, helps you get ready to talk with a professional.",
+            )}
+          </p>
+          <div className="s-intro-cta">
+            <LinkButton to="/start/age" variant="primary" icon="arrow-right">
+              {w("Mulai", "Get started")}
+            </LinkButton>
+            <p className="s-hint">
+              {w("Sudah punya akun? ", "Already have an account? ")}
+              <Link to="/signin">{w("Masuk", "Sign in")}</Link>
+            </p>
+          </div>
+
+          <div className="s-intro-preferences" aria-label={w("Tampilan", "Display")}>
+            <div className="s-pref-row">
+              <p className="s-label">{w("Bahasa", "Language")}</p>
+              <LanguageSwitch compact />
             </div>
+            <div className="s-pref-row">
+              <p className="s-label">{w("Ukuran teks", "Text size")}</p>
+              <div className="s-textsize" role="group" aria-label={w("Ukuran teks", "Text size")}>
+                {(["100", "115", "130", "150"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    aria-pressed={prefs.textScale === s}
+                    onClick={() => {
+                      set("textScale", s);
+                      announce("status", w("Ukuran teks: ", "Text size: ") + s + "%");
+                    }}
+                  >
+                    {`Aa ${s}%`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Link to="/settings/display" className="s-small">
+              {w("Pengaturan tampilan lainnya", "More display settings")}
+            </Link>
           </div>
-          <LinkButton to="/settings/display" variant="quiet">
-            {w("Pengaturan tampilan lainnya", "More display settings")}
-          </LinkButton>
-        </div>
-        <div className="s-intro-actions">
-          <LinkButton to="/start/age" variant="primary" icon="arrow-right">
-            {w("Mulai", "Get started")}
-          </LinkButton>
-          <LinkButton to="/signin" variant="secondary">
-            {w("Masuk", "Sign in")}
-          </LinkButton>
-          <LinkButton to="/about" variant="quiet">
-            {w("Pelajari Sela lebih lanjut", "Learn more about Sela")}
-          </LinkButton>
-          <LinkButton to="/reading" variant="quiet">
-            {w("Bacaan & latihan kecil", "Reading & small exercises")}
-          </LinkButton>
-        </div>
-        <ul className="s-intro-points">
-          {[
-            w("Sela adalah AI, bukan psikolog atau dokter.", "Sela is an AI, not a psychologist or a doctor."),
-            w("Sela tidak memberi diagnosis atau pengobatan.", "Sela gives no diagnosis or treatment."),
-            w("Kamu yang memilih apa yang disimpan dan dibagikan.", "You choose what is kept and what is shared."),
-            w("Sela tidak pernah menghubungi siapa pun atas namamu.", "Sela never contacts anyone on your behalf."),
-          ].map((p) => (
-            <li key={p}>
-              <Icon name="check" />
-              <span>{p}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="s-small s-muted" style={{ marginTop: "var(--space-4)" }}>
-          {w(
-            "Kalau kamu dalam bahaya sekarang, tekan \"Butuh bantuan sekarang\" di bagian atas layar.",
-            'If you\'re in danger right now, press "Need help now" at the top of the screen.',
-          )}
-        </p>
-      </section>
+        </section>
+
+        <section className="s-intro-notes" aria-label={w("Tentang Sela", "About Sela")}>
+          <ul className="s-intro-points">
+            {[
+              w("Sela adalah AI, bukan psikolog atau dokter.", "Sela is an AI, not a psychologist or a doctor."),
+              w("Sela tidak memberi diagnosis atau pengobatan.", "Sela gives no diagnosis or treatment."),
+              w("Kamu yang memilih apa yang disimpan dan dibagikan.", "You choose what is kept and what is shared."),
+              w("Sela tidak pernah menghubungi siapa pun atas namamu.", "Sela never contacts anyone on your behalf."),
+            ].map((p) => (
+              <li key={p}>
+                <Icon name="check" />
+                <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="s-small s-muted s-intro-safety">
+            {w(
+              'Kalau kamu dalam bahaya sekarang, tekan "Butuh bantuan sekarang" di bagian atas layar.',
+              'If you\'re in danger right now, press "Need help now" at the top of the screen.',
+            )}
+          </p>
+          <div className="s-intro-links">
+            <Link to="/about">{w("Pelajari Sela lebih lanjut", "Learn more about Sela")}</Link>
+            <Link to="/reading">{w("Bacaan & latihan kecil", "Reading & small exercises")}</Link>
+          </div>
+        </section>
+      </div>
+
       <aside className="s-start-panel" aria-labelledby="start-panel-title">
         <p className="s-overline">{w("MULAI DARI SINI", "START HERE")}</p>
         <h2 id="start-panel-title">{w("Kamu tidak harus punya jawaban.", "You don't need the answers.")}</h2>
@@ -108,34 +109,26 @@ export function IntroPage() {
             "Sela doesn't ask for a long profile. Language, age and a storage choice are enough to open the talking space.",
           )}
         </p>
-        <ul className="s-about-list">
-          <li>
-            <strong>{w("Mulai sebagai tamu", "Start as a guest")}</strong>
-            <p className="s-small s-muted">
+        <dl className="s-start-facts">
+          <div>
+            <dt>{w("Tanpa akun", "No account")}</dt>
+            <dd>
               {w(
-                "Tanpa akun. Data di server Sela, dihapus otomatis setelah tidak aktif.",
-                "No account. Data on Sela's server, deleted automatically after inactivity.",
+                "Mulai sebagai tamu. Data di server Sela, dihapus otomatis setelah tidak aktif.",
+                "Start as a guest. Data on Sela's server, deleted automatically after inactivity.",
               )}
-            </p>
-          </li>
-          <li>
-            <strong>{w("Atau buat akun", "Or create an account")}</strong>
-            <p className="s-small s-muted">
+            </dd>
+          </div>
+          <div>
+            <dt>{w("Dengan akun", "With an account")}</dt>
+            <dd>
               {w(
                 "Nama pengguna dan kata sandi, tanpa email. Bisa dibuka dari perangkat lain.",
                 "Username and password, no email. Open it from another device.",
               )}
-            </p>
-          </li>
-        </ul>
-        <button
-          type="button"
-          className={buttonClass("primary")}
-          onClick={() => navigate("/start/age")}
-        >
-          {w("Mulai", "Get started")}
-          <Icon name="arrow-right" />
-        </button>
+            </dd>
+          </div>
+        </dl>
         {!options?.guest.available && (
           <p className="s-hint">
             {w(
@@ -145,11 +138,9 @@ export function IntroPage() {
           </p>
         )}
         <p className="s-hint">
-          {w(
-            "Belum siap? Bantuan sekarang bisa dibuka tanpa akun.",
-            "Not ready? Help now opens without an account.",
-          )}{" "}
+          {w("Belum siap? ", "Not ready? ")}
           <Link to="/help">{w("Bantuan sekarang", "Help now")}</Link>
+          {w(" bisa dibuka tanpa akun.", " opens without an account.")}
         </p>
       </aside>
     </div>

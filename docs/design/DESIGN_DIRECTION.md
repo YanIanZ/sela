@@ -1,6 +1,6 @@
 # Sela v3 design direction
 
-Status: **design decision** by the design lead, 2026-10-26, revised the same day after review rounds 1 and 2 ([§11](#11-revision-log)). **Implemented in `web/src/v3/` on 2026-10-28, except the surfaces whose APIs or editorial review are missing (memory, summaries, sharing, recipient, reading).** The implementation and local evidence are in [V3_FRONTEND_VALIDATION.md](../V3_FRONTEND_VALIDATION.md). This folder (`docs/design/**`) is owned by the design lead; code, API and other docs are owned by other roles and are only referenced here.
+Status: **design decision** by the design lead, 2026-10-26, revised the same day after review rounds 1 and 2, and on 2026-10-28 after the implementation refinement ([§11](#11-revision-log)). **Implemented in `web/src/v3/` on 2026-10-28, except the surfaces whose APIs or editorial review are missing (memory, summaries, sharing, recipient, reading).** The implementation and local evidence are in [V3_FRONTEND_VALIDATION.md](../V3_FRONTEND_VALIDATION.md). This folder (`docs/design/**`) is owned by the design lead; code, API and other docs are owned by other roles and are only referenced here.
 
 Labels used in all design documents:
 
@@ -229,8 +229,11 @@ The dye names are a reference only. The design uses no batik motifs as decoratio
 
 ### 4.2 Typography
 
-- **Fonts:** the system UI stack only: `system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", …`. That means Roboto or Noto on Android, SF on iOS and Segoe UI on Windows. All of them cover Indonesian and English and download nothing (CSP `font-src 'self'`, slow connections). The v1 display face (Schibsted Grotesk) is not used: one more file for headings is not worth the bytes.
-- **Hierarchy:** size and weight only. Regular 400 for body text, 600 for labels and emphasis, 700 for headings. Italics are not used for meaning.
+- **Fonts (revised 2026-10-28, implementation refinement).** Two stacks, both shipped with the operating system and neither downloaded (the CSP stays `font-src 'self'`):
+  - **Interface:** `system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", …` for body text, labels, buttons, navigation and status.
+  - **Display:** `"Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, "Noto Serif", serif` for `h1`, `h2` and the room title. It is a system face on every target (Palatino or Georgia on Apple and Windows, Noto Serif on Android), so it costs zero bytes.
+  - **Why revise "system UI only":** the delivered first pass used one sans for everything and read as generic SaaS, not as the paper-and-notebook product in §2C. The serif carries the "kertas dan tinta" idea, separates Sela's printed voice from the interface controls, and makes a page title feel like a heading in a notebook rather than a dashboard label. No illustration, mascot or display webfont was added. The earlier decision's performance and CSP reasons still hold; only the "one family" constraint is replaced.
+- **Hierarchy:** display headings use regular-weight serif (400) with tight leading, so size carries rank instead of weight. Interface labels and emphasis stay at 600; italics are not used for meaning. On a phone the `h1` is 2.25–2.5rem and the room title 1.6rem; on a wide layout the introduction is 3.25rem and a page `h1` 2.5rem.
 - **Reading text** (transcript, journal, reading library): 18px (`--font-size-4`), line-height 1.6, measure 38rem (about 65 characters).
 - **Times and codes:** `font-variant-numeric: tabular-nums` for meta lines. Access and recovery codes use the mono stack, grouped in blocks of four.
 - **Long words and URLs:** `overflow-wrap: anywhere` on user-generated text and URLs. No automatic hyphenation, because browser support for Indonesian hyphenation is uneven and broken words are harder to read.
@@ -1487,6 +1490,25 @@ Also renamed for fit and accuracy: "Baca balasan terakhir" is now "Ke balasan te
 - *A per-item choice to show a private name in a share* became a **per-name** choice per share (S17): showing a name in one item and hiding it in another would still reveal it, and one choice per name is fewer decisions.
 - *A filled danger button with a `--c-on-danger` label* was not added: destructive buttons are now never filled (§6.2), so the role would be unused. The ink-filled confirm replaces it.
 - *"Lihat apa yang Sela tangkap" for unsaved conversations* was kept, not removed: while the closing panel is open the conversation still exists in memory, so the card can be made and is labelled "tidak disimpan" (S09).
+
+**Round 3 (2026-10-28), implementation refinement after the delivered screens were reviewed at 1365, 390 and 320 CSS px.** This pass changed presentation and interaction, not safety, privacy, API or information-architecture requirements. Evidence: [V3_FRONTEND_VALIDATION.md](../V3_FRONTEND_VALIDATION.md#refinement-pass-2026-10-28) and `docs/evidence/v3-frontend/refinement/`.
+
+- **Audit findings fixed.**
+  - The retired v2 stylesheet was bundled after the v3 one; its global `main`, `p` and heading rules overrode the v3 layout (a 72rem `main`, extra paragraph margins). It now loads only with the `/demo` and `/r` chunk.
+  - A page-arrival opacity animation washed every new screen out for its first 260 ms. Automated contrast checks and a screenshot caught it. The animation was removed; content is never faded.
+  - The route-change scroll ran before the lazy route rendered, so a new step could open below its heading. The shell now resets scroll after the route commits, while the first paint keeps the skip link as the first Tab stop.
+  - On a phone the three-row header and two-column bottom bar pushed the primary action below the first viewport, and the Home heading repeated the navigation label. The header is two rows, the bottom bar is always four columns, and Home opens with the human heading "Ada ruang untukmu hari ini." and the talking action above the fold.
+  - The listening room had a 241px composer, a permanent low-value side panel, and on a 320×700 screen no visible writing box. The room is now one centred column: its own scroll region, a compact toolbar, the intent line in the detail sheet, and a composer that stays visible.
+  - The consent step let a person press "Mulai bercerita" while a consent card was still loading or saving. The primary waits for the cards.
+  - Links that led to unavailable summaries were removed or changed to plain status lines; a link that explains the blocker remains. Raw policy versions such as `terms-privacy-2026-11-01.2` are shown as "versi 1 November 2026" in the consent label.
+- **Visual direction.** Display serif for `h1`/`h2` (§4.2); fewer bordered cards and more rules, margins and type; a compact demo banner; a three-fact privacy summary; the live support directory first in the support hub; the "page edge" motif on Home instead of a generic hero card.
+- **Decisions and conflicts recorded.**
+  - The display serif revises §4.2's "system UI stack only"; the rationale and the unchanged byte/CSP reasons are in §4.2.
+  - S09 describes a permanent detail panel from 75em. It is replaced by the "Detail" sheet at every width, because with memory and sharing APIs absent the panel held only blockers and took a third of the room. The sheet keeps storage, intent, help and end/delete.
+  - On phones the toolbar's "Akhiri percakapan" moves into that sheet; the desktop toolbar keeps the visible label.
+  - Below 30em of viewport height the room returns to the page flow and the header stays sticky, so help, Quick exit and Menu stay reachable; the bottom navigation moves into the Menu sheet. The approved short-viewport strip cannot stay fixed inside the shell's container query, so the sticky header carries the same controls.
+  - Home's `h1` is the promise, not "Beranda"; "Beranda" stays the place name in navigation and the document title.
+- **Still not verified here:** a human screen-reader session (NVDA, JAWS, VoiceOver, TalkBack), Safari/Firefox/Android/iOS, a human usability study, owner testing, and Back scroll restoration. Those are not claimed.
 
 ---
 

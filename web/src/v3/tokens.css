@@ -24,6 +24,12 @@
   --font-sans:
     system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue",
     Arial, sans-serif;
+  /* Display type is a serif that ships with the operating system: Iowan Old
+     Style on Apple platforms, Palatino/Georgia on Windows, Noto Serif on
+     Android. No file is downloaded and the CSP is unchanged. */
+  --font-display:
+    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia,
+    "Noto Serif", "Times New Roman", serif;
   --font-mono:
     ui-monospace, "SFMono-Regular", "Roboto Mono", "Noto Sans Mono", Menlo,
     Consolas, monospace;
@@ -43,6 +49,7 @@
   --line-height-heading: 1.3;
   --line-height-ui: 1.4;
   --letter-spacing-body: normal;
+  --tracking-overline: 0.12em;
   --word-spacing-body: normal;
   --paragraph-gap: 0.75em;
 
@@ -127,6 +134,7 @@
   color-scheme: light;
   --c-bg: #faf7f2; /* kertas (paper) */
   --c-surface: #ffffff;
+  --c-surface-quiet: #f5f0e8;
   --c-sunken: #f1ece4;
   --c-text: #1e1c19; /* tinta (ink) */
   --c-muted: #575249;
@@ -171,6 +179,7 @@
   color-scheme: dark;
   --c-bg: #141311;
   --c-surface: #1d1b18;
+  --c-surface-quiet: #1a1815;
   --c-sunken: #25221e;
   --c-text: #f2eee7;
   --c-muted: #bcb4a7;
@@ -217,6 +226,7 @@
   color-scheme: light;
   --c-bg: #ffffff;
   --c-surface: #ffffff;
+  --c-surface-quiet: #ffffff;
   --c-sunken: #ffffff;
   --c-text: #000000;
   --c-muted: #1f1f1f;
@@ -264,6 +274,7 @@
   color-scheme: dark;
   --c-bg: #000000;
   --c-surface: #000000;
+  --c-surface-quiet: #000000;
   --c-sunken: #000000;
   --c-text: #ffffff;
   --c-muted: #e8e8e8;
@@ -314,6 +325,7 @@
     color-scheme: dark;
     --c-bg: #141311;
     --c-surface: #1d1b18;
+    --c-surface-quiet: #1a1815;
     --c-sunken: #25221e;
     --c-text: #f2eee7;
     --c-muted: #bcb4a7;

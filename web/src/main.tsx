@@ -7,7 +7,6 @@ import { V3App } from "./v3/App";
 import { I18nProvider } from "./i18n";
 import { RouterProvider } from "./lib/router";
 import { CatalogProvider } from "./lib/catalog";
-import "./styles.css";
 
 const root = document.getElementById("root");
 if (root) {

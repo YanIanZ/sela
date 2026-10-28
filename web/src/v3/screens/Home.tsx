@@ -6,7 +6,7 @@ import { usePrefs } from "../prefs";
 import { useSession } from "../session";
 import { useLocale, useWords } from "../shared";
 import { Icon } from "../icons";
-import { PageHeader, Loading, ErrorNotice, EmptyState, LinkButton } from "../ui";
+import { Loading, ErrorNotice, EmptyState, LinkButton } from "../ui";
 
 function greeting(lang: string): string {
   const h = new Date().getHours();
@@ -71,14 +71,16 @@ export function HomePage({ user }: { user: Profile }) {
 
   return (
     <div className="s-home">
-      <PageHeader
-        eyebrow={loc.date(new Date().toISOString())}
-        title={w("Beranda", "Home")}
-        lead={w(
-          `${greeting(lang)} Apa yang ingin kamu lakukan sekarang?`,
-          `${greeting(lang)} What would you like to do now?`,
-        )}
-      />
+      <header className="s-home-head">
+        <p className="s-overline">{loc.date(new Date().toISOString())}</p>
+        <h1 id="page-title">{w("Ada ruang untukmu hari ini.", "There is room for you today.")}</h1>
+        <p className="s-home-lead">
+          {w(
+            `${greeting(lang)} Apa yang paling terasa hari ini?`,
+            `${greeting(lang)} What feels most present today?`,
+          )}
+        </p>
+      </header>
 
       {error != null && (
         <ErrorNotice
@@ -88,20 +90,36 @@ export function HomePage({ user }: { user: Profile }) {
         />
       )}
 
-      <section className="s-home-start" aria-labelledby="home-start-title">
-        <p className="s-overline">{w("RUANG CERITA", "SPACE TO TALK")}</p>
-        <h2 id="home-start-title">
-          {w("Ceritakan apa yang sedang kamu bawa.", "Talk about what's on your mind.")}
-        </h2>
-        <p>
-          {w(
-            "Tidak perlu rapi atau lengkap. Sela mendengarkan lebih dulu.",
-            "It doesn't have to be tidy or complete. Sela listens first.",
-          )}
-        </p>
-        <LinkButton to="/talk/new" variant="primary" icon="send">
-          {w("Mulai bercerita", "Start talking")}
-        </LinkButton>
+      <section className="s-room-invite" aria-labelledby="home-start-title">
+        <div>
+          <p className="s-overline">{w("RUANG CERITA", "SPACE TO TALK")}</p>
+          <h2 id="home-start-title">
+            {w("Ceritakan apa yang sedang kamu bawa.", "Talk about what's on your mind.")}
+          </h2>
+          <p>
+            {w(
+              "Tidak perlu rapi atau lengkap. Sela mendengarkan lebih dulu.",
+              "It doesn't have to be tidy or complete. Sela listens first.",
+            )}
+          </p>
+          <LinkButton to="/talk/new" variant="primary" icon="send">
+            {w("Mulai bercerita", "Start talking")}
+          </LinkButton>
+          <p className="s-hint">
+            {w(
+              "Bisa juga tanpa balasan AI. Kamu yang memilih apa yang disimpan.",
+              "It can work without AI replies too. You choose what is kept.",
+            )}
+          </p>
+        </div>
+        <div className="s-room-edge" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <i />
+          <span />
+          <span />
+        </div>
       </section>
 
       <div className="s-quick-actions">

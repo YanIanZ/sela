@@ -18,6 +18,7 @@ import { PrivacyPage } from './pages/Privacy';
 import { HelpPage } from './pages/Help';
 import { RecipientPage } from './pages/Recipient';
 import { ResearchPage } from './pages/Research';
+import './styles.css';
 import { CatalogUnavailable, Interrupted, NotFound, SessionEnded } from './pages/Misc';
 
 const SESSION_PAGES: Record<string, () => ReactNode> = {
