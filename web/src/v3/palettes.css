@@ -1,0 +1,276 @@
+/*
+ * Sela well-being palettes. Each one remaps only the colour roles of the light
+ * and dark schemes plus a softer radius; high-contrast schemes keep their own
+ * values on purpose. The cobalt "Lipat" world in tokens.css stays the base.
+ * Generated pairs are checked for WCAG AA (text 4.5:1, controls/focus 3:1).
+ */
+:root[data-palette]:not([data-palette="lipat"]):not([data-scheme^="contrast"]) {
+  --radius-2: 10px;
+  --radius-3: 14px;
+  --radius-4: 20px;
+}
+
+/* Embun — morning dew. Eucalyptus green on a misted ground; restorative, unhurried. */
+:root[data-palette="embun"]:not([data-scheme]),
+:root[data-palette="embun"][data-scheme="light"] {
+  --c-bg: #EDF3EE;
+  --c-surface: #FFFFFF;
+  --c-surface-quiet: #F4F8F5;
+  --c-sunken: #E2EBE4;
+  --c-text: #1A2B23;
+  --c-muted: #4B5F56;
+  --c-border-subtle: #D0DDD4;
+  --c-border-control: #6C8175;
+  --c-accent: #2E6A52;
+  --c-accent-hover: #225540;
+  --c-on-accent: #FFFFFF;
+  --c-accent-soft: #E0EEE5;
+  --c-link: #285F48;
+  --c-focus: #2E6A52;
+  --c-user: #2E6A52;
+  --c-user-bg: #E3F0E8;
+  --c-user-text: #22533F;
+  --shadow-1: 0 1px 2px rgb(26 43 35 / 0.08);
+  --shadow-2: 0 8px 24px rgb(26 43 35 / 0.16);
+}
+:root[data-palette="embun"][data-scheme="dark"] {
+  --c-bg: #101915;
+  --c-surface: #17231E;
+  --c-surface-quiet: #131F1A;
+  --c-sunken: #203029;
+  --c-text: #EDF4F0;
+  --c-muted: #AFC2B8;
+  --c-border-subtle: #30433A;
+  --c-border-control: #83988D;
+  --c-accent: #8ECBAD;
+  --c-accent-hover: #AADBC2;
+  --c-on-accent: #0C2118;
+  --c-accent-soft: #22382E;
+  --c-link: #9DD4B9;
+  --c-focus: #9DD4B9;
+  --c-user: #8ECBAD;
+  --c-user-bg: #1F382D;
+  --c-user-text: #B2DFC8;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="embun"]:not([data-scheme]) {
+    --c-bg: #101915;
+    --c-surface: #17231E;
+    --c-surface-quiet: #131F1A;
+    --c-sunken: #203029;
+    --c-text: #EDF4F0;
+    --c-muted: #AFC2B8;
+    --c-border-subtle: #30433A;
+    --c-border-control: #83988D;
+    --c-accent: #8ECBAD;
+    --c-accent-hover: #AADBC2;
+    --c-on-accent: #0C2118;
+    --c-accent-soft: #22382E;
+    --c-link: #9DD4B9;
+    --c-focus: #9DD4B9;
+    --c-user: #8ECBAD;
+    --c-user-bg: #1F382D;
+    --c-user-text: #B2DFC8;
+  }
+}
+
+/* Samudra — calm sea. Deep teal on seafoam; the rhythm of a slow breath. */
+:root[data-palette="samudra"]:not([data-scheme]),
+:root[data-palette="samudra"][data-scheme="light"] {
+  --c-bg: #EAF2F3;
+  --c-surface: #FFFFFF;
+  --c-surface-quiet: #F2F7F8;
+  --c-sunken: #DDE9EB;
+  --c-text: #13292D;
+  --c-muted: #475F64;
+  --c-border-subtle: #CCDDE0;
+  --c-border-control: #678186;
+  --c-accent: #1C636D;
+  --c-accent-hover: #144C54;
+  --c-on-accent: #FFFFFF;
+  --c-accent-soft: #DBECEF;
+  --c-link: #185A63;
+  --c-focus: #1C636D;
+  --c-user: #1C636D;
+  --c-user-bg: #DFEFF1;
+  --c-user-text: #155058;
+  --shadow-1: 0 1px 2px rgb(19 41 45 / 0.08);
+  --shadow-2: 0 8px 24px rgb(19 41 45 / 0.16);
+}
+:root[data-palette="samudra"][data-scheme="dark"] {
+  --c-bg: #0D191B;
+  --c-surface: #142326;
+  --c-surface-quiet: #111F22;
+  --c-sunken: #1C3033;
+  --c-text: #EBF5F6;
+  --c-muted: #AAC3C6;
+  --c-border-subtle: #2D4346;
+  --c-border-control: #7D999D;
+  --c-accent: #7ECDD6;
+  --c-accent-hover: #A1DDE3;
+  --c-on-accent: #052126;
+  --c-accent-soft: #1D383C;
+  --c-link: #92D6DE;
+  --c-focus: #92D6DE;
+  --c-user: #7ECDD6;
+  --c-user-bg: #1B373B;
+  --c-user-text: #A8E1E7;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="samudra"]:not([data-scheme]) {
+    --c-bg: #0D191B;
+    --c-surface: #142326;
+    --c-surface-quiet: #111F22;
+    --c-sunken: #1C3033;
+    --c-text: #EBF5F6;
+    --c-muted: #AAC3C6;
+    --c-border-subtle: #2D4346;
+    --c-border-control: #7D999D;
+    --c-accent: #7ECDD6;
+    --c-accent-hover: #A1DDE3;
+    --c-on-accent: #052126;
+    --c-accent-soft: #1D383C;
+    --c-link: #92D6DE;
+    --c-focus: #92D6DE;
+    --c-user: #7ECDD6;
+    --c-user-bg: #1B373B;
+    --c-user-text: #A8E1E7;
+  }
+}
+
+/* Teduh — evening shade. Dusk violet on lavender grey; rest and winding down. Replies take sage so they never share the action voice. */
+:root[data-palette="teduh"]:not([data-scheme]),
+:root[data-palette="teduh"][data-scheme="light"] {
+  --c-bg: #F0EEF5;
+  --c-surface: #FFFFFF;
+  --c-surface-quiet: #F6F4F9;
+  --c-sunken: #E6E2EF;
+  --c-text: #231E32;
+  --c-muted: #57516C;
+  --c-border-subtle: #DAD5E5;
+  --c-border-control: #79728F;
+  --c-accent: #594994;
+  --c-accent-hover: #46397A;
+  --c-on-accent: #FFFFFF;
+  --c-accent-soft: #EAE6F7;
+  --c-link: #514289;
+  --c-focus: #594994;
+  --c-user: #594994;
+  --c-user-bg: #ECE8F8;
+  --c-user-text: #453781;
+  --c-ai: #3D6A5F;
+  --c-ai-bg: #E5EFEB;
+  --c-ai-text: #2E564C;
+  --shadow-1: 0 1px 2px rgb(35 30 50 / 0.08);
+  --shadow-2: 0 8px 24px rgb(35 30 50 / 0.16);
+}
+:root[data-palette="teduh"][data-scheme="dark"] {
+  --c-bg: #14121C;
+  --c-surface: #1D1A28;
+  --c-surface-quiet: #191723;
+  --c-sunken: #282436;
+  --c-text: #F2F0F8;
+  --c-muted: #BBB4D0;
+  --c-border-subtle: #38334E;
+  --c-border-control: #8C84A6;
+  --c-accent: #BAADF1;
+  --c-accent-hover: #CFC5F6;
+  --c-on-accent: #1A1433;
+  --c-accent-soft: #2E2748;
+  --c-link: #C4B9F4;
+  --c-focus: #C4B9F4;
+  --c-user: #BAADF1;
+  --c-user-bg: #2B2546;
+  --c-user-text: #CFC5F6;
+  --c-ai: #93D0BE;
+  --c-ai-bg: #1A302A;
+  --c-ai-text: #A8DBCC;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="teduh"]:not([data-scheme]) {
+    --c-bg: #14121C;
+    --c-surface: #1D1A28;
+    --c-surface-quiet: #191723;
+    --c-sunken: #282436;
+    --c-text: #F2F0F8;
+    --c-muted: #BBB4D0;
+    --c-border-subtle: #38334E;
+    --c-border-control: #8C84A6;
+    --c-accent: #BAADF1;
+    --c-accent-hover: #CFC5F6;
+    --c-on-accent: #1A1433;
+    --c-accent-soft: #2E2748;
+    --c-link: #C4B9F4;
+    --c-focus: #C4B9F4;
+    --c-user: #BAADF1;
+    --c-user-bg: #2B2546;
+    --c-user-text: #CFC5F6;
+    --c-ai: #93D0BE;
+    --c-ai-bg: #1A302A;
+    --c-ai-text: #A8DBCC;
+  }
+}
+
+/* Pasir — warm sand. Deep-sea navy on sun-warmed paper; grounded and familiar. */
+:root[data-palette="pasir"]:not([data-scheme]),
+:root[data-palette="pasir"][data-scheme="light"] {
+  --c-bg: #F4EFE7;
+  --c-surface: #FFFDFA;
+  --c-surface-quiet: #F9F5EF;
+  --c-sunken: #ECE5D9;
+  --c-text: #29241F;
+  --c-muted: #5F5649;
+  --c-border-subtle: #E0D7C8;
+  --c-border-control: #82776A;
+  --c-accent: #2D4B6C;
+  --c-accent-hover: #213954;
+  --c-on-accent: #FFFFFF;
+  --c-accent-soft: #E4EAF2;
+  --c-link: #2A4666;
+  --c-focus: #2D4B6C;
+  --c-user: #2D4B6C;
+  --c-user-bg: #E6ECF3;
+  --c-user-text: #253E5B;
+  --shadow-1: 0 1px 2px rgb(41 36 31 / 0.08);
+  --shadow-2: 0 8px 24px rgb(41 36 31 / 0.16);
+}
+:root[data-palette="pasir"][data-scheme="dark"] {
+  --c-bg: #191613;
+  --c-surface: #231F1A;
+  --c-surface-quiet: #1E1A16;
+  --c-sunken: #2F2922;
+  --c-text: #F4EFE7;
+  --c-muted: #C7BCAC;
+  --c-border-subtle: #40382E;
+  --c-border-control: #988C7C;
+  --c-accent: #9CBADC;
+  --c-accent-hover: #BACFE7;
+  --c-on-accent: #0E1C2C;
+  --c-accent-soft: #293341;
+  --c-link: #A8C3E2;
+  --c-focus: #A8C3E2;
+  --c-user: #9CBADC;
+  --c-user-bg: #273444;
+  --c-user-text: #BACFE7;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="pasir"]:not([data-scheme]) {
+    --c-bg: #191613;
+    --c-surface: #231F1A;
+    --c-surface-quiet: #1E1A16;
+    --c-sunken: #2F2922;
+    --c-text: #F4EFE7;
+    --c-muted: #C7BCAC;
+    --c-border-subtle: #40382E;
+    --c-border-control: #988C7C;
+    --c-accent: #9CBADC;
+    --c-accent-hover: #BACFE7;
+    --c-on-accent: #0E1C2C;
+    --c-accent-soft: #293341;
+    --c-link: #A8C3E2;
+    --c-focus: #A8C3E2;
+    --c-user: #9CBADC;
+    --c-user-bg: #273444;
+    --c-user-text: #BACFE7;
+  }
+}

@@ -27,3 +27,17 @@ it("V13 follows system theme and contrast changes without changing saved prefere
   expect(screen.getByText("contrast-dark")).toBeInTheDocument();
   expect(window.localStorage.getItem("sela.prefs")).toBeNull();
 });
+
+it("applies the calm default palette, persists a chosen one and ignores unknown values", () => {
+  vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  window.localStorage.setItem("sela.prefs", JSON.stringify({ palette: "neon" }));
+  function Pick() {
+    const { prefs, set } = usePrefs();
+    return <button onClick={() => set("palette", "teduh")}>{prefs.palette}</button>;
+  }
+  render(<PrefsProvider><Pick /></PrefsProvider>);
+  expect(document.documentElement).toHaveAttribute("data-palette", "embun");
+  act(() => screen.getByRole("button").click());
+  expect(document.documentElement).toHaveAttribute("data-palette", "teduh");
+  expect(JSON.parse(window.localStorage.getItem("sela.prefs")!).palette).toBe("teduh");
+});

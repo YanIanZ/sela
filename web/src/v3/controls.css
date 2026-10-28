@@ -525,6 +525,29 @@
   gap: var(--space-1);
 }
 
+.s-swatch {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  width: 2.75rem;
+  height: 1.75rem;
+  margin-top: 0.05rem;
+  padding: 3px;
+  border: var(--border-width) solid var(--c-border-subtle);
+  border-radius: var(--radius-2);
+  background: var(--sw-bg);
+}
+
+.s-swatch > span {
+  border-radius: var(--radius-2);
+  background: var(--sw-surface);
+}
+
+.s-swatch > span + span {
+  background: var(--sw-accent);
+}
+
 .s-choice-group--chips .s-choice-items {
   flex-direction: row;
   flex-wrap: wrap;

@@ -142,6 +142,19 @@ A cool, high-clarity neutral field with one saturated cobalt voice and warm illu
 
 **The One Voice Rule.** Cobalt is the only action and identity accent. The accepted dashboard invitation may carry the accent as a surface; surrounding reading and feature areas stay quiet.
 
+### Well-being palettes (2026-10-28)
+The person chooses a colour mood under Display & accessibility (`prefs.palette`, stored with the other non-sensitive display choices and applied before first paint by `boot.js` as `data-palette`). `src/v3/palettes.css` remaps only the `--c-*` roles of the light and dark schemes and softens radii to 10 / 14 / 20px; high-contrast schemes keep their own values. Each palette keeps one accent voice, and every text pair passes 4.5:1 and controls/focus 3:1 in both schemes.
+
+| Palette | Mood | Light ground / accent | Dark accent |
+| --- | --- | --- | --- |
+| **Embun** (default) | Morning dew, restorative | `#EDF3EE` / `#2E6A52` | `#8ECBAD` |
+| **Samudra** | Calm sea, slow breath | `#EAF2F3` / `#1C636D` | `#7ECDD6` |
+| **Teduh** | Evening shade, rest | `#F0EEF5` / `#594994` (replies take sage `#3D6A5F`) | `#BAADF1` |
+| **Pasir** | Warm sand, grounded | `#F4EFE7` / `#2D4B6C` | `#9CBADC` |
+| **Lipat** | Original cobalt identity | `#EDF0F8` / `#3657C7` | `#A4B8FF` |
+
+Help, danger, success and warning stay identical across palettes so safety affordances never change meaning. In dark schemes the Home invitation sinks into `--c-accent-soft` instead of a pale accent slab.
+
 ## Typography
 
 **Display Font:** Manrope (self-hosted `manrope-latin.ttf`, with system-ui fallback)

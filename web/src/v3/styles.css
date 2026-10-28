@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "./palettes.css";
 @import "./controls.css";
 @import "./continuity.css";
 @import "./workspace.css";
@@ -143,6 +144,8 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 .s-settings-nav a { justify-content: flex-start; padding-inline: 0.75rem; border-radius: var(--radius-2); }
 .s-settings-nav a[aria-current="page"], .s-settings-nav a[aria-current="location"] { background: var(--c-accent-soft); }
 .s-settings-main { min-width: 0; max-width: 54rem; }
+.s-settings-layout--display { grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); max-width: 68rem; }
+.s-settings-layout--display > aside { position: sticky; top: calc(var(--top-bar-h, 5.5rem) + 1.5rem); }
 .s-settings-section { scroll-margin-top: calc(var(--top-bar-h, 5rem) + 1rem); }
 .s-support-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 2rem; }
 .s-support-card { border-radius: 0; border: 0; border-bottom: 1px solid var(--c-border-subtle); background: transparent; padding: 1.25rem 0; }
@@ -226,6 +229,7 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
   .n-welcome { padding: 1.75rem; gap: 0.5rem; }
   .n-intro-details { gap: 1.75rem; }
   .s-settings-layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .s-settings-layout--display > aside { position: static; }
   .s-settings-nav { position: static; display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 0.5rem; border-bottom: 1px solid var(--c-border-subtle); gap: 0.5rem; }
   .s-settings-nav a { flex: 0 0 auto; width: auto; white-space: nowrap; }
 }
