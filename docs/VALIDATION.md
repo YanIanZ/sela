@@ -1,4 +1,9 @@
-# Sela v2 acceptance and demo evidence
+# Sela acceptance and demo evidence
+
+**v3 frontend (2026-10-28):** local automated and browser evidence is in
+[`V3_FRONTEND_VALIDATION.md`](V3_FRONTEND_VALIDATION.md). It is not v2 evidence,
+not a live run and not a manual accessibility audit. The v2 matrix below stays
+valid for v2 scope only.
 
 Authority: [SPEC](../SPEC.md) §V, T2–T12. Historical v1 reports do not establish v2 acceptance. Each row names the automated evidence; "live" rows stay pending until a real Modal deployment exists ([B-1](BLOCKERS.md)).
 

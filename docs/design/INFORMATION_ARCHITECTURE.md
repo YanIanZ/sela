@@ -1,6 +1,6 @@
 # Sela v3 information architecture
 
-Status: **design decision** by the design lead, 2026-10-26, revised after review rounds 1 and 2 ([DESIGN_DIRECTION.md §11](DESIGN_DIRECTION.md#11-revision-log)). **Not implemented.** Labels follow [DESIGN_DIRECTION.md](DESIGN_DIRECTION.md) (user-confirmed, PM decision, design decision, externally sourced, planned, pending verification). Screen details are in [SCREENS.md](SCREENS.md).
+Status: **design decision** by the design lead, 2026-10-26, revised after review rounds 1 and 2 ([DESIGN_DIRECTION.md §11](DESIGN_DIRECTION.md#11-revision-log)). **Implemented in `web/src/v3/` on 2026-10-28 for the routes whose APIs exist; blocked surfaces are stated in place.** Labels follow [DESIGN_DIRECTION.md](DESIGN_DIRECTION.md) (user-confirmed, PM decision, design decision, externally sourced, planned, pending verification). Screen details are in [SCREENS.md](SCREENS.md).
 
 ## 1. The model in one picture
 

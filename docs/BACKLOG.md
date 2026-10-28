@@ -1,6 +1,13 @@
 # Sela v3 backlog
 
-Updated: 2026-10-26 · branch `feat/sela-v3-pilot`. Status: **planning document.** The backend foundation is **verified locally, and its CI run on draft PR #9 passed** (commit `0ff3341`; [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26)): S-173 and S-260 are verified locally, and the other foundation items have their backend part verified locally (for S-262, criterion 1). The branch is open as draft PR #9 against main. The design and planning documents are in progress; ruleset `-5` is a WIP snapshot in draft PR #8 to main; the frontend shell (uncommitted in the working tree of `feat/sela-v3-pilot`), the AI provider layer (draft PR #10, stacked on `feat/sela-v3-pilot`), research and reading content (draft PR #11 to main), the P3 listening backend and operations (each on a separate branch, not merged) are in progress. Nothing in v3 is verified live.
+Updated: 2026-10-26 · branch `feat/sela-v3-pilot`. Status: **planning document.** The backend foundation is **verified locally, and its CI run on draft PR #9 passed** (commit `0ff3341`; [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26)): S-173 and S-260 are verified locally, and the other foundation items have their backend part verified locally (for S-262, criterion 1). The branch is open as draft PR #9 against main. The design and planning documents are in progress; ruleset `-5` is a WIP snapshot in draft PR #8 to main; the frontend (implemented and locally checked on `feat/v3-experience`, 2026-10-28, with blocked surfaces named), the AI provider layer (draft PR #10, stacked on `feat/sela-v3-pilot`), research and reading content (draft PR #11 to main), the P3 listening backend and operations (each on a separate branch, not merged) are in progress. Nothing in v3 is verified live.
+**2026-10-28 frontend delivery note.** `feat/v3-experience` implements the v3
+frontend screens backed by existing `/api/v3` routes and records the 28 screen
+groups, API integrations and blocked states in
+[`V3_FRONTEND_VALIDATION.md`](V3_FRONTEND_VALIDATION.md). This note does not
+change any item's status: an item stays `in progress` (or planned) until its own
+evidence and, for screens, the browser review and release gates are recorded.
+
 Authority: owner brief v3 (2026-10-26) → [SPEC.md](../SPEC.md) → the v3 decisions in the decision log: [D-026](DECISION_LOG.md#d-026) (owner direction), [D-027 to D-050](DECISION_LOG.md#d-027), [D-054](DECISION_LOG.md#d-054), [D-055](DECISION_LOG.md#d-055) and [D-056](DECISION_LOG.md#d-056) (PM decisions of 2026-10-26), [D-051](DECISION_LOG.md#d-051) and [D-052](DECISION_LOG.md#d-052) (engineering defaults) and [D-053](DECISION_LOG.md#d-053) (merge record) → this backlog. The backlog orders and specifies work; it does not change requirements by itself. Related: [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) (what is kept, merged, retired or paused, and why), [ADR-0002](adr/ADR-0002-persistence-accounts-and-encryption.md) (persistence, accounts, encryption), [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md) (AI routing), [API v3](API_SPEC_V3.md), [implementation status](IMPLEMENTATION_STATUS.md), [requirements traceability](REQUIREMENTS_TRACEABILITY.md), [roadmap](ROADMAP.md), [blockers](BLOCKERS.md).
 
 ## 1. How to read this
@@ -771,7 +778,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   3. Both stay visible at 320 CSS px and never hide the focused element (2.4.11).
   4. BASE.
 - **Risks:** Browser history on shared devices still shows Sela; the help text says how to clear it.
-- **Owner:** Frontend engineer; UX designer. **Milestone:** P2. **Status:** in progress (uncommitted in the working tree of `feat/sela-v3-pilot`). **Evidence:** in progress — `web/src/components/shell/`, `web/src/lib/quickExit.ts` and `e2e/v3-shell.e2e.mjs`, uncommitted; nothing verified.
+- **Owner:** Frontend engineer; UX designer. **Milestone:** P2. **Status:** in progress; implemented on `feat/v3-experience` (2026-10-28), owner/browser acceptance pending. **Evidence:** `web/src/v3/shell.tsx`, `prefs.tsx` and the browser checks in [V3_FRONTEND_VALIDATION.md](V3_FRONTEND_VALIDATION.md); Quick Exit is rendered and Esc arming is implemented, but a real leave-the-page test is still a manual owner step.
 
 #### S-154 Re-verify every help line before real users
 - **Problem:** Help-line details checked on 2026-10-14/15 have changed: Healing119's site now says 24 hours and lists WhatsApp while the Kemenkes article of 2025-08-07 says morning to night; LISA does not state "free"; Yayasan Pulih contacts moved to `?page_id=201` with new chat lines.
@@ -991,7 +998,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   3. Every route sets a unique title in the active language (2.4.2).
   4. BASE.
 - **Risks:** Rebuilding while v2 pages still exist; the v2 routes stay only in development, test and demo (ADR-0002 §12).
-- **Owner:** Frontend engineer; UX designer. **Milestone:** P2. **Status:** in progress (uncommitted in the working tree of `feat/sela-v3-pilot`). **Evidence:** in progress — `web/src/components/shell/`, `web/src/components/ui/` and `e2e/v3-shell.e2e.mjs`, uncommitted; nothing verified.
+- **Owner:** Frontend engineer; UX designer. **Milestone:** P2. **Status:** in progress; implemented on `feat/v3-experience` (2026-10-28), owner/browser acceptance pending. **Evidence:** `web/src/v3/shell.tsx`, `ui.tsx`, `styles.css` and the browser checks in [V3_FRONTEND_VALIDATION.md](V3_FRONTEND_VALIDATION.md); manual screen-reader review remains open.
 
 #### S-192 Display settings ("Akses cepat")
 - **Problem:** People read differently; some need bigger text, more contrast or no motion (FM-40).
@@ -1019,7 +1026,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
   2. A reply's language matches the person's language or their message's language and is marked with `lang` (3.1.2).
   3. Copy is reviewed by a fluent speaker of each language on the team.
 - **Risks:** Live bilingual quality is unmeasured until B-1.
-- **Owner:** Frontend engineer; UX designer; AI engineer. **Milestone:** P2 onward. **Status:** in progress (uncommitted in the working tree of `feat/sela-v3-pilot`). **Evidence:** in progress — `web/src/i18n/id/`, `web/src/i18n/en/` and `web/src/i18n/namespaces.ts`, uncommitted; nothing verified.
+- **Owner:** Frontend engineer; UX designer; AI engineer. **Milestone:** P2 onward. **Status:** in progress; implemented on `feat/v3-experience` (2026-10-28), fluent-speaker copy review pending. **Evidence:** v3 screens use the `w(id, en)` pair at the call site; ID/EN browser paths and the hard-coded-string test pass; a fluent-speaker review is still required by criterion 3.
 
 #### S-194 Automated WCAG 2.2 AA gate in CI
 - **Problem:** The e2e scan uses WCAG 2.0/2.1 tags only, fails only on serious findings, checks 390 px instead of 320 px, and every page has the same title.
@@ -1762,7 +1769,7 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-273 | Spec and documentation alignment | pilot-critical | P1 | in progress |
 | S-274 | Operator access audit | pilot-critical | P2, P7 | planned (hosted part blocked, B-3) |
 
-**Totals:** 107 items: 52 pilot-critical, 37 pilot-important, 18 post-pilot. The pilot-critical set is large because it holds the eleven DoD capabilities of brief §15 together with the safety controls and the legal and security preconditions for holding real health data; everything that improves the pilot without being required for it is pilot-important, and everything after the pilot or paused is post-pilot. Status today: 2 verified locally (S-173 and S-260), 39 in progress, 9 blocked externally and 57 planned; S-221, S-222, S-224, S-225, S-227, S-228, S-262 and S-274 also have parts blocked externally. Of the 39 items in progress, 13 have their backend foundation part verified locally (S-002 to S-005, S-171, S-172, S-174 to S-177, S-211, S-261, and criterion 1 of S-262, whose restore notice is planned and whose hosted drill is blocked externally), 23 have work only uncommitted or on separate branches that are not merged (frontend shell, AI provider layer, research and reading content, listening backend, operations), and S-150, S-190 and S-273 are the ruleset `-5` fix loop (a WIP snapshot in draft PR #8), the design documents and the planning documents. Nothing is verified live.
+**Totals:** 107 items: 52 pilot-critical, 37 pilot-important, 18 post-pilot. The pilot-critical set is large because it holds the eleven DoD capabilities of brief §15 together with the safety controls and the legal and security preconditions for holding real health data; everything that improves the pilot without being required for it is pilot-important, and everything after the pilot or paused is post-pilot. Status today (2026-10-28): 2 verified locally (S-173 and S-260), 39 in progress, 9 blocked externally and 57 planned; the frontend delivery adds local evidence for the screens but does not move an item to verified locally until its acceptance and owner/browser review are complete; S-221, S-222, S-224, S-225, S-227, S-228, S-262 and S-274 also have parts blocked externally. Of the 39 items in progress, 13 have their backend foundation part verified locally (S-002 to S-005, S-171, S-172, S-174 to S-177, S-211, S-261, and criterion 1 of S-262, whose restore notice is planned and whose hosted drill is blocked externally), 23 have work only uncommitted or on separate branches that are not merged (frontend shell, AI provider layer, research and reading content, listening backend, operations), and S-150, S-190 and S-273 are the ruleset `-5` fix loop (a WIP snapshot in draft PR #8), the design documents and the planning documents. Nothing is verified live.
 
 ## 6. Feature matrix coverage
 
