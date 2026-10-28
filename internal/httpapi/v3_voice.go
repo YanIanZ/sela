@@ -263,9 +263,21 @@ func (g *voiceGate) handle(e sonic.Event) []voiceOut {
 		return out
 	case sonic.KindAssistantText:
 		if !e.Speculative {
-			// Final text follows its audio; show it only if the turn
-			// was released.
-			if g.state == gateShut || !assistantTextOK(e.Text) {
+			// Sonic orders a turn's final text after its audio, so audio
+			// was gated by the turn's speculative text. If the final text
+			// disagrees with the speculative one and fails the check, any
+			// released audio is suspect: tell the client to stop playback
+			// at once (it drops queued audio) and shut the gate for the
+			// rest of the turn. Audio already played cannot be recalled;
+			// the speculative check is what bounds that window.
+			if !assistantTextOK(e.Text) {
+				if g.state == gateOpen {
+					g.state = gateShut
+					return []voiceOut{{msg: map[string]any{"type": "interrupted"}}}
+				}
+				return nil
+			}
+			if g.state == gateShut {
 				return nil
 			}
 			return []voiceOut{{msg: map[string]any{"type": "reply", "text": e.Text, "final": true}}}

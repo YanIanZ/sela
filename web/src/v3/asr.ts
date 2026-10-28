@@ -1,32 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /*
- * Dictation over Sela's server-side Meta transcription proxy
- * (GET /api/v3/asr/realtime, SPEC C25). The browser captures raw PCM
- * audio (mono 24 kHz int16) and streams it to Sela; Sela relays it to
- * Meta with the server-held key. The key never reaches the browser.
- * The transcript stays editable: partials preview live, the final text
- * is appended to the composer, and nothing is ever auto-submitted.
+ * Dictation over Sela's server-side transcription relay
+ * (GET /api/v3/asr/realtime, SPEC C25, backlog S-025). The browser
+ * captures raw PCM audio (mono 16 kHz int16, little-endian) and streams
+ * it to Sela; Sela relays it to Amazon Nova Sonic with credentials held
+ * server-side (a legacy Meta relay remains behind SELA_ASR_MODE=meta).
+ * Credentials never reach the browser. The transcript stays editable:
+ * partials preview live, the final text is appended to the composer,
+ * and nothing is ever auto-submitted.
  */
 
-export const ASR_SAMPLE_RATE = 24000;
+export const ASR_SAMPLE_RATE = 16000;
 /** Frontend stops recording by itself after this long. */
 const MAX_RECORD_MS = 180_000;
-/** Wait for Meta's final answer after endStream before giving up. */
+/** Wait for the provider's final answer after endStream before giving up. */
 const FINAL_WAIT_MS = 20_000;
 
 /** Float32 [-1, 1] to little-endian int16 PCM bytes. Pure: unit-tested. */
 export function floatToPCM16Bytes(input: Float32Array): ArrayBuffer {
-  const out = new Int16Array(input.length);
+  const bytes = new ArrayBuffer(input.length * 2);
+  const view = new DataView(bytes);
   for (let i = 0; i < input.length; i++) {
     const v = Math.max(-1, Math.min(1, input[i] as number));
-    out[i] = v < 0 ? Math.round(v * 0x8000) : Math.round(v * 0x7fff);
+    view.setInt16(i * 2, v < 0 ? Math.round(v * 0x8000) : Math.round(v * 0x7fff), true);
   }
-  return out.buffer;
+  return bytes;
 }
 
-/** Downsample one mono channel to 24 kHz (nearest pick). Pure: unit-tested. */
-export function downsampleTo24k(input: Float32Array, fromRate: number): Float32Array {
+/** Downsample one mono channel to 16 kHz (nearest pick). Pure: unit-tested. */
+export function downsampleTo16k(input: Float32Array, fromRate: number): Float32Array {
   if (fromRate === ASR_SAMPLE_RATE) return input;
   const ratio = fromRate / ASR_SAMPLE_RATE;
   const len = Math.floor(input.length / ratio);
@@ -87,7 +90,7 @@ function closeSession(s: Session): void {
   }
 }
 
-export function useMetaDictation(
+export function useDictation(
   appendFinal: (final: string) => void,
 ): {
   dictating: boolean;
@@ -168,7 +171,7 @@ export function useMetaDictation(
     node.onaudioprocess = (e) => {
       if (ws.readyState !== WebSocket.OPEN) return;
       const ch = e.inputBuffer.getChannelData(0);
-      const resampled = downsampleTo24k(
+      const resampled = downsampleTo16k(
         ch instanceof Float32Array ? ch : new Float32Array(ch),
         inRate,
       );

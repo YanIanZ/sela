@@ -3,9 +3,9 @@ import { act, render } from "@testing-library/react";
 import {
   ASR_SAMPLE_RATE,
   asrSocketURL,
-  downsampleTo24k,
+  downsampleTo16k,
   floatToPCM16Bytes,
-  useMetaDictation,
+  useDictation,
 } from "../v3/asr";
 
 describe("asr pcm helpers", () => {
@@ -19,14 +19,18 @@ describe("asr pcm helpers", () => {
     expect(new Int16Array(buf)).toEqual(new Int16Array([32767, -32768]));
   });
 
-  it("passes 24 kHz audio through untouched", () => {
+  it("passes 16 kHz audio through untouched", () => {
     const input = new Float32Array([0.1, 0.2, 0.3]);
-    expect(downsampleTo24k(input, ASR_SAMPLE_RATE)).toBe(input);
+    expect(downsampleTo16k(input, ASR_SAMPLE_RATE)).toBe(input);
   });
 
-  it("downsamples 48 kHz to 24 kHz by picking every other sample", () => {
-    const input = new Float32Array([0, 0.9, 0.25, 0.9, 0.5, 0.9]);
-    expect(Array.from(downsampleTo24k(input, 48000))).toEqual([0, 0.25, 0.5]);
+  it("downsamples 48 kHz to 16 kHz by picking every third sample", () => {
+    const input = new Float32Array([0, 0.9, 0.9, 0.25, 0.9, 0.9, 0.5, 0.9, 0.9]);
+    expect(Array.from(downsampleTo16k(input, 48000))).toEqual([0, 0.25, 0.5]);
+  });
+
+  it("declares the provider-contract rate of 16 kHz", () => {
+    expect(ASR_SAMPLE_RATE).toBe(16000);
   });
 
   it("builds a same-origin socket URL", () => {
@@ -99,7 +103,7 @@ function renderHook<T>(fn: () => T): { result: { current: T } } {
   return { result: ref };
 }
 
-describe("useMetaDictation", () => {
+describe("useDictation", () => {
   beforeEach(() => {
     micStubs();
     vi.stubGlobal("WebSocket", MockWS);
@@ -113,7 +117,7 @@ describe("useMetaDictation", () => {
 
   it("starts the mic on toggle, sends PCM to the websocket and appends the final transcript", async () => {
     const appended: string[] = [];
-    const { result } = renderHook(() => useMetaDictation((final) => appended.push(final)));
+    const { result } = renderHook(() => useDictation((final) => appended.push(final)));
     expect(result.current.dictating).toBe(false);
     await act(async () => {
       result.current.toggle();
@@ -136,7 +140,7 @@ describe("useMetaDictation", () => {
   });
 
   it("maps close code 4403 to the consent error", async () => {
-    const { result } = renderHook(() => useMetaDictation(() => {}));
+    const { result } = renderHook(() => useDictation(() => {}));
     await act(async () => {
       result.current.toggle();
       await Promise.resolve();
@@ -151,7 +155,7 @@ describe("useMetaDictation", () => {
   });
 
   it("maps close code 4413 to the unavailable error", async () => {
-    const { result } = renderHook(() => useMetaDictation(() => {}));
+    const { result } = renderHook(() => useDictation(() => {}));
     await act(async () => {
       result.current.toggle();
       await Promise.resolve();
@@ -170,7 +174,7 @@ describe("useMetaDictation", () => {
       configurable: true,
       value: { getUserMedia: vi.fn().mockRejectedValue(new Error("no")) },
     });
-    const { result } = renderHook(() => useMetaDictation(() => {}));
+    const { result } = renderHook(() => useDictation(() => {}));
     await act(async () => {
       result.current.toggle();
       await Promise.resolve();

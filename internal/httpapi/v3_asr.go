@@ -16,20 +16,24 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Dictation over Meta voice-transcribe (SPEC C25): the browser streams raw
-// PCM audio to Sela over this socket and Sela relays it to Meta's realtime
-// endpoint with the server-held key. The key never reaches the browser.
+// Dictation (SPEC C25, backlog S-025): the browser streams raw PCM audio
+// to Sela over this socket and Sela relays it to the configured provider
+// with server-held credentials, which never reach the browser. Two relays
+// exist behind SELA_ASR_MODE: Amazon Nova Sonic ("bedrock", the pilot
+// configuration) and the legacy Meta voice-transcribe proxy ("meta").
 // The transcript stays editable client-side; nothing is auto-submitted.
 const (
+	// asrAudioEncoding is the Meta-mode handshake encoding; the Sonic
+	// relay declares its own input config in internal/ai/sonic.
 	asrAudioEncoding = "PCM_24KHZ"
-	// asrSessionMax bounds one dictation session; Meta allows 60 minutes.
+	// asrSessionMax bounds one dictation session.
 	asrSessionMax = 5 * time.Minute
 	// asrAudioMaxBytes caps upstream audio (~5 min at 48 kB/s).
 	asrAudioMaxBytes = 15 << 20
 	asrWriteWait     = 10 * time.Second
 	asrHandshakeWait = 15 * time.Second
-	// asrFlushWait is how long the proxy waits for Meta's final answer
-	// after the browser ends input before closing the socket.
+	// asrFlushWait is how long the relay waits for the provider's final
+	// answer after the browser ends input before closing the socket.
 	asrFlushWait = 15 * time.Second
 )
 
@@ -118,28 +122,35 @@ func (s *Server) v3ASRRealtime(w http.ResponseWriter, r *http.Request, p account
 // asrSonic relays one dictation session to Amazon Nova Sonic, keeping only
 // the user transcript: the assistant text and audio are dropped (a
 // transcript goes into the editable composer, never to a voice reply).
-// The session is a push-to-talk turn, so it opens with the mic and ends at
-// endStream; the final transcript reaches the browser before close.
+// Sonic runs a full-duplex speech-to-speech session, not push-to-talk:
+// the mic stream stays open until endStream ends the browser side, the
+// flush window collects the final transcript, and the deferred close
+// ends the provider session. The final transcript reaches the browser
+// before close.
 func (s *Server) asrSonic(front *websocket.Conn) {
 	ctx, cancel := context.WithTimeout(context.Background(), asrSessionMax)
 	defer cancel()
 
-	region := s.opt.AWSRegion
-	if region == "" {
-		region = sonic.DefaultRegion
+	opener := s.opt.ASROpener
+	if opener == nil {
+		region := s.opt.AWSRegion
+		if region == "" {
+			region = sonic.DefaultRegion
+		}
+		o, err := sonic.NewBedrock(sonic.Config{
+			Region:       region,
+			Model:        s.opt.ASRModel,
+			AccessKeyID:  os.Getenv("AWS_ACCESS_KEY_ID"),
+			SecretKey:    os.Getenv("AWS_SECRET_ACCESS_KEY"),
+			SessionToken: os.Getenv("AWS_SESSION_TOKEN"),
+		})
+		if err != nil {
+			s.asrFail(front, "asr_backend_unreachable")
+			return
+		}
+		opener = o
 	}
-	o, err := sonic.NewBedrock(sonic.Config{
-		Region:       region,
-		Model:        s.opt.ASRModel,
-		AccessKeyID:  os.Getenv("AWS_ACCESS_KEY_ID"),
-		SecretKey:    os.Getenv("AWS_SECRET_ACCESS_KEY"),
-		SessionToken: os.Getenv("AWS_SESSION_TOKEN"),
-	})
-	if err != nil {
-		s.asrFail(front, "asr_backend_unreachable")
-		return
-	}
-	sess, err := o.Open(ctx, sonic.SessionOptions{System: "Transkripsikan ucapan pengguna apa adanya dalam bahasa yang ia pakai. Tidak ada komentar."})
+	sess, err := opener.Open(ctx, sonic.SessionOptions{System: "Transkripsikan ucapan pengguna apa adanya dalam bahasa yang ia pakai. Tidak ada komentar."})
 	if err != nil {
 		s.asrFail(front, "asr_backend_unreachable")
 		return
@@ -160,6 +171,7 @@ func (s *Server) asrSonic(front *websocket.Conn) {
 	go func() {
 		defer close(upDone)
 		front.SetReadLimit(asrInputCap)
+		var sent int64
 		for {
 			mt, msg, err := front.ReadMessage()
 			if err != nil {
@@ -168,6 +180,10 @@ func (s *Server) asrSonic(front *websocket.Conn) {
 			switch mt {
 			case websocket.BinaryMessage:
 				if len(msg)%2 != 0 {
+					return
+				}
+				sent += int64(len(msg))
+				if sent > asrAudioMaxBytes {
 					return
 				}
 				if err := sess.SendAudio(msg); err != nil {
@@ -204,10 +220,13 @@ func (s *Server) asrSonic(front *websocket.Conn) {
 					break flush
 				}
 			}
+			// Exactly one terminal outcome: a final transcript, or the
+			// no-transcript signal — never both.
 			if last != "" {
 				_ = writeJSON(map[string]any{"type": "transcript", "transcript": last, "final": true})
+			} else {
+				_ = writeJSON(map[string]any{"type": "error", "message": "asr_no_transcript"})
 			}
-			_ = writeJSON(map[string]any{"type": "error", "message": "asr_no_transcript"})
 			return
 		case <-ctx.Done():
 			if last != "" {
@@ -227,18 +246,6 @@ func (s *Server) asrSonic(front *websocket.Conn) {
 			}
 		}
 	}
-}
-
-// asrMetaURL returns the realtime endpoint, defaulting to Meta's.
-// The production default is always wss; a dev/test override may point at
-// a local ws mock, which is never reachable from production because the
-// config guard refuses non-wss in staging and production.
-func (s *Server) asrMetaURL() string {
-	u := s.opt.ASRURL
-	if u == "" {
-		u = "wss://api.meta.ai/v1/asr/realtime"
-	}
-	return u
 }
 
 // asrReject reports a pre-session failure inside the upgraded socket.

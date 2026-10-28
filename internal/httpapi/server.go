@@ -102,6 +102,10 @@ type Options struct {
 	// VoiceOpener backs the voice room (GET /api/v3/voice/realtime) with
 	// Amazon Nova 2.5 Sonic or its labelled test double. Nil disables it.
 	VoiceOpener sonic.Opener
+	// ASROpener backs dictation (GET /api/v3/asr/realtime) when ASRMode is
+	// "bedrock". Nil constructs the IAM-credential opener from the
+	// environment; tests inject the labelled sonic test double.
+	ASROpener sonic.Opener
 }
 
 // Server is the HTTP handler.

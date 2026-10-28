@@ -97,6 +97,39 @@ func TestVoiceGateAudioWithoutTextIsNeverPlayed(t *testing.T) {
 	}
 }
 
+func TestVoiceGateUnsafeFinalTextRecallsReleasedAudio(t *testing.T) {
+	// The speculative text passes and releases the turn's audio; the final
+	// text then disagrees and fails the checks (Sonic orders the final text
+	// after the audio). The client must get "interrupted" so it stops
+	// playback and drops queued audio, and the rest of the turn stays shut.
+	g := newVoiceGate()
+	out := g.handle(sonic.Event{Kind: sonic.KindAssistantText, Speculative: true, Text: "Aku mendengarmu."})
+	if !eq(kinds(out), []string{"reply"}) {
+		t.Fatalf("release: %v", kinds(out))
+	}
+	if out := g.handle(sonic.Event{Kind: sonic.KindAssistantAudio, PCM: []byte{1, 0}}); !eq(kinds(out), []string{"audio"}) {
+		t.Fatalf("open gate: %v", kinds(out))
+	}
+	out = g.handle(sonic.Event{Kind: sonic.KindAssistantText, Text: "Minum sertraline 50 mg setiap pagi."})
+	if !eq(kinds(out), []string{"interrupted"}) {
+		t.Fatalf("unsafe final text after release: %v", kinds(out))
+	}
+	if out := g.handle(sonic.Event{Kind: sonic.KindAssistantAudio, PCM: []byte{2, 0}}); len(out) != 0 {
+		t.Fatalf("audio flowed after recall: %v", kinds(out))
+	}
+	if out := g.handle(sonic.Event{Kind: sonic.KindAssistantAudioEnd}); len(out) != 0 {
+		t.Fatalf("replyEnd after recall: %v", kinds(out))
+	}
+	// A safe final text after a released turn still shows normally.
+	g = newVoiceGate()
+	g.handle(sonic.Event{Kind: sonic.KindAssistantText, Speculative: true, Text: "Aku mendengarmu."})
+	g.handle(sonic.Event{Kind: sonic.KindAssistantAudio, PCM: []byte{1, 0}})
+	out = g.handle(sonic.Event{Kind: sonic.KindAssistantText, Text: "Aku mendengarmu."})
+	if !eq(kinds(out), []string{"reply"}) {
+		t.Fatalf("safe final text: %v", kinds(out))
+	}
+}
+
 func TestVoiceGateInterruptionClearsHeldAudio(t *testing.T) {
 	g := newVoiceGate()
 	g.handle(sonic.Event{Kind: sonic.KindAssistantAudio, PCM: []byte{1, 0}})

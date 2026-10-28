@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
 import { useI18n } from "../../i18n";
 import { api, isAbort, type Entry, type Profile, type Room, type Turn } from "../api";
-import { useMetaDictation, type DictationError } from "../asr";
+import { useDictation, type DictationError } from "../asr";
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon } from "../icons";
@@ -466,7 +466,7 @@ function RoomPage({ id }: { id: string }) {
     errorCode,
     clearError,
     toggle: toggleDictation,
-  } = useMetaDictation((final) => {
+  } = useDictation((final) => {
     setText((current) => (current ? current + " " + final : final));
   });
 

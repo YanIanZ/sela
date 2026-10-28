@@ -1,6 +1,7 @@
 package httpapi_test
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/YanIanZ/sela/internal/ai/sonic"
 	"github.com/YanIanZ/sela/internal/httpapi"
 	"github.com/gorilla/websocket"
 )
@@ -300,5 +302,109 @@ func TestASROversizedFrameEndsSide(t *testing.T) {
 			t.Fatalf("read: %v", err)
 		}
 		_ = mt
+	}
+}
+
+// asrSpeech builds loud 16 kHz mono PCM (voiceSpeech at the ASR rate).
+func asrSpeech(ms int) []byte {
+	n := sonic.InputSampleRate * ms / 1000
+	b := make([]byte, 2*n)
+	for i := 0; i < n; i++ {
+		v := int16(9000)
+		if i%2 == 0 {
+			v = -9000
+		}
+		binary.LittleEndian.PutUint16(b[2*i:], uint16(v))
+	}
+	return b
+}
+
+// asrEvents collects every JSON event until the socket closes.
+func asrEvents(t *testing.T, conn *websocket.Conn) []map[string]any {
+	t.Helper()
+	_ = conn.SetReadDeadline(time.Now().Add(15 * time.Second))
+	var out []map[string]any
+	for {
+		mt, raw, err := conn.ReadMessage()
+		if err != nil {
+			if _, ok := err.(*websocket.CloseError); ok {
+				return out
+			}
+			t.Fatalf("read: %v (events %+v)", err, out)
+		}
+		if mt != websocket.TextMessage {
+			continue
+		}
+		var ev map[string]any
+		if json.Unmarshal(raw, &ev) == nil {
+			out = append(out, ev)
+		}
+	}
+}
+
+// Regression: the Sonic dictation relay must end with exactly one terminal
+// outcome — a final transcript or asr_no_transcript, never both (the flush
+// path previously sent a final transcript and then asr_no_transcript).
+func TestASRSonicSingleCompletionWithTranscript(t *testing.T) {
+	e := newV3(t, v3opt{mutateO: func(o *httpapi.Options) {
+		o.ASRMode = "bedrock"
+		o.ASROpener = sonic.TestDouble{}
+	}})
+	c := asrGuest(t, e)
+	conn, _, err := dialASR(t, asrURL(e), c.token(), e.srv.URL)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+	if err := conn.WriteMessage(websocket.BinaryMessage, asrSpeech(500)); err != nil {
+		t.Fatalf("write audio: %v", err)
+	}
+	// Let the test double's turn land (voiced spell + quiet), then end.
+	time.Sleep(1500 * time.Millisecond)
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"endStream"}`)); err != nil {
+		t.Fatalf("endStream: %v", err)
+	}
+	events := asrEvents(t, conn)
+	finals, errors := 0, 0
+	for _, ev := range events {
+		if ev["type"] == "transcript" && ev["final"] == true {
+			finals++
+		}
+		if ev["type"] == "error" {
+			errors++
+		}
+	}
+	if finals != 1 || errors != 0 {
+		t.Fatalf("terminal events = %d final transcripts, %d errors; want exactly 1 final transcript and no error (events %+v)", finals, errors, events)
+	}
+}
+
+func TestASRSonicSingleCompletionWithoutTranscript(t *testing.T) {
+	e := newV3(t, v3opt{mutateO: func(o *httpapi.Options) {
+		o.ASRMode = "bedrock"
+		o.ASROpener = sonic.TestDouble{}
+	}})
+	c := asrGuest(t, e)
+	conn, _, err := dialASR(t, asrURL(e), c.token(), e.srv.URL)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+	// No speech at all: endStream immediately.
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"endStream"}`)); err != nil {
+		t.Fatalf("endStream: %v", err)
+	}
+	events := asrEvents(t, conn)
+	finals, noTranscript := 0, 0
+	for _, ev := range events {
+		if ev["type"] == "transcript" && ev["final"] == true {
+			finals++
+		}
+		if ev["type"] == "error" && ev["message"] == "asr_no_transcript" {
+			noTranscript++
+		}
+	}
+	if finals != 0 || noTranscript != 1 {
+		t.Fatalf("terminal events = %d final transcripts, %d asr_no_transcript; want 0 and 1 (events %+v)", finals, noTranscript, events)
 	}
 }
