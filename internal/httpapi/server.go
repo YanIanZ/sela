@@ -106,6 +106,8 @@ type Options struct {
 	// "bedrock". Nil constructs the IAM-credential opener from the
 	// environment; tests inject the labelled sonic test double.
 	ASROpener sonic.Opener
+	// ASRFlushWait overrides asrFlushWait in tests; zero keeps the default.
+	ASRFlushWait time.Duration
 }
 
 // Server is the HTTP handler.

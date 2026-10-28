@@ -208,7 +208,11 @@ func (s *Server) asrSonic(front *websocket.Conn) {
 		select {
 		case <-upDone:
 			// Wait briefly for the final transcript.
-			deadline := time.After(asrFlushWait)
+			flushWait := asrFlushWait
+			if s.opt.ASRFlushWait > 0 {
+				flushWait = s.opt.ASRFlushWait
+			}
+			deadline := time.After(flushWait)
 		flush:
 			for {
 				select {

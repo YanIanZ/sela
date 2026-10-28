@@ -349,6 +349,7 @@ func TestASRSonicSingleCompletionWithTranscript(t *testing.T) {
 	e := newV3(t, v3opt{mutateO: func(o *httpapi.Options) {
 		o.ASRMode = "bedrock"
 		o.ASROpener = sonic.TestDouble{}
+		o.ASRFlushWait = 500 * time.Millisecond
 	}})
 	c := asrGuest(t, e)
 	conn, _, err := dialASR(t, asrURL(e), c.token(), e.srv.URL)
@@ -359,8 +360,25 @@ func TestASRSonicSingleCompletionWithTranscript(t *testing.T) {
 	if err := conn.WriteMessage(websocket.BinaryMessage, asrSpeech(500)); err != nil {
 		t.Fatalf("write audio: %v", err)
 	}
-	// Let the test double's turn land (voiced spell + quiet), then end.
-	time.Sleep(1500 * time.Millisecond)
+	// Wait for the test double's turn deterministically: the partial
+	// transcript proves the turn landed before input ends.
+	_ = conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	for {
+		mt, raw, err := conn.ReadMessage()
+		if err != nil {
+			t.Fatalf("waiting for the turn: %v", err)
+		}
+		if mt != websocket.TextMessage {
+			continue
+		}
+		var ev struct {
+			Type  string `json:"type"`
+			Final bool   `json:"final"`
+		}
+		if json.Unmarshal(raw, &ev) == nil && ev.Type == "transcript" && !ev.Final {
+			break
+		}
+	}
 	if err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"endStream"}`)); err != nil {
 		t.Fatalf("endStream: %v", err)
 	}
@@ -383,6 +401,7 @@ func TestASRSonicSingleCompletionWithoutTranscript(t *testing.T) {
 	e := newV3(t, v3opt{mutateO: func(o *httpapi.Options) {
 		o.ASRMode = "bedrock"
 		o.ASROpener = sonic.TestDouble{}
+		o.ASRFlushWait = 500 * time.Millisecond
 	}})
 	c := asrGuest(t, e)
 	conn, _, err := dialASR(t, asrURL(e), c.token(), e.srv.URL)
