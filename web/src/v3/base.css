@@ -18,7 +18,7 @@
 html { scroll-padding-top: calc(var(--top-bar-h, 5rem) + 1rem); scroll-padding-bottom: calc(var(--bottom-bar-h, 0px) + 1rem); }
 body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-text); font: var(--font-size-3)/var(--line-height-body) var(--font-sans); letter-spacing: var(--letter-spacing-body); word-spacing: var(--word-spacing-body); overflow-wrap: break-word; -webkit-text-size-adjust: 100%; }
 .s-shell { min-height: 100svh; background: var(--c-bg); container: shell / inline-size; }
-.s-shell-inner { display: flex; flex-direction: column; min-height: 100svh; padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
+.s-shell-inner { display: flex; flex-direction: column; min-height: 100svh; padding-bottom: calc(max(4.75rem, var(--bottom-bar-h, 0px)) + env(safe-area-inset-bottom)); }
 .s-shell h1, .s-shell h2, .s-shell h3, .s-shell h4 { font-family: var(--font-display); line-height: var(--line-height-heading); text-wrap: balance; margin: 0; }
 .s-shell h1 { font-size: var(--font-size-page); font-weight: 650; letter-spacing: -0.035em; line-height: 1.13; }
 .s-shell h2 { font-size: var(--font-size-6); font-weight: 650; letter-spacing: -0.025em; }
