@@ -156,8 +156,8 @@ Selected evidence:
 
 | Item | Budget | Measured |
 | --- | --- | --- |
-| Initial JavaScript, gzip | ≤ 120 KB | 115.0 KB (`index-*.js`); shell/Home chunk 17.8 KB |
-| Route chunks, gzip | ≤ 40 KB each | Settings 11.2 KB; Onboarding 8.2 KB; Auth 3.5 KB; Support 2.6 KB; Help 2.2 KB; Policies 1.4 KB; Reading 1.3 KB |
+| Initial JavaScript, gzip | ≤ 120 KB | 117.0 KB (`index-*.js`); shell/Home chunk 17.8 KB |
+| Route chunks, gzip | ≤ 40 KB each | Settings 11.4 KB; Onboarding 8.2 KB; Auth 3.6 KB; Support 2.6 KB; Help 2.2 KB; Policies 1.4 KB; Reading 1.3 KB |
 | CSS, gzip | ≤ 25 KB | 11.5 KB |
 | Fonts and raster images | 0 bytes | system fonts; inline SVG only |
 
