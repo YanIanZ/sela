@@ -29,7 +29,8 @@ Evidence: [`V3_FRONTEND_VALIDATION.md`](V3_FRONTEND_VALIDATION.md). Frontend
 typecheck, 58 unit/component/axe tests and the production build pass; every Go
 package passes with `SELA_REQUIRE_DB_TESTS=1`; a Chromium journey with 18 axe
 scans (WCAG 2.0/2.1/2.2 A/AA) and 320px/desktop checks passed 44/44 and deleted
-its synthetic guest. Screenshots are in
+its synthetic guest. CI on PR #14, head `0c7cbd0`, passed every job: `v2.yml`
+run 40622842591 and Quality gate run 40622842602. Screenshots are in
 [`docs/evidence/v3-frontend/`](evidence/v3-frontend/). Manual
 screen-reader/usability testing has **not** occurred.
 
