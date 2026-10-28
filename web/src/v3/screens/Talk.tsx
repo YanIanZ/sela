@@ -606,6 +606,13 @@ function RoomPage({ id }: { id: string }) {
           try {
             const latest = await api<Room>("/conversations/" + room.id);
             setRoom(latest);
+            if (
+              !latest.turns.some(
+                (t) => t.role === "user" && t.text === value,
+              )
+            ) {
+              setText(value);
+            }
             setError(e);
             announce(
               "status",
