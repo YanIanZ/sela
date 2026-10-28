@@ -19,12 +19,14 @@ const (
 
 // v3State is what the /api/v3 surface needs beyond Options.
 type v3State struct {
-	cfg      account.Config
-	policies map[string]fixtures.PolicyNotice
-	routes   []v3Route
+	listening *listeningStore
+	cfg       account.Config
+	policies  map[string]fixtures.PolicyNotice
+	routes    []v3Route
 }
 
 func (s *Server) initV3() {
+	s.v3.listening = newListeningStore()
 	cfg := s.opt.AccountConfig
 	if s.opt.Accounts != nil {
 		cfg = s.opt.Accounts.Config()
@@ -57,6 +59,20 @@ func (rt v3Route) pattern() string { return rt.method + " " + rt.path }
 // v3Routes registers every /api/v3 route (API_SPEC_V3 §4-§6).
 func (s *Server) v3Routes() {
 	s.v3.routes = []v3Route{
+		{method: "GET", path: "/api/v3/conversations", owner: s.v3Rooms},
+		{method: "POST", path: "/api/v3/conversations", mutation: true, owner: s.v3CreateRoom},
+		{method: "GET", path: "/api/v3/conversations/{id}", owner: s.v3Room},
+		{method: "DELETE", path: "/api/v3/conversations/{id}", mutation: true, owner: s.v3EndRoom},
+		{method: "POST", path: "/api/v3/conversations/{id}/turns", mutation: true, owner: s.v3SendTurn},
+		{method: "DELETE", path: "/api/v3/conversations/{id}/operation", mutation: true, owner: s.v3StopRoom},
+		{method: "POST", path: "/api/v3/conversations/{id}/resume", mutation: true, owner: s.v3ResumeRoom},
+		{method: "PATCH", path: "/api/v3/conversations/{id}/storage", mutation: true, owner: s.v3RoomStorage},
+		{method: "GET", path: "/api/v3/records", owner: s.v3Records},
+		{method: "POST", path: "/api/v3/records", mutation: true, owner: s.v3CreateRecord},
+		{method: "GET", path: "/api/v3/records/{id}", owner: s.v3Record},
+		{method: "PATCH", path: "/api/v3/records/{id}", mutation: true, owner: s.v3UpdateRecord},
+		{method: "DELETE", path: "/api/v3/records/{id}", mutation: true, owner: s.v3DeleteRecord},
+		{method: "GET", path: "/api/v3/records/{id}/versions", owner: s.v3RecordHistory},
 		{method: "GET", path: "/api/v3/policies", public: true, h: s.v3Policies},
 		{method: "GET", path: "/api/v3/auth/options", public: true, h: s.v3AuthOptions},
 

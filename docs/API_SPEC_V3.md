@@ -290,6 +290,31 @@ Headers: `Content-Disposition: attachment; filename="sela-export-YYYYMMDD.<json|
 
 Password hashes, recovery-code hashes, session token hashes and keys are never exported. Each later feature adds its own section key (for example `journal`, `checkIns`, `memory`, `consultationSummaries`, `shares`) through the registry, in all three formats.
 
+## 6.9 Personal records and listening room (2026-10-27 local implementation)
+
+The default frontend now uses v3. The v2 synthetic journey is retained at `/demo`. Personal-record content and every revision use per-user envelope encryption; one shared `personal_records` table (migration 0200) holds note, check-in and conversation snapshots. This replaces the earlier proposed separate journal/check-in prefixes for this increment. Conversation runtime state is session-scoped memory; saved snapshots participate in the owner export and deletion cascade.
+
+All routes below require the owner cookie and normal same-origin mutation guards. Foreign ids return 404. Request bodies stay under 16 KiB. No user id is accepted from the browser.
+
+| Route | Body / response |
+| --- | --- |
+| `GET /api/v3/records` | `{records: PersonalRecord[]}` newest first; owned decrypted records |
+| `POST /api/v3/records` | `{kind:"note" or "checkin", title?, text, mood?, energy?, tags?, day?, storageGranted:true}`; 201. A note needs text; text max 6000 characters, title max 120. A check-in mood is one of `very_heavy, heavy, okay, good, very_good, mixed`; `energy` is `low, medium, high`; `tags` are up to ten unique values from `sleep, school, work, family, friends, partner, money, health, loneliness, other`. Day is local `YYYY-MM-DD`; at most one check-in per owner/day; duplicate create is 409 stale_version. Fields are optional for a check-in |
+| `GET /api/v3/records/{id}` | One owned record |
+| `PATCH /api/v3/records/{id}` | Same body plus `expectedVersion`; kind/day immutable; keeps encrypted previous versions |
+| `DELETE /api/v3/records/{id}` | `{expectedVersion}`; removes the record and every revision |
+| `GET /api/v3/records/{id}/versions` | `{versions: PersonalRecord[]}` oldest first |
+| `GET /api/v3/conversations` | Active rooms for this owner and this exact session |
+| `POST /api/v3/conversations` | `{save:boolean,recordId?:string}`; storage choice mandatory; optionally resume an owned saved conversation; at most 5 live rooms per session and 500 globally |
+| `GET /api/v3/conversations/{id}` | `{id,save,version,turns,paused,busy,aiState,recordId?}` |
+| `POST /api/v3/conversations/{id}/turns` | `{text,expectedVersion,intent?}`; 1–3000 characters, at most 64 turns. Stores the user's words only when saving was chosen. Contextual Meta-primary reply through `internal/ai`; current per-provider consent required. Eight AI operations per owner per 10 minutes, admission-limited; request budget 90 seconds. Response includes only released, guarded output with provider/model provenance; unavailable AI never invents a reply |
+| `PATCH /api/v3/conversations/{id}/storage` | `{save:boolean,expectedVersion}`; turning off deletes the saved snapshot and revisions, keeping only the live hold |
+| `DELETE /api/v3/conversations/{id}/operation` | Cancel in-flight reply; retain the user's words |
+| `POST /api/v3/conversations/{id}/resume` | `{expectedVersion}`; explicit continuation after inline crisis support; does not call a provider |
+| `DELETE /api/v3/conversations/{id}` | End; purge the hold and cancel inference. A deliberately saved snapshot remains in owned records |
+
+`storage_required` is 403. Unsaved turns never enter PostgreSQL or exports. Holds expire after 30 inactive minutes or 2 hours total; sign-out purges them. Every user-authored entry is screened; crisis text is kept, inline help shown, and room AI paused. Later turns do not erase the user's choice to continue. Provider consent changes invalidate running results. `ai_processing`, `ai_provider_anthropic` and `ai_provider_deepseek` are independent versioned consent purposes; DeepSeek remains default-off and synthetic-only. These routes and screens are local development work, not pilot or public-release approval.
+
 ## 7. Guest and account differences (foundation)
 
 | Capability | Guest | Account |

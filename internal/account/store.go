@@ -120,6 +120,13 @@ func (c Config) purpose(name string) (Purpose, bool) {
 // context and then the owner, and scopes every statement to that owner;
 // a reflection test enforces the signature.
 type OwnerStore interface {
+	CreateRecord(context.Context, UserID, RecordInput) (PersonalRecord, error)
+	Records(context.Context, UserID) ([]PersonalRecord, error)
+	Record(context.Context, UserID, string) (PersonalRecord, error)
+	RecordHistory(context.Context, UserID, string) ([]PersonalRecord, error)
+	UpdateRecord(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
+	DeleteRecord(context.Context, UserID, string, int) error
+
 	Profile(ctx context.Context, owner UserID) (Profile, error)
 	UpdateProfile(ctx context.Context, owner UserID, current SessionID, in ProfileUpdate) (Profile, error)
 	AcknowledgeRecoveryCodes(ctx context.Context, owner UserID, current SessionID) (Profile, error)

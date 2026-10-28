@@ -127,6 +127,7 @@ func accountConfig(cfg config.Config, logger *slog.Logger) account.Config {
 	c.GuardianConsentRequired = cfg.GuardianConsentRequired
 	c.RegionLabel = cfg.RegionLabel
 	c.PolicyVersions = fixtures.V3PolicyVersions()
+	c.Purposes = append(append([]account.Purpose(nil), account.FoundationPurposes...), account.Purpose{Name: "ai_processing", Kinds: []string{account.KindGuest, account.KindAccount}}, account.Purpose{Name: "ai_provider_anthropic", Kinds: []string{account.KindGuest, account.KindAccount}}, account.Purpose{Name: "ai_provider_deepseek", Kinds: []string{account.KindGuest, account.KindAccount}})
 	c.Logger = logger
 	return c
 }
