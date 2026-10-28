@@ -415,6 +415,14 @@ func contextUnits(c *shape) []unit {
 			key = append(key, 0, 'w')
 			key = append(key, t[end:min(len(t), end+checkWindow)]...)
 		}
+		if mayHoldDenial(t[start:end]) {
+			// A denial's disposition reads the rest of the message past the
+			// unit (see restAfter): a method, threat, later act or absence
+			// that follows in a NEW sentence still takes the denial back,
+			// so the key must change when that tail does.
+			key = append(key, 0, 'd')
+			key = append(key, t[end:min(len(t), end+checkWindow)]...)
+		}
 		out = append(out, unit{span{start, end}, string(key)})
 	}
 	for i := 0; i < len(t); i++ {
@@ -457,6 +465,27 @@ func mayHoldWide(u string) bool {
 		}
 	}
 	return false
+}
+
+// denialObjects are the self-harm objects of the denial core (see
+// denialCore); denialNegations are the negators that can stand in one. A
+// unit holding both may hold a denial; a unit missing either cannot.
+var denialObjects = []string{
+	"bunuh diri", "bundir", "mengakhiri hidup", "menyakiti diri", "melukai diri",
+	"kill myself", "commit suicide", "hurt myself", "harm myself",
+	"end my life", "end my own life", "take my life", "take my own life", "suicidal",
+}
+var denialNegations = []string{
+	"tidak", "ga ", "gak ", "gk ", "nggak", "ngga ", "enggak", "engga ", "tak ", "ndak ",
+	"do not", "don't", "dont", "am not", " not ", "won't", "wont", "will not", "would never",
+	"will never", "never", "would not", "wouldn't", "wouldnt",
+}
+
+// mayHoldDenial reports whether the unit text u may hold a denial (see
+// analyseClause). Over-reporting only re-assesses the unit; under-reporting
+// would break skip equivalence, so the check is deliberately conservative.
+func mayHoldDenial(u string) bool {
+	return containsAny(u, denialObjects) && containsAny(u, denialNegations)
 }
 
 // skipPunct returns the first index >= i of t that is not punctuation or

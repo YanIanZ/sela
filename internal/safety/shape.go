@@ -486,7 +486,7 @@ func (c *shape) analyseClause(cl *clause) {
 			if loc == nil {
 				continue
 			}
-			if rest := t[seg.start+loc[1] : seg.end]; !endsDenial(rest, sentenceAfter(t, seg.end)) {
+			if rest := t[seg.start+loc[1] : seg.end]; !endsDenial(rest, restAfter(t, seg.end)) {
 				continue
 			}
 			d.end = seg.start + loc[3]
@@ -511,7 +511,7 @@ func (c *shape) analyseClause(cl *clause) {
 		}
 		next = stripFillers(next)
 		if rest, ok := justRest(next); ok {
-			switch laterKind(rest, sentenceAfter(t, nsp.end), continuationKind(rest)) {
+			switch laterKind(rest, restAfter(t, nsp.end), continuationKind(rest)) {
 			case qualVoid:
 				continue
 			case qualHedge:
@@ -521,7 +521,7 @@ func (c *shape) analyseClause(cl *clause) {
 			}
 		} else if retraction(next) {
 			continue
-		} else if nsp.start >= 0 && laterOwnAct(wordPrefix(t[nsp.start:nsp.end], checkWindow)+sentenceAfter(t, nsp.end)) {
+		} else if nsp.start >= 0 && laterOwnAct(wordPrefix(t[nsp.start:nsp.end], checkWindow)+restAfter(t, nsp.end)) {
 			// "I'm not suicidal, I promise I'll do it tonight", "...,
 			// I've got the pills ready", "aku gak mau bunuh diri, serius
 			// besok aku lakuin" (review finding: v1 crisis, none since
@@ -673,6 +673,22 @@ func sentenceAfter(t string, i int) string {
 	}
 	if k := strings.IndexAny(t[i:min(len(t), i+checkWindow)], ".!?\n"); k >= 0 {
 		return t[i : i+k]
+	}
+	return wordPrefix(t[i:], checkWindow)
+}
+
+// restAfter returns the rest of t after offset i, at most checkWindow
+// bytes and cut at a word boundary, WITHOUT stopping at '.', '!', '?' or a
+// newline. A denial, idiom or brief-break exemption must be weighed
+// against everything the person wrote afterwards: a method, threat, later
+// act or absence that follows in a NEW sentence still takes the exemption
+// back ("I'm not suicidal, just need a break... with the pills"; "aku gak
+// mau bunuh diri, cuma capek. Besok aku lakuin"), exactly as the same tail
+// after a comma already does. Truncating at the separator hid those tails
+// (ruleset -5 blocker: 91 inputs routed none).
+func restAfter(t string, i int) string {
+	if i < 0 || i >= len(t) {
+		return ""
 	}
 	return wordPrefix(t[i:], checkWindow)
 }

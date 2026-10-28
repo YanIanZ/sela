@@ -638,8 +638,10 @@ var catalogue = []rule{
 		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:for\s*)?(?:it\s*all|my\s*(?:whole\s*)?life|this\s*life|my\s*existence)\s*to\s*(?:(?:just|finally|all|already)\s*)?(?:end|be\s*over|stop)\b`, absenceOccasion),
 		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}be\s*gone\b`, absenceOccasion),
 		// "I want to leave this world" (review sweep: v1 none); "... a
-		// better place" is rejected (see absenceOccasion).
-		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}leave\s*this\s*(?:world|earth|planet|life)\b`, absenceOccasion)),
+		// better place" is rejected (see absenceOccasion). Wide: the legacy
+		// idiom's disqualifier may start a new sentence ("... a better
+		// place. Without me in it").
+		patWideReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}leave\s*this\s*(?:world|earth|planet|life)\b`, absenceOccasion)),
 	// The Indonesian counterparts: not being there ("aku pengen nggak ada",
 	// "pengen nggak ada lagi di dunia ini"), leaving or resting forever ("aku
 	// pengen pergi selamanya", "pengen istirahat selamanya"), being done
@@ -665,6 +667,16 @@ var catalogue = []rule{
 		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt|rasanya)\s*){0,2}(?:(?:pergi|keluar|minggat)\s*(?:(?:aja|saja)\s*)?(?:dari|dr)|ninggalin|ninggalkan|meninggalkan|tinggalin)\s*(?:dunia|bumi)\s*(?:ini|fana)\b`, idAbsence),
 		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt)\s*)?(?:semua(?:nya)?(?:\s*ini)?|segalanya|hidup(?:ku|\s*(?:aku|gue|gw|saya))?)\s*(?:(?:cepet|cepat|segera|aja|saja)\s*)?(?:berakhir|tamat|usai)\b`, idAbsence),
 		patReject(`\b(?:aku|saya|gue|gw|gua|ku|aq|ak|sy)\s*(?:(?:udah|sudah|udh|sdh|dah|emang|memang|benar-benar|bener-bener|beneran|sangat|pun)\s*){0,2}(?:siap|rela|ikhlas)\s*(?:(?:buat|untuk|utk)\s*)?(?:mati|meninggal|mampus)\b`, idAbsence)),
+	// A brief leaving or rest word ("pergi sebentar", "tidur sebentar",
+	// "rehat sejenak") whose message says the person is not coming back is a
+	// farewell, not a break (ruleset -5 minor: the tail may start a new
+	// sentence, "aku pergi sebentar. Tidak akan kembali"). Without a
+	// not-coming-back phrase in the rest of the message the match is
+	// rejected ("aku pergi sebentar ke toilet", "sebentar lagi aku pulang"),
+	// and so is an errand or a short absence ("tidak akan lama"); see
+	// briefFarewell.
+	newRule("id-brief-farewell", CategorySuicide, LevelCrisis,
+		patWideReject(`\b(?:pergi|minggat|keluar|tidur|istirahat|beristirahat|rehat|pamit)\s*(?:aja|saja|dulu|dah)?\s*(?:sebentar|bentar|sejenak|sebentar\s*aja|bentar\s*aja|sejenak\s*aja)\b`, briefFarewell)),
 }
 
 // The vocabulary of the hope and wish rules of ruleset -5.

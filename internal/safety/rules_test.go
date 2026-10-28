@@ -39,6 +39,7 @@ var goldenRuleIDs = []string{
 	// added in sela-safety-2026.10.26-5
 	"en-hope-to-die", "en-death-wish-forms", "id-hope-to-die", "id-death-wish-adverb", "en-overdose-plan",
 	"id-overdose-plan", "self-harm-slang", "en-passive-death-wish", "id-passive-death-wish",
+	"id-brief-farewell",
 }
 
 func TestRuleIDsStableAndUnique(t *testing.T) {

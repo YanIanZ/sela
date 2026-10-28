@@ -1925,7 +1925,7 @@ func leaveLegacy(s string, end int) bool {
 	if next := w[k+1]; next != "place" && next != "than" && !(w[0] == "a" && next == "") {
 		return false
 	}
-	return !leaveSoonRe.MatchString(sentenceAfter(s, end))
+	return !leaveSoonRe.MatchString(restAfter(s, end))
 }
 
 // riskOutside reports whether an intent, modal or habit word stands in the
@@ -2049,7 +2049,7 @@ func idAbsence(s string, start, end int) bool {
 		return vanishPlace(s, start, end)
 	case strings.HasSuffix(m, " ini") || strings.HasSuffix(m, "fana"):
 		// "pengen pergi dari dunia ini sebentar": a short break.
-		return briefBreak(w) && !foreverRe.MatchString(sentenceAfter(s, end))
+		return briefBreak(w) && !foreverRe.MatchString(restAfter(s, end))
 	case strings.HasSuffix(m, "udahan"):
 		k := 0
 		for k < 2 && (w[k] == "aja" || w[k] == "saja" || w[k] == "ajah" || particles[w[k]]) {
@@ -2115,10 +2115,32 @@ func stopLivingManner(w []string) bool {
 	return stopManners[w[0]]
 }
 
+// briefFarewell rejects a brief leaving or rest match ("pergi sebentar",
+// "tidur sejenak") unless the rest of the message says the person is not
+// coming back: an explicit not-coming-back phrase or a forever word, even
+// across a sentence break ("aku pergi sebentar. Tidak akan kembali",
+// "aku mau tidur sebentar, selamanya"). A "lagi" ("sebentar lagi" is
+// "soon") or "lama" ("tidak akan lama" is "won't be long") anywhere in the
+// rest keeps it a short break, and so does the absence of any farewell
+// tail ("aku pergi sebentar ke toilet").
+func briefFarewell(s string, _, end int) bool {
+	rest := restAfter(s, end)
+	if briefStayRe.MatchString(rest) {
+		return true
+	}
+	return !noReturnRe.MatchString(rest)
+}
+
 var (
 	// briefTimes after "pergi dari dunia ini" make it a short break (see
 	// briefBreak).
 	briefTimes = setOf("sebentar bentar sejenak sesaat")
+	// noReturnRe after a brief leaving or rest word says the person is not
+	// coming back (see briefFarewell).
+	noReturnRe = regexp.MustCompile(`\b(?:tidak|tak|nggak|ngga|gak|ga|gk|enggak|engga|tdk|takkan|tidakkan)\s*(?:akan\s*)?(?:kembali|balik|pulang)\b|\b(?:nggak|ngga|gak|ga|gk|tidak|tak)\s*bakal\s*(?:kembali|balik|pulang)\b|\bkembali\s*(?:lagi|lg)\b|\bga(?:k|)\s*bangun\s*lagi\b|\b(?:selamanya|selama-lamanya|abadi)\b`)
+	// briefStayRe after a brief leaving or rest word keeps it a short
+	// break: "sebentar lagi" is soon and "tidak akan lama" won't be long.
+	briefStayRe = regexp.MustCompile(`\b(?:sebentar|bentar|sejenak)\s*lagi\b|\b(?:tidak|tak|nggak|ngga|gak|ga|gk|enggak|engga)\s*(?:akan\s*)?lama\b`)
 	// foreverRe later in the sentence makes "pergi dari dunia ini
 	// sebentar" more than a short break (see briefBreak).
 	foreverRe = regexp.MustCompile(`\b(?:selamanya|selama-lamanya|abadi|forever|for\s+good)\b`)
