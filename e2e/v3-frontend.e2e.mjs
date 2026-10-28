@@ -18,6 +18,19 @@ function check(name, ok, detail = "") {
 }
 
 async function audit(page, name) {
+  // Audit the settled layout the user actually gets: fonts loaded and two
+  // animation frames so the shell's measured bars (--bottom-bar-h) and any
+  // client-side reflow have landed. Without this, a fast CI container can
+  // measure the page mid-settle (the policy-detail footer link under the
+  // still-unmeasured place-nav).
+  await page.evaluate(async () => {
+    try {
+      await document.fonts.ready;
+    } catch {
+      /* older engines */
+    }
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
   await page.evaluate(axeSource);
   const violations = await page.evaluate(async () => {
     const r = await window.axe.run(document, {
