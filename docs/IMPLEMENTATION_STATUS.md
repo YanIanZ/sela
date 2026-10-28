@@ -1,10 +1,60 @@
 # Implementation status
 
+## Local v3 frontend delivery — 2026-10-28
+
+Current workspace: `feat/v3-experience`, stacked on the local
+`feat/v3-core-journey` work (merged main `e62506a`, PRs #9–#13; #8 excluded).
+**Status: implemented and verified locally for the screens whose APIs exist;
+nothing is verified live and no pilot or public-release claim is made.**
+
+The default frontend now implements the 28 screen groups in
+[`docs/design/SCREENS.md`](design/SCREENS.md) to the extent their APIs exist:
+the app shell and design system, Introduction/About, onboarding (18+ guest and
+account, 16–17 guest with guardian consent, 15/under-15 blocks), sign-in,
+recovery, guest upgrade, Home, Talk list and room, notes/check-ins, timeline and
+patterns, Support hub, Immediate help, Privacy & data, Display & accessibility,
+Account and Policies. Memory, consultation summary/preparation/sharing/
+recipient/follow-up and reading are honest blocked states and name their missing
+API or editorial gate. The v2 synthetic demo stays at `/demo` and `/r`; the
+legacy `apps/web/` app is untouched.
+
+Real integrations: accounts, guest, recovery, reauth, password, recovery codes,
+consents, guardian consent, sessions, audit, export, account/guest deletion,
+personal records and revisions, conversation list/room/turns/stop/storage/resume
+and the bundled verified help directory. The only backend change is additive to
+the encrypted check-in payload: `energy`, `tags` and mood `mixed`, covered by
+`TestV27CheckInEnergyAndTags`.
+
+Evidence: [`V3_FRONTEND_VALIDATION.md`](V3_FRONTEND_VALIDATION.md). Frontend
+typecheck, 58 unit/component/axe tests and the production build pass; every Go
+package passes with `SELA_REQUIRE_DB_TESTS=1`; a Chromium journey with 18 axe
+scans (WCAG 2.0/2.1/2.2 A/AA) and 320px/desktop checks passed 44/44 and deleted
+its synthetic guest. CI on PR #14, head `0c7cbd0`, passed every job: `v2.yml`
+run 40622842591 and Quality gate run 40622842602. Screenshots are in
+[`docs/evidence/v3-frontend/`](evidence/v3-frontend/). Manual
+screen-reader/usability testing has **not** occurred.
+
+Still open: memory, summary/sharing/recipient/follow-up, reading editorial
+review, conversation corrections/reflections/streaming/hold warning/derived-item
+deletion, earlier policy versions, the 15-year-old server sub-band, legal review
+(B-10), hosting/region (B-3, B-15), live provider evaluation (B-1, B-8, B-9) and
+the restore announcement gate. Items keep their backlog status; this frontend
+delivery does not make them verified live.
+
+## Historical local v3 core increment — 2026-10-27
+
+Current workspace: `feat/v3-core-journey`, based on merged main `e62506a` (PRs #9–#13; #8 remains excluded). Work is **in progress**, with local test evidence; it is not a pilot/public-release claim. The default frontend now uses `/api/v3`: guest/account entry and recovery, home, Meta-primary listening with independent provider consent, encrypted saved conversations, journal with revisions, one check-in per local day, timeline, support, privacy, export and deletion. `/demo` retains the v2 synthetic journey.
+
+No personal content is saved without its surface's explicit storage choice. Unsaved rooms are session-scoped holds, purged at End/sign-out, 30 inactive minutes or 2 hours total. A saved crisis pause survives reopen; deleting its record cancels the associated room. The user original is preserved with versions; owned records and revisions participate in export and account deletion.
+
+Evidence and exact commands: [local v3 validation](V3_CORE_VALIDATION.md). Still open: memory and interpretation review, consultation summaries/sharing/follow-up v3, reading-library UI and authoring verification, conversation streaming, full settings/minor/guardian surfaces, hosted operations and pilot gates. The implementation below is a historical checkpoint from 2026-10-26; references there to unmerged PRs and missing provider credentials are stale, not current merge/access status. Local credentials are not evidence of deployment, model-revision pinning or a completed verifier evaluation.
+
+
 Updated: 2026-10-26. v3 work happens on branch `feat/sela-v3-pilot`, which was stacked on PR #6 (`feat/v2-go-meta-runtime`, D-034). PR #6 was merged into main on 2026-10-26 (`7fc6678`), and this branch merges it (D-053). The branch is pushed and open as **draft PR #9** against main: `0ff3341`, `4cadbfd` and `59dba14`, and on top of them the documentation integration pass that this file describes as "the integration pass", committed on `feat/sela-v3-pilot` and pushed to draft PR #9 (the CI run recorded in §1 tested `59dba14`; no CI run on the integration pass's commit is recorded here). The AI provider layer is draft PR #10 against `feat/sela-v3-pilot`, not merged; the research and reading work is draft PR #11 against main, not merged; ruleset `-5` takes a new PR against main, draft PR #8, a WIP snapshot (D-034 status, [conflict matrix](CONFLICT_MATRIX.md) row 63). Items and acceptance criteria: [backlog](BACKLOG.md). Requirement mapping: [requirements traceability](REQUIREMENTS_TRACEABILITY.md). Order and release ladder: [roadmap](ROADMAP.md). External blockers: [blockers](BLOCKERS.md) (B-1 to B-15). Decisions: [decision log](DECISION_LOG.md) (for v3: owner direction D-026; PM decisions D-027 to D-050 and D-054 to D-056; engineering defaults D-051 and D-052; merge record D-053). Status words: [SPEC §G](../SPEC.md#g-goal).
 
 ## 1. Where v3 stands
 
-**The v3 backend foundation is verified locally, and its CI run on draft PR #9 passed** (commit `0ff3341`, ADR-0002 criteria F-01 to F-47; how the status word applies to it: [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26), which the PM confirms or withdraws now that the CI run is recorded; its implemented-gate point is closed, confirmed by the PM, [D-056](DECISION_LOG.md#d-056)). **Everything else in v3 is planned or in progress. No v3 screen exists yet, nothing in v3 is verified live, nothing is deployed, and no live call to any AI provider has ever been made.** The v2 evidence in §4 stays valid for v2 scope only.
+**The v3 backend foundation is verified locally, and its CI run on draft PR #9 passed** (commit `0ff3341`, ADR-0002 criteria F-01 to F-47; how the status word applies to it: [SPEC §G foundation status note](../SPEC.md#foundation-status-note-2026-10-26), which the PM confirms or withdraws now that the CI run is recorded; its implemented-gate point is closed, confirmed by the PM, [D-056](DECISION_LOG.md#d-056)). **At that 2026-10-27 checkpoint, everything else in v3 was planned or in progress, no v3 screen existed, nothing was verified live, nothing was deployed, and no live call to any AI provider had been made.** The 2026-10-28 frontend section above supersedes the screen statement; live/deployment status is unchanged. The v2 evidence in §4 stays valid for v2 scope only.
 
 Status words are defined once in [SPEC §G](../SPEC.md#g-goal) and used here without restating them; the gate for each level, including **ready for controlled pilot** and **public release**, is in [roadmap §2](ROADMAP.md#2-release-ladder).
 
@@ -95,8 +145,8 @@ Milestone order and exit criteria: [backlog §4](BACKLOG.md#4-milestones).
 | Operator access audit (D-052, SPEC V32) | S-274 | planned; hosted access log blocked externally (B-3) | —; not part of the foundation commit; ADR-0002 §13 and the runbook do not describe the record yet ([conflict matrix](CONFLICT_MATRIX.md) row 57) |
 | Safety ruleset -5 | S-150 | in progress | WIP snapshot committed on `fix/safety-ruleset-5` (`f619677`, draft PR #8 to main), re-verification pending; the fix loop continues in the working tree of that branch (D-034 status); PR #6 is merged into main with `-4` |
 | Design direction, information architecture, screens, content style, accessibility criteria | S-190 | in progress | `docs/design/DESIGN_DIRECTION.md`, `INFORMATION_ARCHITECTURE.md`, `SCREENS.md`, `CONTENT_STYLE.md`, `ACCESSIBILITY_CRITERIA.md`, `tokens.css`, `tools/`, committed with the planning documents (`4cadbfd`); contrast run and PM review not yet recorded |
-| Design system and app shell with help and Quick Exit, bilingual base | S-153, S-191, S-193 | in progress | uncommitted in the working tree of `feat/sela-v3-pilot` (§1) |
-| Welcome, onboarding consents, storage choice, help page, WCAG 2.2 AA gate, browser review of the P2 screens | S-001, S-006, S-152, S-170, S-194, S-195 | planned | — |
+| Design system and app shell with help and Quick Exit, bilingual base | S-153, S-191, S-193 | in progress; implemented and locally checked 2026-10-28 | `web/src/v3/` and [V3_FRONTEND_VALIDATION.md](V3_FRONTEND_VALIDATION.md); owner/browser and screen-reader review pending |
+| Welcome, onboarding consents, storage choice, help page, WCAG 2.2 AA gate, browser review of the P2 screens | S-001, S-006, S-152, S-170, S-194, S-195 | in progress; screens implemented and locally checked 2026-10-28; the automated WCAG 2.2 CI gate is not yet wired | `web/src/v3/`; [V3_FRONTEND_VALIDATION.md](V3_FRONTEND_VALIDATION.md); owner/browser and manual review pending |
 
 ### P3 Listening, notes and timeline
 

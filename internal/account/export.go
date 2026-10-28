@@ -101,6 +101,9 @@ type ExportedSession struct {
 
 func foundationExporters() []Exporter {
 	return []Exporter{
+		exporterFunc{"personalRecords", []string{"personal_records", "personal_record_versions"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
+			return b.store.exportRecords(ctx, tx, owner)
+		}},
 		exporterFunc{"profile", []string{"users"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
 			return b.store.profile(ctx, tx, owner)
 		}},

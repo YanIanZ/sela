@@ -94,7 +94,7 @@ func TestV3PoliciesRenderConfiguredDurations(t *testing.T) {
 			t.Errorf("rendered text lacks %q", w)
 		}
 	}
-	if len(V3PolicyVersions()) != 3 {
+	if len(V3PolicyVersions()) != 6 {
 		t.Fatal("v3 policy versions")
 	}
 }

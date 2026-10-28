@@ -1,6 +1,6 @@
 # Sela v3 screens
 
-Status: **design decision** by the design lead, 2026-10-26, revised after review rounds 1 and 2 ([DESIGN_DIRECTION.md §11](DESIGN_DIRECTION.md#11-revision-log)). **Not implemented.** Components, tokens and patterns come from [DESIGN_DIRECTION.md](DESIGN_DIRECTION.md). Places and routes come from [INFORMATION_ARCHITECTURE.md](INFORMATION_ARCHITECTURE.md). Copy rules come from [CONTENT_STYLE.md](CONTENT_STYLE.md). Accessibility acceptance criteria come from [ACCESSIBILITY_CRITERIA.md](ACCESSIBILITY_CRITERIA.md).
+Status: **design decision** by the design lead, 2026-10-26, revised after review rounds 1 and 2 ([DESIGN_DIRECTION.md §11](DESIGN_DIRECTION.md#11-revision-log)). **Implemented in `web/src/v3/` on 2026-10-28 for the screens whose APIs exist; the summary, sharing, recipient, memory and reading states are truthful blocked states.** The implementation and its local evidence are in [V3_FRONTEND_VALIDATION.md](../V3_FRONTEND_VALIDATION.md). Components, tokens and patterns come from [DESIGN_DIRECTION.md](DESIGN_DIRECTION.md). Places and routes come from [INFORMATION_ARCHITECTURE.md](INFORMATION_ARCHITECTURE.md). Copy rules come from [CONTENT_STYLE.md](CONTENT_STYLE.md). Accessibility acceptance criteria come from [ACCESSIBILITY_CRITERIA.md](ACCESSIBILITY_CRITERIA.md).
 
 ## How to read a screen section
 
@@ -14,7 +14,7 @@ Every section has the same fields:
 - **Recovery:** how a person gets out of every failure without losing their words.
 - **Keyboard and focus order.**
 - **Layout:** at 320 CSS px, and on wide screens (shell 64em or wider).
-- **Copy:** Indonesian and English examples. Final strings live in `web/src/i18n/{id,en}.ts` and keep ID/EN parity, as in v2.
+- **Copy:** Indonesian and English examples. v3 strings live beside their screens as `w(id, en)` pairs and keep ID/EN parity; v2 strings stay in `web/src/i18n/{id,en}.ts`.
 - **API:**
   - "v3 spec": specified in [API_SPEC_V3](../API_SPEC_V3.md); the foundation is being implemented.
   - "v2": implemented in v2; development, test and demo only.
