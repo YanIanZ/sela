@@ -1,19 +1,19 @@
-/* Shared application structure. Desktop workspaces add a shelf of daily tools
- * under the top bar; phones keep the menu sheet and the four-place bottom bar. */
+/* Shared application structure. Desktop workspaces add a row of daily-tool
+ * pills under the top bar; phones keep the menu sheet and the floating pill. */
 .s-shelf-bar { display: none; }
 @media (min-width: 64em) {
- .s-shelf-bar { display: flex; align-items: center; gap: 1.5rem; min-height: 3rem; padding: 0 max(2.5rem, env(safe-area-inset-right)) 0 max(2.5rem, env(safe-area-inset-left)); background: var(--c-surface); border-bottom: 1px solid var(--c-border-subtle); font-size: var(--font-size-1); }
- .s-shelf-bar .s-workspace-context { flex: 0 0 auto; color: var(--c-muted); padding-right: 1.5rem; border-right: 1px solid var(--c-border-subtle); }
+ .s-shelf-bar { display: flex; align-items: center; gap: 1.25rem; min-height: 3rem; padding: 0 max(2.5rem, env(safe-area-inset-right)) 0.5rem max(2.5rem, env(safe-area-inset-left)); background: var(--c-bg); font-family: var(--font-display); font-size: var(--font-size-1); }
+ .s-shelf-bar .s-workspace-context { flex: 0 0 auto; color: var(--c-muted); padding-right: 1.25rem; border-right: 1px solid var(--c-border-subtle); }
  .s-shelf-bar .s-workspace-context strong { color: var(--c-text); font-weight: 600; }
- .s-shelf-bar > nav { display: flex; align-items: center; gap: 1rem; min-width: 0; }
- .s-shelf-bar > nav:first-of-type { flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+ .s-shelf-bar > nav { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+ .s-shelf-bar > nav:first-of-type { flex: 1 1 auto; }
  .s-shelf-bar .s-rail-label { flex: 0 0 auto; color: var(--c-muted); }
- .s-shell .s-shelf-bar ul { display: flex; gap: 0.25rem; list-style: none; margin: 0; padding: 0; }
- .s-shell .s-shelf-bar a { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.25rem; padding: 0.25rem 0.6rem; border-radius: var(--radius-2); color: var(--c-text); text-decoration: none; white-space: nowrap; }
- .s-shell .s-shelf-bar a:hover { background: var(--c-sunken); }
- .s-shell .s-shelf-bar a[aria-current="page"] { background: var(--c-accent-soft); color: var(--c-accent); font-weight: 700; }
+ .s-shell .s-shelf-bar ul { display: flex; flex-wrap: wrap; row-gap: 0.35rem; gap: 0.35rem; list-style: none; margin: 0; padding: 0; }
+ .s-shell .s-shelf-bar a { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.25rem; padding: 0.25rem 0.85rem; border-radius: var(--radius-pill); border: 1px solid var(--c-border-subtle); background: var(--c-surface); color: var(--c-text); text-decoration: none; white-space: nowrap; transition: background-color var(--duration-quick) var(--ease-standard), border-color var(--duration-quick) var(--ease-standard); }
+ .s-shell .s-shelf-bar a:hover { border-color: var(--c-text); }
+ .s-shell .s-shelf-bar a[aria-current="page"] { background: var(--place-home); border-color: transparent; color: var(--on-place); font-weight: 500; }
  .s-shelf-bar .s-icon { width: 1rem; height: 1rem; flex-shrink: 0; color: var(--c-muted); }
- .s-shelf-bar .s-rail-personal { flex: 0 0 auto; padding-left: 1rem; border-left: 1px solid var(--c-border-subtle); gap: 0.25rem; }
+ .s-shelf-bar .s-rail-personal { flex: 0 0 auto; padding-left: 1rem; border-left: 1px solid var(--c-border-subtle); gap: 0.35rem; }
  .s-shell--workspace .s-shell-inner { padding-bottom: 0; }
 }
 @media (min-width: 64em) and (max-width: 82em) {
@@ -23,7 +23,7 @@
 
 /* One reading page across the journal, support, library and settings. */
 .s-workspace-page > .s-narrow { margin-inline: 0; }
-.s-workspace-page[data-space="notes"] > .s-entry-list { padding: 0 1.5rem; background: var(--c-surface); border-radius: var(--radius-3); }
+.s-workspace-page[data-space="notes"] > .s-entry-list { background: var(--c-surface); border-radius: var(--radius-3); }
 .s-workspace-page[data-space="notes"] .s-filters { margin-block: 1.5rem; }
 @media (min-width: 64em) {
  .s-workspace-page .c-support-intro { grid-template-columns: minmax(0, 1.8fr) minmax(12rem, 1fr); }
@@ -31,5 +31,8 @@
  .s-workspace-page .c-support-paths > section:last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 40em) {
- .s-workspace-page[data-space="notes"] > .s-entry-list { padding-inline: 1rem; }
+ .s-workspace-page[data-space="notes"] > .s-entry-list { padding-inline: 0.25rem; }
+}
+@media (forced-colors: active) {
+ .s-shelf-bar a[aria-current="page"] { border-color: Highlight; }
 }

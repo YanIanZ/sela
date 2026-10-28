@@ -5,26 +5,26 @@ primary_target: "web/src/v3/App.tsx"
 related_targets: ["web/src/v3/shell.tsx","web/src/v3/screens/Home.tsx","web/src/v3/styles.css"]
 ---
 
-# Sela replacement interface — Sampul Buku
+# Sela replacement interface — Taman Napas (wellness)
 
-Mode: Operate (public portal is its own Read-mode brief, inheriting this world). Scope: whole web/src/v3 app. Owner request 2026-10-28: rebuild the whole look, more professional and responsive; "editorial hangat" + "tenang & tepercaya"; keep every function and all copy. Supersedes the cobalt Open Fold world. Preserve owner authorization, consent, records, crisis help, Quick exit, ID/EN, display preferences (scheme, contrast, text size, spacing, motion, colour mood) and every supported API; unsupported APIs stay honest blocked states.
+Mode: Operate (public portal is its own Read-mode brief, inheriting this world). Scope: whole web/src/v3 app. Owner request 2026-10-29 (/impeccable): replace the whole UI/UX system and CSS with a wellness world pinned by an owner-supplied reference image (sage-green mobile wellness app: big rounded tinted header sheet, bold rounded sans greeting, mood faces, tinted activity cards with circular arrow buttons, black pill bottom navigation with a sage active dot). Owner answers: whole v3; no mascot; illustrations as crisp SVG geometry only (no raster AI available). Supersedes Sampul Buku. Preserve owner authorization, consent, records, crisis help, Quick exit, ID/EN, display preferences (scheme, contrast, text size, spacing, motion) and every supported API; unsupported APIs stay honest blocked states. All copy kept.
 
 ## Direction contract
 
-THESIS: Each place in Sela is a book you own: a flat cover-colour band names where you are, and beneath it a warm, ruled reading page where your own words lead. Refuses the category default of white cards, pastel blobs and a single teal accent.
+THESIS: Sela is a quiet garden you step into: every place opens on a soft tinted sheet with rounded lower corners that holds the greeting and the way in, and the work below sits on a clean near-white page. Refuses both the cream-serif editorial default and the clinical white-card dashboard.
 
-OWN-WORLD: Warm paper ground (#F5F0E6) with a lighter page (#FBF8F2), ink #231C17, hairline #DCD2C2 and a 2px ink rule opening each section. Four cover colours as wayfinding: brick Beranda, forest Cerita, ochre Catatanku, indigo Dukungan. Literata serif for titles and record titles; Hanken Grotesk for UI and body. Flat print surfaces, 4–8px corners, no shadows at rest, spine marks beside places and shelf rows.
+OWN-WORLD: Sage ground sheets (#D4E5C3) with blush (#F4DDD3), mint (#CDE8DC) and butter (#F6E7B4) as place tints; near-white page #FBFBF7; ink #1C1B18 for text and the primary black pill buttons; deep leaf green #2F6A43 for links, focus and selection. Lexend (self-hosted) for headings, buttons and nav; Hanken Grotesk for body. Pill controls, 20–32px card radii, white circular icon buttons, 4-point sparkle stars and leaf geometry as the only ornament. Flat, one soft lift shadow for floating layers.
 
-STORY: Arrive, see which book you are in, pick talk/note/check-in from the cover, then read your own saved words in ruled rows; Help and Quick exit always in the same top-right place.
+STORY: Arrive, read a warm greeting in large bold type, pick talk / note / check-in from the sheet, glance at mood faces, then read saved words in rounded lists; Help and Quick exit always top-right.
 
-FIRST VIEWPORT: Top bar: Sela spine-mark wordmark left, four place tabs with spine colours centre, Help + Quick exit + Menu right; desktop tool strip beneath. Then a full-bleed cover band in the place colour: serif page title at 3.5–4.75rem with greeting, invitation and primary actions on the cover. Below, a 1.4fr/1fr ruled page: continue + recent records left, shelf of other rooms right. Mobile keeps two-row header and four-place bottom bar with spine colours.
+FIRST VIEWPORT: Top bar: Sela leaf mark + wordmark left, places as a black pill segmented nav (sage active segment) centre, Help (blush pill) + Quick exit (outline pill) + Menu right. Then the place sheet: greeting 3–4.5rem bold Lexend left, primary black pill "Mulai bercerita" with chevrons, two tinted activity cards (Tulis catatan, Cek perasaan) with circular arrow buttons on the right. Below: mood faces row linking into check-in, then continue + recent records left, more spaces right. Phones: header shares the sheet tint, floating black pill bottom nav.
 
-FORM: Indonesian paperback cover system (Pustaka Jaya / Balai Pustaka 1970–80s), my top-ranked grounded candidate, shown as IMPECCABLE'S PICK and chosen by the user over the rolled Surat Balasan direction. seed:5abf77ad9f750cfb. Sketch .impeccable/mocks/decision/sampul-buku.html (capture captures/sampul-buku.png). Code-led.
+FORM: Owner-pinned reference (wellness mobile UI image), translated to web Operate shell. The roll was skipped because a user-pinned direction beats the roll (`concept-seed --check-seed none` exits 0: "none means the roll was skipped") — seed: none (unavailable). Code-led.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
 ## Constraints carried forward
-- No kicker above headings; no scores, streaks or progress.
-- Help/danger/success/warning semantics identical across colour moods; text 4.5:1, controls/focus 3:1 in every scheme; high contrast keeps its own values.
+- No kicker above headings; no scores, streaks or progress. Mood faces always carry their text label; colour never alone.
+- Help/danger/success/warning semantics identical across schemes; text 4.5:1, controls/focus 3:1 in every scheme; high contrast keeps its own values and drops tints.
 - Focused writing/listening rooms keep a protected writing area; 320px and 130–150% text must reflow without horizontal scroll.
 - Dev-only dashboard preview stays synthetic, labelled and API-free.

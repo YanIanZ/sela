@@ -70,7 +70,7 @@ export function AboutPage() {
                   "AI replies are off in this environment. Writing and saving still work.",
                 )}
       </p>
-      <h2 style={{ marginTop: "var(--space-5)" }}>{w("Di mana data diproses", "Where data is processed")}</h2>
+      <h2 className="s-mt-5">{w("Di mana data diproses", "Where data is processed")}</h2>
       <ul className="s-about-list">
         <li>
           <strong>{"Meta · Modal"}</strong>
@@ -93,7 +93,7 @@ export function AboutPage() {
           </p>
         </li>
       </ul>
-      <h2 style={{ marginTop: "var(--space-5)" }}>{w("Yang tidak pernah Sela lakukan", "What Sela never does")}</h2>
+      <h2 className="s-mt-5">{w("Yang tidak pernah Sela lakukan", "What Sela never does")}</h2>
       <ul>
         <li>{w("Memberi diagnosis, resep, atau terapi.", "Give a diagnosis, prescription or therapy.")}</li>
         <li>{w("Menghubungi siapa pun atas namamu.", "Contact anyone on your behalf.")}</li>
@@ -101,7 +101,7 @@ export function AboutPage() {
         <li>{w("Memakai catatanmu untuk melatih model.", "Use your notes to train models.")}</li>
         <li>{w("Menjual data atau memasang iklan.", "Sell data or show advertising.")}</li>
       </ul>
-      <h2 style={{ marginTop: "var(--space-5)" }}>{w("Kredit", "Credits")}</h2>
+      <h2 className="s-mt-5">{w("Kredit", "Credits")}</h2>
       <p>
         {w(
           "Sela melanjutkan Dengar.in. Ikon mengikuti Lucide (lisensi ISC). Bacaan yang dikutip dari WHO memakai lisensi CC BY-NC-SA 3.0 IGO dan tidak ditampilkan sebelum ditinjau editor.",

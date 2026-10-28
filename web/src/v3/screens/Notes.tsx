@@ -9,7 +9,7 @@ import {
 } from "../api";
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
-import { Icon } from "../icons";
+import { Icon, MoodFace } from "../icons";
 import { MemoryPage, entryRoute } from "./Continuity";
 import { WeeklyPage } from "./Weekly";
 import { helpData } from "../helpdata";
@@ -252,7 +252,7 @@ function Timeline({ user }: { user: Profile }) {
                         <span className="s-timeline-preview" style={{ display: "block" }}>
                           {r.kind === "conversation"
                             ? r.title || w("Percakapan tersimpan", "Saved conversation")
-                            : r.text.slice(0, 120) || w("Tanpa teks", "No text")}
+                            : r.text.slice(0, 240) || w("Tanpa teks", "No text")}
                         </span>
                       )}
                     </span>
@@ -422,10 +422,14 @@ function CheckIn() {
   const w = useWords();
   const { lang } = useI18n();
   const { prefs } = usePrefs();
-  const { navigate } = useRouter();
+  const { navigate, query } = useRouter();
   const { announce } = useAnnounce();
   const { records } = useRecords();
-  const [mood, setMood] = useState<string | null>(null);
+  const [askedMood] = useState<string | null>(() => {
+    const asked = query.get("mood");
+    return moods.some((m) => m.value === asked) ? asked : null;
+  });
+  const [mood, setMood] = useState<string | null>(askedMood);
   const [energy, setEnergy] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [text, setText] = useState("");
@@ -433,7 +437,7 @@ function CheckIn() {
   const [groupError, setGroupError] = useState("");
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  useLeaveWarning(Boolean(text || mood));
+  useLeaveWarning(Boolean(text || (mood && mood !== askedMood)));
   const today = localDay();
   const existing = records?.find((r) => r.kind === "checkin" && r.day === today);
 
@@ -520,11 +524,8 @@ function CheckIn() {
           columns={2}
           options={moods.map((m) => ({
             value: m.value,
-            label:
-              (lang === "en" ? m.en : m.id) +
-              (m.dots
-                ? ""
-                : ""),
+            label: lang === "en" ? m.en : m.id,
+            art: <MoodFace mood={m.value} size={44} />,
           }))}
         />
         <ChoiceGroup
@@ -821,6 +822,7 @@ function EntryDetail({ id }: { id: string }) {
 
 function CrisisAfterSave() {
   const w = useWords();
+  const { lang } = useI18n();
   const service = helpData.help[0];
   return (
     <section className="s-crisis-panel" aria-labelledby="crisis-save-title">
@@ -834,9 +836,7 @@ function CrisisAfterSave() {
       {service && (
         <p>
           <strong>{service.name}</strong> ·{" "}
-          {document.documentElement.lang === "en"
-            ? service.description.en
-            : service.description.id}
+          {service.description[lang]}
         </p>
       )}
       <div className="s-actions">

@@ -39,15 +39,15 @@
 .s-info-path li p { font-size: var(--font-size-1); color: var(--c-muted); margin-top: .35rem; }
 .s-info-control dl { margin-block: 1rem; }
 .s-info-control dl > div { padding-block: .75rem; border-bottom: 1px solid var(--c-border-subtle); }
-.s-info-control dt { font-weight: 650; font-size: .875rem; margin-bottom: .35rem; }
+.s-info-control dt { font-weight: 650; font-size: var(--font-size-1); margin-bottom: .35rem; }
 .s-info-control dd { color: var(--c-muted); font-size: var(--font-size-1); }
 .s-info-control > a { display: inline-flex; align-items: center; min-height: var(--target-min); }
 .s-info-help { padding: .25rem .5rem; }
 .s-info-help > .s-icon { color: var(--c-help); margin-bottom: .75rem; }
 .s-info-dashboard .s-info-help h2 { margin-bottom: .75rem; }
-.s-info-help p { font-size: .875rem; color: var(--c-muted); }
+.s-info-help p { font-size: var(--font-size-1); color: var(--c-muted); }
 .s-info-help > a { margin-top: .5rem; }
-.s-info-bottom { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; padding-top: 1rem; border-top: 1px solid var(--c-border-subtle); font-size: .875rem; }
+.s-info-bottom { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; padding-top: 1rem; border-top: 1px solid var(--c-border-subtle); font-size: var(--font-size-1); }
 .s-info-bottom a { display: inline-flex; align-items: center; min-height: var(--target-min); }
 @media (max-width: 68em) {
  .s-info-feature-groups { grid-template-columns: minmax(0,1fr); }
@@ -70,3 +70,12 @@
 .s-info-dashboard .s-info-feature-groups a:hover { color: var(--c-link); background: var(--c-surface-quiet); }
 .s-info-dashboard .s-info-welcome h2 { margin-bottom: .75rem; }
 .s-info-dashboard .s-info-heading h1 { margin-bottom: .5rem; }
+
+:root[data-scheme^="contrast"] .s-info-welcome { border: 2px solid var(--c-text); }
+:root[data-scheme^="contrast"] .s-info-features,
+:root[data-scheme^="contrast"] .s-info-reading,
+:root[data-scheme^="contrast"] .s-info-path,
+:root[data-scheme^="contrast"] .s-info-control { border: 2px solid var(--c-text); }
+@media (forced-colors: active) {
+  .s-info-welcome, .s-info-features, .s-info-reading, .s-info-path, .s-info-control { border: 2px solid CanvasText; }
+}

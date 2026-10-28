@@ -64,16 +64,11 @@ describe('Browser speech utility', () => {
     }
   });
 
-  it('keeps the chat recognition callback isolated from submit, fetch, and gamification paths', () => {
+  it('legacy chat no longer starts browser recognition (dictation moved to the v3 Meta proxy)', () => {
     const chatSource = readFileSync(new URL('../../apps/web/src/app/chat/page.tsx', import.meta.url), 'utf8');
-    const resultCallback = chatSource
-      .split('recognition.onresult = (event) => {')[1]
-      .split('recognition.onerror =')[0];
-
-    assert.match(resultCallback, /applyFinalTranscript\(setInputText, getFinalTranscript\(event\)\)/);
-    assert.doesNotMatch(resultCallback, /sendMessageWithText\s*\(/);
-    assert.doesNotMatch(resultCallback, /fetch\s*\(/);
-    assert.doesNotMatch(resultCallback, /awardLangkah\s*\(/);
+    assert.doesNotMatch(chatSource, /from '@\/lib\/browserSpeech'/);
+    assert.doesNotMatch(chatSource, /recognition\.start\(\)/);
+    assert.doesNotMatch(chatSource, /recognition\.onresult/);
   });
 
   it('maps recognition errors to actionable Indonesian text', () => {
@@ -224,12 +219,11 @@ describe('Microphone permission pre-check before recognition.start()', () => {
     }
   });
 
-  it('both voice pages route recognition.start() through the pre-check and keep the existing denial copy', () => {
-    for (const path of ['../../apps/web/src/app/chat/page.tsx', '../../apps/web/src/app/ruang-ngobrol/page.tsx']) {
-      const source = readFileSync(new URL(path, import.meta.url), 'utf8');
-      assert.match(source, /startUnlessMicrophoneDenied\(window, \(\) => \{/, `${path} must pre-check the microphone permission`);
-      assert.match(source, /speechRecognitionErrorMessage\('not-allowed'/, `${path} must reuse the existing denial message`);
-      assert.ok(source.indexOf('startUnlessMicrophoneDenied(window') < source.indexOf('recognition.start()'), `${path} must start recognition only inside the pre-check`);
-    }
+  it('the paused voice room still routes recognition.start() through the pre-check', () => {
+    const path = '../../apps/web/src/app/ruang-ngobrol/page.tsx';
+    const source = readFileSync(new URL(path, import.meta.url), 'utf8');
+    assert.match(source, /startUnlessMicrophoneDenied\(window, \(\) => \{/, `${path} must pre-check the microphone permission`);
+    assert.match(source, /speechRecognitionErrorMessage\('not-allowed'/, `${path} must reuse the existing denial message`);
+    assert.ok(source.indexOf('startUnlessMicrophoneDenied(window') < source.indexOf('recognition.start()'), `${path} must start recognition only inside the pre-check`);
   });
 });

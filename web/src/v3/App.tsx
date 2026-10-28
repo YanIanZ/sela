@@ -10,6 +10,7 @@ import { Loading } from "./ui";
 import { HomePage } from "./screens/Home";
 import { DashboardPage } from "./screens/Dashboard";
 import { TalkPage } from "./screens/Talk";
+import { VoicePage } from "./screens/Voice";
 import { NotesPage } from "./screens/Notes";
 import { AboutPage } from "./screens/About";
 const SupportPage = lazy(() =>
@@ -92,6 +93,7 @@ function titleFor(path: string, lang: string): string {
   if (path === "/home") return t("Beranda", "Home");
   if (path === "/dashboard") return t("Dashboard Sela", "Sela dashboard");
   if (path === "/talk") return t("Ruang cerita", "Talk");
+  if (path === "/talk/voice") return t("Ruang suara", "Voice room");
   if (path.startsWith("/talk/")) return t("Percakapan", "Conversation");
   if (path === "/notes") return t("Catatan pribadiku", "My personal notes");
   if (path === "/notes/write") return t("Tulis catatan", "Write a note");
@@ -246,6 +248,8 @@ function AppRoutes() {
     screen = <PolicyGatePage user={user} />;
   } else if (user && path === "/home") {
     screen = <HomePage user={user} />;
+  } else if (user && path === "/talk/voice") {
+    screen = <VoicePage user={user} />;
   } else if (user && (path === "/talk" || path.startsWith("/talk/"))) {
     screen = <TalkPage user={user} />;
   } else if (user && (path === "/notes" || path.startsWith("/notes/"))) {

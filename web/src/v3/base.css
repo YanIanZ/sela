@@ -1,8 +1,8 @@
 @font-face {
-  font-family: "Literata";
-  src: url("/fonts/literata-latin.woff2") format("woff2");
+  font-family: "Lexend";
+  src: url("/fonts/lexend-latin.woff2") format("woff2");
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 100 900;
   font-display: swap;
 }
 @font-face {
@@ -13,7 +13,7 @@
   font-display: swap;
 }
 
-/* The interface is a place to work; each place is a book with its own cover. */
+/* The interface is a place to work; each place opens on its own soft sheet. */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-padding-top: calc(var(--top-bar-h, 5rem) + 1rem); scroll-padding-bottom: calc(var(--bottom-bar-h, 0px) + 1rem); }
 body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-text); font: var(--font-size-3)/var(--line-height-body) var(--font-sans); letter-spacing: var(--letter-spacing-body); word-spacing: var(--word-spacing-body); overflow-wrap: break-word; -webkit-text-size-adjust: 100%; }
@@ -45,6 +45,8 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 .s-small { font-size: var(--font-size-2); }
 .s-muted, .s-hint { color: var(--c-muted); }
 .s-hint { font-size: var(--font-size-1); }
+.s-mt-4 { margin-top: var(--space-4); }
+.s-mt-5 { margin-top: var(--space-5); }
 .s-mark { display: block; color: var(--c-accent); flex-shrink: 0; }
 .s-skip { position: fixed; top: -12rem; left: var(--gutter); z-index: var(--z-skip); padding: 0.75rem 1rem; background: var(--c-surface); color: var(--c-text); border: 2px solid var(--c-accent); border-radius: var(--radius-2); font-weight: 650; }
 .s-skip:focus { top: 0.75rem; }
@@ -76,12 +78,12 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 .s-edition-inner p { margin: 0; }
 .s-edition-stamp { flex: 0 0 auto; padding: 0.1rem 0.5rem; border: 1.5px solid var(--c-demo); border-radius: var(--radius-1); color: var(--c-demo); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.5; }
 
-/* Colophon: the last page of the book — what Sela is, where to go, where it came from. */
+/* Footer: what Sela is, where to go, where it came from. */
 .s-footer { width: calc(100% - 5rem); max-width: 85rem; margin: auto auto 0; padding: 2.25rem 0 2.5rem; border-top: 2px solid var(--c-text); color: var(--c-muted); font-size: var(--font-size-1); }
 .s-colophon { display: grid; grid-template-columns: minmax(0, 1.25fr) auto minmax(0, 1fr); gap: 1.5rem 3rem; align-items: start; }
 .s-colophon-brand { display: grid; gap: 0.6rem; max-width: 34ch; }
 .s-colophon-brand p { margin: 0; line-height: 1.5; }
-.s-colophon-mark { display: inline-flex; align-items: center; gap: 0.5rem; width: fit-content; color: var(--c-text); font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; text-decoration: none !important; --mark-1: var(--place-home); --mark-2: var(--place-talk); --mark-3: var(--place-notes); --mark-4: var(--place-support); }
+.s-colophon-mark { display: inline-flex; align-items: center; gap: 0.5rem; width: fit-content; color: var(--c-text); font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; text-decoration: none !important; }
 .s-footer nav { display: grid; gap: 0.15rem; }
 .s-footer nav a { display: inline-flex; align-items: center; min-height: 2rem; width: fit-content; color: var(--c-text); font-weight: 600; text-decoration: underline; text-decoration-color: var(--c-border-control); text-underline-offset: 0.25em; }
 .s-footer nav a:hover { text-decoration-color: currentColor; }
@@ -307,5 +309,5 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 :root[data-viewport="short"] .s-transcript { max-height: none; overflow: visible; min-height: 7rem; }
 @media (prefers-reduced-motion: reduce) { .s-brand:focus-visible .s-mark { transform: none; } }
 :root[data-motion="reduced"] .s-brand:focus-visible .s-mark { transform: none; }
-@media (forced-colors: active) { .s-btn, .s-choice, .s-badge, .s-status-chip { border: 1px solid CanvasText; } }
-@media print { .s-header, .s-place-nav, .s-footer, .s-actions, .s-composer, .s-dialog, .s-menu-sheet, .s-skip { display: none !important; } body, .s-shell, .s-shell-inner { background: white; color: black; } .s-shell main { max-width: none; padding: 0; } }
+@media (forced-colors: active) { .s-btn, .s-choice, .s-badge, .s-status-chip { border: 1px solid CanvasText; } .s-switch-track { border-color: CanvasText; } .s-switch-thumb { border-color: CanvasText; } .s-switch[aria-checked="true"] .s-switch-track { border-color: Highlight; } .s-switch[aria-checked="true"] .s-switch-thumb { border-color: Highlight; } }
+@media print { .s-header, .s-place-nav, .s-footer, .s-actions, .s-composer, .s-dialog, .s-menu-sheet, .s-skip, .s-edition, .s-shelf-bar { display: none !important; } body, .s-shell, .s-shell-inner { background: white; color: black; } .s-shell main { max-width: none; padding: 0; } }

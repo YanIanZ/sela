@@ -103,7 +103,7 @@ export function SignInPage() {
           </Button>
         </div>
       </form>
-      <div className="s-actions" style={{ marginTop: "var(--space-4)" }}>
+      <div className="s-actions s-mt-4">
         <LinkButton to="/recover" variant="quiet">
           {w("Lupa kata sandi? Pakai kode pemulihan", "Forgot your password? Use a recovery code")}
         </LinkButton>

@@ -676,6 +676,7 @@
   width: 1.05rem;
   height: 1.05rem;
   border-radius: 50%;
+  border: 2px solid transparent;
   background: var(--c-text);
   transition: transform var(--duration-quick) var(--ease-standard);
 }
@@ -688,6 +689,12 @@
 .s-switch[aria-checked="true"] .s-switch-thumb {
   transform: translateX(1.28rem);
   background: var(--c-on-accent);
+}
+
+.s-switch[aria-disabled="true"],
+.s-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .s-switch-label {
@@ -845,7 +852,7 @@
 
 .s-badge--user_original,
 .s-badge--user_correction {
-  border-left: 0;
+  border-color: color-mix(in oklch, var(--c-user) 40%, transparent);
   background: var(--c-user-bg);
   color: var(--c-user-text);
 }
@@ -1169,7 +1176,6 @@
 }
 
 .s-turn--user {
-  border-left: 0;
   padding-left: var(--space-3);
 }
 
@@ -1318,7 +1324,7 @@
   background: var(--c-help-bg);
 }
 
-.s-crisis-panel h3 {
+.s-crisis-panel :is(h2, h3) {
   color: var(--c-help-text);
   margin-bottom: var(--space-2);
 }
@@ -1416,7 +1422,7 @@
   margin-right: var(--space-1);
   color: var(--c-muted);
   font-size: var(--font-size-1);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
 }
 
 .s-filter {
@@ -1575,6 +1581,9 @@
   border-radius: var(--radius-3);
   background: var(--c-surface);
 }
+
+.s-support-card--link { text-decoration: none; color: inherit; cursor: pointer; transition: border-color var(--duration-quick) var(--ease-standard); }
+.s-support-card--link:hover { border-color: var(--c-accent); }
 
 .s-support-card h2 {
   font-size: var(--font-size-5);

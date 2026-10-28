@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
+import { useI18n } from "../../i18n";
 import { api, isAbort, type Entry, type Profile, type Room, type Turn } from "../api";
+import { useMetaDictation, type DictationError } from "../asr";
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon } from "../icons";
@@ -137,15 +139,20 @@ function TalkList() {
           "Talk about anything. You decide whether a conversation is saved.",
         )}
         actions={
-          <LinkButton
-            to={
-              selected ? "/talk/new?record=" + selected : "/talk/new"
-            }
-            variant="primary"
-            icon="send"
-          >
-            {w("Mulai bercerita", "Start talking")}
-          </LinkButton>
+          <>
+            <LinkButton
+              to={
+                selected ? "/talk/new?record=" + selected : "/talk/new"
+              }
+              variant="primary"
+              icon="send"
+            >
+              {w("Mulai bercerita", "Start talking")}
+            </LinkButton>
+            <LinkButton to="/talk/voice" variant="secondary" icon="mic">
+              {w("Bicara dengan suara", "Talk by voice")}
+            </LinkButton>
+          </>
         }
       />
       <ErrorNotice error={error} onRetry={load} />
@@ -156,8 +163,7 @@ function TalkList() {
           </div>
           <Link
             to={"/talk/" + live.id}
-            className="s-support-card"
-            style={{ textDecoration: "none", color: "inherit" }}
+            className="s-support-card s-support-card--link"
           >
             <strong>
               {live.save
@@ -435,6 +441,7 @@ function authorLine(turn: Turn, w: (id: string, en: string) => string): string {
 function RoomPage({ id }: { id: string }) {
   const w = useWords();
   const loc = useLocale();
+  const { lang } = useI18n();
   const { query, navigate } = useRouter();
   const { prefs } = usePrefs();
   const { announce } = useAnnounce();
@@ -451,14 +458,55 @@ function RoomPage({ id }: { id: string }) {
   const [ended, setEnded] = useState<"saved" | "unsaved" | null>(null);
   const [detail, setDetail] = useState(false);
   const [newContent, setNewContent] = useState("");
-  const [dictating, setDictating] = useState(false);
   const [closePanel, setClosePanel] = useState(false);
 
-  const textarea = useRef<HTMLTextAreaElement>(null);
+  const {
+    dictating,
+    livePartial,
+    errorCode,
+    clearError,
+    toggle: toggleDictation,
+  } = useMetaDictation((final) => {
+    setText((current) => (current ? current + " " + final : final));
+  });
+
+  const dictationError = (code: DictationError): string => {
+    switch (code) {
+      case "mic_denied":
+        return w(
+          "Akses mikrofon ditolak browser. Izinkan mikrofon lalu coba lagi.",
+          "Microphone access was denied by the browser. Allow it and try again.",
+        );
+      case "asr_consent_required":
+        return w(
+          "Dikte via Meta butuh izinmu dulu. Aktifkan di Privasi & data, bagian Pemrosesan AI.",
+          "Dictation via Meta needs your permission first. Turn it on in Privacy & data, under AI processing.",
+        );
+      case "asr_unavailable":
+        return w(
+          "Dikte belum tersedia di server ini.",
+          "Dictation isn't available on this server.",
+        );
+      default:
+        return w(
+          "Dikte gagal. Tulisanmu tetap di sini.",
+          "Dictation failed. Your writing is still here.",
+        );
+    }
+  };
+
+  useEffect(() => {
+    if (!errorCode) return;
+    const msg = dictationError(errorCode);
+    setError(msg);
+    announce("status", msg);
+    clearError();
+  }, [errorCode, announce, clearError, w]);
+
+  const focusComposer = () => (document.getElementById("composer-text") as HTMLElement | null)?.focus();
   const transcript = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
   const request = useRef<AbortController | null>(null);
-  const recognition = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -482,7 +530,7 @@ function RoomPage({ id }: { id: string }) {
   }, [id, loadKey]);
 
   useEffect(() => {
-    textarea.current?.focus();
+    focusComposer();
   }, [id]);
 
   useEffect(() => {
@@ -632,7 +680,7 @@ function RoomPage({ id }: { id: string }) {
       request.current = null;
       setBusy(false);
       setPendingText(null);
-      textarea.current?.focus();
+      focusComposer();
     }
   };
 
@@ -643,7 +691,7 @@ function RoomPage({ id }: { id: string }) {
       const next = await api<Room>("/conversations/" + room.id + "/operation", undefined, "DELETE");
       setRoom(next);
       announce("status", w("Balasan dihentikan sebelum ditampilkan.", "Reply stopped before it was shown."));
-      textarea.current?.focus();
+      focusComposer();
     } catch {
       // Cancelling is idempotent; the reply may already have arrived.
     }
@@ -732,66 +780,10 @@ function RoomPage({ id }: { id: string }) {
     }
   };
 
-  const toggleDictation = () => {
-    if (dictating) {
-      recognition.current?.stop();
-      setDictating(false);
-      announce("status", w("Dikte berhenti.", "Dictation stopped."));
-      return;
-    }
-    const Ctor =
-      (window as unknown as {
-        SpeechRecognition?: new () => {
-          lang: string;
-          continuous: boolean;
-          interimResults: boolean;
-          start: () => void;
-          stop: () => void;
-          onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-          onend: () => void;
-        };
-        webkitSpeechRecognition?: new () => {
-          lang: string;
-          continuous: boolean;
-          interimResults: boolean;
-          start: () => void;
-          stop: () => void;
-          onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-          onend: () => void;
-        };
-      }).SpeechRecognition ??
-      (window as unknown as { webkitSpeechRecognition?: never }).webkitSpeechRecognition;
-    if (!Ctor) {
-      setError(
-        w(
-          "Dikte tidak tersedia di browser ini.",
-          "Dictation isn't available in this browser.",
-        ),
-      );
-      return;
-    }
-    const rec = new Ctor();
-    rec.lang = document.documentElement.lang === "en" ? "en-GB" : "id-ID";
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.onresult = (e) => {
-      const first = e.results[0]?.[0]?.transcript ?? "";
-      if (first) setText((current) => (current ? current + " " + first : first));
-    };
-    rec.onend = () => {
-      setDictating(false);
-      textarea.current?.focus();
-    };
-    recognition.current = rec;
-    rec.start();
-    setDictating(true);
-    announce("status", w("Mendengarkan… tekan lagi untuk berhenti.", "Listening… press again to stop."));
-  };
-
   const readAloud = (value: string) => {
     try {
       const utter = new SpeechSynthesisUtterance(value);
-      utter.lang = document.documentElement.lang === "en" ? "en-GB" : "id-ID";
+      utter.lang = lang === "en" ? "en-GB" : "id-ID";
       utter.rate = 0.95;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utter);
@@ -895,7 +887,7 @@ function RoomPage({ id }: { id: string }) {
               {": "}
             </span>
             <strong>
-              {intents.find((i) => i.value === intent)?.[document.documentElement.lang === "en" ? "en" : "id"]}
+              {intents.find((i) => i.value === intent)?.[lang]}
             </strong>
             <span aria-hidden="true"> · </span>
             <button
@@ -1023,7 +1015,7 @@ function RoomPage({ id }: { id: string }) {
                             "Help closed. Sela's replies stay paused.",
                           ),
                         );
-                        textarea.current?.focus();
+                        focusComposer();
                       }}
                       onResume={() => void resume()}
                       onEnd={() => void end()}
@@ -1268,6 +1260,12 @@ function RoomPage({ id }: { id: string }) {
                     )}
                   </p>
                 )}
+                {dictating && livePartial && (
+                  <p className="s-hint" aria-live="polite" role="status">
+                    {w("Terdengar: ", "Heard: ")}
+                    {livePartial}…
+                  </p>
+                )}
                 {stopped && (
                   <StatusLine>
                     {w(
@@ -1420,6 +1418,7 @@ function CrisisPanel({
   services: typeof helpData.help;
 }) {
   const w = useWords();
+  const { lang } = useI18n();
   if (hidden) return null;
   return (
     <section className="s-crisis-panel" aria-labelledby="crisis-title">
@@ -1441,7 +1440,7 @@ function CrisisPanel({
       {services.map((s) => (
         <div className="s-service-mini" key={s.id}>
           <h4>{s.name}</h4>
-          <p className="s-small">{s.description[document.documentElement.lang === "en" ? "en" : "id"]}</p>
+          <p className="s-small">{s.description[lang]}</p>
           <div className="s-actions">
             {s.channels.map((c) => (
               <a

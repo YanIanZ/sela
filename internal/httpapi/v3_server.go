@@ -115,6 +115,8 @@ func (s *Server) v3Routes() {
 		{method: "DELETE", path: "/api/v3/me/guardian-consent", mutation: true, owner: s.v3DeleteGuardianConsent},
 		{method: "GET", path: "/api/v3/me/audit", owner: s.v3Audit},
 		{method: "GET", path: "/api/v3/me/export", owner: s.v3Export},
+		{method: "GET", path: "/api/v3/asr/realtime", owner: s.v3ASRRealtime},
+		{method: "GET", path: "/api/v3/voice/realtime", owner: s.v3VoiceRealtime},
 	}
 	for _, rt := range s.v3.routes {
 		s.mux.HandleFunc(rt.pattern(), s.v3Wrap(rt))

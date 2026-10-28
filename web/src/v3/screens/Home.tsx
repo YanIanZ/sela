@@ -4,7 +4,7 @@ import { api, type Entry, type Profile, type Room } from "../api";
 import { usePrefs } from "../prefs";
 import { useSession } from "../session";
 import { useLocale, useWords } from "../shared";
-import { Icon } from "../icons";
+import { Icon, MoodFace, Sparkle, type MoodValue } from "../icons";
 import { entryRoute } from "./Continuity";
 import { Loading, ErrorNotice, LinkButton } from "../ui";
 import { moodLabel } from "./Notes";
@@ -102,7 +102,7 @@ export function HomePage({ user, previewEntries }: { user: Profile; previewEntri
 
   const dashboardHeading = (<>
       <section className="s-home-head" aria-labelledby="page-title">
-        <h1 id="page-title">{w("Beranda", "Home")}</h1>
+        <h1 id="page-title" className="s-sr-only">{w("Beranda", "Home")}</h1>
         <p className="s-home-lead">{greeting}</p>
       </section>
   </>);
@@ -241,7 +241,7 @@ export function HomePage({ user, previewEntries }: { user: Profile; previewEntri
                               ? r.mood
                                 ? moodLabel(r.mood, loc.lang)
                                 : ""
-                              : r.text.slice(0, 120) || w("Tanpa teks", "No text")}
+                              : r.text.slice(0, 240) || w("Tanpa teks", "No text")}
                         </small>
                       )}
                     </span>
@@ -346,15 +346,24 @@ export function HomePage({ user, previewEntries }: { user: Profile; previewEntri
     <h2>{w("Ruang untuk apa pun yang terasa.", "Room for whatever you feel.")}</h2>
     <p>{w("Tidak perlu merangkai cerita yang sempurna. Mulai dari yang paling mudah untukmu.", "Your story does not need to be perfect. Start wherever feels easiest.")}</p>
         <div className="s-home-actions">
-          <LinkButton to="/talk/new" variant="primary" icon="send">
+          <LinkButton to="/talk/new" variant="primary" icon="send" className="s-btn--go">
             {w("Mulai bercerita", "Start talking")}
           </LinkButton>
-          <LinkButton to="/notes/write" variant="secondary" icon="pencil">
-            {w("Tulis catatan", "Write a note")}
-          </LinkButton>
-          <LinkButton to="/notes/check-in" variant="secondary" icon="check">
-            {w("Cek perasaan", "Check in")}
-          </LinkButton>
+          <div className="s-activities">
+            <Link to="/notes/write" className="s-activity s-activity--note">
+              <span className="s-activity-title">{w("Tulis catatan", "Write a note")}</span>
+              <span className="s-activity-go" aria-hidden="true"><Icon name="arrow-up-right" size={18} /></span>
+              <JournalArt />
+            </Link>
+            <Link to="/notes/check-in" className="s-activity s-activity--checkin">
+              <span className="s-activity-title">{w("Cek perasaan", "Check in")}</span>
+              <span className="s-activity-go" aria-hidden="true"><Icon name="arrow-up-right" size={18} /></span>
+              <span className="s-activity-art s-activity-art--faces" aria-hidden="true">
+                <MoodFace mood="okay" size={46} />
+                <MoodFace mood="good" size={58} />
+              </span>
+            </Link>
+          </div>
         </div>
         <p className="s-hint">
           {w(
@@ -362,6 +371,23 @@ export function HomePage({ user, previewEntries }: { user: Profile; previewEntri
             "You decide what is kept and whether AI replies are allowed.",
           )}
         </p>
+  </section>;
+  const moodChoices: MoodValue[] = ["very_heavy", "heavy", "okay", "good", "very_good", "mixed"];
+  const dashboardMood = <section className="s-mood-row" aria-labelledby="mood-title">
+    <div className="s-mood-row-head">
+      <h2 id="mood-title">{w("Bagaimana perasaanmu hari ini?", "How do you feel today?")}</h2>
+      <p className="s-hint">{w("Pilih yang paling dekat. Kamu tetap meninjau dan memilih simpan sebelum apa pun dicatat.", "Pick the closest one. You still review and choose to save before anything is kept.")}</p>
+    </div>
+    <ul>
+      {moodChoices.map((m) => (
+        <li key={m}>
+          <Link to={"/notes/check-in?mood=" + m} className="s-mood-link">
+            <MoodFace mood={m} size={52} />
+            <span>{moodLabel(m, loc.lang)}</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   </section>;
   const dashboardIndex = <section className="s-dash-index" aria-label={w("Ruang lainnya", "More spaces")}>
     <h2>{w("Sesuai kebutuhanmu", "At your own pace")}</h2>
@@ -373,9 +399,13 @@ export function HomePage({ user, previewEntries }: { user: Profile; previewEntri
   return (
     <div className="s-home s-dashboard s-dashboard--today">
       <div className="s-cover s-dash-stage">
+        <Sparkle size={34} className="s-sheet-spark s-sheet-spark--a" />
+        <Sparkle size={18} className="s-sheet-spark s-sheet-spark--b" />
+        <Sparkle size={12} className="s-sheet-spark s-sheet-spark--c" />
         {dashboardHeading}
         {dashboardStart}
       </div>
+      {dashboardMood}
       <div className="s-dash-page">
         <div className="s-dash-history">
           {dashboardErrors}{dashboardContinue}{dashboardHistory}
@@ -384,5 +414,24 @@ export function HomePage({ user, previewEntries }: { user: Profile; previewEntri
       </div>
       {dashboardRetention}{dashboardAge}
     </div>
+  );
+}
+
+function JournalArt() {
+  // A closed notebook with a pencil, drawn from plain shapes.
+  return (
+    <svg className="s-activity-art" width="112" height="96" viewBox="0 0 112 96" aria-hidden="true" focusable="false">
+      <g transform="rotate(-10 52 52)">
+        <rect x="22" y="18" width="60" height="74" rx="8" fill="#2F6A43" />
+        <rect x="28" y="14" width="58" height="74" rx="8" fill="#E9877A" stroke="#2A1F1A" strokeWidth="2.5" />
+        <rect x="38" y="28" width="36" height="12" rx="4" fill="#FBFBF7" stroke="#2A1F1A" strokeWidth="2" />
+        <path d="M40 52h30M40 61h22" stroke="#2A1F1A" strokeWidth="2.5" strokeLinecap="round" />
+      </g>
+      <g transform="rotate(28 92 54)">
+        <rect x="86" y="18" width="13" height="54" rx="3" fill="#F6C26B" stroke="#2A1F1A" strokeWidth="2.5" />
+        <rect x="86" y="18" width="13" height="10" rx="3" fill="#E9877A" stroke="#2A1F1A" strokeWidth="2.5" />
+        <path d="M86 72h13l-6.5 13Z" fill="#FBE3C4" stroke="#2A1F1A" strokeWidth="2.5" strokeLinejoin="round" />
+      </g>
+    </svg>
   );
 }

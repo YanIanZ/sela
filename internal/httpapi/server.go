@@ -25,6 +25,7 @@ import (
 
 	"github.com/YanIanZ/sela/internal/account"
 	"github.com/YanIanZ/sela/internal/ai"
+	"github.com/YanIanZ/sela/internal/ai/sonic"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/research"
 )
@@ -81,6 +82,26 @@ type Options struct {
 	// HSTS adds Strict-Transport-Security (max-age one year); production
 	// sets it (ADR-0002 §5).
 	HSTS bool
+	// ASRMode is the dictation backend: "disabled" (mic off), "meta"
+	// (Meta voice-transcribe realtime), "bedrock" (Amazon Nova Sonic), or
+	// "test_double" (local loopback).
+	ASRMode string
+	// ASRAPIKey is the Meta model API key (secret, never logged); empty
+	// unless ASRMode is "meta".
+	ASRAPIKey string
+	// ASRModel is the transcription model (default per ASRMode).
+	ASRModel string
+	// ASRURL is the realtime endpoint (default
+	// "wss://api.meta.ai/v1/asr/realtime"); tests point it at a mock.
+	ASRURL string
+	// AWSRegion is the Bedrock region for ASRMode "bedrock".
+	AWSRegion string
+	// AWSProfile is the AWS shared-config profile for "bedrock"; empty
+	// uses the default chain.
+	AWSProfile string
+	// VoiceOpener backs the voice room (GET /api/v3/voice/realtime) with
+	// Amazon Nova 2.5 Sonic or its labelled test double. Nil disables it.
+	VoiceOpener sonic.Opener
 }
 
 // Server is the HTTP handler.
@@ -134,7 +155,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Set("X-Content-Type-Options", "nosniff")
 	h.Set("Referrer-Policy", "no-referrer")
 	h.Set("X-Frame-Options", "DENY")
-	h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()")
+	h.Set("Permissions-Policy", "camera=(), microphone=(self), geolocation=(), interest-cohort=()")
 	h.Set("Cross-Origin-Opener-Policy", "same-origin")
 	h.Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
 	if s.opt.HSTS {
@@ -186,8 +207,12 @@ func (r *statusRecorder) Flush() {
 	}
 }
 
-// Hijack is not supported; present so wrappers do not hide it silently.
+// Hijack delegates to the underlying writer so websocket upgrades work;
+// without it the upgrader answers 500.
 func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := r.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
 	return nil, nil, errors.New("hijack not supported")
 }
 

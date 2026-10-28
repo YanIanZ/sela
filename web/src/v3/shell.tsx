@@ -471,8 +471,8 @@ export function AppShell({
           <nav className="n-desktop-nav" aria-label={w("Navigasi utama", "Main navigation")}>
             {user ? places.map((p) => (
               <Link key={p.to} to={p.to} data-place={p.to.slice(1)} aria-current={isPlace(path, p.to) ? "page" : undefined}>
-                <span className="s-spine" aria-hidden="true" />
-                {w(p.label[0], p.label[1])}
+                <Icon name={p.icon} size={18} />
+                <span>{w(p.label[0], p.label[1])}</span>
               </Link>
             )) : (
               <>

@@ -16,6 +16,8 @@ const (
 	PolicyGuardianInformation = "guardian_information"
 	// PolicyPersonalMemory is the optional consent for explicit memory.
 	PolicyPersonalMemory = "personal_memory"
+	// PolicyASRMeta is the optional consent for server-side dictation.
+	PolicyASRMeta = "asr_meta"
 )
 
 //go:embed v3/policies.json
@@ -32,7 +34,7 @@ func V3Policies() (map[string]PolicyNotice, error) {
 		return nil, fmt.Errorf("fixtures: v3 policies: %w", err)
 	}
 	var errs []string
-	for _, key := range []string{PolicyTermsPrivacy, PolicyGuestStorage, PolicyGuardianInformation, PolicyPersonalMemory} {
+	for _, key := range []string{PolicyTermsPrivacy, PolicyGuestStorage, PolicyGuardianInformation, PolicyPersonalMemory, PolicyASRMeta} {
 		p, ok := m[key]
 		if !ok || p.Version == "" || len(p.Body) == 0 {
 			errs = append(errs, fmt.Sprintf("v3 policy %q missing", key))

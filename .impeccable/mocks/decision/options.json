@@ -1,0 +1,202 @@
+{
+  "title": "Sela — semua rasa punya ruang",
+  "question": "Identitas baru dengan pesan kesehatan mental dan ilustrasi yang dibuat khusus untuk Sela.",
+  "options": [
+    {
+      "id": "belum-rapi",
+      "kind": "challenger",
+      "catalogId": "crouwel-grid-specimen",
+      "label": "Tidak harus rapi",
+      "thesis": "Perasaanmu tidak harus rapi untuk mulai bercerita.",
+      "palette": [
+        "#3657C7",
+        "#FFFFFF",
+        "#F49B87",
+        "#EDF0F8"
+      ],
+      "materials": [
+        "ilustrasi lipatan S asli",
+        "identitas kesehatan mental",
+        "kontrol aplikasi standar"
+      ],
+      "viewport": "Dashboard tipografis dengan ilustrasi lipatan berbentuk S, satu ajakan bercerita, lalu ruang catatan dan cek perasaan.",
+      "risk": "Identitas tegas; ruang tulis tetap sederhana agar tidak terasa seperti poster.",
+      "verdict": "competitive",
+      "case": "Dinilai dari kedekatan emosional dan kejelasan fungsi Sela.",
+      "html": ".impeccable/mocks/decision/belum-rapi.html",
+      "comp": ".impeccable/mocks/decision/belum-rapi.webp",
+      "hero": "https://impeccable.style/worlds/cards/crouwel-grid-specimen-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/crouwel-grid-specimen.webp",
+      "raised": [
+        {
+          "from": "Beri ruang",
+          "raise": "Pesan kesehatan mental hadir di tindakan utama, bukan hanya slogan."
+        },
+        {
+          "from": "Hari yang berbeda",
+          "raise": "Setiap kondisi diterima tanpa tahapan atau penilaian."
+        }
+      ]
+    },
+    {
+      "id": "hari-berbeda",
+      "kind": "challenger",
+      "catalogId": "editorial-sequence-montage-botanical-folio-season",
+      "label": "Hari yang berbeda",
+      "thesis": "Hari-hari tidak selalu sama. Sela memberi ruang untuk semuanya.",
+      "palette": [
+        "#FFFFFF",
+        "#285446",
+        "#B93F39",
+        "#E7EFEB"
+      ],
+      "materials": [
+        "ilustrasi lipatan S asli",
+        "identitas kesehatan mental",
+        "kontrol aplikasi standar"
+      ],
+      "viewport": "Navigasi hijau ringkas, ilustrasi bermakna sebagai pembuka, cerita dan catatan dipisah jelas tanpa metrik perasaan.",
+      "risk": "Tidak boleh menyiratkan tahapan penyembuhan atau tuntutan bertumbuh.",
+      "verdict": "competitive",
+      "case": "Dinilai dari kedekatan emosional dan kejelasan fungsi Sela.",
+      "html": ".impeccable/mocks/decision/hari-berbeda.html",
+      "comp": ".impeccable/mocks/decision/hari-berbeda.webp",
+      "hero": "https://impeccable.style/worlds/cards/editorial-sequence-montage-botanical-folio-season-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/editorial-sequence-montage-botanical-folio-season.webp"
+    },
+    {
+      "id": "cerita-utuh",
+      "kind": "challenger",
+      "catalogId": "pop-culture-shelf-doujin-event-catalog",
+      "label": "Cerita yang utuh",
+      "thesis": "Kamu lebih dari satu perasaan atau satu cerita.",
+      "palette": [
+        "#FFFFFF",
+        "#252525",
+        "#3657C7",
+        "#F49B87"
+      ],
+      "materials": [
+        "ilustrasi lipatan S asli",
+        "identitas kesehatan mental",
+        "kontrol aplikasi standar"
+      ],
+      "viewport": "Susunan modular kontemporer, ilustrasi S besar, kotak cerita utama, catatan sebagai potongan riwayat pribadi.",
+      "risk": "Detail visual harus tetap lapang dan terbaca, bukan katalog yang penuh.",
+      "verdict": "competitive",
+      "case": "Dinilai dari kedekatan emosional dan kejelasan fungsi Sela.",
+      "html": ".impeccable/mocks/decision/cerita-utuh.html",
+      "comp": ".impeccable/mocks/decision/cerita-utuh.webp",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-doujin-event-catalog-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/pop-culture-shelf-doujin-event-catalog.webp"
+    },
+    {
+      "id": "ruang-kembali",
+      "kind": "challenger",
+      "catalogId": "vernacular-ephemera-boarding-pass-and-gate-board",
+      "label": "Ruang untuk kembali",
+      "thesis": "Apa pun yang terasa hari ini, kamu boleh mulai dari sini.",
+      "palette": [
+        "#F6F8FA",
+        "#14213D",
+        "#D74935",
+        "#FFFFFF"
+      ],
+      "materials": [
+        "ilustrasi lipatan S asli",
+        "identitas kesehatan mental",
+        "kontrol aplikasi standar"
+      ],
+      "viewport": "Navigasi stabil di kiri, area cerita luas, ilustrasi tentang ruang bagi pikiran, lalu riwayat sederhana.",
+      "risk": "Bahasa perjalanan tidak dibawa sebagai tahap atau status pemulihan.",
+      "verdict": "competitive",
+      "case": "Dinilai dari kedekatan emosional dan kejelasan fungsi Sela.",
+      "html": ".impeccable/mocks/decision/ruang-kembali.html",
+      "comp": ".impeccable/mocks/decision/ruang-kembali.webp",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board.webp"
+    },
+    {
+      "id": "semua-rasa",
+      "kind": "challenger",
+      "catalogId": "digital-design-canon-metro-typographic-tiles",
+      "label": "Semua rasa punya ruang",
+      "thesis": "Kadang berat, kadang campur. Kamu boleh bercerita dengan caramu.",
+      "palette": [
+        "#131519",
+        "#27CAD2",
+        "#FFFFFF",
+        "#F49B87"
+      ],
+      "materials": [
+        "ilustrasi lipatan S asli",
+        "identitas kesehatan mental",
+        "kontrol aplikasi standar"
+      ],
+      "viewport": "Tipografi besar pada bidang cyan dan hitam, ilustrasi lipatan S, kontrol menulis standar dan daftar catatan jelas.",
+      "risk": "Paling berani; ruang percakapan perlu ditenangkan tanpa kehilangan identitas.",
+      "verdict": "competitive",
+      "case": "Dinilai dari kedekatan emosional dan kejelasan fungsi Sela.",
+      "html": ".impeccable/mocks/decision/semua-rasa.html",
+      "comp": ".impeccable/mocks/decision/semua-rasa.webp",
+      "hero": "https://impeccable.style/worlds/cards/digital-design-canon-metro-typographic-tiles-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/digital-design-canon-metro-typographic-tiles.webp"
+    },
+    {
+      "id": "beri-ruang",
+      "kind": "challenger",
+      "catalogId": "variable-font-specimen",
+      "label": "Beri ruang",
+      "thesis": "Tidak perlu tahu nama perasaanmu untuk mulai menceritakannya.",
+      "palette": [
+        "#FFFFFF",
+        "#242830",
+        "#3657C7",
+        "#F49B87"
+      ],
+      "materials": [
+        "ilustrasi lipatan S asli",
+        "identitas kesehatan mental",
+        "kontrol aplikasi standar"
+      ],
+      "viewport": "Kata-kata yang kuat tetapi lembut, ilustrasi S yang menjadi simbol Sela, area tulis terbuka dan akses data yang jelas.",
+      "risk": "Sangat bergantung pada kualitas huruf dan ilustrasi, bukan dekorasi tambahan.",
+      "verdict": "wins",
+      "case": "Dinilai dari kedekatan emosional dan kejelasan fungsi Sela.",
+      "html": ".impeccable/mocks/decision/beri-ruang.html",
+      "comp": ".impeccable/mocks/decision/beri-ruang.webp",
+      "hero": "https://impeccable.style/worlds/cards/variable-font-specimen-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/variable-font-specimen.webp"
+    }
+  ],
+  "canon": true,
+  "canonCard": {
+    "kind": "canon",
+    "label": "Aplikasi familiar berilustrasi",
+    "thesis": "Pengalaman wellbeing standar dengan fungsi yang mudah dikenal.",
+    "palette": [
+      "#FFFFFF",
+      "#243442",
+      "#4C7469"
+    ],
+    "materials": [
+      "kontrol familiar",
+      "ilustrasi"
+    ],
+    "viewport": "Sidebar, percakapan, dan daftar catatan.",
+    "risk": "Lebih dekat dengan aplikasi lain.",
+    "html": ".impeccable/mocks/decision/canon.html",
+    "comp": ".impeccable/mocks/decision/canon.webp"
+  },
+  "reroll": {
+    "registers": [
+      "safer",
+      "bolder"
+    ]
+  },
+  "steer": true,
+  "buildPath": {
+    "value": "code",
+    "toggle": true
+  }
+}

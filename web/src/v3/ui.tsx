@@ -9,6 +9,7 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
+import type * as ReactNS from "react";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { V3Error } from "./api";
@@ -449,6 +450,9 @@ export function TextArea({
   const hintId = hint ? `${fieldId}-hint` : undefined;
   const errorId = error ? `${fieldId}-error` : undefined;
   const w = useWords();
+  const innerRef = (rest as { ref?: ReactNS.Ref<HTMLTextAreaElement> }).ref;
+  const restProps = { ...rest };
+  delete (restProps as { ref?: unknown }).ref;
   return (
     <div className={`s-field ${className ?? ""}`}>
       <label htmlFor={fieldId} className={hideLabel ? "sr-only" : "s-label"}>
@@ -463,7 +467,8 @@ export function TextArea({
         </p>
       )}
       <textarea
-        {...rest}
+        {...restProps}
+        ref={innerRef}
         id={fieldId}
         rows={rows}
         className="s-textarea"
@@ -588,6 +593,7 @@ export function ChoiceGroup<T extends string>({
     label: string;
     hint?: string;
     disabled?: boolean;
+    art?: ReactNode;
   }>;
   hint?: string;
   error?: string;
@@ -647,6 +653,7 @@ export function ChoiceGroup<T extends string>({
             {variant === "chips" && value === o.value && (
               <Icon name="check" size={16} />
             )}
+            {o.art && <span className="s-choice-art" aria-hidden="true">{o.art}</span>}
             <span className="s-choice-text">
               <span>{o.label}</span>
               {o.hint && <span className="s-hint">{o.hint}</span>}

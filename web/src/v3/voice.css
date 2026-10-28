@@ -1,0 +1,48 @@
+/* Voice room (Ruang suara): a quiet mint sheet in Cerita. One circle shows
+ * who has the floor; the transcript below sits in a rounded card. */
+.s-voice { width: 100%; max-width: 46rem; margin-inline: auto; }
+.s-voice-stage[hidden] { display: none; }
+
+.s-voice-consent { padding: 1.5rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-4); background: var(--c-surface); display: grid; gap: 0.85rem; max-width: 62ch; }
+.s-shell .s-voice-consent h2 { margin: 0; }
+
+.s-voice-stage { display: grid; justify-items: center; gap: 1rem; padding: 2rem 1.25rem 1.75rem; border-radius: var(--radius-sheet); background: var(--place-talk); color: var(--on-place); text-align: center; }
+.s-voice-provider { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem; margin: 0; color: var(--on-place-muted); font-size: var(--font-size-1); font-weight: 600; }
+.s-voice-flag { padding: 0.05rem 0.45rem; border: 1.5px solid var(--c-warning-border, var(--c-border-control)); border-radius: var(--radius-pill); color: var(--c-warning, var(--c-text)); font-size: 0.75rem; letter-spacing: 0.02em; font-family: var(--font-display); font-weight: 500; }
+
+.s-voice-orb { position: relative; width: 8.5rem; height: 8.5rem; display: grid; place-items: center; }
+.s-voice-orb span { width: 5.5rem; height: 5.5rem; border-radius: 50%; background: var(--c-leaf); box-shadow: var(--shadow-2); transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1), background-color 300ms ease; }
+.s-voice-orb::before, .s-voice-orb::after { content: ""; position: absolute; inset: 1.5rem; border-radius: 50%; border: 2px solid var(--c-leaf); opacity: 0; }
+.s-voice-orb--idle span, .s-voice-orb--ended span, .s-voice-orb--error span { background: var(--c-border-control); transform: scale(0.86); }
+.s-voice-orb--connecting span { transform: scale(0.92); }
+.s-voice-orb--listening::before { animation: s-voice-breathe 3.2s ease-in-out infinite; }
+.s-voice-orb--speaking span { transform: scale(1.06); }
+.s-voice-orb--speaking::before { animation: s-voice-ring 1.6s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+.s-voice-orb--speaking::after { animation: s-voice-ring 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.8s infinite; }
+.s-voice-orb--crisis span { background: var(--c-help); transform: scale(0.86); }
+@keyframes s-voice-breathe { 0%, 100% { opacity: 0.15; transform: scale(1); } 50% { opacity: 0.55; transform: scale(1.18); } }
+@keyframes s-voice-ring { from { opacity: 0.6; transform: scale(1); } to { opacity: 0; transform: scale(1.55); } }
+@media (prefers-reduced-motion: reduce) { .s-voice-orb::before, .s-voice-orb::after { animation: none !important; } .s-voice-orb--listening::before, .s-voice-orb--speaking::before { opacity: 0.45; } }
+:root[data-motion="reduced"] .s-voice-orb::before, :root[data-motion="reduced"] .s-voice-orb::after { animation: none !important; }
+:root[data-motion="reduced"] .s-voice-orb--listening::before, :root[data-motion="reduced"] .s-voice-orb--speaking::before { opacity: 0.45; }
+
+.s-voice-status { margin: 0; min-height: 1.6em; font-family: var(--font-display); font-size: 1.25rem; font-weight: 500; letter-spacing: -0.02em; color: var(--on-place); max-width: 34ch; }
+.s-voice-controls { justify-content: center; align-items: center; }
+.s-voice-clock { color: var(--on-place-muted); font-size: var(--font-size-1); font-variant-numeric: tabular-nums; }
+.s-voice-stage .s-hint { max-width: 48ch; margin: 0; }
+
+.s-voice-transcript { margin-top: 1.5rem; }
+.s-shell .s-voice-transcript h2 { font-size: 1.25rem; margin: 0 0 0.6rem; }
+.s-voice-transcript ol { list-style: none; margin: 0; padding: 0.25rem 1.25rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); background: var(--c-surface); max-height: 26rem; overflow-y: auto; scrollbar-gutter: stable; }
+.s-voice-transcript ol > :nth-last-child(2) { border-bottom: 0; }
+.s-voice-turn { padding: 0.75rem 0; border-bottom: 1px solid var(--c-border-subtle); }
+.s-voice-turn p { margin: 0.2rem 0 0; font-size: 1.0625rem; line-height: 1.55; }
+.s-voice-who { color: var(--c-muted); font-size: var(--font-size-1); font-weight: 600; }
+.s-voice-turn--sela .s-voice-who { color: var(--c-leaf); }
+.s-voice-end { height: 1px; border: 0; padding: 0; }
+.s-voice > .s-notice, .s-voice > .s-crisis-panel { margin-top: 1.25rem; }
+:root[data-scheme^="contrast"] .s-voice-orb span { border: 2px solid var(--c-text); }
+:root[data-scheme^="contrast"] .s-voice-orb::before, :root[data-scheme^="contrast"] .s-voice-orb::after { border-color: var(--c-text); }
+:root[data-scheme^="contrast"] .s-voice-stage { border: 2px solid var(--c-text); }
+@media (forced-colors: active) { .s-voice-orb span { border: 2px solid CanvasText; } .s-voice-orb::before, .s-voice-orb::after { border-color: CanvasText; } .s-voice-stage { border: 2px solid CanvasText; } }
+@media print { .s-voice-orb, .s-voice-controls { display: none; } }

@@ -95,7 +95,7 @@ A live demo must show actual Meta provenance; unavailable access must remain vis
 
 ## Not used
 
-- No hosted Meta Model API, no tool calling, no image or speech models, no fine-tuning, no inference-time retrieval. Each would need a measured benefit and an ADR.
+- No hosted Meta Model API for generation, no tool calling, no image models, no fine-tuning, no inference-time retrieval. Each would need a measured benefit and an ADR. Exception (2026-10-29, SPEC C25): hosted Meta **speech-to-text only** (`muse-voice-transcribe-1.0` realtime via `GET /api/v3/asr/realtime`) for opt-in dictation under the separate `asr_meta` consent; Meta has no text-to-speech API, so read-aloud stays browser-local.
 - The event eligibility of this setup is unverified ([event notes](META_EVENT_NOTES.md)).
 - Claude and DeepSeek calls are never counted as Meta tooling (D-050).
 

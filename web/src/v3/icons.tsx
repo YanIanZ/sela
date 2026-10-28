@@ -37,6 +37,7 @@ export type IconName =
   | "copy"
   | "arrow-left"
   | "arrow-right"
+  | "arrow-up-right"
   | "close"
   | "settings"
   | "key"
@@ -243,6 +244,7 @@ const paths: Record<IconName, ReactNode> = {
   ),
   spark: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" />,
   shield: <path d="M12 3 4 6v5c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6Z" />,
+  "arrow-up-right": <path d="M7 17 17 7M8 7h9v9" />,
   search: (
     <>
       <circle cx="11" cy="11" r="7" />
@@ -280,7 +282,7 @@ export function Icon({
 }
 
 export function Mark({ size = 32 }: { size?: number }) {
-  // Four spines on a shelf, one per place: Beranda, Cerita, Catatanku, Dukungan.
+  // A sprout: two leaves opening from one stem, a breath taken in.
   return (
     <svg
       width={size}
@@ -290,10 +292,62 @@ export function Mark({ size = 32 }: { size?: number }) {
       focusable="false"
       className="s-mark"
     >
-      <rect x="2" y="7" width="5" height="22" rx="1" style={{ fill: "var(--mark-1, currentColor)" }} />
-      <rect x="8.5" y="3" width="5" height="26" rx="1" style={{ fill: "var(--mark-2, currentColor)" }} />
-      <rect x="15" y="9" width="5" height="20" rx="1" style={{ fill: "var(--mark-3, currentColor)" }} />
-      <rect x="22" y="5" width="5" height="24" rx="1" transform="rotate(8 24.5 29)" style={{ fill: "var(--mark-4, currentColor)" }} />
+      <circle cx="16" cy="16" r="16" style={{ fill: "var(--mark-ground, var(--place-home))" }} />
+      <path d="M16 25c0-6.2-3.6-10.4-9.4-11 .2 6.3 3.9 10.5 9.4 11Z" style={{ fill: "var(--mark-2, var(--c-leaf-soft))" }} />
+      <path d="M16 25c0-7.6 4.1-12.9 10.6-14-.3 7.9-4.4 13.1-10.6 14Z" style={{ fill: "var(--mark-1, var(--c-leaf))" }} />
+    </svg>
+  );
+}
+
+/** Four-point sparkle used as the only ornament on place sheets. */
+export function Sparkle({ size = 24, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+      className={className ? `s-sparkle ${className}` : "s-sparkle"}
+    >
+      <path d="M12 0c.9 7.4 4.6 11.1 12 12-7.4.9-11.1 4.6-12 12-.9-7.4-4.6-11.1-12-12C7.4 11.1 11.1 7.4 12 0Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export type MoodValue = "very_heavy" | "heavy" | "okay" | "good" | "very_good" | "mixed";
+
+const moodMouth: Record<MoodValue, ReactNode> = {
+  very_heavy: (
+    <>
+      <path d="M13 15.5l5 2M35 15.5l-5 2" />
+      <path d="M15 35c5-6 13-6 18 0" />
+    </>
+  ),
+  heavy: <path d="M16 34c4.5-4.5 11.5-4.5 16 0" />,
+  okay: <path d="M17 32h14" />,
+  good: <path d="M15.5 29.5c4.5 5.5 12.5 5.5 17 0" />,
+  very_good: <path d="M14 28h20c-1 7-5.5 10-10 10s-9-3-10-10Z" fill="#2A1F1A" />,
+  mixed: <path d="M15 32c2-2.4 4-2.4 6 0s4 2.4 6 0 4-2.4 6 0" />,
+};
+
+/** A drawn mood face. Always shown beside its text label, never alone. */
+export function MoodFace({ mood, size = 48 }: { mood: MoodValue; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      aria-hidden="true"
+      focusable="false"
+      className={`s-mood-face s-mood-face--${mood}`}
+    >
+      <circle cx="24" cy="24" r="23" className="s-mood-face-fill" />
+      <ellipse cx="17.5" cy="21" rx="2.6" ry="3.4" fill="#2A1F1A" />
+      <ellipse cx="30.5" cy="21" rx="2.6" ry="3.4" fill="#2A1F1A" />
+      <g fill="none" stroke="#2A1F1A" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+        {moodMouth[mood]}
+      </g>
     </svg>
   );
 }

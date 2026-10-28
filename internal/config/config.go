@@ -84,6 +84,17 @@ type Config struct {
 	ColdStart      time.Duration
 	MaxOpsPerHour  int
 
+	// ASRMode is the server-side dictation backend: "disabled" (mic off),
+	// "meta" (Meta voice-transcribe realtime via SELA_ASR_API_KEY),
+	// "bedrock" (Amazon Nova Sonic speech-to-speech via AWS credentials),
+	// or "test_double" (local loopback for development/test only).
+	ASRMode    string
+	ASRAPIKey  string
+	ASRModel   string
+	ASRURL     string
+	AWSRegion  string
+	AWSProfile string
+
 	// Store is the v2 journey store: "memory" (development, test, demo
 	// only) or "disabled" (v2 journey routes not served).
 	Store string
@@ -234,6 +245,19 @@ func LoadMode(mode Mode) (Config, error) {
 	c.MaxOpsPerHour, err = envInt("SELA_MAX_AI_OPS_PER_SESSION", 8, 1, 1000)
 	add(err)
 
+	c.ASRMode = env("SELA_ASR_MODE", "disabled")
+	c.ASRAPIKey = env("SELA_ASR_API_KEY", "")
+	c.ASRModel = env("SELA_ASR_MODEL", "")
+	c.ASRURL = env("SELA_ASR_URL", "wss://api.meta.ai/v1/asr/realtime")
+	c.AWSRegion = env("AWS_REGION", env("AWS_DEFAULT_REGION", "us-east-1"))
+	c.AWSProfile = env("AWS_PROFILE", "")
+	if c.ASRMode == "meta" && c.ASRModel == "" {
+		c.ASRModel = "muse-voice-transcribe-1.0"
+	}
+	if c.ASRMode == "bedrock" && c.ASRModel == "" {
+		c.ASRModel = "amazon.nova-2-5-sonic"
+	}
+
 	switch c.LLMMode {
 	case "disabled":
 	case "modal":
@@ -254,6 +278,28 @@ func LoadMode(mode Mode) (Config, error) {
 		}
 	default:
 		add(errors.New("SELA_LLM_MODE: must be disabled, modal or test_double"))
+	}
+
+	switch c.ASRMode {
+	case "disabled":
+	case "test_double":
+		allow, _ := envBool("SELA_ALLOW_TEST_DOUBLE", false)
+		if public || (mode == ModeServer && !allow) {
+			add(errors.New("SELA_ASR_MODE=test_double is refused in demo, staging and production (V42), and in development and test requires SELA_ALLOW_TEST_DOUBLE=true"))
+		}
+	case "meta":
+		if c.ASRAPIKey == "" || c.ASRModel == "" || c.ASRURL == "" {
+			add(errors.New("SELA_ASR_MODE=meta requires SELA_ASR_API_KEY, SELA_ASR_MODEL and SELA_ASR_URL"))
+		}
+		if (c.Env == EnvProduction || c.Env == EnvStaging) && !strings.HasPrefix(c.ASRURL, "wss://") {
+			add(errors.New("SELA_ASR_URL in staging and production must be wss:// (plain ws never carries dictation audio)"))
+		}
+	case "bedrock":
+		if c.ASRModel == "" || c.AWSRegion == "" {
+			add(errors.New("SELA_ASR_MODE=bedrock requires SELA_ASR_MODEL and AWS_REGION"))
+		}
+	default:
+		add(errors.New("SELA_ASR_MODE: must be disabled, meta, bedrock or test_double"))
 	}
 
 	loadV3(&c, mode, public, add)

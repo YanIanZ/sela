@@ -44,6 +44,8 @@ const purposePlace: Record<string, { id: string; en: string }> = {
     en: "Claude by Anthropic (United States)",
   },
   ai_provider_deepseek: { id: "DeepSeek (Tiongkok)", en: "DeepSeek (China)" },
+  asr_meta: { id: "Meta (Amerika Serikat), hanya saat dikte", en: "Meta (United States), only while dictating" },
+  ai_provider_aws_voice: { id: "Amazon Nova 2.5 Sonic di AWS (Amerika Serikat), hanya di ruang suara · eksperimental", en: "Amazon Nova 2.5 Sonic on AWS (United States), voice room only · experimental" },
   personal_memory: { id: "Disimpan di server Sela", en: "Stored on Sela's server" },
 };
 
@@ -259,7 +261,8 @@ export function PrivacyPage({
     (c) =>
       c.purpose === "ai_processing" ||
       c.purpose.startsWith("ai_provider_") ||
-      c.purpose === "personal_memory",
+      c.purpose === "personal_memory" ||
+      c.purpose === "asr_meta",
   );
   const region = user.guest?.storage.region;
 
@@ -959,8 +962,8 @@ export function DisplayPage() {
             </Button>
             <p className="s-hint">
               {w(
-                "Dikte memakai layanan suara dari browsermu. Di beberapa browser (misalnya Chrome), suaramu dikirim ke server penyedia browser untuk diubah menjadi teks.",
-                "Dictation uses your browser's speech service. In some browsers (for example Chrome), your voice is sent to the browser vendor's servers to be turned into text.",
+                "Dikte mengirim suaramu lewat server Sela ke layanan transkripsi Meta untuk diubah menjadi teks. Mikrofon hanya aktif saat kamu menekan tombol mikrofon.",
+                "Dictation sends your voice through Sela's server to Meta's transcription service to be turned into text. The microphone is only on while you press the mic button.",
               )}
             </p>
           </section>
