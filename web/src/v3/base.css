@@ -202,6 +202,21 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
   .s-colophon { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .s-colophon-brand { grid-column: 1 / -1; }
 }
+/* Large text scales make every rem wider, so the desktop header must
+   compact at widths that fit at 100%: the 1365 px viewport at 130% needs
+   the same header budget as ~1050 px at 100% (WCAG 2.2 AA 1.4.10). */
+@media (min-width: 75em) {
+  :root[data-text-scale="130"] .s-header,
+  :root[data-text-scale="150"] .s-header { padding-inline: 1.5rem; gap: 0.75rem; }
+  :root[data-text-scale="130"] .n-desktop-nav,
+  :root[data-text-scale="150"] .n-desktop-nav { gap: 1rem; }
+  :root[data-text-scale="130"] .s-header-actions .s-btn,
+  :root[data-text-scale="150"] .s-header-actions .s-btn { font-size: var(--font-size-1); padding-inline: 0.5rem; }
+  :root[data-text-scale="130"] .s-header-actions .s-btn .s-icon,
+  :root[data-text-scale="150"] .s-header-actions .s-btn .s-icon { display: none; }
+  :root[data-text-scale="130"] .s-header-actions .s-menu-button .s-icon,
+  :root[data-text-scale="150"] .s-header-actions .s-menu-button .s-icon { display: block; }
+}
 @media (max-width: 63.99em) {
   .n-desktop-nav { display: none; }
   .s-header-actions .s-btn { font-size: var(--font-size-1); }
