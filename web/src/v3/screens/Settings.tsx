@@ -44,8 +44,6 @@ const purposePlace: Record<string, { id: string; en: string }> = {
     en: "Claude by Anthropic (United States)",
   },
   ai_provider_deepseek: { id: "DeepSeek (Tiongkok)", en: "DeepSeek (China)" },
-  asr_meta: { id: "Amazon Nova Sonic (AWS, Amerika Serikat), hanya saat dikte", en: "Amazon Nova Sonic (AWS, United States), only while dictating" },
-  ai_provider_aws_voice: { id: "Amazon Nova 2.5 Sonic di AWS (Amerika Serikat), hanya di ruang suara · eksperimental", en: "Amazon Nova 2.5 Sonic on AWS (United States), voice room only · experimental" },
   personal_memory: { id: "Disimpan di server Sela", en: "Stored on Sela's server" },
 };
 
@@ -259,10 +257,11 @@ export function PrivacyPage({
 
   const aiPurposes = (consents ?? []).filter(
     (c) =>
-      c.purpose === "ai_processing" ||
-      c.purpose.startsWith("ai_provider_") ||
-      c.purpose === "personal_memory" ||
-      c.purpose === "asr_meta",
+      c.purpose !== "asr_meta" &&
+      c.purpose !== "ai_provider_aws_voice" &&
+      (c.purpose === "ai_processing" ||
+        c.purpose.startsWith("ai_provider_") ||
+        c.purpose === "personal_memory"),
   );
   const region = user.guest?.storage.region;
 
@@ -926,46 +925,16 @@ export function DisplayPage() {
             />
           </section>
           <section className="s-display-group" aria-labelledby="reader-title">
-            <h2 id="reader-title">{w("Pembaca layar & suara", "Screen readers & voice")}</h2>
+            <h2 id="reader-title">{w("Pembaca layar", "Screen readers")}</h2>
             <Switch
               checked={prefs.announceReplies}
               onChange={(v) => update("announceReplies", v, w("Pengumuman balasan diubah.", "Reply announcements changed."))}
               label={w("Umumkan balasan ke pembaca layar", "Announce replies to screen readers")}
               hint={w(
-                "Untuk pembaca layar. Ini tidak memutar suara; untuk suara, pakai Bacakan dengan suara.",
-                "For screen readers. This doesn't play sound; for sound, use Read aloud.",
+                "Untuk pembaca layar. Tidak ada audio yang diputar.",
+                "For screen readers. No audio is played.",
               )}
             />
-            <Switch
-              checked={prefs.readAloud}
-              onChange={(v) => update("readAloud", v, w("Bacakan dengan suara diubah.", "Read aloud changed."))}
-              label={w("Bacakan dengan suara", "Read aloud")}
-              hint={w(
-                "Memakai suara lokal di perangkatmu; tidak ada yang dikirim keluar.",
-                "Uses local voices on your device; nothing is sent out.",
-              )}
-            />
-            <Button
-              variant={prefs.dictation ? "danger" : "secondary"}
-              icon="mic"
-              onClick={() => {
-                update(
-                  "dictation",
-                  !prefs.dictation,
-                  prefs.dictation
-                    ? w("Dikte dimatikan.", "Dictation is off.")
-                    : w("Dikte aktif. Mikrofon baru diminta saat kamu menekan tombol mikrofon di kotak tulis.", "Dictation is on. The microphone is requested only when you press the mic in the writing box."),
-                );
-              }}
-            >
-              {prefs.dictation ? w("Matikan dikte", "Turn off dictation") : w("Nyalakan dikte", "Turn on dictation")}
-            </Button>
-            <p className="s-hint">
-              {w(
-                "Dikte mengirim suaramu lewat server Sela ke Amazon Nova Sonic (AWS) untuk diubah menjadi teks. Mikrofon hanya aktif saat kamu menekan tombol mikrofon.",
-                "Dictation sends your voice through Sela's server to Amazon Nova Sonic (AWS) to be turned into text. The microphone is only on while you press the mic button.",
-              )}
-            </p>
           </section>
           <section className="s-display-group" aria-labelledby="safety-title">
             <h2 id="safety-title">{w("Keselamatan", "Safety")}</h2>

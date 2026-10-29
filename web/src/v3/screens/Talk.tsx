@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
 import { useI18n } from "../../i18n";
 import { api, isAbort, type Entry, type Profile, type Room, type Turn } from "../api";
-import { useDictation, type DictationError } from "../asr";
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon } from "../icons";
@@ -148,9 +147,6 @@ function TalkList() {
               icon="send"
             >
               {w("Mulai bercerita", "Start talking")}
-            </LinkButton>
-            <LinkButton to="/talk/voice" variant="secondary" icon="mic">
-              {w("Bicara dengan suara", "Talk by voice")}
             </LinkButton>
           </>
         }
@@ -460,49 +456,6 @@ function RoomPage({ id }: { id: string }) {
   const [newContent, setNewContent] = useState("");
   const [closePanel, setClosePanel] = useState(false);
 
-  const {
-    dictating,
-    livePartial,
-    errorCode,
-    clearError,
-    toggle: toggleDictation,
-  } = useDictation((final) => {
-    setText((current) => (current ? current + " " + final : final));
-  });
-
-  const dictationError = (code: DictationError): string => {
-    switch (code) {
-      case "mic_denied":
-        return w(
-          "Akses mikrofon ditolak browser. Izinkan mikrofon lalu coba lagi.",
-          "Microphone access was denied by the browser. Allow it and try again.",
-        );
-      case "asr_consent_required":
-        return w(
-          "Dikte via Meta butuh izinmu dulu. Aktifkan di Privasi & data, bagian Pemrosesan AI.",
-          "Dictation via Meta needs your permission first. Turn it on in Privacy & data, under AI processing.",
-        );
-      case "asr_unavailable":
-        return w(
-          "Dikte belum tersedia di server ini.",
-          "Dictation isn't available on this server.",
-        );
-      default:
-        return w(
-          "Dikte gagal. Tulisanmu tetap di sini.",
-          "Dictation failed. Your writing is still here.",
-        );
-    }
-  };
-
-  useEffect(() => {
-    if (!errorCode) return;
-    const msg = dictationError(errorCode);
-    setError(msg);
-    announce("status", msg);
-    clearError();
-  }, [errorCode, announce, clearError, w]);
-
   const focusComposer = () => (document.getElementById("composer-text") as HTMLElement | null)?.focus();
   const transcript = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
@@ -780,18 +733,6 @@ function RoomPage({ id }: { id: string }) {
     }
   };
 
-  const readAloud = (value: string) => {
-    try {
-      const utter = new SpeechSynthesisUtterance(value);
-      utter.lang = lang === "en" ? "en-GB" : "id-ID";
-      utter.rate = 0.95;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
-    } catch {
-      setError(w("Suara tidak tersedia di perangkat ini.", "Speech isn't available on this device."));
-    }
-  };
-
   if (loading) {
     return (
       <>
@@ -992,15 +933,6 @@ function RoomPage({ id }: { id: string }) {
                             </div>
                           </dl>
                         </details>
-                        {prefs.readAloud && (
-                          <button
-                            type="button"
-                            className={buttonClass("quiet")}
-                            onClick={() => readAloud(turn.text)}
-                          >
-                            {w("Bacakan", "Read aloud")}
-                          </button>
-                        )}
                       </div>
                     </article>
                   )}
@@ -1221,16 +1153,6 @@ function RoomPage({ id }: { id: string }) {
                 />
                 <div className="s-composer-bottom">
                   <div className="s-composer-actions">
-                    {prefs.dictation && (
-                      <Button
-                        variant="secondary"
-                        icon="mic"
-                        aria-pressed={dictating}
-                        onClick={toggleDictation}
-                      >
-                        {dictating ? w("Berhenti mendengar", "Stop listening") : w("Dikte", "Dictate")}
-                      </Button>
-                    )}
                     {busy ? (
                       <>
                         <Button variant="secondary" icon="stop" onClick={() => void stop()}>
@@ -1258,12 +1180,6 @@ function RoomPage({ id }: { id: string }) {
                       "Tunggu balasan Sela, atau hentikan dulu. Kamu masih bisa menulis.",
                       "Wait for Sela's reply, or stop it first. You can still write.",
                     )}
-                  </p>
-                )}
-                {dictating && livePartial && (
-                  <p className="s-hint" aria-live="polite" role="status">
-                    {w("Terdengar: ", "Heard: ")}
-                    {livePartial}…
                   </p>
                 )}
                 {stopped && (

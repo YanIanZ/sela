@@ -16,7 +16,6 @@ export type IconName =
   | "menu"
   | "send"
   | "stop"
-  | "mic"
   | "quote"
   | "pencil"
   | "ai"
@@ -88,12 +87,6 @@ const paths: Record<IconName, ReactNode> = {
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   send: <path d="m3 11 18-8-8 18-2-8Z" />,
   stop: <rect x="6" y="6" width="12" height="12" rx="1" />,
-  mic: (
-    <>
-      <rect x="9" y="3" width="6" height="11" rx="3" />
-      <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" />
-    </>
-  ),
   quote: <path d="M9 7H5v5h4c0 3-1.6 4.4-4 5 4.6 0 7-2.7 7-7V7Zm10 0h-4v5h4c0 3-1.6 4.4-4 5 4.6 0 7-2.7 7-7V7Z" />,
   pencil: <path d="M4 20h4L20 8l-4-4L4 16v4Zm9-13 4 4" />,
   ai: (

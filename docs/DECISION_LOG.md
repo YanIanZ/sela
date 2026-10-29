@@ -294,6 +294,8 @@ Why: the owner brief asks for sharing with consent per content, recipient and pu
 
 ## D-058
 
+**Superseded by [D-060](#d-060): the voice room and all voice/TTS surfaces were removed on 2026-10-29.**
+
 2026-10-29 · Owner decision · **Experimental Amazon Nova 2.5 Sonic voice room (SPEC C27).** The owner asked for a full voice conversation with Amazon Nova 2.5 Sonic and, after being told the trade-offs, confirmed three points:
 
 1. **Sonic generates the voice reply.** In the voice room only, AWS (not the Meta model on Modal) produces the answer. This narrows C18 and V35 for that room; the text talk room keeps Meta as the primary generator. Every Sonic output carries Amazon's label and is never counted or shown as Meta's (D-050).
@@ -305,4 +307,18 @@ Safety defaults set by the engineering lead under this decision: `18_plus` only;
 
 ## D-059
 
+**Superseded by [D-060](#d-060): the AWS and gorilla/websocket dependencies were removed with the voice features.**
+
 2026-10-29 · PM decision · **Direct Go dependencies for the voice room and dictation.** Under D-058 (the Sonic voice room) and the Sonic dictation relay (BUG-6 second revision, backlog S-025), four direct requirements join the approved set of ADR-0002 §1: `github.com/aws/aws-sdk-go-v2` v1.47.5 (Bedrock stream core), `github.com/aws/aws-sdk-go-v2/credentials` v1.20.12 (static IAM credentials for the dedicated `sela-voice` user), `github.com/aws/aws-sdk-go-v2/service/bedrockruntime` v1.63.8 (`InvokeModelWithBidirectionalStream` on `amazon.nova-2-5-sonic`) and `github.com/gorilla/websocket` v1.5.3 (the voice and dictation sockets; already in use by the v2 realtime journey). Written reasons: [ADR-0002](adr/ADR-0002-persistence-accounts-and-encryption.md) §1, whose F-46 row and the CI allowlist step in `.github/workflows/v2.yml` now list exactly these modules. AWS credentials stay server-side (D-058); no new indirect module is approved by this entry beyond the SDK's own requirements recorded in `go.sum`.
+
+## D-060
+
+2026-10-29 · Owner decision · **Text-only product; remove every voice and TTS surface and focus on Meta AI.** The owner reviewed the previous voice work (PR #15: browser read-aloud, the Amazon Nova 2.5 Sonic voice room, and the Sonic/Meta dictation relay) and decided the product should be text-only. Removed:
+
+1. **Read-aloud TTS.** The `readAloud` display preference, its Settings switch and the per-reply "Bacakan / Read aloud" control. No browser speech synthesis remains in the v3 app.
+2. **Amazon Nova Sonic voice room.** The `/talk/voice` screen, `GET /api/v3/voice/realtime`, `internal/ai/sonic`, `cmd/sela/voice.go`, the `ai_provider_aws_voice` consent, `SELA_VOICE_*` configuration and the voice-room tests.
+3. **Dictation.** The composer microphone, `web/src/v3/asr.ts`, `GET /api/v3/asr/realtime`, `asr_meta`, `SELA_ASR_*` configuration and the dictation tests.
+
+The direct AWS SDK and `gorilla/websocket` requirements are removed from `go.mod` and the CI allowlist; D-059 is superseded. Meta text generation through `internal/ai` stays the primary and only generative path, with the existing DeepSeek fallback and Claude verifier contract unchanged. No provider receives microphone audio, and no speech is synthesized. The legacy v1 `apps/web` runtime is out of scope for this removal (it is paused and not the v3 surface); its voice tests remain only until the v1 runtime retires.
+
+Why: the owner wants the Meta AI text experience to be the focus of the submission, and the voice stack added an AWS provider, extra consent purposes, realtime sockets and audio edge cases that are not part of that story. Changes: SPEC C25/C27/V43, `docs/API_SPEC_V3.md`, `docs/RUNBOOK.md`, `docs/META_INTEGRATION.md`, backlog S-025/S-026/S-027, ADR-0002 §1 and the v3 settings/talk UI.

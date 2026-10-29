@@ -161,43 +161,5 @@
         "en": "If enabled on the server and Meta has an outage, DeepSeek (China) may receive necessary excerpts. It requires separate permission. Currently restricted to synthetic test data; retention follows the provider policy."
       }
     ]
-  },
-  "asr_meta": {
-    "version": "asr-aws-2026-10-29.1",
-    "title": {
-      "id": "Dikte via Amazon Nova Sonic",
-      "en": "Dictation via Amazon Nova Sonic"
-    },
-    "body": [
-      {
-        "id": "Saat kamu menekan tombol mikrofon, suaramu dikirim lewat server Sela ke Amazon Nova Sonic (AS) untuk diubah menjadi teks. Hanya audio yang kamu rekam saat itu yang dikirim; hasil teksnya bisa kamu ubah sebelum dikirim sebagai pesan. Tidak ada suara asisten yang dihasilkan.",
-        "en": "When you press the microphone button, your voice is sent through Sela's server to Amazon Nova Sonic (US) to be turned into text. Only the audio you record at that moment is sent; you can edit the resulting text before sending it as a message. No assistant audio is produced."
-      },
-      {
-        "id": "Izin ini terpisah dan dapat dicabut; tanpa izin ini tombol mikrofon tidak aktif. Retensi mengikuti kebijakan AWS.",
-        "en": "This permission is separate and can be withdrawn; without it the microphone button stays off. Retention follows the AWS policy."
-      }
-    ]
-  },
-  "ai_provider_aws_voice": {
-    "version": "ai-aws-voice-2026-10-29.1",
-    "title": {
-      "id": "Percakapan suara · Amazon Nova 2.5 Sonic",
-      "en": "Voice conversation · Amazon Nova 2.5 Sonic"
-    },
-    "body": [
-      {
-        "id": "Di ruang suara, suaramu dikirim lewat server Sela ke Amazon Nova 2.5 Sonic di AWS (Amerika Serikat). Sonic mengubah suaramu menjadi teks dan menjawab dengan suara. Jawaban itu dibuat oleh Amazon, bukan oleh model Meta, dan selalu diberi label.",
-        "en": "In the voice room, your voice is sent through Sela's server to Amazon Nova 2.5 Sonic on AWS (United States). Sonic turns your voice into text and answers with a voice. Those answers are made by Amazon, not by the Meta model, and are always labelled."
-      },
-      {
-        "id": "Eksperimental: Amazon belum mendukung bahasa Indonesia secara resmi, jadi ucapanmu bisa salah dikenali dan jawabannya bisa keliru. Pemeriksaan krisis tetap berjalan pada teks ucapanmu; kalau terdeteksi bahaya, sesi berhenti dan bantuan manusia ditampilkan.",
-        "en": "Experimental: Amazon does not officially support Indonesian yet, so your speech may be misheard and answers may be wrong. The crisis check still runs on the text of what you say; if danger is detected, the session stops and human help is shown."
-      },
-      {
-        "id": "Hanya untuk usia 18 tahun ke atas. Percakapan suara tidak disimpan oleh Sela; retensi di AWS mengikuti kebijakan penyedia. Izin ini terpisah dan dapat dicabut kapan saja.",
-        "en": "For people aged 18 and over only. Voice conversations are not stored by Sela; retention at AWS follows the provider policy. This permission is separate and can be withdrawn at any time."
-      }
-    ]
   }
 }

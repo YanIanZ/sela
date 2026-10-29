@@ -174,7 +174,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Outcome:** A person writes, gets a contextual reply, decides whether this conversation is saved, and ends it with one action. Saved conversations can be listed, resumed and deleted.
 - **Priority:** pilot-critical. Listening is the core function (brief §1, §5; D-035) and DoD capability 1.
 - **Scope:** Conversation and message records (migration range 0100–0199, encrypted, exporter), `/api/v3/conversations` specified in API_SPEC_V3 §9 before implementation, composer and message log ("Ruang cerita / Talk"), the per-conversation storage choice (save or don't save, asked in plain language before the first message is stored, changeable), the bounded in-memory hold for "don't save" turns (D-051; SPEC V27), "Selesai / End", list, resume and delete.
-- **Non-goals:** Group chat, voice room (S-027), attachments, therapy role-play, a companion persona.
+- **Non-goals:** Group chat, voice room (S-027, retired), attachments, therapy role-play, a companion persona.
 - **Depends on:** S-002 or S-003, S-150, S-151, S-170, S-171, S-191, S-220, S-221, S-223.
 - **Acceptance criteria:**
   1. A new visitor reaches the composer with no profile field other than the age band and the required terms, in at most four screens from the welcome page (e2e counts them).
@@ -214,7 +214,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Acceptance criteria:**
   1. The transcript is a `role="log"`; the in-progress reply is not live and is committed to the log as one node when complete, so a three-sentence reply yields one announcement or none, never fragments.
   2. A visually hidden `role="status"` announces "Sela sedang menulis…" at the start and "Balasan selesai" at the end, at most two announcements per reply.
-  3. A setting "Bacakan balasan otomatis / Announce replies to screen readers" sets only the transcript's `aria-live` (`polite` when on, `off` when off). It is on by default ([accessibility criteria](design/ACCESSIBILITY_CRITERIA.md) ST-3) and stored on this device with the other display preferences ([design direction §5.9](design/DESIGN_DIRECTION.md#59-display-preferences); S-192). It never produces audio; spoken read-aloud exists only in S-026. When it is off, "Baca balasan terakhir / Read last reply" moves focus to the last Sela message.
+  3. A setting "Bacakan balasan otomatis / Announce replies to screen readers" sets only the transcript's `aria-live` (`polite` when on, `off` when off). It is on by default ([accessibility criteria](design/ACCESSIBILITY_CRITERIA.md) ST-3) and stored on this device with the other display preferences ([design direction §5.9](design/DESIGN_DIRECTION.md#59-display-preferences); S-192). It never produces audio; the app has no speech synthesis (D-060). When it is off, "Baca balasan terakhir / Read last reply" moves focus to the last Sela message.
   4. Focus stays in the composer during and after streaming; a visible, keyboard-reachable "Hentikan balasan / Stop reply" sits next to it; stopped text is kept and marked "Dihentikan / Stopped".
   5. Auto-scroll happens only while the reader is at the bottom; otherwise a "Pesan baru / New message" button appears and is announced once.
   6. Under reduced motion there is no caret or typing animation; text may appear sentence by sentence.
@@ -256,47 +256,14 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Risks:** Frequent outages before B-1 make the room feel broken; the copy must not blame the person.
 - **Owner:** Frontend engineer; Go backend engineer. **Milestone:** P3. **Status:** planned. **Evidence:** —
 
-#### S-025 Voice dictation (opt-in)
-- **Problem:** Typing is hard for some people (FM-15).
-- **Outcome:** Optional dictation into the composer with a disclosure and an editable transcript.
-- **Priority:** pilot-important. D-038 migrates voice dictation into the pilot as an opt-in, and SPEC C25 lists it in pilot scope; it serves people for whom typing is hard (brief §6). The pilot can start without it because the operating system's own keyboard dictation already works in any text field. **Amended 2026-10-29 (BUG-6, second revision):** replaced browser Web Speech with server-side Amazon Nova Sonic speech-to-speech (`amazon.nova-2-5-sonic`) because the browser service quality and privacy posture did not meet the pilot bar; Nova 2 Omni is not yet available in this account (Preview, gated behind Nova Forge).
-- **Scope:** The Amazon Nova Sonic speech-to-speech realtime relay (`GET /api/v3/asr/realtime`, `internal/httpapi/v3_asr.go`) behind the separate `asr_meta` consent (S-171) and the composer's mic button ([design direction §6.5](design/DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer)). The browser streams mono 16 kHz int16 PCM to Sela; Sela relays it to Amazon Nova Sonic with IAM credentials held server-side; only user transcript events pass through to the editable composer (assistant audio and text are dropped). Audio is never stored by Sela; provider retention follows the AWS policy, disclosed in the `asr_meta` consent.
-- **Non-goals:** Audio storage by Sela; auto-submit; a voice room (S-027, paused).
-- **Depends on:** S-020, S-171, S-192.
-- **Acceptance criteria:**
-  1. Off by default; turning it on requires the separate `asr_meta` consent, whose text (ID and EN) names Meta as the recipient and states that audio is sent for transcription.
-  2. Microphone permission is asked only on use; recording state is shown in text and announced through `role="status"`.
-  3. The transcript goes into the editable composer and is never sent automatically (DX-08); text input stays available.
-  4. The mic is a toggle, never press-and-hold (2.5.2).
-  5. Without the `asr_meta` consent the websocket answers an error event plus close code 4403; with `SELA_ASR_MODE=disabled` it answers 4413; both are shown as a calm error in ID and EN.
-  6. BASE.
-- **Risks:** Recognition quality for Indonesian and code-switching by Meta's model; audio contains more identifying data than text, so the consent and non-goals are strict.
-- **Owner:** Frontend engineer. **Milestone:** P7. **Status:** implemented locally (dictation proxy, composer hook, consent UI and tests in `feat/sela-wellbeing-themes`); needs live Meta verification. **Evidence:** `internal/httpapi/v3_asr_test.go`, `web/src/test/asr.test.ts`
+#### S-025 Voice dictation (retired)
+- **Status:** retired 2026-10-29 (D-060). The v3 app is text-only: no ASR route, `asr_meta` consent, microphone control or provider audio transfer exists. The 2026-10-29 implementation was removed.
 
-#### S-026 Read replies aloud (opt-in)
-- **Problem:** Some people prefer to listen.
-- **Outcome:** An opt-in read-aloud button using the browser's local speech synthesis.
-- **Priority:** pilot-important. D-038 keeps read-aloud through local speech synthesis as an opt-in in the pilot, and SPEC C25 lists it in pilot scope. The pilot can start without it because screen-reader users already have S-022; this serves preference, not access.
-- **Scope:** The "Bacakan dengan suara / Read aloud" display setting (S-192), off by default; per-reply "Bacakan / Read aloud" with pause and stop ([design direction §6.5](design/DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer)). Separate from the screen-reader announcement setting of S-022.
-- **Non-goals:** Cloud text-to-speech; autoplay.
-- **Depends on:** S-022, S-192.
-- **Acceptance criteria:**
-  1. Never plays automatically (1.4.2); play, pause and stop are keyboard operable.
-  2. Only local voices are used (`localService === true`); if the language has none, the setting says so and stays off, so no text or audio leaves the device.
-  3. BASE.
-- **Risks:** Sensitive text read aloud in public; the control explains this once.
-- **Owner:** Frontend engineer. **Milestone:** P7. **Status:** planned. **Evidence:** —
+#### S-026 Read replies aloud (retired)
+- **Status:** retired 2026-10-29 (D-060). No display preference, per-reply control or browser speech synthesis remains.
 
-#### S-027 Voice room "Ruang Ngobrol" (paused)
-- **Problem:** Talking out loud can be easier than typing (FM-16).
-- **Outcome:** Reopened only when its prerequisites are met.
-- **Priority:** post-pilot, paused (D-038): Gemini is outside the v3 provider plan, the Dengar.in version autoplays reply audio and auto-submits transcripts (DX-08).
-- **Scope (prerequisites to reopen):** a transcript review step before anything is sent; no autoplay; a provider inside the routing policy with its own consent; audio never stored; captions; an accessibility review.
-- **Non-goals:** Porting the Dengar.in room as it is.
-- **Depends on:** S-025, S-026, S-220.
-- **Acceptance criteria:** Defined when reopened; at minimum the prerequisites above, each with a test.
-- **Risks:** Voice data is more identifying than text.
-- **Owner:** PM (reopen decision). **Milestone:** later. **Status:** planned (paused). **Evidence:** —
+#### S-027 Voice room (retired)
+- **Status:** retired 2026-10-29 (D-060). The Amazon Nova Sonic room, its consent and its realtime route were removed; the text talk room is the only conversation surface.
 
 ### 3.3 Personal home (S-040 to S-049)
 
@@ -1003,7 +970,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 
 #### S-192 Display settings ("Akses cepat")
 - **Problem:** People read differently; some need bigger text, more contrast or no motion (FM-40).
-- **Outcome:** Settings for text size, theme, contrast, reading spacing, reduced motion, announcing replies to screen readers (S-022), and the opt-in voice settings (S-025, S-026), applied before the first paint and kept.
+- **Outcome:** Settings for text size, theme, contrast, reading spacing, reduced motion and announcing replies to screen readers (S-022), applied before the first paint and kept. No voice settings remain (D-060).
 - **Priority:** pilot-important. WCAG conformance (pilot-critical) comes from the default design; this panel serves preferences beyond it.
 - **Scope:** "Tampilan & aksesibilitas / Display & accessibility" ([design direction §5.9](design/DESIGN_DIRECTION.md#59-display-preferences)). Preferences are stored on this device in `localStorage` behind `try/catch`; they are non-sensitive, as the v3 browser rule in [safety](SAFETY.md) requires (DX-04). If storage is blocked, a choice lasts until the tab closes. Syncing preferences to the account is planned and needs an API field (design direction §10, item 5).
 - **Non-goals:** Defaults chosen by age band; personal content in browser storage.
@@ -1606,7 +1573,7 @@ The brief lists eight milestones. They are kept, with two changes driven by depe
 | 4 | **P4** Consultation summary, sharing, recipient, follow-up | 4 | P3 | A summary is built from saved entries and memory |
 | 5 | **P5** AI routing complete: Claude verifier, DeepSeek fallback, AI summary wording, memory suggestions, evaluation | 5 | P3, P4 | The verifier checks P3/P4 outputs; its live parts are blocked (B-1, B-8, B-9), so building it after P4 costs no calendar time |
 | 6 | **P6** Research and evidence; reading library | 6 | P1 (track runs in parallel); S-245 needs S-222 | Independent data work; reading content needs the evidence map and authoring-time verification |
-| 7 | **P7** Accessibility audit, display settings and the opt-in voice features, security, hosted operations, minors | 7 | P3–P6 | Needs the finished surfaces to audit, and hosting to deploy; dictation and read-aloud are switched on in the display settings built here |
+| 7 | **P7** Accessibility audit, display settings, security, hosted operations, minors | 7 | P3–P6 | Needs the finished surfaces to audit, and hosting to deploy; voice features were retired (D-060) |
 | 8 | **P8** Final integration and pilot readiness | 8 | all | Owner testing and the readiness report close the program |
 
 ### 4.2 Items and exit criteria
@@ -1645,7 +1612,7 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 2. The v3 gap search is frozen; the v3 evidence map has a row per v3 feature, per brief §9 topic and per population, with gaps declared.
 3. No reading item or "latihan kecil" is published without recorded verification; B-4 progress is recorded.
 
-**P7 Accessibility, security and operations.** Items: S-025, S-026, S-154, S-178, S-192, S-195 (full), S-196, S-210, S-211 (UI), S-212, S-213, S-221 (live), S-262 (hosted: criterion 2, and the status-page post of criterion 3), S-263, S-264, S-265, S-266, S-267, S-274 (hosted access log).
+**P7 Accessibility, security and operations.** Items: S-154, S-178, S-192, S-195 (full), S-196, S-210, S-211 (UI), S-212, S-213, S-221 (live), S-262 (hosted: criterion 2, and the status-page post of criterion 3), S-263, S-264, S-265, S-266, S-267, S-274 (hosted access log).
 1. The full manual accessibility review is complete with no open blocking finding.
 2. The security review's findings are fixed or accepted by the owner.
 3. Staging and demo are deployed with a recorded restore drill (needs B-3, B-15); Modal is deployed (needs B-1).
@@ -1656,7 +1623,7 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 2. The readiness report gives every DoD capability a status on the release ladder, with evidence links.
 3. Every remaining blocker names its owner action.
 
-**Later (after the pilot or paused):** S-008, S-027, S-041, S-053, S-122, S-142, S-179, S-180, S-181, S-182, S-225, S-229, S-247, S-248, S-249, S-268, S-269, S-272.
+**Later (after the pilot or paused):** S-008, S-041, S-053, S-122, S-142, S-179, S-180, S-181, S-182, S-225, S-229, S-247, S-248, S-249, S-268, S-269, S-272.
 
 ## 5. Index
 
@@ -1675,9 +1642,9 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-022 | Screen-reader-friendly streaming and Stop | pilot-critical | P3 | planned |
 | S-023 | "Sela menangkap…" cards | pilot-critical | P3 | planned |
 | S-024 | AI off or unavailable | pilot-critical | P3 | planned |
-| S-025 | Voice dictation (opt-in) | pilot-important | P7 | implemented locally; needs live Meta verification |
-| S-026 | Read aloud (opt-in) | pilot-important | P7 | planned |
-| S-027 | Voice room (paused) | post-pilot | later | planned (paused) |
+| S-025 | Voice dictation | retired | — | retired (D-060) |
+| S-026 | Read aloud | retired | — | retired (D-060) |
+| S-027 | Voice room | retired | — | retired (D-060) |
 | S-040 | Personal home | pilot-important | P3 | planned |
 | S-041 | Optional neutral reminders | post-pilot | later | planned |
 | S-050 | Notes (journal) inside Catatan pribadiku | pilot-critical | P3 | in progress |
@@ -1792,8 +1759,8 @@ Every row of the [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) lands in
 | FM-12 Domain gate | merge | S-021 |
 | FM-13 Distress and crisis cards | improve | S-151 |
 | FM-14 Deterministic crisis engine | keep (already in v2) | S-150 |
-| FM-15 Voice dictation and read-aloud | migrate as opt-in (dictation: Meta server-side, BUG-6) | S-025, S-026 |
-| FM-16 Voice room | paused | S-027 |
+| FM-15 Voice dictation and read-aloud | retire (D-060) | S-025, S-026 (retired) |
+| FM-16 Voice room | retire (D-060) | S-027 (retired) |
 | FM-17 Journal | migrate | S-050 |
 | FM-18 Daily check-in | migrate as standalone | S-060 |
 | FM-19 Daily micro-mission | merge into small exercises | S-141 |

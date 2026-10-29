@@ -95,7 +95,8 @@ A live demo must show actual Meta provenance; unavailable access must remain vis
 
 ## Not used
 
-- No hosted Meta Model API for generation, no tool calling, no image models, no fine-tuning, no inference-time retrieval. Each would need a measured benefit and an ADR. **Superseded exception:** hosted Meta **speech-to-text only** (`muse-voice-transcribe-1.0` realtime via `GET /api/v3/asr/realtime`) for opt-in dictation was approved on 2026-10-29 (SPEC C25) and replaced the same day (BUG-6 second revision) by the Amazon Nova Sonic relay (`SELA_ASR_MODE=bedrock`); the Meta dictation relay remains in code behind `SELA_ASR_MODE=meta` but is not the pilot configuration. Meta has no text-to-speech API, so read-aloud stays browser-local.
+- No hosted Meta Model API for generation, no tool calling, no image models, no fine-tuning, no inference-time retrieval. Each would need a measured benefit and an ADR.
+- **No speech in v3 (D-060).** Voice dictation, read-aloud and the Amazon Nova Sonic voice room were removed on 2026-10-29; the product is text-only. Meta text generation on Modal remains the primary generator. No microphone audio is sent to Meta or any other provider, and no speech is synthesized.
 - The event eligibility of this setup is unverified ([event notes](META_EVENT_NOTES.md)).
 - Claude and DeepSeek calls are never counted as Meta tooling (D-050).
 

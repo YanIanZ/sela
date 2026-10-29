@@ -32,16 +32,9 @@ const (
 	// It is not part of FoundationPurposes: it is optional and off until
 	// the owner grants it (default OFF).
 	PolicyPersonalMemory = "personal_memory"
-	// PolicyASR gates server-side speech-to-text: microphone audio is
-	// streamed through Sela's server to Amazon Nova Sonic (speech-to-speech,
-	// transcript only for the composer). Optional and off until the owner
-	// grants it (default OFF). Kept as "asr_meta" so existing decisions and
-	// the consent registry stay stable; the provider named in the policy text
-	// is what changed.
-	PolicyASRMeta   = "asr_meta"
-	actorUser       = "user"
-	actorSystem     = "system"
-	recoveryLowMark = 3
+	actorUser            = "user"
+	actorSystem          = "system"
+	recoveryLowMark      = 3
 )
 
 // Purpose is one consent purpose in the code registry.

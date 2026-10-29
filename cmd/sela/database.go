@@ -129,8 +129,7 @@ func accountConfig(cfg config.Config, logger *slog.Logger) account.Config {
 	c.PolicyVersions = fixtures.V3PolicyVersions()
 	c.Purposes = append(append([]account.Purpose(nil), account.FoundationPurposes...),
 		account.Purpose{Name: account.PolicyPersonalMemory, Kinds: []string{account.KindGuest, account.KindAccount}})
-	c.Purposes = append(c.Purposes, account.Purpose{Name: "ai_processing", Kinds: []string{account.KindGuest, account.KindAccount}}, account.Purpose{Name: "ai_provider_anthropic", Kinds: []string{account.KindGuest, account.KindAccount}}, account.Purpose{Name: "ai_provider_deepseek", Kinds: []string{account.KindGuest, account.KindAccount}}, account.Purpose{Name: account.PolicyASRMeta, Kinds: []string{account.KindGuest, account.KindAccount}})
-	c.Purposes = append(c.Purposes, account.Purpose{Name: "ai_provider_aws_voice", Kinds: []string{account.KindGuest, account.KindAccount}})
+	c.Purposes = append(c.Purposes, account.Purpose{Name: "ai_processing", Kinds: []string{account.KindGuest, account.KindAccount}}, account.Purpose{Name: "ai_provider_anthropic", Kinds: []string{account.KindGuest, account.KindAccount}}, account.Purpose{Name: "ai_provider_deepseek", Kinds: []string{account.KindGuest, account.KindAccount}})
 	c.Logger = logger
 	return c
 }

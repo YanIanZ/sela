@@ -73,8 +73,7 @@ func v3Config(c *v3clock) account.Config {
 	cfg.PolicyVersions["test_optional"] = "optional-test.1"
 	cfg.Purposes = append(append([]account.Purpose(nil), account.FoundationPurposes...),
 		account.Purpose{Name: "test_optional", Kinds: []string{account.KindGuest, account.KindAccount}},
-		account.Purpose{Name: account.PolicyPersonalMemory, Kinds: []string{account.KindGuest, account.KindAccount}},
-		account.Purpose{Name: account.PolicyASRMeta, Kinds: []string{account.KindGuest, account.KindAccount}})
+		account.Purpose{Name: account.PolicyPersonalMemory, Kinds: []string{account.KindGuest, account.KindAccount}})
 	return cfg
 }
 

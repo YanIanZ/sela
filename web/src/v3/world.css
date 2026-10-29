@@ -351,17 +351,17 @@
   .s-shell .s-place-nav a:hover { color: var(--c-nav-active); }
   .s-shell .s-place-nav a[aria-current="page"] { color: var(--c-nav-active-text); background: var(--c-nav-active); }
   .s-shell .s-place-nav a:focus-visible { outline-color: var(--c-nav-active); outline-offset: 0; }
-  .s-shell-inner { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
+  .s-shell-inner { padding-bottom: calc(max(6rem, var(--bottom-bar-h, 0px)) + var(--top-bar-h, 0px) + env(safe-area-inset-bottom)); }
 }
 @media (max-width: 30em) and (min-height: 30.01em) {
   :root[data-text-scale="130"] .s-shell .s-place-nav,
   :root[data-text-scale="150"] .s-shell .s-place-nav { border-radius: var(--radius-4); }
   :root[data-text-scale="130"] .s-shell-inner,
-  :root[data-text-scale="150"] .s-shell-inner { padding-bottom: calc(10rem + env(safe-area-inset-bottom)); }
+  :root[data-text-scale="150"] .s-shell-inner { padding-bottom: calc(max(10rem, var(--bottom-bar-h, 0px)) + var(--top-bar-h, 0px) + env(safe-area-inset-bottom)); }
 }
 @media (max-width: 23.99em) {
   .s-shell .s-place-nav { border-radius: var(--radius-4); }
-  .s-shell-inner { padding-bottom: calc(9.75rem + env(safe-area-inset-bottom)); }
+  .s-shell-inner { padding-bottom: calc(max(9.75rem, var(--bottom-bar-h, 0px)) + var(--top-bar-h, 0px) + env(safe-area-inset-bottom)); }
 }
 @media (max-width: 74.99em) {
   .s-shell .n-desktop-nav a { padding-inline: 0.75rem; }
