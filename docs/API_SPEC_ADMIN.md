@@ -60,4 +60,4 @@ Migration `0910_admin`:
 
 ## 6. Deliberately absent
 
-Operator UI, staff list and role editing, two-person approval, directory/care operations, research/safety review queues, provider budget editing, partner sandbox, WebAuthn/passkeys and IP allowlisting. These remain target design in [Admin Console](vision/ADMIN_CONSOLE.md); they must not be inferred from the presence of a role name.
+Staff list and role editing, two-person approval, directory/care operations, research/safety review queues, provider budget editing, partner sandbox, WebAuthn/passkeys and IP allowlisting. The first UI slice at `/operator` consumes the routes above; these remaining workflows are target design in [Admin Console](vision/ADMIN_CONSOLE.md) and must not be inferred from the presence of a role name.

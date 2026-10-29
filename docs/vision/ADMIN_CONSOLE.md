@@ -1,7 +1,7 @@
 # Sela | Admin Console & Governance
 
 **Revision:** 2026-10-30 / AC-0.2
-**Status:** target technical + product specification. The **staff identity, isolated API, roles, audit and cache controls are implemented in the Go v3 runtime** (2026-10-30, §10). The operator UI, directory/research workflows, two-person approval, budget editing and partner workspace remain target design.
+**Status:** target technical + product specification. The **staff identity, isolated API, roles, audit, cache controls and the first operator UI slice are implemented in the Go v3 runtime** (2026-10-30, §10). Directory/research workflows, two-person approval, budget editing and the partner workspace remain target design.
 **Audience:** owner, operator, engineer, security/privacy reviewer, future verified provider administrator.
 **Absolute principle:** anonymous Sela users do not create accounts. **Staff and partner operators must authenticate.** Admin is a separate trust domain, not an exception to anonymous privacy.
 
@@ -145,6 +145,7 @@ Branch `feat/admin-redis-foundation`; not verified live.
 | Audit | Append-only PostgreSQL `admin_audit` for login success/failure, logout, staff create/revoke and cache invalidation; no personal content | `ListAudit`, `admin_audit_created` index |
 | Provisioning | `sela admin create --username NAME --role ROLE [--org ORG]` (password on stdin, TOTP secret shown once) and `sela admin revoke`; no self-signup route | `cmd/sela/admin.go` |
 | Operations | `GET /api/admin/v1/me`, `/overview`, `/audit`, `/cache/health`; `POST /cache/invalidate` deletes only the revisioned public help key and audits it | `internal/httpapi/admin.go`, admin HTTP tests |
+| Operator UI | `/operator`: password + TOTP sign-in, overview, AI spend, cache health and role-gated invalidation, permission-gated audit, ID/EN, 320 px reflow and dark mode. Mounted outside the consumer shell; cookie-only session | `web/src/operator/`, 6 component tests, `e2e/operator.e2e.mjs` (real auth 11/11; final-build UI preview 6/6) |
 | Privacy | Overview carries aggregates only (staff, live sessions, audit count in 24 h, cache/database/version); AI spend is task/provider/token metadata without user or session ids | `admin.Overview`, `budget.Summary` |
 
-Deliberately absent: an operator UI, staff list/role editing, two-person approval, directory and research workflows, AI budget editing, partner/sandbox routes, WebAuthn and IP allowlisting. A positive AI budget cap is enforced (see [Redis and cost engineering](REDIS_AI_COST_ENGINEERING.md) §11), but only the owner can change it through deployment configuration, not through the console. These gaps are **not** claimed as done; they belong to the next D10/D11 increment.
+Deliberately absent: staff list/role editing, two-person approval, directory and research workflows, AI budget editing, partner/sandbox routes, WebAuthn and IP allowlisting. A positive AI budget cap is enforced (see [Redis and cost engineering](REDIS_AI_COST_ENGINEERING.md) §11), but only the owner can change it through deployment configuration, not through the console. These gaps are **not** claimed as done; they belong to the next D10/D11 increment.
