@@ -64,6 +64,10 @@ The v1 Next.js app and its root `npm` checks were retired on 2026-10-29; see [de
 | `SELA_MAX_SESSIONS` | `500` | Memory bound. When full, an ordinary session idle for 10 minutes is evicted first; a session with storage consent or an active share only after 30 idle minutes; otherwise new visitors get 503 `capacity` |
 | `SELA_MAX_SESSIONS_PER_CLIENT` | `50` | Live sessions per client address (IPv6 /64); more → 429. Raise it if many demo visitors share one NAT |
 | `SELA_METRICS_TOKEN` | — | Optional operator bearer token (≥16 characters, no spaces) for `GET /api/v2/metrics`; unset means the route does not exist |
+| `SELA_REDIS_URL` | — | Optional `redis://`/`rediss://` public cache and control plane. Unset (or unavailable) keeps Sela fully functional on the authoritative embedded/PostgreSQL path; Redis never holds personal content and never decides consent or safety |
+| `SELA_ADMIN_MFA_KEY` | — | Standard base64 of exactly 32 bytes; seals operator TOTP secrets. Unset disables `/api/admin/v1` (503 `admin_unavailable`). Rotating it invalidates every enrolled TOTP secret, so re-provision staff after a rotation |
+| `SELA_AI_MONTHLY_BUDGET_USD` | `0` | Durable monthly cap on estimated API spend, enforced in PostgreSQL before every paid call. `0` disables the gate. Requires `SELA_DATABASE_URL`; the server refuses to start unmetered when a positive cap is set |
+| `SELA_AI_RESERVE_USD` | `0.25` | Worst-case reservation per AI operation (generator + verifier + regeneration). Must be positive when the cap is enabled |
 | `SELA_RESEARCH_KB` | `data/research/corpus/knowledge_base.jsonl` | Reviewer corpus index |
 | `SELA_LLM_MODE` | `disabled` | `disabled`, `modal` or `test_double` |
 | `SELA_LLM_BASE_URL` | — | Modal server URL (https) or test double URL |
@@ -210,3 +214,27 @@ Each user's data key (DEK) is wrapped by the KEK; the DEK itself never changes, 
 A lost KEK (with its secret-manager copy) makes all content unreadable; KEK custody and its backup are owner responsibilities. A suspected DEK exposure (key table and KEK both leaked) needs a re-encryption tool that does not exist yet (ADR-0002 Consequences).
 
 **Container and deployment note:** since the v3 foundation, `SELA_ENV=production` (the image default) refuses to start without `SELA_DATABASE_URL`, a `prod-…` KEK, Secure cookies and an https `SELA_PUBLIC_ORIGIN`. `deploy/v2/Dockerfile` builds with `golang:1.26.10-alpine` and copies `go.mod` and `go.sum` (D-054); the CI container job checks that the production default refuses to start, then runs the image with `SELA_ENV=development` against a PostgreSQL 16 service and checks health, readiness and the public `/api/v3` routes.
+
+## 10. Operator console, public cache and AI budget
+
+**Separate trust domain.** Operator accounts are provisioned out of band and never through `/api/v3`; an anonymous user cookie cannot authorize `/api/admin/v1`. Staff sign in with a password plus TOTP, and the operator cookie (`__Host-sela_admin`, SameSite=Strict, HttpOnly) is distinct from the user cookie. Roles are deny-by-default; every mutation is appended to PostgreSQL `admin_audit` without personal content. The current API slice covers sign-in/out, `me`, a privacy-safe overview, the audit list, cache health and cache invalidation. Directory, research and budget-editing screens are pending the D11/D12 UI work.
+
+```sh
+# Provision a staff identity; the TOTP secret is printed once.
+printf '%s\n' "$OPERATOR_PASSWORD" | sela admin create --username ops.one --role ops
+sela admin revoke --username ops.one --reason "left the organisation"
+
+# Sign in (the response sets the operator cookie).
+curl -sS -X POST https://sela.example/api/admin/v1/sessions \
+  -H 'Content-Type: application/json' -H 'X-Sela-Request: 1' \
+  -H 'Origin: https://sela.example' \
+  -d '{"username":"ops.one","password":"…","totp":"123456"}'
+
+curl -sS https://sela.example/api/admin/v1/overview -b 'sela_admin=…'
+curl -sS -X POST https://sela.example/api/admin/v1/cache/invalidate \
+  -H 'X-Sela-Request: 1' -H 'Origin: https://sela.example' -b 'sela_admin=…'
+```
+
+**Redis.** The Compose stack runs a disposable, non-persistent Redis (`redis:7-alpine`, no volume, `--save ""`, 64 MB LRU) and points the app at `redis://redis:6379/0`. It caches only the revisioned public help-content catalogue. A miss, an outage or a malformed value falls back to the embedded fixtures; writes are best-effort. Operator cache invalidation deletes only the public help key and writes an audit event. Never put user text, session tokens, consent grants or safety decisions in Redis.
+
+**AI budget.** When `SELA_AI_MONTHLY_BUDGET_USD` is positive, every generative listening operation reserves `SELA_AI_RESERVE_USD` in `ai_spend` inside a transaction serialized by an advisory lock, then settles the measured estimate from provenance. A failed operation settles at the reservation, because provider work may already have been billed. Admission failures fail closed: the operation returns `aiState: "budget_limited"` and makes no provider call. Redis is not consulted, so an outage or restart can neither reset nor bypass the cap. The ledger stores task, provider, token counts and cost estimates only — no user id, session id, prompt or reply. The operator overview reports month-to-date committed/actual spend, open reservations and the top tasks; there is no prompt or per-user view by design.

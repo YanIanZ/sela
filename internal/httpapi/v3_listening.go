@@ -16,6 +16,7 @@ import (
 
 	"github.com/YanIanZ/sela/internal/account"
 	"github.com/YanIanZ/sela/internal/ai"
+	"github.com/YanIanZ/sela/internal/budget"
 	"github.com/YanIanZ/sela/internal/safety"
 )
 
@@ -451,6 +452,21 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 		writeData(w, 200, out)
 		return
 	}
+	var reservation budget.Reservation
+	if s.opt.Budget != nil && s.opt.Budget.Enabled() {
+		var admErr error
+		reservation, admErr = s.opt.Budget.Admit(r.Context(), "listening_reply", s.v3.cfg.Synthetic())
+		if admErr != nil {
+			c.AIState = "unavailable"
+			if errors.Is(admErr, budget.ErrExceeded) {
+				c.AIState = "budget_limited"
+			}
+			out := roomCopy(c)
+			l.mu.Unlock()
+			writeData(w, 200, out)
+			return
+		}
+	}
 	u.n++
 	l.usage[p.UserID] = u
 	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
@@ -489,6 +505,25 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 			}
 			return nil
 		}})
+	}
+	if reservation.Admitted() {
+		settleCtx, settleCancel := context.WithTimeout(context.WithoutCancel(r.Context()), 2*time.Second)
+		settlement := budget.Settlement{ActualUSD: reservation.ReservedUSD, Outcome: "failed"}
+		if err == nil {
+			settlement = budget.Settlement{
+				ActualUSD:    output.Provenance.EstimatedCostUSD,
+				InputTokens:  output.Provenance.InputTokens,
+				OutputTokens: output.Provenance.OutputTokens,
+				Outcome:      string(output.Provenance.Outcome),
+			}
+			if output.Provenance.Generator != nil {
+				settlement.Provider = string(output.Provenance.Generator.Provider)
+			}
+		}
+		if settleErr := s.opt.Budget.Settle(settleCtx, reservation, settlement); settleErr != nil {
+			s.log.Warn("ai_budget_settle_failed", "error", settleErr)
+		}
+		settleCancel()
 	}
 	l.mu.Lock()
 	defer l.mu.Unlock()

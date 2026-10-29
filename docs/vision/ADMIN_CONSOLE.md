@@ -1,8 +1,8 @@
 # Sela | Admin Console & Governance
 
-**Revision:** 2026-10-29 / AC-0.1  
-**Status:** target technical + product specification; **not implemented in the Go v3 runtime**.  
-**Audience:** owner, operator, engineer, security/privacy reviewer, future verified provider administrator.  
+**Revision:** 2026-10-30 / AC-0.2
+**Status:** target technical + product specification. The **staff identity, isolated API, roles, audit and cache controls are implemented in the Go v3 runtime** (2026-10-30, §10). The operator UI, directory/research workflows, two-person approval, budget editing and partner workspace remain target design.
+**Audience:** owner, operator, engineer, security/privacy reviewer, future verified provider administrator.
 **Absolute principle:** anonymous Sela users do not create accounts. **Staff and partner operators must authenticate.** Admin is a separate trust domain, not an exception to anonymous privacy.
 
 ## 1. Why the admin exists
@@ -132,3 +132,19 @@ PostgreSQL owns staff identities, role grants, approvals, public directory versi
 The legacy Next.js operator routes are **not** a template to blindly expose on the Go API; audit and rebuild privileged identity using the current threat model. Existing `internal/account` protects guest-owned data and must not be removed while cutting out consumer login UI. Track this as a separate **code PR**, not a documentation-only implementation claim.
 
 See also [Care Operations](ADMIN_CARE_OPERATIONS.md), [System Architecture](ARCHITECTURE.md), [Product Requirements](PRODUCT_REQUIREMENTS.md), [Delivery Plan](DELIVERY_AND_ACCEPTANCE.md).
+
+## 10. Implemented Go slice (2026-10-30)
+
+Branch `feat/admin-redis-foundation`; not verified live.
+
+| Area | Implemented | Evidence |
+| --- | --- | --- |
+| Separate identity | `admin_users` / `admin_sessions` (`0910_admin`), password (argon2id at the account floor) plus TOTP, sealed TOTP secrets under `SELA_ADMIN_MFA_KEY`, replay-protected steps, failed-login throttle | `internal/admin`, `TestAdminCreateAuthenticateAndLogout` |
+| Isolation | `__Host-sela_admin` cookie (HttpOnly, Secure in production, SameSite=Strict) is distinct from the anonymous `__Host-sela_auth`; a consumer token cannot authorize `/api/admin/v1` | `TestAdminConsoleSeparateDomainAndPermissions` |
+| Roles | Deny-by-default permission map for owner, security admin, directory editor/reviewer, research editor, safety reviewer and ops; server-side checks on every route | `internal/admin/admin.go`, role-scoping HTTP test |
+| Audit | Append-only PostgreSQL `admin_audit` for login success/failure, logout, staff create/revoke and cache invalidation; no personal content | `ListAudit`, `admin_audit_created` index |
+| Provisioning | `sela admin create --username NAME --role ROLE [--org ORG]` (password on stdin, TOTP secret shown once) and `sela admin revoke`; no self-signup route | `cmd/sela/admin.go` |
+| Operations | `GET /api/admin/v1/me`, `/overview`, `/audit`, `/cache/health`; `POST /cache/invalidate` deletes only the revisioned public help key and audits it | `internal/httpapi/admin.go`, admin HTTP tests |
+| Privacy | Overview carries aggregates only (staff, live sessions, audit count in 24 h, cache/database/version); AI spend is task/provider/token metadata without user or session ids | `admin.Overview`, `budget.Summary` |
+
+Deliberately absent: an operator UI, staff list/role editing, two-person approval, directory and research workflows, AI budget editing, partner/sandbox routes, WebAuthn and IP allowlisting. A positive AI budget cap is enforced (see [Redis and cost engineering](REDIS_AI_COST_ENGINEERING.md) §11), but only the owner can change it through deployment configuration, not through the console. These gaps are **not** claimed as done; they belong to the next D10/D11 increment.

@@ -24,7 +24,10 @@ import (
 	"time"
 
 	"github.com/YanIanZ/sela/internal/account"
+	"github.com/YanIanZ/sela/internal/admin"
 	"github.com/YanIanZ/sela/internal/ai"
+	"github.com/YanIanZ/sela/internal/budget"
+	"github.com/YanIanZ/sela/internal/cache"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/research"
 )
@@ -34,6 +37,16 @@ const (
 	SessionCookie   = "sela_session"
 	RecipientCookie = "sela_recipient"
 )
+
+// BudgetGate is the durable AI spend gate (D12). Implementations must not
+// admit a paid call they cannot account for.
+type BudgetGate interface {
+	Enabled() bool
+	Admit(ctx context.Context, task string, synthetic bool) (budget.Reservation, error)
+	Settle(ctx context.Context, r budget.Reservation, s budget.Settlement) error
+	Summary(ctx context.Context) (budget.Summary, error)
+	ByTask(ctx context.Context, limit int) ([]budget.TaskSpend, error)
+}
 
 // Options configures the HTTP layer.
 type Options struct {
@@ -57,6 +70,15 @@ type Options struct {
 	// MetricsToken guards GET /api/v2/metrics ("Authorization: Bearer
 	// <token>"). Empty disables the route (404).
 	MetricsToken string
+	// Cache is the optional public Redis cache/control plane. Nil keeps the
+	// authoritative embedded/DB path.
+	Cache *cache.Client
+	// Admin is the separate operator identity store. Nil disables the
+	// /api/admin/v1 console.
+	Admin *admin.Store
+	// Budget admits and settles paid AI operations against a durable
+	// monthly cap. Nil or disabled keeps the local/test path unmetered.
+	Budget BudgetGate
 
 	// Accounts is the /api/v3 store. Nil (no database configured, a
 	// development setup) makes every /api/v3 route except the policies and

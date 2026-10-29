@@ -825,7 +825,7 @@ func hexOf(b []byte) string { return hex.EncodeToString(b) }
 // timeouts per session kind).
 func TestV3SessionExpiryClearsCookie(t *testing.T) {
 	t.Parallel()
-	e := newV3(t, v3opt{mutateO: func(o *httpapi.Options) { o.HSTS = true }})
+	e := newV3(t, v3opt{mutateO: func(_ *v3env, o *httpapi.Options) { o.HSTS = true }})
 	c := e.client()
 	c.register("sesi.habis")
 	r := c.must(200, "GET", "/api/v3/me", nil)
