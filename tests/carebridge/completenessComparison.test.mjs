@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { compareCompleteness } from '../../scripts/testbench/compareCompleteness.mjs';
+import { compareCompleteness } from '../../scripts/carebridge/compareCompleteness.mjs';
 
 const row = (id, known, overrides = {}) => ({ id, band: 'moderate', lang: 'id',
   state: 'READY_FOR_USER_REVIEW', completenessKnown: known, droppedClaims: 0,

@@ -18,7 +18,7 @@ import {
   compareEscalation,
   escalationOf,
   parseJsonl,
-} from '../../scripts/testbench/datasetLib.mjs';
+} from '../../scripts/carebridge/datasetLib.mjs';
 
 const FILE = new URL('./dataset/cases.v1.jsonl', import.meta.url);
 const cases = parseJsonl(readFileSync(FILE, 'utf8'));
@@ -208,7 +208,7 @@ describe('dataset v1: labels agree with the real deterministic gate', () => {
   });
 });
 
-describe('dataset runner metrics (scripts/testbench/datasetLib.mjs)', () => {
+describe('dataset runner metrics (scripts/carebridge/datasetLib.mjs)', () => {
   it('maps states to escalation labels', () => {
     assert.equal(escalationOf('READY_FOR_USER_REVIEW'), 'none');
     assert.equal(escalationOf('NEEDS_CLARIFICATION'), 'none');
