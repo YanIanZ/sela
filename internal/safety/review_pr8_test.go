@@ -35,15 +35,19 @@ func TestBriefFarewellLookaheadBoundary(t *testing.T) {
 	for _, sep := range []string{" ", ". ", "\n"} {
 		for _, gap := range []int{119, 120, 121, 240} {
 			// The gap is measured from the end of "sebentar" to the start of
-			// the tail. The filler uses one-letter words so the lookahead
-			// crosses a word boundary.
+			// the tail. Use multi-letter filler: normalization joins runs of
+			// single letters, which made the old test's measured gap much
+			// smaller than intended (review finding P2-1).
 			pad := gap - len(sep) - 1
 			if pad < 0 {
 				t.Fatalf("gap %d is too small for separator %q", gap, sep)
 			}
-			fill := strings.Repeat("a ", pad/2)
-			if pad%2 == 1 {
-				fill += "a"
+			fill := strings.Repeat("zz ", pad/3)
+			switch pad % 3 {
+			case 1:
+				fill += "z"
+			case 2:
+				fill += "zz"
 			}
 			text := lead + sep + fill + " " + tail
 			a := Assess(text)
@@ -54,5 +58,53 @@ func TestBriefFarewellLookaheadBoundary(t *testing.T) {
 				t.Fatalf("separator %q gap %d (%d bytes before tail): Assess(...).Level = %s rules %v, want crisis", sep, gap, gap, a.Level, a.RuleIDs)
 			}
 		}
+	}
+}
+
+// TestBriefFarewellNoReturnVariants covers the P1-2 finding: after removing
+// the broad "kembali lagi" alternative, the explicit no-return branches must
+// still cover the common auxiliaries and informal negators.
+func TestBriefFarewellNoReturnVariants(t *testing.T) {
+	for _, text := range []string{
+		"aku pergi sebentar, nanti tidak akan pernah kembali lagi",
+		"aku pergi sebentar, nanti nggak akan pernah kembali lagi",
+		"aku pergi sebentar, nanti gak bisa kembali lagi",
+		"aku pergi sebentar, nanti nggak mungkin kembali lagi",
+		"aku pergi sebentar, nanti ndak kembali lagi",
+		"aku pergi sebentar, nanti kagak kembali lagi",
+		"aku pergi sebentar, nanti tak kan kembali lagi",
+		"aku mau tidur sebentar, nanti nggak bangun lagi",
+		"aku mau tidur sebentar, nanti tidak bangun lagi",
+		"aku mau tidur sebentar, nanti enggak bangun lagi",
+		"aku mau tidur sebentar, nanti tidak akan bangun lagi",
+		"aku mau tidur sebentar, nanti gak bangun lagi",
+	} {
+		if got := Assess(text).Level; got != LevelCrisis {
+			t.Errorf("Assess(%q).Level = %s, want crisis", text, got)
+		}
+	}
+	for _, text := range []string{
+		"aku pergi sebentar, nanti kembali lagi",
+		"aku mau tidur sebentar, nanti bangun lagi",
+		"aku pergi sebentar, tidak akan lama. kita teman selamanya",
+		"aku pergi sebentar, tidak akan lama, cinta kita abadi",
+	} {
+		if got := Assess(text).Level; got != LevelNone {
+			t.Errorf("Assess(%q).Level = %s, want none", text, got)
+		}
+	}
+}
+
+// TestSkipEquivalenceDenialWindow covers P1-1: the denial key must include
+// the same 512-byte tail as restAfter, or a derived variant can skip the
+// sentence that resolves the denial.
+func TestSkipEquivalenceDenialWindow(t *testing.T) {
+	text := "I'm not suicidal, just need a break. " + strings.Repeat("blah ", 21) + "x with the bottlle"
+	got, full := Assess(text), assess(text, false)
+	if got.Level != LevelCrisis {
+		t.Fatalf("Assess(...).Level = %s rules %v, want crisis", got.Level, got.RuleIDs)
+	}
+	if got.Level != full.Level {
+		t.Fatalf("Assess(...).Level = %s, assess(text, false).Level = %s", got.Level, full.Level)
 	}
 }

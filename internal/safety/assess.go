@@ -419,9 +419,12 @@ func contextUnits(c *shape) []unit {
 			// A denial's disposition reads the rest of the message past the
 			// unit (see restAfter): a method, threat, later act or absence
 			// that follows in a NEW sentence still takes the denial back,
-			// so the key must change when that tail does.
+			// so the key must change when that tail does. The key uses the
+			// same restWindow as restAfter; a shorter key lets a derived
+			// variant skip the sentence that would resolve the denial
+			// (review finding P1-1).
 			key = append(key, 0, 'd')
-			key = append(key, t[end:min(len(t), end+checkWindow)]...)
+			key = append(key, t[end:min(len(t), end+restWindow)]...)
 		}
 		out = append(out, unit{span{start, end}, string(key)})
 	}

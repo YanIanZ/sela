@@ -2691,5 +2691,19 @@
   {"text": "aku pergi sebentar, nanti kembali lagi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding A: kembali lagi is a positive return, not a no-return phrase; the brief leaving stays a short break"},
   {"text": "aku pergi sebentar, nanti aku kembali lagi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding A with an explicit subject: kembali lagi is still a positive return"},
   {"text": "aku pergi sebentar, tidak akan lama, tapi tidak akan kembali", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding B: a no-return phrase wins over tidak akan lama, even after tapi"},
-  {"text": "aku pergi sebentar. sebentar lagi tidak akan kembali", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding B across a sentence break: sebentar lagi does not hide the later no-return phrase"}
+  {"text": "aku pergi sebentar. sebentar lagi tidak akan kembali", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding B across a sentence break: sebentar lagi does not hide the later no-return phrase"},
+  {"text": "aku pergi sebentar, nanti tidak akan pernah kembali lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-2: tidak akan pernah kembali lagi"},
+  {"text": "aku pergi sebentar, nanti nggak akan pernah kembali lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: nggak akan pernah kembali lagi"},
+  {"text": "aku pergi sebentar, nanti gak bisa kembali lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: gak bisa kembali lagi"},
+  {"text": "aku pergi sebentar, nanti nggak mungkin kembali lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: nggak mungkin kembali lagi"},
+  {"text": "aku pergi sebentar, nanti ndak kembali lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: ndak kembali lagi"},
+  {"text": "aku pergi sebentar, nanti kagak kembali lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: kagak kembali lagi"},
+  {"text": "aku pergi sebentar, nanti tak kan kembali lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: spaced tak kan kembali lagi"},
+  {"text": "aku mau tidur sebentar, nanti nggak bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: negated bangun lagi"},
+  {"text": "aku mau tidur sebentar, nanti tidak bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-2: tidak bangun lagi"},
+  {"text": "aku mau tidur sebentar, nanti enggak bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: enggak bangun lagi"},
+  {"text": "aku mau tidur sebentar, nanti tidak akan bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-2: tidak akan bangun lagi"},
+  {"text": "aku mau tidur sebentar, nanti gak bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: gak bangun lagi"},
+  {"text": "aku pergi sebentar, tidak akan lama. kita teman selamanya", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a later friendship forever phrase is not a farewell"},
+  {"text": "aku pergi sebentar, tidak akan lama, cinta kita abadi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a later romantic forever phrase is not a farewell"}
 ]

@@ -691,8 +691,9 @@ func sentenceAfter(t string, i int) string {
 // review measured a no-return tail 119, 120, 121 and 240 bytes after the
 // brief phrase, and a 120-byte window cut the tail at a word boundary
 // before the pattern could see it. The window stays bounded so a pathological
-// message with many exemptions remains linear; 512 bytes covers the tested
-// boundary with room for the longest tail phrase.
+// message with many exemptions remains linear. It is measured from the end of
+// the match, so the effective gap before the tail is smaller than 512 by the
+// tail phrase's own length (about 494 bytes for "tidak akan kembali").
 const restWindow = 512
 
 func restAfter(t string, i int) string {
