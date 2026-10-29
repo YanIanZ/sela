@@ -160,7 +160,7 @@ func TestV3Consents(t *testing.T) {
 	g := e.client()
 	g.guest("18_plus")
 	gl := g.must(200, "GET", "/api/v3/me/consents", nil).data()["consents"].([]any)
-	if len(gl) != 5 {
+	if len(gl) != 4 {
 		t.Fatalf("guest purposes: %v", gl)
 	}
 	if r := g.call("PUT", "/api/v3/me/consents/guest_storage", map[string]any{"granted": false, "policyVersion": policyVersion("guest_storage")}); r.status != 409 || r.code() != "required_consent" {
