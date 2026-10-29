@@ -2705,5 +2705,11 @@
   {"text": "aku mau tidur sebentar, nanti tidak akan bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-2: tidak akan bangun lagi"},
   {"text": "aku mau tidur sebentar, nanti gak bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-2: gak bangun lagi"},
   {"text": "aku pergi sebentar, tidak akan lama. kita teman selamanya", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a later friendship forever phrase is not a farewell"},
-  {"text": "aku pergi sebentar, tidak akan lama, cinta kita abadi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a later romantic forever phrase is not a farewell"}
+  {"text": "aku pergi sebentar, tidak akan lama, cinta kita abadi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a later romantic forever phrase is not a farewell"},
+  {"text": "aku mau tidur sebentar, nanti nggak usah bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-3: negated usah bangun lagi"},
+  {"text": "aku mau tidur sebentar, nanti tidak usah bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-3: negated usah bangun lagi"},
+  {"text": "aku mau tidur sebentar, nanti nggak perlu bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-3: negated perlu bangun lagi"},
+  {"text": "aku mau tidur sebentar, nanti tidak perlu bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-3: negated perlu bangun lagi"},
+  {"text": "aku mau tidur sebentar, nanti nggak bangun-bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-3: reduplicated bangun-bangun"},
+  {"text": "aku mau tidur sebentar, nanti tidak bangun-bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-3: reduplicated bangun-bangun"}
 ]

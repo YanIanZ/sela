@@ -2154,7 +2154,7 @@ var (
 	// covered by the negation branch (review finding A). The auxiliaries
 	// cover the common "tidak akan pernah", "gak bisa", "nggak mungkin",
 	// "tak kan" and the informal negators (review finding P1-2).
-	noReturnRe = regexp.MustCompile(`(?i)\b(?:tidak|tak|nggak|ngga|gak|ga|gk|enggak|engga|tdk|takkan|tidakkan|ndak|kagak|nda)\s*(?:(?:akan|bakal|bisa|boleh|mungkin|dapat|pernah|kan)\s*)*(?:(?:kembali|balik|pulang)\b|bangun\s*(?:lagi|lg)\b)`)
+	noReturnRe = regexp.MustCompile(`(?i)\b(?:tidak|tak|nggak|ngga|gak|ga|gk|enggak|engga|tdk|takkan|tidakkan|ndak|kagak|nda)\s*(?:(?:akan|bakal|bisa|boleh|mungkin|dapat|pernah|kan)\s*)*(?:(?:kembali|balik|pulang)\b|(?:usah\s*|perlu\s*)?bangun(?:[\s-]*bangun)?\s*(?:lagi|lg)\b)`)
 	// briefStayRe keeps a short-break phrase benign unless an explicit
 	// no-return phrase wins (review finding B); it is also used to avoid
 	// reading a later "teman selamanya" as a farewell (P2-3).
