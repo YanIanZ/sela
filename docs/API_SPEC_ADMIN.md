@@ -10,7 +10,7 @@ The operator console is a **separate trust domain**. It shares no cookie, sessio
 - Cookie: `__Host-sela_admin` (development over plain HTTP: `sela_admin`). `HttpOnly`, `SameSite=Strict`, `Secure` when `SELA_SECURE_COOKIES=true`. It never authorizes `/api/v3`.
 - Every mutation requires `X-Sela-Request: 1` and a same-origin `Origin`, as `/api/v3` does; failures are `403 cross_origin`.
 - JSON bodies, `Content-Type: application/json`, at most 16 KiB; otherwise `415 unsupported_media` / `413 too_large`.
-- Errors use the shared envelope `{"error":{"code","message","field?"}}`. Codes added by this surface: `admin_unavailable` 503, `admin_invalid_credentials` 401, `admin_throttled` 429, `admin_not_signed_in` 401, `admin_forbidden` 403, `cache_disabled` 503.
+- Errors use the shared envelope `{"error":{"code","message","field?"}}`. Codes added by this surface: `admin_unavailable` 503, `admin_invalid_credentials` 401, `admin_throttled` 429, `admin_not_signed_in` 401, `admin_forbidden` 403, `admin_last_owner` 409, `cache_disabled` 503.
 - No response contains user text, a user id, a session token, a provider key or a Redis key dump.
 
 ## 2. Routes
@@ -22,6 +22,8 @@ The operator console is a **separate trust domain**. It shares no cookie, sessio
 | `GET /me` | signed in | `{"admin":{"username","role","orgId","permissions":[...]}}`. |
 | `GET /overview` | `ops/read` | Privacy-safe aggregates: `activeStaff`, `liveSessions`, `auditLast24h`, `cacheEnabled`, `databaseReady`, `version`, `generatedAt`; plus `aiSpend` and `aiSpendByTask` when a monthly AI budget is configured. |
 | `GET /audit?limit=N` | `security/audit/read` | Newest first, at most 200 (`100` default). Actor username, action, object kind/id, old/new status, reason, time. |
+| `GET /staff` | `staff/manage` | Staff identities only: username, role, organisation label, status, created/last-login times and live session count. Never a password hash, TOTP secret, token or user record. |
+| `POST /staff/{username}/revoke` | `staff/manage` | `{"reason"}` (optional, max 200) sets the account to `revoked`, ends every live session, writes `admin.revoke` with the signed-in actor and returns `{username,status}`. Idempotent for an already-revoked account. The **last active owner cannot be revoked** (`409 admin_last_owner`). |
 | `GET /cache/health` | `ops/read` | `{"cache":{"enabled","ok","latencyMs?","error?"}}`. Never returns keys or values. |
 | `POST /cache/invalidate` | `ops/cache/write` | Deletes only the revisioned public help-content key and appends an audit event. `503 cache_disabled` when Redis is not configured. |
 
@@ -37,7 +39,7 @@ The operator console is a **separate trust domain**. It shares no cookie, sessio
 | `safety_reviewer` | `ops/read`, `safety-content/review` |
 | `ops` | `ops/read`, `ops/cache/write` |
 
-Permissions are re-checked on the server for every route; hiding a button is never the control. `directory/*`, `research/*`, `safety-content/*` and `staff/manage` have no route in this slice yet, so those permissions currently grant nothing beyond the listed routes.
+Permissions are re-checked on the server for every route; hiding a button is never the control. `staff/manage` covers the read-only staff list and revocation; role editing and two-person approval are not implemented. `directory/*`, `research/*` and `safety-content/*` have no route in this slice yet.
 
 ## 4. Provisioning
 
@@ -60,4 +62,4 @@ Migration `0910_admin`:
 
 ## 6. Deliberately absent
 
-Staff list and role editing, two-person approval, directory/care operations, research/safety review queues, provider budget editing, partner sandbox, WebAuthn/passkeys and IP allowlisting. The first UI slice at `/operator` consumes the routes above; these remaining workflows are target design in [Admin Console](vision/ADMIN_CONSOLE.md) and must not be inferred from the presence of a role name.
+Role editing, two-person approval, directory/care operations, research/safety review queues, provider budget editing, partner sandbox, WebAuthn/passkeys and IP allowlisting. The first UI slice at `/operator` consumes the routes above, including the staff list and guarded revocation; these remaining workflows are target design in [Admin Console](vision/ADMIN_CONSOLE.md) and must not be inferred from the presence of a role name.

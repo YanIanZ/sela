@@ -121,7 +121,7 @@ func cmdAdminRevoke(ctx context.Context, args []string, out io.Writer) (int, err
 	if err != nil {
 		return 1, err
 	}
-	if err := st.Revoke(ctx, *username, *reason); err != nil {
+	if err := st.Revoke(ctx, nil, *username, *reason); err != nil {
 		if errors.Is(err, admin.ErrInvalid) {
 			return 2, fmt.Errorf("admin revoke: unknown operator %q", *username)
 		}

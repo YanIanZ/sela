@@ -53,6 +53,16 @@ export type AuditEvent = {
   createdAt: string;
 };
 
+export type Staff = {
+  username: string;
+  role: string;
+  orgId?: string;
+  status: string;
+  createdAt: string;
+  lastLoginAt?: string;
+  liveSessions: number;
+};
+
 export type CacheHealth = {
   enabled: boolean;
   ok: boolean;
@@ -119,6 +129,13 @@ export const adminApi = {
   audit: (limit = 50) =>
     request<{ events: AuditEvent[] }>(`/audit?limit=${limit}`).then(
       (r) => r.events,
+    ),
+  staff: () => request<{ staff: Staff[] }>("/staff").then((r) => r.staff),
+  revokeStaff: (username: string, reason: string) =>
+    request<{ username: string; status: string }>(
+      `/staff/${encodeURIComponent(username)}/revoke`,
+      { method: "POST", body: JSON.stringify({ reason }) },
+      true,
     ),
   cacheHealth: () =>
     request<{ cache: CacheHealth }>("/cache/health").then((r) => r.cache),

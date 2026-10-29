@@ -3,7 +3,7 @@ import axe from "axe-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "../i18n";
 import { OperatorApp } from "../operator/OperatorApp";
-import type { Admin, AuditEvent, Overview } from "../operator/api";
+import type { Admin, AuditEvent, Overview, Staff } from "../operator/api";
 
 const admin: Admin = {
   username: "ops.one",
@@ -66,9 +66,15 @@ type Call = { url: string; init: RequestInit };
 
 function stubApi(
   session: Admin | null,
-  options: { loginStatus?: number; audit?: boolean; logoutStatus?: number } = {},
+  options: {
+    loginStatus?: number;
+    audit?: boolean;
+    logoutStatus?: number;
+    staff?: Staff[];
+  } = {},
 ): Call[] {
   const calls: Call[] = [];
+  const revoked = new Set<string>();
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
@@ -96,6 +102,23 @@ function stubApi(
       }
       if (url.includes("/api/admin/v1/cache/invalidate")) {
         return reply(200, { data: { invalidated: "help-content" } });
+      }
+      if (url.endsWith("/api/admin/v1/staff") && init.method !== "POST") {
+        return reply(200, {
+          data: {
+            staff: (options.staff ?? []).map((s) =>
+              revoked.has(s.username)
+                ? { ...s, status: "revoked", liveSessions: 0 }
+                : s,
+            ),
+          },
+        });
+      }
+      if (url.includes("/api/admin/v1/staff/") && url.endsWith("/revoke")) {
+        const rest = url.split("/staff/")[1] ?? "";
+        const username = decodeURIComponent(rest.split("/")[0] ?? "");
+        revoked.add(username);
+        return reply(200, { data: { username, status: "revoked" } });
       }
       if (url.includes("/api/admin/v1/audit")) {
         return reply(200, { data: { events } });
@@ -247,5 +270,93 @@ describe("operator console", () => {
         ["serious", "critical"].includes(v.impact ?? ""),
       ),
     ).toEqual([]);
+  });
+});
+
+const owner: Admin = {
+  username: "owner.one",
+  role: "owner",
+  orgId: "",
+  permissions: [
+    "ops/read",
+    "security/audit/read",
+    "ops/cache/write",
+    "directory/write",
+    "directory/verify",
+    "research/review",
+    "safety-content/review",
+    "staff/manage",
+  ],
+};
+
+const staffRows: Staff[] = [
+  {
+    username: "owner.one",
+    role: "owner",
+    status: "active",
+    createdAt: "2026-10-01T09:00:00Z",
+    lastLoginAt: "2026-10-30T09:00:00Z",
+    liveSessions: 1,
+  },
+  {
+    username: "ops.two",
+    role: "ops",
+    orgId: "org-a",
+    status: "active",
+    createdAt: "2026-10-02T09:00:00Z",
+    lastLoginAt: "2026-10-29T09:00:00Z",
+    liveSessions: 2,
+  },
+  {
+    username: "ops.gone",
+    role: "ops",
+    status: "revoked",
+    createdAt: "2026-10-03T09:00:00Z",
+    liveSessions: 0,
+  },
+];
+
+describe("operator staff", () => {
+  it("lists staff and revokes another operator after an inline confirmation", async () => {
+    const calls = stubApi(owner, { staff: staffRows });
+    renderOperator();
+
+    await screen.findByRole("heading", { name: "Operator staff" });
+    expect(await screen.findByText("ops.two")).toBeInTheDocument();
+    expect(
+      screen.getByText("You can't revoke your own account"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Access revoked")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Revoke access" }));
+    expect(
+      await screen.findByText("Revoke ops.two? All sessions will end."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Yes, revoke" }));
+
+    await screen.findByText(/ops\.two was revoked/);
+    const call = calls.find((c) => c.url.includes("/staff/ops.two/revoke"));
+    expect(call?.init.method).toBe("POST");
+    expect(JSON.parse(String(call?.init.body))).toEqual({
+      reason: "operator console",
+    });
+    expect(new Headers(call?.init.headers).get("X-Sela-Request")).toBe("1");
+    await waitFor(() => expect(screen.getAllByText("Access revoked")).toHaveLength(2));
+  });
+
+  it("shows the last-owner guard instead of a revoke button", async () => {
+    const security: Admin = {
+      username: "security.one",
+      role: "security_admin",
+      orgId: "",
+      permissions: ["ops/read", "security/audit/read", "staff/manage"],
+    };
+    stubApi(security, { staff: [staffRows[0]!, staffRows[1]!] });
+    renderOperator();
+
+    await screen.findByRole("heading", { name: "Operator staff" });
+    expect(await screen.findByText("Last active owner")).toBeInTheDocument();
+    // Only the non-owner row offers revocation.
+    expect(screen.getAllByRole("button", { name: "Revoke access" })).toHaveLength(1);
   });
 });

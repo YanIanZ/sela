@@ -429,6 +429,21 @@
   color: var(--op-ink);
 }
 
+.op-btn--danger {
+  background: var(--op-danger);
+  border-color: var(--op-danger);
+  color: var(--op-bg);
+}
+
+.op-btn--danger-text {
+  color: var(--op-danger);
+  border-color: var(--op-danger);
+}
+
+.op-btn--danger-text:hover:not(:disabled) {
+  background: var(--op-danger-bg);
+}
+
 .op-alert,
 .op-notice {
   padding: 0.65rem 0.85rem;
@@ -513,6 +528,81 @@
   font-size: 1.05rem;
   letter-spacing: 0.18em;
   font-variant-numeric: tabular-nums;
+}
+
+.op-badge--soft {
+  border-color: var(--op-line);
+  background: var(--op-surface-quiet);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.op-staff {
+  list-style: none;
+  padding: 0;
+  display: grid;
+}
+
+.op-staff > li {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--op-line);
+}
+
+.op-staff-id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+}
+
+.op-staff-id strong {
+  font-size: 0.95rem;
+}
+
+.op-staff-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.op-staff-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--op-muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-staff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.op-confirm {
+  display: grid;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--op-danger);
+  border-radius: 8px;
+  background: var(--op-danger-bg);
+}
+
+.op-confirm p {
+  font-size: 0.86rem;
+}
+
+.op-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .op-splash {

@@ -17,6 +17,7 @@ import {
   type AuditEvent,
   type CacheHealth,
   type Overview,
+  type Staff,
   type TaskSpend,
 } from "./api";
 import "./operator.css";
@@ -352,6 +353,8 @@ function Console({
   const [overview, setOverview] = useState<Overview | null>(null);
   const [cache, setCache] = useState<CacheHealth | null>(null);
   const [events, setEvents] = useState<AuditEvent[] | null>(null);
+  const [staff, setStaff] = useState<Staff[] | null>(null);
+  const [revoking, setRevoking] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -361,6 +364,7 @@ function Console({
 
   const canAudit = admin.permissions.includes("security/audit/read");
   const canWriteCache = admin.permissions.includes("ops/cache/write");
+  const canManageStaff = admin.permissions.includes("staff/manage");
 
   const handleError = useCallback(
     (err: unknown) => {
@@ -383,13 +387,16 @@ function Console({
       ]);
       setOverview(ov);
       setCache(health);
-      if (canAudit) setEvents(await adminApi.audit(50));
+      const jobs: Promise<void>[] = [];
+      if (canAudit) jobs.push(adminApi.audit(50).then(setEvents));
+      if (canManageStaff) jobs.push(adminApi.staff().then(setStaff));
+      await Promise.all(jobs);
     } catch (err) {
       handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [canAudit, handleError]);
+  }, [canAudit, canManageStaff, handleError]);
 
   useEffect(() => {
     void load();
@@ -414,6 +421,26 @@ function Console({
       }
     } finally {
       setSigningOut(false);
+    }
+  };
+
+  const revokeStaff = async (username: string) => {
+    setRevoking(username);
+    setNotice("");
+    setError("");
+    try {
+      await adminApi.revokeStaff(username, "operator console");
+      setNotice(
+        w(
+          `${username} dicabut. Semua sesinya berakhir dan audit mencatat tindakan ini.`,
+          `${username} was revoked. All sessions ended and the audit records this action.`,
+        ),
+      );
+      setStaff(await adminApi.staff());
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setRevoking("");
     }
   };
 
@@ -532,6 +559,15 @@ function Console({
 
         <SpendPanel spend={overview?.aiSpend} byTask={overview?.aiSpendByTask} />
 
+        {canManageStaff && (
+          <StaffPanel
+            admin={admin}
+            staff={staff}
+            busy={revoking}
+            onRevoke={(username) => void revokeStaff(username)}
+          />
+        )}
+
         <section className="op-section" aria-labelledby="op-cache">
           <h2 id="op-cache">{w("Cache publik", "Public cache")}</h2>
           <p>
@@ -644,6 +680,143 @@ function transition(event: AuditEvent): string {
     (value): value is string => Boolean(value),
   );
   return parts.join(" → ");
+}
+
+const STATUS_LABELS: Record<string, [string, string]> = {
+  active: ["Aktif", "Active"],
+  revoked: ["Dicabut", "Revoked"],
+};
+
+function statusLabel(status: string, w: Words): string {
+  const label = STATUS_LABELS[status];
+  return label ? w(label[0], label[1]) : status;
+}
+
+function StaffPanel({
+  admin,
+  staff,
+  busy,
+  onRevoke,
+}: {
+  admin: Admin;
+  staff: Staff[] | null;
+  busy: string;
+  onRevoke: (username: string) => void;
+}) {
+  const w = useWords();
+  const fmt = useFormatters();
+  const [confirming, setConfirming] = useState("");
+  const activeOwners = (staff ?? []).filter(
+    (s) => s.role === "owner" && s.status === "active",
+  ).length;
+
+  return (
+    <section className="op-section" aria-labelledby="op-staff">
+      <h2 id="op-staff">{w("Staf operator", "Operator staff")}</h2>
+      <p>
+        {w(
+          "Hanya identitas staf. Tidak ada kata sandi, kode MFA, atau data pengguna di daftar ini.",
+          "Staff identities only. No passwords, MFA secrets or user data appear in this list.",
+        )}
+      </p>
+      {staff === null ? (
+        <p className="op-hint">{w("Memuat staf…", "Loading staff…")}</p>
+      ) : staff.length === 0 ? (
+        <p className="op-hint">{w("Belum ada operator.", "No operators yet.")}</p>
+      ) : (
+        <ul className="op-staff">
+          {staff.map((s) => {
+            const self = s.username === admin.username;
+            const active = s.status === "active";
+            const lastOwner = active && s.role === "owner" && activeOwners <= 1;
+            return (
+              <li key={s.username}>
+                <div className="op-staff-id">
+                  <strong>{s.username}</strong>
+                  <span className="op-staff-tags">
+                    <span className="op-badge op-badge--soft">
+                      {roleLabel(s.role, w)}
+                    </span>
+                    {s.orgId && <span className="op-hint">{s.orgId}</span>}
+                  </span>
+                </div>
+                <p className="op-staff-meta">
+                  <span
+                    className={`op-dot${active ? " op-dot--ok" : ""}`}
+                    aria-hidden="true"
+                  />
+                  {statusLabel(s.status, w)}
+                  {` · ${fmt.count(s.liveSessions)} ${w("sesi", "sessions")}`}
+                  {` · ${
+                    s.lastLoginAt
+                      ? fmt.date(s.lastLoginAt)
+                      : w("Belum pernah masuk", "Never signed in")
+                  }`}
+                </p>
+                <div className="op-staff-actions">
+                  {!active ? (
+                    <span className="op-hint">
+                      {w("Akses sudah dicabut", "Access revoked")}
+                    </span>
+                  ) : self ? (
+                    <span className="op-hint">
+                      {w(
+                        "Tidak bisa mencabut akun sendiri",
+                        "You can't revoke your own account",
+                      )}
+                    </span>
+                  ) : lastOwner ? (
+                    <span className="op-hint">
+                      {w("Pemilik aktif terakhir", "Last active owner")}
+                    </span>
+                  ) : confirming === s.username ? (
+                    <div className="op-confirm">
+                      <p>
+                        {w(
+                          `Cabut akses ${s.username}? Semua sesinya akan berakhir.`,
+                          `Revoke ${s.username}? All sessions will end.`,
+                        )}
+                      </p>
+                      <div className="op-confirm-actions">
+                        <button
+                          type="button"
+                          className="op-btn op-btn--danger"
+                          disabled={busy === s.username}
+                          onClick={() => {
+                            setConfirming("");
+                            onRevoke(s.username);
+                          }}
+                        >
+                          {busy === s.username
+                            ? w("Mencabut…", "Revoking…")
+                            : w("Ya, cabut", "Yes, revoke")}
+                        </button>
+                        <button
+                          type="button"
+                          className="op-btn op-btn--quiet"
+                          onClick={() => setConfirming("")}
+                        >
+                          {w("Batal", "Cancel")}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="op-btn op-btn--quiet op-btn--danger-text"
+                      onClick={() => setConfirming(s.username)}
+                    >
+                      {w("Cabut akses", "Revoke access")}
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
 }
 
 function cacheState(cache: CacheHealth, w: Words): string {
