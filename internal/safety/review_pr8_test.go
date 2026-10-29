@@ -84,6 +84,8 @@ func TestBriefFarewellNoReturnVariants(t *testing.T) {
 		"aku mau tidur sebentar, nanti tidak perlu bangun lagi",
 		"aku mau tidur sebentar, nanti nggak bangun-bangun lagi",
 		"aku mau tidur sebentar, nanti tidak bangun-bangun lagi",
+		"aku mau tidur sebentar, tidak akan lama, selamanya",
+		"aku pergi sebentar, selamanya",
 	} {
 		if got := Assess(text).Level; got != LevelCrisis {
 			t.Errorf("Assess(%q).Level = %s, want crisis", text, got)
@@ -94,6 +96,9 @@ func TestBriefFarewellNoReturnVariants(t *testing.T) {
 		"aku mau tidur sebentar, nanti bangun lagi",
 		"aku pergi sebentar, tidak akan lama. kita teman selamanya",
 		"aku pergi sebentar, tidak akan lama, cinta kita abadi",
+		"aku pergi sebentar, teman selamanya ya",
+		"aku pergi sebentar, cinta kita abadi",
+		"aku pergi sebentar, kita teman selamanya, tidak akan lama",
 	} {
 		if got := Assess(text).Level; got != LevelNone {
 			t.Errorf("Assess(%q).Level = %s, want none", text, got)

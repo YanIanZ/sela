@@ -2136,10 +2136,16 @@ func briefFarewell(s string, _, end int) bool {
 	// "tidur sebentar, selamanya" is a farewell, while "tidak akan lama.
 	// kita teman selamanya" is a short break (review finding P2-3).
 	if f := foreverRe.FindStringIndex(rest); f != nil {
-		stay := briefStayRe.FindStringIndex(rest)
-		if stay == nil || f[0] < stay[0] {
-			return false
+		before := rest[:f[0]]
+		if benignForeverRe.MatchString(before) {
+			return true
 		}
+		if stay := briefStayRe.FindStringIndex(rest); stay != nil && stay[0] < f[0] {
+			if benignForeverRe.MatchString(rest[stay[1]:f[0]]) {
+				return true
+			}
+		}
+		return false
 	}
 	return true
 }
@@ -2162,6 +2168,10 @@ var (
 	// foreverRe later in the sentence makes "pergi dari dunia ini
 	// sebentar" more than a short break (see briefBreak).
 	foreverRe = regexp.MustCompile(`(?i)\b(?:selamanya|selama-lamanya|abadi|forever|for\s+good)\b`)
+	// benignForeverRe marks a friendship, love or family phrase that a later
+	// forever word belongs to, rather than a farewell ("kita teman
+	// selamanya", "cinta kita abadi").
+	benignForeverRe = regexp.MustCompile(`(?i)\b(?:teman|sahabat|persahabatan|cinta|keluarga|friend|friends|friendship|love|family)\b`)
 	// stopManners after "berhenti hidup" name a way of living (see
 	// stopLivingManner).
 	stopManners = setOf("susah miskin sengsara melarat kekurangan sendirian sendiri kesepian boros mewah foya-foya " +

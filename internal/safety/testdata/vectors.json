@@ -2711,5 +2711,10 @@
   {"text": "aku mau tidur sebentar, nanti nggak perlu bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-3: negated perlu bangun lagi"},
   {"text": "aku mau tidur sebentar, nanti tidak perlu bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-3: negated perlu bangun lagi"},
   {"text": "aku mau tidur sebentar, nanti nggak bangun-bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom", "slang"], "source": "new", "note": "review finding P1-3: reduplicated bangun-bangun"},
-  {"text": "aku mau tidur sebentar, nanti tidak bangun-bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-3: reduplicated bangun-bangun"}
+  {"text": "aku mau tidur sebentar, nanti tidak bangun-bangun lagi", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1-3: reduplicated bangun-bangun"},
+  {"text": "aku mau tidur sebentar, tidak akan lama, selamanya", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a forever word in the same farewell clause after a short-break phrase"},
+  {"text": "aku pergi sebentar, selamanya", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "forever word directly after a brief leaving"},
+  {"text": "aku pergi sebentar, teman selamanya ya", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a friendship forever phrase without a short-break phrase is not a farewell"},
+  {"text": "aku pergi sebentar, cinta kita abadi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a romantic forever phrase is not a farewell"},
+  {"text": "aku pergi sebentar, kita teman selamanya, tidak akan lama", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: reordered friendship phrase plus tidak akan lama"}
 ]
