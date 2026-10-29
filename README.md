@@ -4,7 +4,6 @@
 *Ruang sejenak untuk didengar.*
 
 [![Sela v2](https://github.com/YanIanZ/sela/actions/workflows/v2.yml/badge.svg)](https://github.com/YanIanZ/sela/actions/workflows/v2.yml)
-[![Quality gate](https://github.com/YanIanZ/sela/actions/workflows/quality.yml/badge.svg)](https://github.com/YanIanZ/sela/actions/workflows/quality.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Sela is an anonymous-first, text-only wellbeing platform being built in Go.** It helps people describe their experiences, reflect without being assigned a diagnosis, keep only the personal context they approve, find evidence-informed reading, and prepare their own notes before seeking professional help.
@@ -64,7 +63,7 @@ flowchart TD
 
 **Anonymous for users does not mean anonymous for staff.** Sela's future `/operator` area is a separate, strongly authenticated staff-only interface for source verification, professional/facility catalog quality, research editorial review, official-help freshness, AI/provider budgets, cache health and immutable operational audit. Operators **cannot browse anonymous journals**. Partner accounts are distinct from user sessions; no actual partner exchange is claimed. [Admin Console](docs/vision/ADMIN_CONSOLE.md) · [Care Operations](docs/vision/ADMIN_CARE_OPERATIONS.md).
 
-**Redis is planned for the Go runtime**, rather than reused unmodified from the inherited Next.js application. Cache only **public versioned directory/research assets**, manage short-lived rate/admission counters, and coordinate budget reservations with an authoritative PostgreSQL ledger. **No user stories, private AI responses, prompts or consent grants in Redis**. Redis outages must never bypass crisis handling or allow unbounded paid AI requests. [Redis and AI cost engineering](docs/vision/REDIS_AI_COST_ENGINEERING.md).
+**Redis is planned for the Go runtime**, rather than reused unmodified from the retired inherited Next.js application. Cache only **public versioned directory/research assets**, manage short-lived rate/admission counters, and coordinate budget reservations with an authoritative PostgreSQL ledger. **No user stories, private AI responses, prompts or consent grants in Redis**. Redis outages must never bypass crisis handling or allow unbounded paid AI requests. [Redis and AI cost engineering](docs/vision/REDIS_AI_COST_ENGINEERING.md).
 
 ~~~mermaid
 flowchart LR

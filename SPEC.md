@@ -170,7 +170,7 @@ v2 parts are implemented and verified locally unless stated otherwise; v3 parts 
 | T6 | x | Deliver bilingual onboarding/story/ledger/next-step/opening/manual path | I.web,V1,V2,V4,V7,V8,V13 |
 | T7 | x | Deliver simulated handoff, recipient view, consultation and follow-up | I.web,I.api,V1,V5,V6,V7,V11,V12 |
 | T8 | ! | Verify complete journeys, isolation, failure states, accessibility and resource measurements. Journeys, isolation, failure states and accessibility verified locally; live latency/cost measurement blocked (B-1) | C10,I.ops,I.eval,V1,V3,V6,V9,V13,V15 |
-| T9 | . | Remove superseded v1/AMD runtime features after acceptance; update CI/env/deployment and demo evidence. *v3: removal waits for v3 acceptance, not v2's ([D-020](docs/DECISION_LOG.md#d-020) status; backlog S-272; roadmap §5)* | C4,C9,C11,V14,V15 |
+| T9 | x | Remove superseded v1/AMD runtime features after acceptance; update CI/env/deployment and demo evidence. Done 2026-10-29: Next.js and v1 runtime removed; content ported to Go. *v3: removal waits for v3 acceptance, not v2's ([D-020](docs/DECISION_LOG.md#d-020) status; backlog S-272; roadmap §5)* | C4,C9,C11,V14,V15 |
 | T10 | x | Reproducible research corpus pipeline, rights tracking and reviewer search | C15,I.research,V24 |
 | T11 | ! | Modal serving app, authentication, scale-to-zero, smoke test and rollback; live verification. Implemented and tested offline; deployment blocked (B-1) | C4,C5,I.meta,V9,V25 |
 | T12 | ! | Evaluation harness with pre-registered thresholds (grounding, safety, bilingual, isolation, latency/cost). Offline and test-double suites pass; live-model metrics blocked (B-1) | C10,I.eval,V7,V13,V15 |

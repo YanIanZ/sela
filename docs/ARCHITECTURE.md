@@ -65,4 +65,4 @@ DeepSeek is an optional, default-OFF provider switch for Meta availability failu
 
 ## Migration and coexistence
 
-The inherited v1 (`apps/web` Next.js, `packages/*`, `services/*`, Supabase/PostgreSQL/Redis tooling) is untouched and still tested by `quality.yml`. v2 lives in `cmd/`, `internal/`, `web/`, `modal/`, `e2e/`, `eval/` and is tested by `v2.yml`. v1 removal (T9) waits for v2 acceptance including live Meta evidence; no AMD code exists in v2.
+The inherited v1 Next.js app (`apps/web`), its `packages/*`/`services/*`, Supabase tooling and the v1 `quality.yml` workflow were removed on 2026-10-29 (T9/S-272). The useful legacy content is embedded under `internal/fixtures/data/`, and the v1 crisis tests are frozen under `internal/safety/testdata/v1/`. The current runtime lives in `cmd/`, `internal/`, `web/`, `modal/`, `e2e/`, `eval/` and is tested by `v2.yml`.

@@ -7,8 +7,8 @@ only. **Status: implemented and verified locally.** Not deployed, not verified
 live, not ready for a controlled pilot, and not a clinical or usability claim.
 
 The v2 synthetic demo stays at `/demo`; its fictional recipient entry stays at
-`/r`. The legacy Next.js app in `apps/web/` is untouched and is not a delivery
-target.
+`/r`. The legacy Next.js app in `apps/web/` was removed on 2026-10-29 and is no
+longer part of the delivery tree.
 
 ## What was delivered
 
