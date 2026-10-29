@@ -144,7 +144,7 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 .s-entry-list > a:last-child { border-bottom: 0; }
 .s-badge, .s-status-chip { font-size: var(--font-size-1); }
 .s-menu-sheet { border-radius: var(--radius-4); }
-.s-menu-inner { gap: 1.5rem; padding: 1.5rem; }
+.s-menu-inner { gap: 1.25rem; padding: 1.5rem; }
 .s-menu-safety { padding-bottom: 1.25rem; border-bottom: 1px solid var(--c-border-subtle); }
 .s-dialog-inner { padding: 1.5rem; }
 

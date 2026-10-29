@@ -38,12 +38,57 @@
 @keyframes s-menu-in {
   from {
     opacity: 0;
-    transform: translateY(-6px) scale(0.98);
+    transform: translateY(-8px) scale(0.985);
   }
   to {
     opacity: 1;
     transform: none;
   }
+}
+
+/* A small notch ties the panel to the menu button without a backdrop. */
+.s-menu-sheet::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 32px;
+  width: 12px;
+  height: 12px;
+  background: var(--c-surface);
+  border-left: 1px solid var(--c-border-subtle);
+  border-top: 1px solid var(--c-border-subtle);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.s-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.s-menu-head h2 {
+  margin: 0;
+  font-size: var(--font-size-5);
+}
+
+.s-menu-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--c-border-subtle);
+  border-radius: 50%;
+  background: var(--c-surface);
+  color: var(--c-text);
+  cursor: pointer;
+}
+
+.s-menu-close:hover {
+  background: var(--c-surface-quiet);
 }
 
 .s-dialog::backdrop {
@@ -152,6 +197,9 @@
     max-height: calc(100svh - var(--top-bar-h, 5.5rem) - 1.5rem);
     margin: 0;
     border-radius: var(--radius-4);
+  }
+  .s-menu-sheet::before {
+    right: 54px;
   }
   .s-menu-inner {
     min-height: 0;

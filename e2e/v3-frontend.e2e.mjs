@@ -93,7 +93,13 @@ try {
       await page.waitForTimeout(150);
     }
   }
-  await page.getByRole("button", { name: "Mulai bercerita", exact: true }).click();
+  await page.getByRole("link", { name: "Beranda" }).first().click();
+  await page.waitForURL("**/home");
+  await page.waitForTimeout(400);
+  const homeScroll = await page.evaluate(() => window.scrollY);
+  check("Home opens at the top after navigation", homeScroll === 0, String(homeScroll));
+
+  await page.getByRole("link", { name: "Mulai bercerita", exact: true }).click();
   await page.waitForURL("**/talk/new");
   await page.getByRole("radio", { name: /Jangan simpan/ }).click();
   await page.getByRole("button", { name: "Buka ruang cerita" }).click();

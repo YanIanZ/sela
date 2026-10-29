@@ -197,7 +197,7 @@ function MenuSheet({
       requestAnimationFrame(() => document.getElementById("menu-help")?.focus());
     } else if (!open && el.open) {
       el.close();
-      returnTo.current?.focus();
+      returnTo.current?.focus({ preventScroll: true });
     }
   }, [open]);
 
@@ -245,6 +245,20 @@ function MenuSheet({
       }}
     >
       <div className="s-menu-inner">
+        <div className="s-menu-head">
+          <h2 id="menu-title" ref={heading} tabIndex={-1}>
+            {w("Menu", "Menu")}
+          </h2>
+          <button
+            type="button"
+            className="s-menu-close"
+            onClick={onClose}
+            aria-label={w("Tutup menu", "Close menu")}
+          >
+            <Icon name="close" />
+            <span className="s-sr-only">{w("Tutup menu", "Close menu")}</span>
+          </button>
+        </div>
         <div className="s-menu-safety">
           <Link
             to="/help"
@@ -259,14 +273,7 @@ function MenuSheet({
             <Icon name="quick-exit" />
             <span>{w("Keluar cepat", "Quick exit")}</span>
           </button>
-          <button type="button" className={buttonClass("quiet")} onClick={onClose}>
-            <Icon name="close" />
-            <span>{w("Tutup", "Close")}</span>
-          </button>
         </div>
-        <h2 id="menu-title" ref={heading} tabIndex={-1}>
-          {w("Menu", "Menu")}
-        </h2>
         <Link to="/dashboard" className="s-btn s-btn--quiet" onClick={onClose}>{w("Dashboard informasi", "Information dashboard")}</Link>
         {user && (
           <nav aria-label={w("Navigasi utama", "Main navigation")} className="s-menu-group">
@@ -390,7 +397,12 @@ export function AppShell({
     }
     requestAnimationFrame(() => {
       const main = document.getElementById("main");
-      if (main && document.activeElement !== main) main.focus();
+      if (main && document.activeElement !== main) {
+        // Focusing main must not scroll the freshly reset route down under
+        // the sticky header. The browser otherwise honours scroll-padding and
+        // leaves the page about a header-height below the top.
+        main.focus({ preventScroll: true });
+      }
     });
   }, [path]);
 
