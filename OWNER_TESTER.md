@@ -338,9 +338,9 @@ mark a blocked screen as passing.
       storage still applies until the tab closes and says so.
 - [ ] Theme and high contrast produce four schemes; the preview updates.
 - [ ] Relaxed spacing, reduced motion, show replies at once, Enter-to-send,
-      reply announcements, read-aloud, dictation disclosure, Quick exit shortcut,
-      Quick exit sign-out policy, hidden previews, neutral tab titles and language
-      are all present and reversible.
+      reply announcements, Quick exit shortcut, Quick exit sign-out policy,
+      hidden previews, neutral tab titles and language are all present and
+      reversible. No voice/TTS control is present (D-060).
 - [ ] "Kembalikan ke bawaan" resets everything.
 - [ ] The preview shows a user turn, a Sela turn and a provenance badge/status.
 

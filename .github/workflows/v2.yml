@@ -58,7 +58,7 @@ jobs:
       - name: Direct module requirements are only the approved ones
         run: |
           go list -m -f '{{if not .Indirect}}{{.Path}} {{.Version}}{{end}}' all | sort | tee /tmp/direct.txt
-          diff <(printf '%s\n' 'github.com/YanIanZ/sela ' 'github.com/aws/aws-sdk-go-v2 v1.47.5' 'github.com/aws/aws-sdk-go-v2/credentials v1.20.12' 'github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.63.8' 'github.com/gorilla/websocket v1.5.3' 'github.com/jackc/pgx/v5 v5.10.0' 'golang.org/x/crypto v0.57.0' 'golang.org/x/text v0.42.0' | sort) /tmp/direct.txt
+          diff <(printf '%s\n' 'github.com/YanIanZ/sela ' 'github.com/jackc/pgx/v5 v5.10.0' 'golang.org/x/crypto v0.57.0' 'golang.org/x/text v0.42.0' | sort) /tmp/direct.txt
       - name: Migrations up, status, down-last (all), up
         env:
           SELA_ENV: test

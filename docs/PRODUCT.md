@@ -74,7 +74,7 @@ Purpose: a calm place to pick up where the user left off. Primary action: talk, 
 
 ### Conversation — Cerita, screen "Ruang cerita" / Talk
 
-Purpose: be heard without judgement. Primary action: write (or, if turned on, dictate) and send. Inherits FM-08, FM-12, FM-13 and FM-15; new as a v3 surface (v2 had no conversation).
+Purpose: be heard without judgement. Primary action: write and send. Inherits FM-08, FM-12 and FM-13; new as a v3 surface (v2 had no conversation).
 
 - No profile is needed. An optional intent (just listen, sort my thoughts, understand patterns, prepare a consultation) only adjusts the reply style and can be changed (V26).
 - The save / don't-save choice is asked at the start in plain language and can be changed (V27). An unsaved conversation is held only in server memory while it is open and is discarded at End, after 30 minutes without activity or after 2 hours at most; closing the tab does not keep it (V27, D-051).
@@ -84,7 +84,7 @@ Purpose: be heard without judgement. Primary action: write (or, if turned on, di
 - When AI is unavailable or not consented, Sela says so and the room works as a private writing space; no canned empathy line stands in (V26, V35).
 - A crisis match keeps the conversation and the user's words, shows verified help inline, and pauses AI replies until the user chooses to continue (V38).
 - An off-topic request gets one kind redirect; distress always overrides it.
-- Voice dictation is opt-in, with a disclosure that the browser's speech service may send audio to its vendor and an editable transcript before sending; read-aloud uses local speech synthesis and never autoplays (C25). Both land in milestone P7, after the text room (backlog S-025, S-026).
+- The app is text-only. Voice dictation, read-aloud and the voice room were retired on 2026-10-29 (D-060); no microphone or speech synthesis surface remains. Meta text generation in the talk room is the AI experience.
 
 ### Journal — Catatan, "Tulis catatan" / Write a note
 

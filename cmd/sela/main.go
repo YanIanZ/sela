@@ -132,10 +132,6 @@ func run() error {
 			return e
 		}
 	}
-	voice, voiceMode, err := voiceOpener(cfg.Env)
-	if err != nil {
-		return err
-	}
 	st := store.NewMemory(store.Options{MaxSessions: cfg.MaxSessions, MaxSessionsPerClient: cfg.MaxSessionsPerClient})
 	svc := journey.New(journey.Config{
 		OpTimeout: cfg.OpTimeout, MaxOpsPerWindow: cfg.MaxOpsPerHour, WarmWindow: cfg.WarmWindow, ColdStartEstimate: cfg.ColdStart, Logger: logger,
@@ -145,8 +141,6 @@ func run() error {
 		WebDir: cfg.WebDir, Research: index, Logger: logger, Version: version, MetricsToken: cfg.MetricsToken,
 		AIRouter: aiRouter, Accounts: accounts, AccountConfig: acctCfg, Database: dbStatus, DatabaseRequired: cfg.RequiresDatabase(),
 		DisableV2Journey: cfg.Store != "memory", HSTS: cfg.Env == config.EnvProduction,
-		ASRMode: cfg.ASRMode, ASRAPIKey: cfg.ASRAPIKey, ASRModel: cfg.ASRModel, ASRURL: cfg.ASRURL,
-		VoiceOpener: voice,
 	})
 
 	srv := &http.Server{
@@ -175,7 +169,7 @@ func run() error {
 	logger.Info("sela.start", "version", version, "env", cfg.Env, "addr", cfg.Addr, "llm_mode", string(info.Mode),
 		"model_id", info.ModelID, "model_revision", info.Revision, "secure_cookies", cfg.SecureCookies,
 		"max_sessions", cfg.MaxSessions, "metrics", cfg.MetricsToken != "", "fixtures", catalog.Version,
-		"store", cfg.Store, "database", cfg.DatabaseURL != "", "kek_id", cfg.KEK.ID, "asr_mode", cfg.ASRMode, "voice_mode", voiceMode)
+		"store", cfg.Store, "database", cfg.DatabaseURL != "", "kek_id", cfg.KEK.ID)
 	ln, err := net.Listen("tcp", cfg.Addr)
 	if err != nil {
 		return err

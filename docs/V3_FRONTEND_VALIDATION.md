@@ -22,8 +22,8 @@ Deliverables are:
   announcement regions at the end of `<body>`, route titles and route focus;
 - display preferences applied before paint by `web/public/boot.js`: text size,
   theme, high contrast, relaxed spacing, reduced motion, Enter-to-send,
-  screen-reader reply announcements, read-aloud, dictation disclosure, Quick
-  exit shortcut and sign-out policy, hidden previews and neutral tab titles;
+  screen-reader reply announcements, Quick exit shortcut and sign-out policy,
+  hidden previews and neutral tab titles;
 - bilingual ID/EN copy in the v3 `w(id, en)` pattern; `/html lang` follows the
   language and account locale when signed in;
 - the real v3 journeys listed below, plus truthful unavailable states for

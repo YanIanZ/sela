@@ -25,7 +25,6 @@ import (
 
 	"github.com/YanIanZ/sela/internal/account"
 	"github.com/YanIanZ/sela/internal/ai"
-	"github.com/YanIanZ/sela/internal/ai/sonic"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/research"
 )
@@ -82,32 +81,6 @@ type Options struct {
 	// HSTS adds Strict-Transport-Security (max-age one year); production
 	// sets it (ADR-0002 §5).
 	HSTS bool
-	// ASRMode is the dictation backend: "disabled" (mic off), "meta"
-	// (Meta voice-transcribe realtime), "bedrock" (Amazon Nova Sonic), or
-	// "test_double" (local loopback).
-	ASRMode string
-	// ASRAPIKey is the Meta model API key (secret, never logged); empty
-	// unless ASRMode is "meta".
-	ASRAPIKey string
-	// ASRModel is the transcription model (default per ASRMode).
-	ASRModel string
-	// ASRURL is the realtime endpoint (default
-	// "wss://api.meta.ai/v1/asr/realtime"); tests point it at a mock.
-	ASRURL string
-	// AWSRegion is the Bedrock region for ASRMode "bedrock".
-	AWSRegion string
-	// AWSProfile is the AWS shared-config profile for "bedrock"; empty
-	// uses the default chain.
-	AWSProfile string
-	// VoiceOpener backs the voice room (GET /api/v3/voice/realtime) with
-	// Amazon Nova 2.5 Sonic or its labelled test double. Nil disables it.
-	VoiceOpener sonic.Opener
-	// ASROpener backs dictation (GET /api/v3/asr/realtime) when ASRMode is
-	// "bedrock". Nil constructs the IAM-credential opener from the
-	// environment; tests inject the labelled sonic test double.
-	ASROpener sonic.Opener
-	// ASRFlushWait overrides asrFlushWait in tests; zero keeps the default.
-	ASRFlushWait time.Duration
 }
 
 // Server is the HTTP handler.

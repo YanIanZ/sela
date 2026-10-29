@@ -27,8 +27,6 @@ export type Prefs = {
   showRepliesAtOnce: boolean;
   enterToSend: boolean;
   announceReplies: boolean;
-  readAloud: boolean;
-  dictation: boolean;
   quickExitShortcut: boolean;
   quickExitSignOut: "trusted" | "always" | "never";
   hidePreviews: boolean;
@@ -45,8 +43,6 @@ export const defaultPrefs: Prefs = {
   showRepliesAtOnce: false,
   enterToSend: false,
   announceReplies: true,
-  readAloud: false,
-  dictation: false,
   quickExitShortcut: true,
   quickExitSignOut: "trusted",
   hidePreviews: false,
