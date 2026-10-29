@@ -32,8 +32,6 @@ var v3Messages = map[string]message{
 	"password_weak":              {"Kata sandi ini terlalu umum atau mudah ditebak. Pilih yang lain.", "This password is too common or easy to guess. Choose another."},
 	"store_unavailable":          {"Penyimpanan sedang tidak tersedia. Coba lagi sebentar lagi.", "Storage is unavailable right now. Try again shortly."},
 	"server_busy":                {"Server sedang sibuk. Coba lagi sebentar lagi.", "The server is busy. Try again shortly."},
-	"asr_unavailable":            {"Dikte belum tersedia di server ini.", "Dictation isn't available on this server."},
-	"asr_consent_required":       {"Dikte via Meta butuh izinmu dulu. Aktifkan di Privasi & data, bagian Pemrosesan AI.", "Dictation via Meta needs your permission first. Turn it on in Privacy & data, under AI processing."},
 }
 
 // v3Status is the documented HTTP status of every code /api/v3 returns.
@@ -51,7 +49,6 @@ var v3Status = map[string]int{
 	"not_guest": http.StatusConflict, "required_consent": http.StatusConflict, "username_invalid": http.StatusBadRequest,
 	"username_taken": http.StatusConflict, "password_too_short": http.StatusBadRequest, "password_too_long": http.StatusBadRequest,
 	"password_weak": http.StatusBadRequest, "store_unavailable": http.StatusServiceUnavailable, "server_busy": http.StatusServiceUnavailable,
-	"asr_unavailable": http.StatusServiceUnavailable, "asr_consent_required": http.StatusForbidden,
 }
 
 func init() {

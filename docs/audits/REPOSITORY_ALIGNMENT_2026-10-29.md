@@ -1,5 +1,7 @@
 # Repository alignment audit — 2026-10-29
 
+> **Update 2026-10-29 (D-060):** the voice-room, dictation and read-aloud work described below was removed. The v3 product is text-only; this audit remains as the historical record of that pass.
+
 Scope: full-repository stabilization, reconciliation and architectural alignment
 (branches, PRs, CI, safety engine, voice/ASR contract, AI routing, docs).
 Method: fresh GitHub inspection, four parallel read-only subagent audits, then

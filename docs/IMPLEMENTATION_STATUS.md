@@ -204,7 +204,7 @@ Milestone order and exit criteria: [backlog §4](BACKLOG.md#4-milestones).
 | Work | Items | Status | Evidence |
 | --- | --- | --- | --- |
 | Manual accessibility review, display settings, slow connections | S-192, S-195, S-196 | planned | — |
-| Opt-in voice dictation and read-aloud | S-025, S-026 | planned | — |
+| Voice dictation, read-aloud and voice room | S-025, S-026, S-027 | retired (D-060) | — |
 | Security review before the pilot, observability | S-265, S-266 | S-265 in progress (documents, branch `feat/sela-v3-ops`, not merged); S-266 planned | — |
 | Hosted deployment, rollback and restore drill; the status page (S-263), on which the restore post of S-262 criterion 3 (planned) depends; the database host's access log for operator sessions | S-262, S-263, S-274 | blocked externally (B-3, B-15) | deployment files in progress on branch `feat/sela-v3-ops`, not merged |
 | Meta model on Modal; live verification of Meta as the generator | S-264, S-221 (live) | blocked externally (B-1) | — |

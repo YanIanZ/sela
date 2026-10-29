@@ -276,7 +276,7 @@ A near-white page and ink, warmed by four pastel place tints, with one deep leaf
 - **Deep Leaf** (`leaf`): links, focus rings, caret, the switch "on" track, info icons, timeline and fact icon glyphs. **Fresh Leaf** (`leaf-soft`) is the sprout's second leaf and the selection tint (45% mix).
 
 ### Secondary
-- **Place tints** (`place-home` sage, `place-talk` mint, `place-notes` butter, `place-support` blush, `place-quiet` for Settings, About and Policies): the place sheet, the phone header above it, activity cards, continuity tiles, tinted icon circles in "more spaces", the voice stage. Text on a tint is `ink`, muted text `on-place-muted`. Help pages use `help-bg` with `help-text` as their sheet.
+- **Place tints** (`place-home` sage, `place-talk` mint, `place-notes` butter, `place-support` blush, `place-quiet` for Settings, About and Policies): the place sheet, the phone header above it, activity cards, continuity tiles, tinted icon circles in "more spaces". Text on a tint is `ink`, muted text `on-place-muted`. Help pages use `help-bg` with `help-text` as their sheet.
 - **Sage Wash** (`sage-wash`): selected chips, filters, choices and language buttons; secondary-button hover; timeline and fact icon circles; the onboarding step pill.
 - **Navigation** (`ink` ground, `nav-text` at rest, `place-home` active with `ink` text): the dark place pill in both its desktop and phone forms.
 
@@ -310,11 +310,11 @@ Light is the token set above. Dark (explicit or following the system) moves to a
 - **Headline** (Lexend 600, `headline`, 1.06, −0.035em, max 18ch): every other sheet title. **Headline compact** for focused rooms and sign-in/onboarding cards.
 - **Wordmark** (Lexend 600, `wordmark`; steps down to `title-large` on phones): "Sela" beside the sprout.
 - **Title large** (Lexend 600, `title-large`): room toolbar titles, menu sheet heading, the phone wordmark, and the Beranda greeting at 130–150% text on small phones.
-- **Title** (Lexend 600, `title`): section headings. **Statement** (Lexend 600): footer mark, voice status and voice transcript heading. **Title small** (Lexend 600/500): h3, activity card titles, editor aside headings.
+- **Title** (Lexend 600, `title`): section headings. **Statement** (Lexend 600): footer mark and status headings. **Title small** (Lexend 600/500): h3, activity card titles, editor aside headings.
 - **Lead** (Lexend 400, `lead`, 1.45, max 42ch): the sentence under a sheet title, in `on-place-muted`.
 - **Action** (Lexend 500): the big "way in" button, notice titles. Standard buttons use Lexend 500 at body size.
 - **Reading** (Hanken 400, 1.65, max 62ch): a saved note read back. **Body** (Hanken 400, 1.6; relaxed spacing raises it to 1.8): everything else. List previews use Hanken 500 at body size with a two-line clamp.
-- **Nav** (Lexend 500): desktop place pill and prompts. **Label** (Lexend 500): field labels, list dates and kinds, chips, badges. **Caption** (Lexend 500): phone navigation labels, demo stamp, voice provider flag. Sentence case throughout.
+- **Nav** (Lexend 500): desktop place pill and prompts. **Label** (Lexend 500): field labels, list dates and kinds, chips, badges. **Caption** (Lexend 500): phone navigation labels, demo stamp. Sentence case throughout.
 
 **The Rounded Voice Rule.** Everything the person operates or is greeted with (headings, buttons, navigation, labels) speaks Lexend; paragraphs and their own words stay in Hanken Grotesk.
 

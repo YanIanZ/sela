@@ -76,7 +76,7 @@ func TestV3Consents(t *testing.T) {
 			t.Fatalf("undecided: %v", m)
 		}
 	}
-	if !slices.Equal(names, []string{"terms_privacy", "test_optional", "personal_memory", "asr_meta"}) {
+	if !slices.Equal(names, []string{"terms_privacy", "test_optional", "personal_memory"}) {
 		t.Fatalf("purposes for an account: %v (guest_storage must not apply)", names)
 	}
 	// A required purpose cannot be withdrawn.
