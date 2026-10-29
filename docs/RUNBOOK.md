@@ -217,7 +217,9 @@ A lost KEK (with its secret-manager copy) makes all content unreadable; KEK cust
 
 ## 10. Operator console, public cache and AI budget
 
-**Separate trust domain.** Operator accounts are provisioned out of band and never through `/api/v3`; an anonymous user cookie cannot authorize `/api/admin/v1`. Staff sign in with a password plus TOTP, and the operator cookie (`__Host-sela_admin`, SameSite=Strict, HttpOnly) is distinct from the user cookie. Roles are deny-by-default; every mutation is appended to PostgreSQL `admin_audit` without personal content. The current API slice covers sign-in/out, `me`, a privacy-safe overview, the audit list, cache health and cache invalidation. Directory, research and budget-editing screens are pending the D11/D12 UI work.
+**Separate trust domain.** Operator accounts are provisioned out of band and never through `/api/v3`; an anonymous user cookie cannot authorize `/api/admin/v1`. Staff sign in with a password plus TOTP, and the operator cookie (`__Host-sela_admin`, SameSite=Strict, HttpOnly) is distinct from the user cookie. Roles are deny-by-default; every mutation is appended to PostgreSQL `admin_audit` without personal content.
+
+**Console UI.** Open `/operator` (for example `http://localhost:8081/operator`). The page is mounted outside the consumer shell and shows the overview, AI spend, cache health/invalidation and the audit trail allowed by the signed-in role. It never renders user stories, journals, prompts or per-user data. Staff list/role editing, directory, research and budget-editing screens are still pending.
 
 ```sh
 # Provision a staff identity; the TOTP secret is printed once.
@@ -233,6 +235,14 @@ curl -sS -X POST https://sela.example/api/admin/v1/sessions \
 curl -sS https://sela.example/api/admin/v1/overview -b 'sela_admin=…'
 curl -sS -X POST https://sela.example/api/admin/v1/cache/invalidate \
   -H 'X-Sela-Request: 1' -H 'Origin: https://sela.example' -b 'sela_admin=…'
+```
+
+Browser acceptance (synthetic staff only; screenshots and axe land in `e2e/results/operator/`):
+
+```sh
+E2E_BASE_URL=http://127.0.0.1:8081 \
+OPERATOR_USERNAME=ops.ui OPERATOR_PASSWORD='…' OPERATOR_TOTP_SECRET='…' \
+node e2e/operator.e2e.mjs
 ```
 
 **Redis.** The Compose stack runs a disposable, non-persistent Redis (`redis:7-alpine`, no volume, `--save ""`, 64 MB LRU) and points the app at `redis://redis:6379/0`. It caches only the revisioned public help-content catalogue. A miss, an outage or a malformed value falls back to the embedded fixtures; writes are best-effort. Operator cache invalidation deletes only the public help key and writes an audit event. Never put user text, session tokens, consent grants or safety decisions in Redis.

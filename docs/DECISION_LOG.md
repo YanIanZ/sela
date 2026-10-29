@@ -333,3 +333,11 @@ Why: the owner wants the Meta AI text experience to be the focus of the submissi
 4. **The AI budget is enforced in PostgreSQL.** `ai_spend` (migration `0500`) holds task/provider/token/cost metadata only. A transaction-scoped advisory lock serializes `Admit`, so concurrent instances cannot spend the same headroom; `Settle` records the measured estimate once and a failed operation settles at its reservation. A Redis outage or restart therefore cannot reset or bypass the cap. Admission failure returns `aiState: "budget_limited"` (or `"unavailable"`) with zero provider calls. A positive cap without a database refuses server start.
 
 Scope: API and CLI only. The operator UI, directory/research workflows, two-person approval, provider-budget editing, WebAuthn, production Redis and live billing reconciliation remain open ([admin console](docs/vision/ADMIN_CONSOLE.md) §10, [Redis](docs/vision/REDIS_AI_COST_ENGINEERING.md) §11, tasks T23/T24).
+
+## D-062
+
+2026-10-30 · PM decision · **Operator console UI for the existing D10 API slice.** The console is served at `/operator` and is not part of the consumer app: `main.tsx` mounts either the operator app or the consumer shell, never both, and the operator has its own styles, header and copy. It uses the D-061 cookie (`__Host-sela_admin`) only; no token is put in JavaScript, local storage or a URL.
+
+The first UI slice covers sign-in with password and TOTP, the privacy-safe overview (staff, live sessions, audit count, cache health, database/version), the durable AI spend aggregates, role-gated public-cache invalidation, and the audit trail for roles that hold `security/audit/read`. A 401 returns to the login screen; sign-out clears the UI only after the server revokes the session, so a failed network revocation does not leave a valid HttpOnly cookie behind a screen that claims to be signed out. All copy is ID/EN. The real-auth browser run passed 11/11 checks (login, dashboard, audit, 320 px, sign-out, no console errors); the final build then passed a UI-only preview run for dark mode, axe and 320 px (6/6), because Docker Desktop became unavailable when the host disk filled.
+
+Still open: staff list and role editing, two-person approval, directory/research workflows, AI budget editing, WebAuthn/passkeys and IP allowlisting. No user story, journal, prompt or per-user view is added by this UI.
