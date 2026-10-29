@@ -34,8 +34,16 @@ type pattern struct {
 	// reject, when set, inspects an RE2 match s[start:end] of the sentence s
 	// and reports that it must be discarded. It re-expresses v1 lookarounds
 	// and the documented idiom checks; it looks at s only, never beyond the
-	// sentence.
+	// sentence, unless the pattern is wide.
 	reject func(s string, start, end int) bool
+	// wide patterns are matched per sentence like the others, but their
+	// checks receive the sentence followed by up to restWindow bytes of the
+	// text after it, so that a check can read an elliptical continuation in
+	// the next sentence ("I hope I don't wake up late. or ever"; see
+	// wakeRoutine) or a no-return tail far from a brief-farewell phrase.
+	// contextUnits keys a unit that may hold a wide match with the text that
+	// follows it.
+	wide bool
 	// third, when set, reports that an accepted match names someone else's
 	// act ("bom bunuh diri", "suicide bomber"): it is attributed to a third
 	// party like third-person wording. Same contract as reject.
@@ -59,11 +67,27 @@ type pattern struct {
 	// flat atom set, used to find candidate sentences (see prefilter.go).
 	filter *filter
 	atoms  []string
+	// win bounds the length of a match, so that a long sentence is matched
+	// only in windows around the atoms (see window.go).
+	win windowInfo
+	// word is set when the expression is one literal word between word
+	// boundaries (`\bsh\b`, `\bkms\b`): it is then found by a string search
+	// instead of the regexp (see pattern.find), so a text made of many such
+	// words does not pay a regexp call per match (review finding).
+	word string
 }
+
+// literalWordRe recognises an expression that is one literal word between
+// word boundaries.
+var literalWordRe = regexp.MustCompile(`^\\b([a-z]+)\\b$`)
 
 func pat(expr string) *pattern {
 	f := compileFilter(expr)
-	return &pattern{re: regexp.MustCompile(expr), filter: f, atoms: f.flatAtoms()}
+	p := &pattern{re: regexp.MustCompile(expr), filter: f, atoms: f.flatAtoms(), win: newWindowInfo(expr)}
+	if m := literalWordRe.FindStringSubmatch(expr); m != nil {
+		p.word = m[1]
+	}
+	return p
 }
 
 func patReject(expr string, reject func(s string, start, end int) bool) *pattern {
@@ -83,6 +107,13 @@ func patCheck(expr string, reject, third func(s string, start, end int) bool) *p
 func patMarker(expr string, reject, marker func(s string, start, end int) bool) *pattern {
 	p := patReject(expr, reject)
 	p.marker = marker
+	return p
+}
+
+// patWideReject is a wide pattern with a post-check (see pattern.wide).
+func patWideReject(expr string, reject func(s string, start, end int) bool) *pattern {
+	p := patReject(expr, reject)
+	p.wide = true
 	return p
 }
 
@@ -348,14 +379,15 @@ var catalogue = []rule{
 		patReject(`\b(?:ingin|mau|mw|pengen|pgn|pingin|pengin|kepengen|akan)\s*(?:tidur\s*(?:untuk\s*)?selamanya|(?:ga|gak|nggak|ngga|tidak|tak|enggak)\s*bangun\s*lagi)\b`, ownEuphemism),
 		// "pengen tidur dan ga bangun lagi", "pengen tidur terus ga usah bangun
 		// lagi" (review finding).
-		pat(`\b(?:ingin|mau|mw|pengen|pgn|pingin|pengin|kepengen|semoga|moga|moga-moga|mudah-mudahan|berharap)\s*(?:(?:aku|saya|gue|gw|gua|ku)\s*)?tidur\s*(?:(?:aja|saja|dan|terus|trus|lalu|abis\s*itu)\s*)*(?:ga|gak|gk|nggak|ngga|tidak|tak|enggak)\s*(?:usah\s*|perlu\s*)?bangun\s*(?:lagi|lg)\b`),
+		pat(`\b(?:ingin|mau|mw|pengen|pgn|pingin|pengin|kepengen|semoga|moga|moga-moga|mudah-mudahan|berharap)\s*(?:(?:aja|saja|ajah|deh|ya)\s*)?(?:`+idHopeSelf+`\s*)?tidur\s*(?:(?:aja|saja|dan|terus|trus|lalu|abis\s*itu)\s*)*(?:ga|gak|gk|nggak|ngga|tidak|tak|enggak)\s*(?:usah\s*|perlu\s*)?bangun\s*(?:lagi|lg)\b`),
 		// A hope: "semoga aku ga bangun lagi besok", "berharap tidur
 		// selamanya" (review finding). "bangun kesiangan lagi" (oversleeping
 		// again) does not match.
-		pat(`\b(?:semoga|moga|moga-moga|mudah-mudahan|berharap|harap(?:nya)?)\s*`+idHopeTime+`(?:(?:aku|saya|gue|gw|gua|ku)\s*)?`+idHopeTime+
+		pat(`\b`+idSleepHope+idHopeTime+`(?:`+idHopeSelf+`\s*)?`+idHopeTime+
 			`(?:(?:ga|gak|gk|nggak|ngga|tidak|tak|enggak|engga)\s*(?:usah\s*|perlu\s*)?bangun(?:[\s-]*bangun)?\s*(?:lagi|lg|besok|esok|selamanya)|tidur\s*(?:untuk\s*)?selamanya)\b`),
-		// "semoga tidurku malam ini yang terakhir" (review finding).
-		pat(`\b(?:semoga|moga|moga-moga|mudah-mudahan|berharap|harap(?:nya)?)\s*tidur(?:ku|\s*(?:aku|saya|gue|gw|gua))?\s*`+idHopeTime+`(?:ini\s*)?(?:yang|yg|jadi|menjadi|adalah)\s*(?:yang\s*|yg\s*)?(?:terakhir|penghabisan)\b`)),
+		// "semoga tidurku malam ini yang terakhir", "semoga malam ini
+		// tidurku yang terakhir" (review findings).
+		pat(`\b`+idSleepHope+idHopeTime+`tidur(?:ku|\s*`+idHopeSelf+`)?\s*`+idHopeTime+`(?:ini\s*)?(?:yang|yg|jadi|menjadi|adalah)\s*(?:yang\s*|yg\s*)?(?:terakhir|penghabisan)\b`)),
 	// "aku ingin meninggal saja": the formal verb. A wish (pengen/ingin) is
 	// counted with any subject; "mau meninggal" ("about to die") only with a
 	// first-person subject or "aja" ("rasanya mau meninggal aja"), since
@@ -378,14 +410,21 @@ var catalogue = []rule{
 	newRule("en-sleep-forever", CategorySuicide, LevelCrisis,
 		// "I hope I fall asleep and never wake up", "I hope I sleep and
 		// never wake up" (review finding).
-		pat(`\b(?:want|wanna|wish|hope|hoping|like|ready|pray|praying)\s*(?:that\s*)?(?:i(?:'ll)?\s*(?:(?:can|could|will|would|just|finally)\s*)*)?(?:to\s*)?(?:(?:just|go\s*to|fall|falls|fell)\s*)*(?:sleep|asleep)\s*(?:tonight\s*)?(?:and|&|then|n)\s*(?:never|not|don'?t|won'?t|wouldn'?t)\s*(?:ever\s*)?wake\s*(?:up)?\b`),
+		// A time word may come first: "I hope one day I sleep and never wake
+		// up", "I hope tonight I fall asleep and never wake up" (review
+		// finding).
+		pat(`\b(?:want|wanna|wish|hope|hoping|like|ready|pray|praying)\s*,?\s*(?:that\s*)?`+enHopeTime+`(?:i(?:'ll)?\s*(?:(?:can|could|will|would|just|finally)\s*)*)?(?:to\s*)?(?:(?:just|go\s*to|fall|falls|fell)\s*)*(?:sleep|asleep)\s*(?:tonight\s*)?(?:and|&|then|n)\s*(?:never|not|don'?t|won'?t|wouldn'?t)\s*(?:ever\s*)?wake\s*(?:up)?\b`),
 		// "I hope I never wake up", "I wish I wouldn't wake up" (review
 		// finding). A routine ("I hope I don't wake up late") is rejected
 		// (see wakeRoutine).
-		// "I hope I sleep forever", "I wish I could sleep forever".
-		pat(`\b(?:hope|hoping|hopefully|wish|wishing|pray|praying)\s*(?:that\s*)?i(?:'ll)?\s*(?:(?:can|could|will|would|just)\s*)*(?:sleep|go\s*to\s*sleep|fall\s*asleep)\s*(?:and\s*never\s*wake\s*up\s*)?forever\b`),
-		// A time word may come first: "I hope tonight I don't wake up".
-		patReject(`\b(?:hope|hoping|hopefully|wish|wishing|pray|praying)\s*(?:that\s*)?(?:(?:tonight|tomorrow|today|someday|one\s*day|this\s*time)\s*)?(?:i|i'?ll)\s*(?:just\s*)?(?:never|don'?t|do\s*not|won'?t|will\s*not|wouldn'?t|would\s*not|didn'?t)\s*(?:ever\s*)?wake\s*(?:up)?\b`, wakeRoutine)),
+		// "I hope I sleep forever", "I wish I could sleep forever", "I hope
+		// tonight I sleep forever", "I hope this time I sleep forever".
+		pat(`\b(?:hope|hoping|hopefully|wish|wishing|pray|praying)\s*,?\s*(?:that\s*)?`+enHopeTime+`i(?:'ll)?\s*(?:(?:can|could|will|would|just)\s*)*(?:sleep|go\s*to\s*sleep|fall\s*asleep)\s*(?:and\s*never\s*wake\s*up\s*)?forever\b`),
+		// A time word may come first: "I hope tonight I don't wake up", "I
+		// hope tonight is the night I don't wake up". wakeRoutine reads the
+		// following sentence too ("... late. or ever"), so the pattern is
+		// wide.
+		patWideReject(`\b(?:hope|hoping|hopefully|wish|wishing|pray|praying)\s*,?\s*(?:that\s*)?`+enHopeTime+`(?:i|i'?ll)\s*(?:just\s*)?(?:never|don'?t|do\s*not|won'?t|will\s*not|wouldn'?t|would\s*not|didn'?t)\s*(?:ever\s*)?wake\s*(?:up)?\b`, wakeRoutine)),
 
 	// Past and other forms of en-self-harm's "<verb> myself" ("I burned
 	// myself on purpose", "I harmed myself last night", "I want to stab
@@ -400,12 +439,17 @@ var catalogue = []rule{
 		// I bleed" (review finding: v1 none). Banging one's head and
 		// scratching are everyday idioms or itches on their own, so they
 		// need the injury.
-		pat(`\b(?:hit(?:s|ting)?|punch(?:es|ed|ing)?|slap(?:s|ped|ping)?|smack(?:s|ed|ing)?)\s*myself\b|\b(?:bang(?:s|ed|ing)?|hit(?:s|ting)?|slam(?:s|med|ming)?|smash(?:es|ed|ing)?)\s*my\s*head\s*(?:(?:against|on|into)\s*(?:the\s*|a\s*)?(?:wall|walls|floor|desk|table|door|mirror)\s*)?(?:until|till|til|so\s*hard\s*(?:that\s*)?)\s*(?:it|i)\s*(?:bleed|bleeds|bled|bleeding|bruise|bruised|passed?\s*out)\b|\bscratch(?:es|ed|ing)?\s*myself\s*(?:raw|bloody|(?:until|till|til)\s*(?:i|it)\s*(?:bleed|bleeds|bled|bleeding))\b`)),
+		// An accident told as one past event ("I hit myself on the cabinet
+		// door by accident") is a context marker (see accidental).
+		patMarker(`\b(?:hit(?:s|ting)?|punch(?:es|ed|ing)?|slap(?:s|ped|ping)?|smack(?:s|ed|ing)?)\s*myself\b|\b(?:bang(?:s|ed|ing)?|hit(?:s|ting)?|slam(?:s|med|ming)?|smash(?:es|ed|ing)?)\s*my\s*head\s*(?:(?:against|on|into)\s*(?:the\s*|a\s*)?(?:wall|walls|floor|desk|table|door|mirror)\s*)?(?:until|till|til|so\s*hard\s*(?:that\s*)?)\s*(?:it|i)\s*(?:bleed|bleeds|bled|bleeding|bruise|bruised|passed?\s*out)\b|\bscratch(?:es|ed|ing)?\s*myself\s*(?:raw|bloody|(?:until|till|til)\s*(?:i|it)\s*(?:bleed|bleeds|bled|bleeding))\b`, nil, accidental)),
 	// Past hanging and vehicles: "I hanged myself but the rope broke", "I
 	// want to jump in front of a train", "throw myself under a bus" (review
 	// finding: v1 none).
 	newRule("en-lethal-means-forms", CategorySelfHarm, LevelCrisis,
-		pat(`\b(?:hanged|hung)\s*myself\b|\b(?:step(?:ped|ping|s)?|jump(?:ed|ing|s)?|(?:throw(?:ing|n|s)?|threw)\s*myself)\s*in\s*front\s*of\s*(?:a|an|the|some)?\s*(?:(?:moving|speeding|oncoming)\s*)?(?:train|truck|car|bus|lorry|subway|tram|vehicle)s?\b|\b(?:throw(?:ing|n|s)?|threw)\s*myself\s*(?:under|onto|on\s*to)\s*(?:a|an|the)?\s*(?:train|truck|car|bus|lorry|subway|tram|tracks)\b|\bjump(?:ed|ing|s)?\s*(?:onto|on\s*to|into)\s*(?:the\s*)?(?:train\s*|subway\s*|railway\s*)?tracks\b`)),
+		pat(`\b(?:hanged|hung)\s*myself\b|\b(?:step(?:ped|ping|s)?|jump(?:ed|ing|s)?|(?:throw(?:ing|n|s)?|threw)\s*myself)\s*in\s*front\s*of\s*(?:a|an|the|some)?\s*(?:(?:moving|speeding|oncoming)\s*)?(?:train|truck|car|bus|lorry|subway|tram|vehicle)s?\b|\b(?:throw(?:ing|n|s)?|threw)\s*myself\s*(?:under|onto|on\s*to)\s*(?:a|an|the)?\s*(?:train|truck|car|bus|lorry|subway|tram|tracks)\b|\bjump(?:ed|ing|s)?\s*(?:onto|on\s*to|into)\s*(?:the\s*)?(?:train\s*|subway\s*|railway\s*)?tracks\b`),
+		// "I want to throw myself off a bridge", "throw myself into the river"
+		// (review finding: v1 none). "throw myself into my work" is not listed.
+		pat(`\b(?:throw(?:ing|n|s)?|threw|hurl(?:ing|ed|s)?|fling(?:ing|s)?|flung)\s*myself\s*(?:off|from|out\s*of|over)\s*(?:of\s*)?(?:a|an|the|this|that|my|our|some)?\s*(?:(?:tall|high|nearest)\s*)?(?:bridge|building|roof|rooftop|window|balcony|cliff|tower|ledge|overpass|parking\s*garage|car\s*park|train|stairwell|railing|edge|skyscraper|apartment|dam)s?\b|\b(?:throw(?:ing|n|s)?|threw)\s*myself\s*into\s*(?:the\s*)?(?:river|sea|ocean|lake|water|traffic|road|canal|waves)\b`)),
 	// Colloquial "menyakiti/melukai diri": "nyakitin diri sendiri",
 	// "ngelukain diri" (review finding: v1 none).
 	newRule("id-self-harm-colloquial", CategorySelfHarm, LevelCrisis,
@@ -414,13 +458,22 @@ var catalogue = []rule{
 		// diri sendiri", "mukulin kepalaku sendiri sampai berdarah" (review
 		// finding: v1 none). A head needs "-ku" or "sendiri" ("mukul kepala
 		// adikku" is someone else's).
-		pat(`\b(?:mukul|mukulin|memukul|memukuli|mukulan|nonjok|nonjokin|ninju|ninjuin|nampar|namparin|menampar)\s*(?:diri(?:ku)?(?:\s*sendiri)?|kepala(?:ku|\s*(?:aku|gue|gw|saya))(?:\s*sendiri)?|kepala\s*sendiri)\b`)),
+		pat(`\b(?:mukul|mukulin|memukul|memukuli|mukulan|nonjok|nonjokin|ninju|ninjuin|nampar|namparin|menampar)\s*(?:diri(?:ku)?(?:\s*sendiri)?|kepala(?:ku|\s*(?:aku|gue|gw|saya))(?:\s*sendiri)?|kepala\s*sendiri)\b`),
+		// Stabbing, drowning and burning oneself: "aku mau nusuk diri
+		// sendiri", "aku mau nenggelamin diri", "aku pengen bakar diri"
+		// (review finding: v1 none). "menenggelamkan diri dalam pekerjaan"
+		// (burying oneself in work) is an idiom without an intent word (see
+		// drownIdiomID), and a reported self-immolation ("aksi bakar diri")
+		// is attributed (see burnNews).
+		pat(`\b(?:nusuk|nusukin|menusuk|menusukkan|tusuk|nikam|menikam|tikam)\s*(?:diri(?:ku)?(?:\s*sendiri)?|(?:perut|dada|tangan|leher|nadi|paha)(?:ku)?\s*sendiri)\b`),
+		patReject(`\b(?:nenggelamin|nenggelamkan|neggelamin|menenggelamkan|tenggelamin|tenggelamkan|ngelelepin)\s*diri(?:ku)?(?:\s*sendiri)?\b`, drownIdiomID),
+		patCheck(`\b(?:bakar|membakar|ngebakar|bakarin|ngebakarin)\s*(?:diri(?:ku)?(?:\s*sendiri)?|(?:tangan|badan|kulit)(?:ku)?\s*sendiri)\b`, nil, burnNews)),
 	// A wish to be hit by a vehicle: "pengen ditabrak kereta aja",
 	// "pengen ketabrak truk aja biar selesai". "mau" ("about to": "tadi
 	// mau ketabrak mobil") counts only with "aja" after the vehicle (review
 	// finding: v1 none).
 	newRule("id-vehicle-death-wish", CategorySuicide, LevelCrisis,
-		pat(`\b(?:(?:pengen|pgn|pingin|pengin|kepengen|kepingin|ingin|mending|mendingan)|(?:semoga|moga|moga-moga|mudah-mudahan|berharap)\s*`+idHopeTime+`(?:(?:aku|saya|gue|gw|gua|ku)\s*)?`+idHopeTime+`)\s*(?:(?:aja|saja)\s*)?(?:ditabrak|ketabrak|tertabrak|dilindes|kelindes|dilindas|kelindas|terlindas)\s*(?:(?:sama|oleh)\s*)?(?:kereta(?:\s*api)?|krl|mrt|truk|truck|mobil|bus|bis|motor)\b|\b(?:mau|mw)\s*(?:ditabrak|ketabrak|tertabrak|dilindes|kelindes|dilindas|kelindas|terlindas)\s*(?:(?:sama|oleh)\s*)?(?:kereta(?:\s*api)?|krl|mrt|truk|truck|mobil|bus|bis|motor)\s*(?:aja|saja|ajah)\b`)),
+		pat(`\b(?:(?:pengen|pgn|pingin|pengin|kepengen|kepingin|ingin|mending|mendingan)|(?:semoga|moga|moga-moga|mudah-mudahan|berharap)\s*,?\s*`+idHopeTime+`(?:(?:aku|saya|gue|gw|gua|ku)\s*)?`+idHopeTime+`)\s*(?:(?:aja|saja)\s*)?(?:ditabrak|ketabrak|tertabrak|dilindes|kelindes|dilindas|kelindas|terlindas)\s*(?:(?:sama|oleh)\s*)?(?:kereta(?:\s*api)?|krl|mrt|truk|truck|mobil|bus|bis|motor)\b|\b(?:mau|mw)\s*(?:ditabrak|ketabrak|tertabrak|dilindes|kelindes|dilindas|kelindas|terlindas)\s*(?:(?:sama|oleh)\s*)?(?:kereta(?:\s*api)?|krl|mrt|truk|truck|mobil|bus|bis|motor)\s*(?:aja|saja|ajah)\b`)),
 	// The English counterpart of id-vehicle-death-wish: "I want to get hit by
 	// a car", "I want to get run over by a truck", "i wish a car would hit
 	// me", "i hope a bus hits me tomorrow" (review finding: v1 none). A
@@ -430,7 +483,272 @@ var catalogue = []rule{
 		pat(`\b(?:wish|wished|hope|hoping|pray|praying)\s*(?:that\s*)?(?:a|an|the|some)\s*(?:(?:moving|speeding|passing|oncoming)\s*)?(?:train|truck|car|bus|lorry|vehicle|semi|tram|subway|motorbike|motorcycle)\s*(?:would\s*|will\s*|could\s*|just\s*)*(?:(?:hit|hits|run\s*over|runs\s*over|ran\s*over|kill|kills|crush|crushes)\s*me|(?:run|runs|ran)\s*me\s*over|mows?\s*me\s*down)\b`),
 		// "i want a car to hit me".
 		pat(`\b(?:want|wanted|need)\s*(?:a|an|the|some)\s*(?:train|truck|car|bus|lorry|vehicle|semi|tram|subway)\s*to\s*(?:(?:hit|run\s*over|kill|crush)\s*me|run\s*me\s*over)\b`)),
+
+	// ---- Sela additions, ruleset 2026.10.26-5 ----
+	// A hope, wish or prayer to die, with a bounded run of time words,
+	// pronouns, modals and adverbs between the verb and the death word ("I
+	// hope I die", "I really hope I die soon", "I wish I could just die", "I
+	// pray that I die in my sleep", "I hope tonight I die", "I hope I'm dead
+	// by tomorrow"), and the negated forms of surviving ("I hope I don't
+	// survive the night", "I hope I never see tomorrow", "I hope I'm not alive
+	// next year", "I hope tomorrow never comes"; review finding: v1 none). A
+	// hope someone else voices ("they wish I would die") is attributed (see
+	// hopeOfOthers); "die" spelt for "dye" and dying of old age are rejected
+	// (see hopeDeathIdiom).
+	newRule("en-hope-to-die", CategorySuicide, LevelCrisis,
+		patCheck(`\b`+enHopeLead+enHopeSubject+enHopeFill+`(?:die|be\s*dead|(?:am|was|were|'m)\s*dead|dead|(?:(?:be|am|was|were|'m)\s*)?gone|(?:get|got)\s*(?:killed|murdered)|drop\s*dead|pass\s*away|stop\s*breathing|(?:stop|stopped|cease)\s*(?:existing|to\s*exist|living)|(?:get|catch|got|develop)\s+(?:[a-z']+\s+){1,3}and\s+(?:just\s+)?die)\b`, hopeDeathIdiom, hopeOfOthers),
+		patCheck(`\b`+enHopeLead+enHopeSubject+enHopeFill+`(?:don'?t|dont|do\s*not|won'?t|wont|will\s*not|never|wouldn'?t|would\s*not|can'?t|cannot|didn'?t|am\s*not|'m\s*not|wasn'?t|weren'?t|was\s*not|were\s*not|not)\s*(?:ever\s*)?`+
+			`(?:survive|make\s*it\s*(?:through|to|past|until|till)\s*(?:the\s*)?(?:night|tonight|morning|tomorrow|next|another|end|my|weekend|christmas|new\s*year|\d+)|make\s*it|exist\s*(?:anymore|any\s*more|tomorrow|tonight|by\s*(?:morning|tomorrow|tonight)|next\s*(?:week|month|year)|in\s*the\s*morning)|`+
+			`live\s*(?:to\s*see|past|until|till|through|beyond)\s*(?:the\s*)?(?:\d+|tomorrow|next|another|my|morning|twenty|thirty|forty|fifty|old\s*age)|live\s*(?:much\s*)?(?:longer|another\s*(?:day|week|year))|live\s*(?:very\s*|too\s*|that\s*|for\s*)?long|live\s*anymore|`+
+			`(?:have|need)\s*to\s*(?:live|be\s*alive|exist)\s*(?:much\s*)?(?:longer|anymore|another|past|until|till|through|beyond)|`+
+			`see\s*(?:tomorrow|the\s*(?:morning|sunrise|next\s*day|light\s*of\s*day)|morning|another\s*(?:day|morning|year)|next\s*(?:week|month|year)|my\s*(?:next\s*)?birthday|daylight|sunrise)|`+
+			`last\s*(?:the\s*night|the\s*week|much\s*longer|another\s*(?:day|week|year))|(?:be\s*)?(?:alive|here|around)(?:\s*anymore)?)\b`, hopeDeathIdiom, hopeOfOthers),
+		// "I hope it kills me", "I hope the pills kill me", "I hope this
+		// finally kills me", "I wish my life would end", "I hope my life ends
+		// soon" (review finding).
+		patCheck(`\b`+enHopeLead+`(?:it|this|that|(?:the|these|those|my)\s*[a-z]+(?:\s*[a-z]+)?)\s*`+enHopeFill+`(?:kills?|ends?|takes?)\s*me\b`, nil, hopeOfOthers),
+		patCheck(`\b`+enHopeLead+`my\s*life\s*`+enHopeFill+`(?:ends?|be\s*over|is\s*over|was\s*over|were\s*over|stops?)\b`, lifeEndsHappy, hopeOfOthers),
+		pat(`\b(?:hope|hoping|hopefully|wish|wishing|pray|praying)\s*(?:that\s*)?(?:tomorrow|the\s*morning|morning|the\s*next\s*day)\s*(?:never|doesn'?t|does\s*not|won'?t|will\s*not|would\s*never|wouldn'?t)\s*(?:ever\s*)?(?:comes?|arrives?)\b`),
+		// "I hope my heart stops in my sleep", "I wish my heart would just
+		// stop"; "stops racing" is not one (see heartGerund).
+		patReject(`\b`+enHopeLead+`my\s*heart\s*(?:(?:would|will|could|just|finally)\s*){0,3}(?:stops|stop|gives\s*out|give\s*out)(?:\s*beating)?\b`, heartGerund)),
+	// Other death wishes that v1 en-death-wish misses: an adverb or an
+	// intensifier between the wish and "die" ("I want to just die", "I want to
+	// fucking die", "I want to quickly die"), "I'd like to die", "please let
+	// me die", "I want someone to kill me", "I can't wait to die" (review
+	// finding: v1 none). "die" spelt for "dye" is rejected, and so are the
+	// idiom "let me die on this hill" and a refused permission ("please don't
+	// let me die"; see letMeDieNot).
+	newRule("en-death-wish-forms", CategorySuicide, LevelCrisis,
+		patReject(`\b(?:(?:want|wanted|wanting|wish|wished|hope|hoping|need|ready|like|love)\s*to|wanna)\s*(?:`+enDeathAdverb+`\s*){1,3}(?:to\s*)?(?:die|be\s*dead)\b`, dyeObject),
+		patReject(`\b(?:want|wanted|wish|need)\s*(?:(?:so|really|very)\s*)?(?:bad(?:ly)?|much)\s*to\s*(?:just\s*)?(?:die|be\s*dead)\b`, dyeObject),
+		// A plea to God: "God, please take me", "lord just take me now"; not
+		// "take me home" (see takeMePlace).
+		patReject(`\b(?:god|lord|jesus)\s*,?\s*(?:(?:please|pls|plz|just|now|already|finally)\s*,?\s*){0,3}take\s*me\b`, takeMePlace),
+		patReject(`\b(?:i'?d|id|i\s*would)\s*(?:(?:really|just|honestly|so|actually|truly)\s*)*(?:like|love|prefer)\s*to\s*(?:just\s*)?(?:die|be\s*dead)\b`, deathFormIdiom),
+		patReject(`\blet\s*me\s*(?:just\s*)?die\b`, letMeDieNot),
+		pat(`\b(?:want|wanted|wanna|need|wish|wished|hope|hoping|pray|praying)\s*(?:that\s*)?(?:someone|somebody|anyone|anybody|god)\s*(?:(?:would|could|will|to|just|finally|'d|'ll)\s*){0,3}(?:kill|murder|shoot|end)\s*me\b`),
+		patReject(`\b(?:can'?t|cant|cannot|can\s*not)\s*wait\s*to\s*(?:just\s*)?(?:die|be\s*dead)\b`, dyeObject)),
+	// The Indonesian counterpart of en-hope-to-die: "semoga aku mati",
+	// "semoga aku cepet meninggal", "moga aku mati besok", "aku berharap
+	// mati", "aku doain diriku sendiri mati", "semoga besok aku udah nggak
+	// ada" (review finding: v1 none). The idiom checks of death-wish-phrase
+	// apply ("semoga besok mati lampu"), a hope for someone else's death
+	// ("semoga cepet mati tuh orang") is rejected (see hopeTarget), a hope
+	// someone else voices ("mereka berharap aku mati") is attributed (see
+	// hopeOfOthers), and "nggak ada" is rejected only before a listed object
+	// or place ("semoga aku nggak ada kelas besok"; see notAliveObject).
+	newRule("id-hope-to-die", CategorySuicide, LevelCrisis,
+		patCheck(`\b`+idHopeLead+idHopeFill+`(?:`+idHopeSelf+`\s*)?`+idHopeFill+`(?:mati|meninggal|mampus|modar|mokat|tewas|wafat)\b`, hopeTarget, hopeOfOthers),
+		patCheck(`\b`+idHopeLead+idHopeFill+idHopeSelf+`\s*`+idHopeFill+`(?:(?:udah|sudah|udh|sdh|dah)\s*)?(?:nggak|ngga|gak|ga|gk|tidak|tdk|tak|enggak|engga)\s*(?:ada|bernyawa|bernapas|bernafas|hidup|idup)\b`, notAliveObject, hopeOfOthers),
+		// "semoga ajalku cepet datang", "pengen ajal cepet jemput".
+		pat(`\b(?:`+idHopeLead+`|(?:pengen|pgn|pingin|pengin|kepengen|ingin)\s*)`+idHopeFill+`ajal(?:ku|\s*(?:aku|gue|saya))?\s*`+idHopeFill+`(?:datang|dateng|tiba|jemput|menjemput|jemput\s*aku)\b`),
+		// A plea to God: "ya allah cabut nyawaku", "tuhan ambil aku aja",
+		// "tuhan matiin aku".
+		// "tuhan kenapa gak ambil aku aja" asks why God has not (review
+		// finding).
+		pat(`\b(?:ya\s*allah|ya\s*tuhan|tuhan|allah|gusti|ya\s*rabb)\s*,?\s*(?:(?:kenapa|knp|napa|kok)\s*(?:gak|nggak|ngga|ga|g|tidak|enggak|gk|belum|blm)\s*)?(?:(?:tolong|please|plis|pls|segera|cepet|cepat|aja|langsung|mending)\s*)*(?:cabut|ambil|matiin|matikan)\s*(?:aja\s*)?(?:nyawa(?:ku|\s*`+idPleaSelf+`)|`+idPleaSelf+`|diriku)\b|\bcabut\s*(?:aja\s*)?nyawa(?:ku|\s*`+idPleaSelf+`)\b`),
+		// "semoga hidupku cepet berakhir", "semoga umurku gak panjang",
+		// "semoga aku cepet dipanggil tuhan", "semoga aku segera dijemput
+		// ajal" (review finding). A happy ending is rejected (see
+		// lifeEndsHappy).
+		patCheck(`\b`+idHopeLead+idHopeFill+`(?:hidup|umur|usia)(?:ku|\s*`+idHopeSelf+`)?\s*`+idHopeFill+`(?:berakhir|selesai|tamat|usai|habis|pendek|(?:nggak|ngga|gak|ga|gk|tidak|tdk|tak|enggak|engga)\s*(?:panjang|lama))\b`, lifeEndsHappy, hopeOfOthers),
+		patCheck(`\b`+idHopeLead+idHopeFill+`(?:`+idHopeSelf+`\s*)?`+idHopeFill+`(?:dipanggil|diambil|dijemput|dicabut\s*nyawa(?:ku|nya)?)\s*(?:(?:sama|oleh|ama|sm)\s*)?(?:tuhan|allah|yang\s*maha\s*kuasa|sang\s*pencipta|ajal|maut|malaikat\s*(?:maut|izrail)|izrail)\b`, nil, hopeOfOthers)),
+	// An intensifier or a speed adverb between an Indonesian wish and the
+	// death word: "aku pengen banget mati", "pengen cepet mati", "pgn cpt
+	// mati", "aku ingin sekali mati", "aku mau cepet-cepet mati" (review
+	// finding: v1 none). Same idiom checks as death-wish-phrase; "mau ...
+	// meninggal" ("about to die") needs a first-person subject or "aja", as
+	// in id-death-wish-formal (see adverbDeathIdiom).
+	newRule("id-death-wish-adverb", CategorySuicide, LevelCrisis,
+		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw|mending|mendingan)\s*(?:`+idDeathAdverb+`\s*){1,3}(?:mati|mampus|modar|mokat|meninggal)\b`, adverbDeathIdiom)),
+	// A present or future overdose plan: "I'm going to take all my pills
+	// tonight", "I want to take the whole bottle", "I'm thinking of taking all
+	// my meds at once", "I'll take every pill I have", "I want to swallow a
+	// bottle of pills", and past forms v1 en-overdose-means does not list ("I
+	// took the whole bottle", "I swallowed every pill I had"). The plan forms
+	// have no context marker: medication adherence never discards them, and
+	// their object never narrows them ("I'm going to take the whole bottle of
+	// wine" counts). A negated intent ("I don't want to take all my pills")
+	// is rejected unless a contrastive conjunction hedges it, and a past
+	// bottle of something else ("I took the whole bottle of water") is not an
+	// overdose (see negatedIntent, bottleObject).
+	newRule("en-overdose-plan", CategorySelfHarm, LevelCrisis,
+		patWideReject(`\b`+enOdIntent+`\s*`+enOdFill+enOdVerb+`\s*`+enOdQty+`\s*`+enMeds+`\b`, negatedIntent),
+		patWideReject(`\b`+enOdIntent+`\s*`+enOdFill+enOdVerb+`\s*`+enOdBottle, negatedIntent),
+		patReject(`\b(?:took|taken|swallowed|downed|popped|chugged|ate)\s*(?:`+enOdBottle+`|`+enOdQtyPast+`\s*`+enMeds+`\b)`, bottleObject),
+		// Pills named earlier: "I'm going to swallow them all", "I want to
+		// take all of them at once".
+		patWideReject(`\b`+enOdIntent+`\s*`+enOdFill+`(?:(?:swallow|swallowing|down|downing|pop|popping|chug|chugging)\s*(?:them\s*all|all\s*of\s*them)|(?:take|taking)\s*(?:them\s*all|all\s*of\s*them)\s*(?:at\s*once|in\s*one\s*go|together))\b`, negatedIntent),
+		// A present plan with a time: "I'm taking all my pills tonight",
+		// "tonight I take all my pills", "I'm taking the whole bottle now"
+		// (review finding).
+		pat(`\b(?:i'?m|im|i\s*am)\s*(?:(?:just|finally|literally|really|actually)\s*)?(?:taking|swallowing|downing|popping|chugging)\s*(?:`+enOdQty+`\s*`+enMeds+`|`+enOdBottle+`)\s*`+enOdNow),
+		pat(`\b`+enOdNow+`\s*,?\s*(?:i'?m|im|i\s*am|i)\s*(?:(?:just|finally|literally|really|actually)\s*)?(?:take|taking|swallow|swallowing|down|downing|pop|popping)\s*(?:`+enOdQty+`\s*`+enMeds+`\b|`+enOdBottle+`)`)),
+	// The Indonesian counterpart: "aku mau minum semua obat tidurku", "aku
+	// pengen minum semua obatku sekaligus", "aku mau nelen semua obat",
+	// "aku pengen minum sebotol obat tidur" (review finding: v1 none). "semua"
+	// needs an intent word or "sekaligus" (an adherence report says "udah
+	// minum semua obat"); "sebotol" and "segenggam" do not. A negated intent
+	// is rejected.
+	newRule("id-overdose-plan", CategorySelfHarm, LevelCrisis,
+		patWideReject(`\b`+idOdIntent+`\s*`+idOdFill+idOdVerb+`\s*(?:semua|seluruh|semuanya|sebotol|segenggam|sekotak|sebungkus|satu\s*botol|satu\s*kotak|sestrip|satu\s*strip|banyak)\s*(?:(?:isi|dari)\s*)?`+idMeds+`\b`, negatedIntent),
+		pat(`\b(?:`+idOdVerb+`|ngabisin|menghabiskan|habisin|abisin)\s*(?:sebotol|segenggam|sekotak|sebungkus|satu\s*botol|satu\s*kotak|sestrip|satu\s*strip)\s*`+idMeds+`\b`),
+		// A question asking whether medicine may be taken together ("boleh
+		// minum obat sekaligus dengan vitamin?") is rejected (see
+		// odQuestion; review finding).
+		patReject(`\b`+idOdVerb+`\s*`+idMeds+`\s*(?:semua(?:nya)?\s*)?(?:sekaligus|sebotol|segenggam|sekotak)\b`, odQuestion),
+		pat(`\b`+idOdVerb+`\s*(?:semua|seluruh)\s*`+idMeds+`\s*(?:sekaligus|barengan|bareng)\b`),
+		// "aku mau OD"; a present plan with a time: "malam ini aku minum
+		// semua obat tidurku" (review finding).
+		patWideReject(`\b`+idOdIntent+`\s*`+idOdFill+`(?:od|o\.d|overdo(?:sis|se))\b`, negatedIntent),
+		pat(`\b(?:malam\s*ini|nanti\s*malam|sekarang|skrg|abis\s*ini|habis\s*ini|besok)\s*,?\s*(?:(?:aku|gue|gw|gua|saya|ku|aq)\s*)?(?:(?:langsung|mau|akan|bakal)\s*)?`+idOdVerb+`\s*(?:semua|seluruh|semuanya|sebotol|segenggam|sekotak|sebungkus)\s*`+idMeds+`\b`),
+		// "minum obat sebanyak-banyaknya", "udah siapin semua obat buat
+		// diminum sekaligus" (review finding).
+		pat(`\b`+idOdVerb+`\s*`+idMeds+`\s*(?:sebanyak[\s-]*banyaknya|sebanyak\s*mungkin|sebanyaknya|sebanyak\s*yang\s*aku\s*bisa)\b`),
+		pat(`\b(?:siapin|nyiapin|menyiapkan|siapkan|ngumpulin|kumpulin|ngumpulkan|mengumpulkan|nimbun|numpuk|nyimpen)\s*(?:semua|seluruh|banyak)\s*`+idMeds+`\s*`+
+			`(?:(?:buat|untuk|utk|biar|mau|terus|trus|lalu|dan|nanti|aku|gue|gw)\s*){0,3}(?:di)?(?:minum|minumin|telan|nelen|tenggak)\s*(?:semua(?:nya)?\s*)?(?:sekaligus|barengan|bareng)\b`)),
+	// Self-harm slang and relapse: "pengen sh lagi", "urge to sh", "relapsed
+	// on sh", "I want to sh", "did sh", "sh relapse", "aku relapse, nyilet
+	// lagi", "nyayat lagi", "pengen nyilet" (review findings: v1 none). "sh"
+	// spelling "sh*t" is rejected (see shSlang, shNotSlang).
+	newRule("self-harm-slang", CategorySelfHarm, LevelCrisis,
+		// English intent words and a past "did sh" lead too ("I want to sh",
+		// "gonna sh tonight", "i did sh last night", "sh relapse"; review
+		// finding). The lead and the relapse word are checked around a bare
+		// "sh" (see shSlang): one alternation of every lead was slow on long
+		// texts with "she".
+		patReject(`\bsh\b`, shSlang),
+		pat(`\b(?:nyilet|nyiletin|menyilet|nyayat|nyayatin|menyayat)\s*(?:lagi|lg)\b|\brelaps(?:e|ed|ing)?\s*,?\s*(?:(?:lagi|lg)\s*,?\s*)?(?:nyilet|nyiletin|menyilet|nyayat|nyayatin|menyayat)\b`),
+		// "pengen nyilet": an intent word before the verb, without "lagi"
+		// (review finding). The match carries the intent word, so no
+		// false-positive check reads its object ("pengen nyilet kertas"
+		// counts).
+		pat(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|mau|mw|ingin|akan|bakal|niat|berniat|kepikiran|pengennya)\s*(?:(?:aja|saja|banget|bgt|buat|untuk|coba|nyoba)\s*){0,2}(?:nyilet|nyiletin|menyilet|nyayat|nyayatin|menyayat)\b`)),
+	// First-person passive death wishes that no other rule lists: wanting
+	// not to exist or not to be alive, wanting it all to end, wanting to be
+	// gone ("I just want to not exist", "I want to not be alive anymore", "I
+	// just want it all to end", "I want to be gone"; review finding: v1
+	// none). A negated wish ("I don't want to be gone") is rejected (see
+	// negatedIntent), and so are an online absence ("I want to not exist on
+	// social media"), a stay elsewhere ("I want to not be here today") and
+	// being away for an everyday occasion ("I want to be gone by the time the
+	// party starts"; see absenceOccasion).
+	newRule("en-passive-death-wish", CategorySuicide, LevelCrisis,
+		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}(?:not|never)\s*(?:to\s*)?(?:(?:have\s*)?exist(?:ed)?|be\s*alive|(?:have\s*)?been\s*born|be\s*born|be\s*here|be\s*around)\b`, absenceOccasion),
+		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:for\s*)?(?:it\s*all|my\s*(?:whole\s*)?life|this\s*life|my\s*existence)\s*to\s*(?:(?:just|finally|all|already)\s*)?(?:end|be\s*over|stop)\b`, absenceOccasion),
+		patReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}be\s*gone\b`, absenceOccasion),
+		// "I want to leave this world" (review sweep: v1 none); "... a
+		// better place" is rejected (see absenceOccasion). Wide: the legacy
+		// idiom's disqualifier may start a new sentence ("... a better
+		// place. Without me in it").
+		patWideReject(`\b(?:want|wanna|wanted|wish|wishing|need|needed)\s*(?:to\s*)?(?:(?:just|really|honestly|simply|literally|actually)\s*){0,2}leave\s*this\s*(?:world|earth|planet|life)\b`, absenceOccasion)),
+	// The Indonesian counterparts: not being there ("aku pengen nggak ada",
+	// "pengen nggak ada lagi di dunia ini"), leaving or resting forever ("aku
+	// pengen pergi selamanya", "pengen istirahat selamanya"), being done
+	// ("aku pengen udahan aja"), wanting everything to end ("pengen semuanya
+	// berakhir") and being ready to die ("aku siap mati", "gue udah siap buat
+	// mati"; review finding: v1 none, while English "ready to die" is v1
+	// crisis). A negated wish is rejected (see negatedIntent), and so are a
+	// listed object or everyday place after "nggak ada" ("pengen nggak ada
+	// pr", "pengen nggak ada di kelas"), leaving for a place ("pengen pergi
+	// selamanya dari kota ini"), ending something with someone ("pengen
+	// udahan aja sama dia"), a happy ending ("pengen semuanya berakhir
+	// bahagia") and devotion ("aku siap mati demi kamu"); see idAbsence.
+	newRule("id-passive-death-wish", CategorySuicide, LevelCrisis,
+		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt|rasanya|sih|deh|udah|sudah|udh)\s*){0,2}(?:nggak|ngga|gak|ga|gk|tidak|tdk|tak|enggak|engga)\s*(?:ada|hidup|idup|bernyawa|bernapas|bernafas)\b`, idAbsence),
+		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw|akan)\s*(?:(?:aja|saja|banget|bgt)\s*)?(?:pergi|istirahat|beristirahat|rehat)\s*(?:(?:aja|saja|jauh|dengan\s*tenang|yang\s*tenang|untuk|utk|buat)\s*){0,2}(?:selamanya|selama-lamanya|abadi)\b`, idAbsence),
+		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt)\s*)?udahan\b`, idAbsence),
+		// Stopping living and leaving this world ("aku pengen berhenti hidup",
+		// "mau pergi aja dari dunia ini", "pengen ninggalin dunia ini"; review
+		// sweep: v1 none). A manner after "hidup" ("berhenti hidup boros") and
+		// a short break ("pergi dari dunia ini sebentar") are rejected (see
+		// idAbsence).
+		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt|rasanya)\s*){0,2}(?:berhenti|stop)\s*(?:hidup|idup|bernapas|bernafas)\b`, idAbsence),
+		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt|rasanya)\s*){0,2}(?:(?:pergi|keluar|minggat)\s*(?:(?:aja|saja)\s*)?(?:dari|dr)|ninggalin|ninggalkan|meninggalkan|tinggalin)\s*(?:dunia|bumi)\s*(?:ini|fana)\b`, idAbsence),
+		patReject(`\b(?:pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|mau|mw)\s*(?:(?:aja|saja|banget|bgt)\s*)?(?:semua(?:nya)?(?:\s*ini)?|segalanya|hidup(?:ku|\s*(?:aku|gue|gw|saya))?)\s*(?:(?:cepet|cepat|segera|aja|saja)\s*)?(?:berakhir|tamat|usai)\b`, idAbsence),
+		patReject(`\b(?:aku|saya|gue|gw|gua|ku|aq|ak|sy)\s*(?:(?:udah|sudah|udh|sdh|dah|emang|memang|benar-benar|bener-bener|beneran|sangat|pun)\s*){0,2}(?:siap|rela|ikhlas)\s*(?:(?:buat|untuk|utk)\s*)?(?:mati|meninggal|mampus)\b`, idAbsence)),
+	// A brief leaving or rest word ("pergi sebentar", "tidur sebentar",
+	// "rehat sejenak") whose message says the person is not coming back is a
+	// farewell, not a break (ruleset -5 minor: the tail may start a new
+	// sentence, "aku pergi sebentar. Tidak akan kembali"). Without a
+	// not-coming-back phrase in the rest of the message the match is
+	// rejected ("aku pergi sebentar ke toilet", "sebentar lagi aku pulang"),
+	// and so is an errand or a short absence ("tidak akan lama"); see
+	// briefFarewell.
+	newRule("id-brief-farewell", CategorySuicide, LevelCrisis,
+		patWideReject(`\b(?:pergi|minggat|keluar|tidur|istirahat|beristirahat|rehat|pamit)\s*(?:aja|saja|dulu|dah)?\s*(?:sebentar|bentar|sejenak|sebentar\s*aja|bentar\s*aja|sejenak\s*aja)\b`, briefFarewell)),
 }
+
+// The vocabulary of the hope and wish rules of ruleset -5.
+const (
+	// enHopeLead is a hope, wish or prayer verb and a bounded run of time
+	// words before the subject ("I hope tonight I ...", "I pray to god that
+	// ...", "I hope tonight is the night I ...").
+	enHopeLead = `(?:hope|hoping|hoped|hopefully|wish|wishing|wished|pray|praying|prayed)\s*,?\s*(?:to\s*god\s*,?\s*)?(?:that\s*)?` + enHopeTime + `(?:that\s*)?`
+	enHopeTime = `(?:(?:tonight|tomorrow|today|someday|one\s*day|this\s*time|this\s*year|soon|maybe|finally|eventually|god|please|lord|` +
+		`(?:every|each)\s*(?:night|day|morning)|sometimes|always|secretly|still|really|just|honestly|lowkey|so\s*(?:much|badly|bad|hard)|` +
+		`more\s*than\s*anything|with\s*all\s*my\s*heart|desperately|truly|genuinely|` +
+		`(?:tonight|today|tomorrow)\s*(?:is|will\s*be)\s*the\s*(?:night|day)(?:\s*(?:that|when))?)\s*,?\s*){0,3}`
+	enHopeSubject = `(?:i|i'?ll|i'?d|i'?m|im)\s*`
+	// enHopeFill is a bounded run of modals and adverbs between the subject
+	// and the death word ("I wish I could just die", "I hope I finally die").
+	enHopeFill = `(?:(?:just|really|finally|simply|actually|literally|honestly|seriously|quickly|soon|will|would|could|can|might|may|` +
+		`gonna|going\s*to|eventually|someday|peacefully|quietly|already|then|also|somehow|suddenly)\s*){0,4}`
+	// enDeathAdverb are the adverbs and intensifiers that may stand between
+	// "want to" and "die".
+	enDeathAdverb = `(?:just|really|literally|fucking|fuckin|freaking|frickin|fking|fkn|effing|so|actually|honestly|seriously|simply|` +
+		`finally|quickly|quietly|peacefully|already|kinda|totally|truly|genuinely|desperately|badly|now|soon|go|lowkey|fr|rly|rlly)`
+
+	idHopeLead = `(?:semoga|smoga|moga|moga-moga|moga2|mudah-mudahan|mudah2an|berharap|ngarep|ngarepin|harap(?:nya)?|doain|doakan|mendoakan|berdoa)\s*,?\s*` +
+		`(?:(?:biar|supaya|agar|spy|kalau|kalo|klo|aja|saja|deh|ya)\s*)?`
+	idHopeSelf = `(?:aku|saya|gue|gw|gua|ku|aq|ak|sy|gwe|diriku(?:\s*sendiri)?|diri\s*(?:aku|gue|sendiri))`
+	idHopeFill = `(?:(?:besok(?:\s*pagi)?|esok|nanti(?:\s*malam)?|malam\s*ini|pagi\s*ini|hari\s*ini|segera|cepet|cepat|cpt|cpet|cepetan|` +
+		`cepat-cepat|cepet-cepet|secepatnya|buru-buru|langsung|aja|saja|ajah|udah|sudah|udh|sdh|bisa|akan|bakal|beneran|bener-bener|` +
+		`benar-benar|akhirnya|juga|jg|ya\s*allah|ya\s*tuhan|tuhan|deh|ya|banget|bgt|bngt|bgtt|sekali|sangat|amat|bener|bnr|serius|sih|lah)\s*){0,3}`
+	// idDeathAdverb are the intensifiers and speed adverbs that may stand
+	// between an Indonesian wish and the death word.
+	idDeathAdverb = `(?:banget|bgt|bngt|bgtt|bener|beneran|bener-bener|benar-benar|bnr|sekali|sangat|amat|segera|cepat|cepet|cpt|cpet|` +
+		`cepat-cepat|cepet-cepet|cepetan|secepatnya|buru-buru|langsung|aja|saja|ajah|udah|sudah|udh|sdh|akhirnya|bisa|sih|deh|parah|serius)`
+)
+
+// The vocabulary of the overdose-plan rules of ruleset -5.
+const (
+	enOdIntent = `(?:going\s*to|gonna|want\s*to|wanna|wanted\s*to|will|'ll|plan(?:ning)?\s*(?:to|on)|planned\s*(?:to|on)|about\s*to|ready\s*to|` +
+		`decided\s*to|thinking\s*(?:of|about)|thought\s*(?:of|about)|considering|tempted\s*to|might|could|gotta|urge\s*to)`
+	enOdFill = `(?:(?:just|finally|literally|really|actually|honestly|seriously|go|and|simply)\s*){0,2}`
+	enOdVerb = `(?:take|taking|swallow|swallowing|down|downing|pop|popping|chug|chugging|eat|eating|od\s*on|overdose\s*on|overdosing\s*on)`
+	enOdQty  = `(?:all\s*(?:of\s*)?(?:my|the|these|those|his|her)?|every\s*(?:single\s*)?(?:one\s*of\s*(?:my|the)\s*)?|the\s*rest\s*of\s*(?:my|the)|` +
+		`(?:a|an|the|my|half\s*(?:a|the|my))\s*(?:whole\s*|entire\s*|full\s*)?(?:bottle|pack|packet|box|strip|jar|handful|bunch)\s*of\s*(?:my\s*|the\s*)?|` +
+		`(?:\d+|two|three|four|five)\s*(?:bottles?|packs?|box(?:es)?|strips?)\s*of\s*(?:my\s*|the\s*)?|handfuls\s*of\s*(?:my\s*|the\s*)?|a\s*(?:lot|ton|bunch)\s*of\s*(?:my\s*|the\s*)?|lots\s*of|too\s*many|so\s*many|as\s*many|` +
+		// A number of ten or more ("take 30 pills", "take 50 of my sleeping
+		// pills"; review finding).
+		`(?:[1-9]\d+|ten|twenty|thirty|forty|fifty|sixty|a\s*hundred|hundreds\s*of|a\s*dozen|dozens\s*of)\s*(?:of\s*(?:my|the|these|those)\s*)?)`
+	// enOdQtyPast leaves out "all (of) my/the", which v1 en-overdose-means
+	// counts with its adherence marker.
+	enOdQtyPast = `(?:every\s*(?:single\s*)?(?:one\s*of\s*(?:my|the)\s*)?|the\s*rest\s*of\s*(?:my|the)|` +
+		`(?:a|an|the|my|half\s*(?:a|the|my))\s*(?:entire\s*|full\s*)?(?:bottle|pack|packet|box|strip|jar|handful)\s*of\s*(?:my\s*|the\s*)?)`
+	enOdBottle = `(?:the|a|an|my|that|this)\s*(?:whole|entire|full)\s*(?:bottle|pack|packet|box|strip|jar)s?\b`
+	// enOdNow is the time of a present plan ("tonight", "right now").
+	enOdNow = `(?:tonight|today|now|right\s*now|rn|tomorrow|this\s*(?:evening|morning|afternoon|weekend)|(?:all\s*)?at\s*once|in\s*one\s*go)\b`
+	enMeds  = `(?:(?:sleeping|sleep|pain|anxiety|heart|blood\s*pressure|allergy)\s*)?(?:pills?|meds|medications?|medicines?|tablets?|capsules?|` +
+		`painkillers?|antidepressants?|benzos?|opioids?|opiates?|paracetamol|acetaminophen|tylenol|panadol|advil|ibuprofen|aspirin|xanax|` +
+		`valium|ambien|klonopin|ativan|zoloft|prozac|lexapro|sertraline|fluoxetine|seroquel|quetiapine|lithium|insulin|oxycodone|oxy|` +
+		`percocet|vicodin|morphine|fentanyl|melatonin|diazepam|alprazolam|zolpidem|clonazepam|tramadol|codeine|prescriptions?|drugs)`
+
+	idOdIntent = `(?:mau|mw|pengen|pgn|pngn|pingin|pengin|kepengen|kepingin|ingin|akan|bakal|berencana|rencana|niat|berniat|siap|kepikiran|mikir|mikirin)`
+	idOdFill   = `(?:(?:aja|saja|langsung|udah|sudah|banget|bgt|coba|nyoba|buat|untuk|sekalian)\s*){0,2}`
+	idOdVerb   = `(?:minum|minumin|meminum|nelen|nelan|menelan|telan|nenggak|menenggak|tenggak)`
+	idMeds     = `(?:obat|pil|tablet|kapsul|antidepresan|parasetamol|paracetamol|panadol|bodrex|ctm|antimo)(?:-obatan)?(?:ku|nya|mu)?` +
+		`(?:\s*(?:tidur|penenang|antidepresan|keras)(?:ku|nya|mu)?)?`
+)
+
+// idSleepHope is the hope lead of id-sleep-forever, with an optional "aja"
+// ("semoga aja aku nggak bangun lagi"; review finding).
+const idSleepHope = `(?:semoga|smoga|moga|moga-moga|moga2|mudah-mudahan|mudah2an|berharap|harap(?:nya)?)\s*,?\s*(?:(?:aja|saja|ajah|deh|ya)\s*,?\s*)?`
+
+// idPleaSelf is the speaker in a plea to God ("tuhan ambil gw aja").
+const idPleaSelf = `(?:aku|gue|gw|gua|saya|aq|ak|gwe|sy)`
 
 // idHopeTime is an optional time word in the Indonesian hope patterns of
 // id-sleep-forever; it may stand before or after the pronoun ("semoga besok
@@ -453,14 +771,18 @@ var ruleIndex = func() map[string]int {
 // phrase: "I hope I don't wake up late", "... too early", "... before my
 // alarm", "... at 3am", "... with a headache", "... hungover", "... during
 // the night". Only listed trailing words may follow the routine in its
-// clause ("late tomorrow", "early again", "early for work"). A bare or final
-// "too", "at all", "again", "ever", "sick" or "with this pain" is not a
-// routine ("I hope I don't wake up at all", "I hope I never wake up sick
-// again"), and an intent, modal or habit word or a death word anywhere else
-// in the sentence keeps the match ("I hope I don't wake up during the night,
-// I want it to be over", "... before my alarm so I can die in my sleep").
-// Like every post-check it reads at most checkWindow bytes on either side of
-// the match.
+// clause ("late tomorrow", "early again", "early for work", "before noon on
+// weekends"). A bare or final "too", "at all", "again", "ever", "sick" or
+// "with this pain" is not a routine ("I hope I don't wake up at all", "I
+// hope I never wake up sick again"), "by" a time is a deadline, not a
+// routine ("I hope I don't wake up by morning"), a number of three or more
+// digits is a year rather than a time ("until 2030"), and an intent, modal
+// or habit word or a death word anywhere else in the sentence or in the text
+// after it keeps the match ("I hope I don't wake up during the night, I want
+// it to be over", "... before my alarm so I can die in my sleep", "... late.
+// or ever", "... early. or at all"). The pattern is wide (see pattern.wide):
+// s runs on past the sentence, and like every post-check it reads at most
+// checkWindow bytes on either side of the match.
 func wakeRoutine(s string, start, end int) bool {
 	lo, hi := max(0, start-checkWindow), min(len(s), end+checkWindow)
 	if hasRiskWord(s[lo:start]) || wakeDeathRe.MatchString(s[lo:hi]) {
@@ -471,7 +793,7 @@ func wakeRoutine(s string, start, end int) bool {
 	for i := end; i < hi && len(w) < 12; {
 		c := s[i]
 		switch {
-		case strings.IndexByte(",;:\n", c) >= 0:
+		case strings.IndexByte(",;:\n.!?", c) >= 0:
 			clauseEnd = i
 			i = hi
 		case isAlnum(c):
@@ -497,7 +819,7 @@ func wakeRoutine(s string, start, end int) bool {
 		k = 1
 	case t == "too" && (at(1) == "early" || at(1) == "late" || at(1) == "tired"):
 		k = 2
-	case t == "before" || t == "until" || t == "till" || t == "at" || t == "by":
+	case t == "before" || t == "until" || t == "till" || t == "at":
 		if n := wakeTime(w[1:]); n > 0 {
 			k = 1 + n
 		}
@@ -530,6 +852,13 @@ func wakeTime(w []string) int {
 		if len(w) > 1 && (w[1] == "am" || w[1] == "pm" || w[1] == "o'clock") {
 			return 2
 		}
+		n := 0
+		for n < len(w[0]) && isDigit(w[0][n]) {
+			n++
+		}
+		if n > 2 && w[0][n:] == "" {
+			return 0 // a year ("until 2030"), not a clock time
+		}
 		return 1
 	case wakeTimes[w[0]]:
 		return 1
@@ -544,7 +873,8 @@ var (
 	wakeAilments = setOf("headache hangover migraine cold fever sore stiff")
 	wakeTimes    = setOf("noon midnight dawn sunrise sunset morning alarm six seven eight nine ten five four")
 	// wakeTrail may follow the routine phrase in its clause.
-	wakeTrail = setOf("tomorrow today for work school class the exam test interview lol haha lmao pls please ugh tbh")
+	wakeTrail = setOf("tomorrow today for work school class the exam test interview lol haha lmao pls please ugh tbh " +
+		"on my weekends weekend weekdays saturday saturdays sunday sundays holidays holiday vacation days day off")
 	// wakeDeathRe: a death or finality word in the sentence keeps the match.
 	wakeDeathRe = mustGuarded(`\b(?:die|dies|died|dying|dead|death|kill|killed|suicide|suicidal|forever|over|end|ending|gone|at\s+all|ever|anymore|mati|meninggal)\b`)
 )
@@ -750,7 +1080,9 @@ func idiomaticDeath(s string, start, end int) bool {
 	m := s[start:end]
 	if strings.HasSuffix(m, "mati") {
 		w := nextWords(s, end, 2)
-		if deathIdioms[w[0]] || (w[0] == "rasa" && (w[1] == "" || rasaFollow[w[1]])) {
+		// The -nya form of an idiom noun is the same idiom ("semoga mati
+		// lampunya"; review finding).
+		if deathIdioms[w[0]] || deathIdioms[strings.TrimSuffix(w[0], "nya")] || (w[0] == "rasa" && (w[1] == "" || rasaFollow[w[1]] || laughter(w[1]) || laughterWords[w[1]])) {
 			return true
 		}
 	}
@@ -759,7 +1091,7 @@ func idiomaticDeath(s string, start, end int) bool {
 		if particles[next[0]] {
 			next[0] = next[1]
 		}
-		if isThing(next[0]) {
+		if isThing(next[0]) && !clockTimeAfter(s, end) {
 			return true
 		}
 	}
@@ -767,6 +1099,34 @@ func idiomaticDeath(s string, start, end int) bool {
 		return false
 	}
 	return thingBefore(s, start)
+}
+
+// clockTimeAfter reports whether "jam" or "pukul" and a number follow
+// s[:end], past particles: a time ("pengen mati aja jam 12", "nggak ada jam
+// 12"), not the clock as a device or a lesson hour.
+func clockTimeAfter(s string, end int) bool {
+	i := end
+	for n := 0; n < 3; n++ {
+		for i < len(s) && s[i] == ' ' {
+			i++
+		}
+		j := i
+		for j < len(s) && isLetter(s[j]) {
+			j++
+		}
+		switch w := s[i:j]; {
+		case w == "jam" || w == "pukul":
+			for j < len(s) && s[j] == ' ' {
+				j++
+			}
+			return j < len(s) && isDigit(s[j])
+		case particles[w] || w == "aja" || w == "saja" || w == "lagi":
+			i = j
+		default:
+			return false
+		}
+	}
+	return false
 }
 
 // thingBefore reports whether the subject before s[start:] is a thing (see
@@ -874,7 +1234,8 @@ var (
 // langkah", "mati akal"), laughing ("mati ketawa"), dying of curiosity
 // ("mati penasaran"), a stalled engine ("mati mesin") and still air ("mati
 // angin"). Numbness ("mati rasa") is an idiom only when "rasa" ends the
-// phrase or a particle or preposition follows it (rasaFollow): in run-on
+// phrase or a particle, a preposition or laughter follows it (rasaFollow:
+// "harusnya aku mati rasa lol"; review finding): in run-on
 // chat "rasa" often opens a new noun phrase ("aku mau mati rasa ini terlalu
 // berat"). "kata" is not an idiom noun ("pengen mati kata orang itu dosa").
 var deathIdioms = setOf("lampu listrik gaya kutu suri ketawa penasaran angin langkah akal mesin")

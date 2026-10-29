@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // state is how a rule ended up for one text, ordered by strength.
@@ -27,12 +29,17 @@ func Assess(text string) Assessment { return assess(text, true) }
 // outcomes. With skip, a derived variant only re-matches its context units
 // that differ from the canonical form's (see contextUnits): every other unit
 // has exactly the same matches and dispositions there, unless the whole-text
-// denial or the context-marker gate (see markersApply) differs, in which
-// case it is matched in full. TestSkipEquivalence checks this against
-// assess(text, false).
+// denial differs, in which case it is matched in full. TestSkipEquivalence
+// checks this against assess(text, false).
+//
+// The context-marker gate (see markersApply) is decided once for the text:
+// it is open only when it is open on every variant, so a signal that one
+// reading keeps and another drops (an emoji, an emphasis mark or a quotation
+// mark that the lexical variant reads as a space, while only the lexical
+// variant spells "cut my self" as "cut myself") keeps every match.
 func assess(text string, skip bool) Assessment {
 	vs := variants(text)
-	acc := &accumulator{states: make([]state, len(catalogue)), attributed: make([]bool, len(catalogue))}
+	acc := &accumulator{states: make([]state, len(catalogue)), attributed: make([]bool, len(catalogue)), gate: plainText(text) && gateOpen(vs)}
 	var known map[string]bool
 	for i, v := range vs {
 		if v == "" {
@@ -48,7 +55,7 @@ func assess(text string, skip bool) Assessment {
 				for _, u := range units {
 					known[u.key] = true
 				}
-			case sh.wholeDenial == acc.shapes[0].wholeDenial && sh.markersApply() == acc.shapes[0].markersApply():
+			case sh.wholeDenial == acc.shapes[0].wholeDenial:
 				sentences = changedSentences(sentences, units, known)
 			}
 		}
@@ -69,7 +76,43 @@ type accumulator struct {
 	// adopted is set when a third-person match is shared in place ("she
 	// wants to die too"); shape adoption is checked in assemble.
 	adopted bool
-	shapes  []*shape
+	// gate is the context-marker gate of the text (see gateOpen).
+	gate   bool
+	shapes []*shape
+}
+
+// plainText reports whether the original text, before normalisation, has
+// only letters, digits, spaces and plain punctuation (. , ! ? ; : - and an
+// apostrophe). An emoji, an emoticon's bracket or symbol, a quotation mark
+// of any script or an invisible format character that normalisation would
+// remove closes the context-marker gate (review finding), so the gate
+// reads the original text as well as every variant.
+func plainText(t string) bool {
+	if len(t) > maxMarkerText {
+		return false
+	}
+	for _, r := range t {
+		switch {
+		case r < utf8.RuneSelf:
+			if !isLetter(byte(r|0x20)) && !isDigit(byte(r)) && strings.IndexByte(" \t\n\r.,!?;:-'", byte(r)) < 0 {
+				return false
+			}
+		case !unicode.IsLetter(r) && !unicode.IsSpace(r) && r != '\u2019':
+			return false
+		}
+	}
+	return true
+}
+
+// gateOpen reports whether context markers may discard matches: the gate
+// (see markersApply) must be open on every variant of the text.
+func gateOpen(vs []string) bool {
+	for _, v := range vs {
+		if v != "" && !markersApply(v) {
+			return false
+		}
+	}
+	return true
 }
 
 // hit is one accepted match of catalogue[rule]. third is set when the
@@ -87,7 +130,7 @@ type hit struct {
 func (acc *accumulator) evaluate(c *shape, sentences []span) {
 	hits := matchAll(c, sentences)
 	for _, h := range hits {
-		if h.marked && c.markersApply() {
+		if h.marked && acc.gate {
 			continue
 		}
 		r := &catalogue[h.rule]
@@ -135,13 +178,30 @@ func matchAll(c *shape, sentences []span) []hit {
 			for _, si := range cand {
 				sent := sentences[si]
 				chunk := text[sent.start:sent.end]
-				if p.filter != nil && p.filter.op != 'a' && !p.filter.match(chunk) {
-					continue
+				if p.filter != nil && p.filter.op != 'a' {
+					if len(chunk) >= windowMin {
+						if !idx.windowsOf(si, chunk).filterIn(p.filter, 0, len(chunk)) {
+							continue
+						}
+					} else if !p.filter.match(chunk) {
+						continue
+					}
 				}
-				p.each(chunk, func(start, end int, third, marked bool) bool {
+				ctx := chunk
+				if p.wide {
+					ctx = text[sent.start:min(len(text), sent.end+restWindow)]
+				}
+				add := func(start, end int, third, marked bool) bool {
 					hits = append(hits, hit{i, span{sent.start + start, sent.start + end}, third, marked})
 					return p.maximal
-				})
+				}
+				if !p.maximal && len(chunk) >= windowMin {
+					if ws := idx.windowsOf(si, chunk).windows(p); ws != nil {
+						p.eachIn(chunk, ctx, ws, add)
+						continue
+					}
+				}
+				p.each(chunk, ctx, add)
 			}
 		}
 	}
@@ -313,9 +373,10 @@ type unit struct {
 // Every clause, quotation and frame lies inside one unit, and so does every
 // match (matching is per sentence, and sentences only split units further).
 // How a match counts depends only on its unit's text, the quotations in it,
-// whether a contrastive conjunction follows it, the whole-text denial check
-// and adoption. The key holds the first three; assess compares the fourth
-// and folds adoption over all variants.
+// whether a contrastive conjunction follows it, a "just"/"cuma" clause that
+// opens the next unit, the whole-text denial check and adoption. The key
+// holds the first four; assess compares the fifth and folds adoption over
+// all variants.
 func contextUnits(c *shape) []unit {
 	t := c.text
 	var out []unit
@@ -342,6 +403,29 @@ func contextUnits(c *shape) []unit {
 		if conjunctionAt(t, next) {
 			key = append(key, 0, 'c')
 		}
+		if next < len(t) && qualifierLead(t[next:min(len(t), next+checkWindow)]) {
+			// A denial at the end of the unit is qualified by a "just"/"cuma"
+			// or a retraction that opens the next one ("I'm not suicidal.
+			// just kidding", "... . jk"; see analyseClause).
+			key = append(key, 0, 'j')
+			key = append(key, t[next:min(len(t), next+checkWindow)]...)
+		}
+		if mayHoldWide(t[start:end]) {
+			// A wide pattern's check reads past the unit (see pattern.wide).
+			key = append(key, 0, 'w')
+			key = append(key, t[end:min(len(t), end+restWindow)]...)
+		}
+		if mayHoldDenial(t[start:end]) {
+			// A denial's disposition reads the rest of the message past the
+			// unit (see restAfter): a method, threat, later act or absence
+			// that follows in a NEW sentence still takes the denial back,
+			// so the key must change when that tail does. The key uses the
+			// same restWindow as restAfter; a shorter key lets a derived
+			// variant skip the sentence that would resolve the denial
+			// (review finding P1-1).
+			key = append(key, 0, 'd')
+			key = append(key, t[end:min(len(t), end+restWindow)]...)
+		}
 		out = append(out, unit{span{start, end}, string(key)})
 	}
 	for i := 0; i < len(t); i++ {
@@ -359,6 +443,52 @@ func contextUnits(c *shape) []unit {
 	}
 	emit(len(t))
 	return out
+}
+
+// wideAtoms are the atoms of the wide patterns (see pattern.wide); nil
+// entries stand for a wide pattern without atoms, which any unit may hold.
+var wideAtoms = func() [][]string {
+	var out [][]string
+	for i := range catalogue {
+		for _, p := range catalogue[i].patterns {
+			if p.wide {
+				out = append(out, p.atoms)
+			}
+		}
+	}
+	return out
+}()
+
+// mayHoldWide reports whether the unit text u may hold a match of a wide
+// pattern.
+func mayHoldWide(u string) bool {
+	for _, atoms := range wideAtoms {
+		if atoms == nil || containsAny(u, atoms) {
+			return true
+		}
+	}
+	return false
+}
+
+// denialObjects are the self-harm objects of the denial core (see
+// denialCore); denialNegations are the negators that can stand in one. A
+// unit holding both may hold a denial; a unit missing either cannot.
+var denialObjects = []string{
+	"bunuh diri", "bundir", "mengakhiri hidup", "menyakiti diri", "melukai diri",
+	"kill myself", "commit suicide", "hurt myself", "harm myself",
+	"end my life", "end my own life", "take my life", "take my own life", "suicidal",
+}
+var denialNegations = []string{
+	"tidak", "ga ", "gak ", "gk ", "nggak", "ngga ", "enggak", "engga ", "tak ", "ndak ",
+	"do not", "don't", "dont", "am not", " not ", "won't", "wont", "will not", "would never",
+	"will never", "never", "would not", "wouldn't", "wouldnt",
+}
+
+// mayHoldDenial reports whether the unit text u may hold a denial (see
+// analyseClause). Over-reporting only re-assesses the unit; under-reporting
+// would break skip equivalence, so the check is deliberately conservative.
+func mayHoldDenial(u string) bool {
+	return containsAny(u, denialObjects) && containsAny(u, denialNegations)
 }
 
 // skipPunct returns the first index >= i of t that is not punctuation or
@@ -398,11 +528,26 @@ func changedSentences(sentences []span, units []unit, known map[string]bool) []s
 }
 
 // atomIndex finds the sentences that contain an atom, caching the answer
-// for atoms shared by several patterns.
+// for atoms shared by several patterns, and the windows of the long
+// sentences (see window.go).
 type atomIndex struct {
 	text      string
 	sentences []span
 	cache     map[string][]int
+	long      map[int]*sentenceWindows
+}
+
+// windowsOf returns the window cache of sentence si, whose text is chunk.
+func (x *atomIndex) windowsOf(si int, chunk string) *sentenceWindows {
+	if sw, ok := x.long[si]; ok {
+		return sw
+	}
+	if x.long == nil {
+		x.long = map[int]*sentenceWindows{}
+	}
+	sw := newSentenceWindows(chunk)
+	x.long[si] = sw
+	return sw
 }
 
 // sentencesWith returns, in order, the indices of the sentences containing
@@ -464,7 +609,12 @@ func (p *pattern) candidates(x *atomIndex, buf []int) []int {
 	}
 	if len(x.sentences) <= directCheck {
 		for i, sp := range x.sentences {
-			if containsAny(x.text[sp.start:sp.end], p.atoms) {
+			chunk := x.text[sp.start:sp.end]
+			if len(chunk) >= windowMin {
+				if x.windowsOf(i, chunk).hasAny(p.atoms) {
+					buf = append(buf, i)
+				}
+			} else if containsAny(chunk, p.atoms) {
 				buf = append(buf, i)
 			}
 		}
@@ -494,22 +644,48 @@ func compactInts(s []int) []int {
 // until fn returns true. Patterns start with \b, so searching again from a
 // word start keeps the boundary semantics of the full string. third and
 // marked report the pattern's attribution and context-marker checks (see
-// pattern.third and pattern.marker).
-func (p *pattern) each(s string, fn func(start, end int, third, marked bool) bool) {
+// pattern.third and pattern.marker), which read ctx: s itself, or for a wide
+// pattern s followed by the text after it (see pattern.wide).
+func (p *pattern) each(s, ctx string, fn func(start, end int, third, marked bool) bool) {
 	for pos := 0; pos <= len(s); {
-		loc := p.re.FindStringIndex(s[pos:])
-		if loc == nil {
+		start, end, ok := p.find(s, pos, len(s))
+		if !ok {
 			return
 		}
-		start, end := pos+loc[0], pos+loc[1]
-		if p.reject == nil || !p.reject(s, start, end) {
-			third := p.third != nil && p.third(s, start, end)
-			if fn(start, end, third, p.marker != nil && p.marker(s, start, end)) {
+		if p.reject == nil || !p.reject(ctx, start, end) {
+			third := p.third != nil && p.third(ctx, start, end)
+			if fn(start, end, third, p.marker != nil && p.marker(ctx, start, end)) {
 				return
 			}
 		}
 		pos = nextWordStart(s, start+1)
 	}
+}
+
+// find returns the leftmost match of p in s[pos:hi], as offsets in s. pos
+// starts a word or follows a non-word byte, and hi ends the text or comes
+// before a non-word byte (see each and eachIn), so a word boundary reads the
+// same in s[pos:hi] as in s.
+func (p *pattern) find(s string, pos, hi int) (int, int, bool) {
+	if p.word == "" {
+		loc := p.re.FindStringIndex(s[pos:hi])
+		if loc == nil {
+			return 0, 0, false
+		}
+		return pos + loc[0], pos + loc[1], true
+	}
+	for pos < hi {
+		k := strings.Index(s[pos:hi], p.word)
+		if k < 0 {
+			break
+		}
+		start, end := pos+k, pos+k+len(p.word)
+		if (start == 0 || !isWordByte(s[start-1])) && (end == len(s) || !isWordByte(s[end])) {
+			return start, end, true
+		}
+		pos = start + 1
+	}
+	return 0, 0, false
 }
 
 // nextWordStart returns the first index >= i that starts a word, or

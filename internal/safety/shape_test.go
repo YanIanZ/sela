@@ -494,3 +494,104 @@ func TestAdoptionCrossProduct(t *testing.T) {
 		}
 	}
 }
+
+func TestJustQualifier(t *testing.T) {
+	for _, c := range []struct {
+		rest string
+		want int
+	}{
+		{"tired", qualNone}, {"tired of living", qualNone}, {"need someone to talk to", qualNone},
+		{"yet", qualVoid}, {"kidding", qualVoid}, {"not today", qualVoid}, {"for now", qualVoid},
+		{"untuk sekarang", qualVoid}, {"because of my mom", qualVoid}, {"karena ibu", qualVoid},
+		{"belum berani", qualVoid}, {"not brave enough", qualVoid}, {"bercanda", qualVoid},
+		{"kadang kepikiran", qualHedge}, {"scared", qualHedge}, {"not doing great", qualHedge},
+	} {
+		if got := justQualifier(c.rest); got != c.want {
+			t.Errorf("justQualifier(%q) = %d, want %d", c.rest, got, c.want)
+		}
+	}
+	for _, s := range []string{"tired", "capek banget", "so tired of everything", "having a rough day"} {
+		if !tiredRe.MatchString(" " + s) {
+			t.Errorf("tiredRe does not match %q", s)
+		}
+	}
+	for _, s := range []string{"yet", "kidding", "kepikiran aja", "not today", "want to die", "pengen nggak ada"} {
+		if tiredRe.MatchString(" " + s) {
+			t.Errorf("tiredRe matches %q", s)
+		}
+	}
+	// Only a wish for a listed benign thing ends a denial without a comma
+	// (review finding).
+	for _, c := range []struct {
+		rest string
+		want bool
+	}{
+		{" tired", true}, {" need a break", true}, {" pengen istirahat", true}, {" want someone to talk to", true},
+		{" want to not exist", false}, {" want to be gone", false}, {" pengen nggak ada", false},
+		{" mau udahan aja", false}, {" want to be left", false}, {" need a break forever", false},
+		{" tired and want to disappear", false},
+	} {
+		if got := endsDenial(c.rest, ""); got != c.want {
+			t.Errorf("endsDenial(%q) = %v, want %v", c.rest, got, c.want)
+		}
+	}
+	// A method, a deferral, a threat, a later act, an absence in a later
+	// segment or another wish after the listed phrase keeps the denial from
+	// ending (review finding).
+	for _, c := range []struct {
+		rest, after string
+		want        bool
+	}{
+		{" need a break", "", true}, {" need a break from work", ", see you tomorrow", true},
+		{" need a break with my pills", "", false}, {" need a hug", ", or a rope", false},
+		{" want some rest before i end it", "", false}, {" need a break or i'll do something", "", false},
+		{" pengen istirahat atau aku bakal nekat", "", false}, {" pengen tidur", ", pakai semua obatku", false},
+		{" need a break from everything", ", permanently", false}, {" having a bad day", ", every day, i want out", false},
+		{" tired", ", i'm going to do it tonight", false}, {" need a break and the rope is ready", "", false},
+		{" need a nap before i go to work", "", true}, {" need a break or i'll go crazy", "", true},
+	} {
+		if got := endsDenial(c.rest, c.after); got != c.want {
+			t.Errorf("endsDenial(%q, %q) = %v, want %v", c.rest, c.after, got, c.want)
+		}
+	}
+	for _, c := range []struct {
+		s    string
+		want bool
+	}{
+		{" I promise i'll do it tonight", true}, {" for real this time i'm going to do it", true},
+		{" serius besok aku lakuin", true}, {" I've got the pills ready", true}, {" the pills are ready", true},
+		{" lol tonight is the night", true}, {" udah siapin obat", true},
+		{" I promise", false}, {" I promise I'll do my homework tonight", false}, {" besok aku lakuin tugasnya", false},
+		{" I'm doing this for my kids, I promise", false}, {" tonight is the night we celebrate", false},
+	} {
+		if got := laterOwnAct(c.s); got != c.want {
+			t.Errorf("laterOwnAct(%q) = %v, want %v", c.s, got, c.want)
+		}
+	}
+	for _, c := range []struct {
+		rest string
+		want int
+	}{
+		{"want to be gone", qualVoid}, {"pengen nggak ada", qualVoid}, {"need everything to stop", qualVoid},
+		{"want the pain to stop", qualHedge}, {"need a break", qualNone}, {"waiting for the right time", qualVoid},
+		{"udah siapin obat", qualVoid}, {"too scared to do it", qualVoid}, {"planning", qualVoid},
+	} {
+		if got := continuationKind(c.rest); got != c.want {
+			t.Errorf("continuationKind(%q) = %d, want %d", c.rest, got, c.want)
+		}
+	}
+	for _, c := range []struct {
+		s    string
+		want bool
+	}{
+		{"jk", true}, {"not really", true}, {"that's a lie", true}, {"boong deng", true}, {"gak deng", true},
+		{"yet", true}, {"yet i feel fine", false}, {"i feel fine", false}, {"really", false},
+	} {
+		if got := retraction(stripFillers(c.s)); got != c.want {
+			t.Errorf("retraction(%q) = %v, want %v", c.s, got, c.want)
+		}
+	}
+	if got := stripFillers("haha lol just kidding"); got != "just kidding" {
+		t.Errorf("stripFillers = %q", got)
+	}
+}
