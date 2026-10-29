@@ -233,6 +233,7 @@
 .s-shell .c-support-paths section:nth-child(1) { background: color-mix(in srgb, var(--place-support) 70%, var(--c-surface)); }
 .s-shell .c-support-paths section:nth-child(2) { background: color-mix(in srgb, var(--place-talk) 70%, var(--c-surface)); }
 .s-shell .c-support-paths section:nth-child(3) { background: color-mix(in srgb, var(--place-notes) 60%, var(--c-surface)); }
+.s-shell .c-support-paths section:nth-child(4) { background: var(--c-help-bg); }
 .s-shell :is(.c-consent, .c-editor, .c-summary-draft, .c-paper, .c-week-reflection) { border: 1px solid var(--c-border-subtle); border-radius: var(--radius-4); }
 .s-shell .c-week-strip li { border-radius: var(--radius-3); background: var(--c-surface-quiet); }
 .s-shell .c-week-strip [data-filled="true"] { background: var(--place-home); color: var(--on-place); }
@@ -393,8 +394,8 @@
   .s-shell main .s-emergency { padding: 1.5rem var(--gutter); border-radius: var(--radius-4); }
   .s-shell main :is(.s-onboard, .s-auth-card) > .s-page-header { margin: -1.5rem -1.5rem 1.5rem; padding: 1.5rem; }
   .s-dl > div, .s-audit li { grid-template-columns: minmax(0, 1fr); }
-  .s-shell .s-subnav { width: auto; overflow-x: auto; flex-wrap: nowrap; padding-inline-end: 2rem; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, var(--c-text) calc(100% - 2rem), transparent); mask-image: linear-gradient(to right, var(--c-text) calc(100% - 2rem), transparent); }
-  .s-shell .s-subnav-link { flex: 0 0 auto; white-space: nowrap; }
+  .s-shell .s-subnav { width: 100%; overflow: visible; flex-wrap: wrap; padding: 0.3rem; gap: 0.25rem; }
+  .s-shell .s-subnav-link { flex: 1 1 auto; justify-content: center; white-space: nowrap; padding-inline: 0.7rem; }
 }
 @media (min-width: 64em) and (max-width: 95.99em) {
   .s-shelf-bar .s-workspace-context, .s-shelf-bar .s-rail-label { display: none; }
@@ -528,9 +529,12 @@
 
 /* The daily-tool row stays one tidy line; it scrolls with a fade when it runs out of room. */
 @media (min-width: 64em) {
-  .s-shell .s-shelf-bar > nav:first-of-type { flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; padding-inline-end: 2rem; -webkit-mask-image: linear-gradient(to right, var(--c-text) calc(100% - 2rem), transparent); mask-image: linear-gradient(to right, var(--c-text) calc(100% - 2rem), transparent); }
-  .s-shell .s-shelf-bar > nav:first-of-type::-webkit-scrollbar { display: none; }
-  .s-shell .s-shelf-bar ul { flex-wrap: nowrap; }
+  .s-shell .s-shelf-bar { flex-wrap: wrap; row-gap: 0.35rem; column-gap: 0.85rem; }
+  .s-shell .s-shelf-bar > nav:first-of-type { flex: 0 1 auto; min-width: 0; overflow: visible; padding-inline-end: 0; gap: 0.4rem; }
+  .s-shell .s-shelf-bar ul { flex-wrap: wrap; gap: 0.3rem; }
+  .s-shell .s-shelf-bar a { padding-inline: 0.72rem; }
+  .s-shell .s-shelf-bar .s-rail-personal { margin-left: auto; gap: 0.25rem; }
+  .s-shell .s-shelf-bar .s-rail-personal a { padding-inline: 0.6rem; }
 }
 
 /* Mood faces sit on a soft disc, no second ring. */
@@ -545,13 +549,14 @@
 @media (max-width: 47.99em) {
   .s-shell--room .s-room-empty { padding: 1rem 1.15rem; border-radius: var(--radius-3); }
 }
-/* Phones: the room scrolls as a page so the conversation always has room;
- * the composer stays pinned to the bottom of the screen. */
+/* Phones: the room is one stable viewport. The transcript scrolls, the
+ * writing box and Send stay at the bottom, and the layout does not leave a
+ * blank field below a short conversation. Text zoom switches back to a
+ * scrolling page above, so the transcript never traps a large type size. */
 @media (max-width: 47.99em) {
-  .s-shell--room .s-shell-inner { height: auto; min-height: 100svh; overflow: visible; }
-  .s-shell--room main, .s-shell--room .s-room-layout, .s-shell--room .s-room-layout > div { display: block; }
-  .s-shell--room .s-transcript { max-height: none; overflow: visible; min-height: 6rem; }
-  :root:not([data-text-scale="130"]):not([data-text-scale="150"]) .s-shell--room .s-composer { position: sticky; bottom: 0; z-index: 5; margin-top: 0.75rem; padding: 0.6rem 0 calc(0.75rem + env(safe-area-inset-bottom)); background: var(--c-bg); box-shadow: 0 -12px 16px -12px rgb(28 27 24 / 0.12); }
+  :root:not([data-text-scale="130"]):not([data-text-scale="150"]) .s-shell--room .s-shell-inner { height: 100dvh; min-height: 0; overflow: hidden; }
+  :root:not([data-text-scale="130"]):not([data-text-scale="150"]) .s-shell--room .s-transcript { min-height: 6rem; }
+  .s-shell--room .s-composer { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
   .s-shell--room .s-room-topline { row-gap: 0.25rem; }
   .s-shell--room .s-room-topline .s-room-end { margin-left: auto; }
 }

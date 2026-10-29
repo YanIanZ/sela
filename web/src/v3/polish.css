@@ -1,0 +1,148 @@
+/* Final cross-screen polish: shared motion, card feedback and the narrow
+   edges the per-screen styles otherwise leave rough. */
+
+@keyframes s-page-enter {
+  from {
+    transform: translateY(6px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.s-shell main :is(.s-page-header, .s-home-head, .s-cover, .s-info-heading) {
+  animation: s-page-enter 260ms var(--ease-out-quint) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-shell main :is(.s-page-header, .s-home-head, .s-cover, .s-info-heading) {
+    animation: none;
+  }
+}
+:root[data-motion="reduced"] .s-shell main :is(.s-page-header, .s-home-head, .s-cover, .s-info-heading) {
+  animation: none;
+}
+
+/* Controls settle instead of jumping between states. */
+.s-shell .s-btn {
+  transition:
+    background-color var(--duration-quick) var(--ease-standard),
+    border-color var(--duration-quick) var(--ease-standard),
+    color var(--duration-quick) var(--ease-standard),
+    box-shadow var(--duration-quick) var(--ease-standard),
+    transform var(--duration-quick) var(--ease-standard);
+}
+.s-shell .s-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.s-shell .s-link,
+.s-shell .s-text-button,
+.s-shell .s-back {
+  transition: color var(--duration-quick) var(--ease-standard), text-decoration-color var(--duration-quick) var(--ease-standard);
+}
+
+/* Interactive rows and cards get one quiet hover cue; static content stays still. */
+.s-shell .s-entry-list > a,
+.s-shell .c-care-card,
+.s-shell .s-service {
+  transition:
+    background-color var(--duration-quick) var(--ease-standard),
+    border-color var(--duration-quick) var(--ease-standard),
+    box-shadow var(--duration-quick) var(--ease-standard);
+}
+.s-shell .c-care-card:hover {
+  border-color: var(--c-border-control);
+  box-shadow: var(--shadow-2);
+}
+
+/* The footer name is one word; never split Dengar.in across lines. */
+.s-shell .s-attribution {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.3em;
+  overflow-wrap: normal;
+}
+.s-shell .s-attribution-label { margin-right: 0; }
+.s-shell .s-attribution-name { white-space: nowrap; }
+.s-shell .s-attribution-note { flex-basis: 100%; }
+
+/* The settings index is a row on phones; let it wrap instead of clipping
+   the last tab behind a hidden horizontal scroller. */
+@media (max-width: 47.99em) {
+  .s-shell .s-settings-nav {
+    flex-wrap: wrap;
+    overflow: visible;
+    row-gap: 0.35rem;
+  }
+  .s-shell .s-settings-nav a {
+    flex: 0 1 auto;
+    white-space: normal;
+  }
+}
+
+
+/* The old margin utilities lost to `.s-shell h2 { margin: 0 }`; restore the
+   two used by the information pages and give direct page headings rhythm. */
+.s-shell .s-mt-4 { margin-top: var(--space-4); }
+.s-shell .s-mt-5 { margin-top: var(--space-5); }
+.s-shell .s-narrow > h2 { margin-top: var(--space-6); }
+.s-shell .s-narrow > h2:first-child { margin-top: 0; }
+.s-shell .s-narrow > h2 + p { margin-top: 0.65rem; }
+.s-shell .s-narrow > .s-settings-section:first-of-type { margin-top: var(--space-5); }
+.s-shell .s-narrow > .s-actions { margin-top: var(--space-5); }
+.s-shell .c-care-foot + .s-actions { margin-top: var(--space-4); }
+.s-shell .s-narrow > .s-settings-section + .s-settings-section { margin-top: var(--space-3); }
+
+/* Page-close notes sit a little apart from the last card or action. */
+.s-shell .c-product-boundary,
+.s-shell .c-editorial-status { margin-top: var(--space-5); }
+.s-shell .c-policy-details + .s-hint,
+.s-shell .c-reading-list + .s-hint,
+.s-shell .s-document-list + .s-hint { margin-top: var(--space-3); }
+
+/* Display switches: keep the label and its on/off state near each other
+   instead of pushing the state to the far edge of the column. */
+.s-shell .s-display-group .s-switch-row { max-width: 30rem; }
+.s-shell .s-settings-layout--display > div > .s-display-group + .s-display-group { margin-top: var(--space-5); }
+
+/* The planned-care search is two fields wide on a desktop, one on a phone. */
+@media (min-width: 48em) {
+  .c-care-filters { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .c-care-kinds { grid-column: 1 / -1; }
+}
+
+/* The help cards use the same row rhythm as the rest of the support pages. */
+.s-shell .s-service { padding: 1.35rem 1.5rem; }
+.s-shell .s-help-list .s-service + .s-service { margin-top: 0.65rem; }
+.s-shell .s-help-list .s-service .s-actions { margin-bottom: 0.85rem; }
+.s-shell .s-help-list .s-service .s-source + .s-source { margin-top: 0.2rem; }
+.s-shell .s-help-list .s-service .s-source { margin-bottom: 0; }
+
+/* Reading's editorial close is a page-wide rule, not a half measure. */
+.s-shell .c-editorial-status { max-width: none; }
+.s-shell .c-editorial-status > * { max-width: 70ch; }
+
+/* The support path cards share one quiet hover/focus cue. */
+.s-shell .c-support-paths section { transition: border-color var(--duration-quick) var(--ease-standard), background-color var(--duration-quick) var(--ease-standard); }
+.s-shell .c-support-paths section:focus-within { outline: 2px solid var(--c-focus); outline-offset: 2px; }
+
+/* Phone subnav: three items can share one pill row without clipping. */
+@media (max-width: 47.99em) {
+  .s-shell .s-subnav { gap: 0.2rem; }
+  .s-shell .s-subnav-link { flex: 0 1 auto; font-size: var(--font-size-1); padding-inline: 0.3rem; }
+  .s-shell .s-filter { padding-inline: 0.6rem; }
+  .s-shell .s-filters-label { flex-basis: 100%; }
+}
+
+/* Keep Show/Hide beside the password field, even on a phone; the field can
+   shrink, the control cannot. */
+.s-shell .s-password-row { flex-wrap: nowrap; }
+.s-shell .s-password-row .s-input { flex: 1 1 8rem; }
+.s-shell .s-show-password { align-self: center; min-height: var(--target-min); padding-inline: 0.5rem; }
+
+/* Conversation rhythm: your words on the right, Sela on the left, and a
+   quiet welcome in the middle when the room is still empty. */
+.s-shell .s-transcript { display: flex; flex-direction: column; }
+.s-shell .s-transcript > div { display: flex; flex-direction: column; }
+.s-shell .s-room-empty { margin-block: auto; }
