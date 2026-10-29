@@ -2,6 +2,9 @@
 
 <!-- impeccable:product-schema 1 -->
 
+> **Owner direction update (29 October 2026; not yet implemented):** Sela will be anonymous-first and **consumer login-free**, text-only, without voice/TTS/ASR, avatar or required GPS. Planned differentiator: [Meaning Integrity Engine](docs/vision/MEANING_INTEGRITY_ENGINE.md). Meta remains primary, Claude Sonnet 5.5 verifier, DeepSeek opt-in availability fallback; manual professional/facility discovery joins the real product, while external hospital collaboration is **synthetic-only until real partnerships**. This supersedes conflicting aspirational statements below **for planning**, not claims about the working code. The full scope and migration requirements are [here](docs/vision/README.md) and [ADR-0004](docs/adr/ADR-0004-anonymous-first-meaning-integrity-care-network.md).
+
+
 ## Platform
 
 web
