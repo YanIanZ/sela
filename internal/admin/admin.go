@@ -39,16 +39,17 @@ const (
 	PermResearchReview  = "research/review"
 	PermSafetyReview    = "safety-content/review"
 	PermStaffManage     = "staff/manage"
+	PermSandboxWrite    = "sandbox/write"
 )
 
 var rolePermissions = map[Role][]string{
-	RoleOwner:             {PermOverviewRead, PermAuditRead, PermCacheWrite, PermDirectoryWrite, PermDirectoryVerify, PermResearchReview, PermSafetyReview, PermStaffManage},
+	RoleOwner:             {PermOverviewRead, PermAuditRead, PermCacheWrite, PermDirectoryWrite, PermDirectoryVerify, PermResearchReview, PermSafetyReview, PermStaffManage, PermSandboxWrite},
 	RoleSecurityAdmin:     {PermOverviewRead, PermAuditRead, PermStaffManage},
 	RoleDirectoryEditor:   {PermOverviewRead, PermDirectoryWrite},
 	RoleDirectoryReviewer: {PermOverviewRead, PermDirectoryVerify},
 	RoleResearchEditor:    {PermOverviewRead, PermResearchReview},
 	RoleSafetyReviewer:    {PermOverviewRead, PermSafetyReview},
-	RoleOps:               {PermOverviewRead, PermCacheWrite},
+	RoleOps:               {PermOverviewRead, PermCacheWrite, PermSandboxWrite},
 }
 
 // ValidRole reports whether r is one of the closed set.

@@ -273,7 +273,13 @@ func TestCostEstimate(t *testing.T) {
 	if c := estimateCost(ProviderDeepSeek, false, "", 0, 1_000_000, offPeak); c != 0.6 {
 		t.Fatalf("deepseek off-peak %f", c)
 	}
+	if c := estimateCost(ProviderMetaAPI, false, "", 1_000_000, 0, offPeak); c != 1.25 {
+		t.Fatalf("meta api input %f", c)
+	}
+	if c := estimateCost(ProviderMetaAPI, false, "", 0, 1_000_000, offPeak); c != 4.25 {
+		t.Fatalf("meta api output %f", c)
+	}
 	if estimateCost(ProviderMeta, false, "", 1000, 1000, offPeak) != 0 || estimateCost(ProviderAnthropic, true, "us", 1000, 1000, offPeak) != 0 {
-		t.Fatal("meta and test doubles carry no API cost")
+		t.Fatal("self-hosted meta and test doubles carry no API cost")
 	}
 }

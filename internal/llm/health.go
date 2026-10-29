@@ -83,6 +83,11 @@ func (c *client) checkModels(ctx context.Context) bool {
 	}
 	for _, m := range list.Data {
 		if m.ID == c.cfg.ServedModel {
+			// Meta Model API lists hosted model ids without a Hugging Face
+			// snapshot root; the served id is the identity there.
+			if c.cfg.Mode == ModeMeta {
+				return true
+			}
 			return pinnedRoot(m.Root, c.cfg.ModelID, c.cfg.Revision)
 		}
 	}

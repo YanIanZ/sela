@@ -55,6 +55,8 @@ var messages = map[string]message{
 	"admin_forbidden":           {"Peran operator ini tidak memiliki izin untuk tindakan tersebut.", "This operator role isn't allowed to do that."},
 	"admin_last_owner":          {"Pemilik aktif terakhir tidak bisa dicabut. Angkat pemilik lain dulu.", "The last active owner can't be revoked. Promote another owner first."},
 	"cache_disabled":            {"Cache Redis tidak diaktifkan di server ini.", "Redis cache isn't enabled on this server."},
+	"directory_forbidden":       {"Entri ini hanya dapat diverifikasi oleh peninjau lain.", "This entry can only be verified by another reviewer."},
+	"directory_conflict":        {"Entri ini sudah berubah atau tidak berada di status yang tepat. Muat ulang lalu coba lagi.", "This entry changed or isn't in the right state. Reload and try again."},
 }
 
 // lang picks the message language: explicit header, then Accept-Language.

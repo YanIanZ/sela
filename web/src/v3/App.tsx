@@ -49,6 +49,9 @@ const RecoverPage = lazy(() =>
 const UpgradePage = lazy(() =>
   import("./screens/Auth").then((m) => ({ default: m.UpgradePage })),
 );
+const PlannedCarePage = lazy(() =>
+  import("./screens/PlannedCare").then((m) => ({ default: m.PlannedCarePage })),
+);
 const OnboardingPage = lazy(() =>
   import("./screens/Onboarding").then((m) => ({ default: m.OnboardingPage })),
 );
@@ -100,6 +103,7 @@ function titleFor(path: string, lang: string): string {
   if (path === "/notes/memory") return t("Yang Sela ingat", "What Sela remembers");
   if (path.startsWith("/notes/")) return t("Catatan", "Note");
   if (path === "/support") return t("Dukungan", "Support");
+  if (path === "/support/directory") return t("Bantuan terencana", "Planned support");
   if (path.startsWith("/support/summaries")) return t("Ringkasan untuk konsultasi", "Summary for a consultation");
   if (path.startsWith("/support/shares")) return t("Status berbagi", "Sharing status");
   if (path === "/help") return t("Bantuan sekarang", "Help now");
@@ -124,6 +128,8 @@ function titleFor(path: string, lang: string): string {
 }
 
 function isOwnerPath(path: string): boolean {
+  // Planned support is public: it needs no session and stores no choice.
+  if (path === "/support/directory") return false;
   return OWNER_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));
 }
 
@@ -250,6 +256,8 @@ function AppRoutes() {
     screen = <TalkPage user={user} />;
   } else if (user && (path === "/notes" || path.startsWith("/notes/"))) {
     screen = <NotesPage user={user} path={path} />;
+  } else if (path === "/support/directory") {
+    screen = <PlannedCarePage />;
   } else if (user && path === "/support") {
     screen = <SupportPage />;
   } else if (user && (path.startsWith("/support/summaries") || path === "/support/prepare" || path === "/support/after")) {

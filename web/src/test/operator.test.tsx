@@ -71,6 +71,8 @@ function stubApi(
     audit?: boolean;
     logoutStatus?: number;
     staff?: Staff[];
+    directory?: unknown[];
+    sandbox?: unknown[];
   } = {},
 ): Call[] {
   const calls: Call[] = [];
@@ -119,6 +121,24 @@ function stubApi(
         const username = decodeURIComponent(rest.split("/")[0] ?? "");
         revoked.add(username);
         return reply(200, { data: { username, status: "revoked" } });
+      }
+      if (url.endsWith("/api/admin/v1/directory/audit")) {
+        return reply(200, { data: { events: [] } });
+      }
+      if (url.endsWith("/api/admin/v1/directory") && init.method !== "POST") {
+        return reply(200, { data: { entries: options.directory ?? [] } });
+      }
+      if (url.endsWith("/api/admin/v1/directory") && init.method === "POST") {
+        return reply(201, { data: { id: "d1", status: "draft", version: 1 } });
+      }
+      if (url.includes("/api/admin/v1/directory/") && url.endsWith("/verify")) {
+        return reply(200, { data: { id: "d1", status: "verified", version: 3 } });
+      }
+      if (url.endsWith("/api/admin/v1/sandbox/requests") && init.method !== "POST") {
+        return reply(200, { data: { requests: options.sandbox ?? [] } });
+      }
+      if (url.includes("/api/admin/v1/sandbox/requests") && url.endsWith("/transition")) {
+        return reply(200, { data: { id: "s1", status: "pending", version: 2 } });
       }
       if (url.includes("/api/admin/v1/audit")) {
         return reply(200, { data: { events } });
@@ -286,6 +306,7 @@ const owner: Admin = {
     "research/review",
     "safety-content/review",
     "staff/manage",
+    "sandbox/write",
   ],
 };
 
@@ -358,5 +379,67 @@ describe("operator staff", () => {
     expect(await screen.findByText("Last active owner")).toBeInTheDocument();
     // Only the non-owner row offers revocation.
     expect(screen.getAllByRole("button", { name: "Revoke access" })).toHaveLength(1);
+  });
+});
+
+describe("operator planned care", () => {
+  it("shows the sourced directory and lets a reviewer verify a pending entry", async () => {
+    const directory = [
+      {
+        id: "d1",
+        kind: "organization",
+        name: "Ruang Contoh",
+        city: "Bandung",
+        description: "Contoh sumber.",
+        sourceUrl: "https://example.org/source",
+        sourcePublisher: "Sumber Contoh",
+        sourceAccessedAt: "2026-10-20T00:00:00Z",
+        status: "pending",
+        synthetic: false,
+        version: 2,
+        createdAt: "2026-10-20T00:00:00Z",
+        updatedAt: "2026-10-20T00:00:00Z",
+      },
+    ];
+    const calls = stubApi(owner, { directory, sandbox: [] });
+    renderOperator();
+    await screen.findByRole("heading", { name: "Planned support directory" });
+    expect(await screen.findByText("Ruang Contoh")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Verify" }));
+    await waitFor(() =>
+      expect(calls.some((c) => c.url.endsWith("/directory/d1/verify"))).toBe(true),
+    );
+    const call = calls.find((c) => c.url.endsWith("/directory/d1/verify"));
+    expect(JSON.parse(String(call?.init.body))).toEqual({ expectedVersion: 2 });
+    expect(new Headers(call?.init.headers).get("X-Sela-Request")).toBe("1");
+  });
+
+  it("labels the planned-care sandbox as a simulation and transitions it", async () => {
+    const sandbox = [
+      {
+        id: "s1",
+        organization: "Ruang Fiktif",
+        professional: "Praktisi Fiktif",
+        service: "Konseling",
+        status: "prepared",
+        synthetic: true,
+        version: 1,
+        createdAt: "2026-10-20T00:00:00Z",
+        updatedAt: "2026-10-20T00:00:00Z",
+      },
+    ];
+    const calls = stubApi(owner, { directory: [], sandbox });
+    renderOperator();
+    await screen.findByRole("heading", { name: "Planned support sandbox" });
+    expect(await screen.findByText("Ruang Fiktif")).toBeInTheDocument();
+    expect(screen.getAllByText("Simulation").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Submit (simulation)" }));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith("/sandbox/requests/s1/transition"))).toBe(true));
+    const call = calls.find((c) => c.url.endsWith("/sandbox/requests/s1/transition"));
+    expect(JSON.parse(String(call?.init.body))).toEqual({
+      expectedVersion: 1,
+      status: "pending",
+      note: "",
+    });
   });
 });

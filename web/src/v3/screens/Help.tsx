@@ -139,6 +139,19 @@ export function HelpPage() {
         </LinkButton>
       </section>
 
+      <section className="s-section">
+        <h2>{w("Bantuan terencana", "Planned support")}</h2>
+        <p className="s-hint">
+          {w(
+            "Cari organisasi, fasilitas, atau praktisi dari sumber publik. Kamu yang menghubungi; tidak ada permintaan atau pemesanan otomatis.",
+            "Find organizations, facilities or practitioners from public sources. You make contact; there is no automatic request or booking.",
+          )}
+        </p>
+        <LinkButton to="/support/directory" variant="quiet">
+          {w("Cari bantuan terencana", "Find planned support")}
+        </LinkButton>
+      </section>
+
       {user?.ageBand === "15_17" || user?.ageBand === "unknown" ? (
         <p className="s-hint">
           {w(

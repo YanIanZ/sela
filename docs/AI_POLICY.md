@@ -104,7 +104,7 @@ Chain-of-thought and reasoning tokens are discarded and never requested from the
 
 ## Consent and data handling
 
-- **Separate consent per provider (D-030, D-049).** Each provider has its own versioned consent: `ai_processing` (Meta on Modal, US), `ai_provider_anthropic` (Claude, US) and `ai_provider_deepseek` (DeepSeek, PRC), the purpose names reserved in [API_SPEC_V3](API_SPEC_V3.md) §3. Consenting to one never authorizes another. As in v2, consenting to Meta does not authorize sending anything to Anthropic.
+- **Separate consent per provider (D-030, D-049).** Each provider has its own versioned consent: `ai_processing` (Meta through Meta Model API or a Modal server, US; development/demo uses Model API per D-063), `ai_provider_anthropic` (Claude, US) and `ai_provider_deepseek` (DeepSeek, PRC), the purpose names reserved in [API_SPEC_V3](API_SPEC_V3.md) §3. Consenting to one never authorizes another. As in v2, consenting to Meta does not authorize sending anything to Anthropic.
 - **Disclosure before consent.** It names the provider, location, purpose, data sent, provider retention and withdrawal effect in plain Indonesian and English (ADR-0003 §8.1). Withdrawing a consent stops that provider's use at once and discards in-flight results. Data already sent cannot be recalled from the provider, and the UI says so.
 - **Minimisation (ADR-0003 §9).** Only the segments a task needs are sent. Contact details and names the user marked private are redacted. Nothing is sent from conversations the user chose not to save. No account identifiers are sent, and span ids are per request.
 - **Logs** keep no prompts, narratives, claims, verdict reasons or result text; metadata only (V12).

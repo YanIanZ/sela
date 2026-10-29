@@ -506,6 +506,10 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 			return nil
 		}})
 	}
+	if err != nil {
+		// The router's error text is a content-free outcome/reason code.
+		s.log.Warn("ai_run_failed", "task", "listening_reply", "error", err.Error())
+	}
 	if reservation.Admitted() {
 		settleCtx, settleCancel := context.WithTimeout(context.WithoutCancel(r.Context()), 2*time.Second)
 		settlement := budget.Settlement{ActualUSD: reservation.ReservedUSD, Outcome: "failed"}

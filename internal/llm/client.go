@@ -63,8 +63,10 @@ type chatRequest struct {
 	TopP        *float64  `json:"top_p,omitempty"`
 	TopK        *int      `json:"top_k,omitempty"`
 	Seed        *int      `json:"seed,omitempty"`
-	// ChatTemplateKwargs carries reasoning_strength to the chat template.
+	// ChatTemplateKwargs carries reasoning_strength to the vLLM chat
+	// template. Meta Model API uses ReasoningEffort instead.
 	ChatTemplateKwargs map[string]string `json:"chat_template_kwargs,omitempty"`
+	ReasoningEffort    string            `json:"reasoning_effort,omitempty"`
 	Stream             bool              `json:"stream"`
 	StreamOptions      streamOptions     `json:"stream_options"`
 	ResponseFormat     *responseFormat   `json:"response_format,omitempty"`
@@ -120,17 +122,22 @@ func (c *client) buildBody(req Request) ([]byte, error) {
 		}
 		temp, topP := sp.Temperature, sp.TopP
 		body.Temperature, body.TopP = &temp, &topP
-		if sp.TopK > 0 {
+		// Meta Model API has no top_k parameter; leave it out there.
+		if sp.TopK > 0 && c.cfg.Mode != ModeMeta {
 			topK := sp.TopK
 			body.TopK = &topK
 		}
 	}
-	switch req.ReasoningStrength {
-	case "":
-	case ReasoningLow, ReasoningMedium, ReasoningHigh, ReasoningXHigh:
-		body.ChatTemplateKwargs = map[string]string{"reasoning_strength": req.ReasoningStrength}
-	default:
-		return nil, reject("reasoning strength must be low, medium, high or xhigh")
+	if c.cfg.Mode == ModeMeta {
+		body.ReasoningEffort = c.cfg.ReasoningEffort
+	} else {
+		switch req.ReasoningStrength {
+		case "":
+		case ReasoningLow, ReasoningMedium, ReasoningHigh, ReasoningXHigh:
+			body.ChatTemplateKwargs = map[string]string{"reasoning_strength": req.ReasoningStrength}
+		default:
+			return nil, reject("reasoning strength must be low, medium, high or xhigh")
+		}
 	}
 	if body.MaxTokens == 0 {
 		body.MaxTokens = DefaultMaxTokens
@@ -163,10 +170,10 @@ func (c *client) setAuth(r *http.Request) {
 	if c.cfg.APIKey != "" {
 		r.Header.Set("Authorization", "Bearer "+c.cfg.APIKey)
 	}
-	if c.cfg.ModalKey != "" {
+	if c.cfg.Mode == ModeModal && c.cfg.ModalKey != "" {
 		r.Header.Set("Modal-Key", c.cfg.ModalKey)
 	}
-	if c.cfg.ModalSecret != "" {
+	if c.cfg.Mode == ModeModal && c.cfg.ModalSecret != "" {
 		r.Header.Set("Modal-Secret", c.cfg.ModalSecret)
 	}
 	r.Header.Set("User-Agent", "sela-llm")

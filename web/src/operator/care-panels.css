@@ -1,0 +1,25 @@
+.op-section-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.op-section-head > div { max-width: 52rem; }
+.op-section-head .op-hint { margin-top: 0.35rem; }
+.op-care-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.7rem; padding: 0.9rem; border: 1px solid var(--op-line); border-radius: 8px; background: var(--op-surface-quiet); }
+.op-field--wide { grid-column: 1 / -1; }
+.op-actions { grid-column: 1 / -1; display: flex; gap: 0.5rem; }
+.op-care-list { list-style: none; padding: 0; display: grid; gap: 0; }
+.op-care-list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.75rem 0; border-top: 1px solid var(--op-line); }
+.op-care-main { min-width: 0; display: grid; gap: 0.3rem; }
+.op-care-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.op-care-desc { color: var(--op-ink); font-size: 0.88rem; }
+.op-care-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.4rem; }
+.op-care-status { padding: 0.1rem 0.5rem; border: 1px solid var(--op-line-strong); border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+.op-care-status--verified { border-color: var(--op-success); color: var(--op-success); }
+.op-care-status--pending { border-color: var(--op-warning); color: var(--op-warning); }
+.op-care-status--rejected, .op-care-status--revoked { border-color: var(--op-danger); color: var(--op-danger); }
+.op-badge--demo { border-color: var(--op-warning); color: var(--op-warning); }
+.op-care-audit { margin-top: 0.5rem; border-top: 1px solid var(--op-line); padding-top: 0.6rem; }
+.op-care-audit summary { cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+.op-care-audit ol { list-style: none; padding: 0; margin-top: 0.4rem; display: grid; gap: 0.3rem; }
+.op-care-audit li { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.82rem; }
+@media (max-width: 700px) {
+  .op-care-list > li { grid-template-columns: 1fr; }
+  .op-care-actions { justify-content: flex-start; }
+}

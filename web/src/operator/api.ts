@@ -63,6 +63,50 @@ export type Staff = {
   liveSessions: number;
 };
 
+export type DirectoryEntry = {
+  id: string;
+  kind: string;
+  name: string;
+  city?: string;
+  description?: string;
+  contactUrl?: string;
+  sourceUrl: string;
+  sourcePublisher: string;
+  sourceAccessedAt: string;
+  status: string;
+  synthetic: boolean;
+  version: number;
+  verifiedAt?: string;
+  reverifyAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SandboxRequest = {
+  id: string;
+  organization: string;
+  professional?: string;
+  service?: string;
+  status: string;
+  note?: string;
+  synthetic: boolean;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CareAudit = {
+  id: string;
+  actor?: string;
+  action: string;
+  objectKind: string;
+  objectId: string;
+  oldStatus?: string;
+  newStatus?: string;
+  reason?: string;
+  createdAt: string;
+};
+
 export type CacheHealth = {
   enabled: boolean;
   ok: boolean;
@@ -135,6 +179,39 @@ export const adminApi = {
     request<{ username: string; status: string }>(
       `/staff/${encodeURIComponent(username)}/revoke`,
       { method: "POST", body: JSON.stringify({ reason }) },
+      true,
+    ),
+  directory: (status = "") =>
+    request<{ entries: DirectoryEntry[] }>(
+      "/directory" + (status ? `?status=${encodeURIComponent(status)}` : ""),
+    ).then((r) => r.entries),
+  createDirectory: (input: Record<string, unknown>) =>
+    request<DirectoryEntry>("/directory", { method: "POST", body: JSON.stringify(input) }, true),
+  directoryAction: (
+    id: string,
+    action: "submit" | "verify" | "reject" | "unpublish",
+    expectedVersion: number,
+    extra: Record<string, unknown> = {},
+  ) =>
+    request<DirectoryEntry>(
+      `/directory/${encodeURIComponent(id)}/${action}`,
+      { method: "POST", body: JSON.stringify({ expectedVersion, ...extra }) },
+      true,
+    ),
+  careAudit: () =>
+    request<{ events: CareAudit[] }>("/directory/audit").then((r) => r.events),
+  sandbox: () =>
+    request<{ requests: SandboxRequest[] }>("/sandbox/requests").then((r) => r.requests),
+  createSandbox: (input: Record<string, unknown>) =>
+    request<SandboxRequest>(
+      "/sandbox/requests",
+      { method: "POST", body: JSON.stringify(input) },
+      true,
+    ),
+  transitionSandbox: (id: string, expectedVersion: number, status: string, note = "") =>
+    request<SandboxRequest>(
+      `/sandbox/requests/${encodeURIComponent(id)}/transition`,
+      { method: "POST", body: JSON.stringify({ expectedVersion, status, note }) },
       true,
     ),
   cacheHealth: () =>

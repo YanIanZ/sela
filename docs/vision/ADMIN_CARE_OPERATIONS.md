@@ -1,6 +1,6 @@
 # Sela | Planned Assistance Operations
 
-**Status:** target workflow specification. No real hospital booking, referral exchange or authenticated partner workspace is deployed.  
+**Status:** target workflow specification. A **local planned-care demo** now exists: a sourced public directory, editorial draft/submit/verify/reject/unpublish and an isolated labelled synthetic sandbox (2026-10-30, §10). No real hospital booking, referral exchange, authenticated partner workspace or production directory is deployed.
 **Boundary:** admin publishes trustworthy directories; **users choose** professions and facilities without automatic location. Sela does not assign diagnoses or reach out uninvited.
 
 ## 1. Two kinds of assistance
@@ -129,3 +129,14 @@ In the partner sandbox, statuses are **never mapped to a real facility**. The fu
 ## 9. Future standards
 
 HL7 FHIR Organization, Practitioner, PractitionerRole, Consent, ServiceRequest and Appointment can guide interoperability. Sela is **not** currently integrated with SATUSEHAT, licensed as telemedicine, or partnered with any named hospital. Do not claim otherwise.
+
+## 10. Implemented local demo (2026-10-30)
+
+- Migration `0700_care_directory`: `care_directory_entries`, `care_sandbox_requests` and `care_audit`. No table references a consumer user or stores a story.
+- Public `GET /api/v3/care-directory` and the `/support/directory` page: search by text, kind and an optional manually typed city; no geolocation; only verified entries whose re-verify date is current; source publisher, source date and official links shown; no request, booking or contact action.
+- Operator `/operator`: directory list, create draft, edit, submit, verify/reject/unpublish with `expectedVersion`; a real entry requires creator ≠ reviewer, while a labelled synthetic demo entry may be self-verified. The `/api/admin/v1/directory/audit` view and panel show content-free care events.
+- Synthetic sandbox: `care_sandbox_requests` and `/api/admin/v1/sandbox/requests`; states `prepared → pending → received → acknowledged → closed`, or revoked. Every row is `synthetic = true` and the UI says **Simulasi**. No email, webhook, booking or facility call exists.
+- `sela care seed-demo --admin USERNAME` inserts three fictional entries and two fictional requests in development/test/demo only; production and staging refuse it.
+- Tests: `internal/care` (editorial flow, public filter, self-verify guard, sandbox transitions, seed), HTTP `TestCareDirectoryEditorialFlowAndSandbox`, web planned-care and operator-panel tests, and a browser screenshot review.
+
+Not done: real sourced partner data, professional credential/affiliation verification, freshness scheduler, Redis cache invalidation for the public directory, partner onboarding, patient-approved capsule transfer and any booking. The demo does not claim a hospital partnership.

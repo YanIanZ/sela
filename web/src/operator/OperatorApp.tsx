@@ -16,10 +16,14 @@ import {
   type AISpend,
   type AuditEvent,
   type CacheHealth,
+  type CareAudit,
+  type DirectoryEntry,
   type Overview,
+  type SandboxRequest,
   type Staff,
   type TaskSpend,
 } from "./api";
+import { DirectoryPanel, SandboxPanel } from "./CarePanels";
 import "./operator.css";
 
 type Words = (id: string, en: string) => string;
@@ -355,6 +359,10 @@ function Console({
   const [events, setEvents] = useState<AuditEvent[] | null>(null);
   const [staff, setStaff] = useState<Staff[] | null>(null);
   const [revoking, setRevoking] = useState("");
+  const [directory, setDirectory] = useState<DirectoryEntry[] | null>(null);
+  const [sandbox, setSandbox] = useState<SandboxRequest[] | null>(null);
+  const [careAudit, setCareAudit] = useState<CareAudit[] | null>(null);
+  const [careBusy, setCareBusy] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -365,6 +373,10 @@ function Console({
   const canAudit = admin.permissions.includes("security/audit/read");
   const canWriteCache = admin.permissions.includes("ops/cache/write");
   const canManageStaff = admin.permissions.includes("staff/manage");
+  const canDirectory =
+    admin.permissions.includes("directory/write") ||
+    admin.permissions.includes("directory/verify");
+  const canSandbox = admin.permissions.includes("sandbox/write");
 
   const handleError = useCallback(
     (err: unknown) => {
@@ -390,13 +402,18 @@ function Console({
       const jobs: Promise<void>[] = [];
       if (canAudit) jobs.push(adminApi.audit(50).then(setEvents));
       if (canManageStaff) jobs.push(adminApi.staff().then(setStaff));
+      if (canDirectory) {
+        jobs.push(adminApi.directory().then(setDirectory));
+        jobs.push(adminApi.careAudit().then(setCareAudit));
+      }
+      if (canSandbox) jobs.push(adminApi.sandbox().then(setSandbox));
       await Promise.all(jobs);
     } catch (err) {
       handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [canAudit, canManageStaff, handleError]);
+  }, [canAudit, canDirectory, canManageStaff, canSandbox, handleError]);
 
   useEffect(() => {
     void load();
@@ -441,6 +458,80 @@ function Console({
       handleError(err);
     } finally {
       setRevoking("");
+    }
+  };
+
+  const reloadCare = async () => {
+    const jobs: Promise<void>[] = [];
+    if (canDirectory) {
+      jobs.push(adminApi.directory().then(setDirectory));
+      jobs.push(adminApi.careAudit().then(setCareAudit));
+    }
+    if (canSandbox) jobs.push(adminApi.sandbox().then(setSandbox));
+    await Promise.all(jobs);
+  };
+
+  const createDirectory = async (input: Record<string, unknown>) => {
+    setCareBusy("directory-create");
+    setError("");
+    try {
+      await adminApi.createDirectory(input);
+      setNotice(w("Draf direktori dibuat. Ajukan untuk tinjauan setelah sumbernya lengkap.", "Directory draft created. Submit it after the source is complete."));
+      await reloadCare();
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setCareBusy("");
+    }
+  };
+
+  const directoryAction = async (
+    id: string,
+    action: "submit" | "verify" | "reject" | "unpublish",
+    version: number,
+  ) => {
+    setCareBusy(`directory:${id}`);
+    setError("");
+    try {
+      await adminApi.directoryAction(id, action, version);
+      setNotice(
+        action === "verify"
+          ? w("Entri diterbitkan. Cache publik akan membaca versi ini.", "Entry published. The public view reads this version.")
+          : w("Status direktori diperbarui.", "Directory status updated."),
+      );
+      await reloadCare();
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setCareBusy("");
+    }
+  };
+
+  const createSandbox = async (input: Record<string, unknown>) => {
+    setCareBusy("sandbox-create");
+    setError("");
+    try {
+      await adminApi.createSandbox(input);
+      setNotice(w("Permintaan simulasi dibuat. Tidak ada pengiriman ke fasilitas.", "Simulation request created. Nothing was sent to a facility."));
+      await reloadCare();
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setCareBusy("");
+    }
+  };
+
+  const transitionSandbox = async (id: string, version: number, status: string) => {
+    setCareBusy(`sandbox:${id}`);
+    setError("");
+    try {
+      await adminApi.transitionSandbox(id, version, status);
+      setNotice(w("Status simulasi diperbarui. Tidak ada efek eksternal.", "Simulation status updated. No external effect."));
+      await reloadCare();
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setCareBusy("");
     }
   };
 
@@ -565,6 +656,27 @@ function Console({
             staff={staff}
             busy={revoking}
             onRevoke={(username) => void revokeStaff(username)}
+          />
+        )}
+
+        {canDirectory && (
+          <DirectoryPanel
+            entries={directory}
+            audit={careAudit}
+            busy={careBusy}
+            canWrite={admin.permissions.includes("directory/write")}
+            canVerify={admin.permissions.includes("directory/verify")}
+            onCreate={(input) => void createDirectory(input)}
+            onAction={(id, action, version) => void directoryAction(id, action, version)}
+          />
+        )}
+
+        {canSandbox && (
+          <SandboxPanel
+            requests={sandbox}
+            busy={careBusy}
+            onCreate={(input) => void createSandbox(input)}
+            onTransition={(id, version, status) => void transitionSandbox(id, version, status)}
           />
         )}
 

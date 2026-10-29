@@ -341,3 +341,23 @@ Scope: API and CLI only. The operator UI, directory/research workflows, two-pers
 The first UI slice covers sign-in with password and TOTP, the privacy-safe overview (staff, live sessions, audit count, cache health, database/version), the durable AI spend aggregates, role-gated public-cache invalidation, and the audit trail for roles that hold `security/audit/read`. A 401 returns to the login screen; sign-out clears the UI only after the server revokes the session, so a failed network revocation does not leave a valid HttpOnly cookie behind a screen that claims to be signed out. All copy is ID/EN. The real-auth Docker browser run passed 13/13 checks: login, dashboard, audit, staff list, the self-revocation guard, dark mode, WCAG 2.2 A/AA, 320 px reflow, sign-out and no console errors.
 
 A read-only staff list and guarded revocation are included (role, organisation, status, last sign-in and live sessions; the last active owner and the signed-in account cannot be revoked from the UI). Role editing, two-person approval, directory/research workflows, AI budget editing, WebAuthn/passkeys and IP allowlisting remain open. No user story, journal, prompt or per-user view is added by this UI.
+
+## D-063
+
+2026-10-30 · Owner direction (development/demo) · **Use the Meta Model API with the provided development key while the production path stays the open-weight Model API alternative.** The owner supplied a Meta Model API key and asked for the development demo to use it. Scope and consequences:
+
+1. **Development, test and demo only.** `SELA_LLM_MODE=meta_api` is refused in staging and production by `internal/config` until B-10 clears real-user processing. It uses `https://api.meta.ai/v1`, `muse-spark-1.3`, Bearer auth and `reasoning_effort` (default `minimal`); no Modal key/secret is sent.
+2. **The production recommendation does not change.** ADR-0001/A-1's self-hosted open-weight Meta model on Modal remains the approved production path; this mode is an owner-provided development route, not a claim that Model API is the production choice or that B-7 is resolved for release.
+3. **Honest provenance and cost.** Meta Model API calls are labelled `meta_api` in provenance and the spend ledger, separate from `meta_modal`; the price table adds Muse Spark Standard mode at $1.25/M input and $4.25/M output (observed 2026-10-30). The model is a hosted API, not GPU time.
+4. **Disclosure text updated.** `ai_processing` becomes `ai-meta-2026-10-30.1` and says Meta Model API **or** a Modal server, both US; the onboarding card and About page say the same. Existing grants on the previous version require acceptance of the new version before AI is used.
+5. **Evidence:** a real development listening reply on 2026-10-30 through the running Go app, Meta Model API and the live Claude verifier; no user content is stored for an unsaved room. B-2/B-12 (hackathon tooling eligibility) remain unresolved and no event claim is made.
+
+## D-064
+
+2026-10-30 · Owner direction (development/demo) · **Planned-care demo: a sourced public directory plus an isolated, labelled synthetic sandbox.** To demonstrate the planned-support workflow before any real partner exists, Sela adds migration `0700_care_directory` in the newly reserved 0700–0799 range, the public `/api/v3/care-directory` and `/support/directory`, operator directory editing/review in `/operator`, and fictional sandbox requests.
+
+1. **No real partner, booking or automatic contact.** The demo never emails, posts a webhook, books an appointment or contacts a facility. Public entries show their source and date; the user chooses whether to open an official contact link. A sandbox row is always `synthetic = true` and visibly labelled "Simulasi".
+2. **Real entries use two-person review.** A non-synthetic directory entry can only be verified by a reviewer other than its creator. A clearly synthetic demo entry may be self-verified so a single local operator can demonstrate the flow; production and staging refuse the seed command.
+3. **No private data.** Directory and sandbox tables hold no consumer id, story, prompt, contact detail or appointment. Staff ids are opaque uuid values; care audit is content-free.
+4. **Synthetic rows are environment-scoped.** The public route includes them only in development, test and demo; production returns only sourced real entries. The seed command refuses production and staging.
+5. **Scope:** this is a demo slice of D11, not a real care directory. Professional credential/affiliation verification, freshness automation, real partner onboarding, capsule transfer and booking remain open. No partnership is claimed.

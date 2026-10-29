@@ -8,7 +8,7 @@ import (
 
 // PriceTableVersion names the price table used for cost estimates
 // (observed list prices, ADR-0003 §11; estimates, not measurements).
-const PriceTableVersion = "ai-prices-2026-10-26"
+const PriceTableVersion = "ai-prices-2026-10-30"
 
 // Verification statuses (ADR-0003 §10.1).
 const (
@@ -303,7 +303,8 @@ func peak(t time.Time) bool {
 }
 
 // estimateCost returns an API cost estimate in USD from token counts
-// (cache misses assumed). Meta GPU time and test doubles cost 0 here.
+// (cache misses assumed). Self-hosted Meta GPU time and test doubles cost 0
+// here; Meta Model API tokens use the Standard-mode list prices.
 func estimateCost(role ProviderName, testDouble bool, inferenceGeo string, in, out int, at time.Time) float64 {
 	if testDouble {
 		return 0
@@ -320,6 +321,9 @@ func estimateCost(role ProviderName, testDouble bool, inferenceGeo string, in, o
 		if peak(at) {
 			inPrice, outPrice = 0.30, 1.20
 		}
+	case ProviderMetaAPI:
+		// Muse Spark 1.3 Standard mode, observed 2026-10-30.
+		inPrice, outPrice = 1.25, 4.25
 	default:
 		return 0
 	}
