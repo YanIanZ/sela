@@ -191,16 +191,49 @@ function MenuSheet({
     if (open && !el.open) {
       returnTo.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      el.showModal();
+      // A non-modal panel anchored below the menu button. showModal would
+      // centre it in the viewport and dim the page like a dialog.
+      el.show();
       requestAnimationFrame(() => document.getElementById("menu-help")?.focus());
     } else if (!open && el.open) {
       el.close();
       returnTo.current?.focus();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    const onPointer = (event: PointerEvent) => {
+      const el = ref.current;
+      if (!el || !(event.target instanceof Node)) return;
+      if (el.contains(event.target)) return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest(".s-menu-button")
+      ) {
+        // The button itself toggles; do not close and reopen in one click.
+        return;
+      }
+      onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer, true);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer, true);
+    };
+  }, [onClose, open]);
+
   return (
     <dialog
       ref={ref}
+      id="site-menu"
       className="s-menu-sheet"
       aria-labelledby="menu-title"
       onCancel={(e) => {
@@ -515,7 +548,9 @@ export function AppShell({
             className={buttonClass("quiet", "s-menu-button")}
             aria-label={w("Menu", "Menu")}
             aria-haspopup="dialog"
-            onClick={() => setMenu(true)}
+            aria-expanded={menu}
+            aria-controls="site-menu"
+            onClick={() => setMenu((value) => !value)}
           >
             <Icon name="menu" />
             <span>{w("Menu", "Menu")}</span>

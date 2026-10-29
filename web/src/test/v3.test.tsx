@@ -540,6 +540,32 @@ describe("settings", () => {
   });
 });
 
+describe("shell menu", () => {
+  it("opens as a non-modal panel and closes on Escape or an outside press", async () => {
+    mockApi({}, null);
+    renderPath("/");
+    await screen.findByRole("heading", { level: 1 });
+    const button = screen.getByRole("button", { name: "Menu" });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(button);
+    const dialog = document.querySelector(".s-menu-sheet") as HTMLDialogElement;
+    await waitFor(() => expect(dialog).toHaveAttribute("open"));
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(button).toHaveAttribute("aria-controls", "site-menu");
+    await waitFor(() => expect(document.activeElement?.id).toBe("menu-help"));
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
+    expect(button).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(button);
+    await waitFor(() => expect(dialog).toHaveAttribute("open"));
+    fireEvent.pointerDown(document.body);
+    await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
+  });
+});
+
 describe("accessibility smoke", () => {
   it("has no serious or critical axe findings on the introduction", async () => {
     mockApi({}, null);

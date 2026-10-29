@@ -1,5 +1,34 @@
 import '@testing-library/jest-dom/vitest';
 
+// jsdom implements the <dialog> element but not its imperative API. The
+// shell's menu and the shared dialog use it; this minimal polyfill mirrors
+// the open attribute and the close event.
+if (typeof HTMLDialogElement !== "undefined") {
+  const proto = HTMLDialogElement.prototype as unknown as {
+    show?: () => void;
+    showModal?: () => void;
+    close?: () => void;
+  };
+  if (!proto.show) {
+    proto.show = function (this: HTMLDialogElement) {
+      this.setAttribute("open", "");
+    };
+  }
+  if (!proto.showModal) {
+    proto.showModal = function (this: HTMLDialogElement) {
+      this.setAttribute("open", "");
+      this.setAttribute("data-modal", "");
+    };
+  }
+  if (!proto.close) {
+    proto.close = function (this: HTMLDialogElement) {
+      if (!this.hasAttribute("open")) return;
+      this.removeAttribute("open");
+      this.dispatchEvent(new Event("close"));
+    };
+  }
+}
+
 // jsdom has no layout: the router's scroll-to-top is a no-op in tests.
 window.scrollTo = () => undefined;
 
