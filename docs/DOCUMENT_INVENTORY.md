@@ -16,6 +16,7 @@ Updated: 26 October 2026 (v3 planning documents added; classifications updated a
 | [docs/AI_POLICY.md](AI_POLICY.md) | Current project / v3 and v2 supporting documentation |
 | [docs/API_SPEC.md](API_SPEC.md) | Current project / v2 supporting documentation |
 | [docs/API_SPEC_V3.md](API_SPEC_V3.md) | Current project / v3 API contract (foundation implemented and verified locally, CI passed on draft PR #9; feature sections reserved) |
+| [docs/API_SPEC_ADMIN.md](API_SPEC_ADMIN.md) | Current project / separate operator API v1 (implemented locally 2026-10-30; UI and directory workflows pending) |
 | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | Current project / v3 and v2 supporting documentation |
 | [docs/BACKLOG.md](BACKLOG.md) | Current project / v3 planning document (backlog and milestones) |
 | [docs/BLOCKERS.md](BLOCKERS.md) | Current project / v3 and v2 supporting documentation |

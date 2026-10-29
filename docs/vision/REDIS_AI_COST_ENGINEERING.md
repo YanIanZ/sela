@@ -1,7 +1,7 @@
 # Sela | Redis, Performance & AI Cost Engineering
 
-**Version:** CACHE-0.1 · 29 October 2026  
-**Status:** planned for the Go v3 runtime. Redis **currently exists only in legacy Next.js integration / legacy Compose profile**. This file does not assert Go Redis code, a production Redis cluster, measured savings or live provider billing.
+**Version:** CACHE-0.2 · 30 October 2026
+**Status:** the **Go client, revisioned public cache and durable PostgreSQL spend gate are implemented** (2026-10-30, §11). There is still no production Redis cluster, no measured production saving, no live provider billing and no Redis-backed distributed rate limiter; the local Compose Redis is disposable and non-persistent.
 
 ## 1. Why Redis — and why not everywhere
 
@@ -176,3 +176,18 @@ Set performance thresholds only after baseline and validate realistic tail laten
 - [Redis client-side caching](https://redis.io/docs/latest/develop/clients/client-side-caching/) — tradeoffs of tracking and invalidation; not mandatory for initial Sela Go design.
 - [Redis key expiration](https://redis.io/docs/latest/commands/expire/), [Redis memory management](https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/memory-optimization/).
 - [Historical Sela Redis design](../archive/v1/REDIS.md) and [legacy Go architecture](../ARCHITECTURE.md) for migration context.
+
+## 11. Implemented Go slice (2026-10-30)
+
+Branch `feat/admin-redis-foundation`; local and CI evidence only, no live billing.
+
+- **Go client** (`internal/cache`): `redis://`/`rediss://`, bounded dial/read/write timeout, no retries, keys namespaced `sela:<env>:public:<kind>:<revision>:<id>`. `GetJSON` treats a miss, an outage or a malformed value as "fall back"; `SetJSON` clamps the TTL to the client maximum (10 minutes in the server wiring); errors never fail the request.
+- **Public cache**: `GET /api/v3/help-content` reads and writes the revisioned embedded catalogue (`fixtures.Version`). It holds no user text, token, consent grant or safety result. Operator invalidation deletes only that key and appends an audit event.
+- **Durable budget** (`internal/budget`, migration `0500_ai_spend`): PostgreSQL `ai_spend` stores task, provider, token counts, reserved/actual USD and an open/settled state, never a user id, session id, prompt or reply. `Admit` takes a transaction-scoped advisory lock, sums the UTC month's committed spend (`actual`, or the reservation while open), and inserts the reservation only when it fits. `Settle` records the estimate once; a repeated settlement is a no-op. A failed operation settles at its reservation.
+- **Wiring**: the listening handler admits before `ai.Router.Run` and settles from `Provenance` afterwards. Any admission error fails closed; `budget.ErrExceeded` returns `aiState: "budget_limited"` and makes **zero provider calls** (`TestBudgetDeniesBeforeAnyProviderCall`). A positive cap without a database refuses server start.
+- **Operator visibility**: `/api/admin/v1/overview` adds `aiSpend` (limit, reserve, month start, committed, actual, open reservations, operations) and `aiSpendByTask`. Aggregates only.
+- **Failure properties asserted**: admission is serialized under concurrency (12 workers, at most the cap), a second gate instance on the same database sees the same spend (an outage/restart cannot reset it), and Redis is never consulted for admission. `TestRedisRoundTrip` covers set/get/delete/TTL against a disposable Redis and skips without `SELA_TEST_REDIS_URL`.
+
+A reservation left open by a crash stays committed at its reserve (never released implicitly), so a crash can overcount the month but can never undercount or reset it; a future maintenance command may settle stale reservations after a stated interval. Counter risk: a client that disconnects after a provider call but before settlement is also settled at the reserve by the handler's failure path.
+
+Not implemented: Redis-backed distributed rate limiting or request coalescing, provider-billing reconciliation, measured warm/cold savings, production Redis (HA, TLS, eviction policy, monitoring), budget-change approval workflow and a spend alert. The cost estimates use the existing `ai-prices-2026-10-26` table; Meta GPU time is not attributed. D12 is therefore **implemented in part**, not verified live.

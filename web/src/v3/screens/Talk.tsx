@@ -585,6 +585,11 @@ function RoomPage({ id }: { id: string }) {
           "status",
           w("Balasan AI tidak diizinkan.", "AI replies aren't allowed."),
         );
+      } else if (next.aiState === "budget_limited") {
+        announce(
+          "status",
+          w("Batas anggaran AI bulan ini tercapai.", "This month's AI budget is reached."),
+        );
       } else if (next.aiState === "unavailable" || next.aiState === "rate_limited") {
         announce("status", w("Sela belum bisa membalas sekarang.", "Sela can't reply right now."));
       }
@@ -1069,7 +1074,13 @@ function RoomPage({ id }: { id: string }) {
 
           {!showEnd &&
             !busy &&
-            ["not_consented", "unavailable", "rate_limited", "storage_unavailable"].includes(
+            [
+              "not_consented",
+              "unavailable",
+              "rate_limited",
+              "budget_limited",
+              "storage_unavailable",
+            ].includes(
               room.aiState,
             ) && (
               <div className="s-room-ai-state">
@@ -1090,7 +1101,12 @@ function RoomPage({ id }: { id: string }) {
                           "Batas balasan AI tercapai. Tulisanmu tetap di sini.",
                           "The AI reply limit is reached. Your writing stays here.",
                         )
-                      : w(
+                      : room.aiState === "budget_limited"
+                        ? w(
+                            "Batas anggaran AI bulan ini tercapai. Tulisanmu tetap di sini.",
+                            "This month's AI budget is reached. Your writing stays here.",
+                          )
+                        : w(
                           "Tulisanmu tetap di sini. Coba lagi nanti, atau terus menulis.",
                           "Your writing stays here. Try again later, or keep writing.",
                         )}

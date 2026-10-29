@@ -45,9 +45,29 @@ services:
       - "${SELA_PORT:-8080}:8080"
     env_file:
       - .env.docker-testing
+    environment:
+      # Optional public cache. The Compose stack runs it by default so the
+      # operator cache controls can be exercised locally; production may
+      # leave SELA_REDIS_URL unset and Sela stays fully functional.
+      SELA_REDIS_URL: ${SELA_REDIS_URL:-redis://redis:6379/0}
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Ephemeral public cache only: no volume, no persistence, no personal
+  # content. Redis is never the source of truth for consent, safety or
+  # identity decisions.
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     restart: unless-stopped
 
   # Frontend checks in the version CI uses (.nvmrc: 22). The whole tree is

@@ -45,6 +45,7 @@ External terms (laws, provider terms, event rules) govern legality, eligibility 
 | [Architecture](ARCHITECTURE.md) | Go packages, request path, sessions and sharing |
 | [API contract v2](API_SPEC.md) | `/api/v2` resources, errors, SSE events, limits |
 | [API contract v3](API_SPEC_V3.md) | `/api/v3` foundation (auth, guest, `/me`, consents, audit, export, deletion); reserved sections for later milestones |
+| [Operator API v1](API_SPEC_ADMIN.md) | Separate staff identity, MFA, roles, audit and public-cache controls; implemented locally, UI pending |
 | [Synthetic demo data](DEMO_DATA.md) | Fixtures, practice text, isolation |
 | [AI policy](AI_POLICY.md) | Allowed model work, Meaning Lock, human control, provenance, v3 routing |
 | [Meta integration](META_INTEGRATION.md) | Provider boundary, request parameters, failure behaviour |

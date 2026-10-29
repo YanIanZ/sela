@@ -25,7 +25,10 @@ import (
 	"time"
 
 	"github.com/YanIanZ/sela/internal/account"
+	"github.com/YanIanZ/sela/internal/admin"
 	"github.com/YanIanZ/sela/internal/ai"
+	"github.com/YanIanZ/sela/internal/budget"
+	"github.com/YanIanZ/sela/internal/cache"
 	"github.com/YanIanZ/sela/internal/config"
 	"github.com/YanIanZ/sela/internal/db"
 	"github.com/YanIanZ/sela/internal/fixtures"
@@ -94,6 +97,8 @@ func run() error {
 	// Sela v3 store: PostgreSQL, checked before anything is served.
 	acctCfg := accountConfig(cfg, logger)
 	var accounts *account.Store
+	var adminStore *admin.Store
+	var budgetGate *budget.Gate
 	var dbStatus func(context.Context) (string, string)
 	if cfg.DatabaseURL != "" {
 		pool, err := openDatabase(ctx, cfg)
@@ -117,8 +122,23 @@ func run() error {
 		if err := accounts.RefreshHashDistribution(ctx); err != nil {
 			return fmt.Errorf("database: cannot read the password hash parameters (%s)", db.Classify(err))
 		}
+		if len(cfg.AdminMFAKey) == 32 {
+			adminStore, err = admin.New(pool, admin.Options{Hasher: accounts.Hasher(), MFAKey: cfg.AdminMFAKey, Now: time.Now})
+			if err != nil {
+				return err
+			}
+		}
+		if cfg.AIMonthlyBudgetUSD > 0 {
+			budgetGate, err = budget.New(pool, budget.Options{MonthlyUSD: cfg.AIMonthlyBudgetUSD, ReserveUSD: cfg.AIReserveUSD})
+			if err != nil {
+				return err
+			}
+		}
 		dbStatus = readiness(pool, migs)
 		go runJobs(ctx, accounts, logger)
+	}
+	if cfg.AIMonthlyBudgetUSD > 0 && budgetGate == nil {
+		return errors.New("SELA_AI_MONTHLY_BUDGET_USD requires SELA_DATABASE_URL: refusing to run unmetered")
 	}
 
 	var aiRouter *ai.Router
@@ -132,6 +152,13 @@ func run() error {
 			return e
 		}
 	}
+	pubCache, err := cache.New(cache.Options{URL: cfg.RedisURL, Prefix: "sela:" + cfg.Env, TTL: 10 * time.Minute})
+	if err != nil {
+		return err
+	}
+	if pubCache != nil {
+		defer pubCache.Close()
+	}
 	st := store.NewMemory(store.Options{MaxSessions: cfg.MaxSessions, MaxSessionsPerClient: cfg.MaxSessionsPerClient})
 	svc := journey.New(journey.Config{
 		OpTimeout: cfg.OpTimeout, MaxOpsPerWindow: cfg.MaxOpsPerHour, WarmWindow: cfg.WarmWindow, ColdStartEstimate: cfg.ColdStart, Logger: logger,
@@ -139,6 +166,7 @@ func run() error {
 	handler := httpapi.New(svc, httpapi.Options{
 		PublicOrigin: cfg.PublicOrigin, SecureCookies: cfg.SecureCookies, TrustProxy: cfg.TrustProxy,
 		WebDir: cfg.WebDir, Research: index, Logger: logger, Version: version, MetricsToken: cfg.MetricsToken,
+		Cache: pubCache, Admin: adminStore, Budget: budgetGate,
 		AIRouter: aiRouter, Accounts: accounts, AccountConfig: acctCfg, Database: dbStatus, DatabaseRequired: cfg.RequiresDatabase(),
 		DisableV2Journey: cfg.Store != "memory", HSTS: cfg.Env == config.EnvProduction,
 	})

@@ -604,8 +604,9 @@ func TestEnvironmentMarkerEveryCommand(t *testing.T) {
 	if err := db.CheckEnvironment(ctx, dbtest.NewEmpty(t).Pool, "staging"); err != nil {
 		t.Fatalf("an unmarked database: %v", err)
 	}
-	// The production runner can still revert its own migration.
-	if _, err := prod.DownLast(ctx, 900, ""); err != nil {
+	// The production runner can still revert its own latest migration.
+	migs := db.MustEmbedded()
+	if _, err := prod.DownLast(ctx, migs[len(migs)-1].Version, ""); err != nil {
 		t.Fatal(err)
 	}
 }

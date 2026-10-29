@@ -45,7 +45,7 @@ Existing operational truth: [implementation status](../IMPLEMENTATION_STATUS.md)
 
 ## Operator and performance planes
 
-**Anonymous user** and **authenticated operator** are mutually exclusive trust identities. The operator console manages **public, sourced professional and research catalogs**, operational health and budgets; its users cannot browse private journals. Multi-hospital management is future-contract gated and currently limited to isolated fictional sandbox workflows. **Redis belongs to the Go acceleration/control plane**, never to the private data or safety authority. Existing legacy Next.js admin and Redis are not a verified Go implementation.
+**Anonymous user** and **authenticated operator** are mutually exclusive trust identities. The operator console manages **public, sourced professional and research catalogs**, operational health and budgets; its users cannot browse private journals. Multi-hospital management is future-contract gated and currently limited to isolated fictional sandbox workflows. **Redis belongs to the Go acceleration/control plane**, never to the private data or safety authority. The Go operator API and public cache now exist ([admin API](../API_SPEC_ADMIN.md)); the legacy Next.js admin and Redis are retired and are not reused. The operator UI and directory/research workflows remain target design.
 
 [Admin requirements](ADMIN_CONSOLE.md) · [Planned help workflow](ADMIN_CARE_OPERATIONS.md) · [Redis/cost constraints](REDIS_AI_COST_ENGINEERING.md)
 

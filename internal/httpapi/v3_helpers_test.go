@@ -61,7 +61,7 @@ type v3env struct {
 type v3opt struct {
 	secure  bool
 	mutateC func(*account.Config)
-	mutateO func(*httpapi.Options)
+	mutateO func(*v3env, *httpapi.Options)
 	noStore bool
 }
 
@@ -93,7 +93,7 @@ func newV3(t *testing.T, o v3opt) *v3env {
 	}
 	e.opt = httpapi.Options{SecureCookies: o.secure, TrustProxy: true, Accounts: e.store, AccountConfig: e.cfg, Clock: e.clock.Now}
 	if o.mutateO != nil {
-		o.mutateO(&e.opt)
+		o.mutateO(e, &e.opt)
 	}
 	e.start()
 	return e

@@ -69,6 +69,12 @@ type Config struct {
 	// MetricsToken, when set, enables GET /api/v2/metrics for requests with
 	// "Authorization: Bearer <MetricsToken>". Never logged.
 	MetricsToken string
+	// RedisURL enables the optional public cache/control plane. Empty leaves
+	// Sela fully functional without Redis.
+	RedisURL string
+	// AdminMFAKey decrypts staff TOTP secrets (SELA_ADMIN_MFA_KEY, base64 of
+	// exactly 32 bytes). Empty disables the operator console.
+	AdminMFAKey []byte
 
 	LLMMode        string // disabled | modal | test_double
 	LLMBaseURL     string
@@ -83,6 +89,11 @@ type Config struct {
 	WarmWindow     time.Duration
 	ColdStart      time.Duration
 	MaxOpsPerHour  int
+	// AIMonthlyBudgetUSD caps estimated API spend per UTC month (D12);
+	// 0 disables the gate. AIReserveUSD is the worst-case reservation for
+	// one operation and must be positive when the cap is enabled.
+	AIMonthlyBudgetUSD float64
+	AIReserveUSD       float64
 
 	// Store is the v2 journey store: "memory" (development, test, demo
 	// only) or "disabled" (v2 journey routes not served).
@@ -153,6 +164,18 @@ func envInt(key string, def, min, max int) (int, error) {
 	return n, nil
 }
 
+func envFloat(key string, def, min, max float64) (float64, error) {
+	v := env(key, "")
+	if v == "" {
+		return def, nil
+	}
+	n, err := strconv.ParseFloat(v, 64)
+	if err != nil || n < min || n > max {
+		return 0, fmt.Errorf("%s: must be a number in [%g, %g]", key, min, max)
+	}
+	return n, nil
+}
+
 func envDuration(key string, def, min, max time.Duration) (time.Duration, error) {
 	v := env(key, "")
 	if v == "" {
@@ -215,6 +238,22 @@ func LoadMode(mode Mode) (Config, error) {
 		add(fmt.Errorf("SELA_METRICS_TOKEN: must be at least %d characters without whitespace", minMetricsToken))
 	}
 
+	c.RedisURL = env("SELA_REDIS_URL", "")
+	if raw := env("SELA_ADMIN_MFA_KEY", ""); raw != "" {
+		key, err := base64.StdEncoding.DecodeString(raw)
+		if err != nil || len(key) != 32 {
+			add(errors.New("SELA_ADMIN_MFA_KEY must be base64 of exactly 32 bytes"))
+		} else {
+			c.AdminMFAKey = key
+		}
+	}
+	c.AIMonthlyBudgetUSD, err = envFloat("SELA_AI_MONTHLY_BUDGET_USD", 0, 0, 1_000_000)
+	add(err)
+	c.AIReserveUSD, err = envFloat("SELA_AI_RESERVE_USD", 0.25, 0, 10_000)
+	add(err)
+	if c.AIMonthlyBudgetUSD > 0 && c.AIReserveUSD <= 0 {
+		add(errors.New("SELA_AI_RESERVE_USD must be positive when SELA_AI_MONTHLY_BUDGET_USD is enabled"))
+	}
 	c.LLMMode = env("SELA_LLM_MODE", "disabled")
 	c.LLMBaseURL = env("SELA_LLM_BASE_URL", "")
 	c.LLMAPIKey = env("SELA_LLM_API_KEY", "")

@@ -234,16 +234,16 @@ func TestMigrateCommands(t *testing.T) {
 	if code, out, stderr := runMain(t, env, "migrate up --to 0001"); code != 0 || !strings.Contains(out, "applied 0001_foundation") {
 		t.Fatalf("up --to: %d\n%s%s", code, out, stderr)
 	}
-	if code, out, _ := runMain(t, env, "migrate up"); code != 0 || !strings.Contains(out, "applied 0900_ops_canary") {
+	if code, out, _ := runMain(t, env, "migrate up"); code != 0 || !strings.Contains(out, "applied 0910_admin") {
 		t.Fatalf("up: %d\n%s", code, out)
 	}
 	if code, out, _ := runMain(t, env, "migrate status"); code != 0 || !strings.Contains(out, "result: current") || !strings.Contains(out, "environment marker: test") {
 		t.Fatalf("status: %d\n%s", code, out)
 	}
-	if code, _, stderr := runMain(t, env, "migrate down-last --confirm 0001"); code != 1 || !strings.Contains(stderr, "0900_ops_canary") {
+	if code, _, stderr := runMain(t, env, "migrate down-last --confirm 0001"); code != 1 || !strings.Contains(stderr, "0910_admin") {
 		t.Fatalf("down-last with the wrong confirm: %d %s", code, stderr)
 	}
-	if code, out, _ := runMain(t, env, "migrate down-last --confirm 0900"); code != 0 || !strings.Contains(out, "reverted 0900_ops_canary") {
+	if code, out, _ := runMain(t, env, "migrate down-last --confirm 0910"); code != 0 || !strings.Contains(out, "reverted 0910_admin") {
 		t.Fatalf("down-last: %d\n%s", code, out)
 	}
 	if code, _, _ := runMain(t, env, "migrate status"); code != 3 {

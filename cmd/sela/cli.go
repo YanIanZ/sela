@@ -44,6 +44,8 @@ const usage = `usage:
   sela keys rewrap [--batch 500]         re-wrap every DEK with the current KEK
   sela restore reconcile [--dry-run]     delete restored users whose key is destroyed or missing
   sela backup check --content FILE --keys FILE
+  sela admin create --username NAME --role ROLE [--org ORG]   (password on stdin)
+  sela admin revoke --username NAME [--reason TEXT]
   sela ops canary write|check`
 
 // dispatch runs the server or one operator subcommand and returns the
@@ -63,6 +65,8 @@ func dispatch(args []string, stdout, stderr io.Writer) (int, error) {
 		return cmdRestore(ctx, args[1:], stdout)
 	case "backup":
 		return cmdBackup(args[1:], stdout)
+	case "admin":
+		return cmdAdmin(ctx, args[1:], os.Stdin, stdout)
 	case "ops":
 		return cmdOps(ctx, args[1:], stdout)
 	case "help", "-h", "--help":

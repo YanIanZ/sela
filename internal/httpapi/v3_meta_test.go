@@ -201,7 +201,7 @@ func TestReadyReportsDatabase(t *testing.T) {
 		{"optional and unavailable", "unavailable", "not_configured", false, 200, "ready"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			e := newV3(t, v3opt{noStore: true, mutateO: func(o *httpapi.Options) {
+			e := newV3(t, v3opt{noStore: true, mutateO: func(_ *v3env, o *httpapi.Options) {
 				o.Database = func(context.Context) (string, string) { return tc.database, tc.schema }
 				o.DatabaseRequired = tc.required
 			}})
@@ -232,7 +232,7 @@ func TestReadyReportsDatabase(t *testing.T) {
 		t.Fatalf("health changed: %v", h)
 	}
 	// Staging and production do not serve the v2 journey store.
-	off := newV3(t, v3opt{noStore: true, mutateO: func(o *httpapi.Options) { o.DisableV2Journey = true }})
+	off := newV3(t, v3opt{noStore: true, mutateO: func(_ *v3env, o *httpapi.Options) { o.DisableV2Journey = true }})
 	if d := off.client().call("GET", "/api/v2/ready", nil).data(); d["store"] != "disabled" {
 		t.Fatalf("store: %v", d["store"])
 	}
