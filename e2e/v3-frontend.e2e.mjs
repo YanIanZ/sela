@@ -224,7 +224,7 @@ try {
   await audit(page, "display high contrast mobile 320 ID");
 
   await page.evaluate(() => { const p = JSON.parse(localStorage.getItem('sela.prefs') ?? '{}'); Object.assign(p,{theme:'light',contrast:'system',textScale:'100',spacing:'normal'});localStorage.setItem('sela.prefs',JSON.stringify(p)); });
-  const featureOut = join(ROOT, '.impeccable/review/continuity');
+  const featureOut = join(OUT, "continuity");
   mkdirSync(featureOut, { recursive: true });
   const snap = async (name) => { await page.evaluate(() => window.scrollTo(0,0)); await page.screenshot({path:join(featureOut,name+'.png'),fullPage:true}); await audit(page,name); };
   await page.setViewportSize({width:1440,height:900});

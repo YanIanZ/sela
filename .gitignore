@@ -101,3 +101,6 @@ __pycache__/
 
 # Ultracode run artifacts are local only.
 .workflow/
+
+# Impeccable design artifacts are local review material, never published.
+.impeccable/
