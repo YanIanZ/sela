@@ -40,7 +40,6 @@ coverage/
 playwright-report/
 test-results/
 blob-report/
-scripts/testbench/reports/
 
 # Local databases and dumps
 *.sqlite
@@ -104,3 +103,8 @@ __pycache__/
 
 # Impeccable design artifacts are local review material, never published.
 .impeccable/
+
+# Local Docker and testbench tooling; only docker-compose.yml is published.
+docker/
+scripts/testbench/
+docker-compose.testbench.yml

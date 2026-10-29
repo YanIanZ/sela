@@ -1,5 +1,5 @@
 // SCRUM-47: compare metadata from two live dataset runs, paired by case id.
-// Usage: node --experimental-strip-types scripts/testbench/compareCompleteness.mjs before.json after.json
+// Usage: node --experimental-strip-types scripts/carebridge/compareCompleteness.mjs before.json after.json
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { percentile } from './datasetLib.mjs';

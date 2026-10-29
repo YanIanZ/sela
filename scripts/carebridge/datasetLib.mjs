@@ -1,4 +1,6 @@
-// Pure helpers for scripts/testbench/dataset.mjs (SCRUM-43 / SCRUM-44 baseline).
+// Pure helpers for the local testbench dataset runner
+// (scripts/testbench/dataset.mjs, untracked) and the CareBridge tests
+// (SCRUM-43 / SCRUM-44 baseline).
 // No network, no I/O besides loadDataset, so tests/carebridge/datasetSchema.test.mjs
 // can exercise the metric definitions offline.
 
