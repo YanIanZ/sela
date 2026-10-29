@@ -189,7 +189,7 @@ func matchAll(c *shape, sentences []span) []hit {
 				}
 				ctx := chunk
 				if p.wide {
-					ctx = text[sent.start:min(len(text), sent.end+checkWindow)]
+					ctx = text[sent.start:min(len(text), sent.end+restWindow)]
 				}
 				add := func(start, end int, third, marked bool) bool {
 					hits = append(hits, hit{i, span{sent.start + start, sent.start + end}, third, marked})
@@ -413,7 +413,7 @@ func contextUnits(c *shape) []unit {
 		if mayHoldWide(t[start:end]) {
 			// A wide pattern's check reads past the unit (see pattern.wide).
 			key = append(key, 0, 'w')
-			key = append(key, t[end:min(len(t), end+checkWindow)]...)
+			key = append(key, t[end:min(len(t), end+restWindow)]...)
 		}
 		if mayHoldDenial(t[start:end]) {
 			// A denial's disposition reads the rest of the message past the

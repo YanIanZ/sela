@@ -37,11 +37,12 @@ type pattern struct {
 	// sentence, unless the pattern is wide.
 	reject func(s string, start, end int) bool
 	// wide patterns are matched per sentence like the others, but their
-	// checks receive the sentence followed by up to checkWindow bytes of the
+	// checks receive the sentence followed by up to restWindow bytes of the
 	// text after it, so that a check can read an elliptical continuation in
 	// the next sentence ("I hope I don't wake up late. or ever"; see
-	// wakeRoutine). contextUnits keys a unit that may hold a wide match with
-	// the text that follows it.
+	// wakeRoutine) or a no-return tail far from a brief-farewell phrase.
+	// contextUnits keys a unit that may hold a wide match with the text that
+	// follows it.
 	wide bool
 	// third, when set, reports that an accepted match names someone else's
 	// act ("bom bunuh diri", "suicide bomber"): it is attributed to a third

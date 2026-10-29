@@ -2119,16 +2119,16 @@ func stopLivingManner(w []string) bool {
 // "tidur sejenak") unless the rest of the message says the person is not
 // coming back: an explicit not-coming-back phrase or a forever word, even
 // across a sentence break ("aku pergi sebentar. Tidak akan kembali",
-// "aku mau tidur sebentar, selamanya"). A "lagi" ("sebentar lagi" is
-// "soon") or "lama" ("tidak akan lama" is "won't be long") anywhere in the
-// rest keeps it a short break, and so does the absence of any farewell
-// tail ("aku pergi sebentar ke toilet").
+// "aku mau tidur sebentar, selamanya"). A no-return phrase always wins over
+// a short-break phrase: "tidak akan lama, tapi tidak akan kembali" is a
+// farewell, not a short absence. A short-break phrase alone ("sebentar
+// lagi", "tidak akan lama") keeps the match benign, and so does the absence
+// of any farewell tail ("aku pergi sebentar ke toilet").
 func briefFarewell(s string, _, end int) bool {
-	rest := restAfter(s, end)
-	if briefStayRe.MatchString(rest) {
-		return true
-	}
-	return !noReturnRe.MatchString(rest)
+	// A no-return phrase always wins over a short-break phrase. Otherwise
+	// "tidak akan lama, tapi tidak akan kembali" would stay benign because
+	// the first listed phrase matched (review finding B).
+	return !noReturnRe.MatchString(restAfter(s, end))
 }
 
 var (
@@ -2136,11 +2136,10 @@ var (
 	// briefBreak).
 	briefTimes = setOf("sebentar bentar sejenak sesaat")
 	// noReturnRe after a brief leaving or rest word says the person is not
-	// coming back (see briefFarewell).
-	noReturnRe = regexp.MustCompile(`\b(?:tidak|tak|nggak|ngga|gak|ga|gk|enggak|engga|tdk|takkan|tidakkan)\s*(?:akan\s*)?(?:kembali|balik|pulang)\b|\b(?:nggak|ngga|gak|ga|gk|tidak|tak)\s*bakal\s*(?:kembali|balik|pulang)\b|\bkembali\s*(?:lagi|lg)\b|\bga(?:k|)\s*bangun\s*lagi\b|\b(?:selamanya|selama-lamanya|abadi)\b`)
-	// briefStayRe after a brief leaving or rest word keeps it a short
-	// break: "sebentar lagi" is soon and "tidak akan lama" won't be long.
-	briefStayRe = regexp.MustCompile(`\b(?:sebentar|bentar|sejenak)\s*lagi\b|\b(?:tidak|tak|nggak|ngga|gak|ga|gk|enggak|engga)\s*(?:akan\s*)?lama\b`)
+	// coming back (see briefFarewell). "kembali lagi" is a positive return,
+	// not a no-return phrase; negated forms ("tidak akan kembali lagi") are
+	// already covered by the first alternative (review finding A).
+	noReturnRe = regexp.MustCompile(`\b(?:tidak|tak|nggak|ngga|gak|ga|gk|enggak|engga|tdk|takkan|tidakkan)\s*(?:akan\s*)?(?:kembali|balik|pulang)\b|\b(?:nggak|ngga|gak|ga|gk|tidak|tak)\s*bakal\s*(?:kembali|balik|pulang)\b|\bga(?:k|)\s*bangun\s*lagi\b|\b(?:selamanya|selama-lamanya|abadi)\b`)
 	// foreverRe later in the sentence makes "pergi dari dunia ini
 	// sebentar" more than a short break (see briefBreak).
 	foreverRe = regexp.MustCompile(`\b(?:selamanya|selama-lamanya|abadi|forever|for\s+good)\b`)

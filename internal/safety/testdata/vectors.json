@@ -2687,5 +2687,9 @@
   {"text": "aku pergi sebentar, tidak akan lama", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "tidak akan lama is won't be long, not a farewell"},
   {"text": "aku mau tidur sebentar, nanti bangun lagi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "waking again is a nap"},
   {"text": "I'm not suicidal, just need a break. See you tomorrow", "want": "none", "langs": ["en"], "tags": ["denial"], "source": "new", "note": "a benign new sentence keeps the denial exempt"},
-  {"text": "I'm not suicidal, just need my meds", "want": "elevated", "langs": ["en"], "tags": ["denial"], "source": "new", "note": "a listed benign object stays a hedge, not a void"}
+  {"text": "I'm not suicidal, just need my meds", "want": "elevated", "langs": ["en"], "tags": ["denial"], "source": "new", "note": "a listed benign object stays a hedge, not a void"},
+  {"text": "aku pergi sebentar, nanti kembali lagi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding A: kembali lagi is a positive return, not a no-return phrase; the brief leaving stays a short break"},
+  {"text": "aku pergi sebentar, nanti aku kembali lagi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding A with an explicit subject: kembali lagi is still a positive return"},
+  {"text": "aku pergi sebentar, tidak akan lama, tapi tidak akan kembali", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding B: a no-return phrase wins over tidak akan lama, even after tapi"},
+  {"text": "aku pergi sebentar. sebentar lagi tidak akan kembali", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding B across a sentence break: sebentar lagi does not hide the later no-return phrase"}
 ]

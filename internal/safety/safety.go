@@ -37,9 +37,10 @@
 // markers are written as post-match functions documented on each rule (most
 // of them in checks.go). Rules run per sentence ('.', '!', '?'), which finds
 // exactly what a whole-text search finds, behind a literal prefilter derived
-// from each expression. The checks of a wide pattern also read up to 120
-// bytes of the text after its sentence, for an elliptical continuation ("I
-// hope I don't wake up late. or ever").
+// from each expression. The checks of a wide pattern also read up to
+// restWindow bytes of the text after its sentence, for an elliptical
+// continuation ("I hope I don't wake up late. or ever") and for a no-return
+// tail far from a brief-farewell phrase.
 //
 // Assess runs in time linear in the length of the input. A long sentence
 // (768 bytes or more, such as an unpunctuated voice transcript) is matched

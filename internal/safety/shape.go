@@ -677,20 +677,29 @@ func sentenceAfter(t string, i int) string {
 	return wordPrefix(t[i:], checkWindow)
 }
 
-// restAfter returns the rest of t after offset i, at most checkWindow
-// bytes and cut at a word boundary, WITHOUT stopping at '.', '!', '?' or a
-// newline. A denial, idiom or brief-break exemption must be weighed
-// against everything the person wrote afterwards: a method, threat, later
-// act or absence that follows in a NEW sentence still takes the exemption
-// back ("I'm not suicidal, just need a break... with the pills"; "aku gak
-// mau bunuh diri, cuma capek. Besok aku lakuin"), exactly as the same tail
-// after a comma already does. Truncating at the separator hid those tails
-// (ruleset -5 blocker: 91 inputs routed none).
+// restAfter returns the rest of t after offset i, at most restWindow bytes
+// and cut at a word boundary, WITHOUT stopping at '.', '!', '?' or a
+// newline. A denial, idiom or brief-break exemption must be weighed against
+// what the person wrote afterwards: a method, threat, later act or absence
+// that follows in a NEW sentence still takes the exemption back ("I'm not
+// suicidal, just need a break... with the pills"; "aku gak mau bunuh diri,
+// cuma capek. Besok aku lakuin"), exactly as the same tail after a comma
+// already does. Truncating at the separator hid those tails (ruleset -5
+// blocker: 91 inputs routed none).
+//
+// restWindow is deliberately larger than checkWindow: the independent
+// review measured a no-return tail 119, 120, 121 and 240 bytes after the
+// brief phrase, and a 120-byte window cut the tail at a word boundary
+// before the pattern could see it. The window stays bounded so a pathological
+// message with many exemptions remains linear; 512 bytes covers the tested
+// boundary with room for the longest tail phrase.
+const restWindow = 512
+
 func restAfter(t string, i int) string {
 	if i < 0 || i >= len(t) {
 		return ""
 	}
-	return wordPrefix(t[i:], checkWindow)
+	return wordPrefix(t[i:], restWindow)
 }
 
 // wordPrefix returns s cut to at most n bytes at a word boundary.

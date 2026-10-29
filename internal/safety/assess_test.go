@@ -357,6 +357,9 @@ func adversarialInputs() map[string]string {
 		"sh-run":     repeat("sh "),
 		"sh-fused":   repeat("sh"),
 		"kms-fused":  repeat("kmsx"),
+		// Review finding C: the brief-farewell rule reads a 512-byte
+		// post-exemption window; keep many repetitions linear.
+		"brief-farewell": repeat("aku pergi sebentar, "),
 	}
 }
 
@@ -472,6 +475,7 @@ func TestLinearTime(t *testing.T) {
 		// widened its window to the whole word (review finding).
 		"sh-fused": "sh", "shx-fused": "shx", "kms-fused": "kmsx",
 		"denial-later": "I'm not suicidal just need a break, ", "denial-act": "I'm not suicidal, I promise ",
+		"brief-farewell": "aku pergi sebentar, ", "brief-farewell-dot": "aku pergi sebentar. ",
 	}
 	fastest := func(in string) time.Duration {
 		best := time.Duration(1<<63 - 1)
