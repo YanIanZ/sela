@@ -241,6 +241,7 @@ type ProviderName string
 // Providers.
 const (
 	ProviderMeta       ProviderName = "meta_modal"
+	ProviderMetaAPI    ProviderName = "meta_api"
 	ProviderDeepSeek   ProviderName = "deepseek"
 	ProviderAnthropic  ProviderName = "anthropic"
 	ProviderTestDouble ProviderName = "test_double"

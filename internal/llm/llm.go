@@ -20,12 +20,14 @@ import (
 	"time"
 )
 
-// Mode identifies what is behind the provider. Only ModeModal can produce
-// live_meta provenance.
+// Mode identifies what is behind the provider. ModeModal (self-hosted vLLM
+// on Modal) and ModeMeta (Meta Model API) can both produce live_meta
+// provenance; ModeTestDouble never can.
 type Mode string
 
 const (
 	ModeModal      Mode = "modal"
+	ModeMeta       Mode = "meta_api"
 	ModeTestDouble Mode = "test_double"
 	ModeDisabled   Mode = "disabled"
 )

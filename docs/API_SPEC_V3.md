@@ -348,6 +348,12 @@ Weekly reflection is computed in the browser from original creation dates/check-
 a reflection is saved only after permission as an ordinary encrypted note.
 
 
+## 6.10 Planned-care directory (2026-10-30 local implementation)
+
+`GET /api/v3/care-directory?q=&kind=&city=` is public and returns only entries with `status = "verified"` whose `reverifyAt` is null or in the future. `kind` is `organization`, `facility` or `practitioner`; `q` searches the name, description and source publisher; `city` is an optional manually typed filter. The API never reads a browser location.
+
+Each entry carries `{id, kind, name, city, description, contactUrl, sourceUrl, sourcePublisher, sourceAccessedAt, status, synthetic, version, verifiedAt, reverifyAt, createdAt, updatedAt}`. There is no user id, appointment, availability, referral or contact action. In development, test and demo, clearly synthetic demo entries are included and marked `synthetic: true`; staging and production return only sourced real entries. A stale or unpublished entry is not returned. The page says that Sela does not contact a provider and does not claim a partnership.
+
 ## 7. Guest and account differences (foundation)
 
 | Capability | Guest | Account |
@@ -376,3 +382,4 @@ Each milestone adds its routes here, with bodies, errors, limits, exporter secti
 | P4 Recipient (separate principal, cookie `__Secure-sela_recipient`, `Path=/api/v3/recipient`, one share each) | `/api/v3/recipient` | 0400–0499 |
 | P5 AI routing records and provider consents | `/api/v3/ai` | 0500–0599 |
 | P6 Reading and support content | `/api/v3/reading` | 0600–0699 |
+| Planned care (directory and synthetic sandbox) | `/api/v3/care-directory` | 0700–0799 |

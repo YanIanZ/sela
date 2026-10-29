@@ -895,8 +895,8 @@ function AIStep({
         <>
           {meta &&
             card(meta, {
-              id: "Balasan AI · Meta, diproses di Modal (Amerika Serikat)",
-              en: "AI replies · Meta, processed on Modal (United States)",
+              id: "Balasan AI · Meta (Amerika Serikat)",
+              en: "AI replies · Meta (United States)",
             })}
           {anthropic &&
             card(anthropic, {

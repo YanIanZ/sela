@@ -10,7 +10,7 @@ func clean(t *testing.T) {
 	t.Helper()
 	for _, k := range []string{"SELA_ENV", "SELA_ADDR", "SELA_WEB_DIR", "SELA_PUBLIC_ORIGIN", "SELA_RESEARCH_KB", "SELA_LOG_LEVEL",
 		"SELA_SECURE_COOKIES", "SELA_TRUST_PROXY", "SELA_MAX_SESSIONS", "SELA_LLM_MODE", "SELA_LLM_BASE_URL", "SELA_LLM_API_KEY",
-		"SELA_MODAL_KEY", "SELA_MODAL_SECRET", "SELA_LLM_SERVED_MODEL", "SELA_LLM_MODEL_ID", "SELA_LLM_MODEL_REVISION",
+		"SELA_MODAL_KEY", "SELA_MODAL_SECRET", "SELA_LLM_SERVED_MODEL", "SELA_LLM_MODEL_ID", "SELA_LLM_MODEL_REVISION", "SELA_LLM_REASONING_EFFORT",
 		"SELA_LLM_CONCURRENCY", "SELA_LLM_OP_TIMEOUT", "SELA_LLM_WARM_WINDOW", "SELA_LLM_COLD_START_ESTIMATE",
 		"SELA_MAX_AI_OPS_PER_SESSION", "SELA_ALLOW_TEST_DOUBLE", "SELA_METRICS_TOKEN", "SELA_MAX_SESSIONS_PER_CLIENT"} {
 		t.Setenv(k, "")
@@ -152,5 +152,29 @@ func TestMetricsTokenIsOptionalStrongAndNeverPrinted(t *testing.T) {
 	}
 	if s := c.String(); strings.Contains(s, token) || !strings.Contains(s, "metrics=true") {
 		t.Fatalf("String(): %s", s)
+	}
+}
+
+func TestMetaAPIModeProvidesLiveDevelopmentDefaults(t *testing.T) {
+	clean(t)
+	t.Setenv("SELA_ENV", "development")
+	t.Setenv("SELA_LLM_MODE", "meta_api")
+	t.Setenv("SELA_LLM_API_KEY", "test-only-key")
+	t.Setenv("SELA_LLM_SERVED_MODEL", "muse-spark-1.3")
+	t.Setenv("SELA_LLM_MODEL_ID", "muse-spark-1.3")
+	cfg, err := LoadMode(ModeServer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.LLMBaseURL != "https://api.meta.ai/v1" || cfg.ModelRevision != "muse-spark-1.3" || cfg.LLMReasoningEffort != "minimal" {
+		t.Fatalf("meta config = %+v", cfg)
+	}
+
+	// Real-user production stays closed until B-10.
+	t.Setenv("SELA_ENV", "production")
+	production(t)
+	t.Setenv("SELA_LLM_MODE", "meta_api")
+	if _, err := LoadMode(ModeServer); err == nil || !strings.Contains(err.Error(), "limited to development") {
+		t.Fatalf("production meta_api: %v", err)
 	}
 }

@@ -31,6 +31,22 @@ Status: **adapter and Modal serving app implemented; live deployment not verifie
   - It needs the `ai_processing` consent, with a plain-language disclosure of provider, location and purpose (ADR-0003 §8).
   - Data is minimised as in ADR-0003 §9: only the needed segments, contact details and private names redacted, no account identifiers.
 
+## Meta Model API (development and demo, D-063)
+
+The development demo can use Meta's hosted Model API instead of self-hosted vLLM on Modal:
+
+- `SELA_LLM_MODE=meta_api`
+- `SELA_LLM_BASE_URL=https://api.meta.ai/v1`
+- `SELA_LLM_API_KEY` from the Meta developer dashboard (Bearer token; never committed)
+- `SELA_LLM_SERVED_MODEL=muse-spark-1.3`
+- `SELA_LLM_MODEL_ID=muse-spark-1.3`
+- `SELA_LLM_MODEL_REVISION=muse-spark-1.3`
+- `SELA_LLM_REASONING_EFFORT=minimal` (`low`, `medium`, `high`, `xhigh` also accepted; `none` is rejected by Muse Spark)
+
+The client uses the OpenAI-compatible `POST /v1/chat/completions` stream, omits the vLLM-only `chat_template_kwargs` and `top_k`, sends `reasoning_effort`, and accepts `response_format: json_schema`. Structured output is always schema-constrained; Go validation remains the final guarantee. Health is checked through `/v1/models` because the hosted API has no `/health` document. The provenance provider is `meta_api`, separate from `meta_modal`; the spend ledger prices Muse Spark Standard mode at $1.25/M input and $4.25/M output (2026-10-30).
+
+This mode is refused in staging and production until B-10; the open-weight Meta model on Modal remains the production path in ADR-0001. The development key is not evidence for the hackathon's tooling eligibility (B-2/B-12).
+
 ## What runs where (implemented)
 
 - **Model:** `meta-models/Muse-Glimmer-30B` (Meta, Apache-2.0, open weights), revision `cec94fcfd6512f2cfe708138c32533b346ea4f69`, served by vLLM 0.32.0 on a Modal GPU container (`modal/sela_llm.py`) as `sela-glimmer-cec94fc`. The pin was still valid on 2026-10-26 (HF `sha` unchanged, lastModified 2026-10-22).

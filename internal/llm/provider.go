@@ -63,6 +63,10 @@ type Config struct {
 	// Redirects are never followed, so credentials cannot leak to another
 	// host; a Timeout on it would cut streams and should be left zero.
 	HTTPClient *http.Client
+	// ReasoningEffort is the Meta Model API reasoning_effort value
+	// (minimal, low, medium, high or xhigh). It applies only in ModeMeta;
+	// Muse Spark rejects "none". Empty defaults to minimal.
+	ReasoningEffort string
 	// Observer, when set, receives one metadata-only Event per Complete
 	// call. It is called synchronously and possibly concurrently.
 	Observer Observer
@@ -74,9 +78,17 @@ func New(cfg Config) (Provider, error) {
 	switch cfg.Mode {
 	case ModeDisabled:
 		return Disabled(), nil
-	case ModeModal, ModeTestDouble:
+	case ModeModal, ModeMeta, ModeTestDouble:
 	default:
-		return nil, errors.New("llm: invalid config: mode must be modal, test_double or disabled")
+		return nil, errors.New("llm: invalid config: mode must be modal, meta_api, test_double or disabled")
+	}
+	if cfg.Mode == ModeMeta {
+		if cfg.ModelID != "" && cfg.Revision == "" {
+			cfg.Revision = cfg.ModelID
+		}
+		if cfg.ReasoningEffort == "" {
+			cfg.ReasoningEffort = "minimal"
+		}
 	}
 	if cfg.Mode == ModeTestDouble {
 		if cfg.ModelID == "" {
@@ -103,6 +115,12 @@ func New(cfg Config) (Provider, error) {
 		cfg.MaxOutputBytes = DefaultMaxOutputBytes
 	}
 	root := strings.TrimRight(base.String(), "/")
+	// Meta Model API documents its base URL as https://api.meta.ai/v1;
+	// this client appends /v1/chat/completions itself. Accept the documented
+	// form without producing /v1/v1/...
+	if cfg.Mode == ModeMeta {
+		root = strings.TrimSuffix(root, "/v1")
+	}
 	return &client{
 		cfg:       cfg,
 		hc:        httpClient(cfg.HTTPClient),
@@ -129,6 +147,8 @@ func validate(cfg Config) (*url.URL, error) {
 		add("BaseURL must not contain credentials, a query or a fragment")
 	case cfg.Mode == ModeModal && base.Scheme != "https":
 		add("BaseURL must use https in modal mode")
+	case cfg.Mode == ModeMeta && (base.Scheme != "https" || !strings.EqualFold(base.Hostname(), "api.meta.ai")):
+		add("BaseURL must be https://api.meta.ai/v1 in meta_api mode")
 	case cfg.Mode == ModeTestDouble && base.Scheme == "http" && !isLoopback(base.Hostname()):
 		add("BaseURL may use http only for a loopback host in test_double mode")
 	}
@@ -145,6 +165,22 @@ func validate(cfg Config) (*url.URL, error) {
 		}
 		if cfg.ServedModel == TestDoubleServedModel {
 			add("ServedModel must not be the test-double name in modal mode")
+		}
+	case ModeMeta:
+		for _, f := range []struct{ name, value string }{
+			{"APIKey", cfg.APIKey}, {"ServedModel", cfg.ServedModel}, {"ModelID", cfg.ModelID},
+		} {
+			if strings.TrimSpace(f.value) == "" {
+				add("%s is required in meta_api mode", f.name)
+			}
+		}
+		if cfg.ServedModel == TestDoubleServedModel {
+			add("ServedModel must not be the test-double name in meta_api mode")
+		}
+		switch cfg.ReasoningEffort {
+		case "minimal", "low", "medium", "high", "xhigh":
+		default:
+			add("ReasoningEffort must be minimal, low, medium, high or xhigh in meta_api mode")
 		}
 	case ModeTestDouble:
 		if cfg.ServedModel != TestDoubleServedModel {

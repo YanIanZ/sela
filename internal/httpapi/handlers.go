@@ -72,8 +72,9 @@ func (s *Server) routes() {
 
 	// Sela v3: accounts, guests, sessions, consents and the signed-in user.
 	s.v3Routes()
-	// Separate operator identity, audit and cache controls.
+	// Separate operator identity, audit, cache and planned-care controls.
 	s.adminRoutes()
+	s.adminCareRoutes()
 
 	m.HandleFunc("/api/", s.apiFallback)
 	m.Handle("/", s.static())

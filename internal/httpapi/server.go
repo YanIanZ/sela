@@ -28,6 +28,7 @@ import (
 	"github.com/YanIanZ/sela/internal/ai"
 	"github.com/YanIanZ/sela/internal/budget"
 	"github.com/YanIanZ/sela/internal/cache"
+	"github.com/YanIanZ/sela/internal/care"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/research"
 )
@@ -79,6 +80,9 @@ type Options struct {
 	// Budget admits and settles paid AI operations against a durable
 	// monthly cap. Nil or disabled keeps the local/test path unmetered.
 	Budget BudgetGate
+	// Care is the public planned-care directory and synthetic sandbox. Nil
+	// disables those routes.
+	Care *care.Store
 
 	// Accounts is the /api/v3 store. Nil (no database configured, a
 	// development setup) makes every /api/v3 route except the policies and

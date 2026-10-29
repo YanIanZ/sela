@@ -76,19 +76,22 @@ type Config struct {
 	// exactly 32 bytes). Empty disables the operator console.
 	AdminMFAKey []byte
 
-	LLMMode        string // disabled | modal | test_double
-	LLMBaseURL     string
-	LLMAPIKey      string
-	ModalKey       string
-	ModalSecret    string
-	ServedModel    string
-	ModelID        string
-	ModelRevision  string
-	LLMConcurrency int
-	OpTimeout      time.Duration
-	WarmWindow     time.Duration
-	ColdStart      time.Duration
-	MaxOpsPerHour  int
+	LLMMode       string // disabled | modal | meta_api | test_double
+	LLMBaseURL    string
+	LLMAPIKey     string
+	ModalKey      string
+	ModalSecret   string
+	ServedModel   string
+	ModelID       string
+	ModelRevision string
+	// LLMReasoningEffort is sent as reasoning_effort in meta_api mode
+	// (minimal, low, medium, high or xhigh; Muse Spark rejects "none").
+	LLMReasoningEffort string
+	LLMConcurrency     int
+	OpTimeout          time.Duration
+	WarmWindow         time.Duration
+	ColdStart          time.Duration
+	MaxOpsPerHour      int
 	// AIMonthlyBudgetUSD caps estimated API spend per UTC month (D12);
 	// 0 disables the gate. AIReserveUSD is the worst-case reservation for
 	// one operation and must be positive when the cap is enabled.
@@ -262,6 +265,12 @@ func LoadMode(mode Mode) (Config, error) {
 	c.ServedModel = env("SELA_LLM_SERVED_MODEL", "")
 	c.ModelID = env("SELA_LLM_MODEL_ID", "")
 	c.ModelRevision = env("SELA_LLM_MODEL_REVISION", "")
+	c.LLMReasoningEffort = env("SELA_LLM_REASONING_EFFORT", "minimal")
+	switch c.LLMReasoningEffort {
+	case "minimal", "low", "medium", "high", "xhigh":
+	default:
+		add(errors.New("SELA_LLM_REASONING_EFFORT: must be minimal, low, medium, high or xhigh"))
+	}
 	c.LLMConcurrency, err = envInt("SELA_LLM_CONCURRENCY", 2, 1, 64)
 	add(err)
 	c.OpTimeout, err = envDuration("SELA_LLM_OP_TIMEOUT", 6*time.Minute, 10*time.Second, 15*time.Minute)
@@ -280,6 +289,20 @@ func LoadMode(mode Mode) (Config, error) {
 			c.ServedModel == "" || c.ModelID == "" || c.ModelRevision == "" {
 			add(errors.New("SELA_LLM_MODE=modal requires https SELA_LLM_BASE_URL, SELA_LLM_API_KEY, SELA_MODAL_KEY, SELA_MODAL_SECRET, SELA_LLM_SERVED_MODEL, SELA_LLM_MODEL_ID and SELA_LLM_MODEL_REVISION"))
 		}
+	case "meta_api":
+		if c.LLMBaseURL == "" {
+			c.LLMBaseURL = "https://api.meta.ai/v1"
+		}
+		if !strings.HasPrefix(c.LLMBaseURL, "https://api.meta.ai/") || c.LLMAPIKey == "" ||
+			c.ServedModel == "" || c.ModelID == "" {
+			add(errors.New("SELA_LLM_MODE=meta_api requires SELA_LLM_BASE_URL=https://api.meta.ai/v1, SELA_LLM_API_KEY, SELA_LLM_SERVED_MODEL and SELA_LLM_MODEL_ID"))
+		}
+		if c.ModelRevision == "" {
+			c.ModelRevision = c.ModelID
+		}
+		if mode == ModeServer && c.Env != EnvDevelopment && c.Env != EnvTest && c.Env != EnvDemo {
+			add(errors.New("SELA_LLM_MODE=meta_api is limited to development, test and demo until B-10 clears real-user processing"))
+		}
 	case "test_double":
 		allow, _ := envBool("SELA_ALLOW_TEST_DOUBLE", false)
 		if mode == ModeServer && (!allow || public) {
@@ -292,7 +315,7 @@ func LoadMode(mode Mode) (Config, error) {
 			c.ServedModel = "test-double-not-meta"
 		}
 	default:
-		add(errors.New("SELA_LLM_MODE: must be disabled, modal or test_double"))
+		add(errors.New("SELA_LLM_MODE: must be disabled, modal, meta_api or test_double"))
 	}
 
 	loadV3(&c, mode, public, add)

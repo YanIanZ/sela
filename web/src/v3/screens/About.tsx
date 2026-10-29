@@ -42,8 +42,8 @@ export function AboutPage() {
       <h2>{w("Bagaimana AI dipakai", "How AI is used")}</h2>
       <p>
         {w(
-          "Sela memakai model terbuka Meta yang dijalankan di Modal untuk menyusun balasan. Balasan diperiksa oleh aturan tetap sebelum ditampilkan; balasan yang menyebut hal kesehatan juga diperiksa oleh Claude dari Anthropic. DeepSeek hanya menjadi model cadangan jika model utama tidak tersedia, dan hanya jika kamu mengizinkannya secara terpisah. Model cadangan tidak dipakai untuk usia di bawah 18 tahun.",
-          "Sela uses Meta's open-weight model, served on Modal, to write replies. Replies pass deterministic guards before they are shown; replies that mention health are also checked by Claude from Anthropic. DeepSeek is only a backup generator when the main model is unavailable, and only if you allow it separately. The backup model isn't used under 18.",
+          "Sela memakai model Meta melalui Meta Model API atau model terbuka Meta yang dijalankan di Modal untuk menyusun balasan. Balasan diperiksa oleh aturan tetap sebelum ditampilkan; balasan yang menyebut hal kesehatan juga diperiksa oleh Claude dari Anthropic. DeepSeek hanya menjadi model cadangan jika model utama tidak tersedia, dan hanya jika kamu mengizinkannya secara terpisah. Model cadangan tidak dipakai untuk usia di bawah 18 tahun.",
+          "Sela uses Meta's model through the Meta Model API or the open-weight model served on Modal to write replies. Replies pass deterministic guards before they are shown; replies that mention health are also checked by Claude from Anthropic. DeepSeek is only a backup generator when the main model is unavailable, and only if you allow it separately. The backup model isn't used under 18.",
         )}
       </p>
       <p>
@@ -73,7 +73,7 @@ export function AboutPage() {
       <h2 className="s-mt-5">{w("Di mana data diproses", "Where data is processed")}</h2>
       <ul className="s-about-list">
         <li>
-          <strong>{"Meta · Modal"}</strong>
+          <strong>{"Meta · Model API / Modal"}</strong>
           <p className="s-small s-muted">{w("Amerika Serikat. Balasan percakapan.", "United States. Conversation replies.")}</p>
         </li>
         <li>

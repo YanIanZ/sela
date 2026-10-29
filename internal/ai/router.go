@@ -940,7 +940,7 @@ func (st *run) callGen(ctx context.Context, g Generator, route Route, regen bool
 	st.prov.Calls = append(st.prov.Calls, rec)
 	st.prov.InputTokens += res.InputTokens
 	st.prov.OutputTokens += res.OutputTokens
-	st.prov.EstimatedCostUSD += estimateCost(id.Role, id.TestDouble, "", res.InputTokens, res.OutputTokens, st.r.now())
+	st.prov.EstimatedCostUSD += estimateCost(id.Label(), id.TestDouble, "", res.InputTokens, res.OutputTokens, st.r.now())
 	st.observe(Event{Stage: StageGenerate, Provider: id.Label(), Model: id.ModelID, Route: string(route), Outcome: rec.Outcome,
 		Reason: rec.Reason, Attempts: res.Attempts, LatencyMS: rec.LatencyMS, InputTokens: res.InputTokens,
 		OutputTokens: res.OutputTokens, TestDouble: id.TestDouble})

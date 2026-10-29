@@ -29,6 +29,7 @@ import (
 	"github.com/YanIanZ/sela/internal/ai"
 	"github.com/YanIanZ/sela/internal/budget"
 	"github.com/YanIanZ/sela/internal/cache"
+	"github.com/YanIanZ/sela/internal/care"
 	"github.com/YanIanZ/sela/internal/config"
 	"github.com/YanIanZ/sela/internal/db"
 	"github.com/YanIanZ/sela/internal/fixtures"
@@ -98,6 +99,7 @@ func run() error {
 	acctCfg := accountConfig(cfg, logger)
 	var accounts *account.Store
 	var adminStore *admin.Store
+	var careStore *care.Store
 	var budgetGate *budget.Gate
 	var dbStatus func(context.Context) (string, string)
 	if cfg.DatabaseURL != "" {
@@ -121,6 +123,10 @@ func run() error {
 		// parameter distribution from the first request on (ADR-0002 §6).
 		if err := accounts.RefreshHashDistribution(ctx); err != nil {
 			return fmt.Errorf("database: cannot read the password hash parameters (%s)", db.Classify(err))
+		}
+		careStore, err = care.New(pool, time.Now)
+		if err != nil {
+			return err
 		}
 		if len(cfg.AdminMFAKey) == 32 {
 			adminStore, err = admin.New(pool, admin.Options{Hasher: accounts.Hasher(), MFAKey: cfg.AdminMFAKey, Now: time.Now})
@@ -147,7 +153,7 @@ func run() error {
 		if e != nil {
 			return e
 		}
-		aiRouter, e = ai.Build(aiConfig, llm.Config{Mode: llm.Mode(cfg.LLMMode), BaseURL: cfg.LLMBaseURL, APIKey: cfg.LLMAPIKey, ModalKey: cfg.ModalKey, ModalSecret: cfg.ModalSecret, ServedModel: cfg.ServedModel, ModelID: cfg.ModelID, Revision: cfg.ModelRevision}, ai.Deps{Consent: accountAIConsent{accounts}, MetaAdmission: llm.NewAdmission(cfg.LLMConcurrency)})
+		aiRouter, e = ai.Build(aiConfig, llm.Config{Mode: llm.Mode(cfg.LLMMode), BaseURL: cfg.LLMBaseURL, APIKey: cfg.LLMAPIKey, ModalKey: cfg.ModalKey, ModalSecret: cfg.ModalSecret, ServedModel: cfg.ServedModel, ModelID: cfg.ModelID, Revision: cfg.ModelRevision, ReasoningEffort: cfg.LLMReasoningEffort}, ai.Deps{Consent: accountAIConsent{accounts}, MetaAdmission: llm.NewAdmission(cfg.LLMConcurrency)})
 		if e != nil {
 			return e
 		}
@@ -166,7 +172,7 @@ func run() error {
 	handler := httpapi.New(svc, httpapi.Options{
 		PublicOrigin: cfg.PublicOrigin, SecureCookies: cfg.SecureCookies, TrustProxy: cfg.TrustProxy,
 		WebDir: cfg.WebDir, Research: index, Logger: logger, Version: version, MetricsToken: cfg.MetricsToken,
-		Cache: pubCache, Admin: adminStore, Budget: budgetGate,
+		Cache: pubCache, Admin: adminStore, Budget: budgetGate, Care: careStore,
 		AIRouter: aiRouter, Accounts: accounts, AccountConfig: acctCfg, Database: dbStatus, DatabaseRequired: cfg.RequiresDatabase(),
 		DisableV2Journey: cfg.Store != "memory", HSTS: cfg.Env == config.EnvProduction,
 	})

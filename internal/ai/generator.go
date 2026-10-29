@@ -25,6 +25,10 @@ type GeneratorIdentity struct {
 	// ModelID and Revision are the configured model.
 	ModelID  string
 	Revision string
+	// APIMode marks the Meta Model API rather than self-hosted vLLM on
+	// Modal. Role stays ProviderMeta for routing and consent; Label reports
+	// the honest provenance provider.
+	APIMode bool
 	// TestDouble marks a labelled test double.
 	TestDouble bool
 	// Disabled is the operator kill switch (SELA_LLM_MODE=disabled): not
@@ -36,6 +40,9 @@ type GeneratorIdentity struct {
 func (g GeneratorIdentity) Label() ProviderName {
 	if g.TestDouble {
 		return ProviderTestDouble
+	}
+	if g.Role == ProviderMeta && g.APIMode {
+		return ProviderMetaAPI
 	}
 	return g.Role
 }
@@ -226,6 +233,11 @@ func buildMetaGenerator(cfg llm.Config, adm Admission, testDoubleKey string, pro
 		if production && (u.Scheme != "https" || !modalHost(u) || (u.Port() != "" && u.Port() != "443")) {
 			return nil, errors.New("ai: production requires Meta at an https Modal host (*.modal.run or *.modal.direct)")
 		}
+	case llm.ModeMeta:
+		u, err := url.Parse(cfg.BaseURL)
+		if err != nil || u.Scheme != "https" || !strings.EqualFold(u.Hostname(), "api.meta.ai") {
+			return nil, errors.New("ai: Meta Model API mode requires https://api.meta.ai/v1")
+		}
 	}
 	return newMetaFromLLM(cfg, adm)
 }
@@ -258,6 +270,7 @@ func (m *metaGenerator) Identity() GeneratorIdentity {
 	info := m.p.Info()
 	return GeneratorIdentity{
 		Role: ProviderMeta, ModelID: info.ModelID, Revision: info.Revision,
+		APIMode:    info.Mode == llm.ModeMeta,
 		TestDouble: info.Mode == llm.ModeTestDouble, Disabled: info.Mode == llm.ModeDisabled,
 	}
 }
