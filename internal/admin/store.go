@@ -257,8 +257,9 @@ func (s *Store) Logout(ctx context.Context, p Principal) error {
 }
 
 // Revoke disables a staff identity and every live session it owns. It is
-// idempotent: revoking an already-revoked operator is not an error.
-func (s *Store) Revoke(ctx context.Context, username, reason string) error {
+// idempotent: revoking an already-revoked operator is not an error. The
+// last active owner cannot be revoked. The actor is nil for a CLI action.
+func (s *Store) Revoke(ctx context.Context, actor *AdminID, username, reason string) error {
 	if err := ValidateUsername(username); err != nil {
 		return err
 	}
@@ -268,7 +269,8 @@ func (s *Store) Revoke(ctx context.Context, username, reason string) error {
 	return s.tx(ctx, func(tx pgx.Tx) error {
 		var id AdminID
 		var status string
-		err := tx.QueryRow(ctx, `SELECT id, status FROM admin_users WHERE username = $1 FOR UPDATE`, username).Scan(&id, &status)
+		var role Role
+		err := tx.QueryRow(ctx, `SELECT id, status, role FROM admin_users WHERE username = $1 FOR UPDATE`, username).Scan(&id, &status, &role)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrInvalid
 		}
@@ -278,6 +280,16 @@ func (s *Store) Revoke(ctx context.Context, username, reason string) error {
 		if status == "revoked" {
 			return nil
 		}
+		if role == RoleOwner {
+			var others int
+			if err := tx.QueryRow(ctx, `SELECT count(*) FROM admin_users
+				WHERE role = 'owner' AND status = 'active' AND id <> $1`, id).Scan(&others); err != nil {
+				return err
+			}
+			if others == 0 {
+				return ErrLastOwner
+			}
+		}
 		now := s.now()
 		if _, err := tx.Exec(ctx, `UPDATE admin_users SET status = 'revoked', failed_count = 0, next_attempt_at = NULL WHERE id = $1`, id); err != nil {
 			return err
@@ -286,8 +298,32 @@ func (s *Store) Revoke(ctx context.Context, username, reason string) error {
 			WHERE admin_id = $1 AND revoked_at IS NULL`, id, now); err != nil {
 			return err
 		}
-		return s.audit(ctx, tx, nil, "admin.revoke", "admin_user", username, "active", "revoked", reason)
+		return s.audit(ctx, tx, actor, "admin.revoke", "admin_user", username, "active", "revoked", reason)
 	})
+}
+
+// ListStaff returns every operator identity without secrets. It is limited
+// to callers holding staff/manage; the HTTP layer enforces that.
+func (s *Store) ListStaff(ctx context.Context) ([]StaffView, error) {
+	now := s.now()
+	rows, err := s.pool.Query(ctx, `SELECT u.username, u.role, COALESCE(u.org_id,''), u.status, u.created_at, u.last_login_at,
+		count(s.id) FILTER (WHERE s.revoked_at IS NULL AND s.absolute_expires_at > $1
+			AND s.last_seen_at + make_interval(secs => s.idle_timeout_seconds) > $1)
+		FROM admin_users u LEFT JOIN admin_sessions s ON s.admin_id = u.id
+		GROUP BY u.id ORDER BY u.created_at, u.username`, now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []StaffView
+	for rows.Next() {
+		var v StaffView
+		if err := rows.Scan(&v.Username, &v.Role, &v.OrgID, &v.Status, &v.CreatedAt, &v.LastLoginAt, &v.LiveSessions); err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+	return out, rows.Err()
 }
 
 // Overview returns only privacy-safe aggregate counts.

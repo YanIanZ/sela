@@ -141,6 +141,12 @@ try {
     "audit trail is visible to the owner",
     (await page.getByRole("heading", { name: "Operator audit", exact: true }).count()) === 1,
   );
+  await page.getByRole("heading", { name: "Operator staff", exact: true }).waitFor();
+  await page.getByText("You can't revoke your own account").waitFor();
+  check(
+    "staff list is visible and the signed-in owner is protected from self-revocation",
+    (await page.getByText("You can't revoke your own account").count()) === 1,
+  );
   await audit(page, "dashboard has no serious/critical WCAG 2.2 AA findings");
 
   await page.screenshot({

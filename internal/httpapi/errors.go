@@ -53,6 +53,7 @@ var messages = map[string]message{
 	"admin_throttled":           {"Terlalu banyak percobaan operator. Tunggu sebentar lalu coba lagi.", "Too many operator attempts. Wait a moment and try again."},
 	"admin_not_signed_in":       {"Sesi operator sudah berakhir. Masuk lagi.", "The operator session has ended. Sign in again."},
 	"admin_forbidden":           {"Peran operator ini tidak memiliki izin untuk tindakan tersebut.", "This operator role isn't allowed to do that."},
+	"admin_last_owner":          {"Pemilik aktif terakhir tidak bisa dicabut. Angkat pemilik lain dulu.", "The last active owner can't be revoked. Promote another owner first."},
 	"cache_disabled":            {"Cache Redis tidak diaktifkan di server ini.", "Redis cache isn't enabled on this server."},
 }
 

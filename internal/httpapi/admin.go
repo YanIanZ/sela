@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"strings"
+
 	"github.com/YanIanZ/sela/internal/admin"
 	"github.com/YanIanZ/sela/internal/budget"
 	"github.com/YanIanZ/sela/internal/fixtures"
@@ -25,6 +27,8 @@ func (s *Server) adminRoutes() {
 	m.HandleFunc("GET /api/admin/v1/me", s.read(s.withAdmin(s.adminMe)))
 	m.HandleFunc("GET /api/admin/v1/overview", s.read(s.withAdmin(s.adminOverview)))
 	m.HandleFunc("GET /api/admin/v1/audit", s.read(s.withAdmin(s.adminAudit)))
+	m.HandleFunc("GET /api/admin/v1/staff", s.read(s.withAdmin(s.adminStaff)))
+	m.HandleFunc("POST /api/admin/v1/staff/{username}/revoke", s.mutation("mutation", smallBody, s.withAdmin(s.adminRevokeStaff)))
 	m.HandleFunc("GET /api/admin/v1/cache/health", s.read(s.withAdmin(s.adminCacheHealth)))
 	m.HandleFunc("POST /api/admin/v1/cache/invalidate", s.mutation("mutation", smallBody, s.withAdmin(s.adminCacheInvalidate)))
 }
@@ -185,6 +189,49 @@ func (s *Server) adminAudit(w http.ResponseWriter, r *http.Request, p admin.Prin
 		return
 	}
 	writeData(w, http.StatusOK, map[string]any{"events": events})
+}
+
+func (s *Server) adminStaff(w http.ResponseWriter, r *http.Request, p admin.Principal) {
+	if !p.Can(admin.PermStaffManage) {
+		writeError(w, r, http.StatusForbidden, "admin_forbidden", "")
+		return
+	}
+	staff, err := s.opt.Admin.ListStaff(r.Context())
+	if err != nil {
+		writeError(w, r, http.StatusInternalServerError, "internal", "")
+		return
+	}
+	writeData(w, http.StatusOK, map[string]any{"staff": staff})
+}
+
+func (s *Server) adminRevokeStaff(w http.ResponseWriter, r *http.Request, p admin.Principal) {
+	if !p.Can(admin.PermStaffManage) {
+		writeError(w, r, http.StatusForbidden, "admin_forbidden", "")
+		return
+	}
+	var req struct {
+		Reason string `json:"reason"`
+	}
+	if !decodeOptional(w, r, &req) {
+		return
+	}
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		reason = "operator console"
+	}
+	username := r.PathValue("username")
+	if err := s.opt.Admin.Revoke(r.Context(), &p.AdminID, username, reason); err != nil {
+		switch {
+		case errors.Is(err, admin.ErrLastOwner):
+			writeError(w, r, http.StatusConflict, "admin_last_owner", "")
+		case errors.Is(err, admin.ErrInvalid):
+			writeError(w, r, http.StatusNotFound, "not_found", "")
+		default:
+			writeError(w, r, http.StatusInternalServerError, "internal", "")
+		}
+		return
+	}
+	writeData(w, http.StatusOK, map[string]any{"username": username, "status": "revoked"})
 }
 
 func (s *Server) adminCacheHealth(w http.ResponseWriter, r *http.Request, p admin.Principal) {

@@ -219,7 +219,7 @@ A lost KEK (with its secret-manager copy) makes all content unreadable; KEK cust
 
 **Separate trust domain.** Operator accounts are provisioned out of band and never through `/api/v3`; an anonymous user cookie cannot authorize `/api/admin/v1`. Staff sign in with a password plus TOTP, and the operator cookie (`__Host-sela_admin`, SameSite=Strict, HttpOnly) is distinct from the user cookie. Roles are deny-by-default; every mutation is appended to PostgreSQL `admin_audit` without personal content.
 
-**Console UI.** Open `/operator` (for example `http://localhost:8081/operator`). The page is mounted outside the consumer shell and shows the overview, AI spend, cache health/invalidation and the audit trail allowed by the signed-in role. It never renders user stories, journals, prompts or per-user data. Staff list/role editing, directory, research and budget-editing screens are still pending.
+**Console UI.** Open `/operator` (for example `http://localhost:8081/operator`). The page is mounted outside the consumer shell and shows the overview, AI spend, cache health/invalidation and the audit trail allowed by the signed-in role. It never renders user stories, journals, prompts or per-user data. Owners and security admins also see the staff list and can revoke an operator; the last active owner and the signed-in account cannot be revoked from the UI. Role editing, directory, research and budget-editing screens are still pending.
 
 ```sh
 # Provision a staff identity; the TOTP secret is printed once.

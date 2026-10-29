@@ -140,3 +140,32 @@ func TestAdminOverviewShowsDurableAISpend(t *testing.T) {
 		t.Fatalf("aiSpend = %v", spend)
 	}
 }
+
+func TestAdminStaffListAndRevokeRoutes(t *testing.T) {
+	e, st := newAdminEnv(t)
+	owner := e.client()
+	adminLogin(t, e, st, owner, "owner.web", adminPassword, admin.RoleOwner)
+	if _, _, err := st.Create(bg, "ops.web", adminPassword, admin.RoleOps, "org-a"); err != nil {
+		t.Fatal(err)
+	}
+	list := owner.must(200, "GET", "/api/admin/v1/staff", nil).data()["staff"].([]any)
+	if len(list) != 2 {
+		t.Fatalf("staff = %v", list)
+	}
+	first, _ := list[0].(map[string]any)
+	if first["username"] == nil || first["role"] == nil || first["status"] == nil {
+		t.Fatalf("staff row = %v", first)
+	}
+
+	ops := e.client()
+	adminLogin(t, e, st, ops, "ops.route", adminPassword, admin.RoleOps)
+	ops.must(403, "GET", "/api/admin/v1/staff", nil)
+	ops.must(403, "POST", "/api/admin/v1/staff/ops.web/revoke", map[string]any{"reason": "test"})
+
+	owner.must(200, "POST", "/api/admin/v1/staff/ops.web/revoke", map[string]any{"reason": "test"})
+	r := owner.must(409, "POST", "/api/admin/v1/staff/owner.web/revoke", map[string]any{})
+	if r.code() != "admin_last_owner" {
+		t.Fatalf("code = %q", r.code())
+	}
+	owner.must(404, "POST", "/api/admin/v1/staff/missing.user/revoke", map[string]any{})
+}

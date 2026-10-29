@@ -139,7 +139,19 @@ var (
 	ErrUnavailable        = errors.New("admin: unavailable")
 	ErrThrottled          = errors.New("admin: throttled")
 	ErrInvalid            = errors.New("admin: invalid input")
+	ErrLastOwner          = errors.New("admin: the last active owner cannot be revoked")
 )
+
+// StaffView is one operator identity without any secret material.
+type StaffView struct {
+	Username     string     `json:"username"`
+	Role         Role       `json:"role"`
+	OrgID        string     `json:"orgId,omitempty"`
+	Status       string     `json:"status"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	LastLoginAt  *time.Time `json:"lastLoginAt,omitempty"`
+	LiveSessions int64      `json:"liveSessions"`
+}
 
 // Overview is a privacy-safe operator aggregate. It contains no user text,
 // user id, session id, IP or content-derived metric.
