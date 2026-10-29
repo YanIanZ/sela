@@ -7,6 +7,7 @@ package httpapi
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -22,6 +23,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/YanIanZ/sela/internal/account"
+	"github.com/YanIanZ/sela/internal/ai"
+	"github.com/YanIanZ/sela/internal/ai/sonic"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/research"
 )
@@ -34,6 +38,7 @@ const (
 
 // Options configures the HTTP layer.
 type Options struct {
+	AIRouter *ai.Router
 	// PublicOrigin, when set (e.g. https://sela.example), is the only Origin
 	// accepted for mutations; otherwise the request Host is used.
 	PublicOrigin string
@@ -53,6 +58,56 @@ type Options struct {
 	// MetricsToken guards GET /api/v2/metrics ("Authorization: Bearer
 	// <token>"). Empty disables the route (404).
 	MetricsToken string
+
+	// Accounts is the /api/v3 store. Nil (no database configured, a
+	// development setup) makes every /api/v3 route except the policies and
+	// auth options answer 503 store_unavailable.
+	Accounts *account.Store
+	// AccountConfig drives GET /api/v3/auth/options, the policy texts and
+	// the cookie lifetimes; it is the store's configuration when Accounts
+	// is set.
+	AccountConfig account.Config
+	// Database reports readiness for /api/v2/ready: database is ok,
+	// unavailable or not_configured; schema is current, pending, mismatch
+	// or not_configured. Nil means not configured.
+	Database func(ctx context.Context) (database, schema string)
+	// DatabaseRequired makes /api/v2/ready answer 503 unless the database
+	// is ok and its schema current (demo, staging, production).
+	DatabaseRequired bool
+	// DisableV2Journey stops serving the v2 in-memory journey routes
+	// (staging and production, ADR-0002 §12).
+	DisableV2Journey bool
+	// Clock drives the rate limiter; nil is the wall clock (tests freeze it).
+	Clock func() time.Time
+	// HSTS adds Strict-Transport-Security (max-age one year); production
+	// sets it (ADR-0002 §5).
+	HSTS bool
+	// ASRMode is the dictation backend: "disabled" (mic off), "meta"
+	// (Meta voice-transcribe realtime), "bedrock" (Amazon Nova Sonic), or
+	// "test_double" (local loopback).
+	ASRMode string
+	// ASRAPIKey is the Meta model API key (secret, never logged); empty
+	// unless ASRMode is "meta".
+	ASRAPIKey string
+	// ASRModel is the transcription model (default per ASRMode).
+	ASRModel string
+	// ASRURL is the realtime endpoint (default
+	// "wss://api.meta.ai/v1/asr/realtime"); tests point it at a mock.
+	ASRURL string
+	// AWSRegion is the Bedrock region for ASRMode "bedrock".
+	AWSRegion string
+	// AWSProfile is the AWS shared-config profile for "bedrock"; empty
+	// uses the default chain.
+	AWSProfile string
+	// VoiceOpener backs the voice room (GET /api/v3/voice/realtime) with
+	// Amazon Nova 2.5 Sonic or its labelled test double. Nil disables it.
+	VoiceOpener sonic.Opener
+	// ASROpener backs dictation (GET /api/v3/asr/realtime) when ASRMode is
+	// "bedrock". Nil constructs the IAM-credential opener from the
+	// environment; tests inject the labelled sonic test double.
+	ASROpener sonic.Opener
+	// ASRFlushWait overrides asrFlushWait in tests; zero keeps the default.
+	ASRFlushWait time.Duration
 }
 
 // Server is the HTTP handler.
@@ -62,10 +117,15 @@ type Server struct {
 	log    *slog.Logger
 	mux    *http.ServeMux
 	limits *limiter
-	start  time.Time
+	// authLimits holds the /api/v3 auth buckets, apart from the v2 LRU
+	// (v3_ratelimit.go).
+	authLimits *specLimiter
+	start      time.Time
 
 	closing   chan struct{} // closed by CloseStreams
 	closeOnce sync.Once
+
+	v3 v3State
 }
 
 // New builds the handler.
@@ -73,7 +133,13 @@ func New(svc *journey.Service, opt Options) *Server {
 	if opt.Logger == nil {
 		opt.Logger = slog.New(slog.DiscardHandler)
 	}
-	s := &Server{svc: svc, opt: opt, log: opt.Logger, mux: http.NewServeMux(), limits: newLimiter(), start: time.Now(), closing: make(chan struct{})}
+	s := &Server{svc: svc, opt: opt, log: opt.Logger, mux: http.NewServeMux(), limits: newLimiter(), authLimits: newSpecLimiter(),
+		start: time.Now(), closing: make(chan struct{})}
+	if opt.Clock != nil {
+		s.limits.now = opt.Clock
+		s.authLimits.now = opt.Clock
+	}
+	s.initV3()
 	s.routes()
 	return s
 }
@@ -95,9 +161,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Set("X-Content-Type-Options", "nosniff")
 	h.Set("Referrer-Policy", "no-referrer")
 	h.Set("X-Frame-Options", "DENY")
-	h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()")
+	h.Set("Permissions-Policy", "camera=(), microphone=(self), geolocation=(), interest-cohort=()")
 	h.Set("Cross-Origin-Opener-Policy", "same-origin")
 	h.Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+	if s.opt.HSTS {
+		h.Set("Strict-Transport-Security", "max-age=31536000")
+	}
 	defer func() {
 		if p := recover(); p != nil {
 			s.log.Error("http.panic", "request_id", rid)
@@ -144,8 +213,12 @@ func (r *statusRecorder) Flush() {
 	}
 }
 
-// Hijack is not supported; present so wrappers do not hide it silently.
+// Hijack delegates to the underlying writer so websocket upgrades work;
+// without it the upgrader answers 500.
 func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := r.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
 	return nil, nil, errors.New("hijack not supported")
 }
 

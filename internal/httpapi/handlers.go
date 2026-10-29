@@ -30,41 +30,48 @@ func (s *Server) routes() {
 		m.HandleFunc("GET /api/v2/metrics", s.limited("read", s.metrics))
 	}
 
-	// Owner session.
-	m.HandleFunc("POST /api/v2/sessions", s.mutation("session", smallBody, s.createSession))
-	m.HandleFunc("GET /api/v2/session", s.read(s.getSession))
-	m.HandleFunc("PATCH /api/v2/session", s.mutation("mutation", smallBody, s.patchSession))
-	m.HandleFunc("DELETE /api/v2/session", s.mutation("mutation", smallBody, s.deleteSession))
-	m.HandleFunc("PUT /api/v2/consents/{kind}", s.mutation("mutation", smallBody, s.putConsent))
-	m.HandleFunc("PUT /api/v2/story", s.mutation("mutation", storyBody, s.putStory))
-	m.HandleFunc("POST /api/v2/ledger/draft", s.mutation("ai", smallBody, s.startLedgerDraft))
-	m.HandleFunc("POST /api/v2/ledger/items", s.mutation("mutation", smallBody, s.addItem))
-	m.HandleFunc("PATCH /api/v2/ledger/items/{id}", s.mutation("mutation", smallBody, s.reviewItem))
-	m.HandleFunc("POST /api/v2/ledger/clarifications", s.mutation("mutation", smallBody, s.clarify))
-	m.HandleFunc("POST /api/v2/ledger/approval", s.mutation("mutation", smallBody, s.approve))
-	m.HandleFunc("GET /api/v2/operations/{id}/events", s.read(s.opEvents))
-	m.HandleFunc("DELETE /api/v2/operations/{id}", s.mutation("mutation", smallBody, s.cancelOp))
-	m.HandleFunc("PUT /api/v2/preferences", s.mutation("mutation", smallBody, s.putPreferences))
-	m.HandleFunc("GET /api/v2/next-steps", s.read(s.nextSteps))
-	m.HandleFunc("POST /api/v2/opening/template", s.mutation("mutation", smallBody, s.openingTemplate))
-	m.HandleFunc("POST /api/v2/opening/draft", s.mutation("ai", smallBody, s.openingDraft))
-	m.HandleFunc("PUT /api/v2/opening", s.mutation("mutation", smallBody, s.putOpening))
-	m.HandleFunc("POST /api/v2/opening/practice", s.mutation("mutation", smallBody, s.practice))
-	m.HandleFunc("POST /api/v2/handoffs/preview", s.mutation("mutation", smallBody, s.previewHandoff))
-	m.HandleFunc("POST /api/v2/handoffs", s.mutation("mutation", smallBody, s.createHandoff))
-	m.HandleFunc("DELETE /api/v2/handoffs/{id}/share", s.mutation("mutation", smallBody, s.revokeShare))
-	m.HandleFunc("POST /api/v2/follow-up/check-ins", s.mutation("mutation", smallBody, s.checkIn))
+	// The v2 in-memory journey (owner session and fictional recipient) is
+	// served only in development, test and demo (ADR-0002 §12).
+	if !s.opt.DisableV2Journey {
+		// Owner session.
+		m.HandleFunc("POST /api/v2/sessions", s.mutation("session", smallBody, s.createSession))
+		m.HandleFunc("GET /api/v2/session", s.read(s.getSession))
+		m.HandleFunc("PATCH /api/v2/session", s.mutation("mutation", smallBody, s.patchSession))
+		m.HandleFunc("DELETE /api/v2/session", s.mutation("mutation", smallBody, s.deleteSession))
+		m.HandleFunc("PUT /api/v2/consents/{kind}", s.mutation("mutation", smallBody, s.putConsent))
+		m.HandleFunc("PUT /api/v2/story", s.mutation("mutation", storyBody, s.putStory))
+		m.HandleFunc("POST /api/v2/ledger/draft", s.mutation("ai", smallBody, s.startLedgerDraft))
+		m.HandleFunc("POST /api/v2/ledger/items", s.mutation("mutation", smallBody, s.addItem))
+		m.HandleFunc("PATCH /api/v2/ledger/items/{id}", s.mutation("mutation", smallBody, s.reviewItem))
+		m.HandleFunc("POST /api/v2/ledger/clarifications", s.mutation("mutation", smallBody, s.clarify))
+		m.HandleFunc("POST /api/v2/ledger/approval", s.mutation("mutation", smallBody, s.approve))
+		m.HandleFunc("GET /api/v2/operations/{id}/events", s.read(s.opEvents))
+		m.HandleFunc("DELETE /api/v2/operations/{id}", s.mutation("mutation", smallBody, s.cancelOp))
+		m.HandleFunc("PUT /api/v2/preferences", s.mutation("mutation", smallBody, s.putPreferences))
+		m.HandleFunc("GET /api/v2/next-steps", s.read(s.nextSteps))
+		m.HandleFunc("POST /api/v2/opening/template", s.mutation("mutation", smallBody, s.openingTemplate))
+		m.HandleFunc("POST /api/v2/opening/draft", s.mutation("ai", smallBody, s.openingDraft))
+		m.HandleFunc("PUT /api/v2/opening", s.mutation("mutation", smallBody, s.putOpening))
+		m.HandleFunc("POST /api/v2/opening/practice", s.mutation("mutation", smallBody, s.practice))
+		m.HandleFunc("POST /api/v2/handoffs/preview", s.mutation("mutation", smallBody, s.previewHandoff))
+		m.HandleFunc("POST /api/v2/handoffs", s.mutation("mutation", smallBody, s.createHandoff))
+		m.HandleFunc("DELETE /api/v2/handoffs/{id}/share", s.mutation("mutation", smallBody, s.revokeShare))
+		m.HandleFunc("POST /api/v2/follow-up/check-ins", s.mutation("mutation", smallBody, s.checkIn))
 
-	// Fictional recipient (separate principal and cookie).
-	m.HandleFunc("POST /api/v2/recipient/sessions", s.mutation("recipient", smallBody, s.recipientLogin))
-	m.HandleFunc("GET /api/v2/recipient/handoff", s.read(s.recipientGet))
-	m.HandleFunc("POST /api/v2/recipient/handoff/actions", s.mutation("mutation", smallBody, s.recipientAct))
-	m.HandleFunc("DELETE /api/v2/recipient/session", s.mutation("mutation", smallBody, s.recipientLogout))
+		// Fictional recipient (separate principal and cookie).
+		m.HandleFunc("POST /api/v2/recipient/sessions", s.mutation("recipient", smallBody, s.recipientLogin))
+		m.HandleFunc("GET /api/v2/recipient/handoff", s.read(s.recipientGet))
+		m.HandleFunc("POST /api/v2/recipient/handoff/actions", s.mutation("mutation", smallBody, s.recipientAct))
+		m.HandleFunc("DELETE /api/v2/recipient/session", s.mutation("mutation", smallBody, s.recipientLogout))
+	}
 
 	// Reviewer research corpus (never touches sessions).
 	m.HandleFunc("GET /api/v2/research/manifest", s.limited("research", s.researchManifest))
 	m.HandleFunc("GET /api/v2/research/search", s.limited("research", s.researchSearch))
 	m.HandleFunc("GET /api/v2/research/records/{id}", s.limited("research", s.researchRecord))
+
+	// Sela v3: accounts, guests, sessions, consents and the signed-in user.
+	s.v3Routes()
 
 	m.HandleFunc("/api/", s.apiFallback)
 	m.Handle("/", s.static())
@@ -109,16 +116,34 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	writeData(w, http.StatusOK, map[string]any{"status": "ok", "version": s.opt.Version, "mode": "synthetic_demo", "uptimeSeconds": int(time.Since(s.start).Seconds())})
 }
 
+// ready keeps its v2 fields and adds database and schema. It answers 503
+// only when this environment requires the database and it is unavailable
+// or its schema is not current; "store" still describes the v2 journey
+// store.
 func (s *Server) ready(w http.ResponseWriter, r *http.Request) {
 	ai := s.svc.AIStatus()
-	writeData(w, http.StatusOK, map[string]any{
-		"status":     "ready",
+	database, schema := "not_configured", "not_configured"
+	if s.opt.Database != nil {
+		database, schema = s.opt.Database(r.Context())
+	}
+	store := "memory"
+	if s.opt.DisableV2Journey {
+		store = "disabled"
+	}
+	status, code := "ready", http.StatusOK
+	if s.opt.DatabaseRequired && (database != "ok" || schema != "current") {
+		status, code = "not_ready", http.StatusServiceUnavailable
+	}
+	writeData(w, code, map[string]any{
+		"status":     status,
 		"fixtures":   s.svc.Catalog().Version,
 		"ai":         ai.Info.Mode,
 		"research":   s.opt.Research != nil,
 		"frontend":   s.frontendBuilt(),
-		"store":      "memory",
+		"store":      store,
 		"persistent": false,
+		"database":   database,
+		"schema":     schema,
 	})
 }
 

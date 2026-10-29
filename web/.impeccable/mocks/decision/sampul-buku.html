@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Sela — Sampul Buku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F5F0E6;--page:#FBF8F2;--ink:#231C17;--muted:#5E5248;--rule:#DCD2C2;--brick:#B4472F;--green:#2E5A4C;--ochre:#D6A23E;--indigo:#2F3A63}
+*{box-sizing:border-box;margin:0}
+html,body{width:1440px;height:900px;overflow:hidden}
+body{font-family:"Hanken Grotesk",system-ui,sans-serif;background:var(--paper);color:var(--ink)}
+::selection{background:#EBC9BC}
+.bar{display:flex;align-items:stretch;justify-content:space-between;padding:0 56px;background:var(--page);border-bottom:1px solid var(--rule);height:72px}
+.brand{display:flex;align-items:center;gap:12px;font-family:Literata,serif;font-weight:700;font-size:26px;letter-spacing:-.02em}
+.brand i{width:12px;height:34px;background:var(--brick);border-radius:2px}
+nav{display:flex;gap:4px}
+nav a{display:flex;align-items:center;gap:10px;padding:0 18px;font-weight:600;font-size:16px;color:var(--muted);text-decoration:none;border-bottom:4px solid transparent}
+nav a span{width:8px;height:22px;border-radius:1px;background:var(--c)}
+nav a.on{color:var(--ink);border-bottom-color:var(--brick)}
+.safety{display:flex;gap:10px;align-items:center}
+.btn{font:inherit;font-weight:700;font-size:15px;border-radius:6px;padding:11px 18px;border:1.5px solid var(--ink);background:transparent;color:var(--ink)}
+.help{background:#FBE5DE;border-color:#A1351E;color:#8A2C17}
+.cover{background:var(--brick);color:#FFF6EE;padding:48px 56px 44px;display:grid;grid-template-columns:1fr 420px;gap:48px;align-items:end;position:relative}
+.cover::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:linear-gradient(90deg,var(--ochre) 0 33%,var(--green) 33% 66%,var(--indigo) 66%)}
+.cover h1{font-family:Literata,serif;font-weight:600;font-size:76px;line-height:.98;letter-spacing:-.03em}
+.cover .lead{font-family:Literata,serif;font-size:24px;line-height:1.35;margin-top:16px;color:#FBE3D6;max-width:30ch}
+.invite h2{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.invite p{font-size:16.5px;line-height:1.55;color:#FBE3D6;margin-top:8px}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.primary{background:#FFF6EE;color:var(--brick);border-color:#FFF6EE}
+.ghost{color:#FFF6EE;border-color:#F3C3B1}
+.body{display:grid;grid-template-columns:1.4fr 1fr;gap:56px;padding:40px 56px}
+h3{font-family:Literata,serif;font-weight:600;font-size:26px;letter-spacing:-.02em;display:flex;justify-content:space-between;align-items:baseline}
+h3 a{font-family:"Hanken Grotesk";font-size:15px;font-weight:700;color:var(--brick);text-underline-offset:4px}
+.cont{margin-top:16px;padding:18px 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}
+.cont b{font-size:18px}.cont span{display:block;color:var(--muted);font-size:15px;margin-top:3px}
+.entries{margin-top:4px}
+.e{display:grid;grid-template-columns:96px 1fr auto;gap:20px;padding:16px 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.e time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:15px}
+.e p{font-family:Literata,serif;font-size:19px;font-weight:600}
+.e small{font-size:13.5px;font-weight:600;color:var(--c);border:1px solid currentColor;border-radius:999px;padding:2px 10px}
+.shelf{display:grid;gap:0;margin-top:16px;border-top:2px solid var(--ink)}
+.sp{display:grid;grid-template-columns:10px 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.sp i{background:var(--c);border-radius:1px}
+.sp b{font-size:17px}.sp span{display:block;color:var(--muted);font-size:15px;margin-top:2px}
+</style></head><body>
+<header class="bar">
+ <div class="brand"><i></i>Sela</div>
+ <nav aria-label="Utama"><a class="on" style="--c:var(--brick)"><span></span>Beranda</a><a style="--c:var(--green)"><span></span>Cerita</a><a style="--c:var(--ochre)"><span></span>Catatanku</a><a style="--c:var(--indigo)"><span></span>Dukungan</a></nav>
+ <div class="safety"><button class="btn help">Butuh bantuan sekarang</button><button class="btn">Keluar cepat</button></div>
+</header>
+<section class="cover">
+ <div><h1>Beranda</h1><p class="lead">Selamat malam. Apa yang ingin kamu lakukan sekarang?</p></div>
+ <div class="invite"><h2>Ruang untuk apa pun yang terasa.</h2><p>Tidak perlu merangkai cerita yang sempurna. Mulai dari yang paling mudah untukmu.</p>
+  <div class="acts"><button class="btn primary">Mulai bercerita</button><button class="btn ghost">Tulis catatan</button><button class="btn ghost">Cek perasaan</button></div></div>
+</section>
+<div class="body">
+ <section>
+  <h3>Lanjutkan</h3>
+  <div class="cont"><div><b>Percakapan tersimpan</b><span>6 pesan · terakhir aktif 21.12</span></div><button class="btn">Lanjutkan</button></div>
+  <h3 style="margin-top:32px">Terbaru di Catatanku <a>Lihat semua</a></h3>
+  <div class="entries">
+   <div class="e"><time>28 Okt</time><p>Hari pertama magang, capek tapi lega</p><small style="--c:var(--brick)">Catatan</small></div>
+   <div class="e"><time>27 Okt</time><p>Cemas, lebih tenang menjelang sore</p><small style="--c:var(--green)">Cek perasaan</small></div>
+  </div>
+ </section>
+ <aside>
+  <h3>Ruang lainnya</h3>
+  <div class="shelf">
+   <div class="sp" style="--c:var(--ochre)"><i></i><div><b>Lihat minggu ini</b><span>Tulisanmu, tanpa kesimpulan otomatis.</span></div></div>
+   <div class="sp" style="--c:var(--green)"><i></i><div><b>Bawa yang penting</b><span>Ringkasan dari cerita yang kamu pilih.</span></div></div>
+   <div class="sp" style="--c:var(--indigo)"><i></i><div><b>Memori pilihanmu</b><span>Konteks yang kamu simpan sendiri</span></div></div>
+   <div class="sp" style="--c:var(--brick)"><i></i><div><b>Bacaan untuk jeda</b><span>Sumber yang bisa kamu telusuri</span></div></div>
+  </div>
+ </aside>
+</div>
+</body></html>

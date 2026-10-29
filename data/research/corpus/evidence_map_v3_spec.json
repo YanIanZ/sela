@@ -1,0 +1,1023 @@
+{
+  "spec_version": "sela-evidence-map-v3.2-spec",
+  "authored_by": "AI research agent, 2026-10-26; agent-drafted rows, unreviewed. Revised 2026-10-26 after review: age bands derive only from an accepted age range; minors rows separate 'supports_for_minors' (explicit 15-17 band) from 'context_for_minors' (minors signal, ages unverified); five counter-evidence lines reworded to what their abstracts state. Revised again 2026-10-26 (review round 3): a help-seeking row (every HELP_SEEKING record plus R040, R047, R088 and R098, with inference labels); brief section 9 topics are built from per-record topic tags, so a record counts for a topic only when it is tagged for it; memory correction is no longer counted as listening evidence; the R020, R031, R036, R051, R073, R087 and R092 lines were reworded (R031's line no longer quotes its CC BY-NC-ND abstract).",
+  "how_to_read": [
+    "One row per v3 feature. 'register_support' lists records of the 100-record register (title/abstract screened v0, machine-verified metadata); relation 'direct' = the record studies this feature's question, 'adjacent' = a neighbouring question, 'indirect' = context only.",
+    "Design and population columns are machine labels (study_type, age_band) from the corpus; they are unreviewed. Adult and adolescent evidence are kept apart: only records with age band includes_15_17_explicit (the accepted, explicit age range of a primary study overlaps 15-17) can speak about ages 15-17. Records with conflicting explicit ranges, a review whose eligibility includes minors, or youth words without ages carry a minors signal only; in the minors row they are listed as context with ages unverified, never as evidence about 15-17-year-olds.",
+    "'counter_evidence' lists records that cut against the feature or limit what it may claim.",
+    "'v3 candidates' come from the new frozen gap search and are machine-screened only; they are reading lists for people, not evidence.",
+    "Associations (cohorts, cross-sectional, secondary analyses) are never read as causal effects.",
+    "Nothing here is appraisal: no record was read in full or assessed for risk of bias by a person (blocker B-4).",
+    "'topics' on a register record says which brief section 9 topic it is evidence for; a record of a row with several brief topics counts only for the topics it is tagged with, and an empty list means context for the feature only. The 'Brief section 9 topics' table is built from these tags, never from the union of a row's records.",
+    "'inference' (agent-drafted, unreviewed) says what kind of reading a record allows here, for example 'mediation model on cross-sectional data: associations only, not causal pathways'. 'note' carries the agent's reading of the public abstract where the machine fields are silent (for example ages stated in an abstract that have no machine-verified range).",
+    "Every row states its age groups: ages 15-17 included (accepted explicit range), minors signal with ages unverified, adults only, ages not stated. Evidence from one group is not read as evidence for another."
+  ],
+  "features": [
+    {
+      "id": "listening_room",
+      "feature": "Listening room (Ruang cerita / Talk)",
+      "brief_topics": [
+        "listening"
+      ],
+      "question": "Does a non-directive, non-judgemental AI listening space help people feel heard without harm?",
+      "register_support": [
+        {
+          "id": "R004",
+          "relation": "adjacent",
+          "role": "context"
+        },
+        {
+          "id": "R008",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R086",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R089",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R009",
+          "relation": "indirect",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R075",
+          "reason": "general-purpose chatbots were more directive and inquired less than therapists, and were judged unsuitable in crisis scenarios (2 scripted scenarios, 17 therapists)"
+        },
+        {
+          "id": "R099",
+          "reason": "LLMs expressed stigma and responded inappropriately, e.g. encouraging delusional thinking (sycophancy)"
+        },
+        {
+          "id": "R081",
+          "reason": "none of 29 chatbot apps responded adequately to escalating suicidal-risk prompts"
+        }
+      ],
+      "claim_boundary": "Sela may say it offers a space to talk, that the person can stop at any time and that it does not diagnose. It may not say that people feel heard, feel better, or that its replies are empathic, supportive or therapeutic: no register study tested the outcomes of a non-directive listening tool, and the alliance studies (R008, R086) measure perceptions of a relationship, not benefit.",
+      "declared_gaps": [
+        "No register study of user outcomes (feeling heard, distress, harm) of a non-directive listening tool.",
+        "No register data on AI listening for ages 15-17 or 50+; R008 (17-35) and R089 (15-26) mix minors with young adults.",
+        "No Indonesian-language or code-switching listening study.",
+        "Multi-turn risk accumulation (Nature Medicine 2026 audit, out of register) is not tested on Sela's own conversations."
+      ],
+      "required_before_stronger_claims": "Human title/abstract screening of the listening_feeling_heard queue; a pre-registered usability study with synthetic tasks where 'felt heard' is self-reported; multi-turn safety evaluation of Sela's own replies in ID, EN and code-switched text.",
+      "v3_families": [
+        "listening_feeling_heard"
+      ]
+    },
+    {
+      "id": "journal",
+      "feature": "Journal (Catatan pribadiku)",
+      "brief_topics": [
+        "journaling"
+      ],
+      "question": "Does private journaling or expressive writing, including digital journaling, help, and for whom?",
+      "register_support": [
+        {
+          "id": "R085",
+          "relation": "adjacent",
+          "role": "context"
+        },
+        {
+          "id": "R030",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R031",
+          "relation": "indirect",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [],
+      "claim_boundary": "Sela may describe the journal as a private place to write, stored according to the person's storage choice. It must not claim that writing improves mood, wellbeing or health: the register contains no journaling or expressive-writing study. R085 (a youth platform that includes emotional journaling) analyses goal-setting, not journaling.",
+      "declared_gaps": [
+        "0 journaling or expressive-writing studies in the register (R008 uses a diary as a research method only).",
+        "No evidence on digital journaling for ages 15-17 or 50+.",
+        "No evidence on how crisis disclosures in private journals should be handled (Sela relies on its own safety rules, D-036)."
+      ],
+      "required_before_stronger_claims": "Human screening of the journaling_expressive_writing queue (expressive-writing trials, including null results); appraisal of any review before a benefit statement is drafted.",
+      "v3_families": [
+        "journaling_expressive_writing"
+      ]
+    },
+    {
+      "id": "check_in",
+      "feature": "Check-in (optional mood or state check-ins, no scores or streaks)",
+      "brief_topics": [
+        "journaling",
+        "continuity"
+      ],
+      "question": "Are self-initiated check-ins useful without becoming a score, a burden or engagement pressure?",
+      "register_support": [
+        {
+          "id": "R030",
+          "relation": "adjacent",
+          "role": "supports",
+          "topics": [
+            "journaling",
+            "continuity"
+          ]
+        },
+        {
+          "id": "R031",
+          "relation": "adjacent",
+          "role": "supports",
+          "topics": [
+            "journaling",
+            "continuity"
+          ]
+        },
+        {
+          "id": "R035",
+          "relation": "adjacent",
+          "role": "supports",
+          "topics": [
+            "journaling",
+            "continuity"
+          ]
+        },
+        {
+          "id": "R092",
+          "relation": "adjacent",
+          "role": "context",
+          "topics": []
+        },
+        {
+          "id": "R090",
+          "relation": "indirect",
+          "role": "context",
+          "topics": []
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R030",
+          "reason": "in a systematic review of patient and clinician perspectives, patients reported that measurement-based care enhanced communication, but were concerned that the measures did not reflect their clinical state and were unsure how their answers influenced treatment decisions (perceptions, not a measured effect)"
+        },
+        {
+          "id": "R031",
+          "reason": "focus-group participants (n=18) said that standard measures which did not fit their own treatment goals put them off using the measures again (perceptions, not a measured effect)"
+        },
+        {
+          "id": "R092",
+          "reason": "in a secondary analysis of two smartphone trials (2,201 participants included), the median questionnaire completion was 37.6% among the 1,093 who completed any follow-up questionnaire"
+        }
+      ],
+      "claim_boundary": "A check-in is a self-reflection aid. It is never a symptom score, an assessment or a risk level (D-037, D-039). Do not claim check-ins improve engagement or outcomes: the evidence is clinician-led measurement-based care and associations from secondary analyses.",
+      "declared_gaps": [
+        "Register evidence concerns clinician-led measurement-based care, not self-initiated check-ins in a wellbeing app.",
+        "No 50+ data; R035's co-design sample (16-31) includes some 16-17-year-olds without separate results, and R031's sample was 18-30."
+      ],
+      "required_before_stronger_claims": "Human screening of the check_in_self_monitoring queue; usability testing of burden and perceived relevance.",
+      "v3_families": [
+        "check_in_self_monitoring"
+      ]
+    },
+    {
+      "id": "timeline",
+      "feature": "Timeline (calm history of one's own notes and check-ins)",
+      "brief_topics": [
+        "continuity"
+      ],
+      "question": "Does a person-held history help continuity between conversations or consultations?",
+      "register_support": [
+        {
+          "id": "R031",
+          "relation": "indirect",
+          "role": "supports"
+        },
+        {
+          "id": "R034",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R029",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R020",
+          "relation": "indirect",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R020",
+          "reason": "in one cross-sectional survey of specialist-service managers in New South Wales, 41 of 56 services had minimal-to-basic integration with headspace centres. Sela's design inference, not a finding of the study: a new interface does not by itself integrate services"
+        }
+      ],
+      "claim_boundary": "The timeline is the person's own record, shown as a calm history, never as a score (D-037). No claim of continuity of care, better consultations or better outcomes.",
+      "declared_gaps": [
+        "No register study of person-held timelines or records between sessions or consultations.",
+        "Continuity evidence in the register is about service navigation and integration, not personal records."
+      ],
+      "required_before_stronger_claims": "Human screening of the continuity_after_consultation queue (open notes, patient portals, patient-held records).",
+      "v3_families": [
+        "continuity_after_consultation",
+        "check_in_self_monitoring"
+      ]
+    },
+    {
+      "id": "memory_correction",
+      "feature": "Memory correction ('Sela menangkap...' cards: confirm, correct, remove)",
+      "brief_topics": [],
+      "question": "Can people reliably catch and correct what an AI got wrong about their own story?",
+      "register_support": [
+        {
+          "id": "R065",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R096",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R064",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R067",
+          "relation": "adjacent",
+          "role": "context"
+        },
+        {
+          "id": "R068",
+          "relation": "adjacent",
+          "role": "context"
+        },
+        {
+          "id": "R057",
+          "relation": "adjacent",
+          "role": "caution"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R096",
+          "reason": "adapted LLM summaries were judged equivalent or better than experts' in most cases: errors are not unique to AI, so 'AI is error-prone' is not a full argument"
+        },
+        {
+          "id": "R067",
+          "reason": "automatic evaluation of summaries, especially hallucination detection, remains unreliable; a machine check cannot replace the person's review"
+        }
+      ],
+      "claim_boundary": "Sela may say people can check, correct or delete what Sela noted, and that unconfirmed notes are labelled. It must not claim Sela's understanding is accurate or that correction makes it safe. The evidence is about clinician documentation of EHR text, not personal narratives; R057 found more hallucinations in Korean than in English input, so Indonesian input may differ too.",
+      "declared_gaps": [
+        "No register study of people correcting an AI's reading of their own story.",
+        "No evaluation in Bahasa Indonesia or code-switched text."
+      ],
+      "required_before_stronger_claims": "Sela's own held-out evaluation of unsupported-claim and correction rates in ID/EN/code-switch (doc 07 metrics); human screening of the memory_correction_source_fidelity queue.",
+      "v3_families": [
+        "memory_correction_source_fidelity"
+      ],
+      "brief_topics_note": "Memory correction is a v3 feature, not a brief section 9 topic. Its records concern how faithfully clinical text is summarised (clinician-facing EHR summaries, model benchmarks); they are not evidence about listening or feeling heard, so they are not counted for any brief topic."
+    },
+    {
+      "id": "consultation_summary",
+      "feature": "Consultation summary (Ringkasan untuk konsultasi)",
+      "brief_topics": [
+        "consultation preparation",
+        "continuity"
+      ],
+      "question": "Do patient-prepared summaries or question prompt lists help people prepare for a consultation?",
+      "register_support": [
+        {
+          "id": "R065",
+          "relation": "adjacent",
+          "role": "context",
+          "topics": [
+            "consultation preparation"
+          ]
+        },
+        {
+          "id": "R069",
+          "relation": "adjacent",
+          "role": "context",
+          "topics": [
+            "consultation preparation"
+          ]
+        },
+        {
+          "id": "R096",
+          "relation": "adjacent",
+          "role": "context",
+          "topics": [
+            "consultation preparation"
+          ]
+        },
+        {
+          "id": "R068",
+          "relation": "adjacent",
+          "role": "context",
+          "topics": [
+            "consultation preparation"
+          ]
+        },
+        {
+          "id": "R036",
+          "relation": "indirect",
+          "role": "supports",
+          "topics": [
+            "consultation preparation",
+            "continuity"
+          ]
+        },
+        {
+          "id": "R035",
+          "relation": "indirect",
+          "role": "supports",
+          "topics": [
+            "continuity"
+          ]
+        },
+        {
+          "id": "R012",
+          "relation": "indirect",
+          "role": "supports",
+          "topics": [],
+          "note": "help-seeking evidence; listed under the help-seeking row. Here it is context only: students said they did not know what to expect from services"
+        },
+        {
+          "id": "R026",
+          "relation": "indirect",
+          "role": "supports",
+          "topics": [
+            "continuity"
+          ]
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R027",
+          "reason": "an in-person warm handoff was associated with lower odds of attendance than a traditional in-house referral (adolescents, N=145)"
+        },
+        {
+          "id": "R036",
+          "reason": "in a cross-sectional study of 42 emerging adults (18-29), shared decision-making ratings showed no significant correlation with current symptoms of anxiety or depression or with quality of life; this is not an outcome study"
+        }
+      ],
+      "claim_boundary": "The summary is the person's own notes, prepared with AI help where applicable and approved by them (D-039). Never call it a medical record, diagnosis or assessment. Do not claim it improves consultations, clinician understanding or outcomes: the register holds no question-prompt-list or patient-authored pre-visit summary study, and its summarisation evidence is clinician-facing EHR text judged by physicians.",
+      "declared_gaps": [
+        "0 register studies of question prompt lists or patient-authored pre-visit summaries.",
+        "No evidence from Indonesian clinical settings; no 15-17-specific data (R035's 16-31 co-design sample is not separated by age).",
+        "R065 is needs_check (online date documented, inside the window; reviewer confirmation pending)."
+      ],
+      "required_before_stronger_claims": "Human screening of the consultation_preparation queue (question prompt lists and pre-visit tools are mostly oncology and primary care: transfer must be argued, not assumed).",
+      "v3_families": [
+        "consultation_preparation"
+      ]
+    },
+    {
+      "id": "help_seeking",
+      "feature": "Help-seeking (showing where and how to reach professional or crisis help)",
+      "brief_topics": [
+        "help-seeking"
+      ],
+      "question": "What do people report as helping or hindering a step towards professional help, and what may Sela claim about supporting that step?",
+      "theme_coverage": {
+        "theme": "HELP_SEEKING",
+        "deliberately_excluded": []
+      },
+      "register_support": [
+        {
+          "id": "R011",
+          "relation": "direct",
+          "role": "supports",
+          "inference": "perceptions_qualitative",
+          "note": "interpretative phenomenological interviews with 9 female international students in Scotland: navigating two health systems and the quality of the GP contact shaped later help-seeking"
+        },
+        {
+          "id": "R012",
+          "relation": "direct",
+          "role": "supports",
+          "inference": "perceptions_qualitative",
+          "note": "thematic analysis of open-ended survey answers from Irish university students (18 and over): barriers to starting and to continuing with support services"
+        },
+        {
+          "id": "R013",
+          "relation": "direct",
+          "role": "supports",
+          "inference": "perceptions_qualitative",
+          "note": "71 focus groups in 13 countries; the abstract states ages 12-19 (not machine-verified: no CC full text) and does not separate 15-17-year-olds; stigma, gender norms, cost and service availability reported as barriers, digital technology and trusted relationships as facilitators"
+        },
+        {
+          "id": "R017",
+          "relation": "direct",
+          "role": "supports",
+          "inference": "perceptions_qualitative",
+          "note": "32 interviews with young people in Harare (the abstract states 15-24; machine age candidates conflict); privacy and confidentiality worries among the reported barriers"
+        },
+        {
+          "id": "R018",
+          "relation": "direct",
+          "role": "supports",
+          "inference": "perceptions_qualitative",
+          "note": "repeated interviews with 14 medical students: fear for professional identity and career, and doubts about confidentiality, made them reluctant to disclose, including thoughts of self-harm"
+        },
+        {
+          "id": "R019",
+          "relation": "direct",
+          "role": "supports",
+          "inference": "review_of_reported_factors",
+          "note": "systematic review of 46 ASEAN studies with participants aged 18 or over (narrative synthesis; Garuda searched); social, personal and structural barriers and facilitators"
+        },
+        {
+          "id": "R098",
+          "relation": "direct",
+          "role": "supports",
+          "inference": "perceptions_qualitative",
+          "note": "chat-based interviews with 90 Indonesians aged 18-32 with depression, anxiety or bipolar disorder: access, stigma and cost without national health insurance reported as barriers; insurance membership, family support and self-help as facilitators"
+        },
+        {
+          "id": "R014",
+          "relation": "direct",
+          "role": "context",
+          "inference": "mediation_on_cross_sectional_data",
+          "note": "1,067 Ghanaian university students (ages not stated in the abstract); stigma modelled as mediator between cultural norms and help-seeking, digital engagement as moderator. The abstract's 'effects' are statistical paths in one survey, not causal effects"
+        },
+        {
+          "id": "R015",
+          "relation": "direct",
+          "role": "context",
+          "inference": "mediation_on_cross_sectional_data",
+          "note": "225 Maldivian university students aged 18-35; literacy, stigma and attitudes measured once; the authors themselves note that the design limits causal inference"
+        },
+        {
+          "id": "R016",
+          "relation": "direct",
+          "role": "context",
+          "inference": "association_cross_sectional",
+          "note": "online survey of 3,051 German young people aged 16-25 (accepted explicit range; mean age 22): 16-17-year-olds are included but not reported separately, so this is not evidence about 15-17 and is kept apart from the adult-only records; self-reported unmet need associated with individual, not regional, factors"
+        },
+        {
+          "id": "R047",
+          "relation": "direct",
+          "role": "context",
+          "inference": "pilot_trial_feasibility",
+          "note": "Indonesian pilot RCT (N=130 undergraduates, ages not stated in the abstract): help-seeking intention was a secondary outcome and did not differ from enhanced usual care"
+        },
+        {
+          "id": "R010",
+          "relation": "adjacent",
+          "role": "context",
+          "inference": "perceptions_qualitative",
+          "note": "co-design interviews and workshops with Chinese-speaking international students in Australia for a self-directed support tool; help-seeking is a design aim, not a measured outcome"
+        },
+        {
+          "id": "R040",
+          "relation": "adjacent",
+          "role": "context",
+          "inference": "review_of_reported_factors",
+          "note": "scoping review of 37 studies on engagement with digital interventions by adolescents and young people (eligibility includes minors, ages not one sample); stigma and privacy worries reported as barriers; most included studies report perceptions only"
+        },
+        {
+          "id": "R088",
+          "relation": "indirect",
+          "role": "context",
+          "inference": "pilot_trial_feasibility",
+          "note": "pilot RCT of an online social therapy platform for 74 students aged 18-35 who had already used university counselling: 'help-seeking' describes the sample, not an outcome"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R047",
+          "reason": "the only Indonesian RCT (pilot, N=130 undergraduates) improved mental health literacy more than enhanced usual care but not help-seeking intention, wellbeing or symptoms"
+        },
+        {
+          "id": "R027",
+          "reason": "an in-person warm handoff was associated with lower odds of attending the first appointment than a traditional in-house referral (adolescents, N=145; a regression association in a mixed-methods case study, not a trial): handing over is not the same as being seen"
+        },
+        {
+          "id": "R040",
+          "reason": "most studies in this scoping review reported perceived barriers qualitatively, with little measurement of whether they change engagement"
+        }
+      ],
+      "claim_boundary": "Sela may show where and how professional or crisis help can be reached and may say that people often describe stigma, cost, access and doubts about confidentiality as barriers. It may not claim that Sela increases help-seeking, attendance or service use: the register's only trial that measured help-seeking intention (R047, pilot) found no difference; the quantitative studies are cross-sectional associations (R016) or mediation models on cross-sectional data (R014, R015), which cannot show causal pathways; the rest report perceptions. Evidence for 15-17-year-olds is limited to R016 (16-25, younger respondents not reported separately) and records whose ages are unverified (R013, R017, R040, R047); the student and adult records (R011, R012, R015, R018, R019, R088, R098) must not be generalised to minors.",
+      "declared_gaps": [
+        "No register study tests whether a digital tool changes help-seeking behaviour or service use; R047 measured intention only and found no difference.",
+        "No help-seeking evidence specific to ages 15-17: R016 (16-25) does not report 16-17-year-olds separately; R013 (12-19 per its abstract) and R017 (15-24 per its abstract) have no machine-verified range.",
+        "No help-seeking evidence for adults aged 50 or over; the register is dominated by university students and young adults.",
+        "Indonesian help-seeking evidence is R098 (qualitative, 18-32), R047 (pilot RCT, undergraduates) and the ASEAN review R019 (18+); none studies a digital or AI tool.",
+        "Quantitative evidence is cross-sectional (R014, R015, R016): associations, not effects."
+      ],
+      "required_before_stronger_claims": "Human screening of the help_seeking queue; full-text appraisal of R016, R047 and R098 before any is quoted as an evidence statement; a pre-registered evaluation before Sela claims any effect on help-seeking.",
+      "v3_families": [
+        "help_seeking"
+      ]
+    },
+    {
+      "id": "sharing_and_revocation",
+      "feature": "Sharing and revocation (link + access code to one's own professional)",
+      "brief_topics": [
+        "privacy"
+      ],
+      "question": "Do people understand what they share and what revoking does?",
+      "register_support": [
+        {
+          "id": "R045",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R043",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R037",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R039",
+          "relation": "indirect",
+          "role": "supports"
+        },
+        {
+          "id": "R041",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R046",
+          "relation": "indirect",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R043",
+          "reason": "only 2 of 115 apps' privacy policies provided for notifying third parties to delete personal information; the study analysed policy texts, and deletion in practice was not tested"
+        }
+      ],
+      "claim_boundary": "Sela may state what is shared, with whom, until when, and that access can be revoked from that moment. It must not claim that revocation erases what a recipient already opened or saved, that the recipient's identity is verified, or that a share means care was received (D-041, D-042).",
+      "declared_gaps": [
+        "No cited source measures consent comprehension (claim check 10-g3).",
+        "No study of revocation behaviour or understanding.",
+        "No evidence on guardian access for minors; no UU PDP-specific research."
+      ],
+      "required_before_stronger_claims": "Consent-comprehension questions in usability testing (doc 07 metric); human screening of the sharing_and_revocation queue.",
+      "v3_families": [
+        "sharing_and_revocation"
+      ]
+    },
+    {
+      "id": "minors_mode",
+      "feature": "Minors mode (ages 15-17)",
+      "brief_topics": [
+        "adolescents"
+      ],
+      "question": "What do adolescents aged 15-17 need for consent, confidentiality, guardian involvement and safety?",
+      "register_support": [
+        {
+          "id": "R040",
+          "relation": "adjacent",
+          "role": "context_for_minors"
+        },
+        {
+          "id": "R013",
+          "relation": "adjacent",
+          "role": "context_for_minors",
+          "note": "71 focus groups in 13 countries; the abstract states ages 12-19 (not machine-verified: no CC full text); 15-17-year-olds are not reported separately"
+        },
+        {
+          "id": "R051",
+          "relation": "adjacent",
+          "role": "context_for_minors",
+          "note": "qualitative phenomenological interviews with 34 adolescents aged 15-19 in West Sumatra (abstract; ages not machine-verified, no CC full text); the title's 'qualitative synthesis' is not a review"
+        },
+        {
+          "id": "R054",
+          "relation": "indirect",
+          "role": "supports_for_minors"
+        },
+        {
+          "id": "R056",
+          "relation": "adjacent",
+          "role": "supports_for_minors"
+        },
+        {
+          "id": "R087",
+          "relation": "adjacent",
+          "role": "supports_for_minors",
+          "note": "12-18 is the eligibility range of a trial with no evaluable participants, not the ages of an analysed sample"
+        },
+        {
+          "id": "R072",
+          "relation": "adjacent",
+          "role": "context_for_minors"
+        },
+        {
+          "id": "R017",
+          "relation": "indirect",
+          "role": "context_for_minors",
+          "note": "32 interviews; the abstract states ages 15-24 and the machine age candidates conflict, so no range was accepted"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R087",
+          "reason": "no evaluable data: of 96 eligible youths aged 12-18, 3 consented and all withdrew or were excluded; the authors offer untested explanations (tools seen as irrelevant, a demanding protocol, worries about privacy). 12-18 is the trial's eligibility range, not the ages of an analysed sample"
+        },
+        {
+          "id": "R072",
+          "reason": "generative-AI psychotherapy chatbots used by youth showed crisis-handling and privacy-transparency problems"
+        }
+      ],
+      "claim_boundary": "No evidence supports a claim that Sela is suitable or safe for 15-17-year-olds. The register holds no study of adolescent consent, assent, confidentiality or guardian access. Minors mode stays disabled in production until the legal review (D-031). Adult evidence must not be cited for this row.",
+      "declared_gaps": [
+        "0 register studies on adolescent consent, assent, confidentiality or parental/guardian access.",
+        "Adolescent records mix bands such as 10-24, 12-25 or 15-24 with young adults; 15-17-specific results are not separated.",
+        "No 15-17 evaluation personas and no teen-register safety vectors (research audit R-10)."
+      ],
+      "required_before_stronger_claims": "Human screening of the adolescent_consent_confidentiality queue; legal review (UU PDP Pasal 25, PP 17/2025); adolescent personas and safety vectors before any minors evaluation.",
+      "v3_families": [
+        "adolescent_consent_confidentiality"
+      ]
+    },
+    {
+      "id": "accessibility",
+      "feature": "Accessibility (WCAG 2.2 AA, plain language, assistive technology)",
+      "brief_topics": [
+        "accessibility"
+      ],
+      "question": "What do disabled users, low-literacy users and assistive-technology users need from a mental-health app?",
+      "register_support": [
+        {
+          "id": "R037",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R042",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R038",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R093",
+          "relation": "indirect",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [],
+      "claim_boundary": "Accessibility claims come from conformance testing against the W3C WCAG 2.2 AA standard and from testing with users, not from this corpus. No register study supports a claim about disabled users' experience of mental-health apps.",
+      "declared_gaps": [
+        "0 register studies on disability, sensory or cognitive impairment, or low literacy in mental-health apps.",
+        "WCAG 2.2 is a W3C standard: cite W3C, not research records."
+      ],
+      "required_before_stronger_claims": "Human screening of the accessibility_disability queue; accessibility audit (axe plus manual WCAG 2.2 AA checks).",
+      "v3_families": [
+        "accessibility_disability"
+      ]
+    },
+    {
+      "id": "older_adults",
+      "feature": "Adults 50+",
+      "brief_topics": [
+        "older adults"
+      ],
+      "question": "Do digital mental-health tools work for, and suit, adults aged 50 and over?",
+      "register_support": [
+        {
+          "id": "R049",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R022",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R097",
+          "relation": "indirect",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [],
+      "claim_boundary": "No claim that Sela suits or helps adults aged 50+. Neither older-adult record in the register (R022 service integration, observational; R049 Indonesian insurance-claims cohort, 60+) studies digital or AI tools. R097's larger pooled effect in elderly populations is a subgroup signal across other products, not evidence about Sela.",
+      "declared_gaps": [
+        "No register evidence on digital or AI usability, acceptability or safety for adults 50+.",
+        "No 50+ evaluation personas (research audit R-10)."
+      ],
+      "required_before_stronger_claims": "Human screening of the older_adults_50_plus queue; usability testing with adults 50+.",
+      "v3_families": [
+        "older_adults_50_plus"
+      ]
+    },
+    {
+      "id": "working_age_adults",
+      "feature": "Working-age and mid-life adults (dewasa)",
+      "brief_topics": [
+        "adults"
+      ],
+      "question": "Do digital mental-health tools suit adults beyond university students, including working-age and mid-life adults?",
+      "register_support": [
+        {
+          "id": "R092",
+          "relation": "adjacent",
+          "role": "context"
+        },
+        {
+          "id": "R086",
+          "relation": "adjacent",
+          "role": "context"
+        },
+        {
+          "id": "R084",
+          "relation": "adjacent",
+          "role": "context"
+        },
+        {
+          "id": "R082",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R023",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R042",
+          "relation": "indirect",
+          "role": "context"
+        },
+        {
+          "id": "R039",
+          "relation": "indirect",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R092",
+          "reason": "in a secondary analysis of two smartphone trials (2,201 adults included), the median questionnaire completion was 37.6% among the 1,093 who completed any follow-up questionnaire, and adherence was associated with the symptom trajectory (an association, not an effect)"
+        }
+      ],
+      "claim_boundary": "No claim that Sela suits or helps working-age or mid-life adults in Indonesia. The register's adult evidence is dominated by university students and people aged 18-30. The few records on adults beyond students study other products in other countries (United States, Germany, Peru, Lebanon, Bangladesh, the Netherlands), and the cohort and observational ones report associations.",
+      "declared_gaps": [
+        "No register study of working-age or mid-life Indonesian adults using a digital mental-health tool.",
+        "No register record reports mid-life adults (45-64) separately; MeSH 'Middle Aged' is tagged on most adult studies and is not read as a mid-life signal.",
+        "Run v1.0 of the gap search had no query family for working-age adults; the family was added in run v1.1, and its candidates are machine-screened only."
+      ],
+      "required_before_stronger_claims": "Human screening of the working_age_adults queue; usability testing with working-age and mid-life adults, including people outside higher education.",
+      "v3_families": [
+        "working_age_adults"
+      ]
+    },
+    {
+      "id": "indonesian_context",
+      "feature": "Indonesian context (Bahasa Indonesia, local services, UU PDP)",
+      "brief_topics": [
+        "Indonesian context"
+      ],
+      "question": "What does the Indonesian evidence say, and how well do models handle Bahasa Indonesia and code-switching?",
+      "register_support": [
+        {
+          "id": "R098",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R019",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R047",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R049",
+          "relation": "direct",
+          "role": "context"
+        },
+        {
+          "id": "R048",
+          "relation": "direct",
+          "role": "context"
+        },
+        {
+          "id": "R050",
+          "relation": "direct",
+          "role": "context"
+        },
+        {
+          "id": "R051",
+          "relation": "direct",
+          "role": "context",
+          "note": "qualitative phenomenological interviews with 34 adolescents aged 15-19 in West Sumatra (abstract; ages not machine-verified, no CC full text); the title's 'qualitative synthesis' is not a review"
+        },
+        {
+          "id": "R052",
+          "relation": "direct",
+          "role": "context"
+        },
+        {
+          "id": "R053",
+          "relation": "direct",
+          "role": "context"
+        },
+        {
+          "id": "R054",
+          "relation": "direct",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R047",
+          "reason": "the only Indonesian RCT (pilot, undergraduates) improved literacy but not help-seeking intention or symptoms"
+        },
+        {
+          "id": "R057",
+          "reason": "an open LLM hallucinated more and diagnosed less accurately with Korean than with English input; non-English performance cannot be assumed"
+        }
+      ],
+      "claim_boundary": "Sela may say it is designed in Bahasa Indonesia and English. The register has no Indonesian digital, chatbot or AI study and no Bahasa Indonesia or code-switching model evaluation, so no claim of model quality in Indonesian. Indonesian help-seeking evidence is adult or university-student evidence (R098 ages 18-32; R019 eligibility 18+; R047 undergraduates, ages not stated), never evidence for 15-17-year-olds.",
+      "declared_gaps": [
+        "No Indonesian digital, chatbot or AI study in the register.",
+        "No Bahasa Indonesia or code-switching LLM evaluation in the register.",
+        "No UU PDP or health-data-privacy research in the register.",
+        "All 100 register publications are in English (publication_language en: 100/100); Garuda/SINTA were not harvested."
+      ],
+      "required_before_stronger_claims": "Human screening of the indonesian_context, ai_language_code_switching and health_data_privacy_law queues (including Indonesian-language Crossref records); Sela's own ID/EN/code-switch evaluation.",
+      "v3_families": [
+        "indonesian_context",
+        "ai_language_code_switching",
+        "health_data_privacy_law"
+      ]
+    },
+    {
+      "id": "safety",
+      "feature": "Safety (deterministic crisis screening, inline help, no hard redirect)",
+      "brief_topics": [
+        "safety"
+      ],
+      "question": "How do chatbots fail in crisis situations, and what must Sela's own safeguards be tested against?",
+      "register_support": [
+        {
+          "id": "R081",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R075",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R099",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R072",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R077",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R074",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R094",
+          "relation": "adjacent",
+          "role": "supports"
+        },
+        {
+          "id": "R070",
+          "relation": "adjacent",
+          "role": "context"
+        },
+        {
+          "id": "R071",
+          "relation": "adjacent",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R073",
+          "reason": "reported effectiveness from an uncontrolled evaluation (expert ratings and a questionnaire after use; no comparison group); this is not permission for autonomous crisis use"
+        },
+        {
+          "id": "R097",
+          "reason": "pooled RCTs show symptom reduction with conversational agents: failure evidence is not the whole picture"
+        }
+      ],
+      "claim_boundary": "Sela's safety behaviour is engineering evidence from its own tests on synthetic vectors (ruleset versions, false-negative tracking). The literature shows chatbot crisis failures; it cannot certify Sela. Sela does not prevent suicide, does not assess risk and does not replace crisis services, and it must never be described as safe.",
+      "declared_gaps": [
+        "No Indonesian or code-switching crisis-detection evidence.",
+        "Adolescent crisis evidence limited to R072 (chatbots used by youth) and R051 (qualitative interviews, 34 adolescents aged 15-19 in West Sumatra, Indonesia; ages from the abstract, not machine-verified, no CC full text).",
+        "Benchmarks are vignette or simulated-user studies, not user outcomes."
+      ],
+      "required_before_stronger_claims": "Human screening of the safety queue; Sela's own multi-turn, ID/EN/code-switch safety evaluation.",
+      "v3_families": [
+        "safety"
+      ]
+    },
+    {
+      "id": "privacy",
+      "feature": "Privacy (encryption, minimal data, per-provider consent, cross-border disclosure)",
+      "brief_topics": [
+        "privacy"
+      ],
+      "question": "What do people expect about privacy in mental-health apps, and where do apps fall short?",
+      "register_support": [
+        {
+          "id": "R043",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R037",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R039",
+          "relation": "direct",
+          "role": "supports"
+        },
+        {
+          "id": "R044",
+          "relation": "direct",
+          "role": "context"
+        },
+        {
+          "id": "R041",
+          "relation": "direct",
+          "role": "context"
+        },
+        {
+          "id": "R045",
+          "relation": "direct",
+          "role": "context"
+        },
+        {
+          "id": "R046",
+          "relation": "adjacent",
+          "role": "context"
+        }
+      ],
+      "counter_evidence": [
+        {
+          "id": "R043",
+          "reason": "privacy-policy compliance correlated with app quality (r=0.354); the source's causal reading ('improves engagement') is not supported"
+        }
+      ],
+      "claim_boundary": "Privacy statements rest on Sela's implementation and the legal review (B-10), not on this corpus. No register study covers UU PDP, minors' consent, or people's understanding of cross-border AI processing consent.",
+      "declared_gaps": [
+        "No UU PDP or Indonesian health-data-privacy research in the register.",
+        "No evidence on comprehension of per-provider AI processing consent (US/PRC processing, D-049)."
+      ],
+      "required_before_stronger_claims": "Human screening of the privacy and health_data_privacy_law queues; legal review (DPIA, Pasal 56).",
+      "v3_families": [
+        "privacy",
+        "health_data_privacy_law"
+      ]
+    }
+  ],
+  "brief_section_9_topics": [
+    "listening",
+    "journaling",
+    "help-seeking",
+    "consultation preparation",
+    "continuity",
+    "adolescents",
+    "adults",
+    "older adults",
+    "Indonesian context",
+    "accessibility",
+    "safety",
+    "privacy"
+  ]
+}

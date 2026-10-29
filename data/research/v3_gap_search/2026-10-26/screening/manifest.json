@@ -1,0 +1,98 @@
+{
+  "audit_sample": {
+    "criterion": "doc 14 acceptance criterion 5 (manual false-positive / false-negative audit)",
+    "design": {
+      "pool_7580:deferred": 100,
+      "pool_7580:high": 20,
+      "pool_7580:medium": 20,
+      "v3_run:deferred": 60,
+      "v3_run:high": 20,
+      "v3_run:medium": 20
+    },
+    "machine_pre_audit_pool_deferred": {
+      "note": "a machine re-screen with the v3 lexicon, NOT the manual audit; the auditor columns are blank",
+      "sampled": 100,
+      "v3_rescreen_high_or_medium": 34
+    },
+    "rows": 243,
+    "selection": "first n rows by sha256('sela-fn-audit-2026-10-26|<source>:<stratum>|<candidate_id>'); stable across Python versions; plus deferred pool titles named in the research audit (purposive)",
+    "status": "prepared_not_audited"
+  },
+  "candidates": 4818,
+  "eligibility_rule_version": "sela-pubtype-eligibility-v1",
+  "human_screening_done": false,
+  "inputs": {
+    "candidates.jsonl": "db9b4c0b769dc7cd54a038de927683738f1ed2a665e81aee2720ec2d5b4b17cc",
+    "data/research/sela_screening_index.csv": "8847a72bd51827082c8d4fad6ce4bcba8efd7c2549348b07f413adf997473da8"
+  },
+  "is_appraisal": false,
+  "lexicon_version": "sela-v3-families-1",
+  "limitations": [
+    "Lexical families miss paraphrases and over-match generic words (for example 'trust', 'stress'); every label is a prompt for a human screener, not a relevance or quality judgement.",
+    "Population bands come from words, MeSH groups and explicit ages in titles/abstracts; adult and adolescent signals are kept apart and are unverified.",
+    "possible_null_or_negative_finding is a cue list for finding counter-evidence, not a result.",
+    "The worksheet supports dual screening (two reviewers, disagreement resolution); all decisions are blank."
+  ],
+  "llm_used": false,
+  "outputs": {
+    "fn_audit_sample.csv": "9ef4f2b2337dd95100bf60e5817f363c7658531d4c9bcd0cfcecfdb09e121bdc",
+    "index.csv": "e5a00f23955efcd50cb0b73e5627a9d8775bf098f20a04a4f0deb2d947335f2a",
+    "queue.jsonl": "78b9001d9f047b258d3f4073ff2e1ec3dd0b02999db54da0486713b7eeafd12d",
+    "worksheet.csv": "a16b50a792165bfabdf70b8b4f88f3580a215240035beb131d75b0c88eb7744c"
+  },
+  "population_band_counts_screened_in": {
+    "adolescent_or_youth_unverified": 421,
+    "adults_signal": 451,
+    "includes_15_17_explicit": 181,
+    "not_stated": 904,
+    "older_adults_signal": 465
+  },
+  "possible_null_or_negative_screened_in": 278,
+  "priority_counts": {
+    "deferred": 2147,
+    "excluded_publication_type": 249,
+    "high": 814,
+    "medium": 1608
+  },
+  "queue_count": 400,
+  "queue_family_counts": {
+    "accessibility_disability": 71,
+    "adolescent_consent_confidentiality": 46,
+    "ai_language_code_switching": 31,
+    "check_in_self_monitoring": 51,
+    "consultation_preparation": 38,
+    "continuity_after_consultation": 47,
+    "health_data_privacy_law": 31,
+    "help_seeking": 62,
+    "indonesian_context": 54,
+    "journaling_expressive_writing": 42,
+    "listening_feeling_heard": 44,
+    "memory_correction_source_fidelity": 24,
+    "older_adults_50_plus": 77,
+    "privacy": 135,
+    "safety": 126,
+    "sharing_and_revocation": 36
+  },
+  "queue_rule": "per feature family up to 30 (title hit for that family first, then high before medium, score desc), then the remaining best rows up to 400",
+  "screened_in_by_feature_family": {
+    "accessibility_disability": 233,
+    "adolescent_consent_confidentiality": 133,
+    "ai_language_code_switching": 43,
+    "check_in_self_monitoring": 268,
+    "consultation_preparation": 129,
+    "continuity_after_consultation": 242,
+    "health_data_privacy_law": 41,
+    "help_seeking": 391,
+    "indonesian_context": 239,
+    "journaling_expressive_writing": 240,
+    "listening_feeling_heard": 241,
+    "memory_correction_source_fidelity": 24,
+    "older_adults_50_plus": 403,
+    "privacy": 535,
+    "safety": 629,
+    "sharing_and_revocation": 62
+  },
+  "screening_unit": "title + abstract (abstract read from the local cache only; never committed)",
+  "screening_version": "sela-v3-tiab-screen-v1.0",
+  "status": "machine_title_abstract_screen_unreviewed"
+}

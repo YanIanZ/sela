@@ -1,0 +1,1389 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-28T20:16:21.134209+00:00",
+  "title": "Design System: Sela",
+  "extensions": {
+    "colorMeta": {
+      "page": {
+        "role": "neutral",
+        "displayName": "Garden Page",
+        "cssVar": "--c-bg",
+        "canonical": "#FBFBF7",
+        "schemes": {
+          "light": "#FBFBF7",
+          "dark": "#121713",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(98.7% 0.005 106.5)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#262625",
+          "#454543",
+          "#666663",
+          "#898986",
+          "#AEAEAB",
+          "#D1D1CF",
+          "#EEEEED"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "cssVar": "--c-surface",
+        "canonical": "#FFFFFF",
+        "schemes": {
+          "light": "#FFFFFF",
+          "dark": "#1A211B",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#AEAEAE",
+          "#D1D1D1",
+          "#EEEEEE"
+        ]
+      },
+      "surface-quiet": {
+        "role": "neutral",
+        "displayName": "Quiet Sage Well",
+        "cssVar": "--c-surface-quiet",
+        "canonical": "#F4F6EF",
+        "schemes": {
+          "light": "#F4F6EF",
+          "dark": "#171D18",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(97.0% 0.009 119.6)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#262724",
+          "#444542",
+          "#656762",
+          "#888A84",
+          "#ADAFAA",
+          "#D0D1CE",
+          "#EEEFEC"
+        ]
+      },
+      "sunken": {
+        "role": "neutral",
+        "displayName": "Pressed Sage",
+        "cssVar": "--c-sunken",
+        "canonical": "#EAEFE2",
+        "schemes": {
+          "light": "#EAEFE2",
+          "dark": "#232C24",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(94.5% 0.018 124.0)",
+        "tonalRamp": [
+          "#0B0B09",
+          "#252723",
+          "#44463F",
+          "#64685E",
+          "#878B80",
+          "#ACAFA6",
+          "#CFD2CB",
+          "#EDEFEA"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Garden Ink",
+        "cssVar": "--c-text / --c-accent / --c-nav",
+        "canonical": "#1C1B18",
+        "schemes": {
+          "light": "#1C1B18",
+          "dark": "#EEF2E8",
+          "contrast-light": "#000000",
+          "contrast-dark": "#ffffff"
+        },
+        "oklch": "oklch(22.2% 0.006 91.6)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#272625",
+          "#464543",
+          "#676663",
+          "#8A8985",
+          "#AFAEAB",
+          "#D2D1CE",
+          "#EFEEED"
+        ]
+      },
+      "ink-hover": {
+        "role": "primary",
+        "displayName": "Ink Hover",
+        "cssVar": "--c-accent-hover",
+        "canonical": "#3A3D35",
+        "schemes": {
+          "light": "#3A3D35",
+          "dark": "#EEF6E4",
+          "contrast-light": "#102555",
+          "contrast-dark": "#E0E7FF"
+        },
+        "oklch": "oklch(35.4% 0.014 123.9)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#262724",
+          "#444641",
+          "#646760",
+          "#878B82",
+          "#ACAFA8",
+          "#D0D2CC",
+          "#EDEFEB"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "cssVar": "--c-muted",
+        "canonical": "#55584F",
+        "schemes": {
+          "light": "#55584F",
+          "dark": "#B4BCAB",
+          "contrast-light": "#1f1f1f",
+          "contrast-dark": "#e8e8e8"
+        },
+        "oklch": "oklch(45.5% 0.015 122.0)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#262723",
+          "#444640",
+          "#65675F",
+          "#878B81",
+          "#ADAFA7",
+          "#D0D2CC",
+          "#EEEFEB"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "cssVar": "--c-border-subtle",
+        "canonical": "#E3E7DA",
+        "schemes": {
+          "light": "#E3E7DA",
+          "dark": "#2C362D",
+          "contrast-light": "#000000",
+          "contrast-dark": "#ffffff"
+        },
+        "oklch": "oklch(92.1% 0.018 120.7)",
+        "tonalRamp": [
+          "#0B0B09",
+          "#262723",
+          "#44463F",
+          "#65685E",
+          "#878B80",
+          "#ACAFA6",
+          "#D0D2CB",
+          "#EEEFEA"
+        ]
+      },
+      "control-edge": {
+        "role": "neutral",
+        "displayName": "Control Edge",
+        "cssVar": "--c-border-control",
+        "canonical": "#7B8472",
+        "schemes": {
+          "light": "#7B8472",
+          "dark": "#808B78",
+          "contrast-light": "#000000",
+          "contrast-dark": "#ffffff"
+        },
+        "oklch": "oklch(60.1% 0.029 129.0)",
+        "tonalRamp": [
+          "#0A0C09",
+          "#242821",
+          "#42473D",
+          "#62695A",
+          "#848D7B",
+          "#AAB1A3",
+          "#CED3C8",
+          "#ECF0E8"
+        ]
+      },
+      "sage-wash": {
+        "role": "secondary",
+        "displayName": "Sage Wash",
+        "cssVar": "--c-accent-soft",
+        "canonical": "#E1EDD3",
+        "schemes": {
+          "light": "#E1EDD3",
+          "dark": "#2A3A2C",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(93.0% 0.037 127.4)",
+        "tonalRamp": [
+          "#0A0C08",
+          "#24281F",
+          "#41483A",
+          "#616A57",
+          "#838D77",
+          "#A9B29F",
+          "#CDD4C5",
+          "#EBF1E6"
+        ]
+      },
+      "leaf": {
+        "role": "primary",
+        "displayName": "Deep Leaf",
+        "cssVar": "--c-leaf / --c-link / --c-focus",
+        "canonical": "#2F6A43",
+        "schemes": {
+          "light": "#2F6A43",
+          "dark": "#A9D5A0",
+          "contrast-light": "#003a99",
+          "contrast-dark": "#C4D1FF"
+        },
+        "oklch": "oklch(47.4% 0.089 152.6)",
+        "tonalRamp": [
+          "#050E07",
+          "#162C1D",
+          "#2C4E36",
+          "#427351",
+          "#609870",
+          "#8EBB9A",
+          "#B9DBC1",
+          "#DDF6E3"
+        ]
+      },
+      "leaf-soft": {
+        "role": "primary",
+        "displayName": "Fresh Leaf",
+        "cssVar": "--c-leaf-soft",
+        "canonical": "#8FC17A",
+        "schemes": {
+          "light": "#8FC17A",
+          "dark": "#5E8F52",
+          "contrast-light": "#000000",
+          "contrast-dark": "#ffffff"
+        },
+        "oklch": "oklch(75.8% 0.111 136.8)",
+        "tonalRamp": [
+          "#060E04",
+          "#1A2C13",
+          "#324E26",
+          "#4C723A",
+          "#6A9857",
+          "#95BB86",
+          "#BEDBB3",
+          "#E1F6D8"
+        ]
+      },
+      "nav-text": {
+        "role": "secondary",
+        "displayName": "Nav Text",
+        "cssVar": "--c-nav-text",
+        "canonical": "#D3DAC9",
+        "schemes": {
+          "light": "#D3DAC9",
+          "dark": "#B4BCAB",
+          "contrast-light": "#000000",
+          "contrast-dark": "#ffffff"
+        },
+        "oklch": "oklch(87.8% 0.024 125.2)",
+        "tonalRamp": [
+          "#0A0C09",
+          "#252722",
+          "#43473E",
+          "#63685C",
+          "#868C7D",
+          "#ABB0A4",
+          "#CFD3C9",
+          "#EDF0E9"
+        ]
+      },
+      "place-home": {
+        "role": "secondary",
+        "displayName": "Sage Sheet (Beranda) / nav active",
+        "cssVar": "--place-home / --c-nav-active",
+        "canonical": "#D4E5C3",
+        "schemes": {
+          "light": "#D4E5C3",
+          "dark": "#253425",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(90.0% 0.049 129.1)",
+        "tonalRamp": [
+          "#0A0C07",
+          "#23291D",
+          "#404936",
+          "#5F6B52",
+          "#808F71",
+          "#A7B39B",
+          "#CBD5C2",
+          "#EAF1E3"
+        ]
+      },
+      "place-talk": {
+        "role": "secondary",
+        "displayName": "Mint Sheet (Cerita)",
+        "cssVar": "--place-talk",
+        "canonical": "#CDE8DC",
+        "schemes": {
+          "light": "#CDE8DC",
+          "dark": "#1E3430",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(90.8% 0.033 167.1)",
+        "tonalRamp": [
+          "#080C0A",
+          "#202925",
+          "#3A4943",
+          "#576B63",
+          "#789085",
+          "#A0B3AB",
+          "#C6D5CE",
+          "#E6F2EC"
+        ]
+      },
+      "place-notes": {
+        "role": "secondary",
+        "displayName": "Butter Sheet (Catatanku)",
+        "cssVar": "--place-notes",
+        "canonical": "#F6E7B4",
+        "schemes": {
+          "light": "#F6E7B4",
+          "dark": "#37321F",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(92.8% 0.068 93.6)",
+        "tonalRamp": [
+          "#0D0B04",
+          "#2B2615",
+          "#4D4529",
+          "#71663F",
+          "#96895C",
+          "#B8AE8A",
+          "#D9D1B5",
+          "#F5EFDA"
+        ]
+      },
+      "place-support": {
+        "role": "secondary",
+        "displayName": "Blush Sheet (Dukungan)",
+        "cssVar": "--place-support",
+        "canonical": "#F4DDD3",
+        "schemes": {
+          "light": "#F4DDD3",
+          "dark": "#3A2A25",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(91.4% 0.029 45.0)",
+        "tonalRamp": [
+          "#0E0A09",
+          "#2C2521",
+          "#4E423D",
+          "#73625B",
+          "#98847C",
+          "#BAAAA3",
+          "#DBCEC8",
+          "#F6ECE8"
+        ]
+      },
+      "place-quiet": {
+        "role": "secondary",
+        "displayName": "Quiet Sheet (Settings, About)",
+        "cssVar": "--place-quiet",
+        "canonical": "#E6EADF",
+        "schemes": {
+          "light": "#E6EADF",
+          "dark": "#20271F",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(93.1% 0.015 123.1)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#262723",
+          "#444640",
+          "#64675F",
+          "#878B81",
+          "#ACAFA7",
+          "#D0D2CC",
+          "#EDEFEB"
+        ]
+      },
+      "on-place-muted": {
+        "role": "neutral",
+        "displayName": "Muted on Tint",
+        "cssVar": "--on-place-muted",
+        "canonical": "#3D4338",
+        "schemes": {
+          "light": "#3D4338",
+          "dark": "#C6CDBD",
+          "contrast-light": "#000000",
+          "contrast-dark": "#ffffff"
+        },
+        "oklch": "oklch(37.4% 0.020 130.8)",
+        "tonalRamp": [
+          "#0A0C09",
+          "#252723",
+          "#43473F",
+          "#63685E",
+          "#858C80",
+          "#ABB0A6",
+          "#CED3CB",
+          "#ECF0EA"
+        ]
+      },
+      "user": {
+        "role": "tertiary",
+        "displayName": "Your Voice",
+        "cssVar": "--c-user",
+        "canonical": "#9A4A35",
+        "schemes": {
+          "light": "#9A4A35",
+          "dark": "#F2C9BA",
+          "contrast-light": "#6b3500",
+          "contrast-dark": "#ffb85c"
+        },
+        "oklch": "oklch(50.6% 0.112 35.7)",
+        "tonalRamp": [
+          "#150704",
+          "#3B1D15",
+          "#663629",
+          "#94513F",
+          "#C0705B",
+          "#DE9B89",
+          "#F7C3B5",
+          "#FFE4D9"
+        ]
+      },
+      "user-bg": {
+        "role": "tertiary",
+        "displayName": "Your Bubble",
+        "cssVar": "--c-user-bg",
+        "canonical": "#F6E1D8",
+        "schemes": {
+          "light": "#F6E1D8",
+          "dark": "#3A2924",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(92.4% 0.026 44.7)",
+        "tonalRamp": [
+          "#0E0A09",
+          "#2C2522",
+          "#4D423E",
+          "#72625C",
+          "#97857D",
+          "#B9AAA4",
+          "#DACEC9",
+          "#F5ECE9"
+        ]
+      },
+      "user-text": {
+        "role": "tertiary",
+        "displayName": "Your Words",
+        "cssVar": "--c-user-text",
+        "canonical": "#7A3B2A",
+        "schemes": {
+          "light": "#7A3B2A",
+          "dark": "#F2C9BA",
+          "contrast-light": "#4d2600",
+          "contrast-dark": "#ffc97f"
+        },
+        "oklch": "oklch(43.0% 0.092 36.1)",
+        "tonalRamp": [
+          "#140805",
+          "#381F18",
+          "#61392E",
+          "#8D5546",
+          "#B87664",
+          "#D69F90",
+          "#F1C6BA",
+          "#FFE6DD"
+        ]
+      },
+      "ai-bg": {
+        "role": "tertiary",
+        "displayName": "Sela Bubble",
+        "cssVar": "--c-ai-bg",
+        "canonical": "#E6F0DC",
+        "schemes": {
+          "light": "#E6F0DC",
+          "dark": "#1E2C21",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(94.2% 0.029 128.8)",
+        "tonalRamp": [
+          "#0A0C09",
+          "#242821",
+          "#42473D",
+          "#62695A",
+          "#848D7B",
+          "#AAB1A3",
+          "#CED3C8",
+          "#ECF0E8"
+        ]
+      },
+      "ai-text": {
+        "role": "tertiary",
+        "displayName": "Sela Words",
+        "cssVar": "--c-ai-text",
+        "canonical": "#24543A",
+        "schemes": {
+          "light": "#24543A",
+          "dark": "#B9DDBF",
+          "contrast-light": "#2a2283",
+          "contrast-dark": "#cfcbff"
+        },
+        "oklch": "oklch(40.4% 0.069 157.5)",
+        "tonalRamp": [
+          "#060D08",
+          "#192B20",
+          "#304C3C",
+          "#497059",
+          "#67957A",
+          "#93B8A1",
+          "#BDD9C7",
+          "#E0F5E7"
+        ]
+      },
+      "help": {
+        "role": "semantic",
+        "displayName": "Help",
+        "cssVar": "--c-help",
+        "canonical": "#a1351e",
+        "schemes": {
+          "light": "#a1351e",
+          "dark": "#f2917a",
+          "contrast-light": "#7e1a07",
+          "contrast-dark": "#ffa28d"
+        },
+        "oklch": "oklch(48.4% 0.147 33.7)",
+        "tonalRamp": [
+          "#180503",
+          "#41180F",
+          "#6F2E20",
+          "#A14633",
+          "#D0654E",
+          "#EB947F",
+          "#FFBEAD",
+          "#FFE1D4"
+        ]
+      },
+      "help-hover": {
+        "role": "semantic",
+        "displayName": "Help Hover",
+        "cssVar": "--c-help-hover",
+        "canonical": "#852a16",
+        "schemes": {
+          "light": "#852a16",
+          "dark": "#f7ae9c",
+          "contrast-light": "#5e1205",
+          "contrast-dark": "#ffc2b3"
+        },
+        "oklch": "oklch(42.1% 0.129 33.9)",
+        "tonalRamp": [
+          "#160604",
+          "#3E1B13",
+          "#6A3226",
+          "#9A4C3A",
+          "#C86B56",
+          "#E49885",
+          "#FDC0B2",
+          "#FFE2D7"
+        ]
+      },
+      "help-bg": {
+        "role": "semantic",
+        "displayName": "Help Ground",
+        "cssVar": "--c-help-bg",
+        "canonical": "#fbe9e4",
+        "schemes": {
+          "light": "#fbe9e4",
+          "dark": "#36211b",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(94.7% 0.021 36.0)",
+        "tonalRamp": [
+          "#0D0A0A",
+          "#2B2523",
+          "#4C4340",
+          "#70635F",
+          "#958581",
+          "#B7ABA7",
+          "#D8CECC",
+          "#F4EDEA"
+        ]
+      },
+      "help-text": {
+        "role": "semantic",
+        "displayName": "Help Text",
+        "cssVar": "--c-help-text",
+        "canonical": "#8c2c17",
+        "schemes": {
+          "light": "#8c2c17",
+          "dark": "#f6ae9c",
+          "contrast-light": "#7e1a07",
+          "contrast-dark": "#ffb4a3"
+        },
+        "oklch": "oklch(43.6% 0.134 33.8)",
+        "tonalRamp": [
+          "#170603",
+          "#3F1A12",
+          "#6C3124",
+          "#9C4A38",
+          "#CA6954",
+          "#E69684",
+          "#FFC0B1",
+          "#FFE2D6"
+        ]
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Danger",
+        "cssVar": "--c-danger",
+        "canonical": "#a3271f",
+        "schemes": {
+          "light": "#a3271f",
+          "dark": "#f38e85",
+          "contrast-light": "#8b0f08",
+          "contrast-dark": "#ff9c94"
+        },
+        "oklch": "oklch(47.3% 0.162 28.6)",
+        "tonalRamp": [
+          "#190403",
+          "#431510",
+          "#732A22",
+          "#A64035",
+          "#D65E51",
+          "#F18F82",
+          "#FFBBAF",
+          "#FFDED5"
+        ]
+      },
+      "danger-bg": {
+        "role": "semantic",
+        "displayName": "Danger Ground",
+        "cssVar": "--c-danger-bg",
+        "canonical": "#fce9e7",
+        "schemes": {
+          "light": "#fce9e7",
+          "dark": "#3a1c19",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(94.9% 0.021 24.8)",
+        "tonalRamp": [
+          "#0D0A0A",
+          "#2B2524",
+          "#4C4241",
+          "#706261",
+          "#958583",
+          "#B8AAA9",
+          "#D9CECD",
+          "#F4ECEB"
+        ]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Success",
+        "cssVar": "--c-success",
+        "canonical": "#23683c",
+        "schemes": {
+          "light": "#23683c",
+          "dark": "#83cc9b",
+          "contrast-light": "#0b4a22",
+          "contrast-dark": "#8fe3aa"
+        },
+        "oklch": "oklch(46.2% 0.099 152.2)",
+        "tonalRamp": [
+          "#040E06",
+          "#142D1B",
+          "#284F34",
+          "#3D744E",
+          "#5B9A6D",
+          "#8ABC97",
+          "#B6DCBF",
+          "#DBF7E1"
+        ]
+      },
+      "success-bg": {
+        "role": "semantic",
+        "displayName": "Success Ground",
+        "cssVar": "--c-success-bg",
+        "canonical": "#e6f2e9",
+        "schemes": {
+          "light": "#e6f2e9",
+          "dark": "#18301f",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(95.0% 0.017 153.6)",
+        "tonalRamp": [
+          "#0A0C0A",
+          "#242825",
+          "#414742",
+          "#606962",
+          "#828C85",
+          "#A8B0AA",
+          "#CCD3CE",
+          "#EBF0EC"
+        ]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Warning",
+        "cssVar": "--c-warning",
+        "canonical": "#875200",
+        "schemes": {
+          "light": "#875200",
+          "dark": "#f1c46f",
+          "contrast-light": "#5c3700",
+          "contrast-dark": "#ffd27a"
+        },
+        "oklch": "oklch(48.8% 0.107 67.7)",
+        "tonalRamp": [
+          "#130902",
+          "#362109",
+          "#5D3D16",
+          "#885B25",
+          "#B27D40",
+          "#D0A576",
+          "#ECCAA7",
+          "#FFEACF"
+        ]
+      },
+      "warning-bg": {
+        "role": "semantic",
+        "displayName": "Warning Ground",
+        "cssVar": "--c-warning-bg",
+        "canonical": "#fcf1d9",
+        "schemes": {
+          "light": "#fcf1d9",
+          "dark": "#352a12",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(96.0% 0.034 86.3)",
+        "tonalRamp": [
+          "#0D0B07",
+          "#2A261E",
+          "#4A4438",
+          "#6D6554",
+          "#928874",
+          "#B5AD9C",
+          "#D6D0C3",
+          "#F3EEE4"
+        ]
+      },
+      "warning-border": {
+        "role": "semantic",
+        "displayName": "Warning Edge",
+        "cssVar": "--c-warning-border",
+        "canonical": "#a86e00",
+        "schemes": {
+          "light": "#a86e00",
+          "dark": "#d9a440",
+          "contrast-light": "#5c3700",
+          "contrast-dark": "#ffd27a"
+        },
+        "oklch": "oklch(58.5% 0.125 72.9)",
+        "tonalRamp": [
+          "#130900",
+          "#372101",
+          "#5F3D03",
+          "#8A5B07",
+          "#B47C28",
+          "#D2A569",
+          "#EECA9E",
+          "#FFEAC9"
+        ]
+      },
+      "info": {
+        "role": "semantic",
+        "displayName": "Info",
+        "cssVar": "--c-info",
+        "canonical": "#1f5788",
+        "schemes": {
+          "light": "#1f5788",
+          "dark": "#90c3f0",
+          "contrast-light": "#0b3a66",
+          "contrast-dark": "#a3d2ff"
+        },
+        "oklch": "oklch(44.5% 0.099 248.6)",
+        "tonalRamp": [
+          "#040C15",
+          "#14283B",
+          "#274866",
+          "#3D6A94",
+          "#5A8EC0",
+          "#89B2DC",
+          "#B5D5F5",
+          "#DAF2FF"
+        ]
+      },
+      "info-bg": {
+        "role": "semantic",
+        "displayName": "Info Ground",
+        "cssVar": "--c-info-bg",
+        "canonical": "#e7f0f8",
+        "schemes": {
+          "light": "#e7f0f8",
+          "dark": "#172a3b",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(95.1% 0.014 244.7)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#242729",
+          "#41464A",
+          "#60676D",
+          "#828A91",
+          "#A8AFB4",
+          "#CDD2D6",
+          "#EBEFF2"
+        ]
+      },
+      "demo": {
+        "role": "semantic",
+        "displayName": "Demo Marker",
+        "cssVar": "--c-demo",
+        "canonical": "#5e4a99",
+        "schemes": {
+          "light": "#5e4a99",
+          "dark": "#c6b6f2",
+          "contrast-light": "#3b2475",
+          "contrast-dark": "#d9ccff"
+        },
+        "oklch": "oklch(46.9% 0.124 292.6)",
+        "tonalRamp": [
+          "#0C0817",
+          "#27213F",
+          "#473C6C",
+          "#68599D",
+          "#8C7BCA",
+          "#AFA3E4",
+          "#D2C9FC",
+          "#EFE9FF"
+        ]
+      },
+      "demo-bg": {
+        "role": "semantic",
+        "displayName": "Demo Ground",
+        "cssVar": "--c-demo-bg",
+        "canonical": "#eee9f8",
+        "schemes": {
+          "light": "#eee9f8",
+          "dark": "#2a2340",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(94.2% 0.021 301.1)",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#27252A",
+          "#46434B",
+          "#68646F",
+          "#8B8793",
+          "#AFACB6",
+          "#D2CFD8",
+          "#EFEDF3"
+        ]
+      },
+      "test": {
+        "role": "semantic",
+        "displayName": "Test Marker",
+        "cssVar": "--c-test",
+        "canonical": "#7a5600",
+        "schemes": {
+          "light": "#7a5600",
+          "dark": "#f2c94c",
+          "contrast-light": "#4f3800",
+          "contrast-dark": "#ffda66"
+        },
+        "oklch": "oklch(47.9% 0.099 80.4)",
+        "tonalRamp": [
+          "#110A02",
+          "#32240A",
+          "#574118",
+          "#7F6027",
+          "#A78342",
+          "#C7A978",
+          "#E4CEA8",
+          "#FDECD0"
+        ]
+      },
+      "test-bg": {
+        "role": "semantic",
+        "displayName": "Test Ground",
+        "cssVar": "--c-test-bg",
+        "canonical": "#fff1c7",
+        "schemes": {
+          "light": "#fff1c7",
+          "dark": "#352b0e",
+          "contrast-light": "#ffffff",
+          "contrast-dark": "#000000"
+        },
+        "oklch": "oklch(95.9% 0.056 91.8)",
+        "tonalRamp": [
+          "#0D0B05",
+          "#2B2618",
+          "#4C452E",
+          "#706546",
+          "#958964",
+          "#B7AE90",
+          "#D8D1BA",
+          "#F4EEDD"
+        ]
+      },
+      "mood-very-heavy": {
+        "role": "tertiary",
+        "displayName": "Coral Face (very heavy)",
+        "canonical": "#F0786D",
+        "note": "Fixed fill in every non-contrast scheme; high contrast outlines the face on the ground colour.",
+        "oklch": "oklch(70.9% 0.150 26.9)",
+        "tonalRamp": [
+          "#180504",
+          "#421714",
+          "#702C27",
+          "#A2443C",
+          "#D16259",
+          "#ED9187",
+          "#FFBCB3",
+          "#FFDFD8"
+        ]
+      },
+      "mood-heavy": {
+        "role": "tertiary",
+        "displayName": "Apricot Face (heavy)",
+        "canonical": "#F49C6E",
+        "note": "Fixed fill in every non-contrast scheme; high contrast outlines the face on the ground colour.",
+        "oklch": "oklch(77.2% 0.122 47.9)",
+        "tonalRamp": [
+          "#150702",
+          "#3C1D0C",
+          "#67361C",
+          "#95522C",
+          "#C17247",
+          "#DE9C7B",
+          "#F8C4AA",
+          "#FFE5D2"
+        ]
+      },
+      "mood-okay": {
+        "role": "tertiary",
+        "displayName": "Marigold Face (okay)",
+        "canonical": "#F6C46D",
+        "note": "Fixed fill in every non-contrast scheme; high contrast outlines the face on the ground colour.",
+        "oklch": "oklch(84.7% 0.120 79.9)",
+        "tonalRamp": [
+          "#120900",
+          "#342302",
+          "#5B3F05",
+          "#845E0C",
+          "#AD802B",
+          "#CCA86B",
+          "#E9CD9F",
+          "#FFECCA"
+        ]
+      },
+      "mood-good": {
+        "role": "tertiary",
+        "displayName": "Lime Face (good)",
+        "canonical": "#B8DA6C",
+        "note": "Fixed fill in every non-contrast scheme; high contrast outlines the face on the ground colour.",
+        "oklch": "oklch(84.0% 0.143 123.6)",
+        "tonalRamp": [
+          "#080D00",
+          "#202B02",
+          "#3B4D06",
+          "#58710C",
+          "#79962C",
+          "#A0B96C",
+          "#C6DAA0",
+          "#E6F6CA"
+        ]
+      },
+      "mood-very-good": {
+        "role": "tertiary",
+        "displayName": "Seafoam Face (very good)",
+        "canonical": "#88D4B9",
+        "note": "Fixed fill in every non-contrast scheme; high contrast outlines the face on the ground colour.",
+        "oklch": "oklch(81.3% 0.085 169.7)",
+        "tonalRamp": [
+          "#030E0A",
+          "#112C23",
+          "#224F40",
+          "#36745F",
+          "#529981",
+          "#85BCA7",
+          "#B3DCCC",
+          "#D8F7EB"
+        ]
+      },
+      "mood-mixed": {
+        "role": "tertiary",
+        "displayName": "Lilac Face (mixed)",
+        "canonical": "#CBBBEA",
+        "note": "Fixed fill in every non-contrast scheme; high contrast outlines the face on the ground colour.",
+        "oklch": "oklch(82.1% 0.067 300.5)",
+        "tonalRamp": [
+          "#0C0A11",
+          "#292333",
+          "#494059",
+          "#6B5F82",
+          "#8F81AA",
+          "#B3A7CA",
+          "#D5CCE7",
+          "#F1EBFF"
+        ]
+      },
+      "face-ink": {
+        "role": "tertiary",
+        "displayName": "Face Ink",
+        "canonical": "#2A1F1A",
+        "note": "Eyes and mouths of the drawn mood faces (icons.tsx); text colour in high contrast.",
+        "oklch": "oklch(25.1% 0.020 45.7)",
+        "tonalRamp": [
+          "#0D0B09",
+          "#2A2523",
+          "#4B433F",
+          "#6F635E",
+          "#938680",
+          "#B6ABA6",
+          "#D8CFCB",
+          "#F3EDEA"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Beranda greeting on the sage sheet."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Sheet titles on every other non-focused page."
+      },
+      "headline-compact": {
+        "displayName": "Headline compact",
+        "purpose": "Focused rooms and sign-in/onboarding card titles."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "\"Sela\" beside the sprout mark (title-large on phones)."
+      },
+      "title-large": {
+        "displayName": "Title large",
+        "purpose": "Room toolbar titles, menu heading, phone wordmark, greeting at large text on small phones."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings."
+      },
+      "statement": {
+        "displayName": "Statement",
+        "purpose": "Footer mark and attribution name, voice status, voice transcript heading."
+      },
+      "title-small": {
+        "displayName": "Title small",
+        "purpose": "h3, activity card titles, editor aside headings."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Sentence under a sheet title."
+      },
+      "action": {
+        "displayName": "Action",
+        "purpose": "The big way-in button and notice titles."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "A saved note read back."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Instructions, paragraphs, list previews (500)."
+      },
+      "nav": {
+        "displayName": "Nav",
+        "purpose": "Desktop place pill and writing prompts."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, list dates and kinds, chips, badges, hints."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Phone navigation labels, demo stamp, voice provider flag."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-1",
+        "value": "0 2px 8px rgb(28 27 24 / 0.06)",
+        "dark": "0 2px 8px rgb(0 0 0 / 0.4)",
+        "purpose": "Soft lift: navigation pill, white circular icon buttons, back pill, composer, menu button."
+      },
+      {
+        "name": "shadow-2",
+        "value": "0 18px 40px -8px rgb(28 27 24 / 0.22)",
+        "dark": "0 18px 40px -8px rgb(0 0 0 / 0.7)",
+        "purpose": "Floating layers: phone navigation pill, menus, dialogs, activity-card hover."
+      },
+      {
+        "name": "primary-lift",
+        "value": "0 6px 16px -8px rgb(28 27 24 / 0.55)",
+        "purpose": "Small ink lift under primary pill buttons; removed when disabled and in high contrast."
+      },
+      {
+        "name": "field-focus",
+        "value": "0 0 0 3px color-mix(in srgb, var(--c-focus) 45%, transparent), 0 0 0 1px var(--c-focus)",
+        "purpose": "Leaf focus halo on fields."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Colour and border state changes."
+      },
+      {
+        "name": "ease-out-quint",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Lifts, arrow turns, chevron slides, face hops."
+      },
+      {
+        "name": "duration-quick",
+        "value": "120ms",
+        "purpose": "Hover and press colour changes."
+      },
+      {
+        "name": "duration-gentle",
+        "value": "200ms",
+        "purpose": "Lifts and transforms; reduced motion collapses both durations to 0.01ms."
+      },
+      {
+        "name": "reveal-step",
+        "value": "180ms",
+        "purpose": "Staggered reveals; 0ms when motion is reduced."
+      },
+      {
+        "name": "twinkle",
+        "value": "5.5s infinite (second star delayed 1.8s)",
+        "purpose": "Two sheet sparkles scale and rotate gently; only when motion is allowed."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone-narrow",
+        "value": "24em"
+      },
+      {
+        "name": "phone-small",
+        "value": "30em"
+      },
+      {
+        "name": "phone",
+        "value": "48em"
+      },
+      {
+        "name": "sheet-split (container)",
+        "value": "52rem"
+      },
+      {
+        "name": "beranda-split",
+        "value": "60em"
+      },
+      {
+        "name": "desktop",
+        "value": "64em"
+      },
+      {
+        "name": "wide",
+        "value": "75em"
+      },
+      {
+        "name": "nav-icons",
+        "value": "80em"
+      },
+      {
+        "name": "tool-row-context",
+        "value": "96em"
+      }
+    ],
+    "textScale": [
+      "100%",
+      "115%",
+      "130%",
+      "150%"
+    ],
+    "fonts": [
+      {
+        "family": "Lexend",
+        "file": "public/fonts/lexend-latin.woff2",
+        "weights": "100 900",
+        "license": "OFL-1.1 (public/fonts/OFL-Lexend.txt)"
+      },
+      {
+        "family": "Hanken Grotesk",
+        "file": "public/fonts/hanken-grotesk-latin.woff2",
+        "weights": "400 700",
+        "license": "OFL-1.1"
+      }
+    ],
+    "imagery": "No shipping raster images. All art is inline SVG: sprout Mark, four-point Sparkle, six MoodFace drawings, outline icons on a 24px grid (1.75px stroke)."
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one ink pill action per view.",
+      "html": "<button class=\"ds-btn-primary\">Simpan catatan</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:.5rem;min-height:2.75rem;padding:.55rem 1.15rem;border:1px solid var(--c-accent,#1C1B18);border-radius:999px;background:var(--c-accent,#1C1B18);color:var(--c-on-accent,#FBFBF7);font:500 1rem/1.4 Lexend,'Hanken Grotesk',system-ui,sans-serif;letter-spacing:-.01em;box-shadow:0 6px 16px -8px rgb(28 27 24 / .55);cursor:pointer;transition:background-color 120ms cubic-bezier(.16,1,.3,1),transform 200ms cubic-bezier(.22,1,.36,1)}.ds-btn-primary:hover{background:var(--c-accent-hover,#3A3D35);transform:translateY(-1px)}.ds-btn-primary:active{transform:translateY(1px)}.ds-btn-primary:focus-visible{outline:3px solid var(--c-focus,#2F6A43);outline-offset:3px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Second action: white pill with an ink outline.",
+      "html": "<button class=\"ds-btn-secondary\">Tulis catatan</button>",
+      "css": ".ds-btn-secondary{min-height:2.75rem;padding:.55rem 1.15rem;border:1.5px solid var(--c-text,#1C1B18);border-radius:999px;background:var(--c-surface,#FFFFFF);color:var(--c-text,#1C1B18);font:500 1rem/1.4 Lexend,'Hanken Grotesk',system-ui,sans-serif;letter-spacing:-.01em;cursor:pointer;transition:background-color 120ms cubic-bezier(.16,1,.3,1)}.ds-btn-secondary:hover{background:var(--c-accent-soft,#E1EDD3)}.ds-btn-secondary:focus-visible{outline:3px solid var(--c-focus,#2F6A43);outline-offset:3px}"
+    },
+    {
+      "name": "Way-in Button",
+      "kind": "button",
+      "refersTo": "button-go",
+      "description": "The big start action on a sheet: sage icon circle left, sliding chevrons right.",
+      "html": "<button class=\"ds-btn-go\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>Mulai bercerita<span class=\"ds-chev\" aria-hidden=\"true\"></span></button>",
+      "css": ".ds-btn-go{display:inline-flex;align-items:center;gap:.85rem;min-height:3.5rem;padding:.35rem 1.35rem .35rem .4rem;border:0;border-radius:999px;background:var(--c-accent,#1C1B18);color:var(--c-on-accent,#FBFBF7);font:500 1.0625rem/1.4 Lexend,'Hanken Grotesk',system-ui,sans-serif;letter-spacing:-.01em;box-shadow:0 6px 16px -8px rgb(28 27 24 / .55);cursor:pointer}.ds-btn-go svg{box-sizing:content-box;padding:.7rem;border-radius:50%;background:var(--c-nav-active,#D4E5C3);color:var(--c-nav-active-text,#1C1B18)}.ds-chev{width:1.6rem;height:.9rem;margin-left:.5rem;opacity:.8;background:currentColor;-webkit-mask:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 14' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m2 2 5 5-5 5M10 2l5 5-5 5M18 2l5 5-5 5'/%3E%3C/svg%3E\") no-repeat center/contain;mask:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 14' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m2 2 5 5-5 5M10 2l5 5-5 5M18 2l5 5-5 5'/%3E%3C/svg%3E\") no-repeat center/contain;transition:transform 200ms cubic-bezier(.22,1,.36,1)}.ds-btn-go:hover .ds-chev{transform:translateX(4px)}.ds-btn-go:focus-visible{outline:3px solid var(--c-focus,#2F6A43);outline-offset:3px}"
+    },
+    {
+      "name": "Help and Quick exit",
+      "kind": "button",
+      "refersTo": "button-help",
+      "description": "Always top-right, in this order: blush Help pill, ink-outline Quick exit pill.",
+      "html": "<div class=\"ds-safety\"><a class=\"ds-help\" href=\"#\">Bantuan</a><button class=\"ds-exit\">Keluar cepat</button></div>",
+      "css": ".ds-safety{display:flex;gap:.5rem}.ds-help,.ds-exit{display:inline-flex;align-items:center;min-height:2.75rem;padding:0 1rem;border-radius:999px;font:500 .875rem/1.4 Lexend,'Hanken Grotesk',system-ui,sans-serif;text-decoration:none;cursor:pointer;transition:background-color 120ms cubic-bezier(.16,1,.3,1),color 120ms cubic-bezier(.16,1,.3,1)}.ds-help{background:var(--c-help-bg,#fbe9e4);border:1.5px solid color-mix(in srgb,var(--c-help,#a1351e) 55%,transparent);color:var(--c-help-text,#8c2c17)}.ds-help:hover{background:var(--c-help,#a1351e);border-color:var(--c-help,#a1351e);color:var(--c-on-help,#ffffff)}.ds-exit{background:var(--c-surface,#FFFFFF);border:1.5px solid var(--c-text,#1C1B18);color:var(--c-text,#1C1B18)}.ds-exit:hover{background:var(--c-text,#1C1B18);color:var(--c-bg,#FBFBF7)}.ds-help:focus-visible,.ds-exit:focus-visible{outline:3px solid var(--c-focus,#2F6A43);outline-offset:3px}"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "White well with a control edge and a leaf focus halo.",
+      "html": "<input class=\"ds-field\" placeholder=\"Tulis di sini\">",
+      "css": ".ds-field{min-height:2.75rem;padding:.65rem .95rem;border:1px solid var(--c-border-control,#7B8472);border-radius:14px;background:var(--c-surface,#FFFFFF);color:var(--c-text,#1C1B18);font:400 1rem/1.6 'Hanken Grotesk',system-ui,sans-serif;caret-color:var(--c-leaf,#2F6A43);transition:border-color 120ms cubic-bezier(.16,1,.3,1),box-shadow 120ms cubic-bezier(.16,1,.3,1)}.ds-field::placeholder{color:var(--c-muted,#55584F);opacity:1}.ds-field:hover{border-color:var(--c-text,#1C1B18)}.ds-field:focus-visible{outline:0;border-color:var(--c-leaf,#2F6A43);box-shadow:0 0 0 3px color-mix(in srgb,var(--c-focus,#2F6A43) 45%,transparent),0 0 0 1px var(--c-focus,#2F6A43)}"
+    },
+    {
+      "name": "Place Navigation",
+      "kind": "nav",
+      "refersTo": "place-nav",
+      "description": "The four places in one dark pill with a sage active segment.",
+      "html": "<nav class=\"ds-nav\"><a aria-current=\"page\" href=\"#\">Beranda</a><a href=\"#\">Cerita</a><a href=\"#\">Catatanku</a><a href=\"#\">Dukungan</a></nav>",
+      "css": ".ds-nav{display:inline-flex;gap:.25rem;padding:.3125rem;border-radius:999px;background:var(--c-nav,#1C1B18);box-shadow:var(--shadow-1,0 2px 8px rgb(28 27 24 / .06))}.ds-nav a{display:inline-flex;align-items:center;min-height:2.625rem;padding:0 1.05rem;border-radius:999px;color:var(--c-nav-text,#D3DAC9);font:500 .9375rem/1.4 Lexend,'Hanken Grotesk',system-ui,sans-serif;letter-spacing:-.01em;text-decoration:none;transition:background-color 120ms cubic-bezier(.16,1,.3,1),color 120ms cubic-bezier(.16,1,.3,1)}.ds-nav a:hover{color:var(--c-nav-active,#D4E5C3);background:color-mix(in srgb,var(--c-nav-active,#D4E5C3) 12%,transparent)}.ds-nav a[aria-current=page]{background:var(--c-nav-active,#D4E5C3);color:var(--c-nav-active-text,#1C1B18);font-weight:600}.ds-nav a:focus-visible{outline:3px solid var(--c-nav-active,#D4E5C3);outline-offset:3px}"
+    },
+    {
+      "name": "Place Sheet",
+      "kind": "custom",
+      "refersTo": "place-sheet",
+      "description": "The tinted rounded sheet that opens every non-focused page, with sparkle stars.",
+      "html": "<header class=\"ds-sheet\"><svg class=\"ds-spark\" viewBox=\"0 0 24 24\" width=\"28\" height=\"28\" aria-hidden=\"true\"><path d=\"M12 0c.9 7.4 4.6 11.1 12 12-7.4.9-11.1 4.6-12 12-.9-7.4-4.6-11.1-12-12C7.4 11.1 11.1 7.4 12 0Z\" fill=\"currentColor\"/></svg><h1>Catatanku</h1><p>Kata-katamu sendiri, tersimpan untukmu.</p><button class=\"ds-sheet-btn\">Tulis catatan</button></header>",
+      "css": ".ds-sheet{position:relative;padding:clamp(1.75rem,1rem + 2.6vw,3.25rem) clamp(1.5rem,.9rem + 2.6vw,3.25rem);border-radius:32px;background:var(--place-notes,#F6E7B4);color:var(--on-place,#1C1B18);overflow:hidden}.ds-spark{position:absolute;top:1.25rem;right:1.75rem;color:var(--c-sparkle,#FFFFFF)}.ds-sheet h1{margin:0;max-width:18ch;font:600 clamp(2rem,1.35rem + 2.4vw,3.5rem)/1.06 Lexend,'Hanken Grotesk',system-ui,sans-serif;letter-spacing:-.035em}.ds-sheet p{margin:.85rem 0 1.5rem;max-width:42ch;color:var(--on-place-muted,#3D4338);font:400 clamp(1.0625rem,.98rem + .45vw,1.3125rem)/1.45 Lexend,'Hanken Grotesk',system-ui,sans-serif;letter-spacing:-.01em}.ds-sheet-btn{min-height:2.75rem;padding:.55rem 1.15rem;border:1px solid var(--c-accent,#1C1B18);border-radius:999px;background:var(--c-accent,#1C1B18);color:var(--c-on-accent,#FBFBF7);font:500 1rem/1.4 Lexend,'Hanken Grotesk',system-ui,sans-serif;cursor:pointer}.ds-sheet-btn:hover{background:var(--c-accent-hover,#3A3D35)}.ds-sheet-btn:focus-visible{outline:3px solid var(--c-focus,#2F6A43);outline-offset:3px}"
+    },
+    {
+      "name": "Activity Card",
+      "kind": "card",
+      "refersTo": "activity-card",
+      "description": "Tinted way-in tile with a white circular arrow that turns on hover.",
+      "html": "<a class=\"ds-activity\" href=\"#\"><span class=\"ds-activity-title\">Tulis catatan</span><span class=\"ds-activity-go\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></span></a>",
+      "css": ".ds-activity{position:relative;display:block;width:15rem;min-height:10.5rem;padding:1.1rem 1.15rem;border-radius:20px;background:var(--place-support,#F4DDD3);color:var(--on-place,#1C1B18);text-decoration:none;transition:transform 200ms cubic-bezier(.22,1,.36,1),box-shadow 200ms cubic-bezier(.16,1,.3,1)}.ds-activity:hover{transform:translateY(-3px);box-shadow:var(--shadow-2,0 18px 40px -8px rgb(28 27 24 / .22))}.ds-activity-title{display:block;max-width:11rem;padding-right:2.75rem;font:500 1.125rem/1.2 Lexend,'Hanken Grotesk',system-ui,sans-serif;letter-spacing:-.02em}.ds-activity-go{position:absolute;top:.85rem;right:.85rem;display:grid;place-items:center;width:2.5rem;height:2.5rem;border-radius:50%;background:var(--c-surface,#FFFFFF);color:var(--c-text,#1C1B18);box-shadow:var(--shadow-1,0 2px 8px rgb(28 27 24 / .06));transition:transform 200ms cubic-bezier(.22,1,.36,1)}.ds-activity:hover .ds-activity-go{transform:rotate(45deg)}.ds-activity:focus-visible{outline:3px solid var(--c-focus,#2F6A43);outline-offset:3px}"
+    },
+    {
+      "name": "Mood Face Link",
+      "kind": "custom",
+      "refersTo": "mood-face",
+      "description": "A drawn mood face always above its word.",
+      "html": "<a class=\"ds-mood\" href=\"#\"><svg viewBox=\"0 0 48 48\" width=\"48\" height=\"48\" aria-hidden=\"true\"><circle cx=\"24\" cy=\"24\" r=\"23\" fill=\"#B8DA6C\"/><ellipse cx=\"17.5\" cy=\"21\" rx=\"2.6\" ry=\"3.4\" fill=\"#2A1F1A\"/><ellipse cx=\"30.5\" cy=\"21\" rx=\"2.6\" ry=\"3.4\" fill=\"#2A1F1A\"/><path d=\"M15.5 29.5c4.5 5.5 12.5 5.5 17 0\" fill=\"none\" stroke=\"#2A1F1A\" stroke-width=\"2.6\" stroke-linecap=\"round\"/></svg>Baik</a>",
+      "css": ".ds-mood{display:inline-grid;justify-items:center;gap:.5rem;min-height:2.75rem;padding:.35rem .25rem;border-radius:20px;color:var(--c-text,#1C1B18);font:500 .875rem/1.25 Lexend,'Hanken Grotesk',system-ui,sans-serif;text-decoration:none}.ds-mood svg{box-sizing:content-box;padding:.4rem;border-radius:50%;background:var(--c-surface-quiet,#F4F6EF);box-shadow:inset 0 0 0 1px var(--c-border-subtle,#E3E7DA);transition:transform 200ms cubic-bezier(.22,1,.36,1),background-color 120ms cubic-bezier(.16,1,.3,1)}.ds-mood:hover svg{transform:translateY(-3px) scale(1.06);background:var(--c-accent-soft,#E1EDD3)}.ds-mood:hover{text-decoration:underline;text-underline-offset:.25em}.ds-mood:focus-visible{outline:3px solid var(--c-focus,#2F6A43);outline-offset:3px}"
+    },
+    {
+      "name": "Record List",
+      "kind": "card",
+      "refersTo": "record-list",
+      "description": "Saved words in a rounded white card with hairline rows.",
+      "html": "<div class=\"ds-records\"><a href=\"#\"><span><strong>Catatan · 28 Okt</strong><small>Capek tapi lega. Banyak nama baru.</small></span></a><a href=\"#\"><span><strong>Cek perasaan · 27 Okt</strong><small>Campur aduk, tapi sudah lebih tenang.</small></span></a></div>",
+      "css": ".ds-records{max-width:32rem;padding:.25rem .5rem;border:1px solid var(--c-border-subtle,#E3E7DA);border-radius:20px;background:var(--c-surface,#FFFFFF)}.ds-records a{display:block;padding:.85rem;border-bottom:1px solid var(--c-border-subtle,#E3E7DA);color:var(--c-text,#1C1B18);text-decoration:none;transition:background-color 120ms cubic-bezier(.16,1,.3,1)}.ds-records a:last-child{border-bottom:0}.ds-records a:hover{background:var(--c-surface-quiet,#F4F6EF)}.ds-records strong{display:block;color:var(--c-muted,#55584F);font:500 .875rem/1.4 Lexend,'Hanken Grotesk',system-ui,sans-serif}.ds-records small{display:block;margin-top:.15rem;font:500 1rem/1.5 'Hanken Grotesk',system-ui,sans-serif}.ds-records a:focus-visible{outline:3px solid var(--c-focus,#2F6A43);outline-offset:-3px}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filter and tag pills; selected takes ink edge on sage wash.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">Semua</button><button class=\"ds-chip\" aria-pressed=\"false\">Catatan</button></div>",
+      "css": ".ds-chips{display:flex;gap:.5rem}.ds-chip{min-height:2.75rem;padding:0 1rem;border:1px solid var(--c-border-subtle,#E3E7DA);border-radius:999px;background:var(--c-surface,#FFFFFF);color:var(--c-text,#1C1B18);font:400 .875rem/1.4 Lexend,'Hanken Grotesk',system-ui,sans-serif;cursor:pointer}.ds-chip:hover{border-color:var(--c-border-control,#7B8472)}.ds-chip[aria-pressed=true]{border-color:var(--c-text,#1C1B18);background:var(--c-accent-soft,#E1EDD3);font-weight:500}.ds-chip:focus-visible{outline:3px solid var(--c-focus,#2F6A43);outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Taman Napas",
+    "overview": "Sela is a quiet garden you step into. Every place opens on a soft tinted sheet with generously rounded corners that holds the greeting and the way in; the work below sits on a clean near-white page. The tint tells the person where they are (sage for Beranda, mint for Cerita, butter for Catatanku, blush for Dukungan) and nothing else. Actions stay in one ink voice: a black pill.\n\nThe world is flat, round and calm. Lexend, open and rounded, carries headings, buttons and navigation; Hanken Grotesk carries body copy and the person's saved words. Ornament is limited to drawn geometry: a two-leaf sprout mark, four-point sparkle stars on the sheets, and six drawn mood faces that always sit beside their words. There are no raster images; every piece of art is inline SVG and every font is self-hosted under the OFL. Nothing assesses the person: no scores, streaks, progress or before/after language.\n\nIt replaces the earlier \"Sampul Buku\" paperback world (cream paper, Literata serif, square cover bands, indigo actions). That world is retired.",
+    "keyCharacteristics": [
+      "Near-white page (`page`) with white cards (`surface`) and a pale sage quiet well (`surface-quiet`).",
+      "Four place tints name the place on the sheet, the phone header and small tinted icon circles; they never mark actions or status.",
+      "One ink pill (`ink`) for the primary action; deep leaf green (`leaf`) for links, focus, caret, selection and icon accents.",
+      "Places travel in a dark ink pill navigation with a sage active segment: centred in the desktop top bar, floating at the bottom on phones.",
+      "Help (blush pill) and Quick exit (ink-outline pill) always sit top-right, in that order.",
+      "High contrast drops every tint, sparkle and soft shadow and turns sheets into ruled headings."
+    ],
+    "rules": [
+      {
+        "name": "The Tint Names the Place Rule",
+        "body": "Place tints only say where you are. Actions keep the ink pill, status keeps its semantic colour, and nothing depends on a tint alone.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Ink Voice Rule",
+        "body": "The primary action is always the ink pill; there is one per view, and on a tinted sheet it stays ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Rounded Voice Rule",
+        "body": "Everything the person operates or is greeted with (headings, buttons, navigation, labels) speaks Lexend; paragraphs and their own words stay in Hanken Grotesk.",
+        "section": "typography"
+      },
+      {
+        "name": "The Float Rule",
+        "body": "A shadow means \"this floats or responds to your touch\". Static cards and lists get a hairline border, never a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** open each non-focused page on its place sheet, title in Lexend, with Help and Quick exit top-right.",
+      "**Do** keep one ink pill primary action per view, also on tinted sheets.",
+      "**Do** show every mood face beside its text label, and keep colour from carrying meaning alone.",
+      "**Do** keep help, danger, success and warning in the same roles in every scheme, at 4.5:1 text and 3:1 controls and focus.",
+      "**Do** let high contrast drop tints, sparkles and shadows and rule the sheet instead.",
+      "**Do** draw ornament as inline SVG geometry (sprout, sparkle, faces) and self-host OFL fonts.",
+      "**Do** label synthetic data and unavailable features plainly."
+    ],
+    "donts": [
+      "**Don't** use place tints for actions, statuses or content categories.",
+      "**Don't** put a kicker, date or all-caps eyebrow above a heading.",
+      "**Don't** add streaks, points, scores, badges or progress visuals.",
+      "**Don't** put shadows on static cards or nest cards inside cards.",
+      "**Don't** add raster illustrations, mascots or icon fonts.",
+      "**Don't** reintroduce the retired Sampul Buku serif-and-cover look or the cobalt open-S identity."
+    ]
+  }
+}

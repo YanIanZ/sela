@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Sela — Standar kategori</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6F8F7;--card:#FFFFFF;--ink:#1F2A2E;--muted:#5A6A6E;--line:#E2E8E6;--teal:#2F7A6B;--teal-d:#235E52;--teal-s:#E6F2EF}
+*{box-sizing:border-box;margin:0}
+html,body{width:1440px;height:900px;overflow:hidden}
+body{font-family:Figtree,system-ui,sans-serif;background:var(--bg);color:var(--ink);display:grid;grid-template-columns:256px 1fr}
+.side{background:var(--card);border-right:1px solid var(--line);padding:24px 16px;display:flex;flex-direction:column;gap:6px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:21px;padding:0 10px 22px}
+.brand i{width:30px;height:30px;border-radius:9px;background:var(--teal)}
+.side a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;font-weight:500;font-size:15.5px;color:var(--muted)}
+.side a svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
+.side a.on{background:var(--teal-s);color:var(--teal-d);font-weight:600}
+.side hr{border:0;border-top:1px solid var(--line);margin:14px 4px}
+.side .note{margin-top:auto;font-size:13px;color:var(--muted);padding:12px;background:var(--bg);border-radius:10px}
+main{display:grid;grid-template-rows:68px 1fr}
+.top{display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px solid var(--line);background:var(--card)}
+.top span{font-weight:600}
+.btn{font:inherit;font-weight:600;font-size:14.5px;border-radius:10px;padding:10px 16px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.help{background:#FCEBE6;border-color:#F1C7BB;color:#9A3519}
+.wrap{padding:36px 40px;display:grid;grid-template-columns:1fr 380px;gap:28px;align-content:start}
+h1{font-size:32px;font-weight:700;letter-spacing:-.02em}
+.lead{color:var(--muted);font-size:17px;margin-top:6px}
+.hero{grid-column:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px}
+.hero h2{font-size:22px;font-weight:700}.hero p{color:var(--muted);margin-top:6px;font-size:16px;line-height:1.55}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+.act{border:1px solid var(--line);border-radius:12px;padding:16px;font-weight:600;font-size:15.5px}
+.act.p{background:var(--teal);border-color:var(--teal);color:#fff}
+.act small{display:block;font-weight:400;font-size:13.5px;margin-top:4px;opacity:.8}
+.cont{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center}
+.cont small{color:var(--muted);font-size:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;grid-row:span 2}
+.panel h3{font-size:17px;font-weight:700;display:flex;justify-content:space-between}.panel h3 a{color:var(--teal);font-size:14px}
+.item{padding:14px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}
+.item small{color:var(--muted);font-size:13px}.item p{font-weight:600;margin-top:3px}
+.tag{display:inline-block;background:var(--teal-s);color:var(--teal-d);border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:600;margin-right:6px}
+</style></head><body>
+<nav class="side" aria-label="Utama">
+ <div class="brand"><i></i>Sela</div>
+ <a class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/></svg>Beranda</a>
+ <a><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>Cerita</a>
+ <a><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6zM9 8h6M9 12h6"/></svg>Catatanku</a>
+ <a><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>Dukungan</a>
+ <hr><a>Minggu ini</a><a>Yang Sela ingat</a><a>Pengaturan</a>
+ <div class="note">Mode tamu · dihapus otomatis jika 7 hari tidak aktif</div>
+</nav>
+<main>
+ <header class="top"><span>Beranda</span><div style="display:flex;gap:10px"><button class="btn help">Butuh bantuan sekarang</button><button class="btn">Keluar cepat</button></div></header>
+ <div class="wrap">
+  <div><h1>Selamat malam.</h1><p class="lead">Apa yang ingin kamu lakukan sekarang?</p></div>
+  <div class="panel"><h3>Terbaru di Catatanku <a>Lihat semua</a></h3>
+   <div class="item"><small><span class="tag">Catatan</span>28 Okt</small><p>Hari pertama magang, capek tapi lega</p></div>
+   <div class="item"><small><span class="tag">Cek perasaan</span>27 Okt</small><p>Cemas, lebih tenang menjelang sore</p></div>
+   <div class="item"><small><span class="tag">Percakapan</span>26 Okt</small><p>Soal kakak dan uang kos</p></div>
+  </div>
+  <div class="hero"><h2>Ruang untuk apa pun yang terasa.</h2><p>Tidak perlu merangkai cerita yang sempurna. Mulai dari yang paling mudah untukmu.</p>
+   <div class="acts"><div class="act p">Mulai bercerita<small>Bicara dengan Sela</small></div><div class="act">Tulis catatan<small>Hanya untukmu</small></div><div class="act">Cek perasaan<small>Kapan saja</small></div></div></div>
+  <div class="cont"><div><b>Percakapan tersimpan</b><br><small>6 pesan · terakhir aktif 21.12</small></div><button class="btn">Lanjutkan</button></div>
+ </div>
+</main>
+</body></html>

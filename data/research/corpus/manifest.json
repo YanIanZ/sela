@@ -22,25 +22,34 @@
     "doi_resolvable": {
       "true": 100
     },
-    "evidence_items": 694,
+    "evidence_items": 761,
     "flags": {
       "abstract_only_screening": 100,
+      "age_band_adults_only": 12,
+      "age_band_conflicting_ranges": 7,
+      "age_band_includes_15_17": 7,
+      "age_band_minors_unverified": 13,
+      "age_band_review_eligibility_includes_minors": 2,
+      "age_range_conflicting_candidates": 7,
       "conference_or_preprint": 1,
       "corrected": 3,
       "date_discrepancy_primary": 10,
       "full_text_machine_extracted_unreviewed": 84,
       "licence_restricts_redistribution": 21,
       "licence_unknown": 6,
+      "needs_check_documented": 4,
       "not_in_europepmc": 2,
       "observational": 13,
       "population_country_not_stated": 76,
       "population_includes_minors_or_youth": 20,
       "population_not_indonesian": 15,
       "print_year_differs": 8,
+      "publication_language_inferred_only": 1,
       "qualitative_design": 15,
       "register_date_differs": 8,
       "review_overlap_possible": 18,
       "sample_size_conflicting_candidates": 31,
+      "study_type_label_conflict": 2,
       "trial_design_unverified": 8
     },
     "fulltext_eligible": 84,
@@ -122,6 +131,49 @@
       "PRIVACY": 10,
       "SAFETY": 12,
       "SUMMARIZATION": 8
+    },
+    "v3": {
+      "age_band_summary": {
+        "adults_indexed_or_named_only": 24,
+        "adults_only_explicit": 12,
+        "conflicting_explicit_ranges": 7,
+        "includes_15_17_explicit": 7,
+        "minors_possible_unverified": 13,
+        "not_stated": 34,
+        "review_eligibility_adults_only": 1,
+        "review_eligibility_includes_minors": 2
+      },
+      "age_groups_indexed_present": 52,
+      "age_range_conflicting": 7,
+      "age_range_extracted": 19,
+      "country_evidence_fulltext_with_candidates": 70,
+      "findings_set": 0,
+      "needs_check_documented": [
+        "R002",
+        "R013",
+        "R065",
+        "R100"
+      ],
+      "publication_language": {
+        "en": 100
+      },
+      "publication_language_basis": {
+        "curated": 98,
+        "machine_inferred_only": 1,
+        "publisher_deposit": 1
+      },
+      "publication_type_eligibility": {
+        "eligible": 100
+      },
+      "reviewer_entries": 0,
+      "reviewer_status": {
+        "not_reviewed": 100
+      },
+      "schema_version": "sela-corpus-schema-v3",
+      "study_type_caution": [
+        "R032",
+        "R083"
+      ]
     },
     "with_pmcid": 89,
     "within_cutoff": {
@@ -724,7 +776,7 @@
     "missing_r_ids": []
   },
   "freeze_date": "2026-10-26",
-  "index_version": "87902c81efe30d05",
+  "index_version": "1c4d718cb5b0f2d9",
   "index_version_basis": "first 16 hex of sha256(knowledge_base.jsonl rows serialised without index_version)",
   "input_cross_checks": {
     "count": 2,
@@ -746,9 +798,10 @@
     ]
   },
   "inputs": {
-    "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md": "df41203c2c4fe643b3ddce07a2cd5cc4263ef3d417a2cd739759084b7ae7d199",
+    "data/research/register_inputs/reviewer_decisions.json": "9283373c7a6f41f67c96127436b90398f00f565ae137ec028ab616b72d19d069",
+    "docs/research/sela-relay/07_EVIDENCE_TO_FEATURE.md": "5e24acb7108de0d06f530788574bef211b9d7c4d1efd68d64013ee0fea07701a",
     "docs/research/sela-relay/09_RESEARCH_REGISTER.md": "02c768825f08c39ab42abf5dec4118d77bf5aa2a51602b022adc836d4d9ea220",
-    "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md": "6e115896fdd35a368cafa95bbe9e06b35447ad4790fabe735e27925cd34e5521",
+    "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md": "6fdcc948cab6aee7ec77596235da569a02484da3dad2d68698b7e54c5afae13d",
     "docs/research/sela-relay/research_100.bib": "ebefc1cb8e0fe5acd334a9cef1b6f5a4f94733fa04266d3614e07a3a782fc48b",
     "docs/research/sela-relay/research_100.json": "90bae40e67a9b13847c1b9b85aa18e48fa45e515e85d54f23db3a351f77ec2cd"
   },
@@ -758,19 +811,23 @@
     "Screening is inherited title/abstract screening; no full-text appraisal or risk-of-bias assessment.",
     "Population and country terms are explicit-word matches in titles/annotations, not verified study populations.",
     "Full-text extraction is pattern-based and limited to CC-licensed Europe PMC open-access XML.",
-    "Licence fields reflect metadata published by Crossref and Europe PMC, not legal advice."
+    "Licence fields reflect metadata published by Crossref and Europe PMC, not legal advice.",
+    "publication_language comes from index/publisher metadata (OpenAlex only as a flagged machine inference).",
+    "age_range, age_band and country_evidence_fulltext are pattern matches with locators, not verified study populations; adult evidence is never generalised to ages 15-17.",
+    "needs_check_evidence documents public PubMed and landing-page dates; it does not change any status."
   ],
   "outputs": {
     "eval_fixtures/claim_gates.json": "89f6f0312880d77c98f9dd60de685c9d0dfbec9a18e0098266c3c51b4889e81e",
-    "evidence_map.json": "920d6fa7122e18abf360fada7c4da977b4f51585b0eef32891a2eb65d300ae7c",
-    "knowledge_base.jsonl": "7a87c9ed906d760f1699cf22ebee5e0157f8c3eed905165143a5dbad48a70f45",
-    "records.jsonl": "69d368bbf7efe06fecc8bf3d051c03df614353c7128ba11a6ccf1937dbb0c616"
+    "evidence_map.json": "c9611c9237670447ee517f283a326b153760230a29d72389fe6ccb357613a53f",
+    "knowledge_base.jsonl": "fb10cbcfb4543961782742bcb1c9a19c3a0128a2f10615a6e68747539498488c",
+    "records.jsonl": "e7aaa751a31c7a0ab1651b50e14682a2232c5801f912fc4ee299272fb51a0e19"
   },
-  "pipeline_version": "1.1.0",
+  "pipeline_version": "1.2.0",
   "retrieval_window": {
     "first": "2026-10-26T04:24:55Z",
-    "last": "2026-10-26T04:36:25Z"
+    "last": "2026-10-26T17:08:27Z"
   },
+  "reviewer_policy": "reviewer_name, review_date, review_decision, findings and the *_reviewer_* overrides are copied only from human entries in data/research/register_inputs/reviewer_decisions.json; machine fields are never overwritten; with no entry every reviewer field is null and reviewer_status is not_reviewed",
   "rights_policy": {
     "annotations": "register notes (note_id, transfer_limitation_id) are Sela's own text",
     "full_text": "processed only under an explicit CC licence; cached locally (gitignored); never committed",
@@ -779,7 +836,9 @@
     "snippets": "verbatim <= 240 chars only for CC BY / BY-SA / CC0; otherwise locator + sha256 only",
     "training_use": "none; this corpus is not a training dataset"
   },
-  "rules_version": "sela-corpus-rules-v2",
+  "rules_version": "sela-corpus-rules-v3",
+  "schema_version": "sela-corpus-schema-v3",
+  "snapshot": "snapshots/2026-10-26_pipeline-1.2.0",
   "sources": {
     "crossref": {
       "endpoint": "https://api.crossref.org/works/{doi}",
@@ -806,14 +865,32 @@
         "ok": 84
       }
     },
+    "landing_meta": {
+      "endpoint": "https://doi.org/{doi} (publisher landing page, date meta tags only)",
+      "responses": {
+        "blocked": 2,
+        "ok": 2
+      }
+    },
     "openalex": {
       "endpoint": "https://api.openalex.org/works/doi:{doi}",
       "responses": {
         "ok": 100
       }
+    },
+    "pubmed_history": {
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+      "responses": {
+        "ok": 3
+      }
     }
   },
   "status": "machine_verified_metadata_not_reviewed",
+  "supersedes": {
+    "note": "the 1.1.0 snapshot is frozen and still rebuilds byte for byte with `corpus_pipeline.py reproduce --snapshot 2026-10-26`",
+    "pipeline_version": "1.1.0",
+    "snapshot": "snapshots/2026-10-26"
+  },
   "window_rule": "cutoff_date <= publication_date <= freeze_date; cutoff_date = freeze_date minus five calendar years (29 February maps to 28 February)",
   "year_distribution_check": {
     "claim_source": "docs/research/sela-relay/10_EVIDENCE_APPRAISAL_AND_CLAIMS.md (Verified local register integrity: First-publication year)",

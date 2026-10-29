@@ -3,6 +3,21 @@
 
 Not a systematic review, abstract screening, evidence grade, or clinical validation.
 Uses only public bibliographic fields; does not retrieve copyrighted works or call an LLM.
+
+Rulesets (``--ruleset``; every change is a new version, criterion 6 of doc 14):
+
+- ``sela-title-screen-v1.0`` (2026-10-26, superseded): kept only so the
+  original outputs can be reproduced byte for byte. Its CSV files were written
+  with the ``csv`` module's default CRLF line ending and its manifest hashed
+  those CRLF bytes, while git (``* text=auto``) stores the files with LF. The
+  committed files therefore never matched their manifest hashes (audit P1).
+- ``sela-title-screen-v1.1`` (default): identical title triage, but (a) every
+  output is written with LF line endings and hashed over exactly the bytes on
+  disk, which are the bytes git stores; (b) protocols, corrections/errata,
+  editorials and retraction notices are excluded from the review queue by
+  publication type (title cue as a fallback), with the basis recorded for
+  every excluded row (audit P5). Priority labels are unchanged, so acceptance
+  criterion 1 (exactly one priority per row) still holds.
 """
 from __future__ import annotations
 
@@ -13,11 +28,19 @@ import hashlib
 import json
 import math
 import re
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from corpus import eligibility as ELIG  # noqa: E402
 
 DEFAULT_INPUT = Path("data/research/sela_research_candidates_7580.jsonl")
 DEFAULT_OUTPUT = Path("data/research")
-RULESET_VERSION = "sela-title-screen-v1.0"
+RULESET_V10 = "sela-title-screen-v1.0"
+RULESET_V11 = "sela-title-screen-v1.1"
+RULESETS = (RULESET_V10, RULESET_V11)
+RULESET_VERSION = RULESET_V11
+V10_MANIFEST_COPY = "data/research/screening_history/sela_screening_manifest_v1.0.json"
 
 # Exact/phrase-oriented cues; topic labels from the original broad search are
 # intentionally NOT used to increase the score. They can be extremely noisy.
@@ -187,9 +210,21 @@ def triage(title: str) -> dict:
         "screening_status": "automated_title_only_unreviewed",
     }
 
+# --- publication-type eligibility (v1.1) --------------------------------------
+# One shared, versioned rule (scripts/research/corpus/eligibility.py) so the
+# title screener, the v3 gap search and the corpus pipeline never drift apart.
+ELIGIBILITY_RULE = ELIG.RULE
+
+
+def publication_type_eligibility(publication_type: str, title: str) -> dict:
+    """Deterministic eligibility by publication type (title cue as fallback)."""
+    return ELIG.eligibility(str(publication_type or "").split(";"), title)
+
+
 def select_review_queue(rows: list[dict], maximum: int) -> list[dict]:
     """Stratify year to reduce dominance by 2026 without manufacturing evidence."""
-    good = [r for r in rows if r["screening"]["priority"] in {"high", "medium"}]
+    good = [r for r in rows if r["screening"]["priority"] in {"high", "medium"}
+            and r["screening"].get("eligibility", {}).get("status", "eligible") == "eligible"]
     sort_key = lambda r: (-r["screening"]["score"],
                           0 if r["screening"]["priority"] == "high" else 1,
                           r["title"].casefold(), r["candidate_id"])
@@ -214,9 +249,34 @@ def select_review_queue(rows: list[dict], maximum: int) -> list[dict]:
         chosen.extend(rest[:maximum-len(chosen)])
     return sorted(chosen, key=sort_key)
 
-def screen(input_file: Path, output_dir: Path, limit: int = 400) -> dict:
+def _csv_writer(f, fieldnames, ruleset):
+    # v1.0 kept the csv module default (CRLF); v1.1 writes LF so the hashed
+    # bytes are the bytes git stores (audit P1).
+    if ruleset == RULESET_V10:
+        return csv.DictWriter(f, fieldnames=fieldnames)
+    return csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n")
+
+
+INDEX_FIELDS = ["candidate_id", "doi", "pmid", "first_publication_date", "title", "priority",
+                "score", "family", "signals", "study_design_title_clues", "out_of_domain_flag", "review_status"]
+INDEX_FIELDS_V11 = INDEX_FIELDS + ["eligibility", "eligibility_basis", "ruleset"]
+WORKSHEET_FIELDS = ["candidate_id", "doi", "first_publication_date", "title", "automated_priority",
+                    "abstract_screening", "screening_reason", "reviewer", "review_date",
+                    "full_text_appraised", "study_design_verified", "risk_of_bias",
+                    "finding_direction", "indonesia_transferability", "license_reuse_verified",
+                    "rag_ready", "notes"]
+
+
+def _eligibility_text(e):
+    return ";".join(f"{b['kind']}:{b['source']}:{b['term']}" for b in e["basis"])
+
+
+def screen(input_file: Path, output_dir: Path, limit: int = 400, ruleset: str = RULESET_VERSION) -> dict:
     if limit < 1:
         raise ValueError("Review limit must be positive")
+    if ruleset not in RULESETS:
+        raise ValueError(f"Unknown ruleset {ruleset!r}; choose one of {', '.join(RULESETS)}")
+    v11 = ruleset == RULESET_V11
     raw = input_file.read_bytes()
     records = [json.loads(line) for line in raw.splitlines() if line.strip()]
     if not records:
@@ -233,19 +293,20 @@ def screen(input_file: Path, output_dir: Path, limit: int = 400) -> dict:
         enriched = dict(record)
         enriched["candidate_id"] = f"SL-{i:05d}"
         enriched["screening"] = triage(record["title"])
+        if v11:
+            enriched["screening"]["eligibility"] = publication_type_eligibility(
+                record.get("publication_type"), record["title"])
+            enriched["screening"]["ruleset"] = ruleset
         rows.append(enriched)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     index_path = output_dir / "sela_screening_index.csv"
     with index_path.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "candidate_id","doi","pmid","first_publication_date","title","priority",
-            "score","family","signals","study_design_title_clues","out_of_domain_flag","review_status"
-        ])
+        writer = _csv_writer(f, INDEX_FIELDS_V11 if v11 else INDEX_FIELDS, ruleset)
         writer.writeheader()
         for r in rows:
             s = r["screening"]
-            writer.writerow({
+            row = {
                 "candidate_id":r["candidate_id"],"doi":r.get("doi",""),
                 "pmid":r.get("pmid",""),"first_publication_date":r["first_publication_date"],
                 "title":r["title"],"priority":s["priority"],"score":s["score"],
@@ -253,7 +314,11 @@ def screen(input_file: Path, output_dir: Path, limit: int = 400) -> dict:
                 "study_design_title_clues":";".join(s["study_design_title_clues"]),
                 "out_of_domain_flag":s["out_of_domain_flag"],
                 "review_status":s["screening_status"],
-            })
+            }
+            if v11:
+                row.update({"eligibility": s["eligibility"]["status"],
+                            "eligibility_basis": _eligibility_text(s["eligibility"]), "ruleset": ruleset})
+            writer.writerow(row)
 
     shortlist = select_review_queue(rows, limit)
     queue_path = output_dir / "sela_priority_review_queue.jsonl"
@@ -264,13 +329,7 @@ def screen(input_file: Path, output_dir: Path, limit: int = 400) -> dict:
     # by a reader; the automatic title screen never grants RAG/training permission.
     review_path = output_dir / "sela_human_review_worksheet.csv"
     with review_path.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "candidate_id","doi","first_publication_date","title","automated_priority",
-            "abstract_screening","screening_reason","reviewer","review_date",
-            "full_text_appraised","study_design_verified","risk_of_bias",
-            "finding_direction","indonesia_transferability","license_reuse_verified",
-            "rag_ready","notes"
-        ])
+        writer = _csv_writer(f, WORKSHEET_FIELDS, ruleset)
         writer.writeheader()
         for r in shortlist:
             writer.writerow({
@@ -285,7 +344,7 @@ def screen(input_file: Path, output_dir: Path, limit: int = 400) -> dict:
                 "license_reuse_verified":"NO","rag_ready":"NO","notes":"",
             })
     manifest = {
-        "screening_version": RULESET_VERSION,
+        "screening_version": ruleset,
         "source_file": input_file.name,
         "source_sha256": hashlib.sha256(raw).hexdigest(),
         "source_count": len(rows),
@@ -310,21 +369,57 @@ def screen(input_file: Path, output_dir: Path, limit: int = 400) -> dict:
             "Only licensed full-text sources may later enter a content-based RAG index, after human appraisal.",
         ],
     }
+    if v11:
+        elig = collections.Counter(r["screening"]["eligibility"]["status"] for r in rows)
+        kinds = collections.Counter(k for r in rows for k in r["screening"]["eligibility"]["excluded_kinds"])
+        sources = collections.Counter(
+            (k, b["source"]) for r in rows for k in r["screening"]["eligibility"]["excluded_kinds"]
+            for b in r["screening"]["eligibility"]["basis"] if b["kind"] == k)
+        ineligible_hm = [r for r in rows if r["screening"]["priority"] in {"high", "medium"}
+                         and r["screening"]["eligibility"]["status"] != "eligible"]
+        manifest.update({
+            "line_terminator": "LF",
+            "hash_basis": ("sha256 over the exact bytes written (UTF-8, LF line endings); these are the bytes git "
+                           "stores, and data/research/.gitattributes keeps them LF on checkout"),
+            "eligibility_rule": ELIGIBILITY_RULE,
+            "eligibility_rule_version": ELIG.RULE_VERSION,
+            "eligibility_counts": dict(sorted(elig.items())),
+            "excluded_kind_counts": dict(sorted(kinds.items())),
+            "excluded_basis_entry_counts": {f"{k}:{s}": n for (k, s), n in sorted(sources.items())},
+            "high_or_medium_excluded_by_publication_type": len(ineligible_hm),
+            "supersedes": {
+                "screening_version": RULESET_V10,
+                "frozen_manifest": V10_MANIFEST_COPY,
+                "reason": ("v1.0 hashed CRLF bytes (csv default line ending) while git stores LF, so the committed "
+                           "index and worksheet never matched their manifest hashes (audit P1); v1.0 also let 3 "
+                           "correction notices and 8 protocols into the 400 queue (audit P5)"),
+                "reproduce": "python3 scripts/research/screen_candidates.py --ruleset sela-title-screen-v1.0 --output <scratch>",
+            },
+            "false_negative_audit": ("criterion 5 of doc 14 is not satisfied by this machine run; a deterministic "
+                                     "audit sample with blank human columns is in data/research/v3_gap_search/"),
+        })
+        manifest["limitations"] = manifest["limitations"] + [
+            "Publication-type eligibility relies on Europe PMC pubType tokens and explicit title cues; a protocol or "
+            "notice without either cue stays eligible, and an excluded row is never deleted from the index.",
+        ]
     (output_dir/"sela_screening_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True)+"\n", encoding="utf-8")
     return manifest
 
 def main():
-    p = argparse.ArgumentParser(description=__doc__)
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--input",type=Path,default=DEFAULT_INPUT)
     p.add_argument("--output",type=Path,default=DEFAULT_OUTPUT)
     p.add_argument("--priority-limit",type=int,default=400)
+    p.add_argument("--ruleset",choices=RULESETS,default=RULESET_VERSION,
+                   help="screening ruleset (v1.0 only to reproduce the superseded outputs)")
     args=p.parse_args()
-    manifest=screen(args.input,args.output,args.priority_limit)
+    manifest=screen(args.input,args.output,args.priority_limit,ruleset=args.ruleset)
     print(json.dumps({
         "screening_version":manifest["screening_version"],
         "screened":manifest["source_count"],
         "priorities":manifest["priority_counts"],
+        "eligibility":manifest.get("eligibility_counts"),
         "queue_count":manifest["queue_count"],
         "queue_by_year":manifest["queue_year_counts"],
     },indent=2))

@@ -1,0 +1,150 @@
+{
+  "audit_sample": {
+    "auditor_columns": {
+      "auditor_publication_kind": [
+        "NOT_AUDITED",
+        "study_report",
+        "protocol",
+        "correction_or_erratum",
+        "editorial",
+        "retraction_notice_or_retracted",
+        "other"
+      ],
+      "auditor_relevance": [
+        "NOT_AUDITED",
+        "relevant",
+        "not_relevant",
+        "unsure"
+      ]
+    },
+    "blinding": "the auditor receives only fn_audit_sheet.csv: audit id, title and DOI, rows in one stable shuffle (sha256('sela-fn-audit-2026-10-26|blinded-order|<source>:<candidate_id>')) across all strata, so neither the stratum nor the machine priority can be inferred from the order; fn_audit_key.csv (stratum, machine priority, v3 priority if eligible, eligibility basis) is joined on audit_id only after the audit",
+    "criterion": "doc 14 acceptance criterion 5 (manual false-positive / false-negative audit), plus a check of the publication-type eligibility rule",
+    "design": {
+      "pool_7580:deferred": 100,
+      "pool_7580:excluded_publication_type": 10,
+      "pool_7580:high": 20,
+      "pool_7580:medium": 20,
+      "v3_run:deferred": 60,
+      "v3_run:excluded_publication_type": 10,
+      "v3_run:high": 20,
+      "v3_run:medium": 20
+    },
+    "excluded_publication_type_rows": {
+      "excluded_by_title_cue_only": 5,
+      "sampled": 20
+    },
+    "machine_pre_audit_pool_deferred": {
+      "note": "a machine re-screen with lexicon sela-v3-families-2, NOT the manual audit; the auditor columns are blank",
+      "sampled": 100,
+      "v3_rescreen_high_or_medium": 36
+    },
+    "rows": 263,
+    "selection": "first n rows by sha256('sela-fn-audit-2026-10-26|<source>:<stratum>|<candidate_id>'); stable across Python versions; plus deferred pool titles named in the research audit (purposive)",
+    "status": "prepared_not_audited"
+  },
+  "candidates": 8712,
+  "changes_from_previous_screening": [
+    "lexicon sela-v3-families-2: Indonesian age terms (remaja, anak, siswa, pelajar, lansia, lanjut usia, dewasa) as population signals; Indonesian feature and consent terms (menulis ekspresif, jurnal harian, privasi, kerahasiaan, persetujuan orang tua, bunuh diri, mencari bantuan, disabilitas, ...); a working_age_adults family; every families-1 entry unchanged",
+    "Indonesian age phrases ('berusia 15-17 tahun', 'usia 60 tahun ke atas') are read as ages",
+    "population band v2: includes_15_17_explicit only when the ages agree on one range or minimum that overlaps 15-17 and the record is not a review; ages that describe an advisory or working group do not count",
+    "the false-negative audit is blinded (fn_audit_sheet.csv shows only audit id, title and DOI; fn_audit_key.csv holds the machine labels and is joined after the audit) and adds an excluded_publication_type stratum to check the eligibility rule"
+  ],
+  "eligibility_rule_version": "sela-pubtype-eligibility-v1",
+  "human_screening_done": false,
+  "indonesian_age_term_titles": {
+    "note": "titles containing remaja, anak, siswa, pelajar, lansia or lanjut usia; a check that Indonesian age words now give a population signal",
+    "population_band": {
+      "adolescent_or_youth_unverified": 78,
+      "adults_signal": 3,
+      "includes_15_17_explicit": 11,
+      "older_adults_signal": 19
+    },
+    "screened_in_population_band_not_stated": 0,
+    "titles": 111
+  },
+  "inputs": {
+    "candidates.jsonl": "4bfee75e60dc2c3e85bc34d8e8e4ce7c4a6030f96d3455d8c5b5f9435674473b",
+    "data/research/sela_screening_index.csv": "8847a72bd51827082c8d4fad6ce4bcba8efd7c2549348b07f413adf997473da8"
+  },
+  "is_appraisal": false,
+  "lexicon_version": "sela-v3-families-2",
+  "limitations": [
+    "Lexical families miss paraphrases and over-match generic words (for example 'trust', 'stress', 'anak'); every label is a prompt for a human screener, not a relevance or quality judgement.",
+    "Population bands come from words, MeSH groups and explicit ages in titles/abstracts; adult and adolescent signals are kept apart and are unverified.",
+    "possible_null_or_negative_finding is a cue list for finding counter-evidence, not a result.",
+    "The worksheet supports dual screening (two reviewers, disagreement resolution); all decisions are blank.",
+    "Blinding is procedural: the key file sits next to the sheet and must not be given to the auditor."
+  ],
+  "llm_used": false,
+  "outputs": {
+    "fn_audit_key.csv": "80a4c7ec45e07588af04485652b2c102f8c7e5620c0e33021e4fe6934383a25a",
+    "fn_audit_sheet.csv": "2b949f4ed80ab2a5eae42c1fafeb5e552bb1a7918ad5e1ff469943e667749599",
+    "index.csv": "7649423d00e93b7d1b29b8c4e48075f2812ea10ea7b60ed98c8ff25fd0308dab",
+    "queue.jsonl": "3b75ab85db0669b58f2037e9823f1ce6471c9a0744c846fe65f35e0111ef03ce",
+    "worksheet.csv": "8ab5eaf8f0bce9fe0a69f2d24c7cb226551875e7f62ab8dde39355fee42d2ce6"
+  },
+  "population_band_counts_screened_in": {
+    "adolescent_or_youth_unverified": 911,
+    "adults_signal": 1348,
+    "includes_15_17_explicit": 284,
+    "not_stated": 1215,
+    "older_adults_signal": 1195
+  },
+  "population_band_rule": "Screening v1.1: includes_15_17_explicit only when the title/abstract ages agree on ONE range or minimum that overlaps 15-17 and the record is not a review (a review's ages are eligibility rules, not one sample), the same rule as the corpus age band; ages that describe an advisory or working group do not count. Any other minor age, or youth words without such a range, is adolescent_or_youth_unverified.",
+  "possible_null_or_negative_screened_in": 620,
+  "priority_counts": {
+    "deferred": 3210,
+    "excluded_publication_type": 549,
+    "high": 1803,
+    "medium": 3150
+  },
+  "queue_count": 400,
+  "queue_family_counts": {
+    "accessibility_disability": 68,
+    "adolescent_consent_confidentiality": 40,
+    "ai_language_code_switching": 30,
+    "check_in_self_monitoring": 59,
+    "consultation_preparation": 38,
+    "continuity_after_consultation": 43,
+    "health_data_privacy_law": 35,
+    "help_seeking": 48,
+    "indonesian_context": 71,
+    "journaling_expressive_writing": 38,
+    "listening_feeling_heard": 39,
+    "memory_correction_source_fidelity": 30,
+    "older_adults_50_plus": 83,
+    "privacy": 143,
+    "safety": 129,
+    "sharing_and_revocation": 33,
+    "working_age_adults": 57
+  },
+  "queue_rule": "per feature family up to 30 (title hit for that family first, then high before medium, score desc), then the remaining best rows up to 400",
+  "run_version": "sela-v3-gap-search-v1.1",
+  "screened_in_by_feature_family": {
+    "accessibility_disability": 760,
+    "adolescent_consent_confidentiality": 149,
+    "ai_language_code_switching": 40,
+    "check_in_self_monitoring": 769,
+    "consultation_preparation": 154,
+    "continuity_after_consultation": 276,
+    "health_data_privacy_law": 51,
+    "help_seeking": 455,
+    "indonesian_context": 777,
+    "journaling_expressive_writing": 256,
+    "listening_feeling_heard": 254,
+    "memory_correction_source_fidelity": 35,
+    "older_adults_50_plus": 1084,
+    "privacy": 796,
+    "safety": 1076,
+    "sharing_and_revocation": 63,
+    "working_age_adults": 833
+  },
+  "screening_unit": "title + abstract (abstract read from the local cache only; never committed)",
+  "screening_version": "sela-v3-tiab-screen-v1.1",
+  "status": "machine_title_abstract_screen_unreviewed",
+  "supersedes": {
+    "lexicon_version": "sela-v3-families-1",
+    "note": "screening v1.0 of run v1.0 stays frozen and reproducible; v1.1 only adds entries",
+    "screening_version": "sela-v3-tiab-screen-v1.0"
+  }
+}

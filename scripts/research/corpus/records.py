@@ -1,8 +1,8 @@
 """Assemble one corpus record from the register row and cached API responses (pure)."""
 from __future__ import annotations
 
-from . import PIPELINE_VERSION, RULES_VERSION
 from . import dates as D
+from . import profiles as PF
 from . import extract as X
 from . import ids
 from . import rights as RT
@@ -163,9 +163,17 @@ def _labelled_field(item):
     return {k: item[k] for k in ("section_title", "locator", "snippet", "snippet_sha256", "source_url", "status")}
 
 
-def build_record(paper, envs, freeze_date, cutoff_date, features_by_rid, fulltext_xml=None):
+def build_record(paper, envs, freeze_date, cutoff_date, features_by_rid, fulltext_xml=None, profile=None,
+                 review=None):
     """``envs`` maps 'europepmc_doi', 'europepmc_pmid', 'crossref', 'openalex',
-    'doi_handle', 'fulltext' to cache envelopes (or None)."""
+    'doi_handle', 'fulltext' (and, for the v3 profile, 'pubmed_history' and
+    'landing_meta') to cache envelopes (or None).
+
+    ``profile`` selects the output schema (default: the current version). The
+    legacy 1.1.0 profile returns exactly the pre-1.2.0 record. ``review`` is a
+    validated human reviewer entry (v3 profile only) or None.
+    """
+    profile = profile or PF.CURRENT
     rid = paper["id"]
     doi = ids.normalize_doi(paper.get("doi"))
     reg_pmid = ids.pmid_from_url(paper.get("index_url"))
@@ -200,6 +208,7 @@ def build_record(paper, envs, freeze_date, cutoff_date, features_by_rid, fulltex
     evidence = []
     sample = None
     labelled = {}
+    parsed = None
     if lic["text_processing_allowed"] and pmcid:
         if ft_env and ft_env.get("status") == "ok" and fulltext_xml:
             parsed = X.parse_fulltext(fulltext_xml)
@@ -265,14 +274,14 @@ def build_record(paper, envs, freeze_date, cutoff_date, features_by_rid, fulltex
         "country_or_language": _prov("derived", rule="explicit-term lexicon (title + affirmative register-note clauses)"),
         "sample_size": (_prov("europepmc_fulltext", ft_env, rule=sample.get("rule")) if fulltext_processed
                         else _prov(None, rule="not extracted")),
-        "screening_status": _prov("derived", rule=RULES_VERSION),
+        "screening_status": _prov("derived", rule=profile.rules_version),
         "within_cutoff": _prov("derived", rule=f"{cutoff_date} <= publication_date <= {freeze_date}"),
     }
     for field in ("intervention_or_exposure", "comparator", "outcomes", "limitations"):
         provenance[field] = (_prov("europepmc_fulltext", ft_env, rule="explicitly titled section")
                              if labelled.get(field) else _prov(None, rule="null unless explicitly labelled section"))
 
-    return {
+    record = {
         "id": rid,
         "title": title,
         "authors": authors,
@@ -335,5 +344,16 @@ def build_record(paper, envs, freeze_date, cutoff_date, features_by_rid, fulltex
         "provenance": provenance,
         "retrieval_date": retrieval_date,
         "reviewer_status": REVIEWER_STATUS,
-        "pipeline_version": PIPELINE_VERSION,
+        "pipeline_version": profile.pipeline_version,
     }
+    if not profile.v3:
+        return record
+    from . import v3fields as V3  # local import: the legacy path never loads v3 rules
+
+    return V3.augment(record, {
+        "paper": paper, "envs": envs, "epmc": epmc, "crossref": cr, "openalex": oa, "study_type": stype,
+        "title": title, "paragraphs": (parsed or {}).get("paragraphs") if fulltext_processed else None,
+        "fulltext_url": (ft_env or {}).get("url") if fulltext_processed else None,
+        "fulltext_env": ft_env if fulltext_processed else None,
+        "freeze_date": freeze_date, "cutoff_date": cutoff_date, "review": review, "profile": profile,
+    })
