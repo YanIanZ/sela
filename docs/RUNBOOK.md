@@ -49,7 +49,7 @@ go run ./cmd/sela-eval -mode test_double   # + pipeline and fault-injection runs
 
 Latency comparisons (known against unknown usernames) only log their measurements in the default suite: under `-race` and with packages in parallel single logins vary by several times, so a fixed band failed about one run in ten without any defect. The property they illustrate is asserted deterministically (which argon2id parameters every verification ran with). Run them with `SELA_TIMING_TESTS=1` on a quiet machine, without `-race`, when changing the hashing or the failure path.
 
-The v1 checks (`npm test`, `npm run lint`, …) still apply to the inherited Next.js app; see [development](DEVELOPMENT.md).
+The v1 Next.js app and its root `npm` checks were retired on 2026-10-29; see [development](DEVELOPMENT.md) for the current Go + `web/` commands.
 
 ## 3. Configuration (environment)
 

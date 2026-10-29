@@ -38,7 +38,7 @@ README_PATH = MODAL_DIR / "README.md"
 NOTES_PATH = MODAL_DIR / "MODEL_NOTES.md"
 REQUIREMENTS_PATH = MODAL_DIR / "requirements.txt"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "modal-deploy.yml"
-QUALITY_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "quality.yml"
+V2_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "v2.yml"
 
 sys.path.insert(0, str(MODAL_DIR))
 import smoke_test  # noqa: E402  (stdlib only, asserted below)
@@ -532,13 +532,13 @@ class ModalDeployWorkflowTest(unittest.TestCase):
         self.assertRegex(self.text, r"(?s)environment:.*type: choice.*- dev.*- staging")
         self.assertRegex(self.text, r"(?s)run_smoke:.*type: boolean.*default: false")
 
-    def test_actions_pinned_by_major_version_like_quality(self):
+    def test_actions_pinned_by_major_version_like_ci(self):
         uses = re.findall(r"uses:\s*(\S+)", self.text)
         self.assertTrue(uses)
         for ref in uses:
             self.assertRegex(ref, r"^actions/[a-z-]+@v\d+$")
-        quality_checkout = re.search(r"actions/checkout@(v\d+)", QUALITY_WORKFLOW_PATH.read_text(encoding="utf-8"))
-        self.assertIn(f"actions/checkout@{quality_checkout.group(1)}", uses)
+        ci_checkout = re.search(r"actions/checkout@(v\d+)", V2_WORKFLOW_PATH.read_text(encoding="utf-8"))
+        self.assertIn(f"actions/checkout@{ci_checkout.group(1)}", uses)
 
     def test_secrets_only_via_env_and_never_echoed(self):
         for line in self.text.splitlines():

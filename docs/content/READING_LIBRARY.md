@@ -1,6 +1,6 @@
 # Reading library (content set `sela-reading-v1`)
 
-Status: **content set v1 drafted on 2026-10-26 (version 1.0.0) and revised twice the same day after review (versions 1.1.0 and 1.2.0, see [Version history](#version-history)); implemented as data and verified locally by its validator; not reviewed by a person.** The validator passes on the library itself and **fails on purpose on one file outside it**, `packages/config/src/selfHelpCards.v1.json`, which holds the 22 WHO adaptations without their licence notice (open point 2). All 38 items are `machine_drafted_unreviewed`, and **none is publishable** until a human editor approves its exact text. Supports SPEC C21, I.data, V36, V39 and T19 (backlog S-140, S-141) and decisions D-033, D-038, D-044, D-045 and D-048. This document is non-normative; the SPEC stays authoritative.
+Status: **content set v1 drafted on 2026-10-26 (version 1.0.0) and revised twice the same day after review (versions 1.1.0 and 1.2.0, see [Version history](#version-history)); implemented as data and verified locally by its validator; not reviewed by a person.** The validator passes on the library itself and **fails on purpose on one file outside it**, `internal/fixtures/data/self_help_cards.v1.json`, which holds the 22 WHO adaptations without their licence notice (open point 2). All 38 items are `machine_drafted_unreviewed`, and **none is publishable** until a human editor approves its exact text. Supports SPEC C21, I.data, V36, V39 and T19 (backlog S-140, S-141) and decisions D-033, D-038, D-044, D-045 and D-048. This document is non-normative; the SPEC stays authoritative.
 
 **Where the references live.** SPEC ids from C16 and V26 upward, the D-0xx decisions and the design screens (S10–S26 in `docs/design/SCREENS.md`, `docs/design/CONTENT_STYLE.md`) are in the v3 SPEC and design documents on branch `feat/sela-v3-pilot` (working copy of 2026-10-26). This research branch's `SPEC.md` predates them, so they are named here without links.
 
@@ -18,7 +18,7 @@ The library is the public content behind the "Bacaan & latihan kecil" / "Reading
 | File | Content |
 | --- | --- |
 | `reading_item.schema.json` | JSON Schema (draft 2020-12) for the items files, plus `$defs/sourcesFile` and `$defs/setFile` |
-| `set.json` | Content-set manifest: version `1.1.0` with its change log (`changes`), file list with item ids, counts, a fingerprint over every item's text hash, the methods, and the v1 baseline (`packages/config/src/selfHelpCards.v1.json`, SHA-256 and commit) |
+| `set.json` | Content-set manifest: version `1.1.0` with its change log (`changes`), file list with item ids, counts, a fingerprint over every item's text hash, the methods, and the v1 baseline (`internal/fixtures/data/self_help_cards.v1.json`, SHA-256 and commit) |
 | `sources.json` | 17 sources: licence, licence evidence, suggested citation, the population the source addresses, what was read, the date checked, a re-verify-by date and, for every source whose text is adapted or paraphrased, the stored verbatim check (`verbatim_check`) |
 | `content_gates.json` | 7 reading-specific forbidden-claim gates (`sela-reading-content-gates-v1`) |
 | [`LICENSE.md`](../../data/content/reading/LICENSE.md) | Licence notice for this directory: `cards_who.json` is CC BY-NC-SA 3.0 IGO (licence URI, WHO's suggested citations and translation disclaimer, the terms, B-14); the licence of every other file |
@@ -35,7 +35,7 @@ Validator, verbatim-overlap tool and tests: [tests/content/reading_validator.py]
 python3 -m unittest discover -s tests/content -p 'test_*.py'
 
 # validate the library, then scan the repository for WHO card text without its notice; exit 1 on any error
-# (exits 1 today: one licence error, packages/config/src/selfHelpCards.v1.json, open point 2)
+# (exits 1 today: one licence error, internal/fixtures/data/self_help_cards.v1.json, open point 2)
 python3 tests/content/reading_validator.py
 
 # after editing text: recompute hashes, reading time, plain-language and claim-gate results
@@ -103,7 +103,7 @@ The 8 guides are:
 
 ### Migration of the 30 Dengar.in cards
 
-- **Text kept identical in 23 cards.** Every title, summary, step, "why", "seek help" and caution of 23 cards is identical to `packages/config/src/selfHelpCards.v1.json`. The test compares them field by field, and `origin.v1_text_sha256` pins each card.
+- **Text kept identical in 23 cards.** Every title, summary, step, "why", "seek help" and caution of 23 cards is identical to `internal/fixtures/data/self_help_cards.v1.json`. The test compares them field by field, and `origin.v1_text_sha256` pins each card.
   - That file entered this repository in commit `7d898ae` and is byte-identical to `zlxrnn/dengar.in-2.0` at commit `9ee21e0`.
   - The v1 `source` object and `evidenceNote` are kept verbatim in `origin`.
 - **Six cards changed in content set 1.2.0, each as version 2: their "why" credited the source with something the source does not say.** Only the "why" changed. Each card records `origin.text_changed: true`, says in `adaptation_note` what changed in version 2 and why, and carries an open editor flag that asks the editor to confirm or revert. See [Source claims](#source-claims-what-a-named-source-says).
@@ -400,7 +400,7 @@ The machine-readable history is `set.json` `changes`.
   - **Source claims.** Every summary or "why" that names a source carries a locator, a quote-free paraphrase and a support verdict, pending an editor's confirmation (18 entries). The validator requires them and blocks publishing until each is supported and confirmed.
   - **Verbatim checks.** A committed tool, `tests/content/verbatim_overlap.py`, and a stored `verbatim_check` for every adapted or paraphrased source (and the SPRC guide). Keslan, CDC, SPRC and the four WHO PDFs were checked; the two Ayo Sehat pages could not be, so their "no text copied" now says "not yet verified" (due by 2026-11-26).
   - **Guide wording.** `butuh-bantuan-sekarang` version 2: one English sentence reworded because it shared 6 words with DWMM.
-  - **Repository licence scan.** The validator fails when a repository file holds CC BY-NC-SA card text without the licence URI, the IRIS link and the adaptation notice. It fails today on `packages/config/src/selfHelpCards.v1.json` (open point 2).
+  - **Repository licence scan.** The validator fails when a repository file holds CC BY-NC-SA card text without the licence URI, the IRIS link and the adaptation notice. It fails today on `internal/fixtures/data/self_help_cards.v1.json` (open point 2).
   - **Schema.** Items gain `source_claims`; sources gain `verbatim_check`; editor flags gain the issues `attribution_not_in_source` and `causation_overstated`.
 
   The fingerprint changed because 7 items changed (new versions and text hashes). The research corpus and its frozen 2026-10-26 snapshot are not touched.
@@ -409,7 +409,7 @@ The machine-readable history is `set.json` `changes`.
 
 ## Open points for the PM and other owners
 
-1. **CI (workflow owner).** No workflow runs `tests/content` or the validator, so a change to the content gates, the WHO notices, the audience fields or the help catalogue can merge without the 79 tests. The validator step below **fails until open point 2 is resolved**, because the repository licence scan fails on `packages/config/src/selfHelpCards.v1.json`; that is intended. The unit tests pass, because they accept that one known failure and no other. This library does not own `.github/workflows/`. A proposed `.github/workflows/reading-library.yml`, following the conventions of `research-corpus.yml` (same action versions, read-only permissions, offline):
+1. **CI (workflow owner).** No workflow runs `tests/content` or the validator, so a change to the content gates, the WHO notices, the audience fields or the help catalogue can merge without the 79 tests. The validator step below **fails until open point 2 is resolved**, because the repository licence scan fails on `internal/fixtures/data/self_help_cards.v1.json`; that is intended. The unit tests pass, because they accept that one known failure and no other. This library does not own `.github/workflows/`. A proposed `.github/workflows/reading-library.yml`, following the conventions of `research-corpus.yml` (same action versions, read-only permissions, offline):
 
    ```yaml
    name: Sela reading library
@@ -423,7 +423,7 @@ The machine-readable history is `set.json` `changes`.
          - 'tests/content/**'
          - 'data/research/corpus/eval_fixtures/claim_gates.json'
          - 'web/src/data/help.fallback.json'
-         - 'packages/config/src/selfHelpCards.v1.json'
+         - 'internal/fixtures/data/self_help_cards.v1.json'
          - '.github/workflows/reading-library.yml'
      push:
        branches: [main]
@@ -432,7 +432,7 @@ The machine-readable history is `set.json` `changes`.
          - 'tests/content/**'
          - 'data/research/corpus/eval_fixtures/claim_gates.json'
          - 'web/src/data/help.fallback.json'
-         - 'packages/config/src/selfHelpCards.v1.json'
+         - 'internal/fixtures/data/self_help_cards.v1.json'
      schedule:
        - cron: '17 6 * * 1'
      workflow_dispatch:
@@ -476,8 +476,8 @@ The machine-readable history is `set.json` `changes`.
          - run: python3 tests/content/reading_validator.py --check-stale
    ```
 
-   `packages/config/src/selfHelpCards.v1.json` is in the path filter because the validator compares every migrated card with it and scans it for WHO card text. The licence scan reads the whole repository, so a path-filtered run can miss a new copy of the card text elsewhere; the weekly run catches it. The `stale` job will start failing after 2026-11-26 until the Ayo Sehat pages are re-verified and their verbatim checks have run, which is intended.
-2. **Licence carve-out (owner) and the v1 card file (packages/config owner).** Status on 2026-10-26: **not resolved; the content validator now fails on it.** The root `LICENSE` grants MIT, and the README shows an MIT badge. Anyone who reads only those files is told they have commercial rights in the WHO card text, which WHO never granted. `data/content/reading/LICENSE.md` now gives the correct notice for that directory, but it cannot carve the text out of the root notice, and it cannot cover `packages/config/src/selfHelpCards.v1.json`, which holds the same 22 adaptations. Proposed text, for the owner to add:
+   `internal/fixtures/data/self_help_cards.v1.json` is in the path filter because the validator compares every migrated card with it and scans it for WHO card text. The licence scan reads the whole repository, so a path-filtered run can miss a new copy of the card text elsewhere; the weekly run catches it. The `stale` job will start failing after 2026-11-26 until the Ayo Sehat pages are re-verified and their verbatim checks have run, which is intended.
+2. **Licence carve-out (owner) and the v1 card file (packages/config owner).** Status on 2026-10-26: **not resolved; the content validator now fails on it.** The root `LICENSE` grants MIT, and the README shows an MIT badge. Anyone who reads only those files is told they have commercial rights in the WHO card text, which WHO never granted. `data/content/reading/LICENSE.md` now gives the correct notice for that directory, but it cannot carve the text out of the root notice, and it cannot cover `internal/fixtures/data/self_help_cards.v1.json`, which holds the same 22 adaptations. Proposed text, for the owner to add:
 
    - At the end of `LICENSE`:
 
@@ -490,7 +490,7 @@ The machine-readable history is `set.json` `changes`.
      (https://creativecommons.org/licenses/by-nc-sa/3.0/igo):
 
      - data/content/reading/cards_who.json (see data/content/reading/LICENSE.md);
-     - the 22 entries of packages/config/src/selfHelpCards.v1.json whose
+     - the 22 entries of internal/fixtures/data/self_help_cards.v1.json whose
        source.license is "CC BY-NC-SA 3.0 IGO".
 
      It may be used for non-commercial purposes only, with its attribution and
@@ -498,7 +498,7 @@ The machine-readable history is `set.json` `changes`.
      blocked until permission is obtained or the text is replaced (B-14).
      ```
 
-   - In `README.md`, under "Provenance and license": "Exception: the WHO-adapted self-help cards (`data/content/reading/cards_who.json` and 22 entries of `packages/config/src/selfHelpCards.v1.json`) are CC BY-NC-SA 3.0 IGO, not MIT, and non-commercial only until B-14 clears; see [data/content/reading/LICENSE.md](data/content/reading/LICENSE.md)." Consider changing the badge to "MIT (code); some content CC BY-NC-SA 3.0 IGO".
+   - In `README.md`, under "Provenance and license": "Exception: the WHO-adapted self-help cards (`data/content/reading/cards_who.json` and 22 entries of `internal/fixtures/data/self_help_cards.v1.json`) are CC BY-NC-SA 3.0 IGO, not MIT, and non-commercial only until B-14 clears; see [data/content/reading/LICENSE.md](data/content/reading/LICENSE.md)." Consider changing the badge to "MIT (code); some content CC BY-NC-SA 3.0 IGO".
 
    The carve-out alone does not make the v1 file compliant, and this library cannot change files outside `data/content`, `tests/content` and `docs/content`. The owner of `packages/config` chooses one of these:
 

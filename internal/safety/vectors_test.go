@@ -230,7 +230,7 @@ func TestVectorsCoverV1(t *testing.T) {
 	}
 	literals := map[string]map[string]bool{}
 	for _, name := range v1TestFiles {
-		path := filepath.Join("..", "..", "tests", "crisis", name+".test.mjs")
+		path := filepath.Join("testdata", "v1", name+".test.mjs")
 		src, err := os.ReadFile(path)
 		if errors.Is(err, fs.ErrNotExist) {
 			t.Skipf("v1 test file %s is not present", path)

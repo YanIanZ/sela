@@ -188,7 +188,7 @@
       "origin": {
         "kind": "migrated_v1",
         "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
-        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "migrated_from": "internal/fixtures/data/self_help_cards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
         "v1_id": "kiat-harian-kelola-stres",
         "v1_text_sha256": "9962138cf0fbffd4f13c90358bf103ae9a86f0dbb984b3622b31c11f2652275f",
         "v1_source": {
@@ -388,7 +388,7 @@
       "origin": {
         "kind": "migrated_v1",
         "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
-        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "migrated_from": "internal/fixtures/data/self_help_cards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
         "v1_id": "tidur-cukup-tujuh-sampai-sembilan-jam",
         "v1_text_sha256": "c788f1c2bb7a339d4048d298691a5855d557a2495c87d294162696d2ac2e9545",
         "v1_source": {
@@ -576,7 +576,7 @@
       "origin": {
         "kind": "migrated_v1",
         "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
-        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "migrated_from": "internal/fixtures/data/self_help_cards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
         "v1_id": "jeda-dan-batas-waktu-belajar",
         "v1_text_sha256": "3b6fba702947fcc5b12b6a8071f54493fd4f156279e22d0a14b18194e92f69ab",
         "v1_source": {
@@ -764,7 +764,7 @@
       "origin": {
         "kind": "migrated_v1",
         "authors": "Dengar.in v1 team ('Kata Justin Nama Timnya Gokil Udah', Telkom University Surabaya). The cards were committed by I Wayan Bagus Arya Darma Wiguna (@YanIanZ) under SCRUM-46/SCRUM-45 on 2026-10-15; the v1 knowledge base records runtime use approved by the Safety Owner (Justin) under SCRUM-45. A content review of the card text is not recorded.",
-        "migrated_from": "packages/config/src/selfHelpCards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
+        "migrated_from": "internal/fixtures/data/self_help_cards.v1.json (commit 7d898ae in this repository; byte-identical to zlxrnn/dengar.in-2.0 commit 9ee21e0)",
         "v1_id": "menerima-diri-dan-tujuan-realistis",
         "v1_text_sha256": "5b4fee01c5b340639a8a6efbd21b4279c939de742ae3dd4bb05802716875b40c",
         "v1_source": {

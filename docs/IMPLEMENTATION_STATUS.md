@@ -25,8 +25,10 @@ recovery, guest upgrade, Home, Talk list and room, notes/check-ins, timeline and
 patterns, Support hub, Immediate help, Privacy & data, Display & accessibility,
 Account and Policies. Memory, consultation summary/preparation/sharing/
 recipient/follow-up and reading are honest blocked states and name their missing
-API or editorial gate. The v2 synthetic demo stays at `/demo` and `/r`; the
-legacy `apps/web/` app is untouched.
+API or editorial gate. The v2 synthetic demo stays at `/demo` and `/r`. The
+legacy Next.js app was retired on 2026-10-29; its self-help cards, help
+destinations and support options are embedded under `internal/fixtures/data/`,
+and the v1 crisis test snapshot is under `internal/safety/testdata/v1/`.
 
 Real integrations: accounts, guest, recovery, reauth, password, recovery codes,
 consents, guardian consent, sessions, audit, export, account/guest deletion,
@@ -251,7 +253,7 @@ This section describes branch `feat/v2-go-meta-runtime` (PR #6, merged into main
 | M5 Research pipeline | T10 | Tested locally; human appraisal blocked ([B-4](BLOCKERS.md)) | `tests/research`, `corpus_pipeline.py verify`, eval retrieval |
 | M6 Hardening: safety, privacy, authorization, adversarial, accessibility | T8 | Tested locally; adversarial reviews done and fixed | review findings below |
 | M7 Demo and delivery: e2e, runbook, docs, PR | T8, T12 | e2e and docs done; live demo evidence blocked | [runbook](RUNBOOK.md), PR |
-| Cutover and v1 removal | T9 | Not started (waits for live acceptance) | [roadmap](ROADMAP.md) |
+| Cutover and v1 removal | T9 | Done 2026-10-29: Next.js app, v1 services/packages/tests, Supabase and the v1 quality workflow removed; legacy content ported to Go | `go test ./...`, `web` typecheck/tests/build, `docker compose config`, CI |
 
 ### 4.2 Latest results (v2)
 
@@ -286,7 +288,7 @@ Each package was implemented, then reviewed by an independent agent that tried t
 - **Live metrics**: bilingual wording quality, important-fact coverage, warm latency, cold start and cost per session are pre-registered but unmeasured.
 - **Public deployment** of the Go app ([B-3](BLOCKERS.md)); the container image is built and smoke-tested in CI.
 - **Human research appraisal** ([B-4](BLOCKERS.md)); every record is `reviewer_status: not_reviewed`.
-- **Cutover (T9)**: v1 stays runnable until v2 is accepted with live evidence. Under v3 the removal waits for v3 acceptance (backlog S-272).
+- **Cutover (T9)**: done on 2026-10-29. The Next.js app, v1 services/packages, Supabase, v1 JS tests, the v1 Docker service and the v1 quality workflow were removed. The useful content was ported to Go (self-help cards, help-destination checklists, support options) and the v1 crisis tests were frozen for `TestVectorsCoverV1`.
 
 ### 4.5 Cost estimate (v2 assumptions)
 

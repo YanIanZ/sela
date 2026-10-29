@@ -1518,16 +1518,16 @@ The 100-record corpus pipeline is kept: it is verified reproducible but title/ab
 - **Risks:** Optimism; the PM checks every claim against evidence.
 - **Owner:** PM. **Milestone:** P8. **Status:** planned. **Evidence:** —
 
-#### S-272 Retire the v1 runtime (later)
-- **Problem:** The Next.js v1 runtime still ships in the repository (SPEC T9).
-- **Outcome:** v1 and AMD runtime removed after v3 acceptance, with remaining protections ported.
-- **Priority:** post-pilot. Not needed for the pilot; v1 stays runnable until then (D-020).
-- **Scope:** Port the PII redactor, self-help cards, checklists and crisis vectors first; keep licences, font attribution and Git authorship.
+#### S-272 Retire the v1 runtime
+- **Problem:** The Next.js v1 runtime still shipped in the repository (SPEC T9).
+- **Outcome:** v1 and AMD runtime removed, with remaining protections ported.
+- **Priority:** done 2026-10-29.
+- **Scope:** Port the PII redactor (already in `internal/ai/minimize`), self-help cards, help-destination checklists and support options; freeze the v1 crisis tests for `TestVectorsCoverV1`; keep licences, font attribution and Git authorship.
 - **Non-goals:** Deleting archived evidence or credits.
 - **Depends on:** S-271.
 - **Acceptance criteria:** The removal list is decided from dependency evidence and each ported protection has a test.
 - **Risks:** Losing a protection only v1 has.
-- **Owner:** Go backend engineer; PM. **Milestone:** later. **Status:** planned. **Evidence:** —
+- **Owner:** Go backend engineer; PM. **Milestone:** done. **Status:** done 2026-10-29. **Evidence:** `internal/fixtures/legacy_content.go` + `internal/fixtures/legacy_content_test.go`; `internal/safety/testdata/v1/`; `go test ./...`; `web` typecheck/tests/build; `docker compose config`; CI.
 
 #### S-273 Align the spec and the documentation with v3
 - **Problem:** SPEC.md and the supporting docs still describe the v2 limits (synthetic-only, adults-only, memory-only, Meta-only).
@@ -1623,7 +1623,7 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 2. The readiness report gives every DoD capability a status on the release ladder, with evidence links.
 3. Every remaining blocker names its owner action.
 
-**Later (after the pilot or paused):** S-008, S-041, S-053, S-122, S-142, S-179, S-180, S-181, S-182, S-225, S-229, S-247, S-248, S-249, S-268, S-269, S-272.
+**Later (after the pilot or paused):** S-008, S-041, S-053, S-122, S-142, S-179, S-180, S-181, S-182, S-225, S-229, S-247, S-248, S-249, S-268, S-269.
 
 ## 5. Index
 
@@ -1733,7 +1733,7 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-269 | Row Level Security | post-pilot | later | planned |
 | S-270 | `OWNER_TESTER.md` | pilot-critical | P8 | planned |
 | S-271 | Pilot readiness report and plan | pilot-critical | P8 | planned |
-| S-272 | Retire v1 runtime | post-pilot | later | planned |
+| S-272 | Retire v1 runtime | done | 2026-10-29 | done; content ported and tests added |
 | S-273 | Spec and documentation alignment | pilot-critical | P1 | in progress |
 | S-274 | Operator access audit | pilot-critical | P2, P7 | planned (hosted part blocked, B-3) |
 
@@ -1789,7 +1789,7 @@ Every row of the [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) lands in
 | FM-43 Rate limits | merge (already in Go) | S-003, S-220 |
 | FM-44 AI response cache | retire | — (S-220 non-goal) |
 | FM-45 v1 PostgreSQL and Supabase | retire; replaced | S-260 |
-| FM-46 Next.js cache and health routes | retire with v1 | S-272 |
+| FM-46 Next.js cache and health routes | retire with v1 (done 2026-10-29) | S-272 |
 | FM-47 Live legacy deployments | retire after cutover | S-267 |
 | FM-48 AMD adapter | retire | — (v2 V14) |
 | FM-49 Fault-injection testbench | merge into failure tests | S-220 |

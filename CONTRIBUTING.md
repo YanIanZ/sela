@@ -1,6 +1,6 @@
 # Contributing to Sela
 
-Start with [SPEC.md](SPEC.md), then the [documentation index](docs/README.md). Sela v3 (owner brief v3) is built in the Go and React runtime (`cmd/`, `internal/`, `web/`, `modal/`, `e2e/`, `eval/`, `scripts/ops/`, `scripts/research/`) beside the v2 demo, which stays as the demo configuration; v3 work items are in the [backlog](docs/BACKLOG.md). v1 (Next.js) stays runnable until the cutover (T9). Never describe a proposed endpoint, provider or deployment as implemented, and never present a test-double run as Meta, Claude or DeepSeek output.
+Start with [SPEC.md](SPEC.md), then the [documentation index](docs/README.md). Sela is built in the Go and React runtime (`cmd/`, `internal/`, `web/`, `modal/`, `e2e/`, `eval/`, `scripts/ops/`, `scripts/research/`); the inherited Next.js app was retired on 2026-10-29. Work items are in the [backlog](docs/BACKLOG.md). Never describe a proposed endpoint, provider or deployment as implemented, and never present a test-double run as Meta, Claude or DeepSeek output.
 
 ## Work boundaries
 
@@ -29,10 +29,6 @@ go run ./cmd/sela-eval -mode offline   # and -mode test_double
 ```
 
 CI (`.github/workflows/v2.yml`, for pull requests to main and pushes to main) runs these commands except `sela-eval`, with a PostgreSQL 16 service and the migration round trip, plus a container build; run `sela-eval` locally. Live Modal deployment is manual (`.github/workflows/modal-deploy.yml`) and costs money; see [modal/README.md](modal/README.md).
-
-## v1 checks
-
-Node.js 22.18+ and npm 10+: `npm ci`, `npm run lint`, `npm run lint:services`, `npm run typecheck`, `npm test`, `npm run build`. Full v1 tests need `redis-server` or Docker. See [development](docs/DEVELOPMENT.md).
 
 ## Review focus
 

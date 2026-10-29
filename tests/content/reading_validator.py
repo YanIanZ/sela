@@ -27,7 +27,7 @@ What it checks (see docs/content/READING_LIBRARY.md):
 - across the repository (git-tracked and untracked, not ignored, text files): any file that holds
   CC BY-NC-SA 3.0 IGO card text (8-word runs of the WHO cards' current or v1 text) must carry the
   licence URI, each source's IRIS link and the adaptation notice. This scan makes the validator fail
-  while packages/config/src/selfHelpCards.v1.json holds the 22 WHO adaptations without them.
+  while internal/fixtures/data/self_help_cards.v1.json holds the 22 WHO adaptations without them.
 
 Claim gates: the 13 product-claim gates published in
 data/research/corpus/eval_fixtures/claim_gates.json (used as published, never edited here)
@@ -642,7 +642,7 @@ def source_claim_errors(item, p, sources_by_id):
 def licence_notice_errors(text, sources):
     """LICENSE.md must give the licence, its URI, the scope, B-14, WHO's terms and every suggested citation."""
     required = [
-        WHO_LICENCE, WHO_LICENCE_URL, WHO_LEGALCODE_URL, "cards_who.json", "packages/config/src/selfHelpCards.v1.json",
+        WHO_LICENCE, WHO_LICENCE_URL, WHO_LEGALCODE_URL, "cards_who.json", "internal/fixtures/data/self_help_cards.v1.json",
         "MIT", COMMERCIAL_BLOCKER, "D-045", "non-commercial", "share-alike", "logo", "endorse", "WIPO",
         "attribution", "adaptation_notice",
     ]
@@ -1180,7 +1180,7 @@ def library_errors():
     if v1_cards is not None:
         base = set_doc["v1_baseline"]
         if base["sha256"] != sha256(V1_CARDS_PATH.read_bytes()):
-            errors.append("set.json: v1_baseline.sha256 does not match packages/config/src/selfHelpCards.v1.json")
+            errors.append("set.json: v1_baseline.sha256 does not match internal/fixtures/data/self_help_cards.v1.json")
         if base["card_count"] != len(v1_cards):
             errors.append("set.json: v1_baseline.card_count does not match the v1 file")
         migrated = {i["id"] for i in items if i["origin"]["kind"] == "migrated_v1"}
