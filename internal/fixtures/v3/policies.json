@@ -102,6 +102,27 @@
       }
     ]
   },
+  "personal_memory": {
+    "version": "personal-memory-2026-11-01.1",
+    "title": {
+      "id": "Ingatan pribadi",
+      "en": "Personal memory"
+    },
+    "body": [
+      {
+        "id": "Sela hanya menyimpan hal yang kamu tulis sendiri sebagai ingatan, dan hanya jika kamu menyalakannya. Tidak ada ingatan yang dibuat otomatis, ditambang dari percakapan, atau disimpan tanpa kamu lihat.",
+        "en": "Sela keeps only items you write yourself as memory, and only when you turn this on. Nothing is captured automatically, mined from conversations, or stored without you seeing it."
+      },
+      {
+        "id": "Kamu dapat mengubah atau menghapus setiap ingatan, dan mematikan ingatan kapan saja. Saat dimatikan, Sela tidak membaca atau memakai ingatanmu; isinya tetap tersimpan sampai kamu menghapusnya.",
+        "en": "You can edit or delete each memory item and turn memory off at any time. While it is off, Sela does not read or use your memory; the items stay stored until you delete them."
+      },
+      {
+        "id": "Ingatan disimpan terenkripsi seperti catatanmu dan tidak dikirim ke penyedia AI mana pun pada langkah ini. Ingatan tidak dipakai untuk membalas percakapan sampai kamu menyalakannya secara terpisah nanti.",
+        "en": "Memory is stored encrypted like your notes and is not sent to any AI provider in this step. Memory is not used to answer a conversation until you enable that separately later."
+      }
+    ]
+  },
   "ai_processing": {
     "version": "ai-meta-2026-10-27.1",
     "title": {
@@ -138,6 +159,44 @@
       {
         "id": "Jika diaktifkan server dan Meta mengalami gangguan, DeepSeek (Tiongkok) dapat menerima cuplikan yang diperlukan. Tidak dipakai tanpa izin terpisah. Saat ini hanya untuk data uji sintetis; retensi mengikuti kebijakan penyedia.",
         "en": "If enabled on the server and Meta has an outage, DeepSeek (China) may receive necessary excerpts. It requires separate permission. Currently restricted to synthetic test data; retention follows the provider policy."
+      }
+    ]
+  },
+  "asr_meta": {
+    "version": "asr-aws-2026-10-29.1",
+    "title": {
+      "id": "Dikte via Amazon Nova Sonic",
+      "en": "Dictation via Amazon Nova Sonic"
+    },
+    "body": [
+      {
+        "id": "Saat kamu menekan tombol mikrofon, suaramu dikirim lewat server Sela ke Amazon Nova Sonic (AS) untuk diubah menjadi teks. Hanya audio yang kamu rekam saat itu yang dikirim; hasil teksnya bisa kamu ubah sebelum dikirim sebagai pesan. Tidak ada suara asisten yang dihasilkan.",
+        "en": "When you press the microphone button, your voice is sent through Sela's server to Amazon Nova Sonic (US) to be turned into text. Only the audio you record at that moment is sent; you can edit the resulting text before sending it as a message. No assistant audio is produced."
+      },
+      {
+        "id": "Izin ini terpisah dan dapat dicabut; tanpa izin ini tombol mikrofon tidak aktif. Retensi mengikuti kebijakan AWS.",
+        "en": "This permission is separate and can be withdrawn; without it the microphone button stays off. Retention follows the AWS policy."
+      }
+    ]
+  },
+  "ai_provider_aws_voice": {
+    "version": "ai-aws-voice-2026-10-29.1",
+    "title": {
+      "id": "Percakapan suara · Amazon Nova 2.5 Sonic",
+      "en": "Voice conversation · Amazon Nova 2.5 Sonic"
+    },
+    "body": [
+      {
+        "id": "Di ruang suara, suaramu dikirim lewat server Sela ke Amazon Nova 2.5 Sonic di AWS (Amerika Serikat). Sonic mengubah suaramu menjadi teks dan menjawab dengan suara. Jawaban itu dibuat oleh Amazon, bukan oleh model Meta, dan selalu diberi label.",
+        "en": "In the voice room, your voice is sent through Sela's server to Amazon Nova 2.5 Sonic on AWS (United States). Sonic turns your voice into text and answers with a voice. Those answers are made by Amazon, not by the Meta model, and are always labelled."
+      },
+      {
+        "id": "Eksperimental: Amazon belum mendukung bahasa Indonesia secara resmi, jadi ucapanmu bisa salah dikenali dan jawabannya bisa keliru. Pemeriksaan krisis tetap berjalan pada teks ucapanmu; kalau terdeteksi bahaya, sesi berhenti dan bantuan manusia ditampilkan.",
+        "en": "Experimental: Amazon does not officially support Indonesian yet, so your speech may be misheard and answers may be wrong. The crisis check still runs on the text of what you say; if danger is detected, the session stops and human help is shown."
+      },
+      {
+        "id": "Hanya untuk usia 18 tahun ke atas. Percakapan suara tidak disimpan oleh Sela; retensi di AWS mengikuti kebijakan penyedia. Izin ini terpisah dan dapat dicabut kapan saja.",
+        "en": "For people aged 18 and over only. Voice conversations are not stored by Sela; retention at AWS follows the provider policy. This permission is separate and can be withdrawn at any time."
       }
     ]
   }

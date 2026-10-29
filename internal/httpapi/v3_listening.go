@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -125,6 +126,15 @@ func roomCopy(c *room) room {
 	r.Turns = append([]account.ConversationTurn{}, c.Turns...)
 	return r
 }
+
+// roomLastActivity is the ordering key for the Home “Lanjutkan” card: the
+// newest turn wins, and an empty room sorts as oldest.
+func roomLastActivity(c room) time.Time {
+	if len(c.Turns) == 0 {
+		return time.Time{}
+	}
+	return c.Turns[len(c.Turns)-1].CreatedAt
+}
 func (s *Server) persistRoom(ctx context.Context, c *room) error {
 	if !c.Save {
 		return nil
@@ -231,6 +241,15 @@ func (s *Server) v3Rooms(w http.ResponseWriter, r *http.Request, p account.Princ
 			out = append(out, roomCopy(c))
 		}
 	}
+	// Map iteration is random; Home picks the first room for “Lanjutkan”.
+	// Order by the newest turn, then by id, so the choice is stable.
+	sort.SliceStable(out, func(i, j int) bool {
+		a, b := roomLastActivity(out[i]), roomLastActivity(out[j])
+		if !a.Equal(b) {
+			return a.After(b)
+		}
+		return out[i].ID < out[j].ID
+	})
 	writeData(w, 200, map[string]any{"conversations": out})
 }
 func (s *Server) v3Room(w http.ResponseWriter, r *http.Request, p account.Principal) {

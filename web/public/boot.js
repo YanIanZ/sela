@@ -15,7 +15,7 @@
       root.setAttribute("data-scheme", prefs.theme);
     if (prefs.textScale && prefs.textScale !== "100")
       root.setAttribute("data-text-scale", prefs.textScale);
-    if (prefs.spacing && prefs.spacing !== "standard")
+    if (prefs.spacing && prefs.spacing !== "normal")
       root.setAttribute("data-spacing", prefs.spacing);
     if (prefs.motion && prefs.motion !== "system")
       root.setAttribute("data-motion", prefs.motion);

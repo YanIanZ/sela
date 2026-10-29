@@ -9,11 +9,12 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
+import type * as ReactNS from "react";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { V3Error } from "./api";
 import { errorCopy } from "./errors";
-import { Icon, type IconName } from "./icons";
+import { Icon, Mark, type IconName } from "./icons";
 import { useWords } from "./shared";
 
 /* ------------------------------------------------------------------ */
@@ -21,13 +22,11 @@ import { useWords } from "./shared";
 /* ------------------------------------------------------------------ */
 
 export function PageHeader({
-  eyebrow,
   title,
   lead,
   back,
   actions,
 }: {
-  eyebrow?: string;
   title: string;
   lead?: string;
   back?: { to: string; label: string };
@@ -41,10 +40,15 @@ export function PageHeader({
           {back.label}
         </Link>
       )}
-      {eyebrow && <p className="s-overline">{eyebrow}</p>}
-      <h1 id="page-title">{title}</h1>
-      {lead && <p className="s-lead">{lead}</p>}
-      {actions && <div className="s-page-actions">{actions}</div>}
+      <div className="s-page-header-body">
+        <h1 id="page-title">{title}</h1>
+        {(lead || actions) && (
+          <div className="s-page-header-side">
+            {lead && <p className="s-lead">{lead}</p>}
+            {actions && <div className="s-page-actions">{actions}</div>}
+          </div>
+        )}
+      </div>
     </header>
   );
 }
@@ -63,10 +67,6 @@ export function StatusLine({
       {children}
     </p>
   );
-}
-
-export function Overline({ children }: { children: ReactNode }) {
-  return <p className="s-overline">{children}</p>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -264,7 +264,11 @@ export function EmptyState({
 }) {
   return (
     <div className="s-empty">
-      {mark && <div className="s-empty-mark" aria-hidden="true" />}
+      {mark && (
+        <span className="s-empty-mark" aria-hidden="true">
+          <Mark size={30} />
+        </span>
+      )}
       <h2>{title}</h2>
       {body && <p>{body}</p>}
       {actions && <div className="s-actions">{actions}</div>}
@@ -446,6 +450,9 @@ export function TextArea({
   const hintId = hint ? `${fieldId}-hint` : undefined;
   const errorId = error ? `${fieldId}-error` : undefined;
   const w = useWords();
+  const innerRef = (rest as { ref?: ReactNS.Ref<HTMLTextAreaElement> }).ref;
+  const restProps = { ...rest };
+  delete (restProps as { ref?: unknown }).ref;
   return (
     <div className={`s-field ${className ?? ""}`}>
       <label htmlFor={fieldId} className={hideLabel ? "sr-only" : "s-label"}>
@@ -460,7 +467,8 @@ export function TextArea({
         </p>
       )}
       <textarea
-        {...rest}
+        {...restProps}
+        ref={innerRef}
         id={fieldId}
         rows={rows}
         className="s-textarea"
@@ -580,7 +588,13 @@ export function ChoiceGroup<T extends string>({
   name: string;
   value: T | null;
   onChange: (v: T) => void;
-  options: Array<{ value: T; label: string; hint?: string; disabled?: boolean }>;
+  options: Array<{
+    value: T;
+    label: string;
+    hint?: string;
+    disabled?: boolean;
+    art?: ReactNode;
+  }>;
   hint?: string;
   error?: string;
   variant?: "rows" | "chips" | "tiles";
@@ -639,6 +653,7 @@ export function ChoiceGroup<T extends string>({
             {variant === "chips" && value === o.value && (
               <Icon name="check" size={16} />
             )}
+            {o.art && <span className="s-choice-art" aria-hidden="true">{o.art}</span>}
             <span className="s-choice-text">
               <span>{o.label}</span>
               {o.hint && <span className="s-hint">{o.hint}</span>}

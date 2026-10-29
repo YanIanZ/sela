@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Send,
@@ -16,8 +16,6 @@ import {
   Zap,
   Tag,
   Mic,
-  Square,
-  Volume2,
   ArrowRight
 } from 'lucide-react';
 import { evaluateCrisisInput } from '@dengarin/crisis-engine';
@@ -27,23 +25,9 @@ import { ConsentPending } from '@/components/ConsentPending';
 import { SupportPathwayCard, readSupportPathway } from '@/components/SupportPathwayCard';
 import { buildSupportPathway, type SupportPathway } from '@/lib/api/crisisGate';
 import { CHAT_CLIENT_HISTORY_ENTRIES, CHAT_CLIENT_TIMEOUT_MS } from '@/lib/api/requestLimits';
-import {
-  applyFinalTranscript,
-  browserVoicePrivacyDisclosure,
-  cancelSpeech,
-  getFinalTranscript,
-  getSpeechRecognitionConstructor,
-  isSpeechRecognitionSupported,
-  isSpeechSynthesisSupported,
-  selectVoiceForLanguage,
-  speakExpressively,
-  speechRecognitionErrorMessage,
-  startUnlessMicrophoneDenied,
-  type BrowserSpeechRecognition,
-} from '@/lib/browserSpeech';
 import { validatedActionDisplayText } from '@/lib/voiceRoom';
 import { PageContainer, ContentColumn, Button, ChatProgress } from '@/components/ui';
-import { LOCALE_TAG, commonText, useLanguage, useText } from '@/i18n';
+import { commonText, useLanguage, useText } from '@/i18n';
 import { chatText } from '@/i18n/pages/chat';
 
 interface Message {
@@ -57,8 +41,6 @@ interface Message {
   debiased?: boolean;
   action?: ValidatedAIAction;
   isError?: boolean;
-  /** Only server-validated assistant output is eligible for browser TTS. */
-  ttsEligible?: boolean;
   /** Static greeting: no AI call happened, so no provider badge and not sent as history. */
   isWelcome?: boolean;
   /** Which greeting to render from the dictionary (so it follows the active language). */
@@ -87,18 +69,9 @@ export default function ChatPage() {
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [speechRecognitionSupported, setSpeechRecognitionSupported] = useState(false);
-  const [speechSynthesisSupported, setSpeechSynthesisSupported] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [voiceStatus, setVoiceStatus] = useState('');
-  const [showVoiceDisclosure, setShowVoiceDisclosure] = useState(false);
-  const [hasAcknowledgedVoiceDisclosure, setHasAcknowledgedVoiceDisclosure] = useState(false);
-  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   // Mulai ulang percakapan memerlukan konfirmasi supaya tidak terhapus karena salah ketuk.
   const [confirmReset, setConfirmReset] = useState(false);
   const isSubmittingRef = useRef(false);
-  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
-  const activeSpeechMessageIdRef = useRef<string | null>(null);
 
   // Auto-scroll hanya untuk kotak pesan, BUKAN halaman. scrollIntoView() menggulung
   // semua ancestor termasuk window, sehingga halaman tiba-tiba lompat ke bawah
@@ -128,117 +101,7 @@ export default function ChatPage() {
     isNearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
   };
 
-  // Browser APIs are inspected only after hydration. Both capabilities degrade
-  // independently, so text chat never depends on either one being available.
-  useEffect(() => {
-    setSpeechRecognitionSupported(isSpeechRecognitionSupported(window));
-    setSpeechSynthesisSupported(isSpeechSynthesisSupported(window));
-
-    return () => {
-      recognitionRef.current?.abort();
-      recognitionRef.current = null;
-      activeSpeechMessageIdRef.current = null;
-      cancelSpeech(window.speechSynthesis);
-    };
-  }, []);
-
-  const stopListening = useCallback(() => {
-    const recognition = recognitionRef.current;
-    if (!recognition) return;
-    setVoiceStatus(t.voiceStopped);
-    setIsListening(false);
-    try {
-      recognition.stop();
-    } catch {
-      recognition.abort();
-    }
-  }, [t]);
-
-  const startListening = useCallback(() => {
-    const Recognition = getSpeechRecognitionConstructor(window);
-    if (!Recognition) {
-      setVoiceStatus(t.voiceUnsupported);
-      return;
-    }
-
-    // Some browsers never fire 'not-allowed' for an already-blocked microphone,
-    // so an already-denied permission goes straight to the denial message.
-    void startUnlessMicrophoneDenied(window, () => {
-      recognitionRef.current?.abort();
-      const recognition = new Recognition();
-      recognition.lang = LOCALE_TAG[lang];
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.onresult = (event) => {
-        // Recognition may only update the editable text field. It has no submit,
-        // fetch, crisis-routing, or gamification side effect.
-        applyFinalTranscript(setInputText, getFinalTranscript(event));
-        setVoiceStatus(t.voiceAdded);
-      };
-      recognition.onerror = (event) => {
-        setVoiceStatus(speechRecognitionErrorMessage(event.error, lang));
-        setIsListening(false);
-      };
-      recognition.onend = () => {
-        if (recognitionRef.current === recognition) recognitionRef.current = null;
-        setIsListening(false);
-      };
-      recognitionRef.current = recognition;
-      setVoiceStatus(t.voiceListening);
-      setIsListening(true);
-      try {
-        // This is reached only from the person explicitly choosing "Mulai bicara".
-        recognition.start();
-      } catch {
-        recognitionRef.current = null;
-        setIsListening(false);
-        setVoiceStatus(t.voiceCannotStart);
-      }
-    }, () => {
-      setVoiceStatus(speechRecognitionErrorMessage('not-allowed', lang));
-      setIsListening(false);
-    });
-  }, [lang, t]);
-
-  const requestListening = useCallback(() => {
-    if (!hasAcknowledgedVoiceDisclosure) {
-      setShowVoiceDisclosure(true);
-      return;
-    }
-    startListening();
-  }, [hasAcknowledgedVoiceDisclosure, startListening]);
-
-  const stopSpeaking = useCallback(() => {
-    activeSpeechMessageIdRef.current = null;
-    cancelSpeech(window.speechSynthesis);
-    setSpeakingMessageId(null);
-  }, []);
-
-  const speakMessage = useCallback((message: Message) => {
-    if (!isSpeechSynthesisSupported(window)) return;
-    const Utterance = window.SpeechSynthesisUtterance;
-    if (!Utterance || !window.speechSynthesis) return;
-
-    const finish = () => {
-      if (activeSpeechMessageIdRef.current === message.id) {
-        activeSpeechMessageIdRef.current = null;
-        setSpeakingMessageId(null);
-      }
-    };
-    activeSpeechMessageIdRef.current = message.id;
-    setSpeakingMessageId(message.id);
-    // Dibacakan per kalimat dengan nada dan tempo yang mengikuti isi, bukan datar.
-    speakExpressively(window.speechSynthesis, Utterance, message.text, {
-      lang: LOCALE_TAG[lang],
-      voice: selectVoiceForLanguage(window.speechSynthesis.getVoices(), lang),
-      onend: finish,
-      onerror: finish,
-    });
-  }, [lang]);
-
   const handleResetChat = () => {
-    stopSpeaking();
     setConfirmReset(false);
     setMessages([
       {
@@ -372,7 +235,6 @@ export default function ChatPage() {
           providerId,
           debiased,
           action,
-          ttsEligible: true,
           supportPathway,
         };
         setMessages((prev) => [...prev, botMsg]);
@@ -655,22 +517,6 @@ export default function ChatPage() {
                     </div>
                   )}
 
-                  {msg.sender === 'assistant' && msg.ttsEligible && speechSynthesisSupported && (
-                    <div className="px-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => speakingMessageId === msg.id ? stopSpeaking() : speakMessage(msg)}
-                        aria-label={speakingMessageId === msg.id ? t.stopReading : t.readAloud}
-                        aria-pressed={speakingMessageId === msg.id}
-                        icon={speakingMessageId === msg.id ? <Square className="w-4 h-4" aria-hidden="true" /> : <Volume2 className="w-4 h-4" aria-hidden="true" />}
-                      >
-                        {speakingMessageId === msg.id ? t.stop : t.read}
-                      </Button>
-                    </div>
-                  )}
-
                   {msg.disclaimer && (
                     <p className="text-sm text-[#59544D] px-1 leading-snug">
                       {common.disclaimer}
@@ -715,46 +561,6 @@ export default function ChatPage() {
 
           {/* Input Form */}
           <form onSubmit={handleSendMessage} className="shrink-0 p-3 border-t-2 border-ink bg-paper space-y-2">
-            {showVoiceDisclosure && (
-              <div className="animate-reveal-up border-2 border-ink rounded-md bg-white p-3 text-base leading-relaxed shadow-hard-sm" role="status">
-                <p>{browserVoicePrivacyDisclosure(lang)}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowVoiceDisclosure(false)}
-                  >
-                    {t.voiceDisclosureCancel}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="calm-subtle"
-                    size="sm"
-                    onClick={() => {
-                      setHasAcknowledgedVoiceDisclosure(true);
-                      setShowVoiceDisclosure(false);
-                      startListening();
-                    }}
-                  >
-                    {t.voiceDisclosureStart}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <p className="sr-only" role="status" aria-live="polite">{voiceStatus}</p>
-            {!speechRecognitionSupported && (
-              <p className="text-sm text-[#59544D]" aria-live="polite">
-                {t.voiceUnsupported}
-              </p>
-            )}
-            {speechRecognitionSupported && voiceStatus && (
-              <p className="text-sm text-[#59544D] font-semibold" aria-hidden="true">
-                {voiceStatus}
-              </p>
-            )}
-
             <label htmlFor="pesan-chat" className="sr-only sm:not-sr-only sm:block text-sm font-bold text-ink">{t.inputLabel}</label>
             <div className="flex gap-2">
               <input
@@ -770,21 +576,6 @@ export default function ChatPage() {
                 className="min-h-[48px] flex-1 min-w-0 px-4 py-2.5 rounded-md border-2 border-ink text-base bg-white placeholder:text-[#6B665E] shadow-[2px_2px_0px_#151515] transition-shadow duration-200 ease-spring focus:outline-none focus:shadow-[3px_3px_0px_#3357EE] focus-visible:ring-[3px] focus-visible:ring-cobalt focus-visible:ring-offset-2 disabled:bg-[#D8D3C9]/40 disabled:cursor-not-allowed"
               />
               <div className="flex gap-2 shrink-0">
-                {speechRecognitionSupported && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={isListening ? stopListening : requestListening}
-                    disabled={isTyping}
-                    aria-label={isListening ? t.micStop : t.micStart}
-                    aria-pressed={isListening}
-                    className="min-h-[48px] min-w-[48px] shrink-0"
-                    icon={isListening ? <Square className="w-4 h-4" aria-hidden="true" /> : <Mic className="w-4 h-4" aria-hidden="true" />}
-                  >
-                    <span className="hidden sm:inline">{isListening ? t.micStopShort : t.micStartShort}</span>
-                  </Button>
-                )}
                 <Button
                   type="submit"
                   variant="primary"

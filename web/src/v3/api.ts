@@ -111,7 +111,7 @@ export type Room = {
 
 export type Entry = {
   id: string;
-  kind: "note" | "checkin" | "conversation";
+  kind: "note" | "checkin" | "conversation" | "memory" | "summary" | "followup";
   title: string;
   text: string;
   mood?: string;

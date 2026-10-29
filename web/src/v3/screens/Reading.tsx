@@ -1,54 +1,23 @@
+import { useState } from "react";
+import { Icon } from "../icons";
 import { useWords } from "../shared";
-import { LinkButton, Notice, PageHeader } from "../ui";
+import { LinkButton, Notice, PageHeader, TextField } from "../ui";
 
+const sources = [
+  { publisher: "WHO", title: { id: "Doing What Matters in Times of Stress", en: "Doing What Matters in Times of Stress" }, topic: "stress", language: { id: "Panduan dengan pilihan bahasa", en: "Guide with language options" }, url: "https://www.who.int/publications/i/item/9789240003927" },
+  { publisher: "WHO", title: { id: "Tanya jawab tentang stres", en: "Questions and answers about stress" }, topic: "stress", language: { id: "Bahasa Inggris", en: "English" }, url: "https://www.who.int/news-room/questions-and-answers/item/stress" },
+  { publisher: "NHS", title: { id: "Mengenal kesejahteraan mental", en: "Mental wellbeing tips" }, topic: "wellbeing", language: { id: "Bahasa Inggris", en: "English" }, url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/" },
+  { publisher: "NHS", title: { id: "Panduan tentang tidur", en: "A guide to sleep" }, topic: "sleep", language: { id: "Bahasa Inggris", en: "English" }, url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/how-to-fall-asleep-faster-and-sleep-better/" },
+];
 export function ReadingPage() {
-  const w = useWords();
-  return (
-    <>
-      <PageHeader
-        back={{ to: "/", label: w("Pengenalan", "Introduction") }}
-        title={w("Bacaan & latihan kecil", "Reading & small exercises")}
-        lead={w(
-          "Bacaan singkat dan latihan kecil yang bisa kamu coba kapan saja. Semuanya pilihan, tanpa hitungan hari.",
-          "Short reads and small exercises you can try any time. All optional, no day counts.",
-        )}
-      />
-      <div className="s-narrow">
-        <Notice tone="info" title={w("Belum bisa dibuka", "Can't open yet")}>
-          <p>
-            {w(
-              "Bacaan belum ditampilkan. Setiap item menunggu tinjauan editor manusia, termasuk pemeriksaan sumber dan lisensi, sebelum bisa dibaca di Sela.",
-              "Reading isn't shown yet. Every item awaits a human editor's review, including its source and licence, before it can be read in Sela.",
-            )}
-          </p>
-          <p className="s-small s-muted">
-            {w(
-              "Sela tidak menampilkan teks yang belum ditinjau sebagai bacaan siap pakai. Tidak ada item contoh yang dipalsukan di sini.",
-              "Sela doesn't present unreviewed text as ready-to-use reading. No example item is faked here.",
-            )}
-          </p>
-        </Notice>
-        <h2 style={{ marginTop: "var(--space-5)" }}>{w("Sementara itu", "In the meantime")}</h2>
-        <p>
-          {w(
-            "Kamu tetap bisa menulis catatan, bercerita, atau membuka layanan bantuan yang sudah diverifikasi.",
-            "You can still write a note, talk, or open the verified support services.",
-          )}
-        </p>
-        <div className="s-actions">
-          <LinkButton to="/notes/write" variant="primary">
-            {w("Tulis catatan", "Write a note")}
-          </LinkButton>
-          <LinkButton to="/help" variant="help" icon="help">
-            {w("Layanan bantuan", "Support services")}
-          </LinkButton>
-          <LinkButton to="/" variant="quiet">
-            {w("Ke pengenalan", "Go to Introduction")}
-          </LinkButton>
-        </div>
-      </div>
-    </>
-  );
+  const w = useWords(); const [query, setQuery] = useState("");
+  const filtered = sources.filter(s => (s.title.id + s.title.en + s.publisher + s.topic).toLowerCase().includes(query.toLowerCase()));
+  return <div className="c-reading"><PageHeader title={w("Jeda untuk membaca", "A pause to read")} lead={w("Sumber resmi untuk kamu jelajahi dengan ritmemu sendiri.", "Official sources to explore at your own pace.")} />
+    <div className="c-reading-intro"><p>{w("Tautan ini membuka situs penerbit. Cerita dan catatan Sela tidak ikut dikirim. Isi tersedia dalam bahasa yang disediakan penerbit.", "These links open the publisher's website. Your Sela stories and notes are not sent with them. Content is available in the publisher's languages.")}</p><TextField type="search" label={w("Cari judul atau penerbit", "Search titles or publishers")} value={query} onChange={e => setQuery(e.target.value)} /></div>
+    <div className="c-reading-list">{filtered.map(s => <article className="c-reading-source" key={s.url}><div><h2><a href={s.url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">{w(s.title.id, s.title.en)}<span className="s-sr-only">{w(" (membuka situs penerbit di tab baru)", " (opens publisher website in a new tab)")}</span></a></h2><p className="s-muted">{s.publisher} · {w(s.language.id, s.language.en)} · {w("Situs penerbit", "Publisher website")}</p></div><Icon name="arrow-right" /></article>)}</div>
+    {filtered.length === 0 && <p role="status">{w("Tidak ada judul yang cocok. Coba kata lain.", "No matching titles. Try another word.")}</p>}
+    <section className="c-editorial-status"><h2>{w("Tentang latihan kecil Sela", "About Sela's small exercises")}</h2><p>{w("Kartu latihan dari Dengar.in sudah diinventarisasi, tetapi teks dan lisensinya masih menunggu tinjauan editor manusia. Katalog di atas menautkan langsung ke penerbit; bukan kartu latihan Sela yang sudah disetujui.", "Dengar.in exercise cards have been inventoried, but their text and licences still await human editorial review. The catalogue above links directly to publishers; these are not approved Sela exercise cards.")}</p><LinkButton to="/notes/write" variant="secondary">{w("Tulis yang ingin kamu ingat", "Write what you want to remember")}</LinkButton></section>
+  </div>;
 }
 
 export function RecipientUnavailablePage() {

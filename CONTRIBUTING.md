@@ -24,7 +24,7 @@ python3 -m unittest discover -s tests/research -p 'test_*.py'
 python3 -m unittest discover -s tests/modal -p 'test_*.py'
 python3 scripts/research/corpus_pipeline.py verify
 go build -o build/sela ./cmd/sela && go build -o build/fakellm ./cmd/fakellm
-(cd e2e && npm ci) && node e2e/journey.e2e.mjs
+(cd e2e && npm ci) && E2E_BASE_URL=http://127.0.0.1:8080 node e2e/v3-frontend.e2e.mjs   # app running, e.g. docker compose up
 go run ./cmd/sela-eval -mode offline   # and -mode test_double
 ```
 

@@ -44,6 +44,8 @@ const purposePlace: Record<string, { id: string; en: string }> = {
     en: "Claude by Anthropic (United States)",
   },
   ai_provider_deepseek: { id: "DeepSeek (Tiongkok)", en: "DeepSeek (China)" },
+  asr_meta: { id: "Amazon Nova Sonic (AWS, Amerika Serikat), hanya saat dikte", en: "Amazon Nova Sonic (AWS, United States), only while dictating" },
+  ai_provider_aws_voice: { id: "Amazon Nova 2.5 Sonic di AWS (Amerika Serikat), hanya di ruang suara · eksperimental", en: "Amazon Nova 2.5 Sonic on AWS (United States), voice room only · experimental" },
   personal_memory: { id: "Disimpan di server Sela", en: "Stored on Sela's server" },
 };
 
@@ -259,7 +261,8 @@ export function PrivacyPage({
     (c) =>
       c.purpose === "ai_processing" ||
       c.purpose.startsWith("ai_provider_") ||
-      c.purpose === "personal_memory",
+      c.purpose === "personal_memory" ||
+      c.purpose === "asr_meta",
   );
   const region = user.guest?.storage.region;
 
@@ -272,6 +275,35 @@ export function PrivacyPage({
           "Every choice about your data is here. You can change any of them at any time.",
         )}
       />
+      <dl className="s-privacy-glance">
+        <div>
+          <dt>{w("Yang disimpan", "What is kept")}</dt>
+          <dd>
+            {w(
+              "Hanya catatan dan percakapan yang kamu pilih untuk disimpan.",
+              "Only the notes and conversations you choose to save.",
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>{w("Terlindungi", "Protected")}</dt>
+          <dd>
+            {w(
+              "Terenkripsi per orang di server Sela. Sela dapat membukanya untuk menampilkan fitur yang kamu pilih.",
+              "Encrypted per person on Sela's server. Sela can open it to show the features you choose.",
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>{w("Kendalimu", "Your control")}</dt>
+          <dd>
+            {w(
+              "Ubah izin, ekspor, atau hapus data kapan saja.",
+              "Change permissions, export or delete your data at any time.",
+            )}
+          </dd>
+        </div>
+      </dl>
       <ErrorNotice error={error} onRetry={load} />
       {notice && <StatusLine tone="success">{notice}</StatusLine>}
       <div className="s-settings-layout">
@@ -368,17 +400,7 @@ export function PrivacyPage({
 
           <section className="s-settings-section" id="memori" aria-labelledby="memory-title">
             <h2 id="memory-title">{w("Memori", "Memory")}</h2>
-            <UnavailableFeature
-              title={w("Yang Sela ingat belum tersedia", "What Sela remembers isn't available yet")}
-              body={w(
-                "Sela belum menyimpan memory apa pun. Tidak ada profil tersembunyi di luar layar Yang Sela ingat.",
-                "Sela doesn't keep any memory yet. There is no hidden profile outside What Sela remembers.",
-              )}
-              dependency={w(
-                "Persetujuan personal_memory dan API memori belum ada.",
-                "The personal_memory consent and the memory API don't exist yet.",
-              )}
-            />
+            <p>{w("Memori hanya menyimpan konteks yang kamu tulis sendiri setelah izin terpisah. Tidak ada pengambilan cerita otomatis dan memori tidak dikirim ke AI. Aktifkan, perbaiki, matikan, atau hapus dari halaman Yang Sela ingat.", "Memory only stores context you write yourself after separate permission. Stories are not collected automatically and memory is not sent to AI. Enable, edit, turn off, or delete it from What Sela remembers.")}</p>
             <div className="s-actions">
               <LinkButton to="/notes/memory" variant="secondary">
                 {w("Buka Yang Sela ingat", "Open What Sela remembers")}
@@ -436,7 +458,7 @@ export function PrivacyPage({
                     </p>
                     <div className="s-actions">
                       <Button
-                        variant={granted ? "secondary" : "primary"}
+                        variant="secondary"
                         disabled={busy}
                         onClick={() => void updateConsent(c, !granted)}
                       >
@@ -671,8 +693,8 @@ export function PrivacyPage({
             <h2 id="delete-title">{w("Hapus data", "Delete data")}</h2>
             <p>
               {w(
-                "Yang dihapus: semua catatan, percakapan, cek perasaan, sesi, persetujuan dan riwayat akunmu. Ringkasan dan berbagi belum tersedia, jadi belum ada data di sana.",
-                "What is deleted: every note, conversation, check-in, session, consent and account event. Summaries and sharing aren't available yet, so no data exists there.",
+                "Yang dihapus: semua catatan, percakapan, cek perasaan, sesi, persetujuan dan riwayat akunmu. Memori, ringkasan, persiapan dan tindak lanjut yang tersimpan ikut dihapus.",
+                "What is deleted: every note, conversation, check-in, session, consent and account event. Saved memories, summaries, preparation and follow-up notes are also deleted.",
               )}
             </p>
             <p className="s-hint">
@@ -811,10 +833,10 @@ export function DisplayPage() {
           </p>
         </Notice>
       )}
-      <div className="s-settings-layout">
+      <div className="s-settings-layout s-settings-layout--display">
         <div>
           <section className="s-display-group" aria-labelledby="text-title">
-            <h2 id="text-title">{w("Teks", "Text")}</h2>
+            <h2 id="text-title">{w("Tampilan teks", "Text display")}</h2>
             <ChoiceGroup
               legend={w("Ukuran teks", "Text size")}
               name="text-scale"
@@ -843,7 +865,7 @@ export function DisplayPage() {
             />
           </section>
           <section className="s-display-group" aria-labelledby="colour-title">
-            <h2 id="colour-title">{w("Warna", "Colour")}</h2>
+            <h2 id="colour-title">{w("Warna & kontras", "Colour & contrast")}</h2>
             <ChoiceGroup
               legend={w("Tema", "Theme")}
               name="theme"
@@ -878,7 +900,7 @@ export function DisplayPage() {
             />
           </section>
           <section className="s-display-group" aria-labelledby="motion-title">
-            <h2 id="motion-title">{w("Gerakan", "Motion")}</h2>
+            <h2 id="motion-title">{w("Gerakan & balasan", "Motion & replies")}</h2>
             <ChoiceGroup
               legend={w("Kurangi gerakan", "Reduce motion")}
               name="motion"
@@ -940,8 +962,8 @@ export function DisplayPage() {
             </Button>
             <p className="s-hint">
               {w(
-                "Dikte memakai layanan suara dari browsermu. Di beberapa browser (misalnya Chrome), suaramu dikirim ke server penyedia browser untuk diubah menjadi teks.",
-                "Dictation uses your browser's speech service. In some browsers (for example Chrome), your voice is sent to the browser vendor's servers to be turned into text.",
+                "Dikte mengirim suaramu lewat server Sela ke Amazon Nova Sonic (AWS) untuk diubah menjadi teks. Mikrofon hanya aktif saat kamu menekan tombol mikrofon.",
+                "Dictation sends your voice through Sela's server to Amazon Nova Sonic (AWS) to be turned into text. The microphone is only on while you press the mic button.",
               )}
             </p>
           </section>
@@ -1006,7 +1028,7 @@ export function DisplayPage() {
           </div>
         </div>
         <aside className="s-preview-box" aria-label={w("Pratinjau", "Preview")}>
-          <p className="s-overline">{w("Pratinjau", "Preview")}</p>
+          <p className="s-label">{w("Pratinjau", "Preview")}</p>
           <div className="s-preview-turn">
             <span className="s-turn-author">{w("Kamu", "You")}</span>
             <p className="s-turn-body">
@@ -1017,8 +1039,8 @@ export function DisplayPage() {
             <span className="s-turn-author">{"Sela"}</span>
             <p className="s-turn-body">
               {w(
-                "Aku mendengar bahwa ini tidak mudah untuk ditulis. Kamu bisa mulai dari bagian yang paling terasa.",
-                "I hear that this isn't easy to write. You can start with the part that feels strongest.",
+                "Ini contoh balasan. Teks asli muncul di ruang cerita, bukan di sini.",
+                "This is a sample reply. Your real conversation stays in the talking room, not here.",
               )}
             </p>
           </div>
@@ -1028,7 +1050,13 @@ export function DisplayPage() {
           </div>
           <p className="s-hint">
             {w("Tema aktif: ", "Active scheme: ")}
-            {scheme}
+            {scheme === "dark"
+              ? w("Gelap", "Dark")
+              : scheme === "contrast-dark"
+                ? w("Gelap, kontras tinggi", "Dark, high contrast")
+                : scheme === "contrast-light"
+                  ? w("Terang, kontras tinggi", "Light, high contrast")
+                  : w("Terang", "Light")}
           </p>
         </aside>
       </div>
@@ -1205,19 +1233,21 @@ export function AccountPage({
 
   return (
     <>
-      <PageHeader
-        title={w("Akun", "Account")}
-        lead={w(
-          user.kind === "guest"
-            ? "Mode tamu dengan data di server Sela."
-            : `Masuk sebagai ${user.username}.`,
-          user.kind === "guest"
-            ? "Guest mode, with your data on Sela's server."
-            : `Signed in as ${user.username}.`,
-        )}
-      />
-      <ErrorNotice error={error} />
-      {notice && <StatusLine tone="success">{notice}</StatusLine>}
+      <div className="s-narrow">
+        <PageHeader
+          title={w("Akun", "Account")}
+          lead={w(
+            user.kind === "guest"
+              ? "Mode tamu dengan data di server Sela."
+              : `Masuk sebagai ${user.username}.`,
+            user.kind === "guest"
+              ? "Guest mode, with your data on Sela's server."
+              : `Signed in as ${user.username}.`,
+          )}
+        />
+        <ErrorNotice error={error} />
+        {notice && <StatusLine tone="success">{notice}</StatusLine>}
+      </div>
       <div className="s-narrow">
         {user.kind === "guest" ? (
           <>

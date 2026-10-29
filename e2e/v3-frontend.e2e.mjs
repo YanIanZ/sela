@@ -18,6 +18,19 @@ function check(name, ok, detail = "") {
 }
 
 async function audit(page, name) {
+  // Audit the settled layout the user actually gets: fonts loaded and two
+  // animation frames so the shell's measured bars (--bottom-bar-h) and any
+  // client-side reflow have landed. Without this, a fast CI container can
+  // measure the page mid-settle (the policy-detail footer link under the
+  // still-unmeasured place-nav).
+  await page.evaluate(async () => {
+    try {
+      await document.fonts.ready;
+    } catch {
+      /* older engines */
+    }
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
   await page.evaluate(axeSource);
   const violations = await page.evaluate(async () => {
     const r = await window.axe.run(document, {
@@ -50,15 +63,15 @@ page.on("console", (m) => {
 
 try {
   await page.goto(base + "/", { waitUntil: "networkidle" });
-  await page.screenshot({ path: join(OUT, "01-intro-desktop.png"), fullPage: true });
-  await audit(page, "intro desktop");
+  await page.screenshot({ path: join(OUT, "01-dashboard-desktop.png"), fullPage: true });
+  await audit(page, "information dashboard desktop");
 
   // Keyboard: the skip link is the first focusable element.
   await page.keyboard.press("Tab");
   const first = await page.evaluate(() => document.activeElement?.textContent?.trim());
-  check("intro first focusable is the skip link", first === "Lewati ke konten", first);
+  check("dashboard first focusable is the skip link", first === "Lewati ke konten", first);
 
-  await page.getByRole("link", { name: "Mulai", exact: true }).first().click();
+  await page.getByRole("link", { name: "Masuk ke Beranda", exact: true }).first().click();
   await page.getByRole("radio", { name: "18 tahun ke atas" }).click();
   await page.getByRole("button", { name: "Lanjut" }).click();
   await page.getByRole("radio", { name: /Mulai sebagai tamu/ }).click();
@@ -87,7 +100,7 @@ try {
   await page.waitForURL(/\/talk\/[0-9a-f]+/);
   await page.screenshot({ path: join(OUT, "03-room-empty-desktop.png"), fullPage: true });
   await audit(page, "room empty");
-  await page.getByRole("button", { name: "Detail" }).click();
+  await page.getByRole("button", { name: "Atur percakapan" }).click();
   const detailFocus = await page.evaluate(() => document.activeElement?.textContent?.trim());
   check(
     "room Detail sheet starts with the help control",
@@ -210,6 +223,100 @@ try {
   await page.screenshot({ path: join(OUT, "20-display-contrast-mobile-id.png"), fullPage: true });
   await audit(page, "display high contrast mobile 320 ID");
 
+  await page.evaluate(() => { const p = JSON.parse(localStorage.getItem('sela.prefs') ?? '{}'); Object.assign(p,{theme:'light',contrast:'system',textScale:'100',spacing:'normal'});localStorage.setItem('sela.prefs',JSON.stringify(p)); });
+  const featureOut = join(ROOT, '.impeccable/review/continuity');
+  mkdirSync(featureOut, { recursive: true });
+  const snap = async (name) => { await page.evaluate(() => window.scrollTo(0,0)); await page.screenshot({path:join(featureOut,name+'.png'),fullPage:true}); await audit(page,name); };
+  await page.setViewportSize({width:1440,height:900});
+  await page.goto(base+'/notes/memory',{waitUntil:'networkidle'});
+  await page.getByRole('heading',{name:'Mulai dengan izinmu'}).waitFor();
+  await snap('memory-off-desktop');
+  await page.getByLabel('Aku mengizinkan penyimpanan memori pilihanku').check();
+  await page.getByRole('button',{name:'Aktifkan memori',exact:true}).click();
+  await page.getByLabel('Konteks pilihanmu').fill('Konteks sintetis: aku ingin didengarkan tanpa saran dulu.');
+  await page.getByLabel(/^Judul/).fill('Cara mendengarkanku');
+  await page.getByRole('button',{name:'Simpan konteks',exact:true}).click();
+  await page.getByRole('heading',{name:'Cara mendengarkanku',exact:true}).waitFor();
+  await page.reload({waitUntil:'networkidle'});
+  check('manual memory persists across reload',await page.getByRole('heading',{name:'Cara mendengarkanku',exact:true}).count()===1);
+  await snap('memory-on-desktop');
+  await page.getByRole('button',{name:'Matikan memori',exact:true}).click();
+  await page.getByRole('heading',{name:'Mulai dengan izinmu'}).waitFor();
+  check('memory withdrawal hides all memory',await page.getByRole('heading',{name:'Cara mendengarkanku',exact:true}).count()===0);
+  const sourceResponse=await context.request.post(base+'/api/v3/records',{data:{kind:'note',title:'Sumber ringkasan sintetis',text:'Aku ingin membicarakan jadwalku yang terasa penuh.',storageGranted:true},headers:{'X-Sela-Request':'1'}});
+  check('create real summary source',sourceResponse.status()===201);
+  const source=(await sourceResponse.json()).data;
+  await page.goto(base+'/support/summaries/new',{waitUntil:'networkidle'});
+  await page.getByLabel('Sumber ringkasan sintetis',{exact:false}).check();
+  await page.getByLabel('Judul ringkasan').fill('Bahan percakapan sintetis');
+  await page.getByText('Siapkan percakapannya',{exact:true}).click();
+  await page.getByLabel(/^Yang ingin kubicarakan/).fill('Membicarakan jadwalku.');
+  await page.getByLabel('Pertanyaan yang ingin kutanyakan').fill('Apa yang perlu kucatat?');
+  await page.getByLabel('Simpan draf ini di server Sela').check();
+  await snap('summary-draft-desktop');
+  await page.getByRole('button',{name:'Simpan draf untuk diperiksa'}).click();
+  await page.waitForURL(/\/support\/summaries\/[0-9a-f-]+$/);
+  const summaryURL=page.url();
+  await page.getByLabel('Aku sudah memeriksa versi ini dan isinya mewakili yang ingin kusampaikan').check();
+  await page.getByRole('button',{name:'Setujui versi ini',exact:true}).click();
+  await page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).waitFor();
+  const [download] = await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).click()]);
+  const stream = await download.createReadStream(); let downloaded = ''; for await (const chunk of stream) downloaded += chunk.toString('utf8');
+  check('approved exact summary downloads real user words',downloaded.includes('Aku ingin membicarakan jadwalku yang terasa penuh.') && downloaded.includes('Membicarakan jadwalku.'));
+
+  await snap('summary-approved-desktop');
+  await page.getByRole('button',{name:'Perbaiki kata-kata',exact:true}).click();
+  await page.getByLabel('Perbaiki ringkasan',{exact:true}).fill('Aku ingin membicarakan jadwalku yang terasa penuh. Ini koreksi pilihanku.');
+  await page.getByRole('button',{name:'Simpan perbaikan',exact:true}).click();
+  await page.getByLabel('Aku sudah memeriksa versi ini dan isinya mewakili yang ingin kusampaikan').waitFor();
+  check('editing summary invalidates approval',await page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).count()===0);
+  await page.getByLabel('Aku sudah memeriksa versi ini dan isinya mewakili yang ingin kusampaikan').check();
+  await page.getByRole('button',{name:'Setujui versi ini',exact:true}).click();
+  await page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).waitFor();
+  await page.getByLabel('Catatan setelah konsultasi',{exact:true}).fill('Catatan tindak lanjut sintetis yang ingin kuingat.');
+  await page.getByLabel('Simpan catatan tindak lanjut ini',{exact:true}).check();
+  await page.getByRole('button',{name:'Simpan tindak lanjut',exact:true}).click();
+  await page.getByText('Catatan tindak lanjut sintetis yang ingin kuingat.',{exact:true}).waitFor();
+  await page.reload({waitUntil:'networkidle'});
+  check('follow-up persists after reload',await page.getByText('Catatan tindak lanjut sintetis yang ingin kuingat.',{exact:true}).count()===1);
+  const changed=await context.request.patch(base+'/api/v3/records/'+source.id,{data:{kind:'note',title:source.title,text:'Koreksi sumber sintetis terbaru.',storageGranted:true,expectedVersion:source.version},headers:{'X-Sela-Request':'1'}});
+  check('source update persisted',changed.status()===200);
+  await page.goto(summaryURL,{waitUntil:'networkidle'});
+  await page.getByRole('heading',{name:'Sumber sudah berubah',exact:true}).waitFor();
+  check('source edit invalidates summary approval and download',await page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).count()===0);
+  await snap('summary-stale-desktop');
+  await page.goto(base+'/notes/weekly',{waitUntil:'networkidle'});
+  await page.getByLabel('Refleksimu',{exact:true}).fill('Refleksi mingguan sintetis dari tulisanku sendiri.');
+  await page.getByLabel('Simpan sebagai catatan pribadiku',{exact:true}).check();
+  await snap('weekly-desktop');
+  await page.getByRole('button',{name:'Simpan refleksi',exact:true}).click();
+  await page.waitForURL(/\/notes\/[0-9a-f-]+$/);
+  await page.getByText('Refleksi mingguan sintetis dari tulisanku sendiri.',{exact:true}).waitFor();
+  check('weekly reflection saves real personal note',await page.getByText('Refleksi mingguan sintetis dari tulisanku sendiri.',{exact:true}).count()===1);
+  for(const width of [390,320]) {
+    await page.setViewportSize({width,height:844});
+    for(const [route,name] of [['/home','home'],['/notes/memory','memory'],['/notes/weekly','weekly'],['/support','support'],['/support/summaries/new','summary-new'],['/reading','reading']]) {
+      await page.goto(base+route,{waitUntil:'networkidle'});await snap(name+'-'+width);
+    }
+  }
+  const summaryId = new URL(summaryURL).pathname.split('/').pop();
+  const summaryRead = await context.request.get(base+'/api/v3/consultation-summaries/'+summaryId);
+  const summaryNow = (await summaryRead.json()).data;
+  const fsRead = await context.request.get(base+'/api/v3/consultation-summaries/'+summaryId+'/followups');
+  const fsNow = (await fsRead.json()).data.followups;
+  const removedSummary = await context.request.delete(base+'/api/v3/consultation-summaries/'+summaryId,{data:{expectedVersion:summaryNow.version},headers:{'X-Sela-Request':'1'}});
+  check('summary delete succeeds',removedSummary.status()===200);
+  const deletedFollowup = await context.request.get(base+'/api/v3/records/'+fsNow[0].id);
+  check('summary deletion cascades to follow-up',deletedFollowup.status()===404);
+  for(const [route,name] of [['/support/prepare','prepare-alias-320'],['/support/after','after-alias-320']]) {
+    await page.goto(base+route,{waitUntil:'networkidle'});
+    await page.getByRole('heading',{name:'Ringkasan untuk konsultasi',exact:true}).waitFor();
+    check(name+' opens implemented summary list',await page.getByRole('link',{name:'Susun ringkasan',exact:true}).count()===1);
+    await snap(name);
+  }
+  await page.goto(base+'/support/shares/test',{waitUntil:'networkidle'});
+  check('sharing limit does not claim summary APIs missing',(await page.locator('main').innerText()).includes('Tautan berbagi, kode akses penerima, dan pencabutan akses belum tersedia. Ringkasan manual bisa disetujui dan diunduh dari halaman Ringkasan.'));
+  await snap('sharing-blocked-320');
   // Clean up the synthetic guest through the same server, without UI
   // automation of the destructive dialog.
   const deletion = await context.request.delete(base + "/api/v3/me", {
@@ -225,6 +332,7 @@ try {
   check("journey completed", false, e.message);
   await page.screenshot({ path: join(OUT, "failure.png"), fullPage: true }).catch(() => {});
 } finally {
+  await context.request.delete(base + "/api/v3/me", { data: { confirm: true }, headers: { "X-Sela-Request":"1" } }).catch(() => {});
   writeFileSync(join(OUT, "results.json"), JSON.stringify({ results, errors }, null, 2));
   await browser.close();
   process.exitCode = results.some((result) => !result.ok) ? 1 : 0;

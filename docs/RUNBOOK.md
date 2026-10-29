@@ -42,7 +42,7 @@ SELA_DRILL_DATABASE_URL="$SELA_TEST_DATABASE_URL" scripts/ops/restore-drill.sh  
 python3 -m unittest discover -s tests/research -p 'test_*.py'
 python3 -m unittest discover -s tests/modal -p 'test_*.py'
 python3 scripts/research/corpus_pipeline.py verify
-node e2e/journey.e2e.mjs                   # needs build/ binaries, web/dist and Playwright + Chromium
+E2E_BASE_URL=http://127.0.0.1:8080 node e2e/v3-frontend.e2e.mjs   # app + database running, Playwright + Chromium
 go run ./cmd/sela-eval -mode offline       # deterministic evaluation vs eval/thresholds.json
 go run ./cmd/sela-eval -mode test_double   # + pipeline and fault-injection runs (TEST DOUBLE)
 ```
@@ -77,6 +77,10 @@ The v1 checks (`npm test`, `npm run lint`, …) still apply to the inherited Nex
 | `SELA_LLM_WARM_WINDOW` | `5m` | Assumed warm time after a live call (= Modal scale-down) |
 | `SELA_LLM_COLD_START_ESTIMATE` | `4m` | Shown to users while the model starts |
 | `SELA_MAX_AI_OPS_PER_SESSION` | `8` | Per-session AI operations per 10 minutes |
+| `SELA_ASR_MODE` | `disabled` | Dictation backend: `disabled` (mic off), `meta` (Meta voice-transcribe realtime) or `test_double` (local loopback; needs `SELA_ALLOW_TEST_DOUBLE=true`, never demo/staging/production) |
+| `SELA_ASR_API_KEY` | — | Meta model API key for dictation (secret; never reaches the browser) |
+| `SELA_ASR_MODEL` | `muse-voice-transcribe-1.0` | Transcription model id |
+| `SELA_ASR_URL` | `wss://api.meta.ai/v1/asr/realtime` | Realtime endpoint (tests point it at a mock) |
 | `SELA_STORE` | `memory` (development, test, demo), `disabled` (staging, production) | v2 in-memory journey store; `memory` is refused in staging and production, where v2 journey routes are not served. Alias: `SELA_V2_JOURNEY=on\|off` |
 | `SELA_DATABASE_URL` | — | `postgres://` URL of the v3 store (secret; never logged or printed). Staging and production require `sslmode=verify-full` unless the host is a unix socket or loopback |
 | `SELA_DB_AUTO_MIGRATE` | `false` | `true` applies pending **schema** migrations at start; development and test only |

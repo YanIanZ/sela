@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
+import { useI18n } from "../../i18n";
 import { api, isAbort, type Entry, type Profile, type Room, type Turn } from "../api";
+import { useDictation, type DictationError } from "../asr";
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon } from "../icons";
@@ -14,7 +16,6 @@ import {
   InlineConfirm,
   LinkButton,
   Loading,
-  Notice,
   PageHeader,
   StatusLine,
   TextArea,
@@ -132,22 +133,26 @@ function TalkList() {
   return (
     <>
       <PageHeader
-        eyebrow={w("RUANG CERITA", "SPACE TO TALK")}
         title={w("Cerita", "Talk")}
         lead={w(
           "Ceritakan apa saja. Kamu yang menentukan apakah percakapan disimpan.",
           "Talk about anything. You decide whether a conversation is saved.",
         )}
         actions={
-          <LinkButton
-            to={
-              selected ? "/talk/new?record=" + selected : "/talk/new"
-            }
-            variant="primary"
-            icon="send"
-          >
-            {w("Mulai bercerita", "Start talking")}
-          </LinkButton>
+          <>
+            <LinkButton
+              to={
+                selected ? "/talk/new?record=" + selected : "/talk/new"
+              }
+              variant="primary"
+              icon="send"
+            >
+              {w("Mulai bercerita", "Start talking")}
+            </LinkButton>
+            <LinkButton to="/talk/voice" variant="secondary" icon="mic">
+              {w("Bicara dengan suara", "Talk by voice")}
+            </LinkButton>
+          </>
         }
       />
       <ErrorNotice error={error} onRetry={load} />
@@ -158,8 +163,7 @@ function TalkList() {
           </div>
           <Link
             to={"/talk/" + live.id}
-            className="s-support-card"
-            style={{ textDecoration: "none", color: "inherit" }}
+            className="s-support-card s-support-card--link"
           >
             <strong>
               {live.save
@@ -300,7 +304,6 @@ function NewRoom({ user }: { user: Profile }) {
     <div className="s-narrow">
       <PageHeader
         back={{ to: "/talk", label: w("Cerita", "Talk") }}
-        eyebrow={w("RUANG CERITA", "SPACE TO TALK")}
         title={
           recordId
             ? w("Lanjutkan percakapanmu", "Continue your conversation")
@@ -438,6 +441,7 @@ function authorLine(turn: Turn, w: (id: string, en: string) => string): string {
 function RoomPage({ id }: { id: string }) {
   const w = useWords();
   const loc = useLocale();
+  const { lang } = useI18n();
   const { query, navigate } = useRouter();
   const { prefs } = usePrefs();
   const { announce } = useAnnounce();
@@ -454,14 +458,55 @@ function RoomPage({ id }: { id: string }) {
   const [ended, setEnded] = useState<"saved" | "unsaved" | null>(null);
   const [detail, setDetail] = useState(false);
   const [newContent, setNewContent] = useState("");
-  const [dictating, setDictating] = useState(false);
   const [closePanel, setClosePanel] = useState(false);
 
-  const textarea = useRef<HTMLTextAreaElement>(null);
+  const {
+    dictating,
+    livePartial,
+    errorCode,
+    clearError,
+    toggle: toggleDictation,
+  } = useDictation((final) => {
+    setText((current) => (current ? current + " " + final : final));
+  });
+
+  const dictationError = (code: DictationError): string => {
+    switch (code) {
+      case "mic_denied":
+        return w(
+          "Akses mikrofon ditolak browser. Izinkan mikrofon lalu coba lagi.",
+          "Microphone access was denied by the browser. Allow it and try again.",
+        );
+      case "asr_consent_required":
+        return w(
+          "Dikte via Meta butuh izinmu dulu. Aktifkan di Privasi & data, bagian Pemrosesan AI.",
+          "Dictation via Meta needs your permission first. Turn it on in Privacy & data, under AI processing.",
+        );
+      case "asr_unavailable":
+        return w(
+          "Dikte belum tersedia di server ini.",
+          "Dictation isn't available on this server.",
+        );
+      default:
+        return w(
+          "Dikte gagal. Tulisanmu tetap di sini.",
+          "Dictation failed. Your writing is still here.",
+        );
+    }
+  };
+
+  useEffect(() => {
+    if (!errorCode) return;
+    const msg = dictationError(errorCode);
+    setError(msg);
+    announce("status", msg);
+    clearError();
+  }, [errorCode, announce, clearError, w]);
+
+  const focusComposer = () => (document.getElementById("composer-text") as HTMLElement | null)?.focus();
   const transcript = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
   const request = useRef<AbortController | null>(null);
-  const recognition = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -485,7 +530,7 @@ function RoomPage({ id }: { id: string }) {
   }, [id, loadKey]);
 
   useEffect(() => {
-    textarea.current?.focus();
+    focusComposer();
   }, [id]);
 
   useEffect(() => {
@@ -635,7 +680,7 @@ function RoomPage({ id }: { id: string }) {
       request.current = null;
       setBusy(false);
       setPendingText(null);
-      textarea.current?.focus();
+      focusComposer();
     }
   };
 
@@ -646,7 +691,7 @@ function RoomPage({ id }: { id: string }) {
       const next = await api<Room>("/conversations/" + room.id + "/operation", undefined, "DELETE");
       setRoom(next);
       announce("status", w("Balasan dihentikan sebelum ditampilkan.", "Reply stopped before it was shown."));
-      textarea.current?.focus();
+      focusComposer();
     } catch {
       // Cancelling is idempotent; the reply may already have arrived.
     }
@@ -735,66 +780,10 @@ function RoomPage({ id }: { id: string }) {
     }
   };
 
-  const toggleDictation = () => {
-    if (dictating) {
-      recognition.current?.stop();
-      setDictating(false);
-      announce("status", w("Dikte berhenti.", "Dictation stopped."));
-      return;
-    }
-    const Ctor =
-      (window as unknown as {
-        SpeechRecognition?: new () => {
-          lang: string;
-          continuous: boolean;
-          interimResults: boolean;
-          start: () => void;
-          stop: () => void;
-          onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-          onend: () => void;
-        };
-        webkitSpeechRecognition?: new () => {
-          lang: string;
-          continuous: boolean;
-          interimResults: boolean;
-          start: () => void;
-          stop: () => void;
-          onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-          onend: () => void;
-        };
-      }).SpeechRecognition ??
-      (window as unknown as { webkitSpeechRecognition?: never }).webkitSpeechRecognition;
-    if (!Ctor) {
-      setError(
-        w(
-          "Dikte tidak tersedia di browser ini.",
-          "Dictation isn't available in this browser.",
-        ),
-      );
-      return;
-    }
-    const rec = new Ctor();
-    rec.lang = document.documentElement.lang === "en" ? "en-GB" : "id-ID";
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.onresult = (e) => {
-      const first = e.results[0]?.[0]?.transcript ?? "";
-      if (first) setText((current) => (current ? current + " " + first : first));
-    };
-    rec.onend = () => {
-      setDictating(false);
-      textarea.current?.focus();
-    };
-    recognition.current = rec;
-    rec.start();
-    setDictating(true);
-    announce("status", w("Mendengarkan… tekan lagi untuk berhenti.", "Listening… press again to stop."));
-  };
-
   const readAloud = (value: string) => {
     try {
       const utter = new SpeechSynthesisUtterance(value);
-      utter.lang = document.documentElement.lang === "en" ? "en-GB" : "id-ID";
+      utter.lang = lang === "en" ? "en-GB" : "id-ID";
       utter.rate = 0.95;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utter);
@@ -864,87 +853,59 @@ function RoomPage({ id }: { id: string }) {
   return (
     <>
       <div className="s-room-toolbar">
-        <Link to="/talk" className="s-back">
-          <Icon name="arrow-left" size={18} />
-          {w("Cerita", "Talk")}
-        </Link>
-        {!showEnd && (
-          <Button variant="secondary" onClick={() => void end()}>
-            {w("Akhiri percakapan", "End conversation")}
-          </Button>
-        )}
-        <h1 id="page-title">
-          {room.save ? w("Percakapan", "Conversation") : w("Percakapan baru", "New conversation")}
+        <h1 id="page-title" className="sr-only">
+          {w("Ruang cerita", "A quiet room")}
         </h1>
-        <span
-          className={
-            "s-room-status " +
-            (room.save ? "s-room-status--saved" : "s-room-status--unsaved")
-          }
-        >
-          <Icon name={room.save ? "bookmark" : "bookmark-x"} size={16} />
-          {room.save ? w("Disimpan", "Saved") : w("Tidak disimpan", "Not saved")}
-        </span>
-        <Button variant="quiet" onClick={() => setDetail(true)}>
-          {w("Detail", "Detail")}
-        </Button>
+        <div className="s-room-topline">
+          <Link to="/talk" className="s-back">
+            <Icon name="arrow-left" size={18} />
+            {w("Cerita", "Talk")}
+          </Link>
+          <span
+            className={
+              "s-room-status " +
+              (room.save ? "s-room-status--saved" : "s-room-status--unsaved")
+            }
+          >
+            <Icon name={room.save ? "bookmark" : "bookmark-x"} size={16} />
+            {room.save ? w("Disimpan", "Saved") : w("Tidak disimpan", "Not saved")}
+          </span>
+          {!showEnd && (
+            <Button
+              variant="quiet"
+              className="s-room-end"
+              onClick={() => void end()}
+            >
+              {w("Akhiri percakapan", "End conversation")}
+            </Button>
+          )}
+        </div>
+        {!showEnd && (
+          <p className="s-room-mode">
+            <span className="s-room-mode-label">
+              {w("Mendengarkan", "Listening")}
+              {": "}
+            </span>
+            <strong>
+              {intents.find((i) => i.value === intent)?.[lang]}
+            </strong>
+            <span aria-hidden="true"> · </span>
+            <button
+              type="button"
+              className="s-text-button"
+              aria-label={w("Atur percakapan", "Conversation settings")}
+              onClick={() => setDetail(true)}
+            >
+              {w("Atur", "Adjust")}
+            </button>
+          </p>
+        )}
       </div>
 
       <ErrorNotice error={error} />
 
       <div className="s-room-layout">
         <div>
-          {!showEnd && (
-            <section className="s-conversation-strip" aria-label={w("Pilihan percakapan", "Conversation choices")}>
-              {room.turns.length === 0 ? (
-                <>
-                  <p>
-                    {room.save
-                      ? w(
-                          "Percakapan ini akan disimpan di Catatanku.",
-                          "This conversation will be saved to My notes.",
-                        )
-                      : w(
-                          "Percakapan ini tidak disimpan.",
-                          "This conversation isn't saved.",
-                        )}{" "}
-                    <button type="button" className={buttonClass("quiet")} onClick={() => setDetail(true)}>
-                      {w("Ubah", "Change")}
-                    </button>
-                  </p>
-                  <p className="s-hint">
-                    {w(
-                      "Tulis apa saja yang ada di pikiranmu. Tidak perlu rapi. Sela akan mendengarkan dan membalas dengan singkat.",
-                      "Write whatever is on your mind. It doesn't need to be tidy. Sela will listen and reply briefly.",
-                    )}
-                  </p>
-                </>
-              ) : (
-                <p className="s-small">
-                  {intents.find((i) => i.value === intent)?.[document.documentElement.lang === "en" ? "en" : "id"]}
-                  {" · "}
-                  {room.save ? w("Disimpan", "Saved") : w("Tidak disimpan", "Not saved")}
-                  {" · "}
-                  <button type="button" className={buttonClass("quiet")} onClick={() => setDetail(true)}>
-                    {w("Ubah", "Change")}
-                  </button>
-                </p>
-              )}
-              <ChoiceGroup
-                legend={w("Hari ini kamu ingin…", "What would help today?")}
-                name="intent"
-                value={intent}
-                onChange={setIntent}
-                optional
-                variant="chips"
-                options={intents.map((i) => ({
-                  value: i.value,
-                  label: w(i.id, i.en),
-                }))}
-              />
-            </section>
-          )}
-
           <section aria-labelledby="transcript-title">
             <h2 id="transcript-title" className="sr-only">
               {w("Isi percakapan", "Conversation")}
@@ -957,16 +918,11 @@ function RoomPage({ id }: { id: string }) {
             >
               {room.turns.length === 0 && pendingText === null && !showEnd && (
                 <div className="s-room-empty">
-                  <p>
-                    {w(
-                      "Ruang ini milikmu. Tidak perlu memperkenalkan diri atau menjelaskan semuanya sekaligus.",
-                      "This space is yours. You don't need to introduce yourself or explain everything at once.",
-                    )}
-                  </p>
+                  <p>{w("Ruang ini milikmu.", "This space is yours.")}</p>
                   <p className="s-hint">
                     {w(
-                      "Sela adalah AI, bukan psikolog. Kalau kamu dalam bahaya sekarang, tekan Butuh bantuan sekarang di atas.",
-                      "Sela is an AI, not a psychologist. If you're in danger right now, press Need help now above.",
+                      "Tidak perlu rapi. Sela adalah AI, bukan psikolog.",
+                      "It doesn't need to be tidy. Sela is an AI, not a psychologist.",
                     )}
                   </p>
                 </div>
@@ -1059,7 +1015,7 @@ function RoomPage({ id }: { id: string }) {
                             "Help closed. Sela's replies stay paused.",
                           ),
                         );
-                        textarea.current?.focus();
+                        focusComposer();
                       }}
                       onResume={() => void resume()}
                       onEnd={() => void end()}
@@ -1184,36 +1140,33 @@ function RoomPage({ id }: { id: string }) {
             ["not_consented", "unavailable", "rate_limited", "storage_unavailable"].includes(
               room.aiState,
             ) && (
-              <Notice
-                tone="info"
-                title={
-                  room.aiState === "not_consented"
-                    ? w("Balasan AI tidak diizinkan", "AI replies aren't allowed")
-                    : w("Sela belum bisa membalas sekarang", "Sela can't reply right now")
-                }
-                actions={
-                  <LinkButton to="/settings/privacy#ai" variant="quiet">
-                    {w("Pengaturan AI", "AI settings")}
-                  </LinkButton>
-                }
-              >
+              <div className="s-room-ai-state">
+                <Icon name="info" size={18} />
                 <p>
+                  <strong>
+                    {room.aiState === "not_consented"
+                      ? w("Balasan AI tidak diizinkan.", "AI replies aren't allowed.")
+                      : w("Sela belum bisa membalas sekarang.", "Sela can't reply right now.")}
+                  </strong>{" "}
                   {room.aiState === "not_consented"
                     ? w(
-                        "Tulisanmu tetap di sini. Kamu bisa mengizinkan balasan AI di Privasi & data, atau terus menulis tanpa balasan.",
-                        "Your writing stays here. You can allow AI replies in Privacy & data, or keep writing without a reply.",
+                        "Tulisanmu tetap di sini; kamu bisa terus menulis.",
+                        "Your writing stays here; you can keep writing.",
                       )
                     : room.aiState === "rate_limited"
                       ? w(
-                          "Batas balasan AI untuk saat ini sudah tercapai. Tulisanmu tetap di sini, dan kamu bisa melanjutkan nanti.",
-                          "The AI reply limit has been reached for now. Your writing stays here, and you can continue later.",
+                          "Batas balasan AI tercapai. Tulisanmu tetap di sini.",
+                          "The AI reply limit is reached. Your writing stays here.",
                         )
                       : w(
-                          "Tulisanmu tetap di sini (dan tersimpan, kalau kamu memilih menyimpan). Coba lagi nanti, atau terus menulis tanpa balasan.",
-                          "Your writing stays here (and is saved, if you chose to save it). Try again later, or keep writing without a reply.",
+                          "Tulisanmu tetap di sini. Coba lagi nanti, atau terus menulis.",
+                          "Your writing stays here. Try again later, or keep writing.",
                         )}
                 </p>
-              </Notice>
+                <Link to="/settings/privacy#ai" className="s-text-button">
+                  {w("Pengaturan AI", "AI settings")}
+                </Link>
+              </div>
             )}
           {!showEnd && (
             <>
@@ -1251,7 +1204,7 @@ function RoomPage({ id }: { id: string }) {
                     "Ctrl atau Cmd+Enter untuk mengirim.",
                     "Ctrl or Cmd+Enter to send.",
                   )}
-                  rows={3}
+                  rows={2}
                   value={text}
                   maxLength={3000}
                   onChange={(e) => setText(e.target.value)}
@@ -1307,6 +1260,12 @@ function RoomPage({ id }: { id: string }) {
                     )}
                   </p>
                 )}
+                {dictating && livePartial && (
+                  <p className="s-hint" aria-live="polite" role="status">
+                    {w("Terdengar: ", "Heard: ")}
+                    {livePartial}…
+                  </p>
+                )}
                 {stopped && (
                   <StatusLine>
                     {w(
@@ -1329,8 +1288,8 @@ function RoomPage({ id }: { id: string }) {
           </p>
           <p className="s-small s-muted">
             {w(
-              "Yang Sela ingat belum tersedia di versi ini.",
-              "What Sela remembers isn't available in this build.",
+              "Konteks pilihanmu ada di Yang Sela ingat; memori tidak dikirim ke AI.",
+              "Your chosen context is in What Sela remembers; memory is not sent to AI.",
             )}
           </p>
           <LinkButton to="/help" variant="help" icon="help">
@@ -1367,6 +1326,21 @@ function RoomPage({ id }: { id: string }) {
         sheet
       >
         <div className="s-room-detail">
+          <section>
+            <h3>{w("Cara Sela mendengarkan", "How Sela listens")}</h3>
+            <ChoiceGroup
+              legend={w("Hari ini kamu ingin…", "What would help today?")}
+              name="intent-detail"
+              value={intent}
+              onChange={setIntent}
+              optional
+              variant="chips"
+              options={intents.map((i) => ({
+                value: i.value,
+                label: w(i.id, i.en),
+              }))}
+            />
+          </section>
           <section>
             <h3>{w("Penyimpanan", "Storage")}</h3>
             <p className="s-small">
@@ -1444,6 +1418,7 @@ function CrisisPanel({
   services: typeof helpData.help;
 }) {
   const w = useWords();
+  const { lang } = useI18n();
   if (hidden) return null;
   return (
     <section className="s-crisis-panel" aria-labelledby="crisis-title">
@@ -1465,7 +1440,7 @@ function CrisisPanel({
       {services.map((s) => (
         <div className="s-service-mini" key={s.id}>
           <h4>{s.name}</h4>
-          <p className="s-small">{s.description[document.documentElement.lang === "en" ? "en" : "id"]}</p>
+          <p className="s-small">{s.description[lang]}</p>
           <div className="s-actions">
             {s.channels.map((c) => (
               <a

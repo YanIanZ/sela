@@ -14,14 +14,6 @@ import {
 // A minimal history-API router: the app has a fixed set of top-level pages,
 // so a dependency is not needed. Query strings are kept; fragments are left
 // to the page (the recipient link keeps its token in the fragment).
-const BASE =
-  window.location.pathname === "/demo" ||
-  window.location.pathname.startsWith("/demo/")
-    ? "/demo"
-    : "";
-
-export function routeHref(to:string){return BASE+to}
-
 type Route = { path: string; query: URLSearchParams; hash: string };
 type RouterValue = Route & {
   navigate: (to: string, opts?: { replace?: boolean }) => void;
@@ -31,7 +23,7 @@ const RouterContext = createContext<RouterValue | null>(null);
 
 function current(): Route {
   return {
-    path: window.location.pathname.slice(BASE.length) || "/",
+    path: window.location.pathname || "/",
     query: new URLSearchParams(window.location.search),
     hash: window.location.hash,
   };
@@ -47,7 +39,7 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   const navigate = useCallback((to: string, opts?: { replace?: boolean }) => {
     // Navigating to the page already shown (e.g. two code paths sending the
     // visitor to Immediate help) does not add a history entry.
-    const target = BASE + to;
+    const target = to;
     const same = target === window.location.pathname + window.location.search;
     if (opts?.replace || same) window.history.replaceState(null, "", target);
     else window.history.pushState(null, "", target);
@@ -97,7 +89,7 @@ export function Link({
     navigate(to);
   };
   return (
-    <a href={BASE + to} onClick={handle} className={className} {...rest}>
+    <a href={to} onClick={handle} className={className} {...rest}>
       {children}
     </a>
   );

@@ -210,6 +210,7 @@ export function DataDeletedPage({ onRestart }: { onRestart: () => void }) {
 
 export function PolicyGatePage({ user }: { user: Profile }) {
   const w = useWords();
+  const { lang } = useI18n();
   const { policies, refresh } = useSession();
   const { announce } = useAnnounce();
   const [consents, setConsents] = useState<Consent[] | null>(null);
@@ -267,7 +268,7 @@ export function PolicyGatePage({ user }: { user: Profile }) {
         </LinkButton>
       </div>
       <p className="s-hint">
-        {policy?.title[document.documentElement.lang === "en" ? "en" : "id"] ?? purpose}
+        {policy?.title[lang] ?? purpose}
       </p>
     </div>
   );

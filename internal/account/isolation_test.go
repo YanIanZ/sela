@@ -96,7 +96,7 @@ func TestIsolation(t *testing.T) {
 	if _, _, err := f.store.SetConsent(ctx, B, cur, "test_optional", false, optionalV); err != nil {
 		t.Fatal(err)
 	}
-	if cs, err := f.store.Consents(ctx, B); err != nil || len(cs) != 2 {
+	if cs, err := f.store.Consents(ctx, B); err != nil || len(cs) != 3 {
 		t.Fatalf("consents: %+v %v", cs, err)
 	}
 	hist, _, err := f.store.ConsentHistory(ctx, B, "", account.Page{})

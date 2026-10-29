@@ -79,6 +79,12 @@ New v3 codes (messages to add to `internal/httpapi/errors.go`; every code needs 
 | `password_too_long` | 400 | More than 256 characters or 1024 bytes | Kata sandi maksimal 256 karakter. | Passwords can have at most 256 characters. |
 | `password_weak` | 400 | On the blocklist, or equal to/containing the username | Kata sandi ini terlalu umum atau mudah ditebak. Pilih yang lain. | This password is too common or easy to guess. Choose another. |
 | `store_unavailable` | 503 | Database not configured (development; `Retry-After: 30`) or unreachable at run time: refused or lost connection, network error or timeout, closed pool, server shutting down or out of connections (`Retry-After: 5`); on every store-backed route, sign-in and session lookup included | Penyimpanan sedang tidak tersedia. Coba lagi sebentar lagi. | Storage is unavailable right now. Try again shortly. |
+| `asr_unavailable` | 503 | Dictation requested while `SELA_ASR_MODE=disabled` (inside the upgraded `/api/v3/asr/realtime` socket: error event plus close code 4413) | Dikte belum tersedia di server ini. | Dictation isn't available on this server. |
+| `asr_consent_required` | 403 | Dictation without a current granted `asr_meta` consent (inside the upgraded socket: error event plus close code 4403) | Dikte butuh izinmu dulu. Aktifkan di Privasi & data, bagian Pemrosesan AI. | Dictation needs your permission first. Turn it on in Privacy & data, under AI processing. |
+| `voice_unavailable` | 503 | Voice room requested while `SELA_VOICE_MODE=disabled` (inside the upgraded `/api/v3/voice/realtime` socket: error event plus close code 4413) | Ruang suara belum diaktifkan di server ini. | The voice room isn't enabled on this server. |
+| `voice_consent_required` | 403 | Voice room without a current granted `ai_provider_aws_voice` consent (close code 4403) | Izin percakapan suara belum diberikan. | Voice conversation permission hasn't been given. |
+| `voice_age_band` | 403 | Voice room for an age band other than `18_plus` (close code 4451) | Ruang suara hanya untuk usia 18 tahun ke atas. | The voice room is for people aged 18 and over only. |
+| `voice_busy` | 409 | A second voice session for the same person (close code 4429) | Ruang suara sedang terbuka di tab atau perangkat lain. | The voice room is already open in another tab or device. |
 | `server_busy` | 503 | Hashing slots or guest capacity exhausted (`Retry-After`) | Server sedang sibuk. Coba lagi sebentar lagi. | The server is busy. Try again shortly. |
 
 ## 3. Shared objects
@@ -156,7 +162,7 @@ The registry lives in code with a policy text per purpose (served by `GET /polic
 | `terms_privacy` | Yes (cannot be withdrawn; `409 required_consent`) | guests and accounts | Service terms and privacy notice |
 | `guest_storage` | Yes for guests (moot after upgrade, kept in history) | guests | Where and how long guest data is kept, cookie dependency, no absolute anonymity |
 
-Reserved names for later milestones (not listed by `GET /me/consents` until active): `ai_processing` (Meta model on Modal, P3/P5), `ai_provider_anthropic` (Claude verifier, P5), `ai_provider_deepseek` (DeepSeek fallback, P5), `personal_memory` (P3).
+Reserved names for later milestones (not listed by `GET /me/consents` until active): `ai_processing` (Meta model on Modal, P3/P5), `ai_provider_anthropic` (Claude verifier, P5), `ai_provider_deepseek` (DeepSeek fallback, P5), `personal_memory` (now active for explicit manual memory; see continuity increment in §6).
 
 ## 4. Public routes (no session)
 
@@ -312,8 +318,42 @@ All routes below require the owner cookie and normal same-origin mutation guards
 | `DELETE /api/v3/conversations/{id}/operation` | Cancel in-flight reply; retain the user's words |
 | `POST /api/v3/conversations/{id}/resume` | `{expectedVersion}`; explicit continuation after inline crisis support; does not call a provider |
 | `DELETE /api/v3/conversations/{id}` | End; purge the hold and cancel inference. A deliberately saved snapshot remains in owned records |
+| `GET /api/v3/asr/realtime` | Owner websocket (upgrade first, then checks): the browser streams mono 16 kHz int16 little-endian PCM binary frames; `{"type":"endStream"}` ends input. With `SELA_ASR_MODE=bedrock` (the pilot configuration), Sela relays to Amazon Nova Sonic (`amazon.nova-2-5-sonic`, AWS us-east-1) with server-held IAM credentials and forwards only user-transcript events; assistant text and audio are dropped (dictation, not a voice reply). With the legacy `SELA_ASR_MODE=meta`, Sela relays to Meta `muse-voice-transcribe-1.0` (`PUSH_TO_TALK`, cumulative partials) with the server-held `SELA_ASR_API_KEY` and forwards transcript events untouched. The session ends with exactly one terminal outcome: a final transcript, `asr_no_transcript`, a cancellation, a provider failure or a timeout — never two. Requires a current granted `asr_meta` consent; without it the socket answers `{"type":"error","message":"asr_consent_required"}` plus close code 4403, while `SELA_ASR_MODE=disabled` answers `asr_unavailable` plus close 4413. Cross-site handshakes are refused (`403 cross_origin`) before upgrade. Plain `GET` without upgrade answers `400`. Session cap 5 minutes, upstream cap ~15 MiB. `SELA_ASR_MODE=test_double` answers `endStream` with a labelled test transcript (development/test only) |
+| `GET /api/v3/voice/realtime` | Owner websocket for the voice room (SPEC C27; upgrade first, then checks, in this order: `SELA_VOICE_MODE`, age band, consent, one session per person). The browser streams mono 16 kHz int16 PCM binary frames; `{"type":"end"}` ends the session. Sela relays to Amazon Nova 2.5 Sonic (`amazon.nova-2-5-sonic`, AWS us-east-1) with server-held IAM credentials (Bedrock API keys cannot open this stream) and sends: `{"type":"ready","provider":"aws","model","testDouble","maxSeconds","inputSampleRate":16000,"outputSampleRate":24000}`; `{"type":"transcript","text"}` (Sonic's transcription of the person); `{"type":"reply","text","final"}` and binary mono 24 kHz int16 PCM for assistant speech; `{"type":"replyEnd"}`; `{"type":"interrupted"}` (barge-in: stop playback); `{"type":"withheld"}` (a reply failed the crisis router or output guards: its audio is dropped, never sent); `{"type":"crisis"}` then close 4409 when a transcript signals a crisis (no further assistant audio). Assistant audio is held server-side until its speculative text passes `safety.Assess` and `guard.Check` (hard guards and health-claim flags both withhold). Refusals arrive as `{"type":"error","message"}` plus a close code: `voice_unavailable` 4413, `voice_age_band` 4451 (18_plus only), `voice_consent_required` 4403 (current granted `ai_provider_aws_voice`), `voice_busy` 4429, `voice_backend_unreachable`/`voice_backend_ended` 4500, `voice_time_limit` 4408 (7 min 50 s, under Sonic's 8-minute stream limit). Nothing is stored. Cross-site handshakes are refused (`403 cross_origin`). `SELA_VOICE_MODE=test_double` answers each spoken turn with a labelled `TEST DOUBLE` reply and a tone (development/test only) |
 
 `storage_required` is 403. Unsaved turns never enter PostgreSQL or exports. Holds expire after 30 inactive minutes or 2 hours total; sign-out purges them. Every user-authored entry is screened; crisis text is kept, inline help shown, and room AI paused. Later turns do not erase the user's choice to continue. Provider consent changes invalidate running results. `ai_processing`, `ai_provider_anthropic` and `ai_provider_deepseek` are independent versioned consent purposes; DeepSeek remains default-off and synthetic-only. These routes and screens are local development work, not pilot or public-release approval.
+
+### Manual continuity increment (2026-10-28)
+
+Migration 0300 adds encrypted `memory`, `summary`, and `followup` record kinds.
+No AI generation, automatic extraction, or recipient sharing is enabled by this increment.
+The existing cookie principal, mutation guards, ownership, export, revisions, and deletion rules apply.
+
+| Route | Request / response |
+| --- | --- |
+| `GET /api/v3/memory` | `{enabled,items}`; disabled and empty until current `personal_memory` consent |
+| `POST /api/v3/memory` | `{title,text,storageGranted:true,sourceRefs?:[]}` → personal record |
+| `PATCH /api/v3/memory/{id}` | Same, plus `expectedVersion` |
+| `DELETE /api/v3/memory/{id}` | `{expectedVersion}`; also allowed after consent withdrawal |
+| `GET /api/v3/consultation-summaries` | `{summaries}` |
+| `POST /api/v3/consultation-summaries` | `{title,text,sourceRefs,prepared?,storageGranted:true}` → personal record |
+| `GET /api/v3/consultation-summaries/{id}` | Personal record with effective `summaryState` |
+| `PATCH /api/v3/consultation-summaries/{id}` | Creation fields plus `expectedVersion`; approval resets |
+| `DELETE /api/v3/consultation-summaries/{id}` | `{expectedVersion}`; summary and attached follow-ups cascade |
+| `POST /api/v3/consultation-summaries/{id}/approve` | `{expectedVersion}`; approval binds exact content version |
+| `POST /api/v3/consultation-summaries/{id}/followups` | `{title,text,storageGranted:true}` → personal follow-up record |
+| `GET /api/v3/consultation-summaries/{id}/followups` | `{followups}` |
+
+`sourceRefs` is an array of `{recordId,version}`, maximum 12, minimum one for a summary.
+Sources must be current, owner-owned notes/check-ins/conversations. Derived records cannot be sources.
+A source edit or deletion demotes the effective approval on subsequent reads and exports.
+`prepared` holds optional `goal`, `questions`, and `bring` text. All such content and source links are encrypted.
+Memory is explicit, defaults off, and is never sent to AI. Withdrawal hides memory from normal record reads;
+owner export and deletion remain available. The generic records PATCH additionally accepts an existing
+`followup` for corrections, retaining its parent; generic creation still accepts only notes/check-ins.
+Weekly reflection is computed in the browser from original creation dates/check-in local days;
+a reflection is saved only after permission as an ordinary encrypted note.
+
 
 ## 7. Guest and account differences (foundation)
 

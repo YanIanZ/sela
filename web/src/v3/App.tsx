@@ -8,12 +8,15 @@ import { AppShell } from "./shell";
 import "./styles.css";
 import { Loading } from "./ui";
 import { HomePage } from "./screens/Home";
+import { DashboardPage } from "./screens/Dashboard";
 import { TalkPage } from "./screens/Talk";
+import { VoicePage } from "./screens/Voice";
 import { NotesPage } from "./screens/Notes";
-import { IntroPage, AboutPage } from "./screens/Intro";
+import { AboutPage } from "./screens/About";
 const SupportPage = lazy(() =>
   import("./screens/Support").then((m) => ({ default: m.SupportPage })),
 );
+const SummariesPage = lazy(() => import("./screens/Continuity").then(m => ({ default: m.SummariesPage })));
 const SupportFeaturePage = lazy(() =>
   import("./screens/Support").then((m) => ({ default: m.SupportFeaturePage })),
 );
@@ -86,9 +89,11 @@ const OWNER_PREFIXES = ["/home", "/talk", "/notes", "/support", "/settings/priva
 
 function titleFor(path: string, lang: string): string {
   const t = (id: string, en: string) => (lang === "en" ? en : id);
-  if (path === "/" || path === "") return t("Ruang sejenak untuk didengar", "A little space to feel heard");
+  if (path === "/" || path === "") return t("Dashboard Sela", "Sela dashboard");
   if (path === "/home") return t("Beranda", "Home");
+  if (path === "/dashboard") return t("Dashboard Sela", "Sela dashboard");
   if (path === "/talk") return t("Ruang cerita", "Talk");
+  if (path === "/talk/voice") return t("Ruang suara", "Voice room");
   if (path.startsWith("/talk/")) return t("Percakapan", "Conversation");
   if (path === "/notes") return t("Catatan pribadiku", "My personal notes");
   if (path === "/notes/write") return t("Tulis catatan", "Write a note");
@@ -192,7 +197,9 @@ function AppRoutes() {
   } else if (deleted && path === "/") {
     screen = <DataDeletedPage onRestart={() => setDeleted(false)} />;
   } else if (path === "/" || path === "") {
-    screen = <IntroPage />;
+    screen = <DashboardPage signedIn={Boolean(user)} />;
+  } else if (path === "/dashboard") {
+    screen = <DashboardPage signedIn={Boolean(user)} />;
   } else if (path === "/about") {
     screen = <AboutPage />;
   } else if (path === "/help") {
@@ -241,12 +248,16 @@ function AppRoutes() {
     screen = <PolicyGatePage user={user} />;
   } else if (user && path === "/home") {
     screen = <HomePage user={user} />;
+  } else if (user && path === "/talk/voice") {
+    screen = <VoicePage user={user} />;
   } else if (user && (path === "/talk" || path.startsWith("/talk/"))) {
     screen = <TalkPage user={user} />;
   } else if (user && (path === "/notes" || path.startsWith("/notes/"))) {
     screen = <NotesPage user={user} path={path} />;
   } else if (user && path === "/support") {
     screen = <SupportPage />;
+  } else if (user && (path.startsWith("/support/summaries") || path === "/support/prepare" || path === "/support/after")) {
+    screen = <SummariesPage path={path.startsWith("/support/summaries") ? path : "/support/summaries"} />;
   } else if (user && path.startsWith("/support/")) {
     const feature = path.includes("/prepare")
       ? "prepare"

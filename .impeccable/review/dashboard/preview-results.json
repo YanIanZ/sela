@@ -1,0 +1,58 @@
+{
+  "checks": [
+    {
+      "name": "desktop",
+      "overflow": false,
+      "violations": []
+    },
+    {
+      "name": "tablet",
+      "overflow": false,
+      "violations": []
+    },
+    {
+      "name": "mobile",
+      "overflow": false,
+      "violations": []
+    },
+    {
+      "name": "narrow",
+      "overflow": false,
+      "violations": []
+    },
+    {
+      "name": "dark",
+      "overflow": false,
+      "violations": []
+    },
+    {
+      "name": "contrast-dark",
+      "overflow": false,
+      "violations": []
+    },
+    {
+      "name": "large-text",
+      "overflow": false,
+      "violations": []
+    },
+    {
+      "name": "preview actions blocked",
+      "passed": true
+    },
+    {
+      "name": "preview does not call API",
+      "passed": true,
+      "requests": []
+    },
+    {
+      "name": "no page errors",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "name": "first keyboard target is skip link",
+      "passed": true
+    }
+  ],
+  "pass": true
+}

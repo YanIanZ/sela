@@ -60,6 +60,7 @@ func TestLoadEnvironmentMatrix(t *testing.T) {
 		{"http public origin", map[string]string{"SELA_PUBLIC_ORIGIN": "http://sela.example"}, []string{"demo", "staging", "production"}},
 		{"no public origin", map[string]string{"SELA_PUBLIC_ORIGIN": ""}, []string{"demo", "staging", "production"}},
 		{"test double", map[string]string{"SELA_LLM_MODE": "test_double", "SELA_ALLOW_TEST_DOUBLE": "true"}, []string{"demo", "staging", "production"}},
+		{"ASR test double", map[string]string{"SELA_ASR_MODE": "test_double", "SELA_ALLOW_TEST_DOUBLE": "true"}, []string{"demo", "staging", "production"}},
 		{"memory journey store", map[string]string{"SELA_STORE": "memory"}, []string{"staging", "production"}},
 		{"memory journey store (alias)", map[string]string{"SELA_V2_JOURNEY": "on"}, []string{"staging", "production"}},
 		{"auto-migrate", map[string]string{"SELA_DB_AUTO_MIGRATE": "true"}, []string{"demo", "staging", "production"}},

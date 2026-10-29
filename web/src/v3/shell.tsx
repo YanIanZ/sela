@@ -234,6 +234,7 @@ function MenuSheet({
         <h2 id="menu-title" ref={heading} tabIndex={-1}>
           {w("Menu", "Menu")}
         </h2>
+        <Link to="/dashboard" className="s-btn s-btn--quiet" onClick={onClose}>{w("Dashboard informasi", "Information dashboard")}</Link>
         {user && (
           <nav aria-label={w("Navigasi utama", "Main navigation")} className="s-menu-group">
             <p className="s-menu-label">{w("Ruangmu", "Your space")}</p>
@@ -344,9 +345,12 @@ export function AppShell({
   }, [clear, path, prefs.hidePreviews, prefs.neutralTitles, title, user]);
 
   useEffect(() => {
-    // The router moves focus on its own navigations; this covers browser Back
-    // and direct entry. The first paint keeps the skip link as the first Tab
-    // stop instead of jumping straight into <main>.
+    // Reset the window after a route change. The lazy route chunk can arrive
+    // after the router's own scroll call, which used to leave a new page
+    // scrolled past its heading.
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    // The first paint keeps the skip link as the first Tab stop instead of
+    // jumping straight into <main>.
     if (firstPath.current) {
       firstPath.current = false;
       return;
@@ -363,6 +367,19 @@ export function AppShell({
     const measure = () => {
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(() => {
+        const active = document.activeElement;
+        const typing =
+          active instanceof HTMLElement &&
+          (active.tagName === "TEXTAREA" ||
+            active.tagName === "INPUT" ||
+            active.tagName === "SELECT" ||
+            active.isContentEditable);
+        if (!typing) {
+          const rootFont = Number.parseFloat(getComputedStyle(root).fontSize) || 16;
+          const short = window.innerHeight < 30 * rootFont;
+          if (short) root.setAttribute("data-viewport", "short");
+          else root.removeAttribute("data-viewport");
+        }
         const header = document.querySelector<HTMLElement>(".s-header");
         const nav = document.querySelector<HTMLElement>(".s-place-nav");
         const composer = document.getElementById("composer");
@@ -435,11 +452,11 @@ export function AppShell({
     !guestDismissed;
 
   return (
-    <div className={`s-shell${focused ? " s-shell--focused" : ""}${room ? " s-shell--room" : ""}`}>
-      <div className="s-shell-inner">
+    <div className={`s-shell${user ? "" : " s-shell--public"}${focused ? " s-shell--focused" : ""}${room ? " s-shell--room" : ""}${user && !focused ? " s-shell--workspace" : ""}`}>
       <a href="#main" className="s-skip">
         {w("Lewati ke konten", "Skip to content")}
       </a>
+      <div className="s-shell-inner">
       {room && (
         <a href="#composer" className="s-skip s-skip--second">
           {w("Lewati ke kotak tulis", "Skip to the writing box")}
@@ -450,14 +467,37 @@ export function AppShell({
           <Mark size={30} />
           <span>{"Sela"}</span>
         </Link>
+        {!focused && (
+          <nav className="n-desktop-nav" aria-label={w("Navigasi utama", "Main navigation")}>
+            {user ? places.map((p) => (
+              <Link key={p.to} to={p.to} data-place={p.to.slice(1)} aria-current={isPlace(path, p.to) ? "page" : undefined}>
+                <Icon name={p.icon} size={18} />
+                <span>{w(p.label[0], p.label[1])}</span>
+              </Link>
+            )) : (
+              <>
+                <Link to="/dashboard">{w("Dashboard", "Dashboard")}</Link>
+                <Link to="/about">{w("Tentang Sela", "About Sela")}</Link>
+                <Link to="/policies">{w("Privasi", "Privacy")}</Link>
+                <Link to="/signin">{w("Masuk", "Sign in")}</Link>
+              </>
+            )}
+          </nav>
+        )}
         <div className="s-header-actions">
           <Link
             to="/help"
             className={buttonClass("help-quiet")}
             aria-current={path === "/help" ? "page" : undefined}
+            aria-label={w("Butuh bantuan sekarang", "Need help now")}
           >
             <Icon name="help" />
-            <span>{w("Butuh bantuan sekarang", "Need help now")}</span>
+            <span className="s-help-label-long">
+              {w("Butuh bantuan sekarang", "Need help now")}
+            </span>
+            <span className="s-help-label-short" aria-hidden="true">
+              {w("Bantuan", "Help")}
+            </span>
           </Link>
           <div className="s-exit-wrap">
             <button type="button" className={buttonClass("quiet")} onClick={() => exit()}>
@@ -473,6 +513,7 @@ export function AppShell({
           <button
             type="button"
             className={buttonClass("quiet", "s-menu-button")}
+            aria-label={w("Menu", "Menu")}
             aria-haspopup="dialog"
             onClick={() => setMenu(true)}
           >
@@ -483,12 +524,36 @@ export function AppShell({
       </header>
 
       {user && !focused && (
+        <div className="s-shelf-bar">
+          <span className="s-workspace-context">{w("Ruang pribadimu", "Your personal space")}<span aria-hidden="true"> / </span><strong>{title}</strong></span>
+          <nav aria-label={w("Navigasi ruang pribadi", "Personal workspace navigation")}>
+            <p className="s-rail-label">{w("Untuk harimu", "For your day")}</p>
+            <ul>{([
+              ["/dashboard", "Dashboard", "Dashboard"],
+              ["/notes/check-in", "Cek perasaan", "Check in"],
+              ["/notes/write", "Tulis catatan", "Write a note"],
+              ["/notes/weekly", "Refleksi mingguan", "Weekly reflection"],
+              ["/notes/memory", "Yang Sela ingat", "What Sela remembers"],
+              ["/support/summaries", "Ringkasan konsultasi", "Consultation summaries"],
+              ["/reading", "Bacaan", "Reading"],
+            ] as const).map(([to, id, en]) => <li key={to}><Link to={to} aria-current={path === to || (to === "/support/summaries" && path.startsWith(to + "/")) ? "page" : undefined}>{w(id, en)}</Link></li>)}</ul>
+          </nav>
+          <nav className="s-rail-personal" aria-label={w("Pengaturan pribadi", "Personal settings")}>
+            <Link to="/settings/privacy" aria-current={path === "/settings/privacy" ? "page" : undefined}><Icon name="shield" /><span>{w("Privasi & data", "Privacy & data")}</span></Link>
+            <Link to="/settings/display" aria-current={path === "/settings/display" ? "page" : undefined}><Icon name="settings" /><span>{w("Tampilan", "Display")}</span></Link>
+            <Link to="/settings/account" aria-current={path.startsWith("/settings/account") ? "page" : undefined}><Icon name="user" /><span>{w("Akun", "Account")}</span></Link>
+          </nav>
+        </div>
+      )}
+
+      {user && !focused && (
         <nav className="s-place-nav" aria-label={w("Navigasi utama", "Main navigation")}>
           <ul>
             {places.map((p) => (
               <li key={p.to}>
                 <Link
                   to={p.to}
+                  data-place={p.to.slice(1)}
                   aria-current={isPlace(path, p.to) ? "page" : undefined}
                 >
                   <Icon name={p.icon} size={22} />
@@ -500,49 +565,19 @@ export function AppShell({
         </nav>
       )}
 
-      {user && !focused && (
-        <aside className="s-sidebar">
-          <nav aria-label={w("Navigasi utama", "Main navigation")}>
-            <ul className="s-sidebar-places">
-              {places.map((p) => (
-                <li key={p.to}>
-                  <Link to={p.to} aria-current={isPlace(path, p.to) ? "page" : undefined}>
-                    <Icon name={p.icon} />
-                    <span>{w(p.label[0], p.label[1])}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <nav aria-label={w("Pengaturan", "Settings")} className="s-sidebar-settings">
-            <p className="s-sidebar-label">{w("Pengaturan", "Settings")}</p>
-            <Link
-              to="/settings/privacy"
-              aria-current={path === "/settings/privacy" ? "page" : undefined}
-            >
-              {w("Privasi & data", "Privacy & data")}
-            </Link>
-            <Link
-              to="/settings/display"
-              aria-current={path === "/settings/display" ? "page" : undefined}
-            >
-              {w("Tampilan & aksesibilitas", "Display & accessibility")}
-            </Link>
-            <Link
-              to="/settings/account"
-              aria-current={path === "/settings/account" ? "page" : undefined}
-            >
-              {w("Akun", "Account")}
-            </Link>
-          </nav>
-          <LanguageSwitch compact />
-          <nav aria-label={w("Tentang", "About")} className="s-sidebar-about">
-            <Link to="/about">{w("Tentang Sela", "About Sela")}</Link>
-            <Link to="/policies">{w("Kebijakan", "Policies")}</Link>
-          </nav>
-        </aside>
+      {user?.synthetic && user.environment !== "design-preview" && (
+        <div className="s-edition" role="note">
+          <div className="s-edition-inner">
+            <span className="s-edition-stamp">{w("Edisi demo", "Demo edition")}</span>
+            <p>
+              {w(
+                "Data sintetis; semua fitur berjalan sungguhan.",
+                "Synthetic data; every feature really works.",
+              )}
+            </p>
+          </div>
+        </div>
       )}
-
       <section className="s-notices" aria-label={w("Pemberitahuan", "Notices")}>
         {expired && (
           <div className="s-banner s-banner--warning">
@@ -575,17 +610,6 @@ export function AppShell({
                 )}
               </p>
             </div>
-          </div>
-        )}
-        {user?.synthetic && (
-          <div className="s-banner s-banner--demo">
-            <span className="s-chip">{w("Demo", "Demo")}</span>
-            <p>
-              {w(
-                "Semua data di sini sintetis. Fitur berjalan sungguhan.",
-                "All data here is synthetic. Features really run.",
-              )}
-            </p>
           </div>
         )}
         {user?.actionsRequired?.includes("acknowledge_recovery_codes") && (
@@ -667,26 +691,41 @@ export function AppShell({
         )}
       </section>
 
-      <main id="main" tabIndex={-1} aria-labelledby="page-title">
+      <main id="main" tabIndex={-1} aria-labelledby="page-title" className={user && !focused ? "s-workspace-page" : undefined} data-space={path.split("/")[1]}>
         {children}
       </main>
 
       {!focused && (
         <footer className="s-footer">
-          <p>
-            {w(
-              "Sela bukan layanan darurat dan tidak memberi diagnosis.",
-              "Sela is not an emergency service and gives no diagnosis.",
-            )}
-          </p>
-          <nav aria-label={w("Tautan kaki", "Footer links")}>
-            <Link to="/about">{w("Tentang Sela", "About Sela")}</Link>
-            <Link to="/policies">{w("Kebijakan", "Policies")}</Link>
-            <Link to="/help">{w("Butuh bantuan sekarang", "Need help now")}</Link>
-          </nav>
-          <p className="s-attribution">
-            {w("Diteruskan dari Dengar.in.", "Continues Dengar.in.")}
-          </p>
+          <div className="s-colophon">
+            <div className="s-colophon-brand">
+              <Link to="/about" className="s-colophon-mark" aria-label={w("Tentang Sela", "About Sela")}>
+                <Mark size={26} />
+                <span>{w("Sela", "Sela")}</span>
+              </Link>
+              <p>
+                {w(
+                  "Sela bukan layanan darurat dan tidak memberi diagnosis.",
+                  "Sela is not an emergency service and gives no diagnosis.",
+                )}
+              </p>
+            </div>
+            <nav aria-label={w("Tautan kaki", "Footer links")}>
+              <Link to="/about">{w("Tentang Sela", "About Sela")}</Link>
+              <Link to="/policies">{w("Kebijakan", "Policies")}</Link>
+              <Link to="/help" className="s-colophon-help">{w("Butuh bantuan sekarang", "Need help now")}</Link>
+            </nav>
+            <p className="s-attribution">
+              <span className="s-attribution-label">{w("Melanjutkan", "Continuing")}</span>
+              <span className="s-attribution-name">{w("Dengar.in", "Dengar.in")}</span>
+              <span className="s-attribution-note">
+                {w(
+                  "Dirintis tim Telkom University Surabaya; kreditnya tetap tercatat.",
+                  "Started by a Telkom University Surabaya team; its credits are kept.",
+                )}
+              </span>
+            </p>
+          </div>
         </footer>
       )}
 

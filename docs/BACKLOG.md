@@ -174,7 +174,7 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 - **Outcome:** A person writes, gets a contextual reply, decides whether this conversation is saved, and ends it with one action. Saved conversations can be listed, resumed and deleted.
 - **Priority:** pilot-critical. Listening is the core function (brief §1, §5; D-035) and DoD capability 1.
 - **Scope:** Conversation and message records (migration range 0100–0199, encrypted, exporter), `/api/v3/conversations` specified in API_SPEC_V3 §9 before implementation, composer and message log ("Ruang cerita / Talk"), the per-conversation storage choice (save or don't save, asked in plain language before the first message is stored, changeable), the bounded in-memory hold for "don't save" turns (D-051; SPEC V27), "Selesai / End", list, resume and delete.
-- **Non-goals:** Group chat, voice (S-025 to S-027), attachments, therapy role-play, a companion persona.
+- **Non-goals:** Group chat, voice room (S-027), attachments, therapy role-play, a companion persona.
 - **Depends on:** S-002 or S-003, S-150, S-151, S-170, S-171, S-191, S-220, S-221, S-223.
 - **Acceptance criteria:**
   1. A new visitor reaches the composer with no profile field other than the age band and the required terms, in at most four screens from the welcome page (e2e counts them).
@@ -259,18 +259,19 @@ Every user-facing item must also meet BASE-1 to BASE-9, BASE-11 and BASE-12; eve
 #### S-025 Voice dictation (opt-in)
 - **Problem:** Typing is hard for some people (FM-15).
 - **Outcome:** Optional dictation into the composer with a disclosure and an editable transcript.
-- **Priority:** pilot-important. D-038 migrates voice dictation into the pilot as an opt-in, and SPEC C25 lists it in pilot scope; it serves people for whom typing is hard (brief §6). The pilot can start without it because the operating system's own keyboard dictation already works in any text field.
-- **Scope:** Browser speech recognition behind the "Dikte suara / Voice dictation" display setting (S-192) and the composer's mic button ([design direction §6.5](design/DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer)).
-- **Non-goals:** Audio storage; auto-submit; a cloud speech service run by Sela.
+- **Priority:** pilot-important. D-038 migrates voice dictation into the pilot as an opt-in, and SPEC C25 lists it in pilot scope; it serves people for whom typing is hard (brief §6). The pilot can start without it because the operating system's own keyboard dictation already works in any text field. **Amended 2026-10-29 (BUG-6, second revision):** replaced browser Web Speech with server-side Amazon Nova Sonic speech-to-speech (`amazon.nova-2-5-sonic`) because the browser service quality and privacy posture did not meet the pilot bar; Nova 2 Omni is not yet available in this account (Preview, gated behind Nova Forge).
+- **Scope:** The Amazon Nova Sonic speech-to-speech realtime relay (`GET /api/v3/asr/realtime`, `internal/httpapi/v3_asr.go`) behind the separate `asr_meta` consent (S-171) and the composer's mic button ([design direction §6.5](design/DESIGN_DIRECTION.md#65-conversation-transcript-messages-composer)). The browser streams mono 16 kHz int16 PCM to Sela; Sela relays it to Amazon Nova Sonic with IAM credentials held server-side; only user transcript events pass through to the editable composer (assistant audio and text are dropped). Audio is never stored by Sela; provider retention follows the AWS policy, disclosed in the `asr_meta` consent.
+- **Non-goals:** Audio storage by Sela; auto-submit; a voice room (S-027, paused).
 - **Depends on:** S-020, S-171, S-192.
 - **Acceptance criteria:**
-  1. Off by default; turning it on shows, in ID and EN, that the browser's speech service may send audio to its vendor (D-038).
+  1. Off by default; turning it on requires the separate `asr_meta` consent, whose text (ID and EN) names Meta as the recipient and states that audio is sent for transcription.
   2. Microphone permission is asked only on use; recording state is shown in text and announced through `role="status"`.
   3. The transcript goes into the editable composer and is never sent automatically (DX-08); text input stays available.
   4. The mic is a toggle, never press-and-hold (2.5.2).
-  5. BASE.
-- **Risks:** Recognition quality for Indonesian and code-switching varies by browser.
-- **Owner:** Frontend engineer. **Milestone:** P7. **Status:** planned. **Evidence:** —
+  5. Without the `asr_meta` consent the websocket answers an error event plus close code 4403; with `SELA_ASR_MODE=disabled` it answers 4413; both are shown as a calm error in ID and EN.
+  6. BASE.
+- **Risks:** Recognition quality for Indonesian and code-switching by Meta's model; audio contains more identifying data than text, so the consent and non-goals are strict.
+- **Owner:** Frontend engineer. **Milestone:** P7. **Status:** implemented locally (dictation proxy, composer hook, consent UI and tests in `feat/sela-wellbeing-themes`); needs live Meta verification. **Evidence:** `internal/httpapi/v3_asr_test.go`, `web/src/test/asr.test.ts`
 
 #### S-026 Read replies aloud (opt-in)
 - **Problem:** Some people prefer to listen.
@@ -1674,7 +1675,7 @@ Exit means every listed pilot-critical item is at least `verified locally` (or `
 | S-022 | Screen-reader-friendly streaming and Stop | pilot-critical | P3 | planned |
 | S-023 | "Sela menangkap…" cards | pilot-critical | P3 | planned |
 | S-024 | AI off or unavailable | pilot-critical | P3 | planned |
-| S-025 | Voice dictation (opt-in) | pilot-important | P7 | planned |
+| S-025 | Voice dictation (opt-in) | pilot-important | P7 | implemented locally; needs live Meta verification |
 | S-026 | Read aloud (opt-in) | pilot-important | P7 | planned |
 | S-027 | Voice room (paused) | post-pilot | later | planned (paused) |
 | S-040 | Personal home | pilot-important | P3 | planned |
@@ -1791,7 +1792,7 @@ Every row of the [Dengar.in feature matrix](DENGARIN_FEATURE_MATRIX.md) lands in
 | FM-12 Domain gate | merge | S-021 |
 | FM-13 Distress and crisis cards | improve | S-151 |
 | FM-14 Deterministic crisis engine | keep (already in v2) | S-150 |
-| FM-15 Voice dictation and read-aloud | migrate as opt-in | S-025, S-026 |
+| FM-15 Voice dictation and read-aloud | migrate as opt-in (dictation: Meta server-side, BUG-6) | S-025, S-026 |
 | FM-16 Voice room | paused | S-027 |
 | FM-17 Journal | migrate | S-050 |
 | FM-18 Daily check-in | migrate as standalone | S-060 |

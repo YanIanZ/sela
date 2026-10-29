@@ -10,7 +10,7 @@
 
 Sela is becoming a bilingual (Indonesian/English) listening and continuity app for people aged 15 to 50 and over (owner brief v3, 2026-10-26). A person can talk without filling in a form, keep personal notes under their control, see their own history, correct what Sela remembers, and — only if they want to — prepare a "Ringkasan untuk konsultasi" (summary for a consultation) to share with someone they invite. Sela does not diagnose, treat, triage or replace a professional, and it never contacts anyone on the user's behalf.
 
-**That is the plan, and the v3 frontend now exists for the parts whose services exist.** The v3 backend foundation (accounts, guest mode, encrypted storage, export, deletion) is built and verified locally, and the v3 frontend on `feat/v3-experience` implements the 28 screen groups to the extent their `/api/v3` routes exist. Memory, consultation summary/sharing/recipient/follow-up and reading are honest blocked states, not working mocks. Nothing is verified live, and the product is not pilot-ready. The **v2 demo** remains at `/demo` (fictional professionals and simulated care); it books nothing real, contacts no one, and gives no diagnosis, prescription, triage or therapy. Crisis language still stops the ordinary journey before any AI runs and shows verified Indonesian help services.
+**That is the plan, and the v3 frontend now exists for the parts whose services exist.** The v3 backend foundation (accounts, guest mode, encrypted storage, export, deletion) is built and verified locally, and the v3 frontend on `feat/v3-experience` implements the 28 screen groups to the extent their `/api/v3` routes exist. Memory, consultation summary/sharing/recipient/follow-up and reading are honest blocked states, not working mocks. Nothing is verified live, and the product is not pilot-ready. The v2 demo frontend (`/demo`, `/r`) has been removed; Sela gives no diagnosis, prescription, triage or therapy, books nothing and contacts no one. Crisis language still stops the ordinary journey before any AI runs and shows verified Indonesian help services.
 
 ## Current local development increment (28 October 2026)
 
@@ -18,7 +18,7 @@ The `feat/v3-experience` branch (stacked on the local `feat/v3-core-journey` wor
 
 Evidence: [frontend validation](docs/V3_FRONTEND_VALIDATION.md) and the [owner acceptance guide](OWNER_TESTER.md). Still open: the missing v3 feature APIs, reading editorial review, manual screen-reader/usability review, and all release gates. No live, clinical or pilot claim is made.
 
-For the configured local Docker environment, run `bash scripts/run-local-v3.sh` and open http://localhost:8080. It reads only the ignored local `.env.docker-testing` and `.env.pg-testing` files; it never prints their contents. The default v3 UI needs the database; a no-database v2-only run can still use `/demo`.
+For the configured local Docker environment, run `bash scripts/run-local-v3.sh` and open http://localhost:8080. It reads only the ignored local `.env.docker-testing` and `.env.pg-testing` files; it never prints their contents. `docker compose up --build` starts the same single-binary image with PostgreSQL 16 on http://localhost:8080 (`SELA_PORT` overrides the port), and `docker compose --profile web-test run --rm web-test` runs the web typecheck, tests and build in Node 22. The v3 UI needs the database.
 
 ## Status (28 October 2026)
 
@@ -78,7 +78,7 @@ SELA_ENV=development SELA_SECURE_COOKIES=false SELA_LLM_MODE=test_double SELA_AL
   SELA_LLM_BASE_URL=http://127.0.0.1:8090 go run ./cmd/sela
 ```
 
-Checks: `go vet ./... && go test -race ./...` (the PostgreSQL tests run when `SELA_TEST_DATABASE_URL` is set; see the [runbook](docs/RUNBOOK.md) §2), `cd web && npm run typecheck && npm test`, `node e2e/journey.e2e.mjs` (after building `build/sela` and `build/fakellm`), `go run ./cmd/sela-eval -mode offline`. Configuration, the Modal deployment, cost controls, rollback and a three-minute demo script are in the [runbook](docs/RUNBOOK.md) and [modal/README.md](modal/README.md).
+Checks: `go vet ./... && go test -race ./...` (the PostgreSQL tests run when `SELA_TEST_DATABASE_URL` is set; see the [runbook](docs/RUNBOOK.md) §2), `cd web && npm run typecheck && npm test`, `E2E_BASE_URL=http://127.0.0.1:8080 node e2e/v3-frontend.e2e.mjs` (against a running app with its database), `go run ./cmd/sela-eval -mode offline`. Configuration, the Modal deployment, cost controls, rollback and a three-minute demo script are in the [runbook](docs/RUNBOOK.md) and [modal/README.md](modal/README.md).
 
 ## Documentation
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "../../lib/router";
 import { useI18n } from "../../i18n";
 import { api, type Consent } from "../api";
 import { useSession } from "../session";
@@ -51,7 +52,7 @@ export function PoliciesPage({ purpose }: { purpose?: string }) {
             {consent.granted && !consent.outdated
               ? w("Kamu menyetujui versi ini.", "You agreed to this version.")
               : w("Kamu belum menyetujui versi terbaru.", "You haven't agreed to the latest version yet.")}{" "}
-            <a href="/settings/privacy#persetujuan">{w("Kelola persetujuan", "Manage consents")}</a>
+            <Link to="/settings/privacy#persetujuan">{w("Kelola persetujuan", "Manage consents")}</Link>
           </p>
         )}
         <ErrorNotice error={error} />
@@ -71,7 +72,7 @@ export function PoliciesPage({ purpose }: { purpose?: string }) {
             ))}
           </div>
         </section>
-        <p className="s-hint" style={{ marginTop: "var(--space-4)" }}>
+        <p className="s-hint s-mt-4">
           {w(
             `Versi ini: ${policy.version}. Teks ini adalah draf teknis yang menunggu tinjauan hukum.`,
             `This version: ${policy.version}. This text is a technical draft awaiting legal review.`,
@@ -102,7 +103,7 @@ export function PoliciesPage({ purpose }: { purpose?: string }) {
       ) : (
         <div className="s-policy-index">
           {entries.map(([key, policy]) => (
-            <a className="s-policy-row" href={"/policies/" + key} key={key}>
+            <Link className="s-policy-row" to={"/policies/" + key} key={key}>
               <span>
                 <strong>{policy.title[lang]}</strong>
                 <br />
@@ -112,11 +113,11 @@ export function PoliciesPage({ purpose }: { purpose?: string }) {
                 </small>
               </span>
               <span className="s-muted" aria-hidden="true">→</span>
-            </a>
+            </Link>
           ))}
         </div>
       )}
-      <p className="s-hint" style={{ marginTop: "var(--space-4)" }}>
+      <p className="s-hint s-mt-4">
         {w(
           "Versi sebelumnya belum tersedia sebagai halaman terpisah. Isi dan tanggalnya dicatat di setiap kebijakan.",
           "Earlier versions aren't available as separate pages yet. Each policy records its text and date.",

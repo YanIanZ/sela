@@ -34,6 +34,7 @@ const (
 	guestV         = "guest-storage-test.1"
 	guardianV      = "guardian-information-test.1"
 	optionalV      = "optional-test.1"
+	memoryV        = "personal-memory-test.1"
 )
 
 type clock struct {
@@ -61,9 +62,11 @@ func testConfig(c *clock) account.Config {
 	cfg := account.DefaultConfig("test")
 	cfg.Hash = account.FloorHashParams
 	cfg.Now = c.Now
-	cfg.PolicyVersions = map[string]string{account.PolicyTerms: termsV, account.PolicyGuest: guestV, account.PolicyGuardian: guardianV, "test_optional": optionalV}
+	cfg.PolicyVersions = map[string]string{account.PolicyTerms: termsV, account.PolicyGuest: guestV, account.PolicyGuardian: guardianV,
+		"test_optional": optionalV, account.PolicyPersonalMemory: memoryV}
 	cfg.Purposes = append(append([]account.Purpose(nil), account.FoundationPurposes...),
-		account.Purpose{Name: "test_optional", Kinds: []string{account.KindGuest, account.KindAccount}})
+		account.Purpose{Name: "test_optional", Kinds: []string{account.KindGuest, account.KindAccount}},
+		account.Purpose{Name: account.PolicyPersonalMemory, Kinds: []string{account.KindGuest, account.KindAccount}})
 	return cfg
 }
 

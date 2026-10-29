@@ -11,7 +11,7 @@ import {
 } from "../api";
 import { usePrefs } from "../prefs";
 import { useSession } from "../session";
-import { useAnnounce, useWords } from "../shared";
+import { policyVersionLabel, useAnnounce, useWords } from "../shared";
 import { Icon } from "../icons";
 import { CodesStep } from "./Auth";
 import {
@@ -142,32 +142,12 @@ function AgeStep({
         back={{ to: "/", label: w("Pengenalan", "Introduction") }}
         title={w("Sebelum mulai", "Before you start")}
       />
-      <ul className="s-about-list">
-        <li>
-          {w(
-            "Sela mendengarkan, membantumu melihat kembali ceritamu, dan menyimpan hanya yang kamu pilih.",
-            "Sela listens, helps you look back at your story, and keeps only what you choose.",
-          )}
-        </li>
-        <li>
-          {w(
-            "Sela bukan psikolog atau dokter. Sela tidak memberi diagnosis atau pengobatan, dan tidak menghubungi siapa pun.",
-            "Sela is not a psychologist or a doctor. Sela gives no diagnosis or treatment and contacts no one.",
-          )}
-        </li>
-        <li>
-          {w(
-            "Sela memeriksa tulisanmu untuk menampilkan bantuan jika ada tanda bahaya. Sela tidak memberi tahu siapa pun.",
-            "Sela checks what you write so it can show help if there are signs of danger. Sela does not tell anyone.",
-          )}
-        </li>
-        <li>
-          {w(
-            "Tekan Keluar cepat, atau Esc dua kali, untuk langsung pindah ke halaman lain.",
-            "Press Quick exit, or Esc twice, to leave at once.",
-          )}
-        </li>
-      </ul>
+      <p className="s-onboard-note">
+        {w(
+          "Sela mendengarkan dan menyimpan hanya yang kamu pilih. Sela bukan psikolog atau dokter, tidak menghubungi siapa pun, dan memeriksa tulisanmu untuk menampilkan bantuan jika ada tanda bahaya.",
+          "Sela listens and keeps only what you choose. Sela is not a psychologist or doctor, contacts no one, and checks what you write so it can show help if there are signs of danger.",
+        )}
+      </p>
       <div style={{ marginTop: "var(--space-5)" }}>
         <ChoiceGroup
           legend={w("Berapa usiamu?", "How old are you?")}
@@ -435,7 +415,10 @@ function StorageStep({
 
       <CheckboxRow checked={terms} onChange={setTerms}>
         {w("Aku sudah membaca dan menyetujui Ketentuan & Privasi", "I have read and agree to the Terms & Privacy")}{" "}
-        <span className="s-muted">({termsVersion})</span>{" "}
+        <span className="s-muted">
+          ({w("versi ", "version ")}
+          {policyVersionLabel(termsVersion, lang)})
+        </span>{" "}
         <a href="/policies/terms_privacy" target="_blank" rel="noreferrer">
           {w("Baca", "Read")}
         </a>
@@ -597,7 +580,10 @@ function AccountStep({
         </p>
         <CheckboxRow checked={terms} onChange={setTerms}>
           {w("Aku sudah membaca dan menyetujui Ketentuan & Privasi", "I have read and agree to the Terms & Privacy")}{" "}
-          <span className="s-muted">({policies.terms_privacy?.version})</span>{" "}
+          <span className="s-muted">
+            ({w("versi ", "version ")}
+            {policyVersionLabel(policies.terms_privacy?.version ?? "", lang)})
+          </span>{" "}
           <a href="/policies/terms_privacy" target="_blank" rel="noreferrer">
             {w("Baca", "Read")}
           </a>
@@ -947,6 +933,8 @@ function AIStep({
         <Button
           variant="primary"
           icon="send"
+          busy={busy}
+          disabled={consents === null}
           onClick={() => {
             if (!aiOff && !canContinue) {
               setStepError(

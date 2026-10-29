@@ -103,7 +103,7 @@ export function SignInPage() {
           </Button>
         </div>
       </form>
-      <div className="s-actions" style={{ marginTop: "var(--space-4)" }}>
+      <div className="s-actions s-mt-4">
         <LinkButton to="/recover" variant="quiet">
           {w("Lupa kata sandi? Pakai kode pemulihan", "Forgot your password? Use a recovery code")}
         </LinkButton>
@@ -275,7 +275,6 @@ export function CodesStep({
   return (
     <div className="s-narrow">
       <PageHeader
-        eyebrow={w("LANGKAH TERAKHIR", "LAST STEP")}
         title={w("Simpan jalan pulangmu.", "Keep a way back in.")}
         lead={w(
           "Kode ini satu-satunya cara masuk jika kamu lupa kata sandi. Setiap kode hanya bisa dipakai sekali. Sela tidak bisa menampilkannya lagi.",

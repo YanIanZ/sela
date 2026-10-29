@@ -9,7 +9,9 @@ import {
 } from "../api";
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
-import { Icon } from "../icons";
+import { Icon, MoodFace } from "../icons";
+import { MemoryPage, entryRoute } from "./Continuity";
+import { WeeklyPage } from "./Weekly";
 import { helpData } from "../helpdata";
 import {
   Button,
@@ -27,7 +29,6 @@ import {
   Subnav,
   TextArea,
   TextField,
-  UnavailableFeature,
   buttonClass,
 } from "../ui";
 
@@ -81,7 +82,8 @@ export function NotesPage({ user, path }: { user: Profile; path: string }) {
   if (path === "/notes/write") return <NoteEditor user={user} />;
   if (path === "/notes/check-in") return <CheckIn />;
   if (path === "/notes/patterns") return <Patterns />;
-  if (path === "/notes/memory") return <MemoryBlocked />;
+  if (path === "/notes/weekly") return <WeeklyPage />;
+  if (path === "/notes/memory") return <MemoryPage />;
   const id = path.startsWith("/notes/") ? path.slice("/notes/".length) : "";
   if (id) return <EntryDetail id={id} />;
   return <Timeline user={user} />;
@@ -134,7 +136,6 @@ function Timeline({ user }: { user: Profile }) {
   return (
     <>
       <PageHeader
-        eyebrow={w("CATATANKU", "MY NOTES")}
         title={w("Catatan pribadiku", "My personal notes")}
         lead={w(
           "Semua yang kamu simpan, dari yang terbaru. Hanya kamu yang bisa melihatnya.",
@@ -156,10 +157,12 @@ function Timeline({ user }: { user: Profile }) {
         current="/notes"
         items={[
           { to: "/notes", label: w("Linimasa", "Timeline") },
+          { to: "/notes/weekly", label: w("Refleksi mingguan", "Weekly reflection") },
           { to: "/notes/memory", label: w("Yang Sela ingat", "What Sela remembers") },
         ]}
       />
-      <div className="s-filters" role="group" aria-label={w("Saring entri", "Filter entries")}>
+      <div className="s-filters" role="group" aria-labelledby="filters-label">
+        <span className="s-filters-label" id="filters-label">{w("Tampilkan saja", "Show only")}</span>
         {[
           { kind: "conversation", id: "Percakapan", en: "Conversations" },
           { kind: "note", id: "Catatan", en: "Notes" },
@@ -171,7 +174,7 @@ function Timeline({ user }: { user: Profile }) {
               checked={filters.includes(f.kind)}
               onChange={() => toggle(f.kind)}
             />
-            <Icon name={filters.includes(f.kind) ? "check" : "search"} size={16} />
+            {filters.includes(f.kind) && <Icon name="check" size={16} />}
             <span>{w(f.id, f.en)}</span>
           </label>
         ))}
@@ -222,11 +225,7 @@ function Timeline({ user }: { user: Profile }) {
               {entries.map((r) => (
                 <li key={r.id}>
                   <Link
-                    to={
-                      r.kind === "conversation"
-                        ? "/talk?record=" + r.id
-                        : "/notes/" + r.id
-                    }
+                    to={entryRoute(r)}
                   >
                     <Icon
                       name={
@@ -243,6 +242,9 @@ function Timeline({ user }: { user: Profile }) {
                           ? w("Percakapan", "Conversation")
                           : r.kind === "checkin"
                             ? w("Cek perasaan", "Check-in")
+                            : r.kind === "summary" ? w("Ringkasan", "Summary")
+                            : r.kind === "memory" ? w("Memori", "Memory")
+                            : r.kind === "followup" ? w("Tindak lanjut", "Follow-up")
                             : w("Catatan", "Note")}
                         {r.kind === "checkin" && r.mood ? " · " + moodLabel(r.mood, lang) : ""}
                       </span>
@@ -250,7 +252,7 @@ function Timeline({ user }: { user: Profile }) {
                         <span className="s-timeline-preview" style={{ display: "block" }}>
                           {r.kind === "conversation"
                             ? r.title || w("Percakapan tersimpan", "Saved conversation")
-                            : r.text.slice(0, 120) || w("Tanpa teks", "No text")}
+                            : r.text.slice(0, 240) || w("Tanpa teks", "No text")}
                         </span>
                       )}
                     </span>
@@ -268,10 +270,14 @@ function Timeline({ user }: { user: Profile }) {
         <LinkButton to="/notes/patterns" variant="quiet">
           {w("Lihat pola cek perasaan", "See patterns in your check-ins")}
         </LinkButton>
-        <LinkButton to="/support" variant="quiet">
-          {w("Buat ringkasan untuk konsultasi", "Make a summary for a consultation")}
-        </LinkButton>
       </div>
+      <p className="s-hint" style={{ marginTop: "var(--space-2)" }}>
+        {w(
+          "Pilih catatan yang ingin kamu bawa, susun ringkasan, lalu periksa sebelum mengunduhnya.",
+          "Choose the notes you want to bring, build a summary, then review it before downloading.",
+        )}
+        {" "}<Link to="/support/summaries">{w("Buka ringkasan", "Open summaries")}</Link>
+      </p>
       {user.kind === "guest" && user.guest && (
         <p className="s-retention">
           {w("Mode tamu · dihapus otomatis jika ", "Guest mode · deleted automatically after ")}
@@ -328,7 +334,7 @@ function NoteEditor({ user }: { user: Profile }) {
   };
 
   return (
-    <div className="s-narrow">
+    <div className="s-write">
       <PageHeader
         back={{ to: "/notes", label: w("Catatanku", "My notes") }}
         title={w("Tulis catatan", "Write a note")}
@@ -346,7 +352,8 @@ function NoteEditor({ user }: { user: Profile }) {
       />
       <ErrorNotice error={error} />
       {savedAt && <StatusLine tone="success">{savedAt}</StatusLine>}
-      <form className="s-editor" onSubmit={(e) => void submit(e)}>
+      <form className="s-editor s-editor--page" onSubmit={(e) => void submit(e)}>
+        <div className="s-editor-main">
         <TextField
           label={w("Judul", "Title")}
           optional
@@ -357,29 +364,12 @@ function NoteEditor({ user }: { user: Profile }) {
         <TextArea
           label={w("Catatanmu", "Your note")}
           value={text}
-          rows={12}
+          rows={8}
           maxLength={6000}
           required
           autoFocus
           onChange={(e) => setText(e.target.value)}
         />
-        <div className="s-actions" role="group" aria-label={w("Pancingan menulis", "Writing prompts")}>
-          <span className="s-small s-muted">{w("Butuh pancingan?", "Need a prompt?")}</span>
-          {([
-            ["Apa yang paling terasa hari ini?", "What feels strongest today?"],
-            ["Apa yang ingin kamu ingat?", "What do you want to remember?"],
-            ["Apa yang membantu, sekecil apa pun?", "What helped, however small?"],
-          ] as const).map(([id, en]) => (
-            <button
-              key={id}
-              type="button"
-              className={buttonClass("quiet")}
-              onClick={() => setText((t) => w(id, en) + "\n" + t)}
-            >
-              {w(id, en)}
-            </button>
-          ))}
-        </div>
         <CheckboxRow
           checked={save}
           onChange={setSave}
@@ -398,6 +388,31 @@ function NoteEditor({ user }: { user: Profile }) {
             {w("Batal", "Cancel")}
           </LinkButton>
         </div>
+        </div>
+        <aside className="s-editor-aside" aria-labelledby="prompts-title">
+          <h2 id="prompts-title">{w("Butuh pancingan?", "Need a prompt?")}</h2>
+          <p className="s-hint">
+            {w("Pilih satu; kalimatnya ditambahkan di awal tulisanmu.", "Pick one; it's added to the start of your writing.")}
+          </p>
+          <ul className="s-prompt-list">
+            {([
+              ["Apa yang paling terasa hari ini?", "What feels strongest today?"],
+              ["Apa yang ingin kamu ingat?", "What do you want to remember?"],
+              ["Apa yang membantu, sekecil apa pun?", "What helped, however small?"],
+            ] as const).map(([id, en]) => (
+              <li key={id}>
+                <button
+                  type="button"
+                  className="s-prompt"
+                  onClick={() => setText((t) => w(id, en) + "\n" + t)}
+                >
+                  <Icon name="plus" size={16} />
+                  <span>{w(id, en)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
       </form>
     </div>
   );
@@ -407,10 +422,14 @@ function CheckIn() {
   const w = useWords();
   const { lang } = useI18n();
   const { prefs } = usePrefs();
-  const { navigate } = useRouter();
+  const { navigate, query } = useRouter();
   const { announce } = useAnnounce();
   const { records } = useRecords();
-  const [mood, setMood] = useState<string | null>(null);
+  const [askedMood] = useState<string | null>(() => {
+    const asked = query.get("mood");
+    return moods.some((m) => m.value === asked) ? asked : null;
+  });
+  const [mood, setMood] = useState<string | null>(askedMood);
   const [energy, setEnergy] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [text, setText] = useState("");
@@ -418,7 +437,7 @@ function CheckIn() {
   const [groupError, setGroupError] = useState("");
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  useLeaveWarning(Boolean(text || mood));
+  useLeaveWarning(Boolean(text || (mood && mood !== askedMood)));
   const today = localDay();
   const existing = records?.find((r) => r.kind === "checkin" && r.day === today);
 
@@ -494,7 +513,7 @@ function CheckIn() {
         )}
       />
       <ErrorNotice error={error} />
-      <form className="s-editor" onSubmit={(e) => void submit(e)}>
+      <form className="s-editor s-editor--sheet" onSubmit={(e) => void submit(e)}>
         <ChoiceGroup
           legend={w("Bagaimana perasaanmu sekarang?", "How are you feeling right now?")}
           name="mood"
@@ -505,11 +524,8 @@ function CheckIn() {
           columns={2}
           options={moods.map((m) => ({
             value: m.value,
-            label:
-              (lang === "en" ? m.en : m.id) +
-              (m.dots
-                ? ""
-                : ""),
+            label: lang === "en" ? m.en : m.id,
+            art: <MoodFace mood={m.value} size={44} />,
           }))}
         />
         <ChoiceGroup
@@ -680,7 +696,7 @@ function EntryDetail({ id }: { id: string }) {
   const energyLabel = record.energy ? energies.find((e) => e.value === record.energy) : null;
 
   return (
-    <div className="s-narrow">
+    <div className="s-narrow s-narrow--start">
       <PageHeader
         back={{ to: "/notes", label: w("Catatanku", "My notes") }}
         title={
@@ -760,11 +776,6 @@ function EntryDetail({ id }: { id: string }) {
             {w("Lihat versi sebelumnya", "See earlier versions")}
           </Button>
         )}
-        {!isCheckin && (
-          <LinkButton to="/support" variant="quiet">
-            {w("Buat ringkasan dari catatan ini", "Make a summary from this note")}
-          </LinkButton>
-        )}
         {isCheckin && (
           <LinkButton to="/notes/check-in" variant="quiet">
             {w("Cek perasaan lagi", "Check in again")}
@@ -782,12 +793,21 @@ function EntryDetail({ id }: { id: string }) {
           busy={busy}
         />
       </div>
+      {!isCheckin && (
+        <p className="s-hint" style={{ marginTop: "var(--space-3)" }}>
+          {w(
+            "Kamu bisa memilih catatan ini saat menyusun ringkasan untuk konsultasi.",
+            "You can choose this note when building a summary for a consultation.",
+          )}
+          {" "}<Link to="/support/summaries">{w("Buka ringkasan", "Open summaries")}</Link>
+        </p>
+      )}
       {versions && versions.length > 0 && (
         <section className="s-section">
           <h2>{w("Riwayat versi", "Version history")}</h2>
           {versions.map((v) => (
             <article className="s-history" key={v.version}>
-              <p className="s-overline">
+              <p className="s-label">
                 {w("VERSI ", "VERSION ")}
                 {v.version} · {loc.dateTime(v.updatedAt)}
               </p>
@@ -802,6 +822,7 @@ function EntryDetail({ id }: { id: string }) {
 
 function CrisisAfterSave() {
   const w = useWords();
+  const { lang } = useI18n();
   const service = helpData.help[0];
   return (
     <section className="s-crisis-panel" aria-labelledby="crisis-save-title">
@@ -815,9 +836,7 @@ function CrisisAfterSave() {
       {service && (
         <p>
           <strong>{service.name}</strong> ·{" "}
-          {document.documentElement.lang === "en"
-            ? service.description.en
-            : service.description.id}
+          {service.description[lang]}
         </p>
       )}
       <div className="s-actions">
@@ -972,38 +991,6 @@ function Patterns() {
           </Button>
         </>
       )}
-    </>
-  );
-}
-
-function MemoryBlocked() {
-  const w = useWords();
-  return (
-    <>
-      <PageHeader
-        back={{ to: "/notes", label: w("Catatanku", "My notes") }}
-        title={w("Yang Sela ingat", "What Sela remembers")}
-        lead={w(
-          "Semua yang Sela boleh pakai di percakapan berikutnya, di satu tempat.",
-          "Everything Sela may use in later conversations, in one place.",
-        )}
-      />
-      <UnavailableFeature
-        title={w("Yang Sela ingat belum tersedia", "What Sela remembers isn't available yet")}
-        body={w(
-          "Memory masih menunggu layanan penyimpanan, persetujuan, dan pemeriksaan yang terpisah. Sela tidak menyimpan apa pun di balik layar, dan tidak ada profil tersembunyi.",
-          "Memory is waiting for its storage, consent and checking services. Sela keeps nothing behind the scenes, and there is no hidden profile.",
-        )}
-        dependency={w(
-          "API memori dan persetujuan personal_memory belum ada di /api/v3.",
-          "The memory API and the personal_memory consent are not part of /api/v3 yet.",
-        )}
-      />
-      <div className="s-actions">
-        <LinkButton to="/settings/privacy#memori" variant="secondary">
-          {w("Buka Privasi & data", "Open Privacy & data")}
-        </LinkButton>
-      </div>
     </>
   );
 }

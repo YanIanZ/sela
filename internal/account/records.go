@@ -40,26 +40,34 @@ type RecordInput struct {
 	Day             string             `json:"day"`
 	StorageGranted  bool               `json:"storageGranted"`
 	ExpectedVersion int                `json:"expectedVersion"`
+	SourceRefs      []SourceRef        `json:"sourceRefs"`
+	Prepared        *SummaryPrepared   `json:"prepared"`
+	ParentID        string             `json:"-"`
 }
 
 type PersonalRecord struct {
-	Paused       bool               `json:"paused,omitempty"`
-	Turns        []ConversationTurn `json:"turns,omitempty"`
-	ID           string             `json:"id"`
-	Kind         string             `json:"kind"`
-	Title        string             `json:"title"`
-	Text         string             `json:"text"`
-	Mood         string             `json:"mood,omitempty"`
-	Energy       string             `json:"energy,omitempty"`
-	Tags         []string           `json:"tags,omitempty"`
-	Day          string             `json:"day,omitempty"`
-	Version      int                `json:"version"`
-	Provenance   string             `json:"provenance"`
-	ReviewStatus string             `json:"reviewStatus"`
-	Safety       string             `json:"safety"`
-	Ruleset      string             `json:"ruleset"`
-	CreatedAt    time.Time          `json:"createdAt"`
-	UpdatedAt    time.Time          `json:"updatedAt"`
+	Paused          bool               `json:"paused,omitempty"`
+	Turns           []ConversationTurn `json:"turns,omitempty"`
+	ID              string             `json:"id"`
+	Kind            string             `json:"kind"`
+	Title           string             `json:"title"`
+	Text            string             `json:"text"`
+	Mood            string             `json:"mood,omitempty"`
+	Energy          string             `json:"energy,omitempty"`
+	Tags            []string           `json:"tags,omitempty"`
+	Day             string             `json:"day,omitempty"`
+	Version         int                `json:"version"`
+	Provenance      string             `json:"provenance"`
+	ReviewStatus    string             `json:"reviewStatus"`
+	Safety          string             `json:"safety"`
+	Ruleset         string             `json:"ruleset"`
+	SourceRefs      []SourceRef        `json:"sourceRefs,omitempty"`
+	SummaryState    string             `json:"summaryState,omitempty"`
+	ApprovedVersion int                `json:"approvedVersion,omitempty"`
+	Prepared        *SummaryPrepared   `json:"prepared,omitempty"`
+	ParentID        string             `json:"parentId,omitempty"`
+	CreatedAt       time.Time          `json:"createdAt"`
+	UpdatedAt       time.Time          `json:"updatedAt"`
 }
 
 func recordRef(id string, version int) vault.Ref {
@@ -198,7 +206,23 @@ func (s *Store) record(ctx context.Context, q db.DBTX, owner UserID, id string, 
 	return s.openRecord(ctx, q, owner, id, v, ct)
 }
 func (s *Store) Record(ctx context.Context, owner UserID, id string) (PersonalRecord, error) {
-	return s.record(ctx, s.pool, owner, id, false)
+	r, err := s.record(ctx, s.pool, owner, id, false)
+	if err != nil {
+		return PersonalRecord{}, err
+	}
+	if r.Kind == KindMemory {
+		enabled, err := s.memoryEnabled(ctx, s.pool, owner)
+		if err != nil {
+			return PersonalRecord{}, err
+		}
+		if !enabled {
+			return PersonalRecord{}, ErrNotFound
+		}
+	}
+	if err := s.enrichSummaryState(ctx, s.pool, owner, &r); err != nil {
+		return PersonalRecord{}, err
+	}
+	return r, nil
 }
 func (s *Store) records(ctx context.Context, q db.DBTX, owner UserID) ([]PersonalRecord, error) {
 	rows, err := q.Query(ctx, "SELECT id,version,content_ct FROM personal_records WHERE user_id=$1 ORDER BY updated_at DESC,id DESC", owner)
@@ -231,12 +255,34 @@ func (s *Store) records(ctx context.Context, q db.DBTX, owner UserID) ([]Persona
 		}
 		out = append(out, r)
 	}
+	for i := range out {
+		if err := s.enrichSummaryState(ctx, q, owner, &out[i]); err != nil {
+			return nil, err
+		}
+	}
 	return out, nil
 }
 func (s *Store) Records(ctx context.Context, owner UserID) ([]PersonalRecord, error) {
-	return s.records(ctx, s.pool, owner)
+	records, err := s.records(ctx, s.pool, owner)
+	if err != nil {
+		return nil, err
+	}
+	enabled, err := s.memoryEnabled(ctx, s.pool, owner)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]PersonalRecord, 0, len(records))
+	for _, r := range records {
+		if r.Kind != KindMemory || enabled {
+			out = append(out, r)
+		}
+	}
+	return out, nil
 }
 func (s *Store) UpdateRecord(ctx context.Context, owner UserID, id string, in RecordInput) (PersonalRecord, error) {
+	if in.Kind == KindFollowup {
+		return s.updateFollowup(ctx, owner, id, in)
+	}
 	if err := validateRecord(in); err != nil {
 		return PersonalRecord{}, err
 	}
@@ -277,6 +323,11 @@ func (s *Store) DeleteRecord(ctx context.Context, owner UserID, id string, versi
 		}
 		if version != r.Version {
 			return ErrStaleVersion
+		}
+		if r.Kind == KindSummary {
+			if err := s.deleteSummaryChildren(ctx, tx, owner, id); err != nil {
+				return err
+			}
 		}
 		_, err = tx.Exec(ctx, "DELETE FROM personal_records WHERE user_id=$1 AND id=$2", owner, id)
 		return err

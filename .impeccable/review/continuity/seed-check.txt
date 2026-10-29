@@ -1,0 +1,3 @@
+Command: impeccable concept-seed --check-seed seed:e10a74b613d8d165
+Exit: 0
+SEED KNOWN: seed:e10a74b613d8d165 was rolled on this machine.

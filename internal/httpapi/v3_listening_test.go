@@ -2,6 +2,23 @@ package httpapi_test
 
 import "testing"
 
+func TestV3RoomsAreOrderedByNewestActivity(t *testing.T) {
+	e := newV3(t, v3opt{})
+	c := e.client()
+	c.guest("18_plus")
+	first := c.must(201, "POST", "/api/v3/conversations", map[string]any{"save": false}).data()["id"].(string)
+	c.must(201, "POST", "/api/v3/conversations", map[string]any{"save": false})
+	// A newer turn in the older room makes it the one Home should continue.
+	c.must(200, "POST", "/api/v3/conversations/"+first+"/turns", map[string]any{"text": "Aku ingin mengurai hari ini.", "expectedVersion": 1})
+	list := c.must(200, "GET", "/api/v3/conversations", nil).data()["conversations"].([]any)
+	if len(list) != 2 {
+		t.Fatalf("expected 2 rooms, got %d", len(list))
+	}
+	if got := list[0].(map[string]any)["id"]; got != first {
+		t.Fatalf("newest room is %v, want %s", got, first)
+	}
+}
+
 func TestV27V33V38ListeningRoom(t *testing.T) {
 	e := newV3(t, v3opt{})
 	a := e.client()
