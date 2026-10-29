@@ -45,34 +45,6 @@ async function audit(page, name) {
       }));
   });
   check(`axe ${name}`, violations.length === 0, JSON.stringify(violations));
-  if (violations.length > 0) {
-    const dbg = await page.evaluate(() => {
-      const out = [];
-      for (const sel of ['nav[aria-label="Tautan kaki"] > a[href$="policies"]', 'nav[aria-label="Footer links"] > a[href$="policies"]']) {
-        const a = document.querySelector(sel);
-        if (!a) continue;
-        const r = a.getBoundingClientRect();
-        const pts = [];
-        for (const y of [r.top + 2, r.top + r.height / 2, r.bottom - 2]) {
-          const el = document.elementFromPoint(r.left + r.width / 2, y);
-          pts.push(el ? el.tagName + "." + (el.className || "").toString().slice(0, 60) : "null");
-        }
-        const nav = document.querySelector(".s-place-nav");
-        const nr = nav ? nav.getBoundingClientRect() : null;
-        out.push({
-          link: { top: r.top, bottom: r.bottom, h: r.height, w: r.width },
-          coveredBy: pts,
-          placeNav: nr ? { top: nr.top, h: nr.height, pos: getComputedStyle(nav).position, disp: getComputedStyle(nav).display } : null,
-          bbh: document.documentElement.style.getPropertyValue("--bottom-bar-h"),
-          padBottom: getComputedStyle(document.querySelector(".s-shell-inner")).paddingBottom,
-          scrollY: window.scrollY,
-          vh: window.innerHeight,
-        });
-      }
-      return out;
-    });
-    console.log("DEBUG " + name + " " + JSON.stringify(dbg));
-  }
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
   );
