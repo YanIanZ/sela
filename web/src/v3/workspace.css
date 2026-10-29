@@ -26,9 +26,8 @@
 .s-workspace-page[data-space="notes"] > .s-entry-list { background: var(--c-surface); border-radius: var(--radius-3); }
 .s-workspace-page[data-space="notes"] .s-filters { margin-block: 1.5rem; }
 @media (min-width: 64em) {
- .s-workspace-page .c-support-intro { grid-template-columns: minmax(0, 1.8fr) minmax(12rem, 1fr); }
  .s-workspace-page .c-support-paths { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
- .s-workspace-page .c-support-paths > section:last-child { grid-column: 1 / -1; }
+ .s-workspace-page .c-support-paths > section { min-height: 100%; }
 }
 @media (max-width: 40em) {
  .s-workspace-page[data-space="notes"] > .s-entry-list { padding-inline: 0.25rem; }

@@ -72,6 +72,12 @@ export function HelpPage() {
             <ServiceCard key={s.id} resource={s} />
           ))}
         </div>
+        <p className="s-hint">
+          {w(
+            "Sela tidak memantau percakapan dan tidak dapat menghubungi siapa pun atas namamu.",
+            "Sela does not monitor conversations and cannot contact anyone on your behalf.",
+          )}
+        </p>
       </section>
 
       {fromRoom && (
@@ -134,7 +140,7 @@ export function HelpPage() {
             "Reading and small exercises can't be opened yet; every item awaits an editor's review before it is shown.",
           )}
         </p>
-        <LinkButton to="/reading" variant="quiet">
+        <LinkButton to="/reading" variant="secondary">
           {w("Tentang bacaan & latihan kecil", "About reading & small exercises")}
         </LinkButton>
       </section>
@@ -147,7 +153,7 @@ export function HelpPage() {
             "Find organizations, facilities or practitioners from public sources. You make contact; there is no automatic request or booking.",
           )}
         </p>
-        <LinkButton to="/support/directory" variant="quiet">
+        <LinkButton to="/support/directory" variant="secondary">
           {w("Cari bantuan terencana", "Find planned support")}
         </LinkButton>
       </section>
@@ -257,13 +263,20 @@ function ServiceCard({ resource }: { resource: (typeof helpData.help)[number] })
             href={channelHref(c)}
             target={c.kind === "web" ? "_blank" : undefined}
             rel={c.kind === "web" ? "noreferrer noopener" : undefined}
+            aria-label={
+              c.kind === "phone"
+                ? w("Telepon ", "Call ") + resource.name
+                : c.kind === "whatsapp"
+                  ? "WhatsApp · " + resource.name
+                  : w("Buka situs ", "Open website ") + resource.name
+            }
           >
             <Icon name={c.kind === "phone" ? "phone" : c.kind === "whatsapp" ? "whatsapp" : "external"} />
             {c.kind === "phone"
-              ? w("Telepon ", "Call ") + resource.name
+              ? w("Telepon", "Call")
               : c.kind === "whatsapp"
-                ? "WhatsApp · " + resource.name
-                : w("Buka situs ", "Open website ") + resource.name}
+                ? "WhatsApp"
+                : w("Buka situs", "Open website")}
           </a>
         ))}
       </div>
@@ -283,12 +296,6 @@ function ServiceCard({ resource }: { resource: (typeof helpData.help)[number] })
         {" · "}
         {w("periksa ulang sebelum ", "re-check before ")}
         {resource.reverifyBy}
-      </p>
-      <p className="s-source">
-        {w(
-          "Sela tidak memantau percakapan dan tidak dapat menghubungi siapa pun atas namamu.",
-          "Sela does not monitor conversations and cannot contact anyone on your behalf.",
-        )}
       </p>
     </article>
   );

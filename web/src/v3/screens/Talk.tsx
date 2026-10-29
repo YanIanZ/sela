@@ -516,7 +516,15 @@ function RoomPage({ id }: { id: string }) {
   }, [room?.id, room?.save]);
 
   const scrollToBottom = () => {
-    transcript.current?.scrollIntoView?.({ block: "end" });
+    const el = transcript.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+      // In the text-zoom layout the transcript is not an internal scroller,
+      // so bring the end of the conversation into the page viewport too.
+      if (el.scrollHeight <= el.clientHeight + 4) {
+        el.scrollIntoView?.({ block: "end" });
+      }
+    }
     atBottom.current = true;
     setNewContent("");
   };
@@ -530,14 +538,24 @@ function RoomPage({ id }: { id: string }) {
   }, [room?.paused, announce, w]);
 
   const onScroll = () => {
-    const doc = document.documentElement;
-    atBottom.current = window.innerHeight + window.scrollY >= doc.scrollHeight - 220;
+    const el = transcript.current;
+    if (el && el.scrollHeight > el.clientHeight + 4) {
+      atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+    } else {
+      const doc = document.documentElement;
+      atBottom.current = window.innerHeight + window.scrollY >= doc.scrollHeight - 220;
+    }
     if (atBottom.current) setNewContent("");
   };
   useEffect(() => {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  useEffect(() => {
+    if (!room) return;
+    const t = window.setTimeout(scrollToBottom, 40);
+    return () => window.clearTimeout(t);
+  }, [room?.id]);
 
   const lastAssistant = (r: Room | null) =>
     r?.turns.filter((t) => t.role === "assistant").at(-1);
@@ -550,6 +568,7 @@ function RoomPage({ id }: { id: string }) {
     setStopped(false);
     setText("");
     setPendingText(value);
+    window.setTimeout(scrollToBottom, 30);
     setBusy(true);
     const ac = new AbortController();
     request.current = ac;
@@ -861,6 +880,7 @@ function RoomPage({ id }: { id: string }) {
               role="log"
               aria-live="off"
               ref={transcript}
+              onScroll={onScroll}
             >
               {room.turns.length === 0 && pendingText === null && !showEnd && (
                 <div className="s-room-empty">

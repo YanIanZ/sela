@@ -364,6 +364,11 @@ function SummaryList() {
             "Pilih catatan atau percakapan yang sudah disimpan. Tidak ada cerita yang dipilih otomatis.",
             "Choose saved notes or conversations. No story is selected automatically.",
           )}
+          actions={
+            <LinkButton to="/support/summaries/new" variant="secondary">
+              {w("Susun ringkasan pertama", "Build your first summary")}
+            </LinkButton>
+          }
         />
       )}
       <div className="c-document-list">
