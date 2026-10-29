@@ -85,7 +85,7 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 .s-colophon-brand p { margin: 0; line-height: 1.5; }
 .s-colophon-mark { display: inline-flex; align-items: center; gap: 0.5rem; width: fit-content; color: var(--c-text); font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; text-decoration: none !important; }
 .s-footer nav { display: grid; gap: 0.15rem; }
-.s-footer nav a { display: inline-flex; align-items: center; min-height: 2rem; width: fit-content; color: var(--c-text); font-weight: 600; text-decoration: underline; text-decoration-color: var(--c-border-control); text-underline-offset: 0.25em; }
+.s-footer nav a { display: inline-flex; align-items: center; min-height: 2rem; width: fit-content; color: var(--c-text); font-weight: 600; text-decoration: underline; text-decoration-color: var(--c-border-control); text-underline-offset: 0.25em; scroll-margin-top: calc(var(--top-bar-h, 5rem) + 1rem); }
 .s-footer nav a:hover { text-decoration-color: currentColor; }
 .s-footer nav a.s-colophon-help { color: var(--c-help-text); }
 .s-attribution { display: grid; gap: 0.15rem; margin: 0; padding-left: 1rem; border-left: 1px solid var(--c-border-subtle); }
