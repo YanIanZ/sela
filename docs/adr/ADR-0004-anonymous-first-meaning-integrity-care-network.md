@@ -59,3 +59,7 @@ Previous v3 scope allowed guest and username accounts, focused on listening and 
 5. Revisit this ADR if provider policies, regulations, partner contracts or safety evidence invalidate assumptions.
 
 [Product requirements](../vision/PRODUCT_REQUIREMENTS.md) · [Architecture](../vision/ARCHITECTURE.md) · [Delivery plan](../vision/DELIVERY_AND_ACCEPTANCE.md)
+
+## Extension — Admin Console and Redis (29 October 2026)
+
+Anonymous consumer sessions remain distinct from verified staff and future partner identities; staff operator MFA, source review and publication workflows require a privileged control plane, but **not** access to private user journals. Redis is an optional Go acceleration/short-lived admission plane for public data and non-sensitive counters; PostgreSQL remains the sole authoritative record and spending ledger. See [ADR-0005](ADR-0005-admin-and-redis-acceleration.md), [Admin Console](../vision/ADMIN_CONSOLE.md), [Care Operations](../vision/ADMIN_CARE_OPERATIONS.md) and [Redis engineering](../vision/REDIS_AI_COST_ENGINEERING.md). These are unimplemented target requirements until aligned with SPEC and code.

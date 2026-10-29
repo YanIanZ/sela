@@ -12,6 +12,7 @@ Think of Sela as **five cooperating parts**:
 3. **The assistants:** Meta drafts an interpretation; Claude checks sensitive source fidelity; DeepSeek can substitute only during a narrowly defined Meta outage.
 4. **The notebook:** encrypted, selectively saved user records plus a **separate** library of reviewed research.
 5. **The bridge:** helps a person prepare their own summary and manually find support; hospital collaboration is simulated until authorized partners exist.
+6. **The control tower:** a separate *authenticated* admin workspace that manages public catalogs, source reviews and costs without access to anonymous journals. Redis accelerates repeat public reads and admission, while PostgreSQL holds the authoritative records.
 
 **Only the user decides what to keep, correct or share.**
 
@@ -163,6 +164,33 @@ stateDiagram-v2
 
 Operations must use optimistic version checks or database transactions; stale results from slow AI calls must not resurrect deleted or corrected data.
 
-## 9. What is already here
+## 9. Admin and Redis planes — deliberately separate
+
+~~~mermaid
+flowchart TB
+    U["Anonymous end-user browser"] --> API["Go public API"]
+    STAFF["Staff member with MFA"] --> CONSOLE["Operator UI /operator"]
+    CONSOLE --> ADMIN["Go /api/admin/v1 — staff identity and role enforcement"]
+    API --> AUTH["Guest-scoped personal access"]
+    ADMIN --> DIR["Directory / research / verified help operations"]
+    ADMIN --> METRICS["AI budget, Redis health and audit views"]
+    DIR --> PG[("PostgreSQL — durable and audited")]
+    AUTH --> PG
+    API --> PUBCACHE[("Redis public cache")]
+    API --> BUDGET["Go budget & admission gateway"]
+    BUDGET --> PG
+    BUDGET --> CTR[("Redis short-lived counters")]
+    ADMIN -. "Never implicit read access" .-> AUTH
+~~~
+
+- Staff sessions are provisioned out of band, MFA-protected, isolated from consumer cookies and authorized by RBAC + organization-scoped ABAC. They do not include a private-journal viewer.
+- Directory editors prepare revisions, independent reviewers verify source/credentials, and PostgreSQL audit records the publication; public Redis caches are invalidated after commit.
+- **Redis cache** holds public revisioned metadata. **Redis control** handles bounded tokens/rates/in-flight slots. Separate no-eviction control capacity is preferred over mixing with evictable caches.
+- Go checks consent and deterministic safety **before** model requests, including after any cache outcome. Durable budget authority remains PostgreSQL; when controls cannot guarantee capacity, AI abstains and manual pathways continue.
+- Planned-care operator workflows are not real bookings. Only licensed/authorized partner integrations can eventually receive user-approved capsules.
+
+[Admin Console](ADMIN_CONSOLE.md) · [Care Operations](ADMIN_CARE_OPERATIONS.md) · [Redis engineering](REDIS_AI_COST_ENGINEERING.md)
+
+## 10. What is already here
 
 Current packages include internal/httpapi, internal/safety, internal/ledger, internal/llm, internal/ai, internal/db, internal/vault, internal/account and internal/research. Current main contains an account/guest foundation and Meta Glimmer/Modal path; the new user-facing account removal, meaning graph and real directory are **target changes**. Cross-check with [implementation status](../IMPLEMENTATION_STATUS.md) before any status update.

@@ -112,3 +112,7 @@ Establish a baseline against ordinary summarization without MIE. Fix failing adv
 ## 9. Originality boundary
 
 Source-linked summaries, editable AI memory and correctable profiles exist in other products. MIE's **proposed differentiator** is end-to-end enforcement of meaning constraints and correction-driven invalidation across chat, personal memory, evidence, and care preparation. The claim must be demonstrated with an implementation and comparative tests, not marketing adjectives.
+
+## 10. Operator and cache isolation
+
+The Meaning Integrity claim graph belongs **only to its anonymous owner** and approved recipient scopes; staff Admin Console cannot browse it. Private claims, rejected corrections, embeddings, version hashes derived from sensitive text, and individual AI responses are **not cached in shared Redis**. Administrative operations must never override an invalidated derived summary or the user's revoked sharing choice. See [Admin Console](ADMIN_CONSOLE.md) and [Redis engineering](REDIS_AI_COST_ENGINEERING.md).

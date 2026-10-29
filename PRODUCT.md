@@ -57,6 +57,14 @@ Environments: the user's own phone browser (often a cheap Android on slow 3G, pr
 - No real user data yet. No clinical-efficacy evidence. No real-world deployment evidence.
 - SPEC.md is the single source of truth; decisions D-026 to D-056 in `docs/DECISION_LOG.md`; architecture decisions in `docs/adr/`.
 
+## Operator security and Redis — owner extension, 29 October 2026
+
+Anonymity is an **end-user interface** decision, not permission for unverified operators. Staff must authenticate separately with MFA, least-privilege roles and an immutable audit. Their console manages vetted public care directories, source freshness, research editorial quality and AI budgets—**no anonymous journal viewer**. [Admin Console](docs/vision/ADMIN_CONSOLE.md) and [Planned Care Operations](docs/vision/ADMIN_CARE_OPERATIONS.md).
+
+Go may use Redis for public revisioned directory/research cache, distributed admission and non-sensitive spend counters, with PostgreSQL authoritative for grants, content and durable budget. Never cache raw user stories/prompts or safety decisions; Redis unavailability must not lead to unbounded AI spend. [Redis engineering](docs/vision/REDIS_AI_COST_ENGINEERING.md).
+
+These are **target changes, not deployed features**.
+
 ## Product Principles
 
 1. **Listening first.** A person talks and is heard before anything else is offered. Seeking a professional is never required, pushed or nudged.

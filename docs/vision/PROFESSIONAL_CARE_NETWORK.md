@@ -117,3 +117,11 @@ A user can remain pseudonymous inside Sela but a real facility may legally requi
 - [HL7 FHIR](https://hl7.org/fhir/) is a technical design reference only.
 - [SATUSEHAT platform](https://satusehat.kemkes.go.id/platform/) needs separate onboarding/authorization; never assume open access to partner/patient data.
 - Applicable Indonesian privacy, healthcare and data-sharing laws, provider contracts and professional credential verification require separate legal evaluation. This document is not legal certification.
+
+## 10. Operational ownership and the Admin Console
+
+Publication of real facility/practitioner entries requires an **authenticated operator editorial workflow** and an independent reviewer with cited evidence; it is not a generative AI task. Sela operators curate the **public directory only**, while individual user browsing and journal data remain private. Care requests are not created merely because a user searches for a professional. There is no automated assignment, professional booking or operator-visible "patient queue" without a lawful, explicit, future partner workflow.
+
+The sandbox supports fictional facilities and fictional request state transitions; it must never trigger real webhooks, emails or appointments. Redis may cache published, revisioned public metadata but cannot store care capsules, partner credentials, approval or actual case state.
+
+[Admin Console](ADMIN_CONSOLE.md) · [Planned Care Operations](ADMIN_CARE_OPERATIONS.md) · [Redis policy](REDIS_AI_COST_ENGINEERING.md).

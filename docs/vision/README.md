@@ -13,7 +13,10 @@
 4. [AI, evidence and safety](AI_EVIDENCE_SAFETY.md) — Meta tasks, verifier, fallback, research and release rules.
 5. [Professional Care Network](PROFESSIONAL_CARE_NETWORK.md) — optional manual choice of professionals/facilities without GPS.
 6. [Delivery and acceptance](DELIVERY_AND_ACCEPTANCE.md) — migration steps, tests, measurable evidence and launch gates.
-7. [ADR-0004](../adr/ADR-0004-anonymous-first-meaning-integrity-care-network.md) — decision, consequences and rejected options.
+7. [Admin Console](ADMIN_CONSOLE.md) — privileged operator roles, dashboard and audit **without access to anonymous stories**.
+8. [Admin Care Operations](ADMIN_CARE_OPERATIONS.md) — verify public professionals/facilities and manage synthetic future-partner scenarios.
+9. [Redis & AI cost engineering](REDIS_AI_COST_ENGINEERING.md) — acceleration, rate limits, budgets and safe fallbacks.
+10. [ADR-0004](../adr/ADR-0004-anonymous-first-meaning-integrity-care-network.md) and [ADR-0005](../adr/ADR-0005-admin-and-redis-acceleration.md) — product/architecture decisions and trade-offs.
 
 ## Product in one sentence
 
@@ -39,6 +42,12 @@ The existing [SPEC.md](../../SPEC.md) is the current implemented-system requirem
 Existing operational truth: [implementation status](../IMPLEMENTATION_STATUS.md), [blockers](../BLOCKERS.md), [architecture (current/historical)](../ARCHITECTURE.md), [AI routing (current/historical)](../AI_POLICY.md).
 
 **Status vocabulary:** target / existing foundation / implemented / verified locally / verified live / externally blocked / partner-simulated. A document is not evidence of a running feature.
+
+## Operator and performance planes
+
+**Anonymous user** and **authenticated operator** are mutually exclusive trust identities. The operator console manages **public, sourced professional and research catalogs**, operational health and budgets; its users cannot browse private journals. Multi-hospital management is future-contract gated and currently limited to isolated fictional sandbox workflows. **Redis belongs to the Go acceleration/control plane**, never to the private data or safety authority. Existing legacy Next.js admin and Redis are not a verified Go implementation.
+
+[Admin requirements](ADMIN_CONSOLE.md) · [Planned help workflow](ADMIN_CARE_OPERATIONS.md) · [Redis/cost constraints](REDIS_AI_COST_ENGINEERING.md)
 
 ## Product boundary
 

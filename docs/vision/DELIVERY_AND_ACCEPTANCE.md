@@ -26,6 +26,9 @@
 | D7 | Care Context Capsule | Source-approved summary, version pin, edit, secure export | Stale/export, redaction and permission tests succeed |
 | D8 | Synthetic hospital sandbox | Multiple fictional organizations/facilities/practitioners and idempotent status states | No external medical calls; consistently labelled as simulated |
 | D9 | Quality, evaluation and operating readiness | Go benchmarks, accessible journeys, observability, data retention, threat review | Reproducible reports and independent sign-off evidence |
+| D10 | Admin identity and governance | Staff-only MFA, roles, isolated API, immutable audit, no private journal viewer | Anonymous/staff and cross-tenant isolation; role revoke; two-person approval |
+| D11 | Planned-care backoffice | Directory revision and independent source verification, professional affiliation checks, isolated synthetic sandbox | Real public directory workflow works; synthetic-only requests never contact real providers |
+| D12 | Redis + AI budget admission | Go client, public revisioned cache, separated control counters, durable PostgreSQL ledger and cost visibility | Warm/cold benchmark; controlled spend under concurrency; Redis outage never bypasses consent or safety |
 
 **These are dependencies, not deadline promises.** External credentials, human review, authorization and actual hospital partnerships cannot be solved by code alone.
 
@@ -89,3 +92,19 @@ Do not invent impact percentages or testimonials. Preserve failed test cases and
 **Hackathon demonstration:** Sela's ordinary functioning features should run against their genuine implementation. Only the **partner side** of future hospital collaboration uses clearly synthetic actors and statuses. If Meta/Claude/DeepSeek are not live at submission, label the limitation; never replay fixtures as live inference. Separate code quality and product usability evidence from claims of medical benefit.
 
 Meta event judging details belong to [META_EVENT_NOTES](../META_EVENT_NOTES.md) and may change; check the organizer's official terms before submission.
+
+## 9. Administrative and Redis extension — release gating
+
+**Administrator MVP is a product governance requirement, not a consumer login feature.** Begin D10 early enough to support D6 directory publication. D11 can start with verifiable public directory editorial operations even while actual hospital partnerships remain unavailable. D12 must be evaluated for net cost/latency rather than accepted based on architecture alone.
+
+**Priority acceptance suite:**
+- MFA for every privileged staff user, role and organization scoping, separate cookies, CSRF and append-only PostgreSQL audit.
+- No staff route able to retrieve anonymous stories/meaning claims without a separately authorized future transfer.
+- Independent provider-source publication, stale listing invalidation, and user-facing searching without GPS.
+- Only synthetic partner workflows in a sandbox, with no production webhook/booking credentials.
+- Redis down: public directory/help continue; AI admission uses safe durable gate or declines new paid calls.
+- Redis evicted/restarted: budgets do not reset to infinite and private content cannot appear in cache.
+- A/B measure Go p95, database query reductions, cost per accepted AI task, **and** Redis infrastructure spend.
+- PR #8 safety engine findings remain a separate release blocker; operator toggles never waive that gate.
+
+[Admin Console](ADMIN_CONSOLE.md) · [Care Operations](ADMIN_CARE_OPERATIONS.md) · [Redis and AI cost engineering](REDIS_AI_COST_ENGINEERING.md).

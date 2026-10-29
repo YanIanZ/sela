@@ -109,3 +109,11 @@ Do not bulk copy copyrighted articles, scrape in violation of terms or cite pape
 - [Existing AI policy](../AI_POLICY.md), [AI routing ADR](../adr/ADR-0003-ai-routing-verifier-fallback.md), [Claude verifier contract](../CLAUDE_VERIFIER.md), [DeepSeek fallback](../DEEPSEEK_FALLBACK.md).
 - [Meta developer documentation](https://dev.meta.ai/docs/), [Anthropic API documentation](https://platform.claude.com/docs/), [DeepSeek API documentation](https://api-docs.deepseek.com/).
 - [Research expansion licensing and caveats](../research/sela-relay/RESEARCH_EXPANSION_PIPELINE.md), [Safety](../SAFETY.md), [Blockers](../BLOCKERS.md).
+
+## 10. Cost governance, admin boundaries and caching
+
+Redis may shorten **public** directory/research lookups and coordinate distributed rate/admission counters. It does **not** make private LLM inference automatically cheaper and must never cache journal text, personalized prompts, AI replies, crisis outcomes or consent grants. Go keeps the PostgreSQL spending ledger authoritative and fails safely when budget guarantees are unavailable; urgent help must not rely on Redis or provider uptime.
+
+The verified **operator console** may inspect aggregate provider cost and error rates, not user text or private source anchors. Model routing changes require privileged audit and approval; no operator switch disables mandatory Claude verification or deterministic crisis handling.
+
+Refer to [Redis/AI cost engineering](REDIS_AI_COST_ENGINEERING.md) and [Admin Console](ADMIN_CONSOLE.md).

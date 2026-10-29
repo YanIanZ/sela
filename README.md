@@ -60,6 +60,24 @@ flowchart TD
 
 [Plain-language architecture](docs/vision/ARCHITECTURE.md) · [AI, evidence and safety](docs/vision/AI_EVIDENCE_SAFETY.md) · [Care network](docs/vision/PROFESSIONAL_CARE_NETWORK.md)
 
+## Operator Console and the planned-care control plane
+
+**Anonymous for users does not mean anonymous for staff.** Sela's future `/operator` area is a separate, strongly authenticated staff-only interface for source verification, professional/facility catalog quality, research editorial review, official-help freshness, AI/provider budgets, cache health and immutable operational audit. Operators **cannot browse anonymous journals**. Partner accounts are distinct from user sessions; no actual partner exchange is claimed. [Admin Console](docs/vision/ADMIN_CONSOLE.md) · [Care Operations](docs/vision/ADMIN_CARE_OPERATIONS.md).
+
+**Redis is planned for the Go runtime**, rather than reused unmodified from the inherited Next.js application. Cache only **public versioned directory/research assets**, manage short-lived rate/admission counters, and coordinate budget reservations with an authoritative PostgreSQL ledger. **No user stories, private AI responses, prompts or consent grants in Redis**. Redis outages must never bypass crisis handling or allow unbounded paid AI requests. [Redis and AI cost engineering](docs/vision/REDIS_AI_COST_ENGINEERING.md).
+
+~~~mermaid
+flowchart LR
+    A["Anonymous Sela browser"] --> G["Go application"]
+    O["Authenticated staff operator"] --> OC["Separate Go Admin Console"]
+    OC --> G
+    G --> PG[("PostgreSQL — durable authority")]
+    G --> R[("Redis — public cache + short-lived controls")]
+    G --> M["Meta / Claude / DeepSeek (gated)"]
+    OC --> D["Directory + research review"]
+    D --> PG
+~~~
+
 ## Why Go?
 
 Sela's backend uses a **Go modular monolith** to keep the runtime understandable and operable. One process can serve same-origin JSON APIs and built frontend assets; PostgreSQL 16 stores explicitly approved, encrypted personal records. External AI inference remains separately accounted for.
@@ -108,6 +126,9 @@ Database-specific Go tests require the test database settings in [the runbook](d
 | [Meaning Integrity Engine](docs/vision/MEANING_INTEGRITY_ENGINE.md) | Original technical differentiator and invalidation contract |
 | [AI, research and safety](docs/vision/AI_EVIDENCE_SAFETY.md) | Meta, Claude, DeepSeek, research grounding and fail-closed design |
 | [Professional Care Network](docs/vision/PROFESSIONAL_CARE_NETWORK.md) | GPS-free discovery, multiple facilities, synthetic-only partner simulation |
+| **[Admin Console](docs/vision/ADMIN_CONSOLE.md)** | Separate staff identity, RBAC/ABAC, catalog governance, audit and AI operations |
+| [Admin Care Operations](docs/vision/ADMIN_CARE_OPERATIONS.md) | Planned support workflow, source verification, fictional partner sandbox |
+| **[Redis & AI cost engineering](docs/vision/REDIS_AI_COST_ENGINEERING.md)** | Public caching, rate admission, durable budgets and graceful degradation |
 | [Delivery and acceptance](docs/vision/DELIVERY_AND_ACCEPTANCE.md) | Work packages, evaluation, gate criteria and honest status |
 | [Complete documentation index](docs/README.md) | Existing spec, API contracts, ADRs and historical evidence |
 

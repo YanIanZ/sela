@@ -45,6 +45,10 @@ People can struggle to express experiences accurately, remember what they meant 
 | SV-12 | Safety and quick help | View help without waiting for any AI service | Crisis processing halts ordinary AI flow; never auto-contacts or routes around a refusal |
 | SV-13 | Privacy controls | Withdraw provider consent, delete/export, end session | No provider request after withdrawal; key/retention explanations accurate |
 | SV-14 | Accessibility | ID/EN, screen readers, keyboard, reduced motion, 320px reflow | WCAG 2.2 AA automated + manual checks; tasks work in both languages |
+| SV-15 | Separate operator console | Staff-curated verified directory/research/help and operational overview | MFA-protected, role/tenant authorization and content-free audit; zero implicit journal access |
+| SV-16 | Planned care administration | Source-backed organization/professional verification and future-partner sandbox | Independent approval, public source freshness; fictional requests isolated from real services |
+| SV-17 | Redis acceleration | Cache vetted public directory/research metadata and bounded distributed rate counters | No private content, short TTL/revision, graceful cache outage fallback |
+| SV-18 | AI spending control | Bound Meta/Claude/DeepSeek calls using per-task budgets and admission | PostgreSQL authoritative reservations; Redis fast counters; cannot exceed a cap after Redis failure |
 
 ## 5. Interaction contracts
 
@@ -86,3 +90,11 @@ No voice/TTS/ASR, avatar, required user account, background GPS/IP geolocating, 
 **Infrastructure:** RSS, Go API p95, outbound AI p95, per-provider cost and error rate under a fixed load profile. Record samples and environment alongside metrics.
 
 All quantitative impact results are **pending actual measurement**. A small, consented synthetic-scenario usability study can establish usability, **not clinical efficacy**.
+
+## 9. Admin and infrastructure requirements (2026-10-29 extension)
+
+The anonymous application and the **operator domain** must be built as separate identities. Staff authenticate with MFA and can edit/review public provider directories and curated research using least-privilege role grants; **no operator gains direct access to anonymous user stories**. Professional and hospital entries must be based on sourced, independently verified information. Synthetic collaboration workflows exist only in a visibly isolated partner sandbox.
+
+Redis is an accelerator for public data and a best-effort distributed admission plane, **not** storage for personal journals or AI prompt/completion data. Durable PostgreSQL transactions own cost reservations and business decisions. If Redis control fails and no safe global budget admission exists, AI must abstain; journaling and urgent help continue.
+
+See [Admin Console](ADMIN_CONSOLE.md), [Planned Care Operations](ADMIN_CARE_OPERATIONS.md), [Redis/AI Cost Engineering](REDIS_AI_COST_ENGINEERING.md), [ADR-0005](../adr/ADR-0005-admin-and-redis-acceleration.md). Implementation remains planned.
