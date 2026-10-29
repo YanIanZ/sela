@@ -18,7 +18,7 @@ one component set, and `/api/v3` only. No UI framework was added. The local
 Deliverables are:
 
 - the app shell: top bar with "Butuh bantuan sekarang" and "Keluar cepat",
-  four-place navigation, full-height menu sheet, notices, footer, three live
+  four-place navigation, right-anchored menu panel, notices, footer, three live
   announcement regions at the end of `<body>`, route titles and route focus;
 - display preferences applied before paint by `web/public/boot.js`: text size,
   theme, high contrast, relaxed spacing, reduced motion, Enter-to-send,
@@ -192,8 +192,8 @@ Engineering evidence:
 - ID/EN labels and messages; `lang` on language buttons and preference-driven
   content.
 
-Manual checks performed in Chromium: keyboard order and skip link, menu sheet
-focus/escape, route focus, dialog focus return, 320px layout and 130%/high
+Manual checks performed in Chromium: keyboard order and skip link, menu panel
+focus/escape/outside-press, route focus, dialog focus return, 320px layout and 130%/high
 contrast. **Not performed:** a human screen-reader session with NVDA, JAWS,
 VoiceOver or TalkBack; a human usability study; a formal WCAG audit. Those are
 not claimed. The automated axe result is necessary but not sufficient.

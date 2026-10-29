@@ -93,7 +93,13 @@ try {
       await page.waitForTimeout(150);
     }
   }
-  await page.getByRole("button", { name: "Mulai bercerita", exact: true }).click();
+  await page.getByRole("link", { name: "Beranda" }).first().click();
+  await page.waitForURL("**/home");
+  await page.waitForTimeout(400);
+  const homeScroll = await page.evaluate(() => window.scrollY);
+  check("Home opens at the top after navigation", homeScroll === 0, String(homeScroll));
+
+  await page.getByRole("link", { name: "Mulai bercerita", exact: true }).click();
   await page.waitForURL("**/talk/new");
   await page.getByRole("radio", { name: /Jangan simpan/ }).click();
   await page.getByRole("button", { name: "Buka ruang cerita" }).click();
@@ -156,6 +162,22 @@ try {
 
   // English and a 320px phone.
   await page.getByRole("button", { name: "English" }).first().click();
+
+  // The menu is a panel under the header's menu button, not a centred modal.
+  await page.getByRole("button", { name: "Menu" }).click();
+  const desktopMenu = await page.locator(".s-menu-sheet").boundingBox();
+  const desktopViewport = page.viewportSize();
+  check(
+    "desktop menu is right-anchored, not centred",
+    Boolean(desktopMenu && desktopViewport) &&
+      desktopMenu.x > desktopViewport.width / 2 &&
+      desktopMenu.x + desktopMenu.width <= desktopViewport.width - 20 &&
+      desktopMenu.height < desktopViewport.height,
+    JSON.stringify(desktopMenu),
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(150);
+
   await page.setViewportSize({ width: 320, height: 740 });
   await page.goto(base + "/home", { waitUntil: "networkidle" });
   await page.screenshot({ path: join(OUT, "10-home-mobile-en.png"), fullPage: true });
@@ -176,6 +198,22 @@ try {
     "menu sheet starts with the help control",
     /help now/i.test(menuFocus ?? ""),
     menuFocus,
+  );
+  const phoneMenu = await page.locator(".s-menu-sheet").boundingBox();
+  const phoneHeader = await page.locator(".s-header").boundingBox();
+  const phoneViewport = page.viewportSize();
+  const modal = await page.evaluate(
+    () => document.querySelector(".s-menu-sheet")?.matches(":modal") ?? false,
+  );
+  check(
+    "phone menu is anchored below the header and stays non-modal",
+    Boolean(phoneMenu && phoneHeader && phoneViewport) &&
+      phoneMenu.y >= phoneHeader.y + phoneHeader.height - 2 &&
+      phoneMenu.x + phoneMenu.width >= phoneViewport.width - 24 &&
+      phoneMenu.width < phoneViewport.width &&
+      phoneMenu.height < phoneViewport.height &&
+      !modal,
+    JSON.stringify({ phoneMenu, modal }),
   );
   await page.getByRole("button", { name: "Bahasa Indonesia" }).click();
   await page.keyboard.press("Escape");

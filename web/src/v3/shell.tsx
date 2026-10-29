@@ -191,16 +191,49 @@ function MenuSheet({
     if (open && !el.open) {
       returnTo.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      el.showModal();
+      // A non-modal panel anchored below the menu button. showModal would
+      // centre it in the viewport and dim the page like a dialog.
+      el.show();
       requestAnimationFrame(() => document.getElementById("menu-help")?.focus());
     } else if (!open && el.open) {
       el.close();
-      returnTo.current?.focus();
+      returnTo.current?.focus({ preventScroll: true });
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    const onPointer = (event: PointerEvent) => {
+      const el = ref.current;
+      if (!el || !(event.target instanceof Node)) return;
+      if (el.contains(event.target)) return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest(".s-menu-button")
+      ) {
+        // The button itself toggles; do not close and reopen in one click.
+        return;
+      }
+      onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer, true);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer, true);
+    };
+  }, [onClose, open]);
+
   return (
     <dialog
       ref={ref}
+      id="site-menu"
       className="s-menu-sheet"
       aria-labelledby="menu-title"
       onCancel={(e) => {
@@ -212,6 +245,20 @@ function MenuSheet({
       }}
     >
       <div className="s-menu-inner">
+        <div className="s-menu-head">
+          <h2 id="menu-title" ref={heading} tabIndex={-1}>
+            {w("Menu", "Menu")}
+          </h2>
+          <button
+            type="button"
+            className="s-menu-close"
+            onClick={onClose}
+            aria-label={w("Tutup menu", "Close menu")}
+          >
+            <Icon name="close" />
+            <span className="s-sr-only">{w("Tutup menu", "Close menu")}</span>
+          </button>
+        </div>
         <div className="s-menu-safety">
           <Link
             to="/help"
@@ -226,14 +273,7 @@ function MenuSheet({
             <Icon name="quick-exit" />
             <span>{w("Keluar cepat", "Quick exit")}</span>
           </button>
-          <button type="button" className={buttonClass("quiet")} onClick={onClose}>
-            <Icon name="close" />
-            <span>{w("Tutup", "Close")}</span>
-          </button>
         </div>
-        <h2 id="menu-title" ref={heading} tabIndex={-1}>
-          {w("Menu", "Menu")}
-        </h2>
         <Link to="/dashboard" className="s-btn s-btn--quiet" onClick={onClose}>{w("Dashboard informasi", "Information dashboard")}</Link>
         {user && (
           <nav aria-label={w("Navigasi utama", "Main navigation")} className="s-menu-group">
@@ -357,7 +397,12 @@ export function AppShell({
     }
     requestAnimationFrame(() => {
       const main = document.getElementById("main");
-      if (main && document.activeElement !== main) main.focus();
+      if (main && document.activeElement !== main) {
+        // Focusing main must not scroll the freshly reset route down under
+        // the sticky header. The browser otherwise honours scroll-padding and
+        // leaves the page about a header-height below the top.
+        main.focus({ preventScroll: true });
+      }
     });
   }, [path]);
 
@@ -515,7 +560,9 @@ export function AppShell({
             className={buttonClass("quiet", "s-menu-button")}
             aria-label={w("Menu", "Menu")}
             aria-haspopup="dialog"
-            onClick={() => setMenu(true)}
+            aria-expanded={menu}
+            aria-controls="site-menu"
+            onClick={() => setMenu((value) => !value)}
           >
             <Icon name="menu" />
             <span>{w("Menu", "Menu")}</span>

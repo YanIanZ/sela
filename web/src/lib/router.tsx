@@ -45,8 +45,12 @@ export function RouterProvider({ children }: { children: ReactNode }) {
     else window.history.pushState(null, "", target);
     setRoute(current());
     window.scrollTo({ top: 0 });
-    // Move focus to the main landmark so screen readers announce the new page.
-    requestAnimationFrame(() => document.getElementById("main")?.focus());
+    // Move focus to the main landmark so screen readers announce the new
+    // page. preventScroll keeps the freshly reset route at the top instead
+    // of letting focus scroll it down by the header's scroll padding.
+    requestAnimationFrame(() =>
+      document.getElementById("main")?.focus({ preventScroll: true }),
+    );
   }, []);
   const value = useMemo(() => ({ ...route, navigate }), [route, navigate]);
   return (
