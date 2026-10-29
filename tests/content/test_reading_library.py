@@ -138,7 +138,7 @@ class ContentSetV1(unittest.TestCase):
 class FaithfulMigration(unittest.TestCase):
     def setUp(self):
         if CTX["v1"] is None:
-            self.skipTest("packages/config/src/selfHelpCards.v1.json not present")
+            self.skipTest("internal/fixtures/data/self_help_cards.v1.json not present")
 
     def test_all_30_v1_cards_are_migrated_and_23_keep_identical_text(self):
         self.assertEqual(len(CTX["v1"]) - len(CHANGED_V1), 23)
@@ -261,7 +261,7 @@ class LicenceNotice(unittest.TestCase):
     def test_notice_gives_licence_uri_scope_terms_and_citations(self):
         text = self.text()
         for needle in (RV.WHO_LICENCE_URL, RV.WHO_LEGALCODE_URL, "cards_who.json",
-                       "packages/config/src/selfHelpCards.v1.json", "B-14", "D-045", "WHO logo", "endorse"):
+                       "internal/fixtures/data/self_help_cards.v1.json", "B-14", "D-045", "WHO logo", "endorse"):
             self.assertIn(needle, text)
         for sid in ("who-dwmm-2020", "who-pmplus-2018", "who-mh-work-2022", "who-loneliness-2025"):
             s = CTX["sources_by_id"][sid]
@@ -891,11 +891,11 @@ class LicenceScan(unittest.TestCase):
     def test_repository_card_text_is_only_where_expected(self):
         found = set(self.report["with_card_text"])
         self.assertIn("data/content/reading/cards_who.json", found)
-        self.assertLessEqual(found, {"data/content/reading/cards_who.json", "packages/config/src/selfHelpCards.v1.json"})
+        self.assertLessEqual(found, {"data/content/reading/cards_who.json", "internal/fixtures/data/self_help_cards.v1.json"})
         failing = {e.split(":", 1)[0] for e in self.errors}
         # cards_who.json carries its notices; the v1 file fails until its owner adds them (open point 2)
         self.assertNotIn("data/content/reading/cards_who.json", failing)
-        self.assertLessEqual(failing, {"packages/config/src/selfHelpCards.v1.json"})
+        self.assertLessEqual(failing, {"internal/fixtures/data/self_help_cards.v1.json"})
 
     def test_a_copy_without_the_notice_fails_and_with_it_passes(self):
         text = self.card_text("grounding-saat-badai-emosi")
@@ -910,7 +910,7 @@ class LicenceScan(unittest.TestCase):
 
     def test_v1_text_of_a_changed_card_is_still_detected(self):
         if CTX["v1"] is None:
-            self.skipTest("packages/config/src/selfHelpCards.v1.json not present")
+            self.skipTest("internal/fixtures/data/self_help_cards.v1.json not present")
         v1 = CTX["v1"]["gerak-tubuh-setelah-kerja"]
         old_why = v1["why"]["en"]
         self.assertNotIn(old_why, json.dumps(ITEMS["gerak-tubuh-setelah-kerja"][1]["content"]))

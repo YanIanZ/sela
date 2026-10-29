@@ -1,8 +1,0 @@
-secrets.env
-release.env
-release.next
-active-revision*
-deploy.lock
-tls/
-source/
-*.log

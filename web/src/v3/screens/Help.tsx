@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useRouter } from "../../lib/router";
 import { useI18n } from "../../i18n";
+import { api } from "../api";
 import { useOnline, useWords } from "../shared";
 import { useSession } from "../session";
 import { Icon } from "../icons";
@@ -123,6 +124,8 @@ export function HelpPage() {
         )}
       </section>
 
+      <SelfHelpLibrary />
+
       <section className="s-section">
         <h2>{w("Bacaan yang mungkin membantu", "Reading that may help")}</h2>
         <p className="s-hint">
@@ -145,6 +148,71 @@ export function HelpPage() {
         </p>
       ) : null}
     </>
+  );
+}
+
+type SelfHelpCard = {
+  id: string;
+  title: { id: string; en: string };
+  summary: { id: string; en: string };
+  steps: { id: string[]; en: string[] };
+  why: { id: string; en: string };
+  seekHelpWhen: { id: string; en: string };
+  cautions: { id: string; en: string };
+  topics: string[];
+};
+
+/** The reviewed v1 self-help library, now served by the Go runtime. */
+function SelfHelpLibrary() {
+  const w = useWords();
+  const { lang } = useI18n();
+  const [cards, setCards] = useState<SelfHelpCard[] | null>(null);
+  const [error, setError] = useState<unknown>(null);
+
+  useEffect(() => {
+    let active = true;
+    api<{ selfHelpCards: SelfHelpCard[] }>("/help-content")
+      .then((d) => {
+        if (active) setCards(d.selfHelpCards);
+      })
+      .catch((e) => {
+        if (active) setError(e);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (error || !cards?.length) return null;
+
+  return (
+    <section className="s-section" aria-labelledby="self-help-title">
+      <h2 id="self-help-title">{w("Latihan kecil", "Small exercises")}</h2>
+      <p className="s-hint">
+        {w(
+          "Dipilih dari pustaka yang sudah ditinjau, dengan catatan sumbernya. Ini bukan pengganti bantuan profesional.",
+          "Chosen from a reviewed library, with its source notes. This is not a replacement for professional help.",
+        )}
+      </p>
+      <div className="s-help-list">
+        {cards.slice(0, 6).map((card) => (
+          <details className="s-service" key={card.id}>
+            <summary>
+              <strong>{card.title[lang]}</strong>
+            </summary>
+            <p>{card.summary[lang]}</p>
+            <ol>
+              {card.steps[lang].map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+            <p className="s-small s-muted">{card.why[lang]}</p>
+            <p className="s-hint">{card.cautions[lang]}</p>
+            <p className="s-hint">{card.seekHelpWhen[lang]}</p>
+          </details>
+        ))}
+      </div>
+    </section>
   );
 }
 

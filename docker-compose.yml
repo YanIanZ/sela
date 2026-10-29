@@ -2,8 +2,6 @@
 #
 #   docker compose up --build                  # app on http://localhost:8080
 #   docker compose --profile web-test run --rm web-test   # typecheck + test + build
-#   docker compose --profile legacy up -d      # inherited v1 Next.js demo on :3000
-#   docker compose --profile test run --rm test           # legacy CareBridge suite
 #   docker compose down                        # keep the database volume
 #   docker compose down -v                     # also drop the database volume
 #
@@ -71,58 +69,7 @@ services:
              npm test &&
              npm run build"
 
-  # Inherited v1 Next.js app (apps/web). Not part of the v3 binary; kept behind
-  # a profile until the drawdown in SPEC T9.
-  legacy:
-    profiles: ["legacy"]
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-    image: dengarin-web
-    ports:
-      - "3000:3000"
-    env_file:
-      - path: .env.local
-        required: false
-    environment:
-      # Overrides an empty REDIS_URL in .env.local; `redis` is the service below.
-      REDIS_URL: redis://redis:6379
-    extra_hosts:
-      # Lets AMD_BASE_URL=http://host.docker.internal:8000/v1 reach an SSH tunnel.
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      redis:
-        condition: service_healthy
-
-  redis:
-    profiles: ["legacy"]
-    image: redis:7-alpine
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  # Legacy CareBridge suite; mounts the tree because .dockerignore drops tests.
-  test:
-    profiles: ["test"]
-    image: node:22-alpine
-    working_dir: /app
-    environment:
-      CI: "true"
-    volumes:
-      - .:/app
-      - node_modules_root:/app/node_modules
-      - node_modules_web:/app/apps/web/node_modules
-    command: >
-      sh -c "npm ci --no-audit --no-fund &&
-             node --experimental-strip-types --version &&
-             npm run test:carebridge"
-
 volumes:
   pgdata:
   web_node_modules:
   npm_cache:
-  node_modules_root:
-  node_modules_web:

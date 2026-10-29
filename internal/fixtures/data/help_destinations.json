@@ -1,0 +1,256 @@
+[
+  {
+    "id": "fktp",
+    "label": "Dokter puskesmas / FKTP",
+    "description": "Dokter umum di puskesmas atau klinik BPJS. Pintu pertama kalau kamu ingin dirujuk ke psikolog atau poli jiwa.",
+    "speakingTo": "dokter umum di puskesmas atau klinik FKTP",
+    "vocative": "Dok,",
+    "ask": "ingin tahu apakah bisa dirujuk ke psikolog atau poli jiwa",
+    "checklist": [
+      {
+        "text": "Bawa kartu BPJS/KIS, KTP, dan KK. Pastikan kepesertaan BPJS aktif dan tidak ada tunggakan.",
+        "sourceIds": [
+          "cnn-bpjs-psikolog-2025"
+        ]
+      },
+      {
+        "text": "Tanya apakah puskesmas atau klinik ini punya poli jiwa atau psikolog.",
+        "sourceIds": [
+          "cnn-bpjs-psikolog-2025",
+          "kemenkes-jejaring-2022"
+        ]
+      },
+      {
+        "text": "Kalau tidak ada, minta surat rujukan ke rumah sakit yang punya layanan jiwa.",
+        "sourceIds": [
+          "cnn-bpjs-psikolog-2025"
+        ]
+      },
+      {
+        "text": "Kalau pernah ditangani profesional sebelumnya, bawa catatan atau surat yang ada.",
+        "sourceIds": [
+          "cnn-bpjs-psikolog-2025"
+        ]
+      },
+      {
+        "text": "Kemenkes menyarankan cek kesehatan jiwa minimal setahun sekali di puskesmas. Kamu boleh memintanya.",
+        "sourceIds": [
+          "kemenkes-skrining-2024"
+        ]
+      },
+      {
+        "text": "Bawa catatan ini. Boleh dibacakan atau ditunjukkan kalau sulit mengucapkannya.",
+        "sourceIds": [
+          "mind-uk-gp-guide"
+        ]
+      },
+      {
+        "text": "Belum semua puskesmas punya layanan jiwa. Kalau di tempatmu belum ada, itu bukan salahmu.",
+        "sourceIds": [
+          "kemenkes-jejaring-2022"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "cnn-bpjs-psikolog-2025",
+        "label": "CNN Indonesia, 1 Agu 2025 (media, bukan dokumen BPJS)",
+        "url": "https://www.cnnindonesia.com/edukasi/20250730134021-561-1256711/konsultasi-ke-psikolog-bisa-pakai-bpjs-kesehatan-ini-syarat-caranya",
+        "kind": "media",
+        "accessedOn": "2026-10-13"
+      },
+      {
+        "id": "kemenkes-jejaring-2022",
+        "label": "Kemenkes, 10 Okt 2022",
+        "url": "https://www.kemkes.go.id/id/kemenkes-kembangkan-jejaring-pelayanan-kesehatan-jiwa-di-seluruh-fasyankes",
+        "kind": "official",
+        "accessedOn": "2026-10-13"
+      },
+      {
+        "id": "kemenkes-skrining-2024",
+        "label": "Kemenkes, 25 Okt 2024",
+        "url": "https://www.kemkes.go.id/id/skrining-kesehatan-jiwa-minimal-setahun-sekali",
+        "kind": "official",
+        "accessedOn": "2026-10-13"
+      },
+      {
+        "id": "mind-uk-gp-guide",
+        "label": "Panduan Mind (Inggris), bukan aturan Indonesia",
+        "url": "https://www.mind.org.uk/for-young-people/how-to-get-help-and-support/what-happens-in-a-gp-appointment/",
+        "kind": "guide",
+        "accessedOn": "2026-10-13"
+      }
+    ],
+    "caveat": "Aturan rujukan bisa beda per daerah dan bisa berubah. Cek langsung ke FKTP-mu. Masa berlaku surat rujukan tidak kami tulis karena belum bisa kami pastikan.",
+    "verifiedOn": "2026-10-13"
+  },
+  {
+    "id": "psikolog",
+    "label": "Psikolog",
+    "description": "Sesi pertama dengan psikolog, lewat rujukan BPJS maupun layanan mandiri.",
+    "speakingTo": "psikolog pada sesi pertama",
+    "vocative": "",
+    "ask": "ingin tahu langkah apa yang bisa dimulai bersama",
+    "checklist": [
+      {
+        "text": "Kalau lewat BPJS, mulai dari FKTP dulu untuk surat rujukan. Tanpa rujukan, layanan psikolog biasanya berbayar.",
+        "sourceIds": [
+          "cnn-bpjs-psikolog-2025"
+        ]
+      },
+      {
+        "text": "Bawa kartu BPJS/KIS, KTP, KK, dan surat rujukan kalau lewat BPJS.",
+        "sourceIds": [
+          "cnn-bpjs-psikolog-2025"
+        ]
+      },
+      {
+        "text": "Bawa catatan ini. Sesi pertama biasanya banyak bertanya, jadi catatan membantu kamu tidak lupa.",
+        "sourceIds": [
+          "mind-uk-gp-guide"
+        ]
+      },
+      {
+        "text": "Tanya di awal: berapa lama satu sesi, biayanya, dan apakah bisa lanjut rutin.",
+        "sourceIds": [],
+        "unverified": true
+      },
+      {
+        "text": "Boleh bilang kalau kamu belum tahu harus mulai dari mana. Itu hal biasa di sesi pertama.",
+        "sourceIds": [],
+        "unverified": true
+      }
+    ],
+    "sources": [
+      {
+        "id": "cnn-bpjs-psikolog-2025",
+        "label": "CNN Indonesia, 1 Agu 2025 (media, bukan dokumen BPJS)",
+        "url": "https://www.cnnindonesia.com/edukasi/20250730134021-561-1256711/konsultasi-ke-psikolog-bisa-pakai-bpjs-kesehatan-ini-syarat-caranya",
+        "kind": "media",
+        "accessedOn": "2026-10-13"
+      },
+      {
+        "id": "mind-uk-gp-guide",
+        "label": "Panduan Mind (Inggris), bukan aturan Indonesia",
+        "url": "https://www.mind.org.uk/for-young-people/how-to-get-help-and-support/what-happens-in-a-gp-appointment/",
+        "kind": "guide",
+        "accessedOn": "2026-10-13"
+      }
+    ],
+    "caveat": "Biaya layanan mandiri tidak kami tulis karena angkanya belum bisa kami pastikan untuk 2025 sampai 2026. Tanya langsung ke layanannya.",
+    "verifiedOn": "2026-10-13"
+  },
+  {
+    "id": "healing119",
+    "label": "Healing119 (Kemenkes)",
+    "description": "Dukungan psikologis awal dari Kemenkes lewat telepon atau chat. Gratis dan anonim.",
+    "speakingTo": "konselor Healing119 lewat telepon atau chat",
+    "vocative": "Halo,",
+    "ask": "ingin bercerita dulu dan bertanya langkah selanjutnya",
+    "checklist": [
+      {
+        "text": "Telepon 119, lalu tekan ekstensi 8. Atau buka www.healing119.id dan pilih tombol WhatsApp.",
+        "sourceIds": [
+          "kemenkes-healing119-2025",
+          "healing119-site"
+        ]
+      },
+      {
+        "text": "Gratis. Anonim, tidak tatap muka.",
+        "sourceIds": [
+          "kemenkes-healing119-2025"
+        ]
+      },
+      {
+        "text": "Jam layanan: pagi sampai malam, bukan 24 jam. Cek situsnya untuk jam terbaru.",
+        "sourceIds": [
+          "kemenkes-healing119-2025"
+        ]
+      },
+      {
+        "text": "Yang diberikan adalah dukungan psikologis awal, bukan terapi. Konselor bisa membantu merujuk ke layanan profesional.",
+        "sourceIds": [
+          "kemenkes-healing119-2025"
+        ]
+      },
+      {
+        "text": "Antrean telepon bisa panjang. Kemenkes menyarankan chat atau telepon lewat situs.",
+        "sourceIds": [
+          "detik-healing119-2025"
+        ]
+      },
+      {
+        "text": "Kalau lewat chat, kamu bisa langsung menempel kalimat pembuka di atas.",
+        "sourceIds": [],
+        "unverified": true
+      }
+    ],
+    "sources": [
+      {
+        "id": "kemenkes-healing119-2025",
+        "label": "Kemenkes Ditjen Kesmas, 7 Agu 2025",
+        "url": "https://kesprimkom.kemkes.go.id/konten/127/151/0/cegah-bunuh-diri-dukung-kesehatan-jiwa-kenali-layanan-healing119-id",
+        "kind": "official",
+        "accessedOn": "2026-10-13"
+      },
+      {
+        "id": "healing119-site",
+        "label": "Situs resmi healing119.id",
+        "url": "https://www.healing119.id/",
+        "kind": "official",
+        "accessedOn": "2026-10-13"
+      },
+      {
+        "id": "detik-healing119-2025",
+        "label": "detikHealth mengutip Kemenkes, 2 Sep 2025",
+        "url": "https://health.detik.com/berita-detikhealth/d-8092544/kemenkes-buka-layanan-konseling-gratis-bagi-warga-62-yang-anxiety-gegara-demo",
+        "kind": "media",
+        "accessedOn": "2026-10-13"
+      }
+    ],
+    "caveat": "Nomor WhatsApp tidak kami tulis di sini karena hanya ditemukan di media, belum di halaman resmi. Ambil dari situs healing119.id langsung.",
+    "verifiedOn": "2026-10-13"
+  },
+  {
+    "id": "kampus",
+    "label": "Konselor kampus / kantor",
+    "description": "Unit konseling kampus atau program bantuan karyawan di tempat kerja.",
+    "speakingTo": "konselor di unit konseling kampus atau kantor",
+    "vocative": "",
+    "ask": "ingin tahu apakah bisa konseling di sini dan bagaimana kerahasiaannya",
+    "checklist": [
+      {
+        "text": "Cari nama unitnya dulu: biasanya \"unit layanan psikologi\", \"pusat konseling\", atau \"EAP\" di kantor.",
+        "sourceIds": [],
+        "unverified": true
+      },
+      {
+        "text": "Tanya soal kerahasiaan: apa yang dicatat, siapa yang bisa melihat, dan apakah terhubung ke nilai akademik atau HR.",
+        "sourceIds": [],
+        "unverified": true
+      },
+      {
+        "text": "Tanya apakah mereka bisa merujuk ke psikolog atau psikiater di luar kampus atau kantor bila perlu.",
+        "sourceIds": [],
+        "unverified": true
+      },
+      {
+        "text": "Bawa catatan ini. Boleh dibacakan kalau sulit mengucapkannya.",
+        "sourceIds": [
+          "mind-uk-gp-guide"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "mind-uk-gp-guide",
+        "label": "Panduan Mind (Inggris), bukan aturan Indonesia",
+        "url": "https://www.mind.org.uk/for-young-people/how-to-get-help-and-support/what-happens-in-a-gp-appointment/",
+        "kind": "guide",
+        "accessedOn": "2026-10-13"
+      }
+    ],
+    "caveat": "Tidak ada aturan nasional yang seragam untuk konseling kampus atau kantor yang bisa kami pastikan. Poin di atas saran umum; tiap tempat bisa berbeda.",
+    "verifiedOn": "2026-10-13"
+  }
+]

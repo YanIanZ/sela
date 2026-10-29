@@ -74,4 +74,4 @@ External terms (laws, provider terms, event rules) govern legality, eligibility 
 
 ## Historical implementation
 
-[Archive index](archive/v1/README.md) contains the pre-refactor documentation, including AMD work, old product requirements, Next.js API contracts, Redis/PostgreSQL operations, evaluation reports and bug history. The [font provenance](../apps/web/src/app/fonts/README.md) remains current for the checked-in font. The [database](../services/persistence/migrations/README.md), [Supabase](../supabase/migrations/README.md) and [VPS](../deploy/vps/README.md) READMEs describe v1 only.
+[Archive index](archive/v1/README.md) contains the pre-refactor documentation, including AMD work, old product requirements, Next.js API contracts, Redis/PostgreSQL operations, evaluation reports and bug history. The v1 code paths and deployment READMEs it links to were removed on 2026-10-29 (S-272); the archive remains as provenance.

@@ -88,6 +88,7 @@ func (s *Server) v3Routes() {
 		{method: "GET", path: "/api/v3/consultation-summaries/{id}/followups", owner: s.v3Followups},
 
 		{method: "GET", path: "/api/v3/policies", public: true, h: s.v3Policies},
+		{method: "GET", path: "/api/v3/help-content", public: true, h: s.v3HelpContent},
 		{method: "GET", path: "/api/v3/auth/options", public: true, h: s.v3AuthOptions},
 
 		{method: "POST", path: "/api/v3/auth/register", mutation: true, h: s.v3Register},

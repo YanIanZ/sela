@@ -12,9 +12,7 @@ Updated: 26 October 2026 (v3 planning documents added; classifications updated a
 | [README.md](../README.md) | Current project / v3 and v2 supporting documentation |
 | [SECURITY.md](../SECURITY.md) | Current project / v3 and v2 supporting documentation |
 | [SPEC.md](../SPEC.md) | Normative source of truth (v3; keeps the v2 requirements and tasks as history) |
-| [apps/web/src/app/fonts/README.md](../apps/web/src/app/fonts/README.md) | Attached font source/license provenance; retained |
 | [data/research/README.md](../data/research/README.md) | Supporting research data documentation |
-| [deploy/vps/README.md](../deploy/vps/README.md) | Attached v1 implementation reference; not v2 requirement |
 | [docs/AI_POLICY.md](AI_POLICY.md) | Current project / v3 and v2 supporting documentation |
 | [docs/API_SPEC.md](API_SPEC.md) | Current project / v2 supporting documentation |
 | [docs/API_SPEC_V3.md](API_SPEC_V3.md) | Current project / v3 API contract (foundation implemented and verified locally, CI passed on draft PR #9; feature sections reserved) |
@@ -123,8 +121,7 @@ Updated: 26 October 2026 (v3 planning documents added; classifications updated a
 | [modal/README.md](../modal/README.md) | Current project / v2 Modal serving runbook |
 | [prototypes/evidenceguard/README.md](../prototypes/evidenceguard/README.md) | Standalone verifier prototype documentation (not wired into v2) |
 | [prototypes/generationfallback/README.md](../prototypes/generationfallback/README.md) | Standalone DeepSeek fallback prototype documentation (not wired into v2) |
-| [services/persistence/migrations/README.md](../services/persistence/migrations/README.md) | Attached v1 implementation reference; not v2 requirement |
-| [supabase/migrations/README.md](../supabase/migrations/README.md) | Attached v1 implementation reference; not v2 requirement |
+
 
 ## Research and proposal package
 
