@@ -220,6 +220,11 @@ body, body:has(.s-shell) { margin: 0; background: var(--c-bg); color: var(--c-te
 @media (max-width: 63.99em) {
   .n-desktop-nav { display: none; }
   .s-header-actions .s-btn { font-size: var(--font-size-1); }
+  /* The trailing clearance covers the measured place-nav AND the measured
+     sticky header, so any footer target can scroll below the header (a
+     keyboard tab or a measurement scroll must never leave a link obscured
+     under it, WCAG 2.4.11 / 2.5.8). */
+  .s-shell-inner { padding-bottom: calc(max(4.75rem, var(--bottom-bar-h, 0px)) + var(--top-bar-h, 0px) + env(safe-area-inset-bottom)); }
   .s-place-nav { display: block; position: fixed; z-index: var(--z-sticky); bottom: 0; left: 0; right: 0; background: var(--c-surface); border-top: 1px solid var(--c-border-subtle); padding: 0.3rem 0.25rem max(0.35rem, env(safe-area-inset-bottom)); }
   .s-place-nav ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); list-style: none; margin: 0; padding: 0; }
   .s-shell .s-place-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; min-height: 3.75rem; padding: 0.3rem; text-decoration: none; color: var(--c-muted); font-size: var(--font-size-1); font-weight: 600; border-radius: var(--radius-2); }
