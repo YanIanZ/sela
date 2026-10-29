@@ -2136,14 +2136,8 @@ func briefFarewell(s string, _, end int) bool {
 	// "tidur sebentar, selamanya" is a farewell, while "tidak akan lama.
 	// kita teman selamanya" is a short break (review finding P2-3).
 	if f := foreverRe.FindStringIndex(rest); f != nil {
-		before := rest[:f[0]]
-		if benignForeverRe.MatchString(before) {
+		if benignForeverTailRe.MatchString(rest[:f[0]]) {
 			return true
-		}
-		if stay := briefStayRe.FindStringIndex(rest); stay != nil && stay[0] < f[0] {
-			if benignForeverRe.MatchString(rest[stay[1]:f[0]]) {
-				return true
-			}
 		}
 		return false
 	}
@@ -2168,10 +2162,12 @@ var (
 	// foreverRe later in the sentence makes "pergi dari dunia ini
 	// sebentar" more than a short break (see briefBreak).
 	foreverRe = regexp.MustCompile(`(?i)\b(?:selamanya|selama-lamanya|abadi|forever|for\s+good)\b`)
-	// benignForeverRe marks a friendship, love or family phrase that a later
-	// forever word belongs to, rather than a farewell ("kita teman
-	// selamanya", "cinta kita abadi").
-	benignForeverRe = regexp.MustCompile(`(?i)\b(?:teman|sahabat|persahabatan|cinta|keluarga|friend|friends|friendship|love|family)\b`)
+	// benignForeverTailRe accepts only a relationship phrase immediately
+	// before the forever word: "teman selamanya", "cinta kita abadi",
+	// "kamu sahabatku selamanya". A vocative or verb separated by a comma
+	// ("teman, selamanya", "aku cinta kalian semua, selamanya") stays a
+	// farewell, not a relationship statement.
+	benignForeverTailRe = regexp.MustCompile(`(?i)\b(?:teman(?:-teman)?|sahabat\w*|persahabatan|cinta\w*|keluarga\w*|friend(?:s|ship)?|love|family)(?:\s+(?:kita|kami|ku|aku|kamu|kalian|anda|you|us|our|my))?\s*$`)
 	// stopManners after "berhenti hidup" name a way of living (see
 	// stopLivingManner).
 	stopManners = setOf("susah miskin sengsara melarat kekurangan sendirian sendiri kesepian boros mewah foya-foya " +

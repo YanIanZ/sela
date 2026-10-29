@@ -2716,5 +2716,15 @@
   {"text": "aku pergi sebentar, selamanya", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "forever word directly after a brief leaving"},
   {"text": "aku pergi sebentar, teman selamanya ya", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a friendship forever phrase without a short-break phrase is not a farewell"},
   {"text": "aku pergi sebentar, cinta kita abadi", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: a romantic forever phrase is not a farewell"},
-  {"text": "aku pergi sebentar, kita teman selamanya, tidak akan lama", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: reordered friendship phrase plus tidak akan lama"}
+  {"text": "aku pergi sebentar, kita teman selamanya, tidak akan lama", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2-3: reordered friendship phrase plus tidak akan lama"},
+  {"text": "aku pergi sebentar, teman, selamanya", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1: a vocative separated by a comma is a farewell, not a relationship phrase"},
+  {"text": "aku pergi sebentar, cinta, selamanya", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1: cinta as a vocative is not a benign relationship tail"},
+  {"text": "aku pergi sebentar, keluarga, selamanya", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1: keluarga as a vocative is not a benign relationship tail"},
+  {"text": "aku pergi sebentar, sahabat, selamanya", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1: sahabat as a vocative is not a benign relationship tail"},
+  {"text": "aku pergi sebentar, aku cinta kalian semua, selamanya", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1: cinta as a verb is a farewell note, not a relationship phrase"},
+  {"text": "aku pergi sebentar, i love you all, forever", "want": "crisis", "langs": ["en"], "tags": ["idiom", "codeswitch"], "source": "new", "note": "review finding P1: English love as a verb with a comma is a farewell"},
+  {"text": "aku pergi sebentar, my family, forever", "want": "crisis", "langs": ["en"], "tags": ["idiom", "codeswitch"], "source": "new", "note": "review finding P1: a vocative family phrase with a comma is a farewell"},
+  {"text": "aku pergi sebentar, keluarga ku, selamanya", "want": "crisis", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P1: a comma before the forever word breaks the benign tail"},
+  {"text": "aku pergi sebentar, kamu sahabatku selamanya", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2: a suffixed relationship noun directly before selamanya is benign"},
+  {"text": "aku pergi sebentar, cintaku selamanya", "want": "none", "langs": ["id"], "tags": ["idiom"], "source": "new", "note": "review finding P2: a suffixed cinta directly before selamanya is benign"}
 ]
