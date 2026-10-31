@@ -362,8 +362,6 @@ function Thread({ id }: { id: string }) {
   const [missing, setMissing] = useState(false);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<"" | "held" | "hidden">("");
-
   const load = useCallback(() => {
     api<{ post: Post; replies: Reply[] }>("/community/posts/" + id)
       .then((d) => {
@@ -381,13 +379,16 @@ function Thread({ id }: { id: string }) {
     e.preventDefault();
     if (!body.trim() || busy) return;
     setBusy(true);
-    setNotice("");
     setError(null);
     try {
       const res = await api<{ reply: Reply }>("/community/posts/" + id + "/replies", { body });
       setBody("");
-      if (res.reply.status !== "published") setNotice(res.reply.status as "held" | "hidden");
-      announce("status", w("Balasanmu terkirim.", "Your reply was sent."));
+      announce(
+        "status",
+        res.reply.status === "published"
+          ? w("Balasanmu terkirim.", "Your reply was sent.")
+          : w("Balasanmu belum ditampilkan.", "Your reply isn't shown yet."),
+      );
       load();
     } catch (err) {
       if ((err as { code?: string }).code === "crisis") crisis.open();
@@ -488,7 +489,6 @@ function Thread({ id }: { id: string }) {
                 {w("Kirim balasan", "Send reply")}
               </Button>
             </div>
-            {notice && <StatusNote status={notice} />}
           </form>
         )}
       </section>

@@ -59,7 +59,8 @@ var heavyMoods = []string{"very_heavy", "heavy"}
 //   - support: a crisis entry 8–30 days ago, three or more elevated entries
 //     in 14 days, heavy moods in 60% or more of at least four check-ins in
 //     14 days, or the three latest check-ins all heavy;
-//   - attention: an elevated entry in 14 days, heavy moods in a third or more
+//   - attention: an elevated entry in 14 days, a "very heavy" check-in in
+//     the last 3 days, heavy moods in a third or more
 //     of at least three check-ins in 14 days, two heavy check-ins in 7
 //     days, or low energy in half of at least four check-ins in 14 days;
 //   - everyday: otherwise.
@@ -69,7 +70,7 @@ var heavyMoods = []string{"very_heavy", "heavy"}
 func ComputeConditionMap(records []PersonalRecord, now time.Time) ConditionMap {
 	m := ConditionMap{WindowDays: conditionWindow, ComputedAt: now.UTC(), Ruleset: ConditionRuleset, Sources: map[string]int{}}
 	days := func(r PersonalRecord) float64 { return now.Sub(r.UpdatedAt).Hours() / 24 }
-	var crisis7, crisis30, elevated14, checkins14, heavy14, heavy7, lowEnergy14 int
+	var crisis7, crisis30, elevated14, checkins14, heavy14, heavy7, veryHeavy3, lowEnergy14 int
 	var checkins []PersonalRecord
 	for _, r := range records {
 		age := days(r)
@@ -103,6 +104,9 @@ func ComputeConditionMap(records []PersonalRecord, now time.Time) ConditionMap {
 				heavy14++
 				if age <= 7 {
 					heavy7++
+				}
+				if r.Mood == "very_heavy" && age <= 3 {
+					veryHeavy3++
 				}
 			}
 			if r.Energy == "low" {
@@ -145,12 +149,12 @@ func ComputeConditionMap(records []PersonalRecord, now time.Time) ConditionMap {
 		if streak >= 3 {
 			add("heavy_streak", streak, 14)
 		}
-	case elevated14 >= 1 || (checkins14 >= 3 && share(heavy14, checkins14) >= 1.0/3) || heavy7 >= 2 || (checkins14 >= 4 && share(lowEnergy14, checkins14) >= 0.5):
+	case elevated14 >= 1 || veryHeavy3 >= 1 || (checkins14 >= 3 && share(heavy14, checkins14) >= 1.0/3) || heavy7 >= 2 || (checkins14 >= 4 && share(lowEnergy14, checkins14) >= 0.5):
 		m.Stage = StageAttention
 		if elevated14 >= 1 {
 			add("heavy_words", elevated14, 14)
 		}
-		if (checkins14 >= 3 && share(heavy14, checkins14) >= 1.0/3) || heavy7 >= 2 {
+		if veryHeavy3 >= 1 || (checkins14 >= 3 && share(heavy14, checkins14) >= 1.0/3) || heavy7 >= 2 {
 			add("heavy_checkins", heavy14, 14)
 		}
 		if checkins14 >= 4 && share(lowEnergy14, checkins14) >= 0.5 {

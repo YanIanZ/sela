@@ -20,6 +20,7 @@ func TestComputeConditionMap(t *testing.T) {
 		{"empty", nil, StageEveryday, true},
 		{"calm", []PersonalRecord{check(1, "good", "medium"), check(3, "okay", "high"), {Kind: "note", Safety: "none", UpdatedAt: ago(2)}}, StageEveryday, false},
 		{"elevated note", []PersonalRecord{{Kind: "note", Safety: "elevated", UpdatedAt: ago(4)}}, StageAttention, false},
+		{"very heavy today", []PersonalRecord{check(0, "very_heavy", "")}, StageAttention, false},
 		{"heavy share", []PersonalRecord{check(1, "heavy", ""), check(2, "okay", ""), check(5, "good", "")}, StageAttention, false},
 		{"heavy streak", []PersonalRecord{check(1, "very_heavy", ""), check(2, "heavy", ""), check(3, "heavy", ""), check(6, "good", "")}, StageSupport, false},
 		{"old crisis", []PersonalRecord{{Kind: "conversation", Safety: "crisis", UpdatedAt: ago(20)}}, StageSupport, false},

@@ -14,7 +14,7 @@
 .c-stage--support { --stage: color-mix(in srgb, var(--place-support) 85%, var(--c-surface)); }
 .c-stage--urgent { --stage: var(--c-help-bg); --stage-ink: var(--c-help-text); border: 2px solid var(--c-help); }
 .c-stage p { margin: 0; max-width: 64ch; }
-.c-stage-track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; margin: 0; padding: 0; list-style: none; counter-reset: stage; }
+.s-shell .c-stage-track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; margin: 0; padding: 0; list-style: none; counter-reset: stage; }
 .c-stage-track li { position: relative; padding-top: 0.75rem; font-family: var(--font-display); font-size: var(--font-size-1); font-weight: 500; color: color-mix(in srgb, currentColor 60%, transparent); line-height: 1.25; }
 .c-stage-track li::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 0.4rem; border-radius: var(--radius-pill); background: color-mix(in srgb, currentColor 18%, transparent); }
 .c-stage-track li.is-current { color: inherit; font-weight: 600; }
@@ -33,7 +33,7 @@
 .c-demo-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .s-shell .c-demo-head h3 { margin: 0; }
 .c-demo-badge { padding: 0.15rem 0.7rem; border-radius: var(--radius-pill); background: var(--c-demo-bg, #eee9f8); color: var(--c-demo, #5e4a99); font-family: var(--font-display); font-size: var(--font-size-1); font-weight: 500; }
-.c-demo-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+.s-shell .c-demo-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .c-demo-list li { display: grid; gap: 0.35rem; padding: 0.9rem 1rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-2); background: var(--c-surface); }
 .c-demo-list li.is-match { border-color: var(--c-leaf); box-shadow: inset 3px 0 0 var(--c-leaf); }
 .c-demo-list li > div { display: grid; gap: 0.1rem; }
@@ -48,7 +48,7 @@
 .s-shell .c-community-compose--reply { margin: 1.25rem 0 0; }
 .c-community-topics, .c-community-filter, .c-community-reasons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .s-shell .c-community-filter { margin-bottom: 1rem; }
-.c-community-list { display: grid; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+.s-shell .c-community-list { display: grid; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
 .s-shell .c-community-card { display: grid; gap: 0.5rem; padding: 1.1rem 1.25rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); background: var(--c-surface); color: var(--c-text); text-decoration: none; transition: border-color var(--duration-quick) var(--ease-standard), box-shadow var(--duration-gentle) var(--ease-standard); }
 .s-shell .c-community-card:hover { border-color: var(--c-border-control); box-shadow: var(--shadow-1); }
 .s-shell .c-community-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; margin: 0; font-family: var(--font-display); font-size: var(--font-size-1); color: var(--c-muted); }
