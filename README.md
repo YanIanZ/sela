@@ -116,7 +116,7 @@ SPEC.md      Requirements, invariants and task status — the source of truth
 
 ## Status
 
-Sela is in **active development** toward a controlled pilot. The features above run end to end locally against PostgreSQL with the live Meta model in development; they are covered by Go, frontend and browser tests. There is **no public deployment yet**, and Sela makes no clinical-efficacy claim. Current progress and open blockers: [implementation status](docs/status/IMPLEMENTATION_STATUS.md) · [blockers](docs/status/BLOCKERS.md) · [roadmap](docs/product/ROADMAP.md).
+Sela is in **active development** toward a controlled pilot. The features above run end to end locally against PostgreSQL with the live Meta model in development; they are covered by Go, frontend and browser tests. **Hosting update (owner-reported, 2026-11-01):** production hosting has been set up, but the deployed URL, build SHA, hosted Meta inference and release/privacy gates have not been independently verified in this repository; see [production verification](docs/hackathon/PRODUCTION_VERIFICATION.md). Sela makes no clinical-efficacy claim. Current progress and open blockers: [implementation status](docs/status/IMPLEMENTATION_STATUS.md) · [blockers](docs/status/BLOCKERS.md) · [roadmap](docs/product/ROADMAP.md).
 
 ## Documentation
 
@@ -126,6 +126,7 @@ Sela is in **active development** toward a controlled pilot. The features above 
 | [Product](docs/product/PRODUCT.md) · [Design system](web/DESIGN.md) | What Sela does and how it looks |
 | [API](docs/api/API_SPEC_V3.md) | HTTP contracts |
 | [Docs index](docs/README.md) | Everything else, grouped by purpose |
+| [Meta hackathon plan](docs/hackathon/README.md) | Detailed scoring strategy, MIE, seven scenarios, QA, production verification and submission checklist |
 
 ## Contributing and security
 
