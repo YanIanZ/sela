@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -26,12 +27,17 @@ const (
 
 // ContinuityTitleMax and ContinuityTextMax bound every continuity text.
 // FollowupSectionMax bounds each optional section of an after-consultation
-// note independently.
+// note independently. MaxSummaryItems, SummaryItemTextMax and
+// SummaryItemQuoteMax bound the optional per-statement model of a
+// consultation summary.
 const (
-	ContinuityTitleMax = 6000
-	ContinuityTextMax  = 6000
-	FollowupSectionMax = 2000
-	MaxSourceRefs      = 12
+	ContinuityTitleMax  = 6000
+	ContinuityTextMax   = 6000
+	FollowupSectionMax  = 2000
+	MaxSourceRefs       = 12
+	MaxSummaryItems     = 36
+	SummaryItemTextMax  = 800
+	SummaryItemQuoteMax = 1200
 )
 
 // Summary state is server-controlled: only an explicit approval can make
@@ -84,6 +90,34 @@ type SummaryPrepared struct {
 	Goal      string `json:"goal"`
 	Questions string `json:"questions"`
 	Bring     string `json:"bring"`
+}
+
+// SummaryItemSource pins one owner-selected source revision for a
+// statement. It intentionally carries no quote or turn key: the item's own
+// Quote is the passage it rests on.
+type SummaryItemSource struct {
+	RecordID string `json:"recordId"`
+	Version  int    `json:"version"`
+}
+
+// SummaryItem is one optional statement in a consultation summary. Text is
+// the owner's own wording, Quote is the exact source passage it rests on,
+// and SourceRef pins the owner-selected source revision the quote came
+// from. Items live inside the sealed summary content, so they inherit the
+// same encryption, revisions, export and deletion behaviour as Text.
+//
+// IDs are server-assigned for new items and preserved when an existing
+// item is kept, so a client can edit one statement without replacing the
+// whole list. Position mirrors the array order and is assigned by the
+// server.
+type SummaryItem struct {
+	ID           string            `json:"id"`
+	Text         string            `json:"text"`
+	Quote        string            `json:"quote,omitempty"`
+	SourceRef    SummaryItemSource `json:"sourceRef"`
+	Provenance   string            `json:"provenance"`
+	ReviewStatus string            `json:"reviewStatus"`
+	Position     int               `json:"position"`
 }
 
 // FollowupSections is the optional structured after-consultation note.
@@ -141,12 +175,120 @@ func cloneSourceRefs(in []SourceRef) []SourceRef {
 	return append([]SourceRef(nil), in...)
 }
 
+// cloneSummaryItems copies the item list. Every field is a value, so the
+// shallow copy is enough; the slice is never shared.
+func cloneSummaryItems(in []SummaryItem) []SummaryItem {
+	if len(in) == 0 {
+		return nil
+	}
+	return append([]SummaryItem(nil), in...)
+}
+
+// summarySourceKey identifies one pinned source revision inside a summary.
+// The same key is used to prove that an item quotes a source the owner
+// actually selected, and to attach a source label to an export or share.
+func summarySourceKey(ref SourceRef) string {
+	return sourceKey(ref.RecordID, ref.Version)
+}
+
+func summaryItemSourceKey(ref SummaryItemSource) string {
+	return sourceKey(ref.RecordID, ref.Version)
+}
+
+func sourceKey(recordID string, version int) string {
+	return recordID + "/" + strconv.Itoa(version)
+}
+
 func clonePrepared(in *SummaryPrepared) *SummaryPrepared {
 	if in == nil {
 		return nil
 	}
 	out := *in
 	return &out
+}
+
+// validateSummaryItems checks the optional statement list. Every item
+// needs non-blank wording and a source that the summary itself pins at the
+// exact revision; an AI provenance or an unreviewed item is refused, so
+// nothing in a summary can claim to be model output. Shared ids must be
+// unique; an empty id means "new item, assign one".
+func validateSummaryItems(items []SummaryItem, refs []SourceRef) error {
+	if len(items) > MaxSummaryItems {
+		return invalid("items")
+	}
+	pinned := make(map[string]bool, len(refs))
+	for _, ref := range refs {
+		pinned[summarySourceKey(ref)] = true
+	}
+	seen := make(map[string]bool, len(items))
+	for _, item := range items {
+		if !utf8.ValidString(item.ID) || utf8.RuneCountInString(item.ID) > 64 {
+			return invalid("items")
+		}
+		if item.ID != "" {
+			if seen[item.ID] {
+				return invalid("items")
+			}
+			seen[item.ID] = true
+		}
+		if !utf8.ValidString(item.Text) || strings.TrimSpace(item.Text) == "" ||
+			utf8.RuneCountInString(item.Text) > SummaryItemTextMax {
+			return invalid("items")
+		}
+		if !utf8.ValidString(item.Quote) || utf8.RuneCountInString(item.Quote) > SummaryItemQuoteMax {
+			return invalid("items")
+		}
+		if item.SourceRef.Version <= 0 || !pinned[summaryItemSourceKey(item.SourceRef)] {
+			return invalid("items")
+		}
+		switch item.Provenance {
+		case "", "user_original", "user_correction":
+		default:
+			return invalid("items")
+		}
+		switch item.ReviewStatus {
+		case "", ReviewConfirmed:
+		default:
+			return invalid("items")
+		}
+	}
+	return nil
+}
+
+// normalizeSummaryItems assigns ids, order, provenance and review status.
+// A kept item whose wording, quote or source changed becomes
+// user_correction; a new item is user_original. reviewStatus is always
+// confirmed because there is no AI drafting path for a summary.
+func normalizeSummaryItems(in, before []SummaryItem) []SummaryItem {
+	if len(in) == 0 {
+		return nil
+	}
+	previous := make(map[string]SummaryItem, len(before))
+	for _, item := range before {
+		previous[item.ID] = item
+	}
+	out := make([]SummaryItem, 0, len(in))
+	for i, item := range in {
+		id := item.ID
+		if id == "" {
+			id = newID().String()
+		}
+		provenance := "user_original"
+		if prev, ok := previous[id]; ok {
+			provenance = prev.Provenance
+			if provenance == "" {
+				provenance = "user_original"
+			}
+			if prev.Text != item.Text || prev.Quote != item.Quote || prev.SourceRef != item.SourceRef {
+				provenance = "user_correction"
+			}
+		}
+		out = append(out, SummaryItem{
+			ID: id, Text: item.Text, Quote: item.Quote, SourceRef: item.SourceRef,
+			Provenance: provenance, ReviewStatus: ReviewConfirmed, Position: i,
+		})
+	}
+	return out
 }
 
 // validateContinuity validates one memory, summary or follow-up input.
@@ -164,9 +306,20 @@ func validateContinuity(in RecordInput, minSources int) error {
 		!utf8.ValidString(in.Text) || utf8.RuneCountInString(in.Text) > ContinuityTextMax {
 		return invalid("text")
 	}
-	// A follow-up may be text-only (old clients), sections-only, or both.
-	// Every other continuity kind still needs text.
-	if strings.TrimSpace(in.Text) == "" && !(in.Kind == KindFollowup && !in.Sections.empty()) {
+	// Structured statements belong to a summary only.
+	if in.Kind != KindSummary {
+		if len(in.Items) > 0 {
+			return invalid("items")
+		}
+	} else if len(in.Items) > MaxSummaryItems {
+		return invalid("items")
+	}
+	// A follow-up may be text-only (old clients), sections-only, or both;
+	// a summary may be text-only, statement-only, or both. Every other
+	// continuity kind still needs text.
+	if strings.TrimSpace(in.Text) == "" &&
+		!(in.Kind == KindFollowup && !in.Sections.empty()) &&
+		!(in.Kind == KindSummary && len(in.Items) > 0) {
 		return invalid("text")
 	}
 	// Continuity records never carry check-in fields.
@@ -204,6 +357,9 @@ func validateContinuity(in RecordInput, minSources int) error {
 			}
 		}
 	}
+	if err := validateSummaryItems(in.Items, in.SourceRefs); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -215,6 +371,11 @@ func continuityRecord(id string, in RecordInput, version int, created, now time.
 	if in.Sections != nil {
 		assessed += "\n" + in.Sections.Feeling + "\n" + in.Sections.Remember +
 			"\n" + in.Sections.Agreed + "\n" + in.Sections.AskNext
+	}
+	if in.Kind == KindSummary {
+		for _, item := range in.Items {
+			assessed += "\n" + item.Text + "\n" + item.Quote
+		}
 	}
 	a := safety.Assess(assessed)
 	provenance := "user_original"
@@ -236,6 +397,7 @@ func continuityRecord(id string, in RecordInput, version int, created, now time.
 	}
 	if in.Kind == KindSummary {
 		r.SummaryState = SummaryDraft
+		r.Items = cloneSummaryItems(in.Items)
 	}
 	return r
 }
@@ -726,14 +888,16 @@ func (s *Store) Summary(ctx context.Context, owner UserID, id string) (PersonalR
 	return r, nil
 }
 
-// CreateSummary stores a manual consultation summary. The text and
-// prepared fields are the owner's own words (provenance manual); sources
-// are owner-owned records pinned to the revisions the owner selected.
+// CreateSummary stores a manual consultation summary. The text, prepared
+// fields and optional statements are the owner's own words (provenance
+// manual); sources are owner-owned records pinned to the revisions the
+// owner selected. An item may only quote one of those pinned sources.
 func (s *Store) CreateSummary(ctx context.Context, owner UserID, in RecordInput) (PersonalRecord, error) {
 	in.Kind = KindSummary
 	if err := validateContinuity(in, 1); err != nil {
 		return PersonalRecord{}, err
 	}
+	in.Items = normalizeSummaryItems(in.Items, nil)
 	id := newID().String()
 	now := s.clock()
 	r := continuityRecord(id, in, 1, now, now)
@@ -749,9 +913,10 @@ func (s *Store) CreateSummary(ctx context.Context, owner UserID, in RecordInput)
 	return r, err
 }
 
-// UpdateSummary replaces the summary content in a new revision. Any edit
-// revokes approval (state draft) and the new revision must be approved
-// again.
+// UpdateSummary replaces the summary content in a new revision. Any edit,
+// including a changed statement, revokes approval (state draft) and the new
+// revision must be approved again. A nil Items keeps the stored statements
+// for older text-only clients; an explicit empty array clears them.
 func (s *Store) UpdateSummary(ctx context.Context, owner UserID, id string, in RecordInput) (PersonalRecord, error) {
 	var result PersonalRecord
 	err := s.tx(ctx, func(tx pgx.Tx) error {
@@ -772,12 +937,16 @@ func (s *Store) UpdateSummary(ctx context.Context, owner UserID, id string, in R
 		if in.Prepared == nil {
 			in.Prepared = before.Prepared
 		}
+		if in.Items == nil {
+			in.Items = before.Items
+		}
 		if err := validateContinuity(in, 1); err != nil {
 			return err
 		}
 		if err := s.validateSourceRefs(ctx, tx, owner, in.SourceRefs, true); err != nil {
 			return err
 		}
+		in.Items = normalizeSummaryItems(in.Items, before.Items)
 		result = continuityRecord(id, in, before.Version+1, before.CreatedAt, s.clock())
 		return s.updateContinuityRecord(ctx, tx, owner, result)
 	})

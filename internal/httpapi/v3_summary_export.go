@@ -39,6 +39,7 @@ func (s *Server) v3ExportSummary(w http.ResponseWriter, r *http.Request, p accou
 		return
 	}
 	labels := make([]string, 0, len(rec.SourceRefs))
+	labelsByRef := make(map[string]string, len(rec.SourceRefs))
 	for _, ref := range rec.SourceRefs {
 		label := ref.RecordID
 		if src, err := s.opt.Accounts.Record(r.Context(), p.UserID, ref.RecordID); err == nil {
@@ -48,15 +49,24 @@ func (s *Server) v3ExportSummary(w http.ResponseWriter, r *http.Request, p accou
 				label = src.Kind
 			}
 		}
-		labels = append(labels, label+" · v"+strconv.Itoa(ref.Version))
+		display := label + " · v" + strconv.Itoa(ref.Version)
+		labels = append(labels, display)
+		labelsByRef[ref.RecordID+"/"+strconv.Itoa(ref.Version)] = display
+	}
+	itemLabels := make([]string, len(rec.Items))
+	for i, item := range rec.Items {
+		itemLabels[i] = labelsByRef[item.SourceRef.RecordID+"/"+strconv.Itoa(item.SourceRef.Version)]
+		if itemLabels[i] == "" {
+			itemLabels[i] = item.SourceRef.RecordID + " · v" + strconv.Itoa(item.SourceRef.Version)
+		}
 	}
 	var body []byte
 	contentType, ext := "text/html; charset=utf-8", "html"
 	if format == "html" {
-		body = []byte(renderSummaryHTML(rec, labels, lang))
+		body = []byte(renderSummaryHTML(rec, labels, itemLabels, lang))
 	} else {
 		contentType, ext = "text/markdown; charset=utf-8", "md"
-		body = []byte(renderSummaryMarkdown(rec, labels, lang))
+		body = []byte(renderSummaryMarkdown(rec, labels, itemLabels, lang))
 	}
 	h := w.Header()
 	h.Set("Content-Type", contentType)
@@ -87,7 +97,14 @@ func summaryTitle(rec account.PersonalRecord) string {
 	return "Ringkasan pribadi"
 }
 
-func renderSummaryHTML(rec account.PersonalRecord, labels []string, lang string) string {
+func summaryItemsTitle(lang string) string {
+	if lang == "en" {
+		return "Statements from your sources"
+	}
+	return "Bagian dari sumbermu"
+}
+
+func renderSummaryHTML(rec account.PersonalRecord, labels, itemLabels []string, lang string) string {
 	_, note, summary, goalTitle, questionsTitle, bringTitle, sourcesTitle, footer := summaryCopy(lang)
 	display := html.EscapeString(summaryTitle(rec))
 	var b strings.Builder
@@ -97,10 +114,27 @@ func renderSummaryHTML(rec account.PersonalRecord, labels []string, lang string)
 	b.WriteString("body{font:16px/1.6 system-ui,-apple-system,Segoe UI,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1.25rem;color:#1d1d1f}")
 	b.WriteString("h1{font-size:1.6rem;line-height:1.25}h2{font-size:1.1rem;margin-top:2rem}blockquote{margin:1rem 0;padding:.5rem 1rem;border-left:3px solid #888;color:#444}")
 	b.WriteString("ul{padding-left:1.25rem}footer{margin-top:3rem;font-size:.875rem;color:#555}")
+	b.WriteString(".statement{margin:1.5rem 0}.statement p{white-space:pre-wrap;overflow-wrap:anywhere}")
 	b.WriteString("</style></head><body>")
 	b.WriteString("<h1>" + display + "</h1><blockquote>" + html.EscapeString(note) + "</blockquote>")
 	b.WriteString("<p><small>v" + strconv.Itoa(rec.Version) + " · " + html.EscapeString(rec.UpdatedAt.Format(time.DateOnly)) + "</small></p>")
-	b.WriteString("<h2>" + html.EscapeString(summary) + "</h2><p>" + html.EscapeString(rec.Text) + "</p>")
+	if strings.TrimSpace(rec.Text) != "" {
+		b.WriteString("<h2>" + html.EscapeString(summary) + "</h2><p>" + html.EscapeString(rec.Text) + "</p>")
+	}
+	if len(rec.Items) > 0 {
+		b.WriteString("<h2>" + html.EscapeString(summaryItemsTitle(lang)) + "</h2>")
+		for i, item := range rec.Items {
+			b.WriteString("<section class=\"statement\">")
+			if strings.TrimSpace(item.Quote) != "" {
+				b.WriteString("<blockquote><p>" + html.EscapeString(item.Quote) + "</p></blockquote>")
+			}
+			b.WriteString("<p>" + html.EscapeString(item.Text) + "</p>")
+			if i < len(itemLabels) && itemLabels[i] != "" {
+				b.WriteString("<p><small>" + html.EscapeString(itemLabels[i]) + "</small></p>")
+			}
+			b.WriteString("</section>")
+		}
+	}
 	if rec.Prepared != nil {
 		for _, section := range []struct{ title, text string }{
 			{goalTitle, rec.Prepared.Goal}, {questionsTitle, rec.Prepared.Questions}, {bringTitle, rec.Prepared.Bring},
@@ -118,12 +152,29 @@ func renderSummaryHTML(rec account.PersonalRecord, labels []string, lang string)
 	return b.String()
 }
 
-func renderSummaryMarkdown(rec account.PersonalRecord, labels []string, lang string) string {
+func renderSummaryMarkdown(rec account.PersonalRecord, labels, itemLabels []string, lang string) string {
 	_, note, summary, goalTitle, questionsTitle, bringTitle, sourcesTitle, footer := summaryCopy(lang)
 	var b strings.Builder
 	b.WriteString("# " + summaryTitle(rec) + "\n\n> " + note + "\n\n")
 	b.WriteString("_v" + strconv.Itoa(rec.Version) + " · " + rec.UpdatedAt.Format(time.DateOnly) + "_\n\n")
-	b.WriteString("## " + summary + "\n\n" + rec.Text + "\n\n")
+	if strings.TrimSpace(rec.Text) != "" {
+		b.WriteString("## " + summary + "\n\n" + rec.Text + "\n\n")
+	}
+	if len(rec.Items) > 0 {
+		b.WriteString("## " + summaryItemsTitle(lang) + "\n\n")
+		for i, item := range rec.Items {
+			if strings.TrimSpace(item.Quote) != "" {
+				for _, line := range strings.Split(strings.TrimSpace(item.Quote), "\n") {
+					b.WriteString("> " + line + "\n")
+				}
+				b.WriteString("\n")
+			}
+			b.WriteString(item.Text + "\n\n")
+			if i < len(itemLabels) && itemLabels[i] != "" {
+				b.WriteString("_" + itemLabels[i] + "_\n\n")
+			}
+		}
+	}
 	if rec.Prepared != nil {
 		for _, section := range []struct{ title, text string }{
 			{goalTitle, rec.Prepared.Goal}, {questionsTitle, rec.Prepared.Questions}, {bringTitle, rec.Prepared.Bring},

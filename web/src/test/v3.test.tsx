@@ -1078,6 +1078,221 @@ describe("consultation follow-ups", () => {
   });
 });
 
+describe("consultation summary statements", () => {
+  const note = {
+    id: "note-items",
+    kind: "note",
+    title: "Catatan sintetis",
+    text: "Teks sumber sintetis untuk bagian.",
+    version: 2,
+    provenance: "user_original",
+    reviewStatus: "confirmed",
+    safety: "none",
+    createdAt: "2026-10-27T08:00:00Z",
+    updatedAt: "2026-10-27T08:30:00Z",
+  };
+  const summaryWithItems = {
+    id: "sum-1",
+    kind: "summary",
+    title: "Ringkasan dengan bagian",
+    text: "Kata-kata bebas.",
+    version: 1,
+    provenance: "manual",
+    reviewStatus: "confirmed",
+    safety: "none",
+    summaryState: "draft",
+    sourceRefs: [{ recordId: note.id, version: note.version }],
+    items: [
+      {
+        id: "item-1",
+        text: "Pernyataan pertama.",
+        quote: "Kutipan sumber pertama.",
+        sourceRef: { recordId: note.id, version: note.version },
+        provenance: "user_original",
+        reviewStatus: "confirmed",
+        position: 0,
+      },
+    ],
+    createdAt: "2026-10-27T09:00:00Z",
+    updatedAt: "2026-10-27T09:30:00Z",
+  };
+
+  it("renders each statement with its quote and approves the exact version", async () => {
+    const calls = mockApi(
+      {
+        "GET /records": () => ({ data: { records: [note] } }),
+        "GET /consultation-summaries/sum-1": () => ({ data: summaryWithItems }),
+        "GET /consultation-summaries/sum-1/followups": () => ({ data: { followups: [] } }),
+        "POST /consultation-summaries/sum-1/approve": () => ({
+          data: { ...summaryWithItems, summaryState: "approved", approvedVersion: 1 },
+        }),
+      },
+      profile(),
+    );
+    const { container } = renderPath("/support/summaries/sum-1");
+    expect(
+      await screen.findByRole("heading", { name: "Bagian dari sumbermu" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Pernyataan pertama.")).toBeInTheDocument();
+    expect(screen.getByText("Kutipan sumber pertama.")).toBeInTheDocument();
+    expect(screen.getByText("Catatan sintetis · v2")).toBeInTheDocument();
+    expect(screen.getByText("Kata-kata bebas.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Statements from your sources"),
+    ).not.toBeInTheDocument();
+    const results = await axe.run(container, {
+      rules: { "color-contrast": { enabled: false } },
+    });
+    expect(
+      results.violations.filter((v) =>
+        ["serious", "critical"].includes(v.impact ?? ""),
+      ),
+    ).toEqual([]);
+
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: /Aku sudah memeriksa versi ini/,
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Setujui versi ini" }));
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) =>
+            c.method === "POST" &&
+            c.path === "/consultation-summaries/sum-1/approve",
+        ),
+      ).toBe(true),
+    );
+    const approve = calls.find(
+      (c) =>
+        c.method === "POST" &&
+        c.path === "/consultation-summaries/sum-1/approve",
+    );
+    expect(approve?.body).toEqual({ expectedVersion: 1 });
+  });
+
+  it("keeps a legacy text-only summary free of the statement section", async () => {
+    mockApi(
+      {
+        "GET /records": () => ({ data: { records: [note] } }),
+        "GET /consultation-summaries/sum-1": () => ({
+          data: { ...summaryWithItems, items: undefined },
+        }),
+        "GET /consultation-summaries/sum-1/followups": () => ({ data: { followups: [] } }),
+      },
+      profile(),
+    );
+    renderPath("/support/summaries/sum-1");
+    expect(await screen.findByText("Kata-kata bebas.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Bagian dari sumbermu" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("adds, edits, reorders and removes source statements before saving", async () => {
+    const calls = mockApi(
+      {
+        "GET /records": () => ({ data: { records: [note] } }),
+        "POST /consultation-summaries": () => ({
+          status: 201,
+          data: { ...summaryWithItems, id: "sum-new" },
+        }),
+        "GET /consultation-summaries/sum-new": () => ({
+          data: { ...summaryWithItems, id: "sum-new" },
+        }),
+        "GET /consultation-summaries/sum-new/followups": () => ({
+          data: { followups: [] },
+        }),
+      },
+      profile(),
+    );
+    const { container } = renderPath("/support/summaries/new");
+    fireEvent.click(
+      await screen.findByRole("checkbox", { name: /Catatan sintetis/ }),
+    );
+    expect(screen.getByLabelText(/Yang ingin kamu ceritakan/)).toHaveValue(
+      note.text,
+    );
+
+    const add = screen.getByRole("button", {
+      name: "Tambah bagian dari sumber",
+    });
+    fireEvent.click(add);
+    expect(screen.getByText("1 bagian · maksimal 36")).toBeInTheDocument();
+    const first = screen.getByLabelText("Kata-katamu untuk bagian 1");
+    expect(first).toHaveValue(note.text);
+    fireEvent.change(first, { target: { value: "Bagian pertama." } });
+
+    fireEvent.click(add);
+    fireEvent.change(
+      screen.getByLabelText("Kata-katamu untuk bagian 2"),
+      { target: { value: "Bagian kedua." } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Naikkan bagian 2" }));
+
+    fireEvent.click(add);
+    fireEvent.change(
+      screen.getByLabelText("Kata-katamu untuk bagian 3"),
+      { target: { value: "Bagian ketiga." } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Hapus bagian 3" }));
+    expect(screen.getByText("2 bagian · maksimal 36")).toBeInTheDocument();
+    const results = await axe.run(container, {
+      rules: { "color-contrast": { enabled: false } },
+    });
+    expect(
+      results.violations.filter((v) =>
+        ["serious", "critical"].includes(v.impact ?? ""),
+      ),
+    ).toEqual([]);
+
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: /Simpan draf ini di server Sela/,
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Simpan draf untuk diperiksa" }),
+    );
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) => c.method === "POST" && c.path === "/consultation-summaries",
+        ),
+      ).toBe(true),
+    );
+    const create = calls.find(
+      (c) => c.method === "POST" && c.path === "/consultation-summaries",
+    );
+    const body = create?.body as {
+      text: string;
+      storageGranted: boolean;
+      sourceRefs: Array<{ recordId: string; version: number }>;
+      items: Array<Record<string, unknown>>;
+    };
+    expect(body.text).toBe(note.text);
+    expect(body.storageGranted).toBe(true);
+    expect(body.sourceRefs).toEqual([
+      { recordId: note.id, version: note.version },
+    ]);
+    expect(body.items).toHaveLength(2);
+    expect(body.items[0]).toMatchObject({
+      text: "Bagian kedua.",
+      quote: note.text,
+      sourceRef: { recordId: note.id, version: note.version },
+      position: 0,
+    });
+    expect(body.items[1]).toMatchObject({
+      text: "Bagian pertama.",
+      quote: note.text,
+      sourceRef: { recordId: note.id, version: note.version },
+      position: 1,
+    });
+    expect(body.items[0]).not.toHaveProperty("id");
+  });
+});
+
 describe("settings", () => {
   it("records an AI consent separately and shows the new state", async () => {
     const user = profile();

@@ -351,10 +351,10 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | `GET /api/v3/recipient/share` | frozen projection for the recipient session |
 | `POST /api/v3/recipient/acknowledge` | `{acknowledged:true}`; idempotent |
 | `GET /api/v3/consultation-summaries` | `{summaries}` |
-| `POST /api/v3/consultation-summaries` | `{title,text,sourceRefs,prepared?,storageGranted:true}` → personal record |
-| `GET /api/v3/consultation-summaries/{id}` | Personal record with effective `summaryState` |
-| `GET /api/v3/consultation-summaries/{id}/export?format=html\|md` | Approved summary as a self-contained HTML or Markdown file; `409 invalid_transition` until approved |
-| `PATCH /api/v3/consultation-summaries/{id}` | Creation fields plus `expectedVersion`; approval resets |
+| `POST /api/v3/consultation-summaries` | `{title,text?,sourceRefs,items?,prepared?,storageGranted:true}` → personal record; at least one of `text` or `items` is required |
+| `GET /api/v3/consultation-summaries/{id}` | Personal record with effective `summaryState` and optional `items` |
+| `GET /api/v3/consultation-summaries/{id}/export?format=html\|md` | Approved summary as a self-contained HTML or Markdown file; `409 invalid_transition` until approved; includes `items` with their quotes and source labels |
+| `PATCH /api/v3/consultation-summaries/{id}` | Creation fields plus `expectedVersion`; `items: null` (or omitted) keeps the stored statements, `items: []` clears them, and any edit resets approval |
 | `DELETE /api/v3/consultation-summaries/{id}` | `{expectedVersion}`; summary and attached follow-ups cascade |
 | `POST /api/v3/consultation-summaries/{id}/approve` | `{expectedVersion}`; approval binds exact content version |
 | `POST /api/v3/consultation-summaries/{id}/followups` | `{title,text?,sections?,storageGranted:true}` → personal follow-up record; at least one of `text` or a non-blank section is required |
@@ -367,6 +367,22 @@ An AT-3 memory proposal adds the optional `quote` and `turnKey` fields, sealed w
 Sources must be current, owner-owned notes/check-ins/conversations. Derived records cannot be sources.
 A source edit or deletion demotes the effective approval on subsequent reads and exports.
 `prepared` holds optional `goal`, `questions`, and `bring` text. All such content and source links are encrypted.
+A summary's optional `items` array holds at most 36 quote-backed statements. Each item is
+`{id,text,quote,sourceRef:{recordId,version},provenance,reviewStatus,position}`: `text` is
+1–800 runes of the owner's wording, `quote` is 0–1200 runes of the exact source passage,
+and `sourceRef` must name one of the summary's own `sourceRefs` at the same version. A new
+item omits `id`; the server assigns one once, and a later edit returns that id to keep it
+stable. The server derives `position` from array order and sets `provenance` to
+`user_original` or, when a kept item's wording, quote or source changed,
+`user_correction`; `reviewStatus` is always `confirmed` because there is no AI drafting
+path. An item may not claim AI provenance or an unreviewed state. Items live inside the
+same sealed summary content, so they need no table or migration, inherit revisions, export
+and deletion, and are part of the version that approval binds. Editing an item resets
+approval exactly like a text edit. `text` may be empty when `items` is present, but at least
+one of them is required. Older text-only clients keep working: omitting `items` on PATCH
+preserves stored statements, and a legacy summary reads and renders as before. The HTML/
+Markdown export and the frozen sharing projection include `items` with each quote and the
+label of its pinned source; a legacy text-only summary contains no item section.
 A follow-up's optional `sections` holds `feeling`, `remember`, `agreed` and `askNext`, each UTF-8
 and at most 2000 runes. The four fields live inside the same sealed content as `text`, so they
 inherit owner encryption, revisions, export and the summary-deletion cascade; they add no table
