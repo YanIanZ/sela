@@ -40,6 +40,7 @@ import {
 const purposePlace: Record<string, { id: string; en: string }> = {
   ai_processing: { id: "Meta: balasan dan pemeriksa (Amerika Serikat)", en: "Meta: replies and checker (United States)" },
   personal_memory: { id: "Disimpan di server Sela", en: "Stored on Sela's server" },
+  sharing: { id: "Membagikan ringkasan lewat tautan", en: "Sharing a summary by link" },
 };
 
 export function PrivacyPage({
