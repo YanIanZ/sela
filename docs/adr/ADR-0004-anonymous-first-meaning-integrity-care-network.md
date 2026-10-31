@@ -52,7 +52,7 @@ Previous v3 scope allowed guest and username accounts, focused on listening and 
 
 ## Evidence and follow-up
 
-1. Reconcile SPEC.md, PRODUCT.md, docs/PRODUCT.md, API_SPEC_V3.md, BACKLOG.md, DECISION_LOG.md, safety and privacy texts.
+1. Reconcile SPEC.md, PRODUCT.md, docs/product/PRODUCT.md, API_SPEC_V3.md, BACKLOG.md, DECISION_LOG.md, safety and privacy texts.
 2. Ship bounded code PRs with stated acceptance suites and clear status.
 3. Record live provider/model IDs and end-to-end test results separately from proposed architecture.
 4. Keep PR #8 safety work independently reviewed.

@@ -11,7 +11,7 @@ Snapshot before the Sela public-repository cleanup (26 October 2026). AMD submis
 > **A little space to feel heard.**
 > An anonymous, privacy-first wellbeing companion in **Indonesian and English**: talk, reflect, and prepare for a first mental health consultation.
 
-Sela is an individual continuation by **I Wayan Bagus Arya Darma Wiguna**, built on the existing Dengar.in team project. The inherited AMD / CareBridge work is documented below as project history; it does not describe a new Meta hackathon submission. The target event is the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon). See [event notes](../../META_EVENT_NOTES.md) for the checked waiver and remaining submission decisions.
+Sela is an individual continuation by **I Wayan Bagus Arya Darma Wiguna**, built on the existing Dengar.in team project. The inherited AMD / CareBridge work is documented below as project history; it does not describe a new Meta hackathon submission. The target event is the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon). See [event notes](../../architecture/META_EVENT_NOTES.md) for the checked waiver and remaining submission decisions.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
@@ -317,7 +317,7 @@ Next.js route handlers in `apps/web/src/app/api/`. Full contracts: [`docs/archiv
 
 **Sela:** individual continuation by **I Wayan Bagus Arya Darma Wiguna** ([YanIanZ](https://github.com/YanIanZ)).
 
-**Original project:** Dengar.in, built by **Kata Justin Nama Timnya Gokil Udah** (Telkom University Surabaya). Original contributor attribution and the MIT copyright notice are retained. See [provenance](../../SELA_PROVENANCE.md).
+**Original project:** Dengar.in, built by **Kata Justin Nama Timnya Gokil Udah** (Telkom University Surabaya). Original contributor attribution and the MIT copyright notice are retained. See [provenance](../../product/SELA_PROVENANCE.md).
 
 ## Disclaimer and license
 

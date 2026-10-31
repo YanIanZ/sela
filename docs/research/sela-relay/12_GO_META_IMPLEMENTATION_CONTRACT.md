@@ -6,7 +6,7 @@
 
 - **Backend:** one Go HTTP service using net/http, context cancellation, typed domain state, in-memory isolated demo store and explicit application-layer authorization. Pin toolchain and dependencies after verification; do not pretend that current Go files exist.
 - **Frontend:** new static React + TypeScript + Vite application, locale dictionaries for ID/EN, accessible mobile-first layouts and API-generated state. Do not port old Next.js server routes.
-- **AI:** Meta Model API accessed from a Go server-side adapter after Meta AI consent, with an optional separately consented Claude Sonnet 5.5 **source-fidelity verifier** (see [current contract](../../CLAUDE_VERIFIER.md)); Claude is not a generative fallback. Official cookbook currently documents schema-constrained structured output and function/tool calling; verify the account's allowed model and endpoint with a real, non-sensitive probe before fixing runtime configuration.
+- **AI:** Meta Model API accessed from a Go server-side adapter after Meta AI consent, with an optional separately consented Claude Sonnet 5.5 **source-fidelity verifier** (see [current contract](../../architecture/CLAUDE_VERIFIER.md)); Claude is not a generative fallback. Official cookbook currently documents schema-constrained structured output and function/tool calling; verify the account's allowed model and endpoint with a real, non-sensitive probe before fixing runtime configuration.
 - **Data:** versioned *synthetic* scenario, evidence, fictional-professional, slot, receipt, consultation and follow-up fixtures. No real patient database or live clinician marketplace.
 
 Suggested layout, subject to implementation:
@@ -69,7 +69,7 @@ Only backend fixture lookup decides whether **e1** exists and what it actually s
 
 ## State machine and contract gates
 
-Current planned endpoints are listed in [API_SPEC.md](../../API_SPEC.md). Do not bypass that versioned contract. Adding proposed clarification/decline/expire statuses requires explicit acceptance and concurrent edits to SPEC, API documentation, fixture schemas and tests.
+Current planned endpoints are listed in [API_SPEC.md](../../api/API_SPEC_V2.md). Do not bypass that versioned contract. Adding proposed clarification/decline/expire statuses requires explicit acceptance and concurrent edits to SPEC, API documentation, fixture schemas and tests.
 
 **Assertions to implement as software tests:**
 - Decline AI → no Meta request, manual synthetic journey succeeds.

@@ -94,7 +94,7 @@ func (r *Report) judge(th thresholds) {
 			if hasT {
 				m.Threshold = fmt.Sprintf("%s %g", t.Op, t.Value)
 				if t.Mode == "live" && r.Mode != "live" {
-					m.Detail = "requires live Meta inference (blocked: see docs/BLOCKERS.md B-1)"
+					m.Detail = "requires live Meta inference (blocked: see docs/status/BLOCKERS.md B-1)"
 				}
 			}
 			r.Metrics = append(r.Metrics, m)

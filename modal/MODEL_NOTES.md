@@ -120,5 +120,5 @@ All flag names were checked in the v0.32.0 source: `vllm/engine/arg_utils.py` (d
 2. VRAM fit at `--gpu-memory-utilization 0.90`, `--max-model-len 16384`, `--max-num-seqs 8`, `--language-model-only`. Cold-start time.
 3. Layered auth (§4e) through Modal's proxy.
 4. Whether `response_format: json_schema` is enforced with the `muse_glimmer` reasoning parser (§4d).
-5. Latency and tokens per second at `reasoning_strength: low` for Sela's prompts. Indonesian and code-switched quality (Sela's own evaluation, docs/EVALUATION.md).
+5. Latency and tokens per second at `reasoning_strength: low` for Sela's prompts. Indonesian and code-switched quality (Sela's own evaluation, docs/validation/EVALUATION.md).
 6. The optional HF token Secret path (`SELA_HF_SECRET_NAME`) has not been exercised; the model is ungated, so it is not needed.

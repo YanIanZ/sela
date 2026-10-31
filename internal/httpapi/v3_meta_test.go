@@ -68,7 +68,7 @@ func TestV3MutationGuardAllRoutes(t *testing.T) {
 // specRoutes parses API_SPEC_V3 §4-§6 for "METHOD /api/v3/..." routes.
 func specRoutes(t *testing.T) []string {
 	t.Helper()
-	raw, err := os.ReadFile("../../docs/API_SPEC_V3.md")
+	raw, err := os.ReadFile("../../docs/api/API_SPEC_V3.md")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func TestV3RoutesMatchSpec(t *testing.T) {
 
 func TestV3ErrorMessagesComplete(t *testing.T) {
 	t.Parallel()
-	raw, err := os.ReadFile("../../docs/API_SPEC_V3.md")
+	raw, err := os.ReadFile("../../docs/api/API_SPEC_V3.md")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -8,7 +8,7 @@ Status: draft for user review, 26 October 2026. This document authorizes no impl
 
 The user wants a major refactor aligned with the Meta Global AI Developer Hackathon. Sela should support a journey toward professional or medical care, with Indonesian and English experiences. Anonymity is a privacy option rather than the main positioning. All patient, professional, appointment, consultation and follow-up data in the hackathon journey will be synthetic.
 
-The user is considering Go or Swift; neither has been selected. The event and IP notes remain in [Meta event notes](../../META_EVENT_NOTES.md) and [provenance](../../SELA_PROVENANCE.md).
+The user is considering Go or Swift; neither has been selected. The event and IP notes remain in [Meta event notes](../../architecture/META_EVENT_NOTES.md) and [provenance](../../product/SELA_PROVENANCE.md).
 
 ## Product proposal
 

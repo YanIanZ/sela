@@ -193,4 +193,4 @@ flowchart TB
 
 ## 10. What is already here
 
-Current packages include internal/httpapi, internal/safety, internal/ledger, internal/llm, internal/ai, internal/db, internal/vault, internal/account and internal/research. Current main contains an account/guest foundation and Meta Glimmer/Modal path; the new user-facing account removal, meaning graph and real directory are **target changes**. Cross-check with [implementation status](../IMPLEMENTATION_STATUS.md) before any status update.
+Current packages include internal/httpapi, internal/safety, internal/ledger, internal/llm, internal/ai, internal/db, internal/vault, internal/account and internal/research. Current main contains an account/guest foundation and Meta Glimmer/Modal path; the new user-facing account removal, meaning graph and real directory are **target changes**. Cross-check with [implementation status](../status/IMPLEMENTATION_STATUS.md) before any status update.

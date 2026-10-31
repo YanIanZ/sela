@@ -173,7 +173,7 @@ Every bar wraps **by available space**, never by the text-size setting, so the s
 
 **API** labels:
 
-- "v3 spec": specified in [API_SPEC_V3](../API_SPEC_V3.md), with the foundation being implemented now.
+- "v3 spec": specified in [API_SPEC_V3](../api/API_SPEC_V3.md), with the foundation being implemented now.
 - "v2": implemented in v2 and served in development, test and demo only (ADR-0002 §12).
 - "planned": a reserved prefix in API_SPEC_V3 §9, with no contract yet.
 

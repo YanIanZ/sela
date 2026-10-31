@@ -4,7 +4,7 @@
 # The image defaults to SELA_ENV=production, which refuses to start without
 # SELA_DATABASE_URL, a prod- KEK (SELA_DATA_KEK, SELA_DATA_KEK_ID) and an https
 # SELA_PUBLIC_ORIGIN. Run migrations first with: docker run ... sela:v2 migrate up
-# (see docs/RUNBOOK.md). AI stays disabled until a Modal endpoint is configured.
+# (see docs/operations/RUNBOOK.md). AI stays disabled until a Modal endpoint is configured.
 
 FROM node:22-alpine AS web
 WORKDIR /src/web

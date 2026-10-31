@@ -175,7 +175,7 @@ Set performance thresholds only after baseline and validate realistic tail laten
 - [Redis rate limiting](https://redis.io/docs/latest/develop/use-cases/rate-limiter/) — atomic admission via Lua.
 - [Redis client-side caching](https://redis.io/docs/latest/develop/clients/client-side-caching/) — tradeoffs of tracking and invalidation; not mandatory for initial Sela Go design.
 - [Redis key expiration](https://redis.io/docs/latest/commands/expire/), [Redis memory management](https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/memory-optimization/).
-- [Historical Sela Redis design](../archive/v1/REDIS.md) and [legacy Go architecture](../ARCHITECTURE.md) for migration context.
+- [Historical Sela Redis design](../archive/v1/REDIS.md) and [legacy Go architecture](../architecture/ARCHITECTURE.md) for migration context.
 
 ## 11. Implemented Go slice (2026-10-30)
 

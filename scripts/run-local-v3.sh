@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 for config in .env.docker-testing .env.pg-testing; do
   if [[ ! -f "$config" ]]; then
-    echo "Missing local configuration: $config (see docs/V3_CORE_VALIDATION.md)" >&2
+    echo "Missing local configuration: $config (see docs/validation/V3_CORE_VALIDATION.md)" >&2
     exit 1
   fi
 done
