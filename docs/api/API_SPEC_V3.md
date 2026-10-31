@@ -353,14 +353,21 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | `PATCH /api/v3/consultation-summaries/{id}` | Creation fields plus `expectedVersion`; approval resets |
 | `DELETE /api/v3/consultation-summaries/{id}` | `{expectedVersion}`; summary and attached follow-ups cascade |
 | `POST /api/v3/consultation-summaries/{id}/approve` | `{expectedVersion}`; approval binds exact content version |
-| `POST /api/v3/consultation-summaries/{id}/followups` | `{title,text,storageGranted:true}` → personal follow-up record |
-| `GET /api/v3/consultation-summaries/{id}/followups` | `{followups}` |
+| `POST /api/v3/consultation-summaries/{id}/followups` | `{title,text?,sections?,storageGranted:true}` → personal follow-up record; at least one of `text` or a non-blank section is required |
+| `GET /api/v3/consultation-summaries/{id}/followups` | `{followups}`; each record may carry `sections` |
+| `PATCH /api/v3/consultation-summaries/{id}/followups/{followupId}` | Same fields plus `expectedVersion`; the follow-up must belong to this summary; nil `sections` keeps the stored sections, an explicit empty object clears them |
 
 `sourceRefs` is an array of `{recordId,version}`, maximum 12, minimum one for a summary.
 An AT-3 memory proposal adds the optional `quote` and `turnKey` fields, sealed with the rest of the record, so its review card can show the user's exact words without opening the conversation; existing records without them read unchanged.
 Sources must be current, owner-owned notes/check-ins/conversations. Derived records cannot be sources.
 A source edit or deletion demotes the effective approval on subsequent reads and exports.
 `prepared` holds optional `goal`, `questions`, and `bring` text. All such content and source links are encrypted.
+A follow-up's optional `sections` holds `feeling`, `remember`, `agreed` and `askNext`, each UTF-8
+and at most 2000 runes. The four fields live inside the same sealed content as `text`, so they
+inherit owner encryption, revisions, export and the summary-deletion cascade; they add no table
+or column. `text` remains the free note and is shown when no section is filled; a legacy
+text-only follow-up reads with no `sections`. The generic `PATCH /api/v3/records/{id}` now
+accepts only notes and check-ins, so a follow-up is edited only through its summary route.
 Memory is explicit, defaults off, and is never sent to AI while the
 `personal_memory` consent is off or outdated. With that consent on, a reply
 turn may include at most five confirmed/corrected memory items (600 runes
@@ -368,12 +375,12 @@ together) as `memory` spans, and only when `ai_processing` is also current;
 items over the allowance are skipped deterministically. Unreviewed and
 rejected items are never reply context. Withdrawal hides
 memory from normal record reads, including `GET /api/v3/memory/{id}`;
-owner export and deletion remain available. The generic records PATCH additionally accepts an existing
-`followup` for corrections, retaining its parent; generic creation still accepts only notes/check-ins.
+owner export and deletion remain available.
 AT-3 proposals come only from a saved conversation record and are stored as
 unreviewed memory items; nothing from an unsaved room is used. AI proposal
 wording is released only through the verifier gate (V36), and the source
-quote is kept with the item.
+quote is kept with the item. The generic records PATCH no longer accepts a
+`followup`; follow-ups are edited only through their summary route.
 Weekly reflection is computed in the browser from original creation dates/check-in local days;
 a reflection is saved only after permission as an ordinary encrypted note.
 

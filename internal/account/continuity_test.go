@@ -3,6 +3,7 @@ package account_test
 import (
 	"bytes"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/YanIanZ/sela/internal/account"
@@ -352,5 +353,161 @@ func TestContinuityFollowupsDeletionAndExport(t *testing.T) {
 	after, err := f.store.Export(ctx, pa.UserID, pa.SessionID, "json", "en")
 	if err != nil || bytes.Contains(after.Body, []byte("Synthetic memory body")) {
 		t.Fatalf("deleted memory still exported: %v", err)
+	}
+}
+
+func TestContinuityFollowupSectionsAndEdit(t *testing.T) {
+	f := continuityFixture(t)
+	a := f.guest(account.AgeBand18Plus)
+	b := f.guest(account.AgeBand18Plus)
+	pa, pb := f.principal(a.Token), f.principal(b.Token)
+
+	note, err := f.store.CreateRecord(ctx, pa.UserID, account.RecordInput{
+		Kind: "note", Text: "Synthetic structured follow-up source.", StorageGranted: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	summary, err := f.store.CreateSummary(ctx, pa.UserID, account.RecordInput{
+		Text: "Synthetic summary for a structured follow-up.", StorageGranted: true,
+		SourceRefs: []account.SourceRef{{RecordID: note.ID, Version: note.Version}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherSummary, err := f.store.CreateSummary(ctx, pa.UserID, account.RecordInput{
+		Text: "Synthetic second summary.", StorageGranted: true,
+		SourceRefs: []account.SourceRef{{RecordID: note.ID, Version: note.Version}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sections := &account.FollowupSections{
+		Feeling:  "Synthetic feeling after the consultation.",
+		Remember: "Synthetic thing I want to remember.",
+		Agreed:   "Synthetic agreement with the professional.",
+		AskNext:  "Synthetic question for next time.",
+	}
+	followup, err := f.store.CreateFollowup(ctx, pa.UserID, summary.ID, account.RecordInput{
+		Title: "Synthetic structured follow-up", StorageGranted: true, Sections: sections,
+	})
+	if err != nil {
+		t.Fatalf("create sections-only follow-up: %v", err)
+	}
+	if followup.Text != "" || followup.Sections == nil || followup.Sections.Feeling != sections.Feeling ||
+		followup.Sections.Remember != sections.Remember || followup.Sections.Agreed != sections.Agreed ||
+		followup.Sections.AskNext != sections.AskNext || followup.ParentID != summary.ID {
+		t.Fatalf("structured follow-up: %+v", followup)
+	}
+	var sealed []byte
+	if err := f.db.Pool.QueryRow(ctx, "SELECT content_ct FROM personal_records WHERE id=$1", followup.ID).Scan(&sealed); err != nil {
+		t.Fatal(err)
+	}
+	for _, plain := range []string{sections.Feeling, sections.Remember, sections.Agreed, sections.AskNext} {
+		if bytes.Contains(sealed, []byte(plain)) {
+			t.Fatal("follow-up section plaintext at rest")
+		}
+	}
+	list, err := f.store.Followups(ctx, pa.UserID, summary.ID)
+	if err != nil || len(list) != 1 || list[0].Sections == nil || list[0].Sections.AskNext != sections.AskNext {
+		t.Fatalf("follow-up list misses sections: %+v %v", list, err)
+	}
+	read, err := f.store.Record(ctx, pa.UserID, followup.ID)
+	if err != nil || read.Sections == nil || read.Sections.Remember != sections.Remember {
+		t.Fatalf("follow-up read misses sections: %+v %v", read, err)
+	}
+
+	// A legacy text-only note is still accepted and keeps Sections nil.
+	legacy, err := f.store.CreateFollowup(ctx, pa.UserID, summary.ID, account.RecordInput{
+		Title: "Synthetic legacy follow-up", Text: "Synthetic free-text follow-up.", StorageGranted: true,
+	})
+	if err != nil || legacy.Sections != nil || legacy.Text != "Synthetic free-text follow-up." {
+		t.Fatalf("legacy follow-up: %+v %v", legacy, err)
+	}
+
+	// The dedicated update path replaces title/text/sections with a version check.
+	nextSections := &account.FollowupSections{
+		Feeling:  "Synthetic corrected feeling.",
+		Remember: "Synthetic corrected memory.",
+		Agreed:   "Synthetic corrected agreement.",
+		AskNext:  "Synthetic corrected question.",
+	}
+	edited, err := f.store.UpdateFollowup(ctx, pa.UserID, summary.ID, followup.ID, account.RecordInput{
+		Title: "Synthetic corrected follow-up", Text: "Synthetic free note after editing.",
+		StorageGranted: true, ExpectedVersion: followup.Version, Sections: nextSections,
+	})
+	if err != nil || edited.Version != 2 || edited.ParentID != summary.ID || edited.Sections == nil ||
+		edited.Sections.Feeling != nextSections.Feeling || edited.Text != "Synthetic free note after editing." {
+		t.Fatalf("structured follow-up edit: %+v %v", edited, err)
+	}
+	if _, err := f.store.UpdateFollowup(ctx, pa.UserID, summary.ID, followup.ID, account.RecordInput{
+		Title: "Synthetic stale follow-up", Text: "Synthetic stale.", StorageGranted: true,
+		ExpectedVersion: 1, Sections: nextSections,
+	}); !errors.Is(err, account.ErrStaleVersion) {
+		t.Fatalf("stale follow-up edit: %v", err)
+	}
+	// The summary in the path must be the sealed parent.
+	if _, err := f.store.UpdateFollowup(ctx, pa.UserID, otherSummary.ID, followup.ID, account.RecordInput{
+		Title: "Synthetic wrong parent", Text: "Synthetic wrong parent.", StorageGranted: true,
+		ExpectedVersion: 2, Sections: nextSections,
+	}); !errors.Is(err, account.ErrNotFound) {
+		t.Fatalf("follow-up edit through another summary: %v", err)
+	}
+	if _, err := f.store.UpdateFollowup(ctx, pb.UserID, summary.ID, followup.ID, account.RecordInput{
+		Title: "Synthetic foreign", Text: "Synthetic foreign.", StorageGranted: true,
+		ExpectedVersion: 2, Sections: nextSections,
+	}); !errors.Is(err, account.ErrNotFound) {
+		t.Fatalf("foreign follow-up edit: %v", err)
+	}
+
+	// Sections-only edit clears the free text; an old text-only edit keeps
+	// the stored sections; an explicit empty sections object clears them.
+	onlySections, err := f.store.UpdateFollowup(ctx, pa.UserID, summary.ID, followup.ID, account.RecordInput{
+		Title: "Synthetic structured follow-up", StorageGranted: true, ExpectedVersion: 2, Sections: nextSections,
+	})
+	if err != nil || onlySections.Version != 3 || onlySections.Text != "" || onlySections.Sections == nil {
+		t.Fatalf("sections-only edit: %+v %v", onlySections, err)
+	}
+	legacyEdit, err := f.store.UpdateRecord(ctx, pa.UserID, followup.ID, account.RecordInput{
+		Kind: account.KindFollowup, Title: "Synthetic legacy edit", Text: "Synthetic text-only correction.",
+		StorageGranted: true, ExpectedVersion: 3,
+	})
+	if err != nil || legacyEdit.Sections == nil || legacyEdit.Sections.Feeling != nextSections.Feeling {
+		t.Fatalf("text-only edit dropped sections: %+v %v", legacyEdit, err)
+	}
+	cleared, err := f.store.UpdateFollowup(ctx, pa.UserID, summary.ID, followup.ID, account.RecordInput{
+		Title: "Synthetic cleared", Text: "Synthetic note without sections.", StorageGranted: true,
+		ExpectedVersion: 4, Sections: &account.FollowupSections{Feeling: "  "},
+	})
+	if err != nil || cleared.Version != 5 || cleared.Sections != nil || cleared.Text != "Synthetic note without sections." {
+		t.Fatalf("clear sections: %+v %v", cleared, err)
+	}
+
+	// Boundaries: 2000 runes is accepted, 2001 and invalid UTF-8 are not.
+	maxRunes := strings.Repeat("a", account.FollowupSectionMax)
+	atLimit, err := f.store.CreateFollowup(ctx, pa.UserID, summary.ID, account.RecordInput{
+		Title: "Synthetic boundary", StorageGranted: true,
+		Sections: &account.FollowupSections{Feeling: maxRunes},
+	})
+	if err != nil || atLimit.Sections == nil || len([]rune(atLimit.Sections.Feeling)) != account.FollowupSectionMax {
+		t.Fatalf("2000-rune section: %+v %v", atLimit, err)
+	}
+	for name, in := range map[string]account.RecordInput{
+		"2001 runes": {Title: "Synthetic too long", StorageGranted: true,
+			Sections: &account.FollowupSections{AskNext: maxRunes + "a"}},
+		"invalid utf8": {Title: "Synthetic invalid", StorageGranted: true,
+			Sections: &account.FollowupSections{Remember: string([]byte{0xff})}},
+		"nothing": {Title: "Synthetic empty", StorageGranted: true,
+			Sections: &account.FollowupSections{Feeling: " "}},
+	} {
+		if _, err := f.store.CreateFollowup(ctx, pa.UserID, summary.ID, in); !errors.Is(err, account.ErrInvalidInput) {
+			t.Fatalf("%s: %v", name, err)
+		}
+	}
+	if _, err := f.store.CreateMemory(ctx, pa.UserID, account.RecordInput{
+		Text: "Synthetic memory with sections.", StorageGranted: true, Sections: sections,
+	}); !errors.Is(err, account.ErrInvalidInput) {
+		t.Fatalf("sections on memory: %v", err)
 	}
 }

@@ -104,6 +104,7 @@ func (s *Server) v3Routes() {
 		{method: "POST", path: "/api/v3/consultation-summaries/{id}/approve", mutation: true, guardianGate: true, owner: s.v3ApproveSummary},
 		{method: "POST", path: "/api/v3/consultation-summaries/{id}/followups", mutation: true, guardianGate: true, owner: s.v3CreateFollowup},
 		{method: "GET", path: "/api/v3/consultation-summaries/{id}/followups", owner: s.v3Followups},
+		{method: "PATCH", path: "/api/v3/consultation-summaries/{id}/followups/{followupId}", mutation: true, guardianGate: true, owner: s.v3UpdateFollowup},
 
 		{method: "GET", path: "/api/v3/policies", public: true, h: s.v3Policies},
 		{method: "GET", path: "/api/v3/help-content", public: true, h: s.v3HelpContent},

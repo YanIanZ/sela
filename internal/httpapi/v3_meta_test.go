@@ -20,7 +20,7 @@ import (
 )
 
 func fillPath(p string) string {
-	return strings.NewReplacer("{id}", "6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11", "{purpose}", "terms_privacy", "{slug}", "tidak-ada-di-pustaka").Replace(p)
+	return strings.NewReplacer("{id}", "6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11", "{followupId}", "0b9c2d3e-4f50-4a61-8b72-9c8d7e6f5a40", "{purpose}", "terms_privacy", "{slug}", "tidak-ada-di-pustaka").Replace(p)
 }
 
 func TestV3MutationGuardAllRoutes(t *testing.T) {

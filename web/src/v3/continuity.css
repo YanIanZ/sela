@@ -25,7 +25,14 @@
 .c-paper { padding: 1.75rem; border-radius: var(--radius-4); background: var(--c-surface); display: grid; gap: 1.5rem; }
 .c-source-references, .c-approval, .c-export, .c-followups { display: grid; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--c-border-subtle); }
 .c-followups form { display: grid; gap: 1rem; }
-.c-followup { display: grid; gap: 0.75rem; padding-block: 1rem; border-bottom: 1px solid var(--c-border-subtle); }
+.c-section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+.c-followup { display: grid; gap: 0.75rem; padding-block: 1rem; border-bottom: 1px solid var(--c-border-subtle); min-width: 0; }
+.c-followup-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem 1rem; }
+.c-followup-head h3 { font-size: var(--font-size-3); margin: 0; }
+.c-followup-sections { display: grid; gap: 1rem; min-width: 0; }
+.c-followup-sections h4 { margin-bottom: 0.35rem; }
+.c-followup-fields { margin-bottom: 0; }
+.c-followup-fields > .s-hint { margin-bottom: 1rem; }
 .c-week-nav { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
 .c-week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); list-style: none; padding: 0 !important; gap: 0.5rem; margin-bottom: 2.5rem !important; }
 .c-week-strip li { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 1rem 0.5rem; border-radius: var(--radius-3); background: var(--c-surface); color: var(--c-muted); text-align: center; }

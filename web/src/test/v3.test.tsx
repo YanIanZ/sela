@@ -893,6 +893,191 @@ describe("personal memory", () => {
   });
 });
 
+describe("consultation follow-ups", () => {
+  const summary = {
+    id: "sum-1",
+    kind: "summary",
+    title: "Ringkasan sintetis",
+    text: "Kata-kata ringkasan sintetis.",
+    version: 1,
+    provenance: "manual",
+    reviewStatus: "confirmed",
+    safety: "none",
+    summaryState: "draft",
+    sourceRefs: [],
+    createdAt: "2026-10-27T09:00:00Z",
+    updatedAt: "2026-10-27T10:00:00Z",
+  };
+  const structured = {
+    id: "fu-1",
+    kind: "followup",
+    title: "Setelah konsultasi",
+    text: "Catatan bebas tambahan.",
+    version: 1,
+    provenance: "user_original",
+    reviewStatus: "confirmed",
+    safety: "none",
+    parentId: "sum-1",
+    sections: {
+      feeling: "Aku merasa didengar.",
+      remember: "Minum obat rutin.",
+      agreed: "Coba tidur lebih awal.",
+      askNext: "Apakah perlu kontrol lagi?",
+    },
+    createdAt: "2026-10-28T09:00:00Z",
+    updatedAt: "2026-10-28T09:00:00Z",
+  };
+  const legacy = {
+    id: "fu-2",
+    kind: "followup",
+    title: "Setelah konsultasi",
+    text: "Catatan lama tanpa bagian.",
+    version: 1,
+    provenance: "user_original",
+    reviewStatus: "confirmed",
+    safety: "none",
+    parentId: "sum-1",
+    createdAt: "2026-10-29T09:00:00Z",
+    updatedAt: "2026-10-29T09:00:00Z",
+  };
+  const baseHandlers = {
+    "GET /records": () => ({ data: { records: [] } }),
+    "GET /consultation-summaries/sum-1": () => ({ data: summary }),
+    "GET /consultation-summaries/sum-1/followups": () => ({
+      data: { followups: [structured, legacy] },
+    }),
+  };
+
+  it("renders saved sections and the legacy free text, then edits with a version", async () => {
+    const calls = mockApi(baseHandlers, profile());
+    renderPath("/support/summaries/sum-1");
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Setelah percakapan itu" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Siapkan ringkasan berikutnya" }),
+    ).toHaveAttribute("href", "/support/summaries/new");
+    const heading = screen.getAllByRole("heading", {
+      name: /Catatan setelah konsultasi/,
+    })[0]!;
+    const card = heading.closest("article")!;
+    expect(within(card).getByText("Yang aku rasakan")).toBeInTheDocument();
+    expect(within(card).getByText("Aku merasa didengar.")).toBeInTheDocument();
+    expect(within(card).getByText("Apakah perlu kontrol lagi?")).toBeInTheDocument();
+    expect(screen.getByText("Catatan lama tanpa bagian.")).toBeInTheDocument();
+
+    fireEvent.click(within(card).getByRole("button", { name: "Perbaiki" }));
+    const feeling = within(card).getByLabelText(/Yang aku rasakan/);
+    expect(feeling).toHaveValue("Aku merasa didengar.");
+    fireEvent.change(feeling, { target: { value: "Aku merasa lebih tenang." } });
+    fireEvent.click(within(card).getByRole("button", { name: "Simpan perbaikan" }));
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) =>
+            c.method === "PATCH" &&
+            c.path === "/consultation-summaries/sum-1/followups/fu-1",
+        ),
+      ).toBe(true),
+    );
+    const patch = calls.find(
+      (c) =>
+        c.method === "PATCH" &&
+        c.path === "/consultation-summaries/sum-1/followups/fu-1",
+    );
+    expect(patch?.body).toMatchObject({
+      title: "Setelah konsultasi",
+      text: "Catatan bebas tambahan.",
+      sections: {
+        feeling: "Aku merasa lebih tenang.",
+        remember: "Minum obat rutin.",
+        agreed: "Coba tidur lebih awal.",
+        askNext: "Apakah perlu kontrol lagi?",
+      },
+      storageGranted: true,
+      expectedVersion: 1,
+    });
+  });
+
+  it("keeps the standalone follow-up note read-only and points back to its summary", async () => {
+    const calls = mockApi(
+      { "GET /records/fu-1": () => ({ data: structured }) },
+      profile(),
+    );
+    renderPath("/notes/fu-1");
+    expect(await screen.findByText("Aku merasa didengar.")).toBeInTheDocument();
+    expect(screen.getByText("Yang ingin kuingat")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ubah" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Perbaiki di ringkasan" }),
+    ).toHaveAttribute("href", "/support/summaries/sum-1");
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+  });
+
+  it("creates a follow-up from the four sections and the optional free note", async () => {
+    const calls = mockApi(
+      {
+        ...baseHandlers,
+        "GET /consultation-summaries/sum-1/followups": () => ({
+          data: { followups: [] },
+        }),
+        "POST /consultation-summaries/sum-1/followups": () => ({
+          status: 201,
+          data: { ...structured },
+        }),
+      },
+      profile(),
+    );
+    renderPath("/support/summaries/sum-1");
+    const save = await screen.findByRole("button", { name: "Simpan tindak lanjut" });
+    expect(save).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Yang aku rasakan/), {
+      target: { value: "Aku merasa lebih tenang." },
+    });
+    fireEvent.change(screen.getByLabelText(/Yang ingin kuingat/), {
+      target: { value: "Minum obat setiap pagi." },
+    });
+    fireEvent.change(screen.getByLabelText(/Yang disepakati/), {
+      target: { value: "Coba tidur sebelum jam sebelas." },
+    });
+    fireEvent.change(screen.getByLabelText(/Yang ingin kutanyakan lain kali/), {
+      target: { value: "Apakah perlu kontrol bulan depan?" },
+    });
+    fireEvent.change(screen.getByLabelText(/Catatan bebas/), {
+      target: { value: "Aku ingin membawa ini ke sesi berikutnya." },
+    });
+    fireEvent.click(
+      screen.getByLabelText("Simpan catatan tindak lanjut ini"),
+    );
+    fireEvent.click(save);
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) =>
+            c.method === "POST" &&
+            c.path === "/consultation-summaries/sum-1/followups",
+        ),
+      ).toBe(true),
+    );
+    const create = calls.find(
+      (c) =>
+        c.method === "POST" &&
+        c.path === "/consultation-summaries/sum-1/followups",
+    );
+    expect(create?.body).toMatchObject({
+      title: "Setelah konsultasi",
+      text: "Aku ingin membawa ini ke sesi berikutnya.",
+      sections: {
+        feeling: "Aku merasa lebih tenang.",
+        remember: "Minum obat setiap pagi.",
+        agreed: "Coba tidur sebelum jam sebelas.",
+        askNext: "Apakah perlu kontrol bulan depan?",
+      },
+      storageGranted: true,
+    });
+  });
+});
+
 describe("settings", () => {
   it("records an AI consent separately and shows the new state", async () => {
     const user = profile();

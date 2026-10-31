@@ -25,9 +25,12 @@ const (
 )
 
 // ContinuityTitleMax and ContinuityTextMax bound every continuity text.
+// FollowupSectionMax bounds each optional section of an after-consultation
+// note independently.
 const (
 	ContinuityTitleMax = 6000
 	ContinuityTextMax  = 6000
+	FollowupSectionMax = 2000
 	MaxSourceRefs      = 12
 )
 
@@ -83,6 +86,47 @@ type SummaryPrepared struct {
 	Bring     string `json:"bring"`
 }
 
+// FollowupSections is the optional structured after-consultation note.
+// Every field is the owner's own words and is stored inside the sealed
+// record content, so it inherits the same encryption, revisions, export
+// and deletion behaviour as the free-text field.
+type FollowupSections struct {
+	Feeling  string `json:"feeling"`
+	Remember string `json:"remember"`
+	Agreed   string `json:"agreed"`
+	AskNext  string `json:"askNext"`
+}
+
+func (s *FollowupSections) empty() bool {
+	return s == nil || (strings.TrimSpace(s.Feeling) == "" &&
+		strings.TrimSpace(s.Remember) == "" &&
+		strings.TrimSpace(s.Agreed) == "" &&
+		strings.TrimSpace(s.AskNext) == "")
+}
+
+// cloneFollowupSections preserves owner spacing but drops a sections
+// object whose every field is blank, so old text-only clients and new
+// structured clients store the same shape when nothing was written.
+func cloneFollowupSections(in *FollowupSections) *FollowupSections {
+	if in.empty() {
+		return nil
+	}
+	out := *in
+	return &out
+}
+
+func validFollowupSections(in *FollowupSections) bool {
+	if in == nil {
+		return true
+	}
+	for _, s := range []string{in.Feeling, in.Remember, in.Agreed, in.AskNext} {
+		if !utf8.ValidString(s) || utf8.RuneCountInString(s) > FollowupSectionMax {
+			return false
+		}
+	}
+	return true
+}
+
 // MemoryView is GET /api/v3/memory. Before consent, Items is empty and
 // Enabled is false, whether or not old rows still exist.
 type MemoryView struct {
@@ -120,7 +164,9 @@ func validateContinuity(in RecordInput, minSources int) error {
 		!utf8.ValidString(in.Text) || utf8.RuneCountInString(in.Text) > ContinuityTextMax {
 		return invalid("text")
 	}
-	if strings.TrimSpace(in.Text) == "" {
+	// A follow-up may be text-only (old clients), sections-only, or both.
+	// Every other continuity kind still needs text.
+	if strings.TrimSpace(in.Text) == "" && !(in.Kind == KindFollowup && !in.Sections.empty()) {
 		return invalid("text")
 	}
 	// Continuity records never carry check-in fields.
@@ -134,10 +180,16 @@ func validateContinuity(in RecordInput, minSources int) error {
 		return invalid("sourceRefs")
 	}
 	if in.Kind == KindFollowup {
+		if !validFollowupSections(in.Sections) {
+			return invalid("sections")
+		}
 		if len(in.SourceRefs) != 0 || in.Prepared != nil {
 			return invalid("sourceRefs")
 		}
 		return nil
+	}
+	if in.Sections != nil {
+		return invalid("sections")
 	}
 	if in.Kind != KindSummary {
 		if in.Prepared != nil {
@@ -160,6 +212,10 @@ func continuityRecord(id string, in RecordInput, version int, created, now time.
 	if in.Prepared != nil {
 		assessed += "\n" + in.Prepared.Goal + "\n" + in.Prepared.Questions + "\n" + in.Prepared.Bring
 	}
+	if in.Sections != nil {
+		assessed += "\n" + in.Sections.Feeling + "\n" + in.Sections.Remember +
+			"\n" + in.Sections.Agreed + "\n" + in.Sections.AskNext
+	}
 	a := safety.Assess(assessed)
 	provenance := "user_original"
 	if version > 1 {
@@ -175,6 +231,7 @@ func continuityRecord(id string, in RecordInput, version int, created, now time.
 		Provenance: provenance, ReviewStatus: "confirmed",
 		Safety: string(a.Level), Ruleset: a.Ruleset,
 		SourceRefs: cloneSourceRefs(in.SourceRefs), Prepared: clonePrepared(in.Prepared),
+		Sections: cloneFollowupSections(in.Sections),
 		ParentID: in.ParentID, CreatedAt: created, UpdatedAt: now,
 	}
 	if in.Kind == KindSummary {
@@ -875,12 +932,22 @@ func (s *Store) Followups(ctx context.Context, owner UserID, parentID string) ([
 	return out, nil
 }
 
-// updateFollowup keeps its sealed parent link and appends a revision.
-func (s *Store) updateFollowup(ctx context.Context, owner UserID, id string, in RecordInput) (PersonalRecord, error) {
-	in.Kind = KindFollowup
-	if err := validateContinuity(in, 0); err != nil {
-		return PersonalRecord{}, err
+// UpdateFollowup replaces title/text/sections in a new revision. The
+// follow-up must belong to the owner and to parentID, so the summary
+// route cannot edit a note attached to another summary. A nil Sections
+// keeps the stored sections for old text-only clients; an explicit empty
+// sections object clears them.
+func (s *Store) UpdateFollowup(ctx context.Context, owner UserID, parentID, id string, in RecordInput) (PersonalRecord, error) {
+	if _, err := ParseUUID(parentID); err != nil {
+		return PersonalRecord{}, ErrNotFound
 	}
+	return s.updateFollowup(ctx, owner, parentID, id, in)
+}
+
+// updateFollowup keeps its sealed parent link and appends a revision.
+func (s *Store) updateFollowup(ctx context.Context, owner UserID, parentID, id string, in RecordInput) (PersonalRecord, error) {
+	in.Kind = KindFollowup
+	in.ParentID = parentID
 	var result PersonalRecord
 	err := s.tx(ctx, func(tx pgx.Tx) error {
 		if _, err := userKind(ctx, tx, owner, true); err != nil {
@@ -893,8 +960,26 @@ func (s *Store) updateFollowup(ctx context.Context, owner UserID, id string, in 
 		if before.Kind != KindFollowup {
 			return ErrNotFound
 		}
+		if parentID != "" {
+			if before.ParentID != parentID {
+				return ErrNotFound
+			}
+			parent, err := s.record(ctx, tx, owner, parentID, false)
+			if err != nil {
+				return err
+			}
+			if parent.Kind != KindSummary {
+				return ErrNotFound
+			}
+		}
 		if before.Version != in.ExpectedVersion {
 			return ErrStaleVersion
+		}
+		if in.Sections == nil {
+			in.Sections = before.Sections
+		}
+		if err := validateContinuity(in, 0); err != nil {
+			return err
 		}
 		in.ParentID = before.ParentID
 		result = continuityRecord(id, in, before.Version+1, before.CreatedAt, s.clock())

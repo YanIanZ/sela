@@ -151,6 +151,7 @@ type OwnerStore interface {
 	ApproveSummary(context.Context, UserID, string, int) (PersonalRecord, error)
 	DeleteSummary(context.Context, UserID, string, int) error
 	CreateFollowup(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
+	UpdateFollowup(context.Context, UserID, string, string, RecordInput) (PersonalRecord, error)
 	Followups(context.Context, UserID, string) ([]PersonalRecord, error)
 	Shares(context.Context, UserID) ([]Share, error)
 	CreateShare(context.Context, UserID, string, string, string, int) (Share, string, string, error)

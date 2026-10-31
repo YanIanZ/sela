@@ -153,6 +153,19 @@ func (s *Server) v3CreateFollowup(w http.ResponseWriter, r *http.Request, p acco
 	writeData(w, http.StatusCreated, record)
 }
 
+func (s *Server) v3UpdateFollowup(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	var in account.RecordInput
+	if !decode(w, r, &in) {
+		return
+	}
+	record, err := s.opt.Accounts.UpdateFollowup(r.Context(), p.UserID, r.PathValue("id"), r.PathValue("followupId"), in)
+	if err != nil {
+		s.v3Error(w, r, err)
+		return
+	}
+	writeData(w, http.StatusOK, record)
+}
+
 func (s *Server) v3Followups(w http.ResponseWriter, r *http.Request, p account.Principal) {
 	list, err := s.opt.Accounts.Followups(r.Context(), p.UserID, r.PathValue("id"))
 	if err != nil {

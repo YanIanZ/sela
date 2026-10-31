@@ -10,7 +10,12 @@ import {
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon, MoodFace } from "../icons";
-import { MemoryDetailPage, MemoryPage, entryRoute } from "./Continuity";
+import {
+  FollowupSectionsView,
+  MemoryDetailPage,
+  MemoryPage,
+  entryRoute,
+} from "./Continuity";
 import { WeeklyPage } from "./Weekly";
 import { helpData } from "../helpdata";
 import {
@@ -692,6 +697,7 @@ function EntryDetail({ id }: { id: string }) {
   }
 
   const isCheckin = record.kind === "checkin";
+  const isFollowup = record.kind === "followup";
   const tagsList = (record.tags ?? []).map((t) => {
     const found = tags.find((x) => x.value === t);
     return found ? w(found.id, found.en) : t;
@@ -763,16 +769,26 @@ function EntryDetail({ id }: { id: string }) {
               </Button>
             </div>
           </div>
+        ) : isFollowup ? (
+          <FollowupSectionsView record={record} />
         ) : (
           <p className="s-preserve s-reading-body">{record.text}</p>
         )}
         {record.safety === "crisis" && <CrisisAfterSave />}
       </article>
       <div className="s-actions">
-        {!isCheckin && !editing && (
+        {!isCheckin && !isFollowup && !editing && (
           <Button variant="secondary" onClick={() => setEditing(true)}>
             {w("Ubah", "Edit")}
           </Button>
+        )}
+        {isFollowup && record.parentId && (
+          <LinkButton
+            to={`/support/summaries/${record.parentId}`}
+            variant="secondary"
+          >
+            {w("Perbaiki di ringkasan", "Edit in the summary")}
+          </LinkButton>
         )}
         {!isCheckin && (
           <Button variant="quiet" onClick={() => void loadVersions()}>
