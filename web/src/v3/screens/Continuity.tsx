@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
-import { api, type Consent, type Entry } from "../api";
+import { api, download as downloadFile, type Consent, type Entry } from "../api";
 import { Icon } from "../icons";
 import { useSession } from "../session";
 import { useLocale, useWords } from "../shared";
@@ -665,7 +665,7 @@ function SummaryDetail({ id }: { id: string }) {
       setBusy(false);
     }
   };
-  const download = async () => {
+  const downloadSummary = async (format: "html" | "md") => {
     if (!r || stale || r.summaryState !== "approved") return;
     setBusy(true);
     setError(null);
@@ -685,33 +685,10 @@ function SummaryDetail({ id }: { id: string }) {
           ),
         );
       }
-      const content = [
-        r.title || w("Ringkasan pribadi", "Personal summary"),
-        w(
-          "Ditulis dan disetujui pengguna · bukan diagnosis atau catatan resmi tenaga profesional",
-          "Written and approved by the user · not a diagnosis or official professional record",
-        ),
-        `v${r.version} · ${loc.dateTime(r.updatedAt)}`,
-        r.text,
-        ...(r.prepared
-          ? [r.prepared.goal, r.prepared.questions, r.prepared.bring]
-          : []),
-        w("Sumber pilihan", "Chosen sources"),
-        ...(r.sourceRefs ?? []).map((ref) => {
-          const src = sources.find((x) => x.id === ref.recordId);
-          return `${src?.title || src?.kind || ref.recordId} · v${ref.version}`;
-        }),
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-      const url = URL.createObjectURL(
-        new Blob([content], { type: "text/plain;charset=utf-8" }),
+      await downloadFile(
+        `/consultation-summaries/${id}/export?format=${format}&lang=${loc.lang}`,
+        `sela-ringkasan.${format}`,
       );
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "sela-ringkasan.txt";
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
       setError(e);
     } finally {
@@ -903,13 +880,22 @@ function SummaryDetail({ id }: { id: string }) {
                   "Download to show or print yourself. No recipient is contacted. Downloaded copies cannot be recalled.",
                 )}
               </p>
-              <Button
-                variant="primary"
-                disabled={busy}
-                onClick={() => void download()}
-              >
-                {w("Unduh ringkasan (.txt)", "Download summary (.txt)")}
-              </Button>
+              <div className="s-actions">
+                <Button
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() => void downloadSummary("html")}
+                >
+                  {w("Unduh HTML (untuk dicetak)", "Download HTML (to print)")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={() => void downloadSummary("md")}
+                >
+                  {w("Unduh Markdown", "Download Markdown")}
+                </Button>
+              </div>
             </section>
           )}
           <section className="c-followups">

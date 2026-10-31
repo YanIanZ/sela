@@ -81,6 +81,7 @@ func (s *Server) v3Routes() {
 		{method: "GET", path: "/api/v3/consultation-summaries", owner: s.v3Summaries},
 		{method: "POST", path: "/api/v3/consultation-summaries", mutation: true, owner: s.v3CreateSummary},
 		{method: "GET", path: "/api/v3/consultation-summaries/{id}", owner: s.v3Summary},
+		{method: "GET", path: "/api/v3/consultation-summaries/{id}/export", owner: s.v3ExportSummary},
 		{method: "PATCH", path: "/api/v3/consultation-summaries/{id}", mutation: true, owner: s.v3UpdateSummary},
 		{method: "DELETE", path: "/api/v3/consultation-summaries/{id}", mutation: true, owner: s.v3DeleteSummary},
 		{method: "POST", path: "/api/v3/consultation-summaries/{id}/approve", mutation: true, owner: s.v3ApproveSummary},

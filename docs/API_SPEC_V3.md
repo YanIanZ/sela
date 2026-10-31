@@ -331,6 +331,7 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | `GET /api/v3/consultation-summaries` | `{summaries}` |
 | `POST /api/v3/consultation-summaries` | `{title,text,sourceRefs,prepared?,storageGranted:true}` → personal record |
 | `GET /api/v3/consultation-summaries/{id}` | Personal record with effective `summaryState` |
+| `GET /api/v3/consultation-summaries/{id}/export?format=html\|md` | Approved summary as a self-contained HTML or Markdown file; `409 invalid_transition` until approved |
 | `PATCH /api/v3/consultation-summaries/{id}` | Creation fields plus `expectedVersion`; approval resets |
 | `DELETE /api/v3/consultation-summaries/{id}` | `{expectedVersion}`; summary and attached follow-ups cascade |
 | `POST /api/v3/consultation-summaries/{id}/approve` | `{expectedVersion}`; approval binds exact content version |

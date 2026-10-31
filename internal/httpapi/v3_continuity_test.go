@@ -1,6 +1,9 @@
 package httpapi_test
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // continuityV3 uses the shared v3 test configuration, where the optional
 // personal_memory purpose is active but not granted.
@@ -133,6 +136,9 @@ func TestV3ConsultationSummaryApprovalFollowupsAndCascade(t *testing.T) {
 	if draft["version"].(float64) != 2 || draft["summaryState"] != "draft" {
 		t.Fatalf("edit must revoke approval: %v", draft)
 	}
+	if r := a.call("GET", "/api/v3/consultation-summaries/"+id+"/export?format=html", nil); r.status != 409 || r.code() != "invalid_transition" {
+		t.Fatalf("draft export: %d %s", r.status, r.raw)
+	}
 	a.must(200, "POST", "/api/v3/consultation-summaries/"+id+"/approve", map[string]any{"expectedVersion": 2})
 
 	// A source edit invalidates the stored approval and blocks reapproval
@@ -154,6 +160,22 @@ func TestV3ConsultationSummaryApprovalFollowupsAndCascade(t *testing.T) {
 	a.must(200, "PATCH", "/api/v3/consultation-summaries/"+id, repin)
 	a.must(200, "POST", "/api/v3/consultation-summaries/"+id+"/approve", map[string]any{"expectedVersion": 3})
 
+	// The approved summary exports as HTML or Markdown, with the owner's
+	// words, the prepared sections and the pinned source label.
+	htmlExport := a.call("GET", "/api/v3/consultation-summaries/"+id+"/export?format=html", nil)
+	htmlBody := string(htmlExport.raw)
+	if htmlExport.status != 200 || !strings.Contains(htmlBody, "Synthetic summary final.") ||
+		!strings.Contains(htmlBody, "Synthetic goal") || !strings.Contains(htmlBody, "Synthetic source") ||
+		!strings.Contains(htmlExport.header.Get("Content-Type"), "text/html") {
+		t.Fatalf("html export: %d %s", htmlExport.status, htmlBody)
+	}
+	mdExport := a.call("GET", "/api/v3/consultation-summaries/"+id+"/export?format=md&lang=en", nil)
+	mdBody := string(mdExport.raw)
+	if mdExport.status != 200 || !strings.Contains(mdBody, "# Synthetic summary") ||
+		!strings.Contains(mdBody, "## Chosen sources") || !strings.Contains(mdExport.header.Get("Content-Type"), "text/markdown") {
+		t.Fatalf("markdown export: %d %s", mdExport.status, mdBody)
+	}
+
 	// Sources and summaries stay owner-isolated.
 	foreign := map[string]any{
 		"title": "Synthetic foreign summary", "text": "Synthetic foreign.", "storageGranted": true,
@@ -163,6 +185,9 @@ func TestV3ConsultationSummaryApprovalFollowupsAndCascade(t *testing.T) {
 		t.Fatalf("foreign source accepted: %d %s", r.status, r.raw)
 	}
 	b.must(404, "GET", "/api/v3/consultation-summaries/"+id, nil)
+	if r := b.call("GET", "/api/v3/consultation-summaries/"+id+"/export?format=html", nil); r.status != 404 {
+		t.Fatalf("foreign export: %d %s", r.status, r.raw)
+	}
 
 	// The generic record surface stays note/check-in only.
 	if r := a.call("POST", "/api/v3/records", map[string]any{"kind": "memory", "text": "Synthetic", "storageGranted": true}); r.status != 400 || r.field() != "kind" {
