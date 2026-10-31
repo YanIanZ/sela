@@ -117,7 +117,11 @@ func (s *Server) limited(bucket string, h http.HandlerFunc) http.HandlerFunc {
 }
 
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
-	writeData(w, http.StatusOK, map[string]any{"status": "ok", "version": s.opt.Version, "mode": "synthetic_demo", "uptimeSeconds": int(time.Since(s.start).Seconds())})
+	mode := s.opt.AccountConfig.Environment
+	if mode == "" {
+		mode = "production"
+	}
+	writeData(w, http.StatusOK, map[string]any{"status": "ok", "version": s.opt.Version, "mode": mode, "uptimeSeconds": int(time.Since(s.start).Seconds())})
 }
 
 // ready keeps its v2 fields and adds database and schema. It answers 503
