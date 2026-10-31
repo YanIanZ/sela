@@ -311,7 +311,7 @@ try {
   await page.getByLabel('Aku sudah memeriksa versi ini dan isinya mewakili yang ingin kusampaikan').check();
   await page.getByRole('button',{name:'Setujui versi ini',exact:true}).click();
   await page.getByRole('button',{name:'Unduh HTML (untuk dicetak)',exact:true}).waitFor();
-  await page.getByLabel('Yang ingin kuingat',{exact:true}).fill('Catatan tindak lanjut sintetis yang ingin kuingat.');
+  await page.getByLabel(/^Yang ingin kuingat/).fill('Catatan tindak lanjut sintetis yang ingin kuingat.');
   await page.getByLabel('Simpan catatan tindak lanjut ini',{exact:true}).check();
   await page.getByRole('button',{name:'Simpan tindak lanjut',exact:true}).click();
   await page.getByText('Catatan tindak lanjut sintetis yang ingin kuingat.',{exact:true}).waitFor();
