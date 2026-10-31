@@ -334,9 +334,11 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | Route | Request / response |
 | --- | --- |
 | `GET /api/v3/memory` | `{enabled,items}`; disabled and empty until current `personal_memory` consent |
-| `GET /api/v3/memory/{id}` | One owned memory record; `404 not_found` without current `personal_memory` consent or for another owner |
+| `GET /api/v3/memory/{id}` | One owned memory record with its `reviewStatus`, `provenance` and source refs (including the proposal `quote` and `turnKey`); `404 not_found` without current `personal_memory` consent or for another owner |
 | `POST /api/v3/memory` | `{title,text,storageGranted:true,sourceRefs?:[]}` → personal record |
+| `POST /api/v3/memory/proposals` | `{conversationId,expectedVersion?}` → `{proposals,aiState}`. Runs AT-3 over the recent user turns of one **saved** conversation record (never a live unsaved hold) and requires current `personal_memory` and `ai_processing` consent. Every released AI wording becomes an owned memory record with `reviewStatus: "unreviewed"`, `provenance: "unconfirmed_interpretation"` and a source ref carrying the user's exact `quote` and the turn key. `aiState` is `released`, `no_input` (no sendable user turn) or `unavailable` (the router withheld or could not release anything); a withheld, dropped or quote-fallback item is never stored. `409 stale_version` when `expectedVersion` is given and the conversation record changed, and `409 invalid_transition` while the saved conversation is crisis-paused |
 | `PATCH /api/v3/memory/{id}` | Same, plus `expectedVersion` |
+| `PATCH /api/v3/memory/{id}/review` | `{expectedVersion,action:"confirm"\|"correct"\|"reject",text?}` → reviewed memory record. `confirm` keeps the AI wording and sets `confirmed`; `correct` replaces the text in a new revision with `provenance: "user_correction"` and status `corrected`; `reject` sets `rejected`. Owner-scoped and versioned: a stale `expectedVersion` is `409 stale_version`, a foreign or non-memory id is `404 not_found`, and a missing current `personal_memory` consent is `403 consent_required`. Every review action appends a revision; confirm and reject keep the text, a correction replaces it. A rejected item can be confirmed or corrected again |
 | `DELETE /api/v3/memory/{id}` | `{expectedVersion}`; also allowed after consent withdrawal |
 | `GET /api/v3/shares` | `{shares}` (owner metadata, no token or code) |
 | `POST /api/v3/shares` | `{summaryId,label,purpose,durationHours}` → `{share,token,code}` once; requires `sharing` |
@@ -355,6 +357,7 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | `GET /api/v3/consultation-summaries/{id}/followups` | `{followups}` |
 
 `sourceRefs` is an array of `{recordId,version}`, maximum 12, minimum one for a summary.
+An AT-3 memory proposal adds the optional `quote` and `turnKey` fields, sealed with the rest of the record, so its review card can show the user's exact words without opening the conversation; existing records without them read unchanged.
 Sources must be current, owner-owned notes/check-ins/conversations. Derived records cannot be sources.
 A source edit or deletion demotes the effective approval on subsequent reads and exports.
 `prepared` holds optional `goal`, `questions`, and `bring` text. All such content and source links are encrypted.
@@ -362,10 +365,15 @@ Memory is explicit, defaults off, and is never sent to AI while the
 `personal_memory` consent is off or outdated. With that consent on, a reply
 turn may include at most five confirmed/corrected memory items (600 runes
 together) as `memory` spans, and only when `ai_processing` is also current;
-items over the allowance are skipped deterministically. Withdrawal hides
+items over the allowance are skipped deterministically. Unreviewed and
+rejected items are never reply context. Withdrawal hides
 memory from normal record reads, including `GET /api/v3/memory/{id}`;
 owner export and deletion remain available. The generic records PATCH additionally accepts an existing
 `followup` for corrections, retaining its parent; generic creation still accepts only notes/check-ins.
+AT-3 proposals come only from a saved conversation record and are stored as
+unreviewed memory items; nothing from an unsaved room is used. AI proposal
+wording is released only through the verifier gate (V36), and the source
+quote is kept with the item.
 Weekly reflection is computed in the browser from original creation dates/check-in local days;
 a reflection is saved only after permission as an ordinary encrypted note.
 

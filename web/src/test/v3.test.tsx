@@ -695,6 +695,202 @@ describe("personal memory", () => {
       expectedVersion: 2,
     });
   });
+
+  it("requests a proposal from a saved conversation and reviews it", async () => {
+    const user = profile();
+    const createdAt = "2026-10-27T09:00:00Z";
+    const memory = {
+      id: "mem-1",
+      kind: "memory",
+      title: "Konteks sintetis",
+      text: "Aku lebih tenang kalau ditanya dulu.",
+      version: 1,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt,
+      updatedAt: createdAt,
+    };
+    const conversation = {
+      id: "conv-1",
+      kind: "conversation",
+      title: "Percakapan sintetis",
+      text: "",
+      version: 3,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt,
+      updatedAt: createdAt,
+      turns: [],
+    };
+    const proposal = {
+      id: "prop-1",
+      kind: "memory",
+      title: "",
+      text: "Kamu suka menulis di pagi hari.",
+      version: 1,
+      provenance: "unconfirmed_interpretation",
+      reviewStatus: "unreviewed",
+      safety: "none",
+      sourceRefs: [
+        {
+          recordId: "conv-1",
+          version: 3,
+          quote: "Aku suka menulis di pagi hari.",
+          turnKey: "turn-0",
+        },
+      ],
+      createdAt,
+      updatedAt: createdAt,
+    };
+    let items: Array<Record<string, unknown>> = [memory];
+    const calls = mockApi(
+      {
+        "GET /memory": () => ({ data: { enabled: true, items } }),
+        "GET /records": () => ({ data: { records: [conversation] } }),
+        "POST /memory/proposals": () => {
+          items = [proposal, ...items];
+          return { data: { proposals: [proposal], aiState: "released" } };
+        },
+        "PATCH /memory/prop-1/review": (body) => {
+          const action = (body as Record<string, string>).action;
+          const next = {
+            ...proposal,
+            reviewStatus:
+              action === "confirm"
+                ? "confirmed"
+                : action === "correct"
+                  ? "corrected"
+                  : "rejected",
+          };
+          items = items.map((r) => (r.id === "prop-1" ? next : r));
+          return { data: next };
+        },
+      },
+      user,
+    );
+    renderPath("/notes/memory");
+    fireEvent.click(await screen.findByRole("button", { name: "Minta usulan" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Buat usulan dari percakapan ini",
+      }),
+    );
+    expect(
+      await screen.findByText("Aku suka menulis di pagi hari."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Kamu suka menulis di pagi hari.").length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText("Tafsiran Sela")).toBeInTheDocument();
+    expect(screen.getAllByText("Belum ditinjau").length).toBeGreaterThan(0);
+    const request = calls.find(
+      (c) => c.method === "POST" && c.path === "/memory/proposals",
+    );
+    expect(request?.body).toMatchObject({
+      conversationId: "conv-1",
+      expectedVersion: 3,
+    });
+
+    expect(screen.getByRole("button", { name: "Ingat" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Jangan" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ubah dulu" }));
+    fireEvent.change(screen.getByLabelText("Kata-katamu"), {
+      target: { value: "Menulis di pagi hari membantumu." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Simpan koreksi" }));
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) => c.method === "PATCH" && c.path === "/memory/prop-1/review",
+        ),
+      ).toBe(true),
+    );
+    const patch = calls.find(
+      (c) => c.method === "PATCH" && c.path === "/memory/prop-1/review",
+    );
+    expect(patch?.body).toMatchObject({
+      expectedVersion: 1,
+      action: "correct",
+      text: "Menulis di pagi hari membantumu.",
+    });
+  });
+
+  it("shows a proposal's quote and review status on its detail and confirms it", async () => {
+    const user = profile();
+    const createdAt = "2026-10-27T09:00:00Z";
+    const proposal = {
+      id: "prop-1",
+      kind: "memory",
+      title: "",
+      text: "Kamu suka menulis di pagi hari.",
+      version: 1,
+      provenance: "unconfirmed_interpretation",
+      reviewStatus: "unreviewed",
+      safety: "none",
+      sourceRefs: [
+        {
+          recordId: "conv-1",
+          version: 3,
+          quote: "Aku suka menulis di pagi hari.",
+          turnKey: "turn-0",
+        },
+      ],
+      createdAt,
+      updatedAt: createdAt,
+    };
+    const conversation = {
+      id: "conv-1",
+      kind: "conversation",
+      title: "Percakapan sintetis",
+      text: "",
+      version: 3,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt,
+      updatedAt: createdAt,
+      turns: [],
+    };
+    const calls = mockApi(
+      {
+        "GET /memory": () => ({ data: { enabled: true, items: [proposal] } }),
+        "GET /memory/prop-1": () => ({ data: proposal }),
+        "GET /records/conv-1": () => ({ data: conversation }),
+        "PATCH /memory/prop-1/review": () => ({
+          data: { ...proposal, reviewStatus: "confirmed" },
+        }),
+      },
+      user,
+    );
+    renderPath("/notes/memory/prop-1");
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Kamu suka menulis di pagi hari.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Aku suka menulis di pagi hari.")).toBeInTheDocument();
+    expect(screen.getByText("Tafsiran Sela")).toBeInTheDocument();
+    expect(screen.getByText("Belum ditinjau")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Percakapan sintetis" }),
+    ).toHaveAttribute("href", "/talk?record=conv-1");
+    fireEvent.click(screen.getByRole("button", { name: "Konfirmasi" }));
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) => c.method === "PATCH" && c.path === "/memory/prop-1/review",
+        ),
+      ).toBe(true),
+    );
+    const patch = calls.find(
+      (c) => c.method === "PATCH" && c.path === "/memory/prop-1/review",
+    );
+    expect(patch?.body).toMatchObject({ expectedVersion: 1, action: "confirm" });
+    expect(await screen.findByText("Dikonfirmasi")).toBeInTheDocument();
+  });
 });
 
 describe("settings", () => {
