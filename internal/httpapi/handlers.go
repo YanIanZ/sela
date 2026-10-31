@@ -76,6 +76,7 @@ func (s *Server) routes() {
 	s.adminRoutes()
 	s.adminCareRoutes()
 	s.adminReadingRoutes()
+	s.adminCommunityRoutes()
 
 	m.HandleFunc("/api/", s.apiFallback)
 	m.Handle("/", s.static())

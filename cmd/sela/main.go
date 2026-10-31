@@ -30,6 +30,7 @@ import (
 	"github.com/YanIanZ/sela/internal/budget"
 	"github.com/YanIanZ/sela/internal/cache"
 	"github.com/YanIanZ/sela/internal/care"
+	"github.com/YanIanZ/sela/internal/community"
 	"github.com/YanIanZ/sela/internal/config"
 	"github.com/YanIanZ/sela/internal/db"
 	"github.com/YanIanZ/sela/internal/fixtures"
@@ -101,6 +102,7 @@ func run() error {
 	var accounts *account.Store
 	var adminStore *admin.Store
 	var careStore *care.Store
+	var communityStore *community.Store
 	var readingReviews *reading.ReviewStore
 	var budgetGate *budget.Gate
 	var dbStatus func(context.Context) (string, string)
@@ -127,6 +129,10 @@ func run() error {
 			return fmt.Errorf("database: cannot read the password hash parameters (%s)", db.Classify(err))
 		}
 		careStore, err = care.New(pool, time.Now)
+		if err != nil {
+			return err
+		}
+		communityStore, err = community.New(pool, time.Now)
 		if err != nil {
 			return err
 		}
@@ -179,6 +185,7 @@ func run() error {
 		PublicOrigin: cfg.PublicOrigin, SecureCookies: cfg.SecureCookies, TrustProxy: cfg.TrustProxy,
 		WebDir: cfg.WebDir, Research: index, Logger: logger, Version: version, MetricsToken: cfg.MetricsToken,
 		Cache: pubCache, Admin: adminStore, Budget: budgetGate, Care: careStore,
+		Community: communityStore, Moderator: community.MetaModerator{Provider: provider},
 		ReadingReviews: readingReviews,
 		AIRouter:       aiRouter, Accounts: accounts, AccountConfig: acctCfg, Database: dbStatus, DatabaseRequired: cfg.RequiresDatabase(),
 		DisableV2Journey: cfg.Store != "memory", HSTS: cfg.Env == config.EnvProduction,

@@ -29,6 +29,7 @@ import (
 	"github.com/YanIanZ/sela/internal/budget"
 	"github.com/YanIanZ/sela/internal/cache"
 	"github.com/YanIanZ/sela/internal/care"
+	"github.com/YanIanZ/sela/internal/community"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/reading"
 	"github.com/YanIanZ/sela/internal/research"
@@ -87,6 +88,11 @@ type Options struct {
 	// Care is the public planned-care directory and synthetic sandbox. Nil
 	// disables those routes.
 	Care *care.Store
+	// Community is the anonymous peer-sharing store (D-072). Nil disables
+	// the community routes (503 store_unavailable).
+	Community *community.Store
+	// Moderator checks community posts and replies before they are shown.
+	Moderator community.Moderator
 	// ReadingReviews is the operator sign-off store for the embedded reading
 	// library. Nil keeps the public routes on the embedded-only gate.
 	ReadingReviews *reading.ReviewStore

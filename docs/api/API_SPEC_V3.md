@@ -461,6 +461,33 @@ The owner's "names kept private" list is an explicit privacy control: names are 
 
 Every listening reply and reflection request loads the owner's list and passes it to `ai.Input.PrivateNames`; the minimiser replaces each occurrence with `[NAMA-n]` before the payload exists. If the list cannot be read, the request is not blocked: the server logs a content-free warning and continues with the deterministic contact-detail redaction only. The settings preview is computed in the browser from the saved names and is never sent to a provider. The owner's own export includes the decrypted list (`sections.privateNames`) because it is their data; a share or recipient projection never includes it. Deleting the account removes the rows and crypto-shreds the key, so copies of the ciphertext cannot be opened.
 
+## 6.13 Condition map and demo practitioners (2026-11-01 local implementation, D-071)
+
+`GET /api/v3/condition-map` needs the optional `condition_map` consent (`403 consent_required`, field `condition_map`, otherwise). It reads only the owner's saved records of the last 30 days and answers, with `Cache-Control: no-store`:
+
+```json
+{ "data": { "stage": "everyday | attention | support | urgent", "signals": [{ "key": "crisis_entries | heavy_words | heavy_checkins | heavy_streak | low_energy", "count": 2, "days": 14 }],
+  "dataPoints": 9, "windowDays": 30, "dataLimited": false, "sources": { "checkin": 5, "note": 3, "conversation": 1 }, "computedAt": "…", "ruleset": "sela-condition-2026.11.01-1" } }
+```
+
+The stage is computed with fixed rules (`internal/account/condition.go`), is never stored, logged or sent to a model, and is not a diagnosis, triage category or risk score; no number is returned for the person beyond counts of their own entries.
+
+`GET /api/v3/care-demo` is public and returns `{ "practitioners": [...], "synthetic": true }`: fictional practitioners and one fictional clinic for the product demo, each with `synthetic: true`, the stages they suit and their modes. They cannot be contacted and receive no data.
+
+## 6.14 Community (2026-11-01 local implementation, D-072)
+
+Every route needs the optional `community` consent and the `18_plus` age band (`403 age_not_supported` otherwise); writes also pass the guardian gate. Text is checked by the safety router first: crisis answers `422 crisis` (field `body`) and nothing is stored. Moderation (rules, then the Meta model) decides the status: `published`, `held` (moderation unavailable or unsure) or `hidden` (harmful). Authors see their own held or hidden items with their labels; others never do. Limits: 5 posts and 30 replies per author per hour (`429 rate_limited`), posts ≤ 2,000 and replies ≤ 1,000 characters.
+
+- `GET /api/v3/community/posts?topic=` — newest published posts (plus the viewer's own), `topic` one of `daily, work, study, family, relationship, loneliness, other`.
+- `POST /api/v3/community/posts` — `{ "body", "topic" }` → `201 { "post", "support" }`; `support` is true when the text read as elevated, so the app shows help alongside.
+- `GET /api/v3/community/posts/{id}` — the post and its visible replies.
+- `DELETE /api/v3/community/posts/{id}` — the author deletes their post and its replies (`204`).
+- `POST /api/v3/community/posts/{id}/replies` — `{ "body" }` → `201 { "reply", "support" }`; one alias per person per thread.
+- `DELETE /api/v3/community/replies/{id}` — the author deletes their reply (`204`).
+- `POST /api/v3/community/reports` — `{ "kind": "post|reply", "id", "reason": "bullying|harassment|hate|sexual|self_harm|personal_info|spam|other" }`; one report per person; three distinct reports hide the item for an operator. Reporting your own item is `403`.
+
+Operators (permission `community/moderate`, roles owner and safety reviewer) use `GET /api/admin/v1/community/queue` and `POST /api/admin/v1/community/{kind}/{id}/decision` with `{ "action": "restore|remove", "reason" }`; every decision is audited. The queue carries no author information. Migration `1000_community` (range 1000–1099).
+
 ## 7. Guest and account differences (foundation)
 
 | Capability | Guest | Account |
@@ -491,3 +518,4 @@ Each milestone adds its routes here, with bodies, errors, limits, exporter secti
 | P6 Reading and support content | `/api/v3/reading` | 0600–0699 |
 | Planned care (directory and synthetic sandbox) | `/api/v3/care-directory` | 0700–0799 |
 | Privacy controls (names kept private) | `/api/v3/me/private-names` | 0800–0899 |
+| Community (anonymous peer sharing) | `/api/v3/community` | 1000–1099 |

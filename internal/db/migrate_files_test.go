@@ -82,8 +82,8 @@ func TestMigrationFilesRules(t *testing.T) {
 }
 
 func TestMigrationFilesReservedRanges(t *testing.T) {
-	allowed := []string{"0001", "0099", "0100", "0199", "0200", "0299", "0300", "0399", "0400", "0499", "0500", "0599", "0600", "0699", "0700", "0799", "0800", "0899", "0900", "0999"}
-	refused := []string{"0000", "1000", "9999"}
+	allowed := []string{"0001", "0099", "0100", "0199", "0200", "0299", "0300", "0399", "0400", "0499", "0500", "0599", "0600", "0699", "0700", "0799", "0800", "0899", "0900", "0999", "1000", "1099"}
+	refused := []string{"0000", "1100", "9999"}
 	for _, v := range allowed {
 		if _, err := Parse(mapFS(map[string]string{v + "_a.up.sql": schemaUp, v + "_a.down.sql": schemaDown}), "m"); err != nil {
 			t.Errorf("%s refused: %v", v, err)

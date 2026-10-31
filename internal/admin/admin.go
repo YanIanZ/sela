@@ -40,15 +40,18 @@ const (
 	PermSafetyReview    = "safety-content/review"
 	PermStaffManage     = "staff/manage"
 	PermSandboxWrite    = "sandbox/write"
+	// PermCommunityModerate decides held, hidden and reported community
+	// posts (D-072).
+	PermCommunityModerate = "community/moderate"
 )
 
 var rolePermissions = map[Role][]string{
-	RoleOwner:             {PermOverviewRead, PermAuditRead, PermCacheWrite, PermDirectoryWrite, PermDirectoryVerify, PermResearchReview, PermSafetyReview, PermStaffManage, PermSandboxWrite},
+	RoleOwner:             {PermOverviewRead, PermAuditRead, PermCacheWrite, PermDirectoryWrite, PermDirectoryVerify, PermResearchReview, PermSafetyReview, PermStaffManage, PermSandboxWrite, PermCommunityModerate},
 	RoleSecurityAdmin:     {PermOverviewRead, PermAuditRead, PermStaffManage},
 	RoleDirectoryEditor:   {PermOverviewRead, PermDirectoryWrite},
 	RoleDirectoryReviewer: {PermOverviewRead, PermDirectoryVerify},
 	RoleResearchEditor:    {PermOverviewRead, PermResearchReview},
-	RoleSafetyReviewer:    {PermOverviewRead, PermSafetyReview},
+	RoleSafetyReviewer:    {PermOverviewRead, PermSafetyReview, PermCommunityModerate},
 	RoleOps:               {PermOverviewRead, PermCacheWrite, PermSandboxWrite},
 }
 

@@ -71,6 +71,7 @@ var Ranges = []Range{
 	{700, 799, "planned-care directory and synthetic sandbox"},
 	{800, 899, "privacy controls"},
 	{900, 999, "ops"},
+	{1000, 1099, "community"},
 }
 
 // RangeOf returns the owner of a version, or "" when it is not reserved.

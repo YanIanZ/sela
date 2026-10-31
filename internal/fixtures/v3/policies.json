@@ -152,5 +152,47 @@
         "en": "You choose what the summary contains and who it is for. The link and access code are shown once; the recipient is not identity-verified, and you can revoke access at any time. Names you mark private are masked in the shared summary. Copies already downloaded or printed cannot be recalled."
       }
     ]
+  },
+  "condition_map": {
+    "version": "condition-map-2026-11-01.1",
+    "title": {
+      "id": "Peta kondisi",
+      "en": "Condition map"
+    },
+    "body": [
+      {
+        "id": "Kalau kamu mengizinkan, Sela membaca catatan, cek perasaan, dan percakapan yang sudah kamu simpan selama 30 hari terakhir untuk menunjukkan satu tahap: Sehari-hari, Perlu perhatian, Butuh dukungan, atau Butuh bantuan segera. Percakapan yang tidak disimpan tidak pernah dibaca.",
+        "en": "If you allow it, Sela reads the notes, check-ins and conversations you have saved in the last 30 days to show one stage: Everyday, Needs attention, Needs support or Needs help now. Conversations you did not save are never read."
+      },
+      {
+        "id": "Tahap ini dihitung dengan aturan tetap, bukan oleh AI, dan selalu disertai alasannya. Ini bukan diagnosis, bukan penilaian risiko, dan tidak dikirim ke siapa pun, termasuk penyedia AI atau tenaga profesional, kecuali kamu sendiri memilih membawanya.",
+        "en": "The stage is computed with fixed rules, not by AI, and always shows its reasons. It is not a diagnosis or a risk assessment, and it is not sent to anyone — not to an AI provider or a professional — unless you choose to bring it yourself."
+      },
+      {
+        "id": "Tidak ada yang disimpan: tahap dihitung setiap kali kamu membukanya. Kamu dapat mematikan izin ini kapan saja.",
+        "en": "Nothing is stored: the stage is computed each time you open it. You can turn this permission off at any time."
+      }
+    ]
+  },
+  "community": {
+    "version": "community-2026-11-01.1",
+    "title": {
+      "id": "Berbagi cerita ke sesama",
+      "en": "Sharing stories with others"
+    },
+    "body": [
+      {
+        "id": "Ruang berbagi hanya untuk usia 18 tahun ke atas. Ceritamu tampil dengan nama samaran acak, tanpa profil, dan nama atau kontak yang terdeteksi disamarkan sebelum tampil.",
+        "en": "The sharing space is for people aged 18 and over. Your story appears under a random alias with no profile, and names or contacts that are detected are masked before it appears."
+      },
+      {
+        "id": "Setiap cerita dan balasan diperiksa dulu oleh pemeriksa keamanan Sela dan oleh model Meta (Amerika Serikat) sebelum tampil. Perundungan, pelecehan, ujaran kebencian, atau ajakan menyakiti diri langsung disembunyikan dan ditinjau operator. Tulisan yang terbaca sebagai bahaya tidak ditampilkan; kamu akan diarahkan ke bantuan.",
+        "en": "Every story and reply is checked first by Sela's safety checks and by a Meta model (United States) before it appears. Bullying, harassment, hate or encouragement of self-harm is hidden at once and reviewed by an operator. Writing that reads as danger is not shown; you are guided to help instead."
+      },
+      {
+        "id": "Orang lain bisa melaporkan tulisan. Operator hanya melihat tulisan yang dilaporkan atau ditahan, tidak pernah ruang pribadimu. Kamu dapat menghapus ceritamu kapan saja; salinan yang sudah dibaca orang lain tidak bisa ditarik kembali.",
+        "en": "Others can report what is posted. Operators only see posts that are reported or held, never your private space. You can delete your story at any time; what others have already read cannot be recalled."
+      }
+    ]
   }
 }
