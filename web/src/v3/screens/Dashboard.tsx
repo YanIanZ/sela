@@ -67,7 +67,7 @@ export function DashboardPage({ signedIn = false }: { signedIn?: boolean }) {
         <section className="s-info-control" aria-labelledby="dashboard-control"><h2 id="dashboard-control">{w("Tetap dalam kendalimu", "You stay in control")}</h2><dl>
           <div><dt>{w("Percakapan & jurnal", "Conversations & journal")}</dt><dd>{w("Penyimpanan mengikuti izinmu. Pilihan tidak menyimpan tetap tersedia untuk percakapan.", "Storage follows your permissions. Conversations also offer a do-not-save option.")}</dd></div>
           <div><dt>{w("Ringkasan", "Summaries")}</dt><dd>{w("Ditulis dan diperiksa olehmu. Unduh setelah menyetujui versinya.", "Written and reviewed by you. Download after approving its version.")}</dd></div>
-          <div><dt>{w("Berbagi ke penerima", "Recipient sharing")}</dt><dd>{w("Tautan berbagi dan kode akses belum tersedia.", "Share links and recipient access codes are not available yet.")}</dd></div>
+          <div><dt>{w("Berbagi ke penerima", "Recipient sharing")}</dt><dd>{w("Tautan berbagi dan kode akses tersedia di Dukungan.", "Share links and access codes are available from Support.")}</dd></div>
         </dl><Link to="/policies">{w("Baca kebijakan", "Read the policies")}</Link></section>
         <section className="s-info-help" aria-labelledby="dashboard-help"><Icon name="help" /><h2 id="dashboard-help">{w("Butuh bantuan manusia?", "Need human support?")}</h2><p>{w("Lihat informasi layanan bantuan. Sela bukan layanan darurat dan tidak memberi diagnosis.", "Explore support service information. Sela is not an emergency service and gives no diagnosis.")}</p><Link to="/help">{w("Lihat layanan bantuan", "View support services")}<Icon name="arrow-right" /></Link></section>
       </aside>
