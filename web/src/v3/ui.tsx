@@ -712,6 +712,7 @@ export function Dialog({
   children,
   className,
   sheet = false,
+  alert = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -719,8 +720,11 @@ export function Dialog({
   children: ReactNode;
   className?: string;
   sheet?: boolean;
+  /** Announce the dialog as an alert and focus its heading. */
+  alert?: boolean;
 }) {
   const w = useWords();
+  const titleID = useId();
   const ref = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
@@ -746,7 +750,8 @@ export function Dialog({
     <dialog
       ref={ref}
       className={`s-dialog ${className ?? ""}`}
-      aria-labelledby="s-dialog-title"
+      role={alert ? "alertdialog" : undefined}
+      aria-labelledby={titleID}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -780,7 +785,7 @@ export function Dialog({
           </div>
         )}
         <div className="s-dialog-head">
-          <h2 id="s-dialog-title" ref={heading} tabIndex={-1}>
+          <h2 id={titleID} ref={heading} tabIndex={-1}>
             {title}
           </h2>
           <button

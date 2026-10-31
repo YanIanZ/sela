@@ -109,7 +109,7 @@ const consents = [
   },
 ];
 
-type Reply = { status?: number; data?: unknown; error?: string } | "unauth";
+type Reply = { status?: number; data?: unknown; error?: string } | "unauth" | Response;
 type Handler = (body: unknown, url: URL) => Reply | Promise<Reply>;
 
 function json(payload: unknown, status = 200) {
@@ -117,6 +117,16 @@ function json(payload: unknown, status = 200) {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function sse(frames: Array<{ event: string; data: unknown }>) {
+  return new Response(
+    frames.map((f) => `event: ${f.event}\ndata: ${JSON.stringify(f.data)}\n\n`).join(""),
+    {
+      status: 200,
+      headers: { "Content-Type": "text/event-stream; charset=utf-8" },
+    },
+  );
 }
 
 function mockApi(handlers: Record<string, Handler>, signedIn: Profile | null) {
@@ -143,6 +153,7 @@ function mockApi(handlers: Record<string, Handler>, signedIn: Profile | null) {
         return json({ error: { code: "not_found", message: "Not found" } }, 404);
       }
       const reply = await handler(body, url);
+      if (reply instanceof Response) return reply;
       if (reply === "unauth") {
         return json(
           { error: { code: "not_signed_in", message: "Not signed in" } },
@@ -453,6 +464,155 @@ describe("home, notes and conversations", () => {
       text: "Aku merasa berat hari ini.",
       expectedVersion: 1,
     });
+    // The stream route was attempted first and the JSON route is the fallback.
+    expect(calls.some((c) => c.path === "/conversations/room-1/turns/stream")).toBe(true);
+  });
+
+  it("renders validated stream chunks once and keeps the done room", async () => {
+    const user = profile();
+    const empty = {
+      id: "room-1",
+      save: false,
+      version: 1,
+      turns: [],
+      paused: false,
+      busy: false,
+      aiState: "not_requested",
+      holdExpiresIn: 1800,
+    };
+    const reply = "Kedengarannya hari ini berat.";
+    const answered = {
+      ...empty,
+      version: 3,
+      aiState: "ready",
+      turns: [
+        {
+          role: "user",
+          text: "Aku merasa berat hari ini.",
+          provenance: "user_original",
+          createdAt: "2026-10-27T10:00:00Z",
+        },
+        {
+          role: "assistant",
+          text: reply,
+          provenance: "live_meta",
+          reviewStatus: "unreviewed",
+          model: "meta-model",
+          createdAt: "2026-10-27T10:00:05Z",
+        },
+      ],
+    };
+    const calls = mockApi(
+      {
+        "GET /conversations/room-1": () => ({ data: empty }),
+        "POST /conversations/room-1/turns/stream": () =>
+          sse([
+            { event: "status", data: { state: "thinking" } },
+            { event: "chunk", data: { text: "Kedengarannya" } },
+            { event: "chunk", data: { text: " hari ini berat." } },
+            { event: "done", data: answered },
+          ]),
+      },
+      user,
+    );
+    renderPath("/talk/room-1");
+    const composer = await screen.findByLabelText("Tulis untuk Sela");
+    fireEvent.change(composer, { target: { value: "Aku merasa berat hari ini." } });
+    fireEvent.click(screen.getByRole("button", { name: "Kirim" }));
+    expect(await screen.findByText(reply)).toBeInTheDocument();
+    expect(screen.getAllByText(reply)).toHaveLength(1);
+    expect(calls.some((c) => c.path === "/conversations/room-1/turns/stream")).toBe(true);
+    expect(calls.some((c) => c.path === "/conversations/room-1/turns")).toBe(false);
+  });
+
+  it("warns before an unsaved hold expires and refreshes it", async () => {
+    const user = profile();
+    // Four minutes left: the component's threshold check runs on arrival.
+    const empty = {
+      id: "room-1",
+      save: false,
+      version: 1,
+      turns: [],
+      paused: false,
+      busy: false,
+      aiState: "not_requested",
+      holdExpiresIn: 240,
+    };
+    let firstRead = true;
+    const calls = mockApi(
+      {
+        "GET /conversations/room-1": () => {
+          // "Tetap buka" is a real GET: the server restarts the idle timer.
+          const data = firstRead ? empty : { ...empty, holdExpiresIn: 1800 };
+          firstRead = false;
+          return { data };
+        },
+      },
+      user,
+    );
+    renderPath("/talk/room-1");
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Percakapan akan segera dibuang",
+    });
+    expect(within(dialog).getByRole("button", { name: "Tetap buka" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Akhiri sekarang" })).toBeInTheDocument();
+
+    const reads = () =>
+      calls.filter((c) => c.method === "GET" && c.path === "/conversations/room-1").length;
+    const before = reads();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Tetap buka" }));
+    await waitFor(() => expect(reads()).toBeGreaterThan(before));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+
+  it("ends the room from the hold warning", async () => {
+    const user = profile();
+    const empty = {
+      id: "room-1",
+      save: false,
+      version: 1,
+      turns: [],
+      paused: false,
+      busy: false,
+      aiState: "not_requested",
+      holdExpiresIn: 240,
+    };
+    const calls = mockApi(
+      {
+        "GET /conversations/room-1": () => ({ data: empty }),
+        "DELETE /conversations/room-1": () => ({ data: { ended: true, saved: false } }),
+      },
+      user,
+    );
+    renderPath("/talk/room-1");
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Percakapan akan segera dibuang",
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Akhiri sekarang" }));
+    expect(
+      await screen.findByRole("heading", { name: "Percakapan selesai." }),
+    ).toBeInTheDocument();
+    expect(calls.some((c) => c.method === "DELETE" && c.path === "/conversations/room-1")).toBe(
+      true,
+    );
+  });
+
+  it("never warns for a saved room", async () => {
+    const user = profile();
+    const saved = {
+      id: "room-1",
+      save: true,
+      version: 1,
+      turns: [],
+      paused: false,
+      busy: false,
+      aiState: "not_requested",
+      holdExpiresIn: 240,
+    };
+    mockApi({ "GET /conversations/room-1": () => ({ data: saved }) }, user);
+    renderPath("/talk/room-1");
+    expect(await screen.findByLabelText("Tulis untuk Sela")).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 });
 

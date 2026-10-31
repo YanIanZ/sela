@@ -119,7 +119,14 @@ export type Room = {
   busy: boolean;
   aiState: string;
   recordId?: string;
+  /** Seconds until the temporary server hold is discarded. */
+  holdExpiresIn?: number;
 };
+
+/** Events the turn stream may deliver before its final room. */
+export type TurnStreamEvent =
+  | { type: "status"; state: string }
+  | { type: "chunk"; text: string };
 
 export type Entry = {
   id: string;
@@ -259,6 +266,141 @@ export async function api<T>(
       );
     }
     return data.data as T;
+  } catch (error) {
+    if (isAbort(error) && signal?.aborted) throw error;
+    if (isAbort(error)) throw new V3Error("timeout", "Request timed out");
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+    signal?.removeEventListener("abort", forward);
+  }
+}
+
+type RawStreamFrame = { event: string; data: string };
+
+/** Parse one SSE frame; comments and keep-alive blocks yield null. */
+function parseStreamFrame(block: string): RawStreamFrame | null {
+  let event = "";
+  let data: string[] | null = null;
+  for (const line of block.replace(/\r/g, "").split("\n")) {
+    if (line === "" || line.startsWith(":")) continue;
+    if (line.startsWith("event:")) {
+      event = line.slice(6).trim();
+    } else if (line.startsWith("data:")) {
+      const value = line.slice(5);
+      (data ??= []).push(value.startsWith(" ") ? value.slice(1) : value);
+    }
+  }
+  if (event === "" && data === null) return null;
+  return { event: event || "message", data: data?.join("\n") ?? "" };
+}
+
+/**
+ * POST a turn and read validated reply chunks as they arrive. The server
+ * only sends text it has already released and stored, so a chunk is never a
+ * provider token. The returned room is the same object the JSON route
+ * returns and remains the single source of persisted turns.
+ */
+export async function streamTurn(
+  path: string,
+  body: unknown,
+  onEvent: (event: TurnStreamEvent) => void,
+  signal?: AbortSignal,
+  timeoutMs = 110_000,
+): Promise<Room> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  const forward = () => controller.abort();
+  signal?.addEventListener("abort", forward, { once: true });
+  try {
+    const res = await fetch("/api/v3" + path, {
+      method: "POST",
+      credentials: "same-origin",
+      signal: controller.signal,
+      headers: {
+        Accept: "text/event-stream",
+        "X-Sela-Request": "1",
+        "X-Sela-Language": document.documentElement.lang === "en" ? "en" : "id",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      let data: { error?: { code?: string; message?: string; field?: string } } = {};
+      try {
+        data = await res.json();
+      } catch {
+        // a proxy can answer HTML; the status still decides
+      }
+      const code = data.error?.code ?? "stream_unavailable";
+      if (res.status === 401 && code === "not_signed_in" && authActive) {
+        window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
+      }
+      throw new V3Error(
+        code,
+        data.error?.message ?? `HTTP ${res.status}`,
+        res.status,
+        data.error?.field,
+      );
+    }
+    if (!res.body || !(res.headers.get("Content-Type") ?? "").startsWith("text/event-stream")) {
+      throw new V3Error("stream_unavailable", "Streaming is unavailable", res.status);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let room: Room | null = null;
+    const handle = (frame: RawStreamFrame) => {
+      let payload: unknown = {};
+      try {
+        payload = frame.data === "" ? {} : JSON.parse(frame.data);
+      } catch {
+        throw new V3Error("stream_invalid", "The reply stream was malformed");
+      }
+      if (frame.event === "status") {
+        const state = (payload as { state?: unknown }).state;
+        onEvent({ type: "status", state: typeof state === "string" ? state : "" });
+      } else if (frame.event === "chunk") {
+        const text = (payload as { text?: unknown }).text;
+        if (typeof text === "string" && text !== "") {
+          onEvent({ type: "chunk", text });
+        }
+      } else if (frame.event === "done") {
+        room = payload as Room;
+      } else if (frame.event === "error") {
+        const code = (payload as { code?: unknown }).code;
+        throw new V3Error(
+          typeof code === "string" && code !== "" ? code : "internal",
+          "The reply stream failed",
+        );
+      }
+    };
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let at = buffer.indexOf("\n\n");
+        while (at >= 0) {
+          const block = buffer.slice(0, at);
+          buffer = buffer.slice(at + 2);
+          const frame = parseStreamFrame(block);
+          if (frame) handle(frame);
+          at = buffer.indexOf("\n\n");
+        }
+      }
+      buffer += decoder.decode();
+      if (buffer.trim() !== "") {
+        const frame = parseStreamFrame(buffer);
+        if (frame) handle(frame);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    if (room === null) {
+      throw new V3Error("stream_incomplete", "The stream ended before the reply was ready");
+    }
+    return room;
   } catch (error) {
     if (isAbort(error) && signal?.aborted) throw error;
     if (isAbort(error)) throw new V3Error("timeout", "Request timed out");
