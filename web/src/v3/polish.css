@@ -146,3 +146,37 @@
 .s-shell .s-transcript { display: flex; flex-direction: column; }
 .s-shell .s-transcript > div { display: flex; flex-direction: column; }
 .s-shell .s-room-empty { margin-block: auto; }
+
+/* Support: sharing closes the page as its own quiet panel. */
+.c-support-intro .s-actions { margin-top: 0; }
+.s-shell .c-support-share { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; margin-top: var(--space-5); padding: 1.5rem clamp(1.25rem, 2.5vw, 1.75rem); border-radius: var(--radius-4); background: var(--c-surface-quiet); }
+.s-shell .c-support-share > div { flex: 1 1 22rem; min-width: 0; }
+.s-shell .c-support-share h2 { font-size: var(--font-size-4); margin: 0 0 0.35rem; }
+.s-shell .c-support-share p { max-width: 62ch; color: var(--c-muted); }
+
+/* Disclosures: one shared look — rounded row, display face, a turning chevron. */
+.s-shell main details:not(.s-reflections) > summary {
+  display: flex; align-items: center; gap: 0.5rem; min-height: var(--target-min);
+  list-style: none; cursor: pointer; font-family: var(--font-display); font-weight: 500; color: var(--c-text);
+}
+.s-shell main details:not(.s-reflections) > summary::-webkit-details-marker { display: none; }
+.s-shell main details:not(.s-reflections) > summary::after {
+  content: ""; flex: none; width: 1rem; height: 1rem; margin-inline-start: auto; background: currentColor; opacity: 0.6;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat center / contain;
+  transition: transform var(--duration-gentle) var(--ease-standard);
+}
+.s-shell main details[open]:not(.s-reflections) > summary::after { transform: rotate(180deg); }
+.s-shell main details:not(.s-reflections) > summary:focus-visible { outline: var(--focus-width) solid var(--c-focus); outline-offset: 2px; border-radius: var(--radius-1); }
+/* Inline disclosures (inside a sentence-sized meta row) keep the chevron next to the text. */
+.s-shell main .s-turn-meta details > summary { color: var(--c-link); min-height: 2rem; }
+.s-shell main .s-turn-meta details > summary::after { margin-inline-start: 0; width: 0.85rem; height: 0.85rem; }
+/* Help exercises are expandable cards. */
+.s-shell .s-help-list details.s-service { padding: 0; }
+.s-shell .s-help-list details.s-service > summary { padding: 1rem 1.5rem; border-radius: var(--radius-3); }
+.s-shell .s-help-list details.s-service > summary:hover { background: var(--c-surface-quiet); }
+.s-shell .s-help-list details.s-service[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.s-shell .s-help-list details.s-service > :not(summary) { margin-inline: 1.5rem; }
+.s-shell .s-help-list details.s-service > :last-child { margin-bottom: 1.25rem; }
+.s-shell .s-help-list details.s-service ol { display: grid; gap: 0.35rem; margin-block: 0.75rem; }
+.s-shell .s-help-list + .s-hint { margin-top: 0.85rem; }

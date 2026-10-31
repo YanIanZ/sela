@@ -543,4 +543,5 @@
 .s-shell .s-mood-link .s-mood-face { box-shadow: none; }
 .s-shell .s-shelf-bar :is(.s-workspace-context, .s-rail-label) { display: none; }
 /* Text-style actions keep their text on the row's edge even when the row wraps. */
-.s-shell main :is(.s-actions, .s-page-actions, .c-support-intro > div, .s-onboard-actions) > .s-btn--quiet { padding-inline: 0.6rem; margin-inline-start: -0.6rem; }
+.s-shell main :is(.s-actions, .s-page-actions, .c-support-intro > div, .s-onboard-actions) > .s-btn--quiet { padding-inline: 0.6rem; }
+.s-shell main :is(.s-actions, .s-page-actions, .c-support-intro > div, .s-onboard-actions) > .s-btn--quiet:first-child { margin-inline-start: -0.6rem; }

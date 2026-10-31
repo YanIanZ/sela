@@ -33,20 +33,25 @@ import {
 const HOLD_WARNING_MS = 5 * 60_000;
 const HOLD_WARNING_TICK_MS = 30_000;
 
+// Two ways Sela responds (D-067): the normal mode talks things through and
+// looks for a way forward; "listen" is for being heard, with one small step.
 const intents = [
-  { value: "listen", id: "Didengarkan saja", en: "Just listen" },
-  { value: "sort_thoughts", id: "Merapikan pikiran", en: "Sort my thoughts" },
   {
-    value: "understand_patterns",
-    id: "Memahami pengalaman",
-    en: "Understand my experiences",
+    value: "discuss",
+    id: "Ngobrol & cari solusi",
+    en: "Talk it through",
+    hintId: "Sela ikut berpikir dan menawarkan jalan keluar.",
+    hintEn: "Sela thinks it through with you and offers ways forward.",
   },
   {
-    value: "prepare_consultation",
-    id: "Menyiapkan konsultasi",
-    en: "Prepare for a consultation",
+    value: "listen",
+    id: "Didengarkan saja",
+    en: "Just listen",
+    hintId: "Sela fokus mendengarkan, lalu menawarkan satu langkah kecil.",
+    hintEn: "Sela focuses on listening, then offers one small step.",
   },
 ];
+const intentValue = (v: string | null) => (v === "listen" ? "listen" : "discuss");
 
 const starters = [
   { id: "Hari ini aku merasa ", en: "Today I feel " },
@@ -455,7 +460,6 @@ function authorLine(turn: Turn, w: (id: string, en: string) => string): string {
 function RoomPage({ id }: { id: string }) {
   const w = useWords();
   const loc = useLocale();
-  const { lang } = useI18n();
   const { query, navigate } = useRouter();
   const { prefs } = usePrefs();
   const { announce } = useAnnounce();
@@ -465,7 +469,7 @@ function RoomPage({ id }: { id: string }) {
   const [error, setError] = useState<unknown>(null);
   const [loadKey, setLoadKey] = useState(0);
   const [text, setText] = useState("");
-  const [intent, setIntent] = useState<string>(query.get("intent") ?? "listen");
+  const [intent, setIntent] = useState<string>(intentValue(query.get("intent")));
   const [pendingText, setPendingText] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
   // Index of the first reply that arrived without a visible stream, so it can
@@ -1058,15 +1062,32 @@ function RoomPage({ id }: { id: string }) {
           )}
         </div>
         {!showEnd && (
-          <p className="s-room-mode">
-            <span className="s-room-mode-label">
-              {w("Mendengarkan", "Listening")}
-              {": "}
-            </span>
-            <strong>
-              {intents.find((i) => i.value === intent)?.[lang]}
-            </strong>
-            <span className="s-room-mode-dot" aria-hidden="true"> · </span>
+          <div className="s-room-mode">
+            <div
+              className="s-room-modes"
+              role="radiogroup"
+              aria-label={w("Cara Sela merespons", "How Sela responds")}
+            >
+              {intents.map((i) => (
+                <label
+                  key={i.value}
+                  className={"s-room-mode-option" + (intent === i.value ? " is-selected" : "")}
+                  title={w(i.hintId, i.hintEn)}
+                >
+                  <input
+                    type="radio"
+                    name="room-mode"
+                    value={i.value}
+                    checked={intent === i.value}
+                    onChange={() => {
+                      setIntent(i.value);
+                      announce("status", w(i.hintId, i.hintEn));
+                    }}
+                  />
+                  <span>{w(i.id, i.en)}</span>
+                </label>
+              ))}
+            </div>
             <button
               type="button"
               className="s-text-button s-room-adjust"
@@ -1076,7 +1097,7 @@ function RoomPage({ id }: { id: string }) {
               <Icon name="settings" size={16} />
               {w("Atur", "Adjust")}
             </button>
-          </p>
+          </div>
         )}
       </div>
 
@@ -1154,7 +1175,7 @@ function RoomPage({ id }: { id: string }) {
                         </span>
                         <span>{authorLine(turn, w)}</span>
                       </p>
-                      <p className="s-turn-body">{turn.text}</p>
+                      <ReplyText text={turn.text} />
                       <div className="s-turn-meta">
                         <time dateTime={turn.createdAt}>{loc.dateTime(turn.createdAt)}</time>
                         <details>
@@ -1247,7 +1268,7 @@ function RoomPage({ id }: { id: string }) {
                     </span>
                     <span>{w("Sela · balasan AI", "Sela · AI reply")}</span>
                   </p>
-                  <p className="s-turn-body">{replyDraft}</p>
+                  <ReplyText text={replyDraft} />
                   <p className="s-turn-meta">
                     {w("Sedang menulis…", "Writing…")}
                   </p>
@@ -1692,17 +1713,16 @@ function RoomPage({ id }: { id: string }) {
       >
         <div className="s-room-detail">
           <section>
-            <h3>{w("Cara Sela mendengarkan", "How Sela listens")}</h3>
+            <h3>{w("Cara Sela merespons", "How Sela responds")}</h3>
             <ChoiceGroup
-              legend={w("Hari ini kamu ingin…", "What would help today?")}
+              legend={w("Saat ini kamu ingin…", "Right now you'd like…")}
               name="intent-detail"
               value={intent}
-              onChange={setIntent}
-              optional
-              variant="chips"
+              onChange={(v) => setIntent(intentValue(v))}
               options={intents.map((i) => ({
                 value: i.value,
                 label: w(i.id, i.en),
+                hint: w(i.hintId, i.hintEn),
               }))}
             />
           </section>
@@ -1766,6 +1786,43 @@ function RoomPage({ id }: { id: string }) {
         </div>
       </Dialog>
     </>
+  );
+}
+
+// Sela's replies arrive as plain text; lines become paragraphs and lines that
+// start with a bullet become a list, so a longer reply stays easy to read.
+function ReplyText({ text }: { text: string }) {
+  const blocks: Array<{ kind: "p"; text: string } | { kind: "ul"; items: string[] }> = [];
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (!line) continue;
+    const bullet = /^(?:[•\-*]|\d+[.)])\s+(.*)$/.exec(line);
+    if (bullet) {
+      const item = String(bullet[1] ?? "");
+      const last = blocks[blocks.length - 1];
+      if (last?.kind === "ul") last.items.push(item);
+      else blocks.push({ kind: "ul", items: [item] });
+    } else {
+      blocks.push({ kind: "p", text: line });
+    }
+  }
+  if (blocks.length <= 1 && blocks[0]?.kind !== "ul") {
+    return <p className="s-turn-body">{text.trim()}</p>;
+  }
+  return (
+    <div className="s-turn-body s-turn-body--rich">
+      {blocks.map((b, i) =>
+        b.kind === "p" ? (
+          <p key={i}>{b.text}</p>
+        ) : (
+          <ul key={i}>
+            {b.items.map((item, j) => (
+              <li key={j}>{item}</li>
+            ))}
+          </ul>
+        ),
+      )}
+    </div>
   );
 }
 

@@ -151,3 +151,32 @@
   .s-room-end-short { display: inline; }
 }
 .s-room-empty-mark { display: flex; justify-content: center; width: 100%; }
+
+/* Two response modes as one segmented pill; Adjust sits beside it. */
+.s-shell--room .s-room-mode { gap: 0.35rem 0.5rem; padding: 0.25rem; }
+.s-room-modes { display: inline-flex; gap: 0.2rem; padding: 0; border: 0; }
+.s-room-mode-option { position: relative; display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0.3rem 0.95rem; border-radius: var(--radius-pill); color: var(--c-muted); font-family: var(--font-display); font-weight: 500; cursor: pointer; transition: background-color var(--duration-gentle) var(--ease-standard), color var(--duration-gentle) var(--ease-standard), box-shadow var(--duration-gentle) var(--ease-standard); }
+.s-room-mode-option input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.s-room-mode-option:hover { color: var(--c-text); background: var(--c-sunken); }
+.s-room-mode-option.is-selected { background: var(--c-surface); color: var(--c-text); box-shadow: var(--shadow-1); }
+.s-room-mode-option:has(input:focus-visible) { outline: var(--focus-width) solid var(--c-focus); outline-offset: 2px; }
+:root[data-scheme^="contrast"] .s-room-mode-option.is-selected { border: 2px solid var(--c-text); }
+@media (forced-colors: active) { .s-room-mode-option.is-selected { border: 2px solid Highlight; } }
+@media (max-width: 47.99em) {
+  .s-shell--room .s-room-mode { flex-wrap: nowrap; }
+  .s-room-modes { flex: 1 1 auto; min-width: 0; }
+  .s-room-mode-option { flex: 1 1 0; justify-content: center; padding-inline: 0.5rem; font-size: var(--font-size-1); text-align: center; line-height: 1.2; }
+  .s-shell--room .s-room-mode .s-room-adjust { flex: none; padding-inline: 0.6rem; }
+}
+
+/* Longer replies read as short paragraphs and, when Sela lists options, a list. */
+.s-turn-body--rich { display: grid; gap: 0.55rem; }
+.s-turn-body--rich p { margin: 0; }
+.s-turn-body--rich ul { display: grid; gap: 0.35rem; margin: 0; padding-inline-start: 1.15rem; }
+.s-turn-body--rich li::marker { color: var(--c-ai); }
+
+/* Time and "About this reply" share one line; the details open below. */
+.s-shell--room .s-turn-meta details { flex: 0 1 auto; }
+.s-shell--room .s-turn-meta details[open] { flex: 1 1 100%; }
+/* Phones: in the room the demo stamp alone is enough; its sentence returns elsewhere. */
+@media (max-width: 47.99em) { .s-shell--room .s-edition-inner p { display: none; } }

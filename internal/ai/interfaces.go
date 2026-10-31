@@ -206,5 +206,6 @@ type Input struct {
 	Budget time.Duration
 }
 
-// Intents (D-034).
-var intents = map[string]bool{"": true, "listen": true, "sort_thoughts": true, "understand_patterns": true, "prepare_consultation": true}
+// Intents (D-034, D-067). The room offers two modes: "listen" and the normal
+// "discuss"; the older values stay accepted and are answered in normal mode.
+var intents = map[string]bool{"": true, "listen": true, "discuss": true, "sort_thoughts": true, "understand_patterns": true, "prepare_consultation": true}
