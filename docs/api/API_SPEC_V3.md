@@ -338,7 +338,8 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | `POST /api/v3/memory` | `{title,text,storageGranted:true,sourceRefs?:[]}` → personal record |
 | `PATCH /api/v3/memory/{id}` | Same, plus `expectedVersion` |
 | `DELETE /api/v3/memory/{id}` | `{expectedVersion}`; also allowed after consent withdrawal |
-| `GET /api/v3/shares` | `{shares}` (owner metadata, no token or code) |
+| `GET /api/v3/shares` | `{shares}` owner metadata, newest first: `openedCount`, `acknowledgedCount`, `lastOpenedAt`, `acknowledged` derived from events; no token, code, hash or content |
+| `GET /api/v3/shares/{id}/events` | `{events:[{kind,at}]}` newest first; owner only; `404 not_found` for another owner, an unknown or a malformed id; no token, code, content, recipient identity or IP address |
 | `POST /api/v3/shares` | `{summaryId,label,purpose,durationHours}` → `{share,token,code}` once; requires `sharing` |
 | `POST /api/v3/shares/{id}/revoke` | `{expectedVersion}` → ended share; every recipient session ends |
 | `POST /api/v3/recipient/session` | `{token,code}` → `{share}` and the recipient cookie |
@@ -354,6 +355,7 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | `POST /api/v3/consultation-summaries/{id}/followups` | `{title,text,storageGranted:true}` → personal follow-up record |
 | `GET /api/v3/consultation-summaries/{id}/followups` | `{followups}` |
 
+Sharing metadata and history are read-only for the owner. `openedCount`, `acknowledgedCount` and `lastOpenedAt` come from the append-only `share_events`; an idempotent re-acknowledgement adds no second event. These values describe link and access-code use, never the recipient's identity, whether care happened, or the content that was viewed. Revoked and expired shares keep their history readable by their owner.
 `sourceRefs` is an array of `{recordId,version}`, maximum 12, minimum one for a summary.
 Sources must be current, owner-owned notes/check-ins/conversations. Derived records cannot be sources.
 A source edit or deletion demotes the effective approval on subsequent reads and exports.

@@ -91,6 +91,7 @@ func (s *Server) v3Routes() {
 		{method: "PATCH", path: "/api/v3/memory/{id}", mutation: true, guardianGate: true, owner: s.v3UpdateMemory},
 		{method: "DELETE", path: "/api/v3/memory/{id}", mutation: true, guardianGate: true, owner: s.v3DeleteMemory},
 		{method: "GET", path: "/api/v3/shares", owner: s.v3Shares},
+		{method: "GET", path: "/api/v3/shares/{id}/events", owner: s.v3ShareEvents},
 		{method: "POST", path: "/api/v3/shares", mutation: true, guardianGate: true, owner: s.v3CreateShare},
 		{method: "POST", path: "/api/v3/shares/{id}/revoke", mutation: true, guardianGate: true, owner: s.v3RevokeShare},
 		{method: "GET", path: "/api/v3/consultation-summaries", owner: s.v3Summaries},

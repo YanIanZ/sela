@@ -63,6 +63,18 @@ func (s *Server) v3Shares(w http.ResponseWriter, r *http.Request, p account.Prin
 	writeData(w, http.StatusOK, map[string]any{"shares": list})
 }
 
+// v3ShareEvents exposes the owner's own access history. The response is
+// only {kind,at}: no recipient identity, IP address, token, code or
+// projection content.
+func (s *Server) v3ShareEvents(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	events, err := s.opt.Accounts.ShareEvents(r.Context(), p.UserID, r.PathValue("id"))
+	if err != nil {
+		s.v3Error(w, r, err)
+		return
+	}
+	writeData(w, http.StatusOK, map[string]any{"events": events})
+}
+
 func (s *Server) v3RevokeShare(w http.ResponseWriter, r *http.Request, p account.Principal) {
 	var in struct {
 		ExpectedVersion int `json:"expectedVersion"`
