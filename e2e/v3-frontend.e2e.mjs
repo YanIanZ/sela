@@ -352,9 +352,10 @@ try {
     check(name+' opens implemented summary list',await page.getByRole('link',{name:'Susun ringkasan',exact:true}).count()===1);
     await snap(name);
   }
-  await page.goto(base+'/support/shares/test',{waitUntil:'networkidle'});
-  check('sharing limit does not claim summary APIs missing',(await page.locator('main').innerText()).includes('Tautan berbagi, kode akses penerima, dan pencabutan akses belum tersedia. Ringkasan manual bisa disetujui dan diunduh dari halaman Ringkasan.'));
-  await snap('sharing-blocked-320');
+  await page.goto(base+'/support/shares',{waitUntil:'networkidle'});
+  const sharingText=await page.locator('main').innerText();
+  check('sharing page is implemented',sharingText.includes('Bagikan ringkasan') && sharingText.includes('Buat tautan baru'));
+  await snap('sharing-320');
   // Clean up the synthetic guest through the same server, without UI
   // automation of the destructive dialog.
   const deletion = await context.request.delete(base + "/api/v3/me", {
