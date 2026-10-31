@@ -1,8 +1,10 @@
+> **Owner deployment update — 2026-11-01.** The owner reports that Sela hosting is now in production. This is an owner-reported change since the earlier local-only checkpoint, **not** independent proof of deployed SHA, hosted Meta inference, safe real-user processing, region or pilot/public-release readiness. See [hackathon production verification](../hackathon/PRODUCTION_VERIFICATION.md). Pending evidence, preserve B-1/B-3 verification/B-10/B-15 and other release gates; do not rebuild hosting as an assumed missing task.
+>
 > **Status reconciliation — 2026-11-01.** The dated checkpoints at the top of this file are authoritative. The detailed P2–P8 tables further down date from the 2026-10-27 planning pass; where they say "planned", "in progress" or name an unmerged branch, this snapshot supersedes them.
 >
 > | Area | Status on 2026-11-01 |
 > | --- | --- |
-> | Accounts, guest mode, recovery, sessions, consents, guardian consent, export, deletion | Implemented locally; PostgreSQL + Docker browser journey passing. No hosted deployment. |
+> | Accounts, guest mode, recovery, sessions, consents, guardian consent, export, deletion | Implemented locally; PostgreSQL + Docker browser journey passing. Production hosting is owner-reported, deployed code/release not independently verified. |
 > | Conversation room | Implemented: saved/unsaved holds, hold warning, crisis pause, reflections with confirm/correct/reject, post-validation streaming with SSE keep-alives, no-AI path. True provider-token streaming is not implemented (V22 keeps unvalidated text off the wire). |
 > | Journal, check-in, weekly reflection, notes, home | Implemented locally; weekly reflection is computed in the browser and saved as a normal note. |
 > | Memory | Implemented: confirmed/corrected items can enter AT-1 (max 5 / 600 runes), AT-3 proposals, review/versioning, private names redaction. |
@@ -14,7 +16,7 @@
 > | Operator console | Password+TOTP console, AI spend, cache, audit, staff list, care directory demo and reading review. Staff/role editing, two-person approval and the warm/cold benchmark are not built. |
 > | Accessibility | Automated axe WCAG 2.2 AA gate in CI; manual screen-reader/usability audit not done. |
 > | Security | Independent security assessment not done. |
-> | Hosting, legal and live evaluation | Not done: B-1 (Modal), B-3 (hosting), B-5 (help lines), B-6 (user research), B-10 (legal/DPIA/PSE), B-13 (legacy deployments), B-14 (WHO licence), B-15 (region). |
+> | Hosting, legal and live evaluation | Owner reports production hosting configured; independent B-3 hosting verification, B-1 live Meta, B-5 help lines, B-6 research, B-10 legal/DPIA/PSE, B-13 legacy, B-14 WHO licence, B-15 region remain unresolved until evidence. |
 >
 > **Still genuinely open in code/product:** true token streaming; earlier policy versions + in-app restore announcement; legacy 15/16–17 split; unified timeline; reading content approval by a human; reconciliation of the older P2–P8 rows below.
 
