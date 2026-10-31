@@ -135,5 +135,18 @@
         "en": "Necessary conversation excerpts are sent to Meta models through the Meta Model API or a Modal server (US). The checker is a different Meta model, not a third-party provider. Text is minimised and contact details redacted. The provider processes requests under its retention policy. AI can be wrong; decline or withdraw permission and keep writing without AI."
       }
     ]
+  },
+  "sharing": {
+    "version": "sharing-2026-10-31.1",
+    "title": {
+      "id": "Berbagi ringkasan",
+      "en": "Sharing a summary"
+    },
+    "body": [
+      {
+        "id": "Kamu memilih isi ringkasan yang dibagikan dan kepada siapa. Tautan dan kode akses hanya ditampilkan sekali; penerima tidak diverifikasi identitasnya, dan kamu bisa mencabut akses kapan saja. Salinan yang sudah diunduh atau dicetak tidak bisa ditarik kembali.",
+        "en": "You choose what the summary contains and who it is for. The link and access code are shown once; the recipient is not identity-verified, and you can revoke access at any time. Copies already downloaded or printed cannot be recalled."
+      }
+    ]
   }
 }

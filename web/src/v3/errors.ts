@@ -54,6 +54,14 @@ const copy: Record<string, { id: string; en: string }> = {
     id: "Koneksi terlalu lama menjawab. Tulisanmu tetap di sini; coba lagi.",
     en: "The connection took too long. Your writing is still here; try again.",
   },
+  invalid_share: {
+    id: "Tautan atau kode tidak cocok, atau sudah tidak berlaku.",
+    en: "The link or code doesn't match, or it is no longer valid.",
+  },
+  consent_required: {
+    id: "Izin yang diperlukan belum diberikan.",
+    en: "The required permission hasn't been given.",
+  },
   not_signed_in: {
     id: "Kamu belum masuk atau sesimu sudah berakhir. Silakan masuk lagi.",
     en: "You aren't signed in, or your session has ended. Please sign in again.",

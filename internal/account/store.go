@@ -143,6 +143,9 @@ type OwnerStore interface {
 	DeleteSummary(context.Context, UserID, string, int) error
 	CreateFollowup(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
 	Followups(context.Context, UserID, string) ([]PersonalRecord, error)
+	Shares(context.Context, UserID) ([]Share, error)
+	CreateShare(context.Context, UserID, string, string, string, int) (Share, string, string, error)
+	RevokeShare(context.Context, UserID, string, int) (Share, error)
 
 	Profile(ctx context.Context, owner UserID) (Profile, error)
 	UpdateProfile(ctx context.Context, owner UserID, current SessionID, in ProfileUpdate) (Profile, error)
@@ -179,6 +182,9 @@ type SystemStore interface {
 	Retention(ctx context.Context) (RetentionReport, error)
 	ReconcileRestore(ctx context.Context, dryRun bool) (ReconcileReport, error)
 	RefreshHashDistribution(ctx context.Context) error
+	OpenShare(ctx context.Context, token, code string) (SharedProjection, string, error)
+	RecipientShare(ctx context.Context, session string) (SharedProjection, error)
+	AcknowledgeShare(ctx context.Context, session string) error
 }
 
 var (

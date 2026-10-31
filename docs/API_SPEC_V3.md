@@ -80,6 +80,7 @@ New v3 codes (messages to add to `internal/httpapi/errors.go`; every code needs 
 | `password_weak` | 400 | On the blocklist, or equal to/containing the username | Kata sandi ini terlalu umum atau mudah ditebak. Pilih yang lain. | This password is too common or easy to guess. Choose another. |
 | `store_unavailable` | 503 | Database not configured (development; `Retry-After: 30`) or unreachable at run time: refused or lost connection, network error or timeout, closed pool, server shutting down or out of connections (`Retry-After: 5`); on every store-backed route, sign-in and session lookup included | Penyimpanan sedang tidak tersedia. Coba lagi sebentar lagi. | Storage is unavailable right now. Try again shortly. |
 | `server_busy` | 503 | Hashing slots or guest capacity exhausted (`Retry-After`) | Server sedang sibuk. Coba lagi sebentar lagi. | The server is busy. Try again shortly. |
+| `invalid_share` | 401 | Unknown link, wrong access code, ended or expired share (deliberately indistinguishable) | Tautan atau kode tidak cocok, atau sudah tidak berlaku. | The link or code doesn't match, or it is no longer valid. |
 
 ## 3. Shared objects
 
@@ -330,6 +331,12 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | `POST /api/v3/memory` | `{title,text,storageGranted:true,sourceRefs?:[]}` → personal record |
 | `PATCH /api/v3/memory/{id}` | Same, plus `expectedVersion` |
 | `DELETE /api/v3/memory/{id}` | `{expectedVersion}`; also allowed after consent withdrawal |
+| `GET /api/v3/shares` | `{shares}` (owner metadata, no token or code) |
+| `POST /api/v3/shares` | `{summaryId,label,purpose,durationHours}` → `{share,token,code}` once; requires `sharing` |
+| `POST /api/v3/shares/{id}/revoke` | `{expectedVersion}` → ended share; every recipient session ends |
+| `POST /api/v3/recipient/session` | `{token,code}` → `{share}` and the recipient cookie |
+| `GET /api/v3/recipient/share` | frozen projection for the recipient session |
+| `POST /api/v3/recipient/acknowledge` | `{acknowledged:true}`; idempotent |
 | `GET /api/v3/consultation-summaries` | `{summaries}` |
 | `POST /api/v3/consultation-summaries` | `{title,text,sourceRefs,prepared?,storageGranted:true}` → personal record |
 | `GET /api/v3/consultation-summaries/{id}` | Personal record with effective `summaryState` |

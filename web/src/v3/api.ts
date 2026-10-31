@@ -134,6 +134,7 @@ export type Entry = {
   provenance: string;
   reviewStatus: string;
   safety: string;
+  summaryState?: "draft" | "approved";
   createdAt: string;
   updatedAt: string;
   turns?: Turn[];

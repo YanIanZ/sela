@@ -25,8 +25,11 @@ const HelpPage = lazy(() =>
 const ReadingPage = lazy(() =>
   import("./screens/Reading").then((m) => ({ default: m.ReadingPage })),
 );
-const RecipientUnavailablePage = lazy(() =>
-  import("./screens/Reading").then((m) => ({ default: m.RecipientUnavailablePage })),
+const SharesPage = lazy(() =>
+  import("./screens/Shares").then((m) => ({ default: m.SharesPage })),
+);
+const RecipientPage = lazy(() =>
+  import("./screens/Shares").then((m) => ({ default: m.RecipientPage })),
 );
 const PoliciesPage = lazy(() =>
   import("./screens/Policies").then((m) => ({ default: m.PoliciesPage })),
@@ -239,7 +242,7 @@ function AppRoutes() {
       );
     }
   } else if (path === "/recipient") {
-    screen = <RecipientUnavailablePage />;
+    screen = <RecipientPage />;
   } else if (owner && !user) {
     screen = expired ? (
       <SessionEndedPage guest={sessionGuest()} />
@@ -262,6 +265,8 @@ function AppRoutes() {
     screen = <SupportPage />;
   } else if (user && (path.startsWith("/support/summaries") || path === "/support/prepare" || path === "/support/after")) {
     screen = <SummariesPage path={path.startsWith("/support/summaries") ? path : "/support/summaries"} />;
+  } else if (user && path.startsWith("/support/shares")) {
+    screen = <SharesPage />;
   } else if (user && path.startsWith("/support/")) {
     const feature = path.includes("/prepare")
       ? "prepare"

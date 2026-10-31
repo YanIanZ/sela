@@ -32,6 +32,7 @@ var v3Messages = map[string]message{
 	"password_weak":              {"Kata sandi ini terlalu umum atau mudah ditebak. Pilih yang lain.", "This password is too common or easy to guess. Choose another."},
 	"store_unavailable":          {"Penyimpanan sedang tidak tersedia. Coba lagi sebentar lagi.", "Storage is unavailable right now. Try again shortly."},
 	"server_busy":                {"Server sedang sibuk. Coba lagi sebentar lagi.", "The server is busy. Try again shortly."},
+	"invalid_share":              {"Tautan atau kode tidak cocok, atau sudah tidak berlaku.", "The link or code doesn't match, or it is no longer valid."},
 }
 
 // v3Status is the documented HTTP status of every code /api/v3 returns.
@@ -48,7 +49,8 @@ var v3Status = map[string]int{
 	"password_login_disabled": http.StatusForbidden, "age_not_supported": http.StatusForbidden, "age_band_not_enabled": http.StatusForbidden,
 	"not_guest": http.StatusConflict, "required_consent": http.StatusConflict, "username_invalid": http.StatusBadRequest,
 	"username_taken": http.StatusConflict, "password_too_short": http.StatusBadRequest, "password_too_long": http.StatusBadRequest,
-	"password_weak": http.StatusBadRequest, "store_unavailable": http.StatusServiceUnavailable, "server_busy": http.StatusServiceUnavailable,
+	"password_weak": http.StatusBadRequest, "invalid_share": http.StatusUnauthorized,
+	"store_unavailable": http.StatusServiceUnavailable, "server_busy": http.StatusServiceUnavailable,
 }
 
 func init() {
