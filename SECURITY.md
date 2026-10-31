@@ -1,29 +1,57 @@
 # Security policy
 
-## Runtimes
+Sela stores and processes deeply personal writing. We treat every vulnerability that could expose it, mislead a person in distress or bypass a consent as serious.
 
-The maintained branch is `main`. Sela v2 (Go API + static frontend, `cmd/` and `internal/`) is a synthetic demonstration. Sela v3, built for real use, is in development on `feat/sela-v3-pilot`: its backend foundation (`/api/v3`) is verified locally, and its CI run on draft PR #9 passed ([foundation status note](SPEC.md#foundation-status-note-2026-10-26)); it is not deployed. The inherited Next.js v1 stays runnable until the cutover. No runtime has an external security audit; the v3 foundation had three rounds of security review by agent reviewers independent of the implementer (internal; not the independent security assessment that public release requires). Historical deployments and archived competition snapshots are not supported releases.
+## Supported versions
 
-## Report privately
+| Version | Where | Supported |
+| --- | --- | --- |
+| `main` (Sela v3) | Production: https://sela.vertalt.my.id | Yes |
+| Older branches, the retired v2 demo and archived Dengar.in deployments | — | No |
 
-Use [GitHub private vulnerability reporting](https://github.com/YanIanZ/sela/security/advisories/new). Include affected commit/paths, reproduction with synthetic data, expected behaviour and impact. Do not include real stories, patient or professional information, credentials or keys. Do not disclose exploitable issues in public tickets. No response timeline is guaranteed.
+The legacy Dengar.in deployments are not Sela and are not covered by this policy.
 
-## v2 controls (tested in this repository)
+## Reporting a vulnerability
 
-- Sessions: random identifiers in `HttpOnly`, `SameSite=Strict`, path-scoped cookies (`Secure` in production); idle and absolute expiry; deletion purges the session, its shares and recipient principals. State is memory-only and bounded.
-- Mutations: JSON only, size-limited, strict decoding (unknown fields rejected), same-origin guard, per-address rate limits, optimistic version checks, idempotency keys for handoffs.
-- Sharing: a 256-bit token in the URL fragment plus a separate access code; the token alone never grants access; five wrong codes lock the share; recipient principals are scoped to their own cookie path; revocation, expiry and deletion end access with a uniform error.
-- Headers: strict CSP (`'self'` only, no inline script), `frame-ancestors 'none'`, `nosniff`, no referrer; static files cannot escape the web directory.
-- Logging: request metadata only (route pattern, status, duration, bytes); no stories, quotes, model output, tokens, codes or keys. Tests plant canary strings and check the logs.
-- AI: crisis routing runs before any model call; only `modal` (Meta on Modal) or a non-production test double; credentials only from the server environment; redirects are never followed with credentials; every model output passes Meaning Lock before it is shown or stored.
+Report privately through [GitHub private vulnerability reporting](https://github.com/YanIanZ/sela/security/advisories/new). Please include:
 
-## v3 foundation controls (verified locally, CI passed on draft PR #9; not deployed)
+- the affected commit, URL or path, and the impact;
+- reproduction steps using **synthetic data only**;
+- what you expected and what happened.
 
-- Accounts: argon2id passwords with paste and password managers allowed, ten single-use recovery codes, uniform failures for unknown usernames, persisted per-username backoff and rate limits; server-side sessions in a `__Host-` cookie, rotated on sign-in, upgrade, password change and recovery.
-- Data: PostgreSQL 16; personal content encrypted per user (AES-256-GCM data key wrapped by a key-encryption key from the secret manager, AAD bound to user, record and field); account deletion destroys the data key; backups split content and keys, and a restore reconciles deletions (one residual window after a total database loss, stated in the privacy text and accepted for a controlled pilot, D-055).
-- Isolation: the owner comes only from the session cookie, every store method takes the owner, and another user's resource answers `404`; the server and every operator command refuse a database or key from another environment.
-- Logs: metadata only; never content, usernames, passwords, recovery codes, tokens, user ids, keys, database URLs or IP addresses.
+Never include real stories, health information, credentials, tokens, keys or another person's data. Do not open public issues, pull requests or posts about an exploitable problem until it is fixed. We aim to acknowledge reports within 3 working days and to agree a disclosure date with you; we credit reporters who want it.
 
-Details and residual risks: [ADR-0002](docs/adr/ADR-0002-persistence-accounts-and-encryption.md). See [SPEC](SPEC.md), [safety](docs/architecture/SAFETY.md), [AI policy](docs/architecture/AI_POLICY.md) and [API](docs/api/API_SPEC_V2.md). For v1 (encrypted recovery, forum moderation, providers, database), consult the [historical threat model](docs/archive/v1/THREAT_MODEL.md). Old reports do not certify either runtime.
+**This is not an emergency channel.** If you or someone else is in danger, contact local emergency services or a crisis line.
 
-The demo accepts no actual patient-care transaction. GitHub reporting is not an emergency channel; immediate danger requires local emergency assistance.
+### Safe harbour
+
+Good-faith research that respects this policy is welcome. Stay within your own synthetic accounts, do not access or keep other people's data, do not degrade service (no load or denial-of-service testing on production), do not use social engineering, and stop and report as soon as you reach someone else's data.
+
+### In scope
+
+- Cross-user or cross-session access to records, conversations, shares, posts or moderation data
+- Consent bypass (AI processing, storage, memory, condition map, sharing, community)
+- Safety bypass: crisis text reaching a model, being stored contrary to the person's choice, or being published in the community
+- Prompt injection or jailbreak that makes Sela output a diagnosis, medication advice, a professional persona, pressure, contact details or hidden instructions
+- Moderation bypass that publishes bullying, harassment, doxxing or self-harm encouragement
+- Share-link or access-code weaknesses, session fixation, CSRF, XSS, CSP bypass
+- Secrets, personal content or identifiers in logs, errors or responses
+- Operator console access control and audit gaps
+
+### Out of scope
+
+Reports that need a compromised device or browser, missing best-practice headers with no exploit, rate limits on public static pages, and findings on the legacy Dengar.in deployments.
+
+## How Sela protects data
+
+- **Sessions**: server-side sessions in a `__Host-` `HttpOnly`, `Secure`, `SameSite=Strict` cookie; rotation on privilege change; idle and absolute expiry.
+- **Encryption**: personal content is encrypted per person (AES-256-GCM data key wrapped by a key-encryption key held outside the database, AAD bound to owner, record and field); deleting an account destroys its key.
+- **Isolation**: the owner comes only from the session; every store method is owner-bound; another person's resource answers `404`; servers and operator commands refuse a database or key from another environment.
+- **Mutations**: JSON only, size-limited, strict decoding, same-origin guard, rate limits, optimistic versions, idempotency keys.
+- **Headers**: strict CSP (`'self'` only, no inline script), HSTS, `frame-ancestors 'none'`, `nosniff`, no referrer.
+- **Safety and AI**: a deterministic crisis and danger router runs before storage, publishing and any model call; jailbreak and injection prefaces are neutralised; every model output passes hard guards, and a separate Meta verifier checks flagged output; provider keys stay on the server.
+- **Community**: adults only; every post and reply passes the safety router and Meta moderation before anyone sees it; reports auto-hide; operators see posts only through the moderation queue and never a person's private space.
+- **Operators**: separate identity with TOTP, role checks and an append-only audit; no access to private journals or conversations.
+- **Logs**: metadata only; canary tests check that content never reaches them.
+
+Design details and residual risks: [ADR-0002](docs/adr/ADR-0002-persistence-accounts-and-encryption.md), [safety](docs/architecture/SAFETY.md), [AI policy](docs/architecture/AI_POLICY.md) and the [current plan](docs/roadmap/SAFE_FLOW_AND_TODO.md). Sela has had internal security reviews but **no independent external audit yet**.
