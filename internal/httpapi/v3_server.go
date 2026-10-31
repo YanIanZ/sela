@@ -77,6 +77,7 @@ func (s *Server) v3Routes() {
 		{method: "GET", path: "/api/v3/records/{id}/versions", owner: s.v3RecordHistory},
 
 		{method: "GET", path: "/api/v3/memory", owner: s.v3Memory},
+		{method: "GET", path: "/api/v3/memory/{id}", owner: s.v3MemoryItem},
 		{method: "POST", path: "/api/v3/memory", mutation: true, owner: s.v3CreateMemory},
 		{method: "PATCH", path: "/api/v3/memory/{id}", mutation: true, owner: s.v3UpdateMemory},
 		{method: "DELETE", path: "/api/v3/memory/{id}", mutation: true, owner: s.v3DeleteMemory},

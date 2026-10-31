@@ -18,6 +18,15 @@ func (s *Server) v3Memory(w http.ResponseWriter, r *http.Request, p account.Prin
 	writeData(w, http.StatusOK, view)
 }
 
+func (s *Server) v3MemoryItem(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	record, err := s.opt.Accounts.MemoryItem(r.Context(), p.UserID, r.PathValue("id"))
+	if err != nil {
+		s.v3Error(w, r, err)
+		return
+	}
+	writeData(w, http.StatusOK, record)
+}
+
 func (s *Server) v3CreateMemory(w http.ResponseWriter, r *http.Request, p account.Principal) {
 	var in account.RecordInput
 	if !decode(w, r, &in) {

@@ -103,7 +103,7 @@
     ]
   },
   "personal_memory": {
-    "version": "personal-memory-2026-11-01.1",
+    "version": "personal-memory-2026-11-01.2",
     "title": {
       "id": "Ingatan pribadi",
       "en": "Personal memory"
@@ -118,8 +118,8 @@
         "en": "You can edit or delete each memory item and turn memory off at any time. While it is off, Sela does not read or use your memory; the items stay stored until you delete them."
       },
       {
-        "id": "Ingatan disimpan terenkripsi seperti catatanmu dan tidak dikirim ke penyedia AI mana pun pada langkah ini. Ingatan tidak dipakai untuk membalas percakapan sampai kamu menyalakannya secara terpisah nanti.",
-        "en": "Memory is stored encrypted like your notes and is not sent to any AI provider in this step. Memory is not used to answer a conversation until you enable that separately later."
+        "id": "Ingatan disimpan terenkripsi seperti catatanmu. Saat izin balasan AI juga aktif, Sela dapat memakai ingatan yang sudah kamu konfirmasi (paling banyak 5, 600 karakter) untuk membalas. Tanpa izin AI atau saat ingatan dimatikan, tidak ada ingatan yang dikirim.",
+        "en": "Memory is stored encrypted like your notes. When AI reply consent is also on, Sela may use memory you confirmed (at most 5 items, 600 characters) to reply. Without AI consent, or while memory is off, no memory is sent."
       }
     ]
   },

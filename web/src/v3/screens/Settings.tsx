@@ -395,7 +395,7 @@ export function PrivacyPage({
 
           <section className="s-settings-section" id="memori" aria-labelledby="memory-title">
             <h2 id="memory-title">{w("Memori", "Memory")}</h2>
-            <p>{w("Memori hanya menyimpan konteks yang kamu tulis sendiri setelah izin terpisah. Tidak ada pengambilan cerita otomatis dan memori tidak dikirim ke AI. Aktifkan, perbaiki, matikan, atau hapus dari halaman Yang Sela ingat.", "Memory only stores context you write yourself after separate permission. Stories are not collected automatically and memory is not sent to AI. Enable, edit, turn off, or delete it from What Sela remembers.")}</p>
+            <p>{w("Memori hanya menyimpan konteks yang kamu tulis sendiri setelah izin terpisah. Tidak ada pengambilan cerita otomatis. Saat izin balasan AI juga aktif, memori yang sudah kamu konfirmasi bisa dipakai Sela untuk membalas; tanpa izin AI, tidak ada memori yang dikirim. Aktifkan, perbaiki, matikan, atau hapus dari halaman Yang Sela ingat.", "Memory only stores context you write yourself after separate permission. Stories are not collected automatically. When AI reply consent is also on, memory you confirmed may be used by Sela to reply; without AI consent, no memory is sent. Enable, edit, turn off, or delete it from What Sela remembers.")}</p>
             <div className="s-actions">
               <LinkButton to="/notes/memory" variant="secondary">
                 {w("Buka Yang Sela ingat", "Open What Sela remembers")}

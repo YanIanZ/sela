@@ -157,7 +157,7 @@ The registry lives in code with a policy text per purpose (served by `GET /polic
 | `terms_privacy` | Yes (cannot be withdrawn; `409 required_consent`) | guests and accounts | Service terms and privacy notice |
 | `guest_storage` | Yes for guests (moot after upgrade, kept in history) | guests | Where and how long guest data is kept, cookie dependency, no absolute anonymity |
 
-Reserved names for later milestones (not listed by `GET /me/consents` until active): `ai_processing` (Meta model on Modal, P3/P5), `ai_provider_anthropic` (Claude verifier, P5), `ai_provider_deepseek` (DeepSeek fallback, P5), `personal_memory` (now active for explicit manual memory; see continuity increment in §6).
+Reserved names for later milestones (not listed by `GET /me/consents` until active): `ai_processing` (Meta model on Modal, P3/P5), `ai_provider_anthropic` (Claude verifier, P5), `ai_provider_deepseek` (DeepSeek fallback, P5), `personal_memory` (now active for explicit manual memory and confirmed reply context; see continuity increment in §6).
 
 ## 4. Public routes (no session)
 
@@ -317,7 +317,7 @@ All routes below require the owner cookie and normal same-origin mutation guards
 | `POST /api/v3/conversations/{id}/resume` | `{expectedVersion}`; explicit continuation after inline crisis support; does not call a provider |
 | `DELETE /api/v3/conversations/{id}` | End; purge the hold and cancel inference. A deliberately saved snapshot remains in owned records |
 
-`storage_required` is 403. Unsaved turns never enter PostgreSQL or exports. Holds expire after 30 inactive minutes or 2 hours total; sign-out purges them. Every user-authored entry is screened; crisis text is kept, inline help shown, and room AI paused. Later turns do not erase the user's choice to continue. Provider consent changes invalidate running results. `ai_processing`, `ai_provider_anthropic` and `ai_provider_deepseek` are independent versioned consent purposes; DeepSeek remains default-off and synthetic-only. When a durable monthly AI budget is configured, admission happens before any provider call; an exhausted or unavailable budget returns `aiState: "budget_limited"` (or `"unavailable"`) and preserves the user's text without a provider call. These routes and screens are local development work, not pilot or public-release approval.
+`storage_required` is 403. Unsaved turns never enter PostgreSQL or exports. Holds expire after 30 inactive minutes or 2 hours total; sign-out purges them. Every user-authored entry is screened; crisis text is kept, inline help shown, and room AI paused. Later turns do not erase the user's choice to continue. Provider consent changes invalidate running results. `ai_processing`, `ai_provider_anthropic` and `ai_provider_deepseek` are independent versioned consent purposes; DeepSeek remains default-off and synthetic-only. When a durable monthly AI budget is configured, admission happens before any provider call; an exhausted or unavailable budget returns `aiState: "budget_limited"` (or `"unavailable"`) and preserves the user's text without a provider call. A listening turn may include at most five confirmed/corrected memory items (600 runes together) as `memory` spans only when `personal_memory` and `ai_processing` are both current; otherwise no memory is sent. These routes and screens are local development work, not pilot or public-release approval.
 
 ### Manual continuity increment (2026-10-28)
 
@@ -328,6 +328,7 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | Route | Request / response |
 | --- | --- |
 | `GET /api/v3/memory` | `{enabled,items}`; disabled and empty until current `personal_memory` consent |
+| `GET /api/v3/memory/{id}` | One owned memory record; `404 not_found` without current `personal_memory` consent or for another owner |
 | `POST /api/v3/memory` | `{title,text,storageGranted:true,sourceRefs?:[]}` → personal record |
 | `PATCH /api/v3/memory/{id}` | Same, plus `expectedVersion` |
 | `DELETE /api/v3/memory/{id}` | `{expectedVersion}`; also allowed after consent withdrawal |
@@ -351,7 +352,12 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 Sources must be current, owner-owned notes/check-ins/conversations. Derived records cannot be sources.
 A source edit or deletion demotes the effective approval on subsequent reads and exports.
 `prepared` holds optional `goal`, `questions`, and `bring` text. All such content and source links are encrypted.
-Memory is explicit, defaults off, and is never sent to AI. Withdrawal hides memory from normal record reads;
+Memory is explicit, defaults off, and is never sent to AI while the
+`personal_memory` consent is off or outdated. With that consent on, a reply
+turn may include at most five confirmed/corrected memory items (600 runes
+together) as `memory` spans, and only when `ai_processing` is also current;
+items over the allowance are skipped deterministically. Withdrawal hides
+memory from normal record reads, including `GET /api/v3/memory/{id}`;
 owner export and deletion remain available. The generic records PATCH additionally accepts an existing
 `followup` for corrections, retaining its parent; generic creation still accepts only notes/check-ins.
 Weekly reflection is computed in the browser from original creation dates/check-in local days;

@@ -1393,8 +1393,8 @@ function RoomPage({ id }: { id: string }) {
           </p>
           <p className="s-small s-muted">
             {w(
-              "Konteks pilihanmu ada di Yang Sela ingat; memori tidak dikirim ke AI.",
-              "Your chosen context is in What Sela remembers; memory is not sent to AI.",
+              "Konteks pilihanmu ada di Yang Sela ingat. Saat izin balasan AI aktif, memori yang dikonfirmasi bisa dipakai untuk membalas.",
+              "Your chosen context is in What Sela remembers. While AI reply consent is on, confirmed memory may be used to reply.",
             )}
           </p>
           <LinkButton to="/help" variant="help" icon="help">

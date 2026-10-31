@@ -456,6 +456,87 @@ describe("home, notes and conversations", () => {
   });
 });
 
+describe("personal memory", () => {
+  it("opens a memory detail with its source and saves an edit", async () => {
+    const user = profile();
+    const memory = {
+      id: "mem-1",
+      kind: "memory",
+      title: "Konteks sintetis",
+      text: "Aku lebih tenang kalau ditanya dulu.",
+      version: 2,
+      provenance: "user_correction",
+      reviewStatus: "confirmed",
+      safety: "none",
+      sourceRefs: [{ recordId: "note-1", version: 2 }],
+      createdAt: "2026-10-27T09:00:00Z",
+      updatedAt: "2026-10-27T10:00:00Z",
+    };
+    const source = {
+      id: "note-1",
+      kind: "note",
+      title: "Catatan sumber sintetis",
+      text: "Sumber sintetis.",
+      version: 2,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt: "2026-10-27T09:00:00Z",
+      updatedAt: "2026-10-27T09:00:00Z",
+    };
+    const calls = mockApi(
+      {
+        "GET /memory": () => ({ data: { enabled: true, items: [memory] } }),
+        "GET /memory/mem-1": () => ({ data: memory }),
+        "GET /records/note-1": () => ({ data: source }),
+        "PATCH /memory/mem-1": (body) => ({
+          data: {
+            ...memory,
+            title: (body as Record<string, string>).title,
+            text: (body as Record<string, string>).text,
+            version: 3,
+            updatedAt: "2026-10-27T11:00:00Z",
+          },
+        }),
+      },
+      user,
+    );
+    renderPath("/notes/memory");
+    const link = await screen.findByRole("link", { name: /Konteks sintetis/ });
+    expect(link).toHaveAttribute("href", "/notes/memory/mem-1");
+    fireEvent.click(link);
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Konteks sintetis" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Dikonfirmasi")).toBeInTheDocument();
+    expect(screen.getByText("Koreksimu")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Catatan sumber sintetis" }),
+    ).toHaveAttribute("href", "/notes/note-1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Perbaiki" }));
+    fireEvent.change(screen.getByLabelText("Konteks pilihanmu"), {
+      target: { value: "Aku lebih tenang kalau ditanya dulu, pelan-pelan." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Simpan perbaikan" }));
+    await waitFor(() =>
+      expect(
+        calls.some((c) => c.method === "PATCH" && c.path === "/memory/mem-1"),
+      ).toBe(true),
+    );
+    expect(
+      await screen.findByText("Aku lebih tenang kalau ditanya dulu, pelan-pelan."),
+    ).toBeInTheDocument();
+    const patch = calls.find((c) => c.method === "PATCH" && c.path === "/memory/mem-1");
+    expect(patch?.body).toMatchObject({
+      title: "Konteks sintetis",
+      text: "Aku lebih tenang kalau ditanya dulu, pelan-pelan.",
+      storageGranted: true,
+      expectedVersion: 2,
+    });
+  });
+});
+
 describe("settings", () => {
   it("records an AI consent separately and shows the new state", async () => {
     const user = profile();
