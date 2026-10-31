@@ -70,6 +70,9 @@ type Provenance struct {
 	// of occurrence.
 	Outcome      Outcome  `json:"outcome"`
 	Reasons      []string `json:"reasons,omitempty"`
+	// InputFlags are content-free marks on the input, such as
+	// "jailbreak_attempt" (S-010).
+	InputFlags []string `json:"inputFlags,omitempty"`
 	SupportInfo  bool     `json:"supportInfo,omitempty"`
 	LatencyMS    int64    `json:"latencyMs"`
 	InputTokens  int      `json:"inputTokens"`

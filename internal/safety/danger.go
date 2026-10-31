@@ -52,6 +52,10 @@ type dangerRule struct {
 	re       *regexp.Regexp
 	// others marks a threat to other people: a game context downgrades it.
 	others bool
+	// raw rules read the lower-cased original instead of the normalised
+	// text: scripts and diacritics that normalisation would fold ("tự tử",
+	// suicide, against "từ từ", slowly) stay distinct.
+	raw bool
 	// after, when set, discards a match that this expression finds right
 	// after it ("tali sepatu", "dipukul bola", "hits me with deadlines").
 	after *regexp.Regexp
@@ -59,6 +63,12 @@ type dangerRule struct {
 
 func dRule(id string, c Category, expr string) dangerRule {
 	return dangerRule{id: id, category: c, re: regexp.MustCompile(expr)}
+}
+
+func rawRule(id string, c Category, expr string) dangerRule {
+	r := dRule(id, c, expr)
+	r.raw = true
+	return r
 }
 
 var dangerRules = []dangerRule{
@@ -139,6 +149,32 @@ var dangerRules = []dangerRule{
 			`\bi(?:'ve|\s+have)?\s+(?:been\s+)?(?:saving|stockpiling|hoarding|collecting)\s+(?:up\s+)?(?:my\s+)?(?:pills|meds|medication|sleeping\s+pills)\b|\bi\s+bought\s+a\s+(?:rope|gun)\b`),
 	dRule("danger-en-farewell", CategorySuicide,
 		`\bthis\s+is\s+my\s+last\s+(?:message|post|goodbye|note)\b|\bmy\s+last\s+words\b|\bi\s+won'?t\s+be\s+(?:here|around|alive)\s+(?:tomorrow|anymore)\b`),
+	// Other languages (S-012): suicidal intent in Malay, Javanese,
+	// Sundanese, Spanish, Portuguese, French, Tagalog, Vietnamese, Hindi,
+	// Chinese, Japanese, Korean and Arabic.
+	dRule("danger-ms-jv-su-suicide", CategorySuicide,
+		`\b(?:nak|mahu)\s+(?:bunuh\s+diri|mati\s+je)\b|\btak\s+nak\s+hidup\s+lagi\b|`+
+			`\b(?:arep|pengin|kepengin|pingin|kepingin|meh)\s+(?:nglalu|modar|mati\s+wae|mati\s+ae|gantung\s+awak|bunuh\s+awak)\b|\bnglalu\b|`+
+			`\b(?:hayang|rek|arek|hoyong)\s+(?:paeh|maot|bunuh\s+diri|maehan\s+maneh)\b`),
+	dRule("danger-es-pt-fr-suicide", CategorySuicide,
+		`\b(?:quiero|voy\s+a|pienso)\s+(?:morir(?:me)?|matarme|suicidarme|quitarme\s+la\s+vida)\b|\bme\s+(?:quiero|voy\s+a)\s+(?:morir|matar|suicidar)\b|\bno\s+quiero\s+(?:seguir\s+)?vivir\b|`+
+			`\b(?:quero|vou)\s+(?:morrer|me\s+matar|me\s+suicidar)\b|\bnao\s+quero\s+mais\s+viver\b|`+
+			`\bje\s+(?:veux|vais)\s+(?:mourir|me\s+tuer|me\s+suicider|en\s+finir)\b|\bje\s+ne\s+veux\s+plus\s+vivre\b`),
+	dRule("danger-tl-hi-suicide", CategorySuicide,
+		`\bgusto\s+ko\s+(?:nang\s+|na\s+)?mamatay\b|\bmagpapakamatay\b|\bpapatayin\s+ko\s+ang\s+sarili\s+ko\b|\bayoko\s+nang\s+mabuhay\b|`+
+			`\b(?:mar\s+jana|marna)\s+chah(?:ta|ti)\b|\bkhudkushi\b|\baatmahatya\b`),
+	func() dangerRule {
+		r := rawRule("danger-intl-script-suicide", CategorySuicide,
+			`(?:muốn|sẽ|định)\s+(?:chết|tự\s*tử)|tự\s*tử|không\s+muốn\s+sống|`+
+				`我?(?:想|要|打算)(?:去)?死|自杀|自殺|不想活|结束(?:我的)?生命|結束(?:我的)?生命|割腕|`+
+				`死にたい|自殺したい|消えたい|リストカット|`+
+				`죽고\s*싶|자살|살기\s*싫|`+
+				`أريد\s+أن\s+أموت|سأقتل\s+نفسي|أقتل\s+نفسي|انتحار|`+
+				`आत्महत्या|मरना\s+चाहत|मैं\s+मर\s+जाना\s+चाहत`)
+		// "我想死你了" is "I miss you to death".
+		r.after = regexp.MustCompile(`^(?:你|您|他|她|了你)`)
+		return r
+	}(),
 }
 
 // dangerPerson is someone the speaker can be unsafe with.
@@ -157,14 +193,19 @@ var (
 // it counts at.
 func assessDanger(text string) (ids []string, cats []Category, level Level) {
 	norm := strings.ReplaceAll(Normalize(text), "’", "'")
+	lower := strings.ToLower(text)
 	level = LevelNone
 	game := dangerGame.MatchString(norm)
 	for i := range dangerRules {
 		r := &dangerRules[i]
 		hit := LevelNone
-		for _, loc := range r.re.FindAllStringIndex(norm, -1) {
-			m := norm[loc[0]:loc[1]]
-			if r.after != nil && r.after.MatchString(norm[loc[1]:]) {
+		subject := norm
+		if r.raw {
+			subject = lower
+		}
+		for _, loc := range r.re.FindAllStringIndex(subject, -1) {
+			m := subject[loc[0]:loc[1]]
+			if r.after != nil && r.after.MatchString(subject[loc[1]:]) {
 				continue
 			}
 			l := LevelCrisis

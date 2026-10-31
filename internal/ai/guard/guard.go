@@ -30,7 +30,7 @@ import (
 )
 
 // Version identifies the guard rules; change it whenever a rule changes.
-const Version = "sela-ai-guards-2026.10.26-2"
+const Version = "sela-ai-guards-2026.11.01-1"
 
 // Guard names a guard. Hard guards block; flags gate on verification.
 type Guard string
@@ -424,7 +424,7 @@ var (
 	// URLs and phone numbers use the redactor's rules (minimize.FindURLs,
 	// minimize.FindPhones).
 	handleRe = regexp.MustCompile(`(?:^|[^a-z0-9_.@])@[a-z0-9_][a-z0-9_.]{1,29}`)
-	injectRe = regexp.MustCompile(`ignore\s+(?:all\s+|any\s+|the\s+)?(?:previous|prior|above|earlier)\s+(?:instructions|prompts|rules|messages)|abaikan\s+(?:semua\s+|seluruh\s+)?(?:instruksi|perintah|aturan)|approved\s*[=:]\s*true|consent\s*[=:]\s*true|system\s+prompt|<<<\s*sela_|sela_(?:input|verify)_json|\[/?inst\]|<\|im_start\|>|</?system>|developer\s+mode|jailbreak`)
+	injectRe = regexp.MustCompile(`ignore\s+(?:all\s+|any\s+|the\s+)?(?:previous|prior|above|earlier)\s+(?:instructions|prompts|rules|messages)|abaikan\s+(?:semua\s+|seluruh\s+)?(?:instruksi|perintah|aturan)|approved\s*[=:]\s*true|consent\s*[=:]\s*true|system\s+prompt|<<<\s*sela_|sela_(?:input|verify)_json|\[/?inst\]|<\|im_start\|>|</?system>|developer\s+mode|jailbreak|\bdan\s+mode|do\s+anything\s+now|no\s+longer\s+bound|(?:without|no)\s+(?:any\s+)?(?:restrictions|filters|guidelines)\s+(?:now|anymore|enabled)|unrestricted\s+mode|mode\s+tanpa\s+(?:batas|filter|sensor)|(?:sekarang|kini)\s+(?:aku|saya)\s+(?:bebas|tanpa)\s+(?:aturan|batasan|filter)`)
 	// placeholRe is the redactor's placeholder pattern, any case: only a
 	// placeholder a session can produce is removed before CON-1, so a
 	// number written as "[KONTAK-6281234567890]" is still seen.

@@ -77,3 +77,44 @@ func TestDangerLexicon(t *testing.T) {
 		}
 	}
 }
+
+// TestTypoAndLanguages pins typo tolerance and the other-language phrases
+// (S-011, S-012).
+func TestTypoAndLanguages(t *testing.T) {
+	cases := []struct {
+		text string
+		want Level
+	}{
+		{"aku mau bnuh dri", LevelCrisis},
+		{"aku mau bunnuh diri", LevelCrisis},
+		{"aku mau gantug diri", LevelCrisis},
+		{"pengen mtii aja", LevelCrisis},
+		{"i want to kil myself", LevelCrisis},
+		{"aku arep nglalu", LevelCrisis},
+		{"hayang paeh", LevelCrisis},
+		{"gusto ko nang mamatay", LevelCrisis},
+		{"me quiero matar", LevelCrisis},
+		{"eu quero morrer", LevelCrisis},
+		{"je veux mourir", LevelCrisis},
+		{"tôi muốn chết", LevelCrisis},
+		{"我想死", LevelCrisis},
+		{"死にたい", LevelCrisis},
+		{"죽고 싶어", LevelCrisis},
+		{"أريد أن أموت", LevelCrisis},
+		// ordinary
+		{"我想死你了", LevelNone},
+		{"từ từ thôi", LevelNone},
+		{"God take me back to school", LevelNone},
+		{"I started cutting back on coffee", LevelNone},
+		{"aku nggak mau mati cuma butuh teman cerita", LevelNone},
+		{"i'm putting myself first", LevelNone},
+		{"aku mampu kok", LevelNone},
+		{"aku mau bacot dia", LevelNone},
+		{"semoga hidupmu bahagia", LevelNone},
+	}
+	for _, c := range cases {
+		if got := Assess(c.text).Level; got != c.want {
+			t.Errorf("Assess(%q) = %s, want %s", c.text, got, c.want)
+		}
+	}
+}

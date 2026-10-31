@@ -23,7 +23,16 @@ const (
 // Assess classifies text and returns the routing decision. It is
 // deterministic, free of I/O and safe for concurrent use.
 // The routing policy is described in the package documentation.
-func Assess(text string) Assessment { return withDanger(assess(text, true), text) }
+func Assess(text string) Assessment {
+	a := withDanger(assess(text, true), text)
+	// Typo tolerance: the corrected reading can only add safety.
+	if fixed, ok := typoVariant(text); ok {
+		if b := withDanger(assess(fixed, true), fixed); rank(b.Level) > rank(a.Level) {
+			return b
+		}
+	}
+	return a
+}
 
 // assess matches every variant of text (see variants) and folds the
 // outcomes. With skip, a derived variant only re-matches its context units
