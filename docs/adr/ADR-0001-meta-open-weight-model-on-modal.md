@@ -1,6 +1,6 @@
 # ADR-0001 — Meta open-weight model for Sela v2, served on Modal
 
-Status: **accepted for implementation; live serving not yet verified** (no Modal credentials or GPU budget in this environment, see [blockers](../BLOCKERS.md)). Date: 2026-10-26. Authority: [SPEC](../../SPEC.md) C4, I.meta, V7, V9, V10, V15; owner direction of 2026-10-26.
+Status: **accepted for implementation; live serving not yet verified** (no Modal credentials or GPU budget in this environment, see [blockers](../status/BLOCKERS.md)). Date: 2026-10-26. Authority: [SPEC](../../SPEC.md) C4, I.meta, V7, V9, V10, V15; owner direction of 2026-10-26.
 
 ## Context
 
@@ -36,7 +36,7 @@ All facts below were checked on 2026-10-26 against primary sources by the extern
 
 ## Capability, cost and risk
 
-- **Indonesian/English/code-switching:** evidence is indirect (paper tier). Sela runs its own bilingual and code-switched evaluation with pre-registered thresholds ([evaluation](../EVALUATION.md)); failure would trigger a new ADR, not a silent model swap.
+- **Indonesian/English/code-switching:** evidence is indirect (paper tier). Sela runs its own bilingual and code-switched evaluation with pre-registered thresholds ([evaluation](../validation/EVALUATION.md)); failure would trigger a new ADR, not a silent model swap.
 - **Memory:** ~72 GB VRAM budget on an 80 GB GPU leaves little KV cache; Sela's prompts are short (<4k tokens) and output is bounded, so `--max-model-len` 16384 with 8 concurrent sequences is the starting point, to be measured.
 - **Latency:** unmeasured. Reasoning models emit hidden reasoning tokens; low effort and bounded `max_tokens` are required. Cold start (container + ~60 GB weight load from Volume) is expected to take minutes; Modal answers 503 at once while no container is ready, so the operation retries every 10 s within twice the cold-start estimate and the UI shows a warming state.
 - **Cost (Modal list prices, observed 2026-10-26):** H100 $0.001097/s ≈ $3.95/h; H200 ≈ $4.54/h; A100-80GB ≈ $2.50/h. With `max_containers=1` the burn rate is bounded by one GPU while warm. Illustrative demo session: 4 min cold start + 10 min use + 5 min scale-down ≈ 19 GPU-minutes ≈ **$1.25 on H100**. Starter plan includes $30/month credits and needs a payment method for GPUs. These are estimates, not measurements.

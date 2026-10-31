@@ -24,6 +24,6 @@ Use [GitHub private vulnerability reporting](https://github.com/YanIanZ/sela/sec
 - Isolation: the owner comes only from the session cookie, every store method takes the owner, and another user's resource answers `404`; the server and every operator command refuse a database or key from another environment.
 - Logs: metadata only; never content, usernames, passwords, recovery codes, tokens, user ids, keys, database URLs or IP addresses.
 
-Details and residual risks: [ADR-0002](docs/adr/ADR-0002-persistence-accounts-and-encryption.md). See [SPEC](SPEC.md), [safety](docs/SAFETY.md), [AI policy](docs/AI_POLICY.md) and [API](docs/API_SPEC.md). For v1 (encrypted recovery, forum moderation, providers, database), consult the [historical threat model](docs/archive/v1/THREAT_MODEL.md). Old reports do not certify either runtime.
+Details and residual risks: [ADR-0002](docs/adr/ADR-0002-persistence-accounts-and-encryption.md). See [SPEC](SPEC.md), [safety](docs/architecture/SAFETY.md), [AI policy](docs/architecture/AI_POLICY.md) and [API](docs/api/API_SPEC_V2.md). For v1 (encrypted recovery, forum moderation, providers, database), consult the [historical threat model](docs/archive/v1/THREAT_MODEL.md). Old reports do not certify either runtime.
 
 The demo accepts no actual patient-care transaction. GitHub reporting is not an emergency channel; immediate danger requires local emergency assistance.

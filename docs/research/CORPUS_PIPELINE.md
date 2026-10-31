@@ -369,7 +369,7 @@ python3 scripts/research/corpus_pipeline.py verify
   Resolve their dates by hand before relying on them in public claims. (2026-10-26, pipeline 1.2.0: the public dates are now documented in `needs_check_evidence`; a reviewer still has to confirm them.)
 
 **Claim gates:** 13 gates, 69 patterns. Every pattern compiles in Python `re` and in Node 22 `new RegExp(p, 'iu')`, and every example behaves as declared in both.
-- `scan-claims` over `web/src/i18n/en.ts`, `web/src/i18n/id.ts`, `docs/SAFETY.md` and `docs/PRODUCT.md` gives 0 hits. Seven disclaimers are suppressed by the negation window, for example "A sent request does not mean you have received care", "… belum berarti kamu sudah mendapat perawatan", "Sela … tidak memberi diagnosis" and "… not an AI therapist".
+- `scan-claims` over `web/src/i18n/en.ts`, `web/src/i18n/id.ts`, `docs/architecture/SAFETY.md` and `docs/product/PRODUCT.md` gives 0 hits. Seven disclaimers are suppressed by the negation window, for example "A sent request does not mean you have received care", "… belum berarti kamu sudah mendapat perawatan", "Sela … tidak memberi diagnosis" and "… not an AI therapist".
 - The 880 i18n strings, checked the way `web/src/test/claims.test.ts` checks them, also give 0 hits.
 - Gates v1 used one-word lookbehinds and flagged 5 of those disclaimers (4 strings under the JavaScript check). It also missed "Sela adalah terapis", "Sela adalah psikolog AI", "Sela membantu mengatasi depresi" and "Sela is an evidence-based therapist". All of these are now examples, and `tests/research` scans the i18n copy and expects 0 hits.
 

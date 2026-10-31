@@ -153,8 +153,69 @@ func foundationExporters() []Exporter {
 				return e, err
 			})
 		}},
+		exporterFunc{"shares", []string{"shares", "share_recipient_sessions", "share_events"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
+			rows, err := tx.Query(ctx, `SELECT id,summary_id,summary_version,label,purpose,state,version,expires_at,created_at,revoked_at,end_reason
+				FROM shares WHERE user_id=$1 ORDER BY created_at DESC, id DESC`, owner)
+			if err != nil {
+				return nil, err
+			}
+			type event struct {
+				ShareID string    `json:"shareId"`
+				Kind    string    `json:"kind"`
+				At      time.Time `json:"at"`
+			}
+			type shareExport struct {
+				Share
+				Events []event `json:"events"`
+			}
+			shares := []shareExport{}
+			byID := map[string]int{}
+			for rows.Next() {
+				var e shareExport
+				var id, summaryID pgtype.UUID
+				var revokedAt *time.Time
+				var reason *string
+				if err := rows.Scan(&id, &summaryID, &e.SummaryVersion, &e.Label, &e.Purpose, &e.State, &e.Version, &e.ExpiresAt, &e.CreatedAt, &revokedAt, &reason); err != nil {
+					rows.Close()
+					return nil, err
+				}
+				e.ID, e.SummaryID = uuidText(id.Bytes), uuidText(summaryID.Bytes)
+				byID[e.ID] = len(shares)
+				shares = append(shares, e)
+			}
+			rows.Close()
+			if err := rows.Err(); err != nil {
+				return nil, err
+			}
+			evRows, err := tx.Query(ctx, `SELECT e.share_id,e.kind,e.at FROM share_events e JOIN shares s ON s.id=e.share_id
+				WHERE s.user_id=$1 ORDER BY e.at`, owner)
+			if err != nil {
+				return nil, err
+			}
+			for evRows.Next() {
+				var id pgtype.UUID
+				var ev event
+				if err := evRows.Scan(&id, &ev.Kind, &ev.At); err != nil {
+					evRows.Close()
+					return nil, err
+				}
+				ev.ShareID = uuidText(id.Bytes)
+				if i, ok := byID[ev.ShareID]; ok {
+					shares[i].Events = append(shares[i].Events, ev)
+				}
+			}
+			evRows.Close()
+			return shares, evRows.Err()
+		}},
 		exporterFunc{"guardianConsents", []string{"guardian_consents"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
 			return b.store.guardianRecords(ctx, tx, owner)
+		}},
+		// The owner's own export includes the names they marked private,
+		// decrypted, because the list is their data and this file is only
+		// ever delivered to them (after a recent password proof). The list
+		// is never part of a share or a recipient projection.
+		exporterFunc{"privateNames", []string{"private_names"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
+			return b.store.privateNames(ctx, tx, owner)
 		}},
 		exporterFunc{"sessions", []string{"sessions"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
 			rows, err := tx.Query(ctx, `SELECT id, kind, trusted_device, device_browser, device_os, created_at, last_seen_at,
@@ -291,6 +352,7 @@ var sectionTitles = map[string][2]string{
 	"consentHistory":   {"Riwayat persetujuan", "Consent history"},
 	"guardianConsents": {"Persetujuan orang tua atau wali", "Parent or guardian consent"},
 	"sessions":         {"Sesi masuk", "Sign-in sessions"},
+	"privateNames":     {"Nama yang disamarkan", "Names kept private"},
 	"audit":            {"Catatan aktivitas keamanan", "Security activity log"},
 }
 

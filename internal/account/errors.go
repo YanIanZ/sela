@@ -47,17 +47,22 @@ var (
 	// personal memory). It reuses the existing consent_required code and
 	// message; it is deliberately not listed in Codes(), whose v3 entries
 	// are checked against the API spec table by TestV3ErrorMessagesComplete.
-	ErrConsentRequired   = &Error{Code: "consent_required", Field: "personalMemory"}
-	ErrUsernameInvalid   = &Error{Code: "username_invalid", Field: "username"}
-	ErrUsernameTaken     = &Error{Code: "username_taken", Field: "username"}
-	ErrPasswordTooShort  = &Error{Code: "password_too_short"}
-	ErrPasswordTooLong   = &Error{Code: "password_too_long"}
-	ErrPasswordWeak      = &Error{Code: "password_weak"}
-	ErrServerBusy        = &Error{Code: "server_busy", RetryAfter: 5 * time.Second}
-	ErrPolicyOutdated    = &Error{Code: "policy_outdated"}
-	ErrStaleVersion      = &Error{Code: "stale_version"}
-	ErrInvalidTransition = &Error{Code: "invalid_transition"}
-	ErrRateLimited       = &Error{Code: "rate_limited"}
+	ErrConsentRequired = &Error{Code: "consent_required", Field: "personalMemory"}
+	// ErrGuardianConsentRequired is the server-side guardian gate: a
+	// 15_17 owner whose guardian consent is missing or withdrawn is
+	// refused on content writes. Same code and status as ErrConsentRequired,
+	// different field so the client can open the guardian flow.
+	ErrGuardianConsentRequired = &Error{Code: "consent_required", Field: "guardianConsent"}
+	ErrUsernameInvalid         = &Error{Code: "username_invalid", Field: "username"}
+	ErrUsernameTaken           = &Error{Code: "username_taken", Field: "username"}
+	ErrPasswordTooShort        = &Error{Code: "password_too_short"}
+	ErrPasswordTooLong         = &Error{Code: "password_too_long"}
+	ErrPasswordWeak            = &Error{Code: "password_weak"}
+	ErrServerBusy              = &Error{Code: "server_busy", RetryAfter: 5 * time.Second}
+	ErrPolicyOutdated          = &Error{Code: "policy_outdated"}
+	ErrStaleVersion            = &Error{Code: "stale_version"}
+	ErrInvalidTransition       = &Error{Code: "invalid_transition"}
+	ErrRateLimited             = &Error{Code: "rate_limited"}
 )
 
 func invalid(field string) *Error { return &Error{Code: ErrInvalidInput.Code, Field: field} }
@@ -89,7 +94,8 @@ func Codes() []string {
 	all := []*Error{ErrInvalidInput, ErrNotFound, ErrNotSignedIn, ErrInvalidCredentials, ErrRecoveryFailed,
 		ErrCurrentPasswordIncorrect, ErrReauthRequired, ErrAccountRequired, ErrPasswordLoginDisabled, ErrAgeNotSupported,
 		ErrAgeBandNotEnabled, ErrNotGuest, ErrRequiredConsent, ErrUsernameInvalid, ErrUsernameTaken, ErrPasswordTooShort,
-		ErrPasswordTooLong, ErrPasswordWeak, ErrServerBusy, ErrPolicyOutdated, ErrStaleVersion, ErrInvalidTransition, ErrRateLimited}
+		ErrPasswordTooLong, ErrPasswordWeak, ErrServerBusy, ErrPolicyOutdated, ErrStaleVersion, ErrInvalidTransition, ErrRateLimited, ErrShareInvalid,
+		ErrNameTaken, ErrNameLimitReached}
 	out := make([]string, len(all))
 	for i, e := range all {
 		out[i] = e.Code

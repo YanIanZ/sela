@@ -498,7 +498,7 @@ The machine-readable history is `set.json` `changes`.
      blocked until permission is obtained or the text is replaced (B-14).
      ```
 
-   - In `README.md`, under "Provenance and license": "Exception: the WHO-adapted self-help cards (`data/content/reading/cards_who.json` and 22 entries of `internal/fixtures/data/self_help_cards.v1.json`) are CC BY-NC-SA 3.0 IGO, not MIT, and non-commercial only until B-14 clears; see [data/content/reading/LICENSE.md](data/content/reading/LICENSE.md)." Consider changing the badge to "MIT (code); some content CC BY-NC-SA 3.0 IGO".
+   - In `README.md`, under "Provenance and license": "Exception: the WHO-adapted self-help cards (`data/content/reading/cards_who.json` and 22 entries of `internal/fixtures/data/self_help_cards.v1.json`) are CC BY-NC-SA 3.0 IGO, not MIT, and non-commercial only until B-14 clears; see [data/content/reading/LICENSE.md](../../data/content/reading/LICENSE.md)." Consider changing the badge to "MIT (code); some content CC BY-NC-SA 3.0 IGO".
 
    The carve-out alone does not make the v1 file compliant, and this library cannot change files outside `data/content`, `tests/content` and `docs/content`. The owner of `packages/config` chooses one of these:
 

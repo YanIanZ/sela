@@ -106,9 +106,9 @@ Do not bulk copy copyrighted articles, scrape in violation of terms or cite pape
 
 ## 9. Primary references
 
-- [Existing AI policy](../AI_POLICY.md), [AI routing ADR](../adr/ADR-0003-ai-routing-verifier-fallback.md), [Claude verifier contract](../CLAUDE_VERIFIER.md), [DeepSeek fallback](../DEEPSEEK_FALLBACK.md).
+- [Existing AI policy](../architecture/AI_POLICY.md), [AI routing ADR](../adr/ADR-0003-ai-routing-verifier-fallback.md), [Claude verifier contract](../architecture/CLAUDE_VERIFIER.md), [DeepSeek fallback](../architecture/DEEPSEEK_FALLBACK.md).
 - [Meta developer documentation](https://dev.meta.ai/docs/), [Anthropic API documentation](https://platform.claude.com/docs/), [DeepSeek API documentation](https://api-docs.deepseek.com/).
-- [Research expansion licensing and caveats](../research/sela-relay/RESEARCH_EXPANSION_PIPELINE.md), [Safety](../SAFETY.md), [Blockers](../BLOCKERS.md).
+- [Research expansion licensing and caveats](../research/sela-relay/RESEARCH_EXPANSION_PIPELINE.md), [Safety](../architecture/SAFETY.md), [Blockers](../status/BLOCKERS.md).
 
 ## 10. Cost governance, admin boundaries and caching
 

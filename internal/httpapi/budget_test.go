@@ -77,13 +77,10 @@ func newBudgetEnv(t *testing.T, gate httpapi.BudgetGate) (*v3env, *countingHandl
 	posts := &countingHandler{h: mustDouble(t)}
 	metaSrv := httptest.NewServer(posts)
 	t.Cleanup(metaSrv.Close)
-	claudeSrv := httptest.NewServer(&countingHandler{h: mustDouble(t)})
-	t.Cleanup(claudeSrv.Close)
-
 	router, err := ai.Build(ai.Config{
 		Env: ai.EnvTest, AllowTestDouble: true, Profile: ai.ProfileFull,
 		AllowedBands: ai.Bands(ai.Band18Plus), OpTimeout: ai.DefaultOpTimeout,
-		Anthropic: ai.AnthropicConfig{Mode: ai.ModeTestDouble, BaseURL: claudeSrv.URL, AttemptTimeout: time.Second},
+		MetaVerifier: ai.MetaVerifierConfig{Mode: ai.ModeDisabled},
 	}, llm.Config{Mode: llm.ModeTestDouble, BaseURL: metaSrv.URL, ServedModel: llm.TestDoubleServedModel,
 		AttemptTimeout: time.Second}, ai.Deps{Consent: allowAI{}, MetaAdmission: llm.NewAdmission(2)})
 	if err != nil {
@@ -94,7 +91,7 @@ func newBudgetEnv(t *testing.T, gate httpapi.BudgetGate) (*v3env, *countingHandl
 			kinds := []string{account.KindGuest, account.KindAccount}
 			c.Purposes = append(c.Purposes,
 				account.Purpose{Name: "ai_processing", Kinds: kinds},
-				account.Purpose{Name: "ai_provider_anthropic", Kinds: kinds})
+				account.Purpose{Name: "ai_processing", Kinds: kinds})
 		},
 		mutateO: func(_ *v3env, o *httpapi.Options) {
 			o.AIRouter = router

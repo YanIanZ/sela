@@ -5,8 +5,8 @@
 // client also talks to cmd/fakellm, a deterministic test double that is
 // always reported as ModeTestDouble and never as Meta inference. The v2
 // runtime has no fallback to any other provider: the opt-in DeepSeek fallback
-// of SPEC C13/V19-V21 exists only as the standalone prototype in
-// prototypes/generationfallback and is not wired in. When the configured
+// of SPEC C13/V19-V21 existed only as a standalone prototype (removed from
+// the tree after e1bf7fc) and was never wired in. When the configured
 // provider fails, callers get a typed error and show an honest unavailable
 // state (SPEC V9).
 //

@@ -39,13 +39,13 @@ Sela is an **anonymous-first space** where users can write freely, receive **sou
 
 The existing [SPEC.md](../../SPEC.md) is the current implemented-system requirements authority; it contains earlier owner directions. This set records **new owner decisions for the next change** and is the **proposal for a coordinated SPEC/backlog/API/decision-log update**. Do not silently claim an existing endpoint meets this vision. For delivery, the owner and implementation reviewer reconcile the conflicts, update normative files and tests, then advance status using evidence.
 
-Existing operational truth: [implementation status](../IMPLEMENTATION_STATUS.md), [blockers](../BLOCKERS.md), [architecture (current/historical)](../ARCHITECTURE.md), [AI routing (current/historical)](../AI_POLICY.md).
+Existing operational truth: [implementation status](../status/IMPLEMENTATION_STATUS.md), [blockers](../status/BLOCKERS.md), [architecture (current/historical)](../architecture/ARCHITECTURE.md), [AI routing (current/historical)](../architecture/AI_POLICY.md).
 
 **Status vocabulary:** target / existing foundation / implemented / verified locally / verified live / externally blocked / partner-simulated. A document is not evidence of a running feature.
 
 ## Operator and performance planes
 
-**Anonymous user** and **authenticated operator** are mutually exclusive trust identities. The operator console manages **public, sourced professional and research catalogs**, operational health and budgets; its users cannot browse private journals. Multi-hospital management is future-contract gated and currently limited to isolated fictional sandbox workflows. **Redis belongs to the Go acceleration/control plane**, never to the private data or safety authority. The Go operator API, the `/operator` UI and the public cache now exist ([admin API](../API_SPEC_ADMIN.md)); the legacy Next.js admin and Redis are retired and are not reused. Directory/research workflows and two-person approval remain target design.
+**Anonymous user** and **authenticated operator** are mutually exclusive trust identities. The operator console manages **public, sourced professional and research catalogs**, operational health and budgets; its users cannot browse private journals. Multi-hospital management is future-contract gated and currently limited to isolated fictional sandbox workflows. **Redis belongs to the Go acceleration/control plane**, never to the private data or safety authority. The Go operator API, the `/operator` UI and the public cache now exist ([admin API](../api/API_SPEC_ADMIN.md)); the legacy Next.js admin and Redis are retired and are not reused. Directory/research workflows and two-person approval remain target design.
 
 [Admin requirements](ADMIN_CONSOLE.md) · [Planned help workflow](ADMIN_CARE_OPERATIONS.md) · [Redis/cost constraints](REDIS_AI_COST_ENGINEERING.md)
 

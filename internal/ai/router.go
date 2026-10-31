@@ -11,9 +11,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/YanIanZ/sela/internal/ai/anthropic"
-	"github.com/YanIanZ/sela/internal/ai/deepseek"
 	"github.com/YanIanZ/sela/internal/ai/guard"
+	"github.com/YanIanZ/sela/internal/ai/metaverifier"
 	"github.com/YanIanZ/sela/internal/ai/minimize"
 	"github.com/YanIanZ/sela/internal/ai/transport"
 	"github.com/YanIanZ/sela/internal/ai/verifier"
@@ -22,24 +21,18 @@ import (
 
 // Deps are the router's collaborators. The configuration is
 // authoritative: a client given here is used only when the configuration
-// enables its provider (SELA_VERIFIER_MODE=disabled drops Claude,
-// SELA_DEEPSEEK_MODE=disabled drops DeepSeek and the alternative verifier,
-// the meta_only profile drops all three; RR-15), and a test double given
-// here needs AllowTestDouble outside production. Each slot must hold the
-// provider it is named for (NewRouter refuses any other): the router takes
-// a call's consents, age-band row, labels and provenance from the slot.
+// enables its provider (SELA_VERIFIER_MODE=disabled drops the verifier;
+// RR-15), and a test double given here needs AllowTestDouble outside
+// production. Each slot must hold the provider it is named for (NewRouter
+// refuses any other): the router takes a call's consents, age-band row,
+// labels and provenance from the slot.
 type Deps struct {
-	// Meta is the primary generator (required for NewRouter; Build builds
-	// it with NewMetaGenerator when unset).
+	// Meta is the generator (required for NewRouter; Build builds it with
+	// NewMetaGenerator when unset).
 	Meta Generator
-	// DeepSeek is the fallback generator (optional).
-	DeepSeek Generator
-	// Claude is the verifier (optional; without it verifier-gated tasks
-	// abstain).
-	Claude verifier.Verifier
-	// AltVerifier is DeepSeek as alternative verifier (optional; used only
-	// under RR-9).
-	AltVerifier verifier.Verifier
+	// Verifier is the Meta verifier (optional; without it verifier-gated
+	// tasks abstain).
+	Verifier verifier.Verifier
 	// Consent is required.
 	Consent ConsentChecker
 	// Limits is optional (nil allows all).
@@ -56,18 +49,16 @@ type Deps struct {
 
 // Router routes AI tasks (ADR-0003 §5). It is safe for concurrent use.
 type Router struct {
-	cfg     Config
-	meta    Generator
-	ds      Generator
-	claude  verifier.Verifier
-	alt     verifier.Verifier
-	consent ConsentChecker
-	limits  Limiter
-	screen  Screener
-	obs     Observer
-	now     func() time.Time
-	brk     *breaker
-	// spend is Claude's estimated spend today, for SELA_VERIFIER_DAILY_USD.
+	cfg      Config
+	meta     Generator
+	verifier verifier.Verifier
+	consent  ConsentChecker
+	limits   Limiter
+	screen   Screener
+	obs      Observer
+	now      func() time.Time
+	brk      *breaker
+	// spend is the verifier's estimated spend today, for SELA_VERIFIER_DAILY_USD.
 	spend *spendMeter
 }
 
@@ -98,9 +89,9 @@ func (m *spendMeter) total(now time.Time) float64 {
 	return m.usd
 }
 
-// verifierSpendReached reports whether Sela's Claude daily spend ceiling
+// verifierSpendReached reports whether Sela's verifier daily spend ceiling
 // (SELA_VERIFIER_DAILY_USD) is reached: an availability failure of the
-// Claude route (spend_cap, §4, §10.1).
+// verifier route (spend_cap, §4, §10.1).
 func (r *Router) verifierSpendReached() bool {
 	return r.cfg.VerifierDailyUSD > 0 && r.spend.total(r.now()) >= r.cfg.VerifierDailyUSD
 }
@@ -126,32 +117,21 @@ func NewRouter(cfg Config, d Deps) (*Router, error) {
 	// Each slot holds the provider it is named for. The router derives a
 	// call's consents, age-band row, labels and provenance from the slot,
 	// so a client in the wrong slot would be verified, consented and
-	// labelled as another provider (a DeepSeek verifier recorded as
-	// live_anthropic, Claude asked again as the alternative verifier, a
-	// test double outside the minors rule of §8.3).
+	// labelled as another provider.
 	if err := checkSlots(d); err != nil {
 		return nil, err
 	}
 	// RR-15: the configured modes are authoritative, also for clients
 	// passed in Deps (Build keeps those).
 	if !cfg.VerifierEnabled() {
-		d.Claude = nil
-	}
-	if !cfg.DeepSeekEnabled() {
-		d.DeepSeek, d.AltVerifier = nil, nil
+		d.Verifier = nil
 	}
 	var doubles []string
 	if d.Meta.Identity().TestDouble {
 		doubles = append(doubles, "Meta")
 	}
-	if d.DeepSeek != nil && d.DeepSeek.Identity().TestDouble {
-		doubles = append(doubles, "DeepSeek")
-	}
-	if d.Claude != nil && d.Claude.Identity().TestDouble {
-		doubles = append(doubles, "Claude")
-	}
-	if d.AltVerifier != nil && d.AltVerifier.Identity().TestDouble {
-		doubles = append(doubles, "alternative verifier")
+	if d.Verifier != nil && d.Verifier.Identity().TestDouble {
+		doubles = append(doubles, "Meta verifier")
 	}
 	if len(doubles) > 0 {
 		if cfg.Production() {
@@ -161,7 +141,7 @@ func NewRouter(cfg Config, d Deps) (*Router, error) {
 			return nil, errors.New("ai: test doubles (" + strings.Join(doubles, ", ") + ") require SELA_ALLOW_TEST_DOUBLE=true")
 		}
 	}
-	r := &Router{cfg: cfg, meta: d.Meta, ds: d.DeepSeek, claude: d.Claude, alt: d.AltVerifier, consent: d.Consent,
+	r := &Router{cfg: cfg, meta: d.Meta, verifier: d.Verifier, consent: d.Consent,
 		limits: d.Limits, screen: d.Screener, obs: d.Observer, now: d.Now, brk: &breaker{}, spend: &spendMeter{}}
 	if r.screen == nil {
 		r.screen = SafetyScreener{}
@@ -173,27 +153,16 @@ func NewRouter(cfg Config, d Deps) (*Router, error) {
 }
 
 // checkSlots refuses a Deps client that is not the provider of its slot:
-// Meta must have the role meta_modal, DeepSeek the role deepseek, Claude
-// the provider anthropic and the alternative verifier the provider
-// deepseek (a test double reports the provider it stands in for).
+// Meta must have the role meta_modal and the verifier the provider
+// meta_verifier (a test double reports the provider it stands in for).
 func checkSlots(d Deps) error {
 	var bad []string
 	if r := d.Meta.Identity().Role; r != ProviderMeta {
 		bad = append(bad, "Meta has role "+string(r))
 	}
-	if d.DeepSeek != nil {
-		if r := d.DeepSeek.Identity().Role; r != ProviderDeepSeek {
-			bad = append(bad, "DeepSeek has role "+string(r))
-		}
-	}
-	if d.Claude != nil {
-		if p := d.Claude.Identity().Provider; p != anthropic.Provider {
-			bad = append(bad, "Claude has provider "+p)
-		}
-	}
-	if d.AltVerifier != nil {
-		if p := d.AltVerifier.Identity().Provider; p != deepseek.Provider {
-			bad = append(bad, "AltVerifier has provider "+p)
+	if d.Verifier != nil {
+		if p := d.Verifier.Identity().Provider; p != metaverifier.Provider {
+			bad = append(bad, "Verifier has provider "+p)
 		}
 	}
 	if len(bad) > 0 {
@@ -204,7 +173,7 @@ func checkSlots(d Deps) error {
 
 // Build wires a router from configuration: Meta through the existing
 // internal/llm client built from meta (NewMetaGenerator: the generator owns
-// the retries and the cold-start wait), and Claude and DeepSeek clients as
+// the retries and the cold-start wait), and the Meta verifier client as
 // configured. Deps fields that are already set are kept, subject to the
 // configured modes (see Deps). A Meta test double receives
 // Config.TestDoubleAPIKey only, never the live vLLM key or the Modal
@@ -220,24 +189,12 @@ func Build(cfg Config, meta llm.Config, d Deps) (*Router, error) {
 		}
 		d.Meta = g
 	}
-	if d.Claude == nil && cfg.VerifierEnabled() {
-		c, err := anthropic.New(cfg.anthropicConfig())
+	if d.Verifier == nil && cfg.VerifierEnabled() {
+		c, err := metaverifier.New(cfg.metaVerifierConfig())
 		if err != nil {
 			return nil, err
 		}
-		d.Claude = c
-	}
-	if cfg.DeepSeekEnabled() && (d.DeepSeek == nil || d.AltVerifier == nil) {
-		c, err := deepseek.New(cfg.deepseekConfig())
-		if err != nil {
-			return nil, err
-		}
-		if d.DeepSeek == nil {
-			d.DeepSeek = NewDeepSeekGenerator(c)
-		}
-		if d.AltVerifier == nil {
-			d.AltVerifier = c.AsVerifier()
-		}
+		d.Verifier = c
 	}
 	return NewRouter(cfg, d)
 }
@@ -349,10 +306,6 @@ func (r *Router) Run(ctx context.Context, task Task, in Input) (Output, error) {
 		Guards:       GuardRecord{Version: guard.Version, Risk: RiskNone},
 		Verification: VerificationRecord{Status: StatusNotRequested, Provenance: VerifiedNotRequested, Route: NoVerifierRoute}}
 	st.prov.Synthetic = in.Synthetic
-	if r.ds != nil || r.alt != nil {
-		// V21, §17 O-3: the DeepSeek data setting this operation ran under.
-		st.prov.DeepSeekData = r.cfg.deepseekData()
-	}
 	if !ok {
 		return Output{}, st.fail(OutcomeInvalidInput, "unknown_task")
 	}
@@ -472,7 +425,7 @@ func (r *Router) Run(ctx context.Context, task Task, in Input) (Output, error) {
 	var decisions []verifier.Decision
 	var reqs []verifier.Request
 	var refs []claimRef
-	if needsVerification(pol, st.guards, st.prov.Route) && len(draft.Items) > 0 {
+	if needsVerification(pol, st.guards) && len(draft.Items) > 0 {
 		reqs, refs, err = st.claims(draft)
 		if err != nil {
 			code := ReasonInputTooLarge
@@ -602,11 +555,6 @@ func (st *run) preflight(ctx context.Context, role ProviderName, withLimits bool
 	if ctx.Err() != nil {
 		return st.storeError(ctx)
 	}
-	if role == ProviderDeepSeek && !st.deepseekDataAllowed() {
-		// V21, §17 O-3: nothing that is not synthetic reaches DeepSeek
-		// until the operator enables real-user processing.
-		return ReasonSyntheticOnly
-	}
 	r := st.r
 	for _, p := range st.purposes(role) {
 		c, err := r.consent.Consent(ctx, st.in.Subject, p)
@@ -628,7 +576,7 @@ func (st *run) preflight(ctx context.Context, role ProviderName, withLimits bool
 	if reason := st.checkBand(ctx, role); reason != "" {
 		return reason
 	}
-	if withLimits && role == ProviderAnthropic && r.verifierSpendReached() {
+	if withLimits && role == ProviderMetaVerifier && r.verifierSpendReached() {
 		return ReasonSpendCap
 	}
 	if withLimits && r.limits != nil {
@@ -730,153 +678,34 @@ func (st *run) afterCall(ctx context.Context, role ProviderName, stopped string,
 	return nil
 }
 
-// verifierRoute reports whether the Claude route is permitted for this
-// user and configuration ("" when it is). SELA_VERIFIER_MODE=disabled
-// always abstains (RR-15), whatever client was passed in. The alternative
-// verifier never stands in for a missing Claude consent or configuration
-// (RR-2, RR-11).
+// verifierRoute reports whether the Meta verifier route is permitted for
+// this user and configuration ("" when it is). SELA_VERIFIER_MODE=disabled
+// always abstains (RR-15), whatever client was passed in.
 func (st *run) verifierRoute(ctx context.Context) string {
 	r := st.r
 	switch {
-	case r.cfg.Profile == ProfileMetaOnly:
-		return ReasonProfileMetaOnly
-	case !r.cfg.Anthropic.Mode.on():
+	case !r.cfg.MetaVerifier.Mode.on():
 		return ReasonVerifierDisabled
-	case r.claude == nil:
+	case r.verifier == nil:
 		return ReasonNotConfigured
-	case st.task != TaskReadingVerification && !r.claude.Identity().TestDouble && st.claudeGeo() != anthropic.DefaultInferenceGeo:
-		// The ai_provider_anthropic consent names the US (§8):
-		// personal data never goes to a client that may process it
-		// elsewhere. AT-6 carries no personal data.
-		return ReasonInferenceGeo
 	}
-	return st.preflight(ctx, ProviderAnthropic, false)
-}
-
-// fallbackVerifierRoute is RR-4 (i): before DeepSeek writes an output
-// that only Claude may verify (an AT-1 reply, §17 O-6; AT-3 and AT-4,
-// RR-9 b), the Claude route must be permitted now: consent, age band and
-// configuration (verifierRoute), Sela's verifier daily spend ceiling
-// (SELA_VERIFIER_DAILY_USD) and the per-user verifier limit, asked without
-// counting a call (Limiter.Check). Sela knows each of these states before
-// it calls DeepSeek, so no text is sent to DeepSeek only for the output to
-// abstain. The size of the AT-1 verifier input is such a state too: claims
-// cites the current user turn whole, so a turn that needs more than
-// MaxCitedSpans VC-1 pieces can never be verified (verification_input_too_large,
-// see currentTurnFits). It returns "" when the route is permitted.
-func (st *run) fallbackVerifierRoute(ctx context.Context) string {
-	if !st.currentTurnFits() {
-		return ReasonInputTooLarge
-	}
-	if reason := st.verifierRoute(ctx); reason != "" {
-		return reason
-	}
-	r := st.r
-	if r.verifierSpendReached() {
-		return ReasonSpendCap
-	}
-	if r.limits != nil {
-		if err := r.limits.Check(ctx, st.in.Subject, ProviderAnthropic, st.task); err != nil {
-			if errors.Is(err, ErrSpendCap) {
-				return ReasonSpendCap
-			}
-			return ReasonUserLimit
-		}
-	}
-	return ""
-}
-
-// currentTurnFits reports whether the AT-1 verifier request can cite the
-// current (latest) user turn whole: claims splits it into VC-1 pieces
-// (splitSpan, MaxSpanBytes) and abstains when it needs more than
-// MaxCitedSpans. Other tasks cite the spans the draft names, which are not
-// known before the call, so they always fit here.
-func (st *run) currentTurnFits() bool {
-	if st.task != TaskListeningReply {
-		return true
-	}
-	for i := len(st.payload.Spans) - 1; i >= 0; i-- {
-		if s := st.payload.Spans[i]; s.Role == RoleUser {
-			return len(splitSpan(s.Text, verifier.MaxSpanBytes)) <= verifier.MaxCitedSpans
-		}
-	}
-	return true // no user turn: claims rejects it after the call (no user spans)
-}
-
-// deepseekDataAllowed reports whether DeepSeek may receive this
-// operation's data (V21, §17 O-3): any data once the operator set
-// real_user (production also needs the B-10 clearance, Config.Validate),
-// otherwise only data the caller marked synthetic, and never in production,
-// which holds no demo data (C21, C24).
-func (st *run) deepseekDataAllowed() bool {
-	cfg := st.r.cfg
-	if cfg.deepseekData() == DeepSeekRealUser {
-		return true
-	}
-	return st.in.Synthetic && !cfg.Production()
-}
-
-// fallbackVersionCheck is V21: after every fallback request, before the
-// result is used, the caller's session, record and fixture versions and
-// crisis state are rechecked (Input.Commit; the consents are rechecked by
-// afterCall). A change discards the result as stale.
-func (st *run) fallbackVersionCheck(ctx context.Context) error {
-	if st.in.Commit == nil {
-		return st.fail(OutcomeStale, ReasonNoVersionCheck) // unreachable: RR-4 requires it
-	}
-	if err := st.in.Commit(ctx); err != nil {
-		if st.parent != nil && st.parent.Err() != nil {
-			return st.fail(OutcomeCanceled, ReasonCanceled)
-		}
-		return st.fail(OutcomeStale, ReasonStale)
-	}
-	return nil
-}
-
-// claudeGeo is where the Claude client processes requests: what the
-// client reports, else the configured value, else "us".
-func (st *run) claudeGeo() string {
-	if g := st.r.claude.Identity().InferenceGeo; g != "" {
-		return g
-	}
-	return orDefault(st.r.cfg.Anthropic.InferenceGeo, anthropic.DefaultInferenceGeo)
+	return st.preflight(ctx, ProviderMetaVerifier, false)
 }
 
 // metaWindow is how long Meta may take to produce first content,
 // including a cold start (§3.2): the task's fixed wait (AT-1: 20 s) or the
-// time until the remaining budget equals the reserves the later steps
-// need, less reserveMargin so the reserves are whole when the window
-// ends. The verification reserve is always kept; with withFallback the
-// fallback reserve is kept too, when a fallback is configured and the
-// budget can hold it next to MinMetaWindow. ok is false when less than
-// MinMetaWindow is left: Meta is then not called at all, and the run ends
-// on the no-AI path. A short budget is never a Meta failure.
-func (st *run) metaWindow(withFallback bool) (wait time.Duration, ok bool) {
+// time until the remaining budget equals the verification reserve, less
+// reserveMargin so the reserve is whole when the window ends. ok is false
+// when less than MinMetaWindow is left: Meta is then not called at all,
+// and the run ends on the no-AI path. A short budget is never a Meta
+// failure.
+func (st *run) metaWindow() (wait time.Duration, ok bool) {
 	avail := st.remaining() - reserveMargin - st.pol.VerificationReserve
-	if withFallback && st.fallbackConfigured() && avail-st.pol.fallbackReserve() >= MinMetaWindow {
-		avail -= st.pol.fallbackReserve()
-	}
 	wait = avail
 	if st.pol.FirstContentWait > 0 && st.pol.FirstContentWait < wait {
 		wait = st.pol.FirstContentWait
 	}
 	return wait, wait >= MinMetaWindow
-}
-
-// fallbackBound bounds a DeepSeek generation: the fallback reserve, and
-// never the time the verification reserve keeps (with, for AT-1, the
-// verifier attempt every DeepSeek reply needs, §3.2, §17 O-6).
-func (st *run) fallbackBound() time.Duration {
-	return min(st.pol.FallbackReserve, st.remaining()-st.pol.VerificationReserve-st.pol.FallbackVerifierReserve)
-}
-
-// fallbackConfigured reports whether a fallback is possible for this run
-// at all (the configuration, the data setting and the version re-check),
-// so Meta's window keeps the fallback reserve only then.
-func (st *run) fallbackConfigured() bool {
-	r := st.r
-	return st.pol.FallbackAllowed && r.cfg.Fallback && r.cfg.Profile == ProfileFull && r.ds != nil &&
-		st.deepseekDataAllowed() && st.in.Commit != nil
 }
 
 // genCall bounds one generator call.
@@ -885,26 +714,17 @@ type genCall struct {
 	wait time.Duration
 	// maxRetries is the task's retry rule for Meta (§3.2).
 	maxRetries int
-	// timeout bounds a DeepSeek call as a whole and per attempt.
+	// timeout bounds a generator call as a whole and per attempt (zero
+	// keeps the client's own attempt timeout).
 	timeout time.Duration
 	// noColdStartWait: the RR-14 breaker is open (Meta).
 	noColdStartWait bool
 }
 
-// slotRole is the provider of a generator route: the slot the generator
-// came from (Deps.Meta or Deps.DeepSeek, checked by NewRouter), never what
-// its Identity says at call time.
-func slotRole(route Route) ProviderName {
-	if route == RouteFallback {
-		return ProviderDeepSeek
-	}
-	return ProviderMeta
-}
-
 // slotIdentity is g's identity with the role of its slot.
-func slotIdentity(g Generator, route Route) GeneratorIdentity {
+func slotIdentity(g Generator, _ Route) GeneratorIdentity {
 	id := g.Identity()
-	id.Role = slotRole(route)
+	id.Role = ProviderMeta
 	return id
 }
 
@@ -940,7 +760,7 @@ func (st *run) callGen(ctx context.Context, g Generator, route Route, regen bool
 	st.prov.Calls = append(st.prov.Calls, rec)
 	st.prov.InputTokens += res.InputTokens
 	st.prov.OutputTokens += res.OutputTokens
-	st.prov.EstimatedCostUSD += estimateCost(id.Label(), id.TestDouble, "", res.InputTokens, res.OutputTokens, st.r.now())
+	st.prov.EstimatedCostUSD += estimateCost(id.Label(), id.TestDouble, res.InputTokens, res.OutputTokens)
 	st.observe(Event{Stage: StageGenerate, Provider: id.Label(), Model: id.ModelID, Route: string(route), Outcome: rec.Outcome,
 		Reason: rec.Reason, Attempts: res.Attempts, LatencyMS: rec.LatencyMS, InputTokens: res.InputTokens,
 		OutputTokens: res.OutputTokens, TestDouble: id.TestDouble})
@@ -963,7 +783,7 @@ func (st *run) generate(ctx context.Context) (Draft, error) {
 		st.prov.CircuitOpen = true
 		st.prov.Reasons = append(st.prov.Reasons, ReasonCircuitOpen)
 	}
-	wait, ok := st.metaWindow(true)
+	wait, ok := st.metaWindow()
 	if !ok {
 		// The budget cannot hold Meta's window and the reserves: the
 		// honest no-AI path. Meta is not called, so this is not a Meta
@@ -1009,53 +829,16 @@ func (st *run) generate(ctx context.Context) (Draft, error) {
 		// RR-5: content failures are terminal for the provider chain.
 		return Draft{}, st.fail(OutcomeAbstain, string(failure.Reason))
 	}
-	// Availability before content: RR-4. Only an upstream Meta outage is
-	// eligible (§4 note, §17 O-1, V19); anything else ends here with an
-	// operator alert.
+	// Availability failures end on the honest no-AI path: there is no
+	// fallback generator. An upstream outage raises an operator alert.
 	primary := failure.FallbackReason
 	if primary == "" {
 		primary = orDefault(failure.Cause, string(failure.Reason))
 	}
-	primaryReason := "primary_" + primary
-	// (f): the fallback reserve, and the verification reserve its output
-	// still needs (RR-9: only Claude may verify DeepSeek output).
-	facts := fallbackFacts{Failure: failure.Class, ContentStarted: failure.ContentStarted, TaskAllows: st.pol.FallbackAllowed,
-		FlagOn: r.cfg.Fallback, Profile: r.cfg.Profile, Configured: r.ds != nil, Remaining: st.remaining(),
-		Reserve: st.pol.reserves(), Eligible: failure.FallbackReason != "", DataAllowed: st.deepseekDataAllowed(),
-		VersionCheck: st.in.Commit != nil}
-	if reason := fallbackDecision(facts); reason != "" {
-		if reason == ReasonFallbackNotEligible {
-			st.observe(Event{Stage: StageOperatorAlert, Provider: ProviderMeta, Outcome: primary, Reason: reason})
-		}
-		return Draft{}, st.fail(OutcomeNoAI, primaryReason, reason)
+	if failure.FallbackReason != "" {
+		st.observe(Event{Stage: StageOperatorAlert, Provider: ProviderMeta, Outcome: primary})
 	}
-	// RR-4 (i), §17 O-6: an output only Claude may verify is written by
-	// DeepSeek only while the Claude route is permitted.
-	if st.pol.fallbackNeedsClaude() {
-		if reason := st.fallbackVerifierRoute(ctx); reason != "" {
-			return Draft{}, st.halt(reason, OutcomeNoAI, primaryReason, ReasonFallbackNeedsVerifier)
-		}
-	}
-	if reason := st.preflight(ctx, ProviderDeepSeek, true); reason != "" {
-		return Draft{}, st.halt(reason, OutcomeNoAI, primaryReason)
-	}
-	st.prov.FallbackReason = failure.FallbackReason
-	res, ge, stopped := st.callGen(ctx, r.ds, RouteFallback, false, nil, genCall{timeout: st.fallbackBound()})
-	if err := st.afterCall(ctx, ProviderDeepSeek, stopped, OutcomeNoAI); err != nil {
-		return Draft{}, err
-	}
-	if ge != nil {
-		// RR-6: one switch at most; a DeepSeek failure ends in no-AI.
-		if ge.Class == transport.ClassIntegrity {
-			return Draft{}, st.fail(OutcomeNoAI, primaryReason, ReasonIntegrity, "fallback_"+string(ge.Reason))
-		}
-		return Draft{}, st.fail(OutcomeNoAI, primaryReason, "fallback_"+string(ge.Reason))
-	}
-	// V21: the versions are rechecked after every fallback request.
-	if err := st.fallbackVersionCheck(ctx); err != nil {
-		return Draft{}, err
-	}
-	return st.accept(ctx, res, r.ds, RouteFallback)
+	return Draft{}, st.fail(OutcomeNoAI, "primary_"+primary)
 }
 
 // accept parses a generation, applies the risk flag, the guards and the
@@ -1064,9 +847,6 @@ func (st *run) generate(ctx context.Context) (Draft, error) {
 func (st *run) accept(ctx context.Context, res GenerateResult, g Generator, route Route) (Draft, error) {
 	id := slotIdentity(g, route)
 	failOutcome := OutcomeAbstain
-	if route == RouteFallback {
-		failOutcome = OutcomeNoAI // Fallback --> NoAI: any other failure
-	}
 	for attempt := 0; ; attempt++ {
 		draft, err := parseDraft(res.Text, st.pol, st.payload)
 		if err != nil {
@@ -1129,24 +909,13 @@ func (st *run) accept(ctx context.Context, res GenerateResult, g Generator, rout
 			return Draft{}, st.fail(OutcomeAbstain, append([]string{reason}, codes...)...)
 		}
 		// One regeneration on the same provider, with the rejection reason
-		// added as a constraint. Never another provider, so no fallback
-		// reserve is kept for it.
-		call := genCall{timeout: st.fallbackBound()}
-		if id.Role == ProviderMeta {
-			wait, ok := st.metaWindow(false)
-			if !ok {
-				return Draft{}, st.fail(OutcomeAbstain, reason, ReasonBudget)
-			}
-			call = genCall{wait: wait, maxRetries: st.pol.MetaMaxRetries}
-		} else if call.timeout <= 0 {
+		// added as a constraint. Never another provider: there is no
+		// fallback generator.
+		wait, ok := st.metaWindow()
+		if !ok {
 			return Draft{}, st.fail(OutcomeAbstain, reason, ReasonBudget)
 		}
-		if route == RouteFallback && st.pol.fallbackNeedsClaude() {
-			// RR-4 (i) holds for every DeepSeek request of the operation.
-			if pre := st.fallbackVerifierRoute(ctx); pre != "" {
-				return Draft{}, st.halt(pre, OutcomeAbstain, reason, ReasonFallbackNeedsVerifier)
-			}
-		}
+		call := genCall{wait: wait, maxRetries: st.pol.MetaMaxRetries}
 		if pre := st.preflight(ctx, id.Role, true); pre != "" {
 			return Draft{}, st.halt(pre, OutcomeAbstain, reason)
 		}
@@ -1157,12 +926,6 @@ func (st *run) accept(ctx context.Context, res GenerateResult, g Generator, rout
 		}
 		if ge != nil {
 			return Draft{}, st.fail(OutcomeAbstain, reason, "regeneration_"+string(ge.Reason))
-		}
-		if route == RouteFallback {
-			// V21: after every fallback request.
-			if err := st.fallbackVersionCheck(ctx); err != nil {
-				return Draft{}, err
-			}
 		}
 		res = next
 	}
@@ -1217,8 +980,6 @@ func draftProvenance(id GeneratorIdentity) string {
 		return DraftTestDouble
 	case id.Role == ProviderMeta:
 		return DraftLiveMeta
-	case id.Role == ProviderDeepSeek:
-		return DraftLiveDeepSeekFallback
 	}
 	return DraftUnavailable
 }
@@ -1477,7 +1238,7 @@ func (st *run) verify(ctx context.Context, reqs []verifier.Request) ([]verifier.
 	if st.remaining() < st.pol.VerifierAttempt {
 		return nil, abstained(ReasonBudget)
 	}
-	decs, reports, reason := st.runVerifier(ctx, r.claude, VerifierRoute, reqs)
+	decs, reports, reason := st.runVerifier(ctx, r.verifier, VerifierRoute, reqs)
 	switch reason {
 	case "":
 		return decs, nil
@@ -1488,49 +1249,14 @@ func (st *run) verify(ctx context.Context, reqs []verifier.Request) ([]verifier.
 	if err := st.verifierEnded(reason); err != nil {
 		return nil, err
 	}
-	claudeReason := transport.Reason(reason) // includes spend_cap
+	verifierFailure := transport.Reason(reason) // includes spend_cap
 	vr.UnavailableReasons = append(vr.UnavailableReasons, reason)
-	if reports > 0 && claudeReason.Class() == transport.ClassAvailability {
-		// Claude already checked part of this output: its findings stand
-		// and no other verifier is asked for the rest. Withheld.
+	if reports > 0 && verifierFailure.Class() == transport.ClassAvailability {
+		// The verifier already checked part of this output: its findings
+		// stand, and the rest is withheld. There is no second verifier.
 		return nil, unavailable(ReasonPartialReport)
 	}
-	// RR-9 / RR-10: only an availability failure may reach the
-	// alternative verifier, and only for Meta output.
-	alt := altDecision(altFacts{ClaudeFailure: claudeReason, Generator: st.genID.Role, FlagOn: r.cfg.AltVerifier,
-		Profile: r.cfg.Profile, Configured: r.alt != nil, Remaining: st.remaining(), Attempt: st.pol.VerifierAttempt,
-		DataAllowed: st.deepseekDataAllowed()})
-	if alt == ReasonNotAvailability {
-		return nil, unavailable()
-	}
-	if alt != "" {
-		return nil, unavailable(alt)
-	}
-	// The route check (consents and band) without Sela's limits:
-	// runVerifier asks the Limiter right before each call, so the first
-	// alternative call is counted once (Limiter contract, §11).
-	if pre := st.preflight(ctx, ProviderDeepSeek, false); pre != "" {
-		if err := st.verifierEnded(pre); err != nil {
-			return nil, err
-		}
-		return nil, unavailable(pre)
-	}
-	decs, _, reason = st.runVerifier(ctx, r.alt, AlternativeVerifierRoute, reqs)
-	switch reason {
-	case "":
-		return decs, nil
-	case ReasonUserLimit, ReasonSpendCap, ReasonNoConsent, ReasonAgeBand, ReasonConsentCheck, ReasonBudget:
-		if n := len(vr.Attempts); n > 0 && vr.Attempts[n-1].Route == AlternativeVerifierRoute && vr.Attempts[n-1].Calls == 0 {
-			// Sela's own check stopped the alternative verifier before
-			// any call: it was not tried, so its reason follows Claude's
-			// (§10.1), as before the call.
-			return nil, unavailable(reason)
-		}
-	}
-	if err := st.verifierEnded(reason); err != nil {
-		return nil, err
-	}
-	return nil, unavailable("alternative_" + reason)
+	return nil, unavailable()
 }
 
 // verifierCalled reports whether any verifier was called for this output.
@@ -1564,34 +1290,26 @@ func (st *run) verifierEnded(reason string) error {
 	return nil
 }
 
-// verifierLabel is the label shown with a verifier's verdicts, from its
-// slot: live Claude needs none (the items say "Claude", see checkLabel),
-// the alternative verifier is always labelled as such, and a test double
-// always says so, whatever label it reports otherwise.
-func verifierLabel(route VerificationRoute, id verifier.Identity) string {
-	switch {
-	case id.TestDouble && strings.HasPrefix(id.Label, "TEST DOUBLE"):
-		return id.Label
-	case id.TestDouble && route == AlternativeVerifierRoute:
-		return deepseek.TestDoubleLabel + " (" + deepseek.AlternativeLabel + ")"
-	case id.TestDouble:
-		return anthropic.TestDoubleLabel
-	case route == AlternativeVerifierRoute:
-		return deepseek.AlternativeLabel
+// verifierLabel is the label shown with a verifier's verdicts: a test
+// double always says so, whatever label it reports otherwise; a live Meta
+// verifier needs none (the items say "Meta verifier", see checkLabel).
+func verifierLabel(id verifier.Identity) string {
+	if id.TestDouble {
+		if strings.HasPrefix(id.Label, "TEST DOUBLE") {
+			return id.Label
+		}
+		return metaverifier.TestDoubleLabel
 	}
 	return ""
 }
 
 // checkLabel is the CheckLabel of released items: the recorded label, or
-// "Claude" for the live Claude route.
+// "Meta verifier" for the live route.
 func checkLabel(vr *VerificationRecord) string {
-	switch {
-	case vr.Label != "":
+	if vr.Label != "" {
 		return vr.Label
-	case vr.Route == AlternativeVerifierRoute:
-		return deepseek.AlternativeLabel
 	}
-	return "Claude"
+	return "Meta verifier"
 }
 
 // verifierReason classifies a verifier error. An error that is not a
@@ -1631,29 +1349,25 @@ func verifierReason(err error) transport.Reason {
 // and "" or a reason code.
 func (st *run) runVerifier(ctx context.Context, v verifier.Verifier, route VerificationRoute, reqs []verifier.Request) ([]verifier.Decision, int, string) {
 	id := v.Identity()
-	role, stage := ProviderAnthropic, StageVerify
-	if route == AlternativeVerifierRoute {
-		role, stage = ProviderDeepSeek, StageAltVerify
-	}
-	if role == st.genID.Role {
-		return nil, 0, ReasonSelfVerification // never verify a model's own output
+	role, stage := ProviderMetaVerifier, StageVerify
+	if id.Model == st.r.meta.Identity().ModelID {
+		// A model never verifies its own output (SPEC V36): the verifier
+		// slot must be configured with a different Meta model.
+		return nil, 0, ReasonSelfVerification
 	}
 	vr := &st.prov.Verification
 	label := ProviderName(role)
 	if id.TestDouble {
 		label = ProviderTestDouble
 	}
-	att := VerifierAttempt{Route: route, Provider: label, ModelID: id.Model, Label: verifierLabel(route, id)}
-	if route == VerifierRoute && !id.TestDouble {
-		att.InferenceGeo = st.claudeGeo()
-	}
+	att := VerifierAttempt{Route: route, Provider: label, ModelID: id.Model, Label: verifierLabel(id)}
 	// finish records the attempt; the top-level fields describe the
 	// latest verifier, so a used alternative report never carries
 	// Claude's calls or tokens.
 	finish := func(outcome string) {
 		att.Outcome = outcome
 		vr.Attempts = append(vr.Attempts, att)
-		vr.Route, vr.Provider, vr.ModelID, vr.Label, vr.InferenceGeo = att.Route, att.Provider, att.ModelID, att.Label, att.InferenceGeo
+		vr.Route, vr.Provider, vr.ModelID, vr.Label = att.Route, att.Provider, att.ModelID, att.Label
 		vr.ServedModel, vr.APIVersion, vr.Calls = att.ServedModel, att.APIVersion, att.Calls
 		vr.LatencyMS, vr.InputTokens, vr.OutputTokens = att.LatencyMS, att.InputTokens, att.OutputTokens
 	}
@@ -1701,9 +1415,9 @@ func (st *run) runVerifier(ctx context.Context, v verifier.Verifier, route Verif
 		att.OutputTokens += res.OutputTokens
 		st.prov.InputTokens += res.InputTokens
 		st.prov.OutputTokens += res.OutputTokens
-		cost := estimateCost(role, id.TestDouble, att.InferenceGeo, res.InputTokens, res.OutputTokens, st.r.now())
+		cost := estimateCost(role, id.TestDouble, res.InputTokens, res.OutputTokens)
 		st.prov.EstimatedCostUSD += cost
-		if role == ProviderAnthropic {
+		if role == ProviderMetaVerifier {
 			st.r.spend.add(cost, st.r.now()) // SELA_VERIFIER_DAILY_USD
 		}
 		outcome := "ok"
@@ -1766,10 +1480,8 @@ func (st *run) runVerifier(ctx context.Context, v verifier.Verifier, route Verif
 	switch {
 	case id.TestDouble:
 		vr.Provenance = VerifiedTestDouble
-	case route == AlternativeVerifierRoute:
-		vr.Provenance = VerifiedLiveDeepSeekAlt
 	default:
-		vr.Provenance = VerifiedLiveAnthropic
+		vr.Provenance = VerifiedLiveMetaVerifier
 	}
 	vr.Verdicts, vr.Issues = verdicts, issues
 	for _, ck := range verifier.Checks() {
@@ -1978,10 +1690,9 @@ func (st *run) commit(ctx context.Context) string {
 	return ""
 }
 
-// authoring runs AT-6: a human author wrote the claims, Claude checks
-// each against the licensed source passages, and nothing is published
-// without a check. No alternative verifier: the output was not generated
-// by Meta (RR-9 b).
+// authoring runs AT-6: a human author wrote the claims, the Meta verifier
+// checks each against the licensed source passages, and nothing is
+// published without a check.
 func (st *run) authoring(ctx context.Context, sess *minimize.Session) (Output, error) {
 	if len(st.in.Claims) == 0 || len(st.in.Claims) > verifier.MaxClaims*st.pol.MaxVerifierCalls {
 		return Output{}, st.fail(OutcomeInvalidInput, "claims")
@@ -2021,7 +1732,7 @@ func (st *run) authoring(ctx context.Context, sess *minimize.Session) (Output, e
 	if err != nil {
 		return Output{}, st.fail(OutcomeInvalidInput, "claims")
 	}
-	decs, _, reason := st.runVerifier(ctx, st.r.claude, VerifierRoute, reqs)
+	decs, _, reason := st.runVerifier(ctx, st.r.verifier, VerifierRoute, reqs)
 	if err := st.verifierEnded(reason); err != nil {
 		return Output{}, err
 	}

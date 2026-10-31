@@ -42,7 +42,7 @@ func (s *Server) v3UpdateRecord(w http.ResponseWriter, r *http.Request, p accoun
 	if !decode(w, r, &in) {
 		return
 	}
-	if in.Kind != "note" && in.Kind != "checkin" && in.Kind != account.KindFollowup {
+	if in.Kind != "note" && in.Kind != "checkin" {
 		writeError(w, r, 400, "invalid_input", "kind")
 		return
 	}

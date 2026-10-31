@@ -20,7 +20,7 @@ import (
 )
 
 func fillPath(p string) string {
-	return strings.NewReplacer("{id}", "6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11", "{purpose}", "terms_privacy").Replace(p)
+	return strings.NewReplacer("{id}", "6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11", "{followupId}", "0b9c2d3e-4f50-4a61-8b72-9c8d7e6f5a40", "{purpose}", "terms_privacy", "{slug}", "tidak-ada-di-pustaka").Replace(p)
 }
 
 func TestV3MutationGuardAllRoutes(t *testing.T) {
@@ -68,7 +68,7 @@ func TestV3MutationGuardAllRoutes(t *testing.T) {
 // specRoutes parses API_SPEC_V3 §4-§6 for "METHOD /api/v3/..." routes.
 func specRoutes(t *testing.T) []string {
 	t.Helper()
-	raw, err := os.ReadFile("../../docs/API_SPEC_V3.md")
+	raw, err := os.ReadFile("../../docs/api/API_SPEC_V3.md")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +114,9 @@ func TestV3RoutesMatchSpec(t *testing.T) {
 			}
 		}
 	}
-	// Each one is really served with its method: no 404 or 405.
+	// Each one is really served with its method: no 404 or 405. The reading
+	// detail route is content-gated, so a slug with no approved item answers
+	// 404; a wrong method proves the pattern is registered there.
 	for _, s := range spec {
 		method, path, _ := strings.Cut(s, " ")
 		var body any
@@ -122,6 +124,13 @@ func TestV3RoutesMatchSpec(t *testing.T) {
 			body = map[string]any{}
 		}
 		r := e.client().call(method, fillPath(path), body)
+		if r.status == 404 && strings.Contains(path, "{slug}") {
+			wrong := e.client().call("POST", fillPath(path), map[string]any{})
+			if wrong.status != 405 || !strings.Contains(wrong.header.Get("Allow"), "GET") {
+				t.Errorf("%s: gated route is not registered (wrong method: %d, Allow: %q)", s, wrong.status, wrong.header.Get("Allow"))
+			}
+			continue
+		}
 		if r.status == 404 || r.status == 405 {
 			t.Errorf("%s: %d", s, r.status)
 		}
@@ -139,7 +148,7 @@ func TestV3RoutesMatchSpec(t *testing.T) {
 
 func TestV3ErrorMessagesComplete(t *testing.T) {
 	t.Parallel()
-	raw, err := os.ReadFile("../../docs/API_SPEC_V3.md")
+	raw, err := os.ReadFile("../../docs/api/API_SPEC_V3.md")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -258,11 +267,14 @@ func TestV3StoreUnavailable(t *testing.T) {
 		if rt.Public {
 			continue
 		}
+		// One client per route: the mutation bucket is per client address,
+		// and this loop intentionally hits every write route in a row.
+		one := e.client()
 		var body any
 		if rt.Mutation {
 			body = map[string]any{}
 		}
-		r := c.call(rt.Method, fillPath(rt.Path), body)
+		r := one.call(rt.Method, fillPath(rt.Path), body)
 		if r.status != 503 || r.code() != "store_unavailable" || r.header.Get("Retry-After") == "" {
 			t.Errorf("%s %s: %d %s", rt.Method, rt.Path, r.status, r.raw)
 		}

@@ -35,11 +35,11 @@
 ## 3. Cross-document migration checklist
 
 - [ ] SPEC.md: define new anonymous-only owner model and release gates; remove account requirement or mark legacy.
-- [ ] PRODUCT.md and docs/PRODUCT.md: reconcile previous user-account and "not a directory" wording; retain original history.
-- [ ] docs/API_SPEC_V3.md: define session/memory/care APIs and migration; do not remove security middleware.
-- [ ] docs/AI_POLICY.md / Meta docs / ADR-0003: record selected model after **verified availability and policy check**; keep provider separation.
-- [ ] docs/SAFETY.md: document user age, care scope and source-based help; do not infer clinical approval.
-- [ ] docs/BACKLOG.md, docs/ROADMAP.md, docs/REQUIREMENTS_TRACEABILITY.md, docs/IMPLEMENTATION_STATUS.md: add feature IDs, owners, tests, evidence and latest statuses.
+- [ ] PRODUCT.md and docs/product/PRODUCT.md: reconcile previous user-account and "not a directory" wording; retain original history.
+- [ ] docs/api/API_SPEC_V3.md: define session/memory/care APIs and migration; do not remove security middleware.
+- [ ] docs/architecture/AI_POLICY.md / Meta docs / ADR-0003: record selected model after **verified availability and policy check**; keep provider separation.
+- [ ] docs/architecture/SAFETY.md: document user age, care scope and source-based help; do not infer clinical approval.
+- [ ] docs/product/BACKLOG.md, docs/product/ROADMAP.md, docs/status/REQUIREMENTS_TRACEABILITY.md, docs/status/IMPLEMENTATION_STATUS.md: add feature IDs, owners, tests, evidence and latest statuses.
 - [ ] web: remove login/recovery/signup navigation safely; update anonymous privacy copy and quick exit.
 - [ ] internal/account: preserve guest principal enforcement, migration, session rotation, archival and deletion.
 - [ ] E2E/tests: run old journeys plus new invariant suite; verify all claimed capabilities.
@@ -91,7 +91,7 @@ Do not invent impact percentages or testimonials. Preserve failed test cases and
 
 **Hackathon demonstration:** Sela's ordinary functioning features should run against their genuine implementation. Only the **partner side** of future hospital collaboration uses clearly synthetic actors and statuses. If Meta/Claude/DeepSeek are not live at submission, label the limitation; never replay fixtures as live inference. Separate code quality and product usability evidence from claims of medical benefit.
 
-Meta event judging details belong to [META_EVENT_NOTES](../META_EVENT_NOTES.md) and may change; check the organizer's official terms before submission.
+Meta event judging details belong to [META_EVENT_NOTES](../architecture/META_EVENT_NOTES.md) and may change; check the organizer's official terms before submission.
 
 ## 9. Administrative and Redis extension — release gating
 

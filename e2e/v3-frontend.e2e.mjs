@@ -297,21 +297,21 @@ try {
   const summaryURL=page.url();
   await page.getByLabel('Aku sudah memeriksa versi ini dan isinya mewakili yang ingin kusampaikan').check();
   await page.getByRole('button',{name:'Setujui versi ini',exact:true}).click();
-  await page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).waitFor();
-  const [download] = await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).click()]);
+  await page.getByRole('button',{name:'Unduh HTML (untuk dicetak)',exact:true}).waitFor();
+  const [download] = await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Unduh Markdown',exact:true}).click()]);
   const stream = await download.createReadStream(); let downloaded = ''; for await (const chunk of stream) downloaded += chunk.toString('utf8');
-  check('approved exact summary downloads real user words',downloaded.includes('Aku ingin membicarakan jadwalku yang terasa penuh.') && downloaded.includes('Membicarakan jadwalku.'));
+  check('approved exact summary downloads real user words',download.suggestedFilename().endsWith('.md') && downloaded.includes('Aku ingin membicarakan jadwalku yang terasa penuh.') && downloaded.includes('Membicarakan jadwalku.'));
 
   await snap('summary-approved-desktop');
   await page.getByRole('button',{name:'Perbaiki kata-kata',exact:true}).click();
   await page.getByLabel('Perbaiki ringkasan',{exact:true}).fill('Aku ingin membicarakan jadwalku yang terasa penuh. Ini koreksi pilihanku.');
   await page.getByRole('button',{name:'Simpan perbaikan',exact:true}).click();
   await page.getByLabel('Aku sudah memeriksa versi ini dan isinya mewakili yang ingin kusampaikan').waitFor();
-  check('editing summary invalidates approval',await page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).count()===0);
+  check('editing summary invalidates approval',await page.getByRole('button',{name:'Unduh HTML (untuk dicetak)',exact:true}).count()===0);
   await page.getByLabel('Aku sudah memeriksa versi ini dan isinya mewakili yang ingin kusampaikan').check();
   await page.getByRole('button',{name:'Setujui versi ini',exact:true}).click();
-  await page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).waitFor();
-  await page.getByLabel('Catatan setelah konsultasi',{exact:true}).fill('Catatan tindak lanjut sintetis yang ingin kuingat.');
+  await page.getByRole('button',{name:'Unduh HTML (untuk dicetak)',exact:true}).waitFor();
+  await page.getByLabel(/^Yang ingin kuingat/).fill('Catatan tindak lanjut sintetis yang ingin kuingat.');
   await page.getByLabel('Simpan catatan tindak lanjut ini',{exact:true}).check();
   await page.getByRole('button',{name:'Simpan tindak lanjut',exact:true}).click();
   await page.getByText('Catatan tindak lanjut sintetis yang ingin kuingat.',{exact:true}).waitFor();
@@ -321,7 +321,7 @@ try {
   check('source update persisted',changed.status()===200);
   await page.goto(summaryURL,{waitUntil:'networkidle'});
   await page.getByRole('heading',{name:'Sumber sudah berubah',exact:true}).waitFor();
-  check('source edit invalidates summary approval and download',await page.getByRole('button',{name:'Unduh ringkasan (.txt)',exact:true}).count()===0);
+  check('source edit invalidates summary approval and download',await page.getByRole('button',{name:'Unduh HTML (untuk dicetak)',exact:true}).count()===0);
   await snap('summary-stale-desktop');
   await page.goto(base+'/notes/weekly',{waitUntil:'networkidle'});
   await page.getByLabel('Refleksimu',{exact:true}).fill('Refleksi mingguan sintetis dari tulisanku sendiri.');
@@ -352,9 +352,10 @@ try {
     check(name+' opens implemented summary list',await page.getByRole('link',{name:'Susun ringkasan',exact:true}).count()===1);
     await snap(name);
   }
-  await page.goto(base+'/support/shares/test',{waitUntil:'networkidle'});
-  check('sharing limit does not claim summary APIs missing',(await page.locator('main').innerText()).includes('Tautan berbagi, kode akses penerima, dan pencabutan akses belum tersedia. Ringkasan manual bisa disetujui dan diunduh dari halaman Ringkasan.'));
-  await snap('sharing-blocked-320');
+  await page.goto(base+'/support/shares',{waitUntil:'networkidle'});
+  const sharingText=await page.locator('main').innerText();
+  check('sharing page is implemented',sharingText.includes('Bagikan ringkasan') && sharingText.includes('Buat tautan baru'));
+  await snap('sharing-320');
   // Clean up the synthetic guest through the same server, without UI
   // automation of the destructive dialog.
   const deletion = await context.request.delete(base + "/api/v3/me", {

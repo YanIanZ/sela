@@ -64,6 +64,7 @@ func TestLoadEnvironmentMatrix(t *testing.T) {
 		{"memory journey store (alias)", map[string]string{"SELA_V2_JOURNEY": "on"}, []string{"staging", "production"}},
 		{"auto-migrate", map[string]string{"SELA_DB_AUTO_MIGRATE": "true"}, []string{"demo", "staging", "production"}},
 		{"bad band", map[string]string{"SELA_ALLOWED_AGE_BANDS": "under_15"}, all},
+		{"bad explicit 15 band", map[string]string{"SELA_ALLOWED_AGE_BANDS": "under_16"}, all},
 		{"argon2 below floor", map[string]string{"SELA_ARGON2_MEMORY_KIB": "19455"}, all},
 		{"argon2 one pass", map[string]string{"SELA_ARGON2_ITERATIONS": "1"}, all},
 		{"guest TTL beyond max age", map[string]string{"SELA_GUEST_INACTIVE_TTL": "240h", "SELA_GUEST_MAX_AGE": "168h"}, all},

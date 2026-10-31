@@ -8,12 +8,12 @@ These files and supporting artifacts were relocated from the `d5da323` documenta
 
 | Original path | Archived record |
 | --- | --- |
-| `docs/AI_POLICY.md` | [AI_POLICY.md](AI_POLICY.md) |
+| `docs/architecture/AI_POLICY.md` | [AI_POLICY.md](AI_POLICY.md) |
 | `docs/AMD_01_SCOPE_DAN_SYARAT.md` | [AMD_01_SCOPE_DAN_SYARAT.md](AMD_01_SCOPE_DAN_SYARAT.md) |
 | `docs/AMD_SETUP.md` | [AMD_SETUP.md](AMD_SETUP.md) |
 | `docs/AMD_TRACK2_DEVELOPMENT_PLAN.md` | [AMD_TRACK2_DEVELOPMENT_PLAN.md](AMD_TRACK2_DEVELOPMENT_PLAN.md) |
 | `docs/AMD_TRACK2_TASKS.md` | [AMD_TRACK2_TASKS.md](AMD_TRACK2_TASKS.md) |
-| `docs/API_SPEC.md` | [API_SPEC.md](API_SPEC.md) |
+| `docs/api/API_SPEC_V2.md` | [API_SPEC.md](API_SPEC.md) |
 | `docs/CAREBRIDGE_ARCHITECTURE.md` | [CAREBRIDGE_ARCHITECTURE.md](CAREBRIDGE_ARCHITECTURE.md) |
 | `docs/CAREBRIDGE_DATASET.md` | [CAREBRIDGE_DATASET.md](CAREBRIDGE_DATASET.md) |
 | `docs/CAREBRIDGE_EVAL_RUBRIC.md` | [CAREBRIDGE_EVAL_RUBRIC.md](CAREBRIDGE_EVAL_RUBRIC.md) |
@@ -39,7 +39,7 @@ These files and supporting artifacts were relocated from the `d5da323` documenta
 | `docs/REDIS_TESTING_CHECKLIST.md` | [REDIS_TESTING_CHECKLIST.md](REDIS_TESTING_CHECKLIST.md) |
 | `docs/RELEASE_GATE_2026-10-16.md` | [RELEASE_GATE_2026-10-16.md](RELEASE_GATE_2026-10-16.md) |
 | `docs/RUANG_NGOBROL.md` | [RUANG_NGOBROL.md](RUANG_NGOBROL.md) |
-| `docs/SAFETY.md` | [SAFETY.md](SAFETY.md) |
+| `docs/architecture/SAFETY.md` | [SAFETY.md](SAFETY.md) |
 | `docs/SCRIPTWRITE_CHANGELOG.md` | [SCRIPTWRITE_CHANGELOG.md](SCRIPTWRITE_CHANGELOG.md) |
 | `docs/SCRUM-47_LIVE_EVAL_2026-10-16.md` | [SCRUM-47_LIVE_EVAL_2026-10-16.md](SCRUM-47_LIVE_EVAL_2026-10-16.md) |
 | `docs/SELA_V2_DESIGN.md` | [SELA_V2_DESIGN.md](SELA_V2_DESIGN.md) |
@@ -79,4 +79,4 @@ These files and supporting artifacts were relocated from the `d5da323` documenta
 | `docs/forum-replies-migration.sql` | [forum-replies-migration.sql](forum-replies-migration.sql) |
 | `docs/research/RISET_FITUR_DAN_GAP_2026-10-13.md` | [research/RISET_FITUR_DAN_GAP_2026-10-13.md](research/RISET_FITUR_DAN_GAP_2026-10-13.md) |
 
-Existing v1 migration/font/deployment READMEs stay beside the code they document and are classified in the [complete inventory](../../DOCUMENT_INVENTORY.md). Original license notices remain with their source.
+Existing v1 migration/font/deployment READMEs stay beside the code they document and are classified in the [complete inventory](../../status/DOCUMENT_INVENTORY.md). Original license notices remain with their source.

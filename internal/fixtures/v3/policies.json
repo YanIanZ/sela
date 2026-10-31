@@ -103,7 +103,7 @@
     ]
   },
   "personal_memory": {
-    "version": "personal-memory-2026-11-01.1",
+    "version": "personal-memory-2026-11-01.2",
     "title": {
       "id": "Ingatan pribadi",
       "en": "Personal memory"
@@ -118,47 +118,34 @@
         "en": "You can edit or delete each memory item and turn memory off at any time. While it is off, Sela does not read or use your memory; the items stay stored until you delete them."
       },
       {
-        "id": "Ingatan disimpan terenkripsi seperti catatanmu dan tidak dikirim ke penyedia AI mana pun pada langkah ini. Ingatan tidak dipakai untuk membalas percakapan sampai kamu menyalakannya secara terpisah nanti.",
-        "en": "Memory is stored encrypted like your notes and is not sent to any AI provider in this step. Memory is not used to answer a conversation until you enable that separately later."
+        "id": "Ingatan disimpan terenkripsi seperti catatanmu. Saat izin balasan AI juga aktif, Sela dapat memakai ingatan yang sudah kamu konfirmasi (paling banyak 5, 600 karakter) untuk membalas. Tanpa izin AI atau saat ingatan dimatikan, tidak ada ingatan yang dikirim.",
+        "en": "Memory is stored encrypted like your notes. When AI reply consent is also on, Sela may use memory you confirmed (at most 5 items, 600 characters) to reply. Without AI consent, or while memory is off, no memory is sent."
       }
     ]
   },
   "ai_processing": {
-    "version": "ai-meta-2026-10-30.1",
+    "version": "ai-processing-2026-10-31.1",
     "title": {
-      "id": "Meta (AS)",
-      "en": "Meta (US)"
+      "id": "Balasan AI dan pemeriksa Meta",
+      "en": "AI replies and the Meta checker"
     },
     "body": [
       {
-        "id": "Cuplikan percakapan yang diperlukan dikirim ke model Meta melalui Meta Model API atau server Modal (AS). Teks dikurangi dan detail kontak disamarkan. Penyedia dapat memproses permintaan sesuai kebijakan retensinya. AI dapat keliru; kamu dapat menolak atau mencabut izin dan tetap menulis tanpa AI.",
-        "en": "Necessary conversation excerpts are sent to Meta through the Meta Model API or a Modal server (US). Text is minimised and contact details redacted. The provider processes requests under its retention policy. AI can be wrong; decline or withdraw permission and keep writing without AI."
+        "id": "Cuplikan percakapan yang diperlukan dikirim ke model Meta melalui Meta Model API atau server Modal (AS). Model pemeriksa adalah model Meta lain, bukan penyedia ketiga. Teks dikurangi dan detail kontak disamarkan. Penyedia dapat memproses permintaan sesuai kebijakan retensinya. AI dapat keliru; kamu dapat menolak atau mencabut izin dan tetap menulis tanpa AI.",
+        "en": "Necessary conversation excerpts are sent to Meta models through the Meta Model API or a Modal server (US). The checker is a different Meta model, not a third-party provider. Text is minimised and contact details redacted. The provider processes requests under its retention policy. AI can be wrong; decline or withdraw permission and keep writing without AI."
       }
     ]
   },
-  "ai_provider_anthropic": {
-    "version": "ai-anthropic-2026-10-27.1",
+  "sharing": {
+    "version": "sharing-2026-10-31.1",
     "title": {
-      "id": "Pemeriksaan Claude",
-      "en": "Claude verification"
+      "id": "Berbagi ringkasan",
+      "en": "Sharing a summary"
     },
     "body": [
       {
-        "id": "Cuplikan yang diperlukan dan draf AI dikirim ke Anthropic Claude (AS) untuk pemeriksaan kesetiaan sumber, bukan penilaian medis. Retensi mengikuti kebijakan penyedia. Izin ini terpisah dan dapat dicabut.",
-        "en": "Necessary excerpts and AI drafts are sent to Anthropic Claude (US) for source-fidelity checks, not medical assessment. Retention follows the provider policy. This permission is separate and can be withdrawn."
-      }
-    ]
-  },
-  "ai_provider_deepseek": {
-    "version": "ai-deepseek-2026-10-27.1",
-    "title": {
-      "id": "Alternatif DeepSeek",
-      "en": "DeepSeek alternative"
-    },
-    "body": [
-      {
-        "id": "Jika diaktifkan server dan Meta mengalami gangguan, DeepSeek (Tiongkok) dapat menerima cuplikan yang diperlukan. Tidak dipakai tanpa izin terpisah. Saat ini hanya untuk data uji sintetis; retensi mengikuti kebijakan penyedia.",
-        "en": "If enabled on the server and Meta has an outage, DeepSeek (China) may receive necessary excerpts. It requires separate permission. Currently restricted to synthetic test data; retention follows the provider policy."
+        "id": "Kamu memilih isi ringkasan yang dibagikan dan kepada siapa. Tautan dan kode akses hanya ditampilkan sekali; penerima tidak diverifikasi identitasnya, dan kamu bisa mencabut akses kapan saja. Salinan yang sudah diunduh atau dicetak tidak bisa ditarik kembali.",
+        "en": "You choose what the summary contains and who it is for. The link and access code are shown once; the recipient is not identity-verified, and you can revoke access at any time. Copies already downloaded or printed cannot be recalled."
       }
     ]
   }

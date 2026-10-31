@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
-import { api, type Consent, type Entry } from "../api";
+import { api, download as downloadFile, type Consent, type Entry } from "../api";
 import { Icon } from "../icons";
 import { useSession } from "../session";
 import { useLocale, useWords } from "../shared";
@@ -14,16 +14,75 @@ import {
   Loading,
   Notice,
   PageHeader,
+  ProvenanceBadge,
+  ReviewStatusChip,
+  SelectField,
   TextArea,
   TextField,
 } from "../ui";
 
-export type SourceRef = { recordId: string; version: number };
+export type SourceRef = {
+  recordId: string;
+  version: number;
+  /** The user's exact words, set only for an AT-3 proposal. */
+  quote?: string;
+  turnKey?: string;
+};
+export type FollowupSections = {
+  feeling: string;
+  remember: string;
+  agreed: string;
+  askNext: string;
+};
 export type ContinuityRecord = Entry & {
   sourceRefs?: SourceRef[];
   summaryState?: "draft" | "approved";
   prepared?: { goal: string; questions: string; bring: string };
+  sections?: FollowupSections;
   parentId?: string;
+};
+
+type Words = (id: string, en: string) => string;
+
+const excerpt = (text: string) => {
+  const line = text.trim().split("\n")[0] ?? "";
+  return line.length > 90 ? `${line.slice(0, 90)}…` : line;
+};
+
+const memoryHeading = (r: Entry, w: Words) =>
+  r.title.trim() || excerpt(r.text) || w("Konteks pribadi", "Personal context");
+
+const memoryStatusLabel = (status: string, w: Words) => {
+  switch (status) {
+    case "unreviewed":
+      return w("Belum ditinjau", "Not reviewed");
+    case "rejected":
+      return w("Ditolak", "Rejected");
+    case "corrected":
+      return w("Dikoreksi olehmu", "Corrected by you");
+    default:
+      return w("Dikonfirmasi olehmu", "Confirmed by you");
+  }
+};
+
+const provenanceLine = (provenance: string, w: Words) => {
+  switch (provenance) {
+    case "unconfirmed_interpretation":
+      return w(
+        "Kata-katanya disusun Sela sebagai tafsiran, bukan kata-katamu.",
+        "The wording is Sela's interpretation, not your own words.",
+      );
+    case "user_correction":
+      return w(
+        "Kata-katanya kamu tulis sendiri setelah mengoreksi usulan Sela.",
+        "You wrote these words yourself after correcting Sela's suggestion.",
+      );
+    default:
+      return w(
+        "Kata-katanya kamu tulis sendiri.",
+        "You wrote these words yourself.",
+      );
+  }
 };
 export const sourceText = (r: Entry) =>
   r.kind === "conversation"
@@ -36,10 +95,142 @@ export const entryRoute = (r: Entry) =>
   r.kind === "summary"
     ? `/support/summaries/${r.id}`
     : r.kind === "memory"
-      ? "/notes/memory"
+      ? `/notes/memory/${r.id}`
       : r.kind === "conversation"
         ? `/talk?record=${r.id}`
         : `/notes/${r.id}`;
+
+type FollowupDraft = FollowupSections & { note: string };
+
+const blankFollowupDraft: FollowupDraft = {
+  feeling: "",
+  remember: "",
+  agreed: "",
+  askNext: "",
+  note: "",
+};
+
+// The four owner-facing sections. Each one is optional; the free note
+// below them stays available for anything that does not fit.
+const followupParts = [
+  { key: "feeling", id: "Yang aku rasakan", en: "What I felt" },
+  { key: "remember", id: "Yang ingin kuingat", en: "What I want to remember" },
+  { key: "agreed", id: "Yang disepakati", en: "What we agreed" },
+  {
+    key: "askNext",
+    id: "Yang ingin kutanyakan lain kali",
+    en: "What I want to ask next time",
+  },
+] as const;
+
+const followupDraftFilled = (draft: FollowupDraft) =>
+  [...followupParts.map((part) => draft[part.key]), draft.note].some(
+    (value) => value.trim() !== "",
+  );
+
+const followupDraftFor = (record: ContinuityRecord): FollowupDraft => ({
+  feeling: record.sections?.feeling ?? "",
+  remember: record.sections?.remember ?? "",
+  agreed: record.sections?.agreed ?? "",
+  askNext: record.sections?.askNext ?? "",
+  note: record.text,
+});
+
+const followupPayload = (draft: FollowupDraft) => ({
+  text: draft.note,
+  sections: {
+    feeling: draft.feeling,
+    remember: draft.remember,
+    agreed: draft.agreed,
+    askNext: draft.askNext,
+  },
+  storageGranted: true,
+});
+
+function FollowupFields({
+  value,
+  onChange,
+  disabled,
+  autoFocusFirst,
+}: {
+  value: FollowupDraft;
+  onChange: (next: FollowupDraft) => void;
+  disabled?: boolean;
+  autoFocusFirst?: boolean;
+}) {
+  const w = useWords();
+  return (
+    <fieldset className="s-fieldset c-followup-fields">
+      <legend className="s-legend">
+        {w("Empat bagian catatan", "Four parts of the note")}
+      </legend>
+      <p className="s-hint">
+        {w(
+          "Isi bagian yang berguna. Satu bagian atau catatan bebas sudah cukup.",
+          "Fill the parts that help. One section or the free note is enough.",
+        )}
+      </p>
+      {followupParts.map((part, index) => (
+        <TextArea
+          key={part.key}
+          label={w(part.id, part.en)}
+          value={value[part.key]}
+          onChange={(e) => onChange({ ...value, [part.key]: e.target.value })}
+          maxLength={2000}
+          rows={2}
+          optional
+          disabled={disabled}
+          autoFocus={autoFocusFirst && index === 0}
+        />
+      ))}
+      <TextArea
+        label={w("Catatan bebas", "Free note")}
+        value={value.note}
+        onChange={(e) => onChange({ ...value, note: e.target.value })}
+        maxLength={6000}
+        rows={3}
+        optional
+        disabled={disabled}
+        hint={w(
+          "Tambahan singkat di luar empat bagian.",
+          "A short addition beyond the four parts.",
+        )}
+      />
+    </fieldset>
+  );
+}
+
+export function FollowupSectionsView({
+  record,
+}: {
+  record: { text: string; sections?: FollowupSections };
+}) {
+  const w = useWords();
+  const filled = followupParts.filter(
+    (part) => (record.sections?.[part.key] ?? "").trim() !== "",
+  );
+  if (filled.length === 0) {
+    return <p className="c-original">{record.text}</p>;
+  }
+  return (
+    <div className="c-followup-sections">
+      <dl className="s-dl">
+        {filled.map((part) => (
+          <div key={part.key}>
+            <dt>{w(part.id, part.en)}</dt>
+            <dd className="c-original">{record.sections![part.key]}</dd>
+          </div>
+        ))}
+      </dl>
+      {record.text.trim() !== "" && (
+        <div>
+          <h4>{w("Catatan bebas", "Free note")}</h4>
+          <p className="c-original">{record.text}</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ContinuityHelp({ records }: { records: Entry[] }) {
   const w = useWords();
@@ -63,8 +254,283 @@ function ContinuityHelp({ records }: { records: Entry[] }) {
   );
 }
 
+/**
+ * MemoryProposals asks AT-3 for suggestions from one saved conversation and
+ * keeps every unreviewed card in view with the user's quote and the AI
+ * wording. Nothing here is used as reply context until the user confirms or
+ * corrects it.
+ */
+function MemoryProposals({
+  items,
+  onChanged,
+}: {
+  items: ContinuityRecord[];
+  onChanged: () => void;
+}) {
+  const w = useWords();
+  const loc = useLocale();
+  const [open, setOpen] = useState(false);
+  const [conversations, setConversations] = useState<Entry[] | null>(null);
+  const [chosen, setChosen] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const [note, setNote] = useState("");
+  const [reviewed, setReviewed] = useState<Record<string, true>>({});
+  const [correcting, setCorrecting] = useState<string | null>(null);
+  const [correction, setCorrection] = useState("");
+  const unreviewed = items.filter(
+    (r) => r.reviewStatus === "unreviewed" && !reviewed[r.id],
+  );
+  const loadConversations = () => {
+    setLoading(true);
+    setError(null);
+    api<{ records: Entry[] }>("/records")
+      .then((d) => {
+        const list = d.records.filter((r) => r.kind === "conversation");
+        setConversations(list);
+        setChosen((current) => current || list[0]?.id || "");
+      })
+      .catch(setError)
+      .finally(() => setLoading(false));
+  };
+  const openPanel = () => {
+    setOpen(true);
+    // Reload on every open so a conversation saved or continued in another
+    // tab is offered at its current version.
+    if (!loading) loadConversations();
+  };
+  const request = async () => {
+    const conv = (conversations ?? []).find((r) => r.id === chosen);
+    if (!conv) return;
+    setBusy(true);
+    setError(null);
+    setNote("");
+    try {
+      const out = await api<{ proposals: ContinuityRecord[]; aiState: string }>(
+        "/memory/proposals",
+        { conversationId: conv.id, expectedVersion: conv.version },
+        "POST",
+      );
+      setNote(
+        out.aiState === "unavailable"
+          ? w(
+              "Sela belum bisa membuat usulan sekarang. Coba lagi nanti.",
+              "Sela can't suggest anything right now. Try again later.",
+            )
+          : out.aiState === "no_input"
+            ? w(
+                "Percakapan ini belum punya tulisanmu yang bisa dijadikan usulan.",
+                "This conversation has no writing of yours to base a suggestion on.",
+              )
+            : out.proposals.length === 0
+              ? w(
+                  "Tidak ada hal baru yang perlu diingat dari percakapan ini.",
+                  "There is nothing new worth remembering from this conversation.",
+                )
+              : w(
+                  "Sela mengusulkan hal di bawah. Periksa dulu sebelum dipakai untuk membalas.",
+                  "Sela suggested the items below. Review them before they are used for replies.",
+                ),
+      );
+      onChanged();
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const review = async (
+    r: ContinuityRecord,
+    action: "confirm" | "correct" | "reject",
+    text?: string,
+  ) => {
+    setBusy(true);
+    setError(null);
+    setNote("");
+    try {
+      await api<ContinuityRecord>(
+        `/memory/${r.id}/review`,
+        {
+          expectedVersion: r.version,
+          action,
+          ...(action === "correct" ? { text } : {}),
+        },
+        "PATCH",
+      );
+      setReviewed((current) => ({ ...current, [r.id]: true }));
+      setCorrecting(null);
+      setCorrection("");
+      onChanged();
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section
+      className="c-memory-proposals"
+      aria-labelledby="memory-proposals-heading"
+      aria-busy={busy || loading}
+    >
+      <div className="c-state-row">
+        <div>
+          <h2 id="memory-proposals-heading">
+            {w("Usulan dari Sela", "Suggestions from Sela")}
+          </h2>
+          <p className="s-hint">
+            {w(
+              "Dari percakapan yang sudah kamu simpan. Setiap usulan masih tafsiran sampai kamu periksa. Memerlukan izin memori dan izin balasan AI.",
+              "From conversations you already saved. Every suggestion stays an interpretation until you review it. Needs memory and AI reply consent.",
+            )}
+          </p>
+        </div>
+        <Button variant="secondary" onClick={openPanel} disabled={loading || busy}>
+          {w("Minta usulan", "Ask for suggestions")}
+        </Button>
+      </div>
+      {open && (
+        <div className="c-editor">
+          {loading && <Loading label={w("Membuka percakapan…", "Opening conversations…")} />}
+          {!loading && conversations?.length === 0 && (
+            <p className="s-hint">
+              {w(
+                "Belum ada percakapan tersimpan. Simpan percakapan dulu, lalu minta usulan.",
+                "No saved conversation yet. Save a conversation first, then ask for suggestions.",
+              )}
+            </p>
+          )}
+          {(conversations?.length ?? 0) > 0 && (
+            <SelectField
+              label={w("Pilih percakapan tersimpan", "Choose a saved conversation")}
+              value={chosen}
+              onChange={(e) => setChosen(e.target.value)}
+            >
+              {(conversations ?? []).map((r) => (
+                <option key={r.id} value={r.id}>
+                  {memoryHeading(r, w)} · {loc.shortDate(r.updatedAt)}
+                </option>
+              ))}
+            </SelectField>
+          )}
+          <div className="s-actions">
+            <Button
+              variant="primary"
+              onClick={() => void request()}
+              disabled={!chosen || busy || loading}
+            >
+              {w(
+                "Buat usulan dari percakapan ini",
+                "Create suggestions from this conversation",
+              )}
+            </Button>
+            <Button variant="quiet" onClick={() => setOpen(false)} disabled={busy}>
+              {w("Tutup", "Close")}
+            </Button>
+          </div>
+        </div>
+      )}
+      {note && (
+        <p className="s-hint" role="status">
+          {note}
+        </p>
+      )}
+      <ErrorNotice error={error} onRetry={open ? loadConversations : openPanel} />
+      {unreviewed.length > 0 && (
+        <div
+          className="c-document-list"
+          aria-label={w("Usulan yang belum ditinjau", "Suggestions to review")}
+        >
+          {unreviewed.map((r) => {
+            const quote = r.sourceRefs?.find((ref) => ref.quote)?.quote;
+            return (
+              <article className="c-memory-item" key={r.id}>
+                <div className="s-record-meta">
+                  <ProvenanceBadge value={r.provenance} />
+                  <ReviewStatusChip value={r.reviewStatus} />
+                </div>
+                {quote && (
+                  <blockquote className="c-memory-quote">
+                    <p>{quote}</p>
+                  </blockquote>
+                )}
+                <p className="c-original">{r.text}</p>
+                {correcting === r.id ? (
+                  <form
+                    className="c-editor"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void review(r, "correct", correction);
+                    }}
+                  >
+                    <TextArea
+                      label={w("Kata-katamu", "Your wording")}
+                      value={correction}
+                      onChange={(e) => setCorrection(e.target.value)}
+                      required
+                      maxLength={6000}
+                      rows={4}
+                    />
+                    <div className="s-actions">
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        disabled={busy || !correction.trim()}
+                      >
+                        {w("Simpan koreksi", "Save correction")}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setCorrecting(null);
+                          setCorrection("");
+                        }}
+                        disabled={busy}
+                      >
+                        {w("Batal", "Cancel")}
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="s-actions">
+                    <Button
+                      variant="primary"
+                      onClick={() => void review(r, "confirm")}
+                      disabled={busy}
+                    >
+                      {w("Ingat", "Remember")}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setCorrecting(r.id);
+                        setCorrection(r.text);
+                      }}
+                      disabled={busy}
+                    >
+                      {w("Ubah dulu", "Edit first")}
+                    </Button>
+                    <Button
+                      variant="quiet"
+                      onClick={() => void review(r, "reject")}
+                      disabled={busy}
+                    >
+                      {w("Jangan", "No")}
+                    </Button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function MemoryPage() {
   const w = useWords();
+  const loc = useLocale();
   const { policies } = useSession();
   const [data, setData] = useState<{
     enabled: boolean;
@@ -72,7 +538,6 @@ export function MemoryPage() {
   } | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  const [editing, setEditing] = useState<ContinuityRecord | null>(null);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [allow, setAllow] = useState(false);
@@ -104,7 +569,6 @@ export function MemoryPage() {
         "PUT",
       );
       setAllow(false);
-      setEditing(null);
       setTitle("");
       setText("");
       load();
@@ -120,30 +584,12 @@ export function MemoryPage() {
     setError(null);
     try {
       await api(
-        editing ? `/memory/${editing.id}` : "/memory",
-        {
-          title,
-          text,
-          storageGranted: true,
-          ...(editing ? { expectedVersion: editing.version } : {}),
-        },
-        editing ? "PATCH" : "POST",
+        "/memory",
+        { title, text, storageGranted: true },
+        "POST",
       );
-      setEditing(null);
       setTitle("");
       setText("");
-      load();
-    } catch (e) {
-      setError(e);
-    } finally {
-      setBusy(false);
-    }
-  };
-  const del = async (r: Entry) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await api(`/memory/${r.id}`, { expectedVersion: r.version }, "DELETE");
       load();
     } catch (e) {
       setError(e);
@@ -168,8 +614,8 @@ export function MemoryPage() {
           <h2>{w("Mulai dengan izinmu", "Start with your permission")}</h2>
           <p>
             {w(
-              "Memori mati secara default. Jika diaktifkan, hanya hal yang kamu tulis di halaman ini yang disimpan, terenkripsi di server Sela. Tidak ada pengambilan cerita otomatis atau pengiriman memori ke AI.",
-              "Memory is off by default. When enabled, only what you write here is saved, encrypted on Sela's server. Stories are not collected automatically and memory is not sent to AI.",
+              "Memori mati secara default. Jika diaktifkan, hanya hal yang kamu tulis di halaman ini yang disimpan, terenkripsi di server Sela. Tidak ada pengambilan cerita otomatis.",
+              "Memory is off by default. When enabled, only what you write here is saved, encrypted on Sela's server. Stories are not collected automatically.",
             )}
           </p>
           <details className="c-policy-details">
@@ -202,8 +648,8 @@ export function MemoryPage() {
           <div className="c-state-row">
             <span>
               {w(
-                "Aktif · ditulis olehmu, tanpa AI",
-                "On · written by you, without AI",
+                "Aktif · kamu yang menentukan · dipakai membalas hanya saat izin AI aktif",
+                "On · you decide · used for replies only while AI consent is on",
               )}
             </span>
             <Button
@@ -216,18 +662,22 @@ export function MemoryPage() {
           </div>
           <p className="s-hint">
             {w(
+              "Saat izin balasan AI juga aktif, Sela dapat memakai memori yang sudah dikonfirmasi (paling banyak 5, dari yang terbaru) untuk membalas. Tanpa izin AI atau saat memori dimatikan, tidak ada memori yang dikirim.",
+              "When AI reply consent is also on, Sela may use confirmed memory (at most 5, newest first) to reply. Without AI consent, or while memory is off, no memory is sent.",
+            )}
+          </p>
+          <p className="s-hint">
+            {w(
               "Mematikan menghentikan penggunaan memori; isi tersimpan tetap bisa dihapus setelah diaktifkan kembali atau lewat hapus semua data.",
               "Turning memory off stops its use; saved items can be deleted after re-enabling it, or by deleting all data.",
             )}
           </p>
           <form className="c-editor" onSubmit={save}>
             <h2>
-              {editing
-                ? w("Perbaiki konteks", "Edit context")
-                : w(
-                    "Apa yang ingin kamu simpan?",
-                    "What would you like to keep?",
-                  )}
+              {w(
+                "Apa yang ingin kamu simpan?",
+                "What would you like to keep?",
+              )}
             </h2>
             <TextField
               label={w("Judul", "Title")}
@@ -254,26 +704,14 @@ export function MemoryPage() {
                 variant="primary"
                 disabled={busy || !text.trim()}
               >
-                {editing
-                  ? w("Simpan perbaikan", "Save changes")
-                  : w("Simpan konteks", "Save context")}
+                {w("Simpan konteks", "Save context")}
               </Button>
-              {editing && (
-                <Button
-                  onClick={() => {
-                    setEditing(null);
-                    setText("");
-                    setTitle("");
-                  }}
-                >
-                  {w("Batal", "Cancel")}
-                </Button>
-              )}
             </div>
           </form>
+          <MemoryProposals items={data.items} onChanged={load} />
           <ContinuityHelp records={data.items} />
           <section
-            className="c-records"
+            className="c-document-list"
             aria-label={w("Memori tersimpan", "Saved memories")}
           >
             {data.items.length === 0 && (
@@ -286,30 +724,363 @@ export function MemoryPage() {
               />
             )}
             {data.items.map((r) => (
-              <article key={r.id} className="c-memory-item">
-                <h2>{r.title || w("Konteks pribadi", "Personal context")}</h2>
-                <p className="c-original">{r.text}</p>
+              <Link
+                key={r.id}
+                to={`/notes/memory/${r.id}`}
+                className="c-document-link"
+              >
+                <div>
+                  <h2>{memoryHeading(r, w)}</h2>
+                  <p className="s-muted">
+                    {memoryStatusLabel(r.reviewStatus, w)} ·{" "}
+                    {loc.shortDate(r.updatedAt)}
+                  </p>
+                </div>
+                <Icon name="arrow-right" />
+              </Link>
+            ))}
+          </section>
+        </>
+      )}
+    </div>
+  );
+}
+
+// MemoryDetailPage shows one owner-scoped memory with its provenance, its
+// pinned sources and the same edit/delete actions as the memory form.
+export function MemoryDetailPage({ id }: { id: string }) {
+  const w = useWords();
+  const loc = useLocale();
+  const { navigate } = useRouter();
+  const [record, setRecord] = useState<ContinuityRecord | null>(null);
+  const [sources, setSources] = useState<
+    Array<{ ref: SourceRef; entry: Entry | null }>
+  >([]);
+  const [error, setError] = useState<unknown>(null);
+  const [editing, setEditing] = useState(false);
+  const [correctingReview, setCorrectingReview] = useState(false);
+  const [correction, setCorrection] = useState("");
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = () => {
+    setError(null);
+    api<ContinuityRecord>(`/memory/${id}`)
+      .then(async (r) => {
+        setRecord(r);
+        setTitle(r.title);
+        setText(r.text);
+        const refs = r.sourceRefs ?? [];
+        setSources(
+          await Promise.all(
+            refs.map(async (ref) => {
+              try {
+                return { ref, entry: await api<Entry>(`/records/${ref.recordId}`) };
+              } catch {
+                return { ref, entry: null };
+              }
+            }),
+          ),
+        );
+      })
+      .catch(setError);
+  };
+  useEffect(load, [id]);
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!record) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const next = await api<ContinuityRecord>(
+        `/memory/${record.id}`,
+        { title, text, storageGranted: true, expectedVersion: record.version },
+        "PATCH",
+      );
+      setRecord(next);
+      setTitle(next.title);
+      setText(next.text);
+      setEditing(false);
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const review = async (
+    action: "confirm" | "correct" | "reject",
+    nextText?: string,
+  ) => {
+    if (!record) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const next = await api<ContinuityRecord>(
+        `/memory/${record.id}/review`,
+        {
+          expectedVersion: record.version,
+          action,
+          ...(action === "correct" ? { text: nextText } : {}),
+        },
+        "PATCH",
+      );
+      setRecord(next);
+      setTitle(next.title);
+      setText(next.text);
+      setCorrectingReview(false);
+      setCorrection("");
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const sourceLabel = (r: Entry) =>
+    r.title ||
+    (r.kind === "conversation"
+      ? w("Percakapan", "Conversation")
+      : r.kind === "checkin"
+        ? w("Cek perasaan", "Check-in")
+        : w("Catatan", "Note"));
+  const quote = record?.sourceRefs?.find((ref) => ref.quote)?.quote;
+  const unreviewed = record?.reviewStatus === "unreviewed";
+  const rejected = record?.reviewStatus === "rejected";
+  const editable =
+    record?.reviewStatus === "confirmed" || record?.reviewStatus === "corrected";
+  return (
+    <div className="s-narrow c-memory">
+      <PageHeader
+        back={{ to: "/notes/memory", label: w("Yang Sela ingat", "What Sela remembers") }}
+        title={record ? memoryHeading(record, w) : w("Konteks pribadi", "Personal context")}
+        lead={
+          unreviewed
+            ? w(
+                "Usulan Sela ini belum dipakai untuk membalas sampai kamu periksa.",
+                "Sela's suggestion isn't used for replies until you review it.",
+              )
+            : rejected
+              ? w(
+                  "Kamu menolak usulan ini. Kamu bisa meninjaunya lagi kapan saja.",
+                  "You rejected this suggestion. You can review it again at any time.",
+                )
+              : w(
+                  "Konteks ini kamu pilih sendiri. Saat izin balasan AI aktif, memori yang dikonfirmasi bisa dipakai Sela untuk membalas.",
+                  "You chose this context yourself. While AI reply consent is on, confirmed memory may be used by Sela to reply.",
+                )
+        }
+      />
+      <ErrorNotice error={error} onRetry={load} />
+      {!record && !error && <Loading label={w("Membuka…", "Opening…")} />}
+      {record && (
+        <>
+          <ContinuityHelp records={[record]} />
+          <article className="c-paper">
+            <p className="s-hint">
+              {unreviewed
+                ? w(
+                    "Usulan Sela ini belum kamu tinjau. Konfirmasi, perbaiki, atau tolak sebelum dipakai untuk membalas.",
+                    "You haven't reviewed this suggestion yet. Confirm, correct or reject it before it is used for replies.",
+                  )
+                : rejected
+                  ? w(
+                      "Kamu menolak usulan ini. Kamu bisa menerima atau memperbaikinya lagi kapan saja.",
+                      "You rejected this suggestion. You can accept or correct it again at any time.",
+                    )
+                  : record.reviewStatus === "corrected"
+                    ? w(
+                        "Kamu sudah mengoreksi konteks ini.",
+                        "You corrected this context.",
+                      )
+                    : w(
+                        "Kamu sudah mengonfirmasi konteks ini.",
+                        "You confirmed this context.",
+                      )}{" "}
+              {provenanceLine(record.provenance, w)}
+            </p>
+            <div className="s-record-meta">
+              <ProvenanceBadge value={record.provenance} />
+              <ReviewStatusChip value={record.reviewStatus} />
+              <span>
+                {w("versi ", "version ")}
+                {record.version}
+              </span>
+            </div>
+            <dl className="s-dl">
+              <div>
+                <dt>{w("Dibuat", "Created")}</dt>
+                <dd>{loc.dateTime(record.createdAt)}</dd>
+              </div>
+              <div>
+                <dt>{w("Terakhir diubah", "Last updated")}</dt>
+                <dd>{loc.dateTime(record.updatedAt)}</dd>
+              </div>
+            </dl>
+            {quote && (
+              <blockquote className="c-memory-quote">
+                <p>{quote}</p>
+              </blockquote>
+            )}
+            {editing ? (
+              <form className="c-editor" onSubmit={(e) => void save(e)}>
+                <TextField
+                  label={w("Judul", "Title")}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={120}
+                  optional
+                />
+                <TextArea
+                  label={w("Konteks pilihanmu", "Your chosen context")}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  required
+                  maxLength={6000}
+                  rows={6}
+                />
                 <div className="s-actions">
                   <Button
-                    variant="quiet"
+                    type="submit"
+                    variant="primary"
+                    disabled={busy || !text.trim()}
+                  >
+                    {w("Simpan perbaikan", "Save changes")}
+                  </Button>
+                  <Button
                     onClick={() => {
-                      setEditing(r);
-                      setTitle(r.title);
-                      setText(r.text);
+                      setEditing(false);
+                      setTitle(record.title);
+                      setText(record.text);
                     }}
                   >
-                    {w("Perbaiki", "Edit")}
+                    {w("Batal", "Cancel")}
                   </Button>
+                </div>
+              </form>
+            ) : correctingReview ? (
+              <form
+                className="c-editor"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void review("correct", correction);
+                }}
+              >
+                <TextArea
+                  label={w("Kata-katamu", "Your wording")}
+                  value={correction}
+                  onChange={(e) => setCorrection(e.target.value)}
+                  required
+                  maxLength={6000}
+                  rows={6}
+                  hint={w(
+                    "Yang tersimpan menjadi versi koreksimu, bukan kata-kata Sela.",
+                    "The saved version becomes your correction, not Sela's wording.",
+                  )}
+                />
+                <div className="s-actions">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={busy || !correction.trim()}
+                  >
+                    {w("Simpan koreksi", "Save correction")}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setCorrectingReview(false);
+                      setCorrection("");
+                    }}
+                  >
+                    {w("Batal", "Cancel")}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <p className="c-original">{record.text}</p>
+                <div className="s-actions">
+                  {(unreviewed || rejected) && (
+                    <Button
+                      variant="primary"
+                      onClick={() => void review("confirm")}
+                      disabled={busy}
+                    >
+                      {w("Konfirmasi", "Confirm")}
+                    </Button>
+                  )}
+                  {(unreviewed || rejected) && (
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setCorrectingReview(true);
+                        setCorrection(record.text);
+                      }}
+                      disabled={busy}
+                    >
+                      {w("Perbaiki", "Correct")}
+                    </Button>
+                  )}
+                  {unreviewed && (
+                    <Button
+                      variant="quiet"
+                      onClick={() => void review("reject")}
+                      disabled={busy}
+                    >
+                      {w("Tolak", "Reject")}
+                    </Button>
+                  )}
+                  {editable && (
+                    <Button variant="secondary" onClick={() => setEditing(true)}>
+                      {w("Perbaiki", "Edit")}
+                    </Button>
+                  )}
                   <InlineConfirm
                     label={w("Hapus", "Delete")}
                     question={w("Hapus konteks ini?", "Delete this context?")}
                     confirmLabel={w("Hapus", "Delete")}
-                    onConfirm={() => void del(r)}
+                    onConfirm={() => {
+                      setBusy(true);
+                      setError(null);
+                      api(
+                        `/memory/${record.id}`,
+                        { expectedVersion: record.version },
+                        "DELETE",
+                      )
+                        .then(() => navigate("/notes/memory"))
+                        .catch(setError)
+                        .finally(() => setBusy(false));
+                    }}
                     busy={busy}
                   />
                 </div>
-              </article>
-            ))}
+              </>
+            )}
+          </article>
+          <section className="c-source-references">
+            <h2>{w("Sumber pilihanmu", "Your chosen sources")}</h2>
+            {sources.length === 0 ? (
+              <p>
+                {w(
+                  "Ditulis langsung olehmu tanpa sumber tersimpan.",
+                  "Written directly by you without saved sources.",
+                )}
+              </p>
+            ) : (
+              <ul>
+                {sources.map(({ ref, entry }) => (
+                  <li key={ref.recordId}>
+                    {entry ? (
+                      <Link to={entryRoute(entry)}>{sourceLabel(entry)}</Link>
+                    ) : (
+                      w(
+                        "Sumber sudah dihapus atau tidak dapat dibuka",
+                        "Source deleted or unavailable",
+                      )
+                    )}{" "}
+                    · v{ref.version}
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </>
       )}
@@ -625,11 +1396,15 @@ function SummaryDetail({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
-  const [after, setAfter] = useState("");
+  const [after, setAfter] = useState<FollowupDraft>(blankFollowupDraft);
   const [saveAfter, setSaveAfter] = useState(false);
+  const [editingFollowup, setEditingFollowup] = useState<string | null>(null);
+  const [followupDraft, setFollowupDraft] =
+    useState<FollowupDraft>(blankFollowupDraft);
   const load = () => {
     setError(null);
     setReviewed(false);
+    setEditingFollowup(null);
     Promise.all([
       api<ContinuityRecord>(`/consultation-summaries/${id}`),
       api<{ records: Entry[] }>("/records"),
@@ -665,7 +1440,7 @@ function SummaryDetail({ id }: { id: string }) {
       setBusy(false);
     }
   };
-  const download = async () => {
+  const downloadSummary = async (format: "html" | "md") => {
     if (!r || stale || r.summaryState !== "approved") return;
     setBusy(true);
     setError(null);
@@ -685,33 +1460,10 @@ function SummaryDetail({ id }: { id: string }) {
           ),
         );
       }
-      const content = [
-        r.title || w("Ringkasan pribadi", "Personal summary"),
-        w(
-          "Ditulis dan disetujui pengguna · bukan diagnosis atau catatan resmi tenaga profesional",
-          "Written and approved by the user · not a diagnosis or official professional record",
-        ),
-        `v${r.version} · ${loc.dateTime(r.updatedAt)}`,
-        r.text,
-        ...(r.prepared
-          ? [r.prepared.goal, r.prepared.questions, r.prepared.bring]
-          : []),
-        w("Sumber pilihan", "Chosen sources"),
-        ...(r.sourceRefs ?? []).map((ref) => {
-          const src = sources.find((x) => x.id === ref.recordId);
-          return `${src?.title || src?.kind || ref.recordId} · v${ref.version}`;
-        }),
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-      const url = URL.createObjectURL(
-        new Blob([content], { type: "text/plain;charset=utf-8" }),
+      await downloadFile(
+        `/consultation-summaries/${id}/export?format=${format}&lang=${loc.lang}`,
+        `sela-ringkasan.${format}`,
       );
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "sela-ringkasan.txt";
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
       setError(e);
     } finally {
@@ -903,17 +1655,36 @@ function SummaryDetail({ id }: { id: string }) {
                   "Download to show or print yourself. No recipient is contacted. Downloaded copies cannot be recalled.",
                 )}
               </p>
-              <Button
-                variant="primary"
-                disabled={busy}
-                onClick={() => void download()}
-              >
-                {w("Unduh ringkasan (.txt)", "Download summary (.txt)")}
-              </Button>
+              <div className="s-actions">
+                <Button
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() => void downloadSummary("html")}
+                >
+                  {w("Unduh HTML (untuk dicetak)", "Download HTML (to print)")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={() => void downloadSummary("md")}
+                >
+                  {w("Unduh Markdown", "Download Markdown")}
+                </Button>
+              </div>
             </section>
           )}
-          <section className="c-followups">
-            <h2>{w("Setelah percakapan itu", "After that conversation")}</h2>
+          <section className="c-followups" aria-labelledby="followups-title">
+            <div className="c-section-heading">
+              <h2 id="followups-title">
+                {w("Setelah percakapan itu", "After that conversation")}
+              </h2>
+              <LinkButton to="/support/summaries/new" variant="secondary">
+                {w(
+                  "Siapkan ringkasan berikutnya",
+                  "Prepare the next summary",
+                )}
+              </LinkButton>
+            </div>
             <p>
               {w(
                 "Catat yang ingin kamu ingat. Ini catatan pribadimu, bukan catatan resmi profesional.",
@@ -921,6 +1692,7 @@ function SummaryDetail({ id }: { id: string }) {
               )}
             </p>
             <form
+              className="c-followup-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 void run(async () => {
@@ -928,26 +1700,19 @@ function SummaryDetail({ id }: { id: string }) {
                     `/consultation-summaries/${id}/followups`,
                     {
                       title: w("Setelah konsultasi", "After the consultation"),
-                      text: after,
-                      storageGranted: true,
+                      ...followupPayload(after),
                     },
                     "POST",
                   );
-                  setAfter("");
+                  setAfter(blankFollowupDraft);
                   setSaveAfter(false);
                 });
               }}
             >
-              <TextArea
-                label={w(
-                  "Catatan setelah konsultasi",
-                  "Note after the consultation",
-                )}
+              <FollowupFields
                 value={after}
-                onChange={(e) => setAfter(e.target.value)}
-                maxLength={6000}
-                rows={4}
-                required
+                onChange={setAfter}
+                disabled={busy}
               />
               <CheckboxRow checked={saveAfter} onChange={setSaveAfter}>
                 {w(
@@ -958,20 +1723,98 @@ function SummaryDetail({ id }: { id: string }) {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={busy || !after.trim() || !saveAfter}
+                disabled={busy || !followupDraftFilled(after) || !saveAfter}
               >
                 {w("Simpan tindak lanjut", "Save follow-up")}
               </Button>
             </form>
-            {followups.map((f) => (
-              <article className="c-followup" key={f.id}>
-                <p className="s-hint">{loc.dateTime(f.createdAt)}</p>
-                <p className="c-original">{f.text}</p>
-                <Link to={`/notes/${f.id}`}>
-                  {w("Buka catatan", "Open note")}
-                </Link>
-              </article>
-            ))}
+            {followups.map((f) => {
+              const headingId = `followup-${f.id}-title`;
+              const isEditing = editingFollowup === f.id;
+              return (
+                <article
+                  className="c-followup"
+                  key={f.id}
+                  aria-labelledby={headingId}
+                >
+                  <div className="c-followup-head">
+                    <h3 id={headingId}>
+                      {w(
+                        "Catatan setelah konsultasi",
+                        "After-consultation note",
+                      )}{" "}
+                      · {loc.shortDate(f.createdAt)}
+                    </h3>
+                    <span className="s-hint">
+                      {w("versi ", "version ")}
+                      {f.version}
+                    </span>
+                  </div>
+                  {isEditing ? (
+                    <form
+                      className="c-followup-form"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void run(async () => {
+                          await api(
+                            `/consultation-summaries/${id}/followups/${f.id}`,
+                            {
+                              title: f.title,
+                              ...followupPayload(followupDraft),
+                              expectedVersion: f.version,
+                            },
+                            "PATCH",
+                          );
+                        });
+                      }}
+                    >
+                      <FollowupFields
+                        value={followupDraft}
+                        onChange={setFollowupDraft}
+                        disabled={busy}
+                        autoFocusFirst
+                      />
+                      <div className="s-actions">
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          disabled={
+                            busy || !followupDraftFilled(followupDraft)
+                          }
+                        >
+                          {w("Simpan perbaikan", "Save changes")}
+                        </Button>
+                        <Button
+                          onClick={() => setEditingFollowup(null)}
+                          disabled={busy}
+                        >
+                          {w("Batal", "Cancel")}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <FollowupSectionsView record={f} />
+                      <div className="s-actions">
+                        <Button
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            setEditingFollowup(f.id);
+                            setFollowupDraft(followupDraftFor(f));
+                          }}
+                        >
+                          {w("Perbaiki", "Edit")}
+                        </Button>
+                        <Link to={`/notes/${f.id}`}>
+                          {w("Buka catatan", "Open note")}
+                        </Link>
+                      </div>
+                    </>
+                  )}
+                </article>
+              );
+            })}
           </section>
           <div className="s-actions">
             <InlineConfirm

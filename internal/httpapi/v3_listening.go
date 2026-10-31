@@ -21,14 +21,19 @@ import (
 )
 
 type room struct {
-	ID            string                     `json:"id"`
-	Save          bool                       `json:"save"`
-	Version       int                        `json:"version"`
-	Turns         []account.ConversationTurn `json:"turns"`
-	Paused        bool                       `json:"paused"`
-	Busy          bool                       `json:"busy"`
-	AIState       string                     `json:"aiState"`
-	RecordID      string                     `json:"recordId,omitempty"`
+	ID          string                     `json:"id"`
+	Save        bool                       `json:"save"`
+	Version     int                        `json:"version"`
+	Turns       []account.ConversationTurn `json:"turns"`
+	Reflections []account.Reflection       `json:"reflections,omitempty"`
+	Paused      bool                       `json:"paused"`
+	Busy        bool                       `json:"busy"`
+	AIState     string                     `json:"aiState"`
+	RecordID    string                     `json:"recordId,omitempty"`
+	// HoldExpiresIn is the number of seconds before the server discards a
+	// held room: 30 idle minutes, capped at 2 hours from creation. It is
+	// relative to this response so a wrong client clock cannot hide expiry.
+	HoldExpiresIn int `json:"holdExpiresIn,omitempty"`
 	owner         account.UserID
 	session       account.SessionID
 	created, last time.Time
@@ -122,9 +127,30 @@ func (l *listeningStore) purgeSession(owner account.UserID, session account.Sess
 		}
 	}
 }
+
+// holdExpiresIn is the server's hold deadline as a relative duration. The
+// room is discarded at the earlier of 30 minutes without a request and 2
+// hours from creation, matching sweep and the idle timer.
+func holdExpiresIn(c *room, now time.Time) int {
+	if c.created.IsZero() || c.last.IsZero() {
+		return 0
+	}
+	expires := c.last.Add(30 * time.Minute)
+	if absolute := c.created.Add(2 * time.Hour); absolute.Before(expires) {
+		expires = absolute
+	}
+	left := expires.Sub(now)
+	if left <= 0 {
+		return 0
+	}
+	return int((left + time.Second - 1) / time.Second)
+}
+
 func roomCopy(c *room) room {
 	r := *c
 	r.Turns = append([]account.ConversationTurn{}, c.Turns...)
+	r.Reflections = append([]account.Reflection(nil), c.Reflections...)
+	r.HoldExpiresIn = holdExpiresIn(c, time.Now())
 	return r
 }
 
@@ -151,7 +177,8 @@ func (s *Server) persistRoom(ctx context.Context, c *room) error {
 	if len(runes) > 80 {
 		title = string(runes[:80]) + "…"
 	}
-	in := account.RecordInput{Paused: c.Paused, Kind: "conversation", Title: title, Turns: c.Turns, StorageGranted: true, ExpectedVersion: c.recordVersion}
+	in := account.RecordInput{Paused: c.Paused, Kind: "conversation", Title: title, Turns: c.Turns,
+		Reflections: c.Reflections, StorageGranted: true, ExpectedVersion: c.recordVersion}
 	var record account.PersonalRecord
 	var err error
 	if c.RecordID == "" {
@@ -212,6 +239,7 @@ func (s *Server) v3CreateRoom(w http.ResponseWriter, r *http.Request, p account.
 		c.RecordID = rec.ID
 		c.recordVersion = rec.Version
 		c.Turns = rec.Turns
+		c.Reflections = rec.Reflections
 		c.Paused = rec.Paused
 	}
 	if err := s.persistRoom(r.Context(), c); err != nil {
@@ -369,36 +397,146 @@ func (s *Server) v3RoomStorage(w http.ResponseWriter, r *http.Request, p account
 	c.Version++
 	writeData(w, 200, roomCopy(c))
 }
-func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Principal) {
-	var in struct {
-		Text            string `json:"text"`
-		ExpectedVersion int    `json:"expectedVersion"`
-		Intent          string `json:"intent"`
+
+// memoryContextSpans selects confirmed/corrected memory items for AT-1.
+// The store returns items newest first. At most five items and 600 runes
+// are sent, and an item is included whole only when it fits the remaining
+// allowance, so memory text is never cut mid-sentence. Items that would
+// exceed the allowance are skipped deterministically; if none fit, no
+// memory is sent.
+func memoryContextSpans(items []account.PersonalRecord) []ai.Span {
+	const maxItems, maxRunes = 5, 600
+	out := []ai.Span{}
+	used := 0
+	for _, r := range items {
+		if len(out) >= maxItems {
+			break
+		}
+		if r.ReviewStatus != "confirmed" && r.ReviewStatus != "corrected" {
+			continue
+		}
+		text := strings.TrimSpace(r.Text)
+		if title := strings.TrimSpace(r.Title); title != "" {
+			text = title + "\n" + text
+		}
+		n := utf8.RuneCountInString(text)
+		if n == 0 || used+n > maxRunes {
+			continue
+		}
+		out = append(out, ai.Span{Key: "memory-" + strconv.Itoa(len(out)), Role: ai.RoleMemory, Text: text})
+		used += n
 	}
-	if !decode(w, r, &in) {
-		return
+	return out
+}
+
+// listeningSpans builds the AT-1 payload: memory first, then the newest
+// conversation turns. When memory is present the turn count and total
+// runes are capped so the router's DropOldest cannot discard the memory
+// context first; memory spans are never dropped here.
+func listeningSpans(turns []account.ConversationTurn, memory []ai.Span) []ai.Span {
+	pol, ok := ai.PolicyFor(ai.TaskListeningReply)
+	if !ok {
+		return append([]ai.Span{}, memory...)
 	}
+	spans := append([]ai.Span{}, memory...)
+	total := 0
+	for _, s := range memory {
+		total += utf8.RuneCountInString(s.Text)
+	}
+	maxTurns := pol.MaxSpans - len(memory)
+	if maxTurns > 12 {
+		maxTurns = 12
+	}
+	selected := []ai.Span{}
+	for i := len(turns) - 1; i >= 0 && len(selected) < maxTurns; i-- {
+		t := turns[i]
+		if t.Role == "user" && safety.Assess(t.Text).Level == safety.LevelCrisis {
+			continue
+		}
+		role := ai.RoleUser
+		if t.Role == "assistant" {
+			role = ai.RoleEarlierReply
+		}
+		n := utf8.RuneCountInString(t.Text)
+		if pol.MaxTotalRunes > 0 && total+n > pol.MaxTotalRunes {
+			break
+		}
+		selected = append(selected, ai.Span{Key: "turn-" + strconv.Itoa(i), Role: role, Text: t.Text})
+		total += n
+	}
+	for i := len(selected) - 1; i >= 0; i-- {
+		spans = append(spans, selected[i])
+	}
+	return spans
+}
+
+// isRoleLimit reports whether a run failed because the redacted payload
+// exceeded a per-role limit (the router makes no provider call in that case).
+func isRoleLimit(err error) bool {
+	var re *ai.RunError
+	if !errors.As(err, &re) {
+		return false
+	}
+	for _, reason := range re.Reasons {
+		if reason == ai.ReasonRoleLimit {
+			return true
+		}
+	}
+	return false
+}
+
+// listeningTurnInput is the body of both turn routes. The streaming route
+// accepts exactly the same fields and pipeline as the JSON route.
+type listeningTurnInput struct {
+	Text            string `json:"text"`
+	ExpectedVersion int    `json:"expectedVersion"`
+	Intent          string `json:"intent"`
+}
+
+// listeningTurn is the result of a completed turn. Released is non-empty
+// only when the router released validated text and it was stored in the
+// room; it is the only text a streaming route may emit.
+type listeningTurn struct {
+	Room     room
+	Released []string
+}
+
+// turnRejection is a pre-stream refusal with a stable API error code.
+type turnRejection struct {
+	status int
+	code   string
+	field  string
+}
+
+func (e *turnRejection) write(w http.ResponseWriter, r *http.Request) {
+	writeError(w, r, e.status, e.code, e.field)
+}
+
+// runListeningTurn is the one turn pipeline: validation, the user turn,
+// persistence, crisis pause, consent, usage and budget limits, the AI
+// router (AT-1 plus prompt/output guards and the verifier), settlement and
+// storing the released reply. beforeAI, when set, runs once after every
+// pre-AI check passed and immediately before the router call; the SSE
+// handler uses it to open the stream and send status without any content.
+func (s *Server) runListeningTurn(r *http.Request, p account.Principal, id string, in listeningTurnInput, beforeAI func()) (listeningTurn, *turnRejection, error) {
+	var out listeningTurn
 	if strings.TrimSpace(in.Text) == "" || utf8.RuneCountInString(in.Text) > 3000 {
-		writeError(w, r, 400, "invalid_input", "text")
-		return
+		return out, &turnRejection{status: 400, code: "invalid_input", field: "text"}, nil
 	}
 	l := s.v3.listening
 	l.mu.Lock()
-	c := l.owned(r.PathValue("id"), p)
+	c := l.owned(id, p)
 	if c == nil {
 		l.mu.Unlock()
-		writeError(w, r, 404, "not_found", "")
-		return
+		return out, &turnRejection{status: 404, code: "not_found"}, nil
 	}
 	if c.Busy || c.Version != in.ExpectedVersion {
 		l.mu.Unlock()
-		writeError(w, r, 409, "stale_version", "")
-		return
+		return out, &turnRejection{status: 409, code: "stale_version"}, nil
 	}
 	if len(c.Turns) >= 62 {
 		l.mu.Unlock()
-		writeError(w, r, 409, "limit_reached", "")
-		return
+		return out, &turnRejection{status: 409, code: "limit_reached"}, nil
 	}
 	c.Turns = append(c.Turns, account.ConversationTurn{Role: "user", ReviewStatus: "confirmed", Text: in.Text, Provenance: "user_original", CreatedAt: time.Now()})
 	c.Version++
@@ -409,37 +547,37 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 		c.Turns = c.Turns[:len(c.Turns)-1]
 		c.Version--
 		l.mu.Unlock()
-		s.v3Error(w, r, err)
-		return
+		return out, nil, err
 	}
 	if c.Paused || s.opt.AIRouter == nil {
 		c.AIState = "unavailable"
 		if c.Paused {
 			c.AIState = "paused"
 		}
-		out := roomCopy(c)
+		out.Room = roomCopy(c)
 		l.mu.Unlock()
-		writeData(w, 200, out)
-		return
+		return out, nil, nil
 	}
 	granted := false
+	memoryGranted := false
 	cs, consentErr := s.opt.Accounts.Consents(r.Context(), p.UserID)
 	if consentErr != nil {
 		l.mu.Unlock()
-		s.v3Error(w, r, consentErr)
-		return
+		return out, nil, consentErr
 	}
 	for _, consent := range cs {
 		if consent.Purpose == "ai_processing" && consent.Granted && !consent.Outdated {
 			granted = true
 		}
+		if consent.Purpose == "personal_memory" && consent.Granted && !consent.Outdated {
+			memoryGranted = true
+		}
 	}
 	if !granted {
 		c.AIState = "not_consented"
-		out := roomCopy(c)
+		out.Room = roomCopy(c)
 		l.mu.Unlock()
-		writeData(w, 200, out)
-		return
+		return out, nil, nil
 	}
 	u := l.usage[p.UserID]
 	if time.Since(u.at) > 10*time.Minute {
@@ -447,10 +585,9 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	}
 	if u.n >= 8 {
 		c.AIState = "rate_limited"
-		out := roomCopy(c)
+		out.Room = roomCopy(c)
 		l.mu.Unlock()
-		writeData(w, 200, out)
-		return
+		return out, nil, nil
 	}
 	var reservation budget.Reservation
 	if s.opt.Budget != nil && s.opt.Budget.Enabled() {
@@ -461,10 +598,9 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 			if errors.Is(admErr, budget.ErrExceeded) {
 				c.AIState = "budget_limited"
 			}
-			out := roomCopy(c)
+			out.Room = roomCopy(c)
 			l.mu.Unlock()
-			writeData(w, 200, out)
-			return
+			return out, nil, nil
 		}
 	}
 	u.n++
@@ -477,22 +613,25 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	turns := append([]account.ConversationTurn{}, c.Turns...)
 	l.mu.Unlock()
 	defer cancel()
+	// Memory is context only: a failed read never blocks the reply, and
+	// nothing is loaded unless the current personal_memory consent is on.
+	var memories []account.PersonalRecord
+	if memoryGranted {
+		if view, memErr := s.opt.Accounts.Memory(ctx, p.UserID); memErr != nil {
+			s.log.Warn("ai_memory_context_failed", "task", "listening_reply", "error", memErr.Error())
+		} else if view.Enabled {
+			memories = view.Items
+		}
+	}
+	if beforeAI != nil {
+		beforeAI()
+	}
 	profile, err := s.opt.Accounts.Profile(ctx, p.UserID)
 	var output ai.Output
 	if err == nil {
-		spans := []ai.Span{}
-		start := max(0, len(turns)-12)
-		for i, t := range turns[start:] {
-			role := ai.RoleUser
-			if t.Role == "assistant" {
-				role = ai.RoleEarlierReply
-			}
-			if t.Role == "user" && safety.Assess(t.Text).Level == safety.LevelCrisis {
-				continue
-			}
-			spans = append(spans, ai.Span{Key: strconv.Itoa(i), Role: role, Text: t.Text})
-		}
-		output, err = s.opt.AIRouter.Run(ctx, ai.TaskListeningReply, ai.Input{Subject: ai.Subject(p.UserID.String()), Language: profile.Locale, Spans: spans, Intent: in.Intent, Commit: func(ctx context.Context) error {
+		memory := memoryContextSpans(memories)
+		spans := listeningSpans(turns, memory)
+		input := ai.Input{Subject: ai.Subject(p.UserID.String()), Language: profile.Locale, Spans: spans, Intent: in.Intent, PrivateNames: s.privateNamesFor(ctx, p.UserID, "listening_reply"), Commit: func(ctx context.Context) error {
 			principal, e := s.opt.Accounts.Authenticate(ctx, s.authToken(r))
 			if e != nil || principal.UserID != p.UserID {
 				return errors.New("session ended")
@@ -504,7 +643,15 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 				return errors.New("stale conversation")
 			}
 			return nil
-		}})
+		}}
+		output, err = s.opt.AIRouter.Run(ctx, ai.TaskListeningReply, input)
+		if err != nil && len(memory) > 0 && isRoleLimit(err) {
+			// Per-role limits apply after redaction, which can lengthen
+			// text. Retry once without memory instead of losing the reply;
+			// the role-limit failure made no provider call.
+			input.Spans = input.Spans[len(memory):]
+			output, err = s.opt.AIRouter.Run(ctx, ai.TaskListeningReply, input)
+		}
 	}
 	if err != nil {
 		// The router's error text is a content-free outcome/reason code.
@@ -533,8 +680,7 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	defer l.mu.Unlock()
 	live := l.owned(c.ID, p)
 	if live == nil {
-		writeError(w, r, 404, "not_found", "")
-		return
+		return out, &turnRejection{status: 404, code: "not_found"}, nil
 	}
 	live.Busy = false
 	live.cancel = nil
@@ -543,8 +689,8 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 		if live.Version != version {
 			live.AIState = "canceled"
 		}
-		writeData(w, 200, roomCopy(live))
-		return
+		out.Room = roomCopy(live)
+		return out, nil, nil
 	}
 	model := ""
 	if output.Provenance.Generator != nil {
@@ -556,10 +702,38 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	}
 	live.Version++
 	live.AIState = "ready"
+	stored := true
 	if err := s.persistRoom(r.Context(), live); err != nil {
 		live.Turns = live.Turns[:len(live.Turns)-len(output.Items)]
 		live.Version--
 		live.AIState = "storage_unavailable"
+		stored = false
 	}
-	writeData(w, 200, roomCopy(live))
+	if stored {
+		out.Released = make([]string, 0, len(output.Items))
+		for _, item := range output.Items {
+			out.Released = append(out.Released, item.Text)
+		}
+	}
+	out.Room = roomCopy(live)
+	return out, nil, nil
+}
+
+// v3SendTurn is the JSON route. It keeps the existing response shape while
+// sharing the pipeline with the streaming route.
+func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	var in listeningTurnInput
+	if !decode(w, r, &in) {
+		return
+	}
+	out, reject, err := s.runListeningTurn(r, p, r.PathValue("id"), in, nil)
+	if reject != nil {
+		reject.write(w, r)
+		return
+	}
+	if err != nil {
+		s.v3Error(w, r, err)
+		return
+	}
+	writeData(w, 200, out.Room)
 }

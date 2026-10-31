@@ -40,9 +40,13 @@ export const emptyDraft: OnboardingDraft = {
   codes: null,
 };
 
+// under_16 is sent only for a self-declared 15-year-old. It is input-only:
+// the server refuses it with age_not_supported and stores nothing, while
+// 15_17 remains the stored band for existing 16-17 records.
 function apiBand(value: string): string {
   if (value === "18_plus") return "18_plus";
-  if (value === "16_17" || value === "15") return "15_17";
+  if (value === "16_17") return "15_17";
+  if (value === "15") return "under_16";
   if (value === "unknown") return "unknown";
   return value;
 }
@@ -89,7 +93,7 @@ export function OnboardingPage({
     );
   if (step === "guardian")
     return <GuardianStep policies={policies} onCreated={onCreated} />;
-  if (step === "ai") return <AIStep draft={draft} policies={policies} options={options} />;
+  if (step === "ai") return <AIStep policies={policies} options={options} />;
   return <AgeStep draft={draft} setDraft={setDraft} options={options} />;
 }
 
@@ -115,15 +119,15 @@ function AgeStep({
     }
     setError("");
     setDraft({ ...draft, ageBand: age });
+    const band = apiBand(age);
     if (age === "under_15") {
       navigate("/start/blocked?reason=under15");
       return;
     }
-    if (age === "15") {
+    if (band === "under_16") {
       navigate("/start/blocked?reason=age15");
       return;
     }
-    const band = apiBand(age);
     if (!allowed.includes(band)) {
       navigate("/start/blocked?reason=band");
       return;
@@ -756,11 +760,9 @@ function GuardianStep({
 }
 
 function AIStep({
-  draft,
   policies,
   options,
 }: {
-  draft: OnboardingDraft;
   policies: Record<string, Policy>;
   options: Options | null;
 }) {
@@ -788,10 +790,7 @@ function AIStep({
   useEffect(load, []);
 
   const meta = consents?.find((c) => c.purpose === "ai_processing");
-  const anthropic = consents?.find((c) => c.purpose === "ai_provider_anthropic");
-  const deepseek = consents?.find((c) => c.purpose === "ai_provider_deepseek");
-  const canContinue =
-    meta && answered[meta.purpose] && (!meta.granted || !anthropic || answered[anthropic.purpose]);
+  const canContinue = meta && answered[meta.purpose];
   const aiOff = consents !== null && !meta;
 
   const decide = async (c: Consent, granted: boolean) => {
@@ -895,28 +894,9 @@ function AIStep({
         <>
           {meta &&
             card(meta, {
-              id: "Balasan AI · Meta (Amerika Serikat)",
-              en: "AI replies · Meta (United States)",
+              id: "Balasan AI dan pemeriksa · Meta (Amerika Serikat)",
+              en: "AI replies and checker · Meta (United States)",
             })}
-          {anthropic &&
-            card(anthropic, {
-              id: "Pemeriksa · Claude dari Anthropic (Amerika Serikat)",
-              en: "Checker · Claude by Anthropic (United States)",
-            })}
-          {deepseek &&
-            (draft.ageBand === "18_plus" ? (
-              card(deepseek, {
-                id: "Model cadangan · DeepSeek (Tiongkok)",
-                en: "Backup model · DeepSeek (China)",
-              })
-            ) : (
-              <p className="s-hint">
-                {w(
-                  "Model cadangan tidak dipakai untuk usia di bawah 18 tahun.",
-                  "The backup model isn't used under 18.",
-                )}
-              </p>
-            ))}
         </>
       )}
       {options?.synthetic && (

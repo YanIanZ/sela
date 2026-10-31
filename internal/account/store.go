@@ -17,12 +17,18 @@ import (
 	"github.com/YanIanZ/sela/internal/vault"
 )
 
-// Age bands. "under_15" is accepted as input only and always refused.
+// Age bands. "under_15" and "under_16" are accepted as input only and
+// always refused; neither is ever stored. "15_17" stays the stored band for
+// existing 16-17 records, so no legacy row is rewritten.
 const (
 	AgeBand15to17  = "15_17"
 	AgeBand18Plus  = "18_plus"
 	AgeBandUnknown = "unknown"
 	AgeBandUnder15 = "under_15"
+	// AgeBandUnder16 is the explicit self-declared 15 band. It is refused
+	// with age_not_supported before anything is stored, which lets the
+	// server distinguish a 15-year-old from a stored 16-17 record.
+	AgeBandUnder16 = "under_16"
 	KindGuest      = "guest"
 	KindAccount    = "account"
 	PolicyTerms    = "terms_privacy"
@@ -132,7 +138,10 @@ type OwnerStore interface {
 	DeleteRecord(context.Context, UserID, string, int) error
 
 	Memory(context.Context, UserID) (MemoryView, error)
+	MemoryItem(context.Context, UserID, string) (PersonalRecord, error)
 	CreateMemory(context.Context, UserID, RecordInput) (PersonalRecord, error)
+	CreateMemoryProposals(context.Context, UserID, []MemoryProposalInput) ([]PersonalRecord, error)
+	ReviewMemory(context.Context, UserID, string, int, string, string) (PersonalRecord, error)
 	UpdateMemory(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
 	DeleteMemory(context.Context, UserID, string, int) error
 	Summaries(context.Context, UserID) ([]PersonalRecord, error)
@@ -142,7 +151,16 @@ type OwnerStore interface {
 	ApproveSummary(context.Context, UserID, string, int) (PersonalRecord, error)
 	DeleteSummary(context.Context, UserID, string, int) error
 	CreateFollowup(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
+	UpdateFollowup(context.Context, UserID, string, string, RecordInput) (PersonalRecord, error)
 	Followups(context.Context, UserID, string) ([]PersonalRecord, error)
+	Shares(context.Context, UserID) ([]Share, error)
+	ShareEvents(context.Context, UserID, string) ([]ShareEvent, error)
+	CreateShare(context.Context, UserID, string, string, string, int) (Share, string, string, error)
+	RevokeShare(context.Context, UserID, string, int) (Share, error)
+
+	PrivateNames(context.Context, UserID) ([]PrivateName, error)
+	CreatePrivateName(context.Context, UserID, string) (PrivateName, error)
+	DeletePrivateName(context.Context, UserID, string) error
 
 	Profile(ctx context.Context, owner UserID) (Profile, error)
 	UpdateProfile(ctx context.Context, owner UserID, current SessionID, in ProfileUpdate) (Profile, error)
@@ -159,6 +177,7 @@ type OwnerStore interface {
 	SetConsent(ctx context.Context, owner UserID, current SessionID, purpose string, granted bool, policyVersion string) (ConsentView, bool, error)
 	ConsentHistory(ctx context.Context, owner UserID, purpose string, page Page) ([]ConsentEvent, string, error)
 	GuardianConsent(ctx context.Context, owner UserID) (GuardianView, error)
+	RequireGuardianConsent(ctx context.Context, owner UserID) error
 	SetGuardianConsent(ctx context.Context, owner UserID, current SessionID, in GuardianInput) (GuardianRecord, error)
 	WithdrawGuardianConsent(ctx context.Context, owner UserID, current SessionID) error
 	AuditEvents(ctx context.Context, owner UserID, current SessionID, page Page) ([]AuditEvent, string, error)
@@ -179,6 +198,9 @@ type SystemStore interface {
 	Retention(ctx context.Context) (RetentionReport, error)
 	ReconcileRestore(ctx context.Context, dryRun bool) (ReconcileReport, error)
 	RefreshHashDistribution(ctx context.Context) error
+	OpenShare(ctx context.Context, token, code string) (SharedProjection, string, error)
+	RecipientShare(ctx context.Context, session string) (SharedProjection, error)
+	AcknowledgeShare(ctx context.Context, session string) error
 }
 
 var (

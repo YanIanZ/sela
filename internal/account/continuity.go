@@ -25,9 +25,12 @@ const (
 )
 
 // ContinuityTitleMax and ContinuityTextMax bound every continuity text.
+// FollowupSectionMax bounds each optional section of an after-consultation
+// note independently.
 const (
 	ContinuityTitleMax = 6000
 	ContinuityTextMax  = 6000
+	FollowupSectionMax = 2000
 	MaxSourceRefs      = 12
 )
 
@@ -40,10 +43,39 @@ const (
 
 // SourceRef pins one explicitly selected source record and the exact
 // revision the owner saw. The reference is stored inside the sealed
-// content, so it is encrypted and owner-scoped like the text.
+// content, so it is encrypted and owner-scoped like the text. Quote and
+// TurnKey are set only for an AT-3 memory proposal: they carry the user's
+// own words and the caller's turn key, so the review card can show the
+// exact sentence without opening the conversation.
 type SourceRef struct {
 	RecordID string `json:"recordId"`
 	Version  int    `json:"version"`
+	Quote    string `json:"quote,omitempty"`
+	TurnKey  string `json:"turnKey,omitempty"`
+}
+
+// Review states shared by a memory item and its proposal. They match the
+// reflection review states; an AI proposal starts unreviewed.
+const (
+	ReviewUnreviewed = "unreviewed"
+	ReviewConfirmed  = "confirmed"
+	ReviewCorrected  = "corrected"
+	ReviewRejected   = "rejected"
+)
+
+// Memory review actions accepted by ReviewMemory.
+const (
+	MemoryReviewConfirm = "confirm"
+	MemoryReviewCorrect = "correct"
+	MemoryReviewReject  = "reject"
+)
+
+// MemoryProposalInput is one released AT-3 proposal. Text is the AI
+// wording after the router released it; SourceRefs pin the saved
+// conversation and the user's quote it rests on.
+type MemoryProposalInput struct {
+	Text       string
+	SourceRefs []SourceRef
 }
 
 // SummaryPrepared is the optional preparation the owner writes for a
@@ -52,6 +84,47 @@ type SummaryPrepared struct {
 	Goal      string `json:"goal"`
 	Questions string `json:"questions"`
 	Bring     string `json:"bring"`
+}
+
+// FollowupSections is the optional structured after-consultation note.
+// Every field is the owner's own words and is stored inside the sealed
+// record content, so it inherits the same encryption, revisions, export
+// and deletion behaviour as the free-text field.
+type FollowupSections struct {
+	Feeling  string `json:"feeling"`
+	Remember string `json:"remember"`
+	Agreed   string `json:"agreed"`
+	AskNext  string `json:"askNext"`
+}
+
+func (s *FollowupSections) empty() bool {
+	return s == nil || (strings.TrimSpace(s.Feeling) == "" &&
+		strings.TrimSpace(s.Remember) == "" &&
+		strings.TrimSpace(s.Agreed) == "" &&
+		strings.TrimSpace(s.AskNext) == "")
+}
+
+// cloneFollowupSections preserves owner spacing but drops a sections
+// object whose every field is blank, so old text-only clients and new
+// structured clients store the same shape when nothing was written.
+func cloneFollowupSections(in *FollowupSections) *FollowupSections {
+	if in.empty() {
+		return nil
+	}
+	out := *in
+	return &out
+}
+
+func validFollowupSections(in *FollowupSections) bool {
+	if in == nil {
+		return true
+	}
+	for _, s := range []string{in.Feeling, in.Remember, in.Agreed, in.AskNext} {
+		if !utf8.ValidString(s) || utf8.RuneCountInString(s) > FollowupSectionMax {
+			return false
+		}
+	}
+	return true
 }
 
 // MemoryView is GET /api/v3/memory. Before consent, Items is empty and
@@ -91,7 +164,9 @@ func validateContinuity(in RecordInput, minSources int) error {
 		!utf8.ValidString(in.Text) || utf8.RuneCountInString(in.Text) > ContinuityTextMax {
 		return invalid("text")
 	}
-	if strings.TrimSpace(in.Text) == "" {
+	// A follow-up may be text-only (old clients), sections-only, or both.
+	// Every other continuity kind still needs text.
+	if strings.TrimSpace(in.Text) == "" && !(in.Kind == KindFollowup && !in.Sections.empty()) {
 		return invalid("text")
 	}
 	// Continuity records never carry check-in fields.
@@ -105,10 +180,16 @@ func validateContinuity(in RecordInput, minSources int) error {
 		return invalid("sourceRefs")
 	}
 	if in.Kind == KindFollowup {
+		if !validFollowupSections(in.Sections) {
+			return invalid("sections")
+		}
 		if len(in.SourceRefs) != 0 || in.Prepared != nil {
 			return invalid("sourceRefs")
 		}
 		return nil
+	}
+	if in.Sections != nil {
+		return invalid("sections")
 	}
 	if in.Kind != KindSummary {
 		if in.Prepared != nil {
@@ -131,6 +212,10 @@ func continuityRecord(id string, in RecordInput, version int, created, now time.
 	if in.Prepared != nil {
 		assessed += "\n" + in.Prepared.Goal + "\n" + in.Prepared.Questions + "\n" + in.Prepared.Bring
 	}
+	if in.Sections != nil {
+		assessed += "\n" + in.Sections.Feeling + "\n" + in.Sections.Remember +
+			"\n" + in.Sections.Agreed + "\n" + in.Sections.AskNext
+	}
 	a := safety.Assess(assessed)
 	provenance := "user_original"
 	if version > 1 {
@@ -146,6 +231,7 @@ func continuityRecord(id string, in RecordInput, version int, created, now time.
 		Provenance: provenance, ReviewStatus: "confirmed",
 		Safety: string(a.Level), Ruleset: a.Ruleset,
 		SourceRefs: cloneSourceRefs(in.SourceRefs), Prepared: clonePrepared(in.Prepared),
+		Sections: cloneFollowupSections(in.Sections),
 		ParentID: in.ParentID, CreatedAt: created, UpdatedAt: now,
 	}
 	if in.Kind == KindSummary {
@@ -278,6 +364,10 @@ func (s *Store) validateSourceRefs(ctx context.Context, q db.DBTX, owner UserID,
 		if err != nil || ref.Version <= 0 {
 			return invalid("sourceRefs")
 		}
+		if !utf8.ValidString(ref.Quote) || utf8.RuneCountInString(ref.Quote) > ContinuityTextMax ||
+			!utf8.ValidString(ref.TurnKey) || utf8.RuneCountInString(ref.TurnKey) > 64 {
+			return invalid("sourceRefs")
+		}
 		key := uuidText(id)
 		if seen[key] {
 			return invalid("sourceRefs")
@@ -374,6 +464,20 @@ func (s *Store) Memory(ctx context.Context, owner UserID) (MemoryView, error) {
 	return MemoryView{Enabled: true, Items: items}, nil
 }
 
+// MemoryItem returns one explicit memory item under the same consent rules
+// as Memory: without the current personal_memory consent, or when another
+// owner holds the id, the item is not found.
+func (s *Store) MemoryItem(ctx context.Context, owner UserID, id string) (PersonalRecord, error) {
+	r, err := s.Record(ctx, owner, id)
+	if err != nil {
+		return PersonalRecord{}, err
+	}
+	if r.Kind != KindMemory {
+		return PersonalRecord{}, ErrNotFound
+	}
+	return r, nil
+}
+
 // CreateMemory stores one explicit memory item. It requires the
 // personal_memory consent and storageGranted.
 func (s *Store) CreateMemory(ctx context.Context, owner UserID, in RecordInput) (PersonalRecord, error) {
@@ -459,6 +563,140 @@ func (s *Store) DeleteMemory(ctx context.Context, owner UserID, id string, versi
 		_, err = tx.Exec(ctx, "DELETE FROM personal_records WHERE user_id=$1 AND id=$2", owner, id)
 		return err
 	})
+}
+
+// validateMemoryProposal checks one released AT-3 proposal before it is
+// stored. The quote is the owner's own words from the cited turn, so it is
+// required; nothing without a source quote becomes a proposal.
+func validateMemoryProposal(in MemoryProposalInput) error {
+	if !utf8.ValidString(in.Text) || strings.TrimSpace(in.Text) == "" || utf8.RuneCountInString(in.Text) > ContinuityTextMax {
+		return invalid("text")
+	}
+	if len(in.SourceRefs) == 0 || len(in.SourceRefs) > MaxSourceRefs {
+		return invalid("sourceRefs")
+	}
+	for _, ref := range in.SourceRefs {
+		if !utf8.ValidString(ref.Quote) || strings.TrimSpace(ref.Quote) == "" ||
+			utf8.RuneCountInString(ref.Quote) > ContinuityTextMax {
+			return invalid("sourceRefs")
+		}
+		if !utf8.ValidString(ref.TurnKey) || utf8.RuneCountInString(ref.TurnKey) > 64 {
+			return invalid("sourceRefs")
+		}
+	}
+	return nil
+}
+
+// CreateMemoryProposals stores released AT-3 proposals as explicit memory
+// items in one transaction. Every item starts unreviewed with the
+// unconfirmed-interpretation class; only the owner's later review can make
+// it usable as reply context. A proposal without a source quote, or with a
+// source that is not current and owner-owned, is refused.
+func (s *Store) CreateMemoryProposals(ctx context.Context, owner UserID, proposals []MemoryProposalInput) ([]PersonalRecord, error) {
+	if len(proposals) == 0 {
+		return []PersonalRecord{}, nil
+	}
+	if len(proposals) > 5 {
+		return nil, invalid("proposals")
+	}
+	now := s.clock()
+	out := make([]PersonalRecord, 0, len(proposals))
+	for _, in := range proposals {
+		if err := validateMemoryProposal(in); err != nil {
+			return nil, err
+		}
+		a := safety.Assess(in.Text)
+		out = append(out, PersonalRecord{
+			ID: newID().String(), Kind: KindMemory, Text: in.Text, Version: 1,
+			Provenance: "unconfirmed_interpretation", ReviewStatus: ReviewUnreviewed,
+			Safety: string(a.Level), Ruleset: a.Ruleset,
+			SourceRefs: cloneSourceRefs(in.SourceRefs), CreatedAt: now, UpdatedAt: now,
+		})
+	}
+	err := s.tx(ctx, func(tx pgx.Tx) error {
+		if _, err := userKind(ctx, tx, owner, true); err != nil {
+			return err
+		}
+		enabled, err := s.memoryEnabled(ctx, tx, owner)
+		if err != nil {
+			return err
+		}
+		if !enabled {
+			return withField(ErrConsentRequired, "personalMemory")
+		}
+		for i := range out {
+			if err := s.validateSourceRefs(ctx, tx, owner, out[i].SourceRefs, true); err != nil {
+				return err
+			}
+		}
+		for _, r := range out {
+			if err := s.insertContinuityRecord(ctx, tx, owner, r); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ReviewMemory applies the owner's review to one memory proposal. Every
+// action appends a revision: confirm and reject keep the text and change
+// only the status, while correct replaces the text with the
+// user-correction class. The exact expected version is required, so a stale
+// tab never overwrites a newer review.
+func (s *Store) ReviewMemory(ctx context.Context, owner UserID, id string, expectedVersion int, action, text string) (PersonalRecord, error) {
+	switch action {
+	case MemoryReviewConfirm, MemoryReviewReject:
+	case MemoryReviewCorrect:
+		if !utf8.ValidString(text) || strings.TrimSpace(text) == "" || utf8.RuneCountInString(text) > ContinuityTextMax {
+			return PersonalRecord{}, invalid("text")
+		}
+	default:
+		return PersonalRecord{}, invalid("action")
+	}
+	var result PersonalRecord
+	err := s.tx(ctx, func(tx pgx.Tx) error {
+		if _, err := userKind(ctx, tx, owner, true); err != nil {
+			return err
+		}
+		r, err := s.record(ctx, tx, owner, id, true)
+		if err != nil {
+			return err
+		}
+		if r.Kind != KindMemory {
+			return ErrNotFound
+		}
+		if r.Version != expectedVersion {
+			return ErrStaleVersion
+		}
+		enabled, err := s.memoryEnabled(ctx, tx, owner)
+		if err != nil {
+			return err
+		}
+		if !enabled {
+			return withField(ErrConsentRequired, "personalMemory")
+		}
+		r.UpdatedAt = s.clock()
+		switch action {
+		case MemoryReviewConfirm:
+			r.ReviewStatus = ReviewConfirmed
+		case MemoryReviewReject:
+			r.ReviewStatus = ReviewRejected
+		case MemoryReviewCorrect:
+			r.Text = text
+			r.Provenance = "user_correction"
+			r.ReviewStatus = ReviewCorrected
+			a := safety.Assess(r.Title + "\n" + r.Text)
+			r.Safety, r.Ruleset = string(a.Level), a.Ruleset
+		}
+		r.Version++
+		result = r
+		return s.updateContinuityRecord(ctx, tx, owner, r)
+	})
+	return result, err
 }
 
 // Summaries lists the owner's consultation summaries with the effective
@@ -694,12 +932,22 @@ func (s *Store) Followups(ctx context.Context, owner UserID, parentID string) ([
 	return out, nil
 }
 
-// updateFollowup keeps its sealed parent link and appends a revision.
-func (s *Store) updateFollowup(ctx context.Context, owner UserID, id string, in RecordInput) (PersonalRecord, error) {
-	in.Kind = KindFollowup
-	if err := validateContinuity(in, 0); err != nil {
-		return PersonalRecord{}, err
+// UpdateFollowup replaces title/text/sections in a new revision. The
+// follow-up must belong to the owner and to parentID, so the summary
+// route cannot edit a note attached to another summary. A nil Sections
+// keeps the stored sections for old text-only clients; an explicit empty
+// sections object clears them.
+func (s *Store) UpdateFollowup(ctx context.Context, owner UserID, parentID, id string, in RecordInput) (PersonalRecord, error) {
+	if _, err := ParseUUID(parentID); err != nil {
+		return PersonalRecord{}, ErrNotFound
 	}
+	return s.updateFollowup(ctx, owner, parentID, id, in)
+}
+
+// updateFollowup keeps its sealed parent link and appends a revision.
+func (s *Store) updateFollowup(ctx context.Context, owner UserID, parentID, id string, in RecordInput) (PersonalRecord, error) {
+	in.Kind = KindFollowup
+	in.ParentID = parentID
 	var result PersonalRecord
 	err := s.tx(ctx, func(tx pgx.Tx) error {
 		if _, err := userKind(ctx, tx, owner, true); err != nil {
@@ -712,8 +960,26 @@ func (s *Store) updateFollowup(ctx context.Context, owner UserID, id string, in 
 		if before.Kind != KindFollowup {
 			return ErrNotFound
 		}
+		if parentID != "" {
+			if before.ParentID != parentID {
+				return ErrNotFound
+			}
+			parent, err := s.record(ctx, tx, owner, parentID, false)
+			if err != nil {
+				return err
+			}
+			if parent.Kind != KindSummary {
+				return ErrNotFound
+			}
+		}
 		if before.Version != in.ExpectedVersion {
 			return ErrStaleVersion
+		}
+		if in.Sections == nil {
+			in.Sections = before.Sections
+		}
+		if err := validateContinuity(in, 0); err != nil {
+			return err
 		}
 		in.ParentID = before.ParentID
 		result = continuityRecord(id, in, before.Version+1, before.CreatedAt, s.clock())

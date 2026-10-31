@@ -1,0 +1,147 @@
+/*
+ * Motion: calm and short. Things settle into place (a small rise, never a
+ * fade on text, which would transiently lower contrast), never bounce or
+ * loop for attention. Every duration and delay is scaled by
+ * --motion, which drops to 0 under reduced motion (system setting or the
+ * Display preference), so nothing moves for people who asked for stillness.
+ * Fill mode is `backwards` so no transform lingers after an animation ends
+ * (a lingering transform would break sticky and fixed children).
+ */
+
+:root { --motion: 1; }
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) { --motion: 0; }
+}
+:root[data-motion="reduced"] { --motion: 0; }
+
+@keyframes s-rise { from { transform: translateY(10px); } to { transform: none; } }
+@keyframes s-rise-small { from { transform: translateY(5px); } to { transform: none; } }
+@keyframes s-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes s-sheet-in { from { transform: translateY(6px) scale(0.99); } to { transform: none; } }
+@keyframes s-pop { from { transform: translateY(8px) scale(0.97); } to { transform: none; } }
+@keyframes s-bubble { from { transform: translateY(8px) scale(0.96); } }
+@keyframes s-pill-in { from { translate: 0 8px; } to { translate: 0 0; } }
+@keyframes s-nudge { 0% { transform: none; } 40% { transform: translateY(-3px) scale(1.08); } 100% { transform: none; } }
+@keyframes s-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes s-sparkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.94); } }
+
+/* Pages: the sheet settles first, the work below follows a beat later. */
+.s-shell main > * {
+  animation: s-rise calc(var(--motion) * 380ms) var(--ease-out-quint) calc(var(--motion) * 70ms) backwards;
+}
+.s-shell main :is(.s-page-header, .s-home-head, .s-cover, .s-info-heading) {
+  animation: s-sheet-in calc(var(--motion) * 420ms) var(--ease-out-quint) backwards;
+}
+/* On phones the sheet shares the header's tint, so the tint stays put and
+   only its contents rise; otherwise a seam would flash under the header. */
+@media (max-width: 47.99em) {
+  .s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-home-head, .s-cover, .s-info-heading):not(:is(.s-onboard, .s-auth-card, .s-emergency) *) {
+    animation: none;
+  }
+  .s-shell:not(.s-shell--focused) main :is(.s-page-header, .s-home-head, .s-cover, .s-info-heading):not(:is(.s-onboard, .s-auth-card, .s-emergency) *) > * {
+    animation: s-rise-small calc(var(--motion) * 360ms) var(--ease-out-quint) calc(var(--motion) * 40ms) backwards;
+  }
+  .s-shell:not(.s-shell--focused) main > :is(.s-page-header, .s-cover, .s-info-heading, .s-home-head),
+  .s-shell:not(.s-shell--focused) main > :has(> :is(.s-page-header, .s-cover, .s-info-heading, .s-home-head)) { animation: none; }
+  .s-shell:not(.s-shell--focused) main > :has(> :is(.s-page-header, .s-cover, .s-info-heading, .s-home-head)) > :not(.s-page-header, .s-cover, .s-info-heading, .s-home-head) {
+    animation: s-rise calc(var(--motion) * 380ms) var(--ease-out-quint) calc(var(--motion) * 90ms) backwards;
+  }
+}
+.s-shell:not(.s-shell--focused) main .s-page-header::after,
+.s-shell main .s-info-heading::after {
+  transform-origin: 70% 30%;
+  animation: s-sparkle calc(var(--motion) * 6s) ease-in-out infinite;
+}
+
+/* Lists and groups of cards arrive one after another, briefly. */
+.s-shell :is(.s-entry-list > a, .s-timeline li, .s-help-list .s-service, .c-support-paths section, .s-info-feature-groups li, .c-reading-source, .s-settings-section, .s-activities > *, .s-mood-row .s-mood-link, .s-room-starter) {
+  animation: s-rise-small calc(var(--motion) * 340ms) var(--ease-out-quint) backwards;
+}
+.s-shell :is(.s-entry-list > a, .s-timeline li, .s-help-list .s-service, .c-support-paths section, .s-info-feature-groups li, .c-reading-source, .s-settings-section, .s-activities > *, .s-mood-row .s-mood-link, .s-room-starter):nth-child(2) { animation-delay: calc(var(--motion) * 50ms); }
+.s-shell :is(.s-entry-list > a, .s-timeline li, .s-help-list .s-service, .c-support-paths section, .s-info-feature-groups li, .c-reading-source, .s-settings-section, .s-activities > *, .s-mood-row .s-mood-link, .s-room-starter):nth-child(3) { animation-delay: calc(var(--motion) * 100ms); }
+.s-shell :is(.s-entry-list > a, .s-timeline li, .s-help-list .s-service, .c-support-paths section, .s-info-feature-groups li, .c-reading-source, .s-settings-section, .s-activities > *, .s-mood-row .s-mood-link, .s-room-starter):nth-child(4) { animation-delay: calc(var(--motion) * 150ms); }
+.s-shell :is(.s-entry-list > a, .s-timeline li, .s-help-list .s-service, .c-support-paths section, .s-info-feature-groups li, .c-reading-source, .s-settings-section, .s-activities > *, .s-mood-row .s-mood-link, .s-room-starter):nth-child(5) { animation-delay: calc(var(--motion) * 200ms); }
+.s-shell :is(.s-entry-list > a, .s-timeline li, .s-help-list .s-service, .c-support-paths section, .s-info-feature-groups li, .c-reading-source, .s-settings-section, .s-activities > *, .s-mood-row .s-mood-link, .s-room-starter):nth-child(n + 6) { animation-delay: calc(var(--motion) * 250ms); }
+
+/* Notices and status lines fade in where they appear. */
+.s-shell :is(.s-notice, .s-banner, .s-status, .s-confirm, .s-room-ai-state, .s-pause-line) {
+  animation: s-rise-small calc(var(--motion) * 300ms) var(--ease-out-quint) backwards;
+}
+.s-shell .s-loading {
+  animation:
+    s-fade calc(var(--motion) * 300ms) var(--ease-standard) backwards,
+    s-breathe calc(var(--motion) * 1.8s) ease-in-out calc(var(--motion) * 300ms) infinite;
+}
+
+/* Navigation: the current place eases in; its icon gives one small nod. */
+.s-shell .s-place-nav a,
+.s-shell .n-desktop-nav a {
+  transition:
+    background-color var(--duration-gentle) var(--ease-standard),
+    color var(--duration-gentle) var(--ease-standard);
+}
+.s-shell :is(.s-place-nav, .n-desktop-nav) a[aria-current="page"] .s-icon {
+  animation: s-nudge calc(var(--motion) * 420ms) var(--ease-out-quint);
+}
+.s-shell .s-subnav-link,
+.s-shell .s-settings-nav a,
+.s-shell .s-filter,
+.s-shell .s-shelf-bar a {
+  transition:
+    background-color var(--duration-gentle) var(--ease-standard),
+    color var(--duration-gentle) var(--ease-standard),
+    border-color var(--duration-gentle) var(--ease-standard);
+}
+
+/* Cards that invite a press lift a little and settle back. */
+.s-shell :is(.s-activity, .c-care-card, .c-document-link, a.s-policy-row) {
+  transition:
+    transform var(--duration-gentle) var(--ease-out-quint),
+    box-shadow var(--duration-gentle) var(--ease-standard),
+    background-color var(--duration-quick) var(--ease-standard),
+    border-color var(--duration-quick) var(--ease-standard);
+}
+.s-shell .s-entry-list > a > .s-icon:last-child,
+.s-shell .s-activity-go,
+.s-shell .s-info-feature-groups a > .s-icon:last-child {
+  transition: transform var(--duration-gentle) var(--ease-out-quint), background-color var(--duration-quick) var(--ease-standard);
+}
+.s-shell .s-entry-list > a:hover > .s-icon:last-child,
+.s-shell .s-info-feature-groups a:hover > .s-icon:last-child {
+  transform: translateX(calc(var(--motion) * 3px));
+}
+
+/* Choices and switches answer the tap. */
+.s-shell .s-switch-thumb { transition: transform var(--duration-gentle) var(--ease-out-quint), background-color var(--duration-quick) var(--ease-standard); }
+.s-shell .s-switch-track { transition: background-color var(--duration-gentle) var(--ease-standard), border-color var(--duration-gentle) var(--ease-standard); }
+.s-shell .s-check-box { transition: background-color var(--duration-quick) var(--ease-standard), border-color var(--duration-quick) var(--ease-standard); }
+.s-shell .s-check input:checked + .s-check-box > * { animation: s-pop calc(var(--motion) * 220ms) var(--ease-out-quint) backwards; }
+
+/* Dialogs rise from below; their backdrop fades. */
+.s-dialog[open] { animation: s-pop calc(var(--motion) * 280ms) var(--ease-out-quint); }
+.s-dialog[open]::backdrop { animation: s-fade calc(var(--motion) * 240ms) var(--ease-standard); }
+
+/* Conversation: your words and Sela's settle in from their own side. */
+.s-shell--room .s-turn--pending,
+.s-shell--room .s-turn--sela:is([data-fresh], [data-streaming]) {
+  animation: s-bubble calc(var(--motion) * 320ms) var(--ease-out-quint) backwards;
+}
+.s-shell--room .s-turn--user { transform-origin: bottom right; }
+.s-shell--room .s-turn--sela { transform-origin: bottom left; }
+.s-shell--room .s-pending { transform-origin: left center; animation: s-pop calc(var(--motion) * 260ms) var(--ease-out-quint) calc(var(--motion) * 120ms) backwards; }
+.s-shell--room .s-room-empty { animation: s-sheet-in calc(var(--motion) * 420ms) var(--ease-out-quint) backwards; }
+.s-shell--room .s-room-starter:nth-child(1) { animation-delay: calc(var(--motion) * 160ms); }
+.s-shell--room .s-room-starter:nth-child(2) { animation-delay: calc(var(--motion) * 220ms); }
+.s-shell--room .s-room-starter:nth-child(3) { animation-delay: calc(var(--motion) * 280ms); }
+.s-shell--room .s-reflections[open] > :not(summary) { animation: s-rise-small calc(var(--motion) * 280ms) var(--ease-out-quint) backwards; }
+.s-shell--room :is(.s-closing, .s-crisis-panel) { animation: s-rise calc(var(--motion) * 380ms) var(--ease-out-quint) backwards; }
+.s-shell--room .s-new-content { animation: s-pill-in calc(var(--motion) * 260ms) var(--ease-out-quint) backwards; }
+.s-shell--room .s-composer-actions .s-btn--primary:not(:disabled) .s-icon { transition: transform var(--duration-gentle) var(--ease-out-quint); }
+.s-shell--room .s-composer-actions .s-btn--primary:not(:disabled):hover .s-icon { transform: translate(calc(var(--motion) * 2px), calc(var(--motion) * -2px)); }
+
+/* The room's own sticky composer must never sit inside a moving ancestor. */
+.s-shell--room main > .s-room-layout { animation: none; }
+
+@media print {
+  .s-shell *, .s-dialog { animation: none !important; transition: none !important; }
+}

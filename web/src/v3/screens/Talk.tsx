@@ -1,10 +1,19 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
 import { useI18n } from "../../i18n";
-import { api, isAbort, type Entry, type Profile, type Room, type Turn } from "../api";
+import {
+  api,
+  isAbort,
+  streamTurn,
+  type Entry,
+  type Profile,
+  type Reflection,
+  type Room,
+  type Turn,
+} from "../api";
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
-import { Icon } from "../icons";
+import { Icon, Mark } from "../icons";
 import { helpData, channelHref } from "../helpdata";
 import {
   Button,
@@ -21,6 +30,9 @@ import {
   buttonClass,
 } from "../ui";
 
+const HOLD_WARNING_MS = 5 * 60_000;
+const HOLD_WARNING_TICK_MS = 30_000;
+
 const intents = [
   { value: "listen", id: "Didengarkan saja", en: "Just listen" },
   { value: "sort_thoughts", id: "Merapikan pikiran", en: "Sort my thoughts" },
@@ -35,6 +47,14 @@ const intents = [
     en: "Prepare for a consultation",
   },
 ];
+
+const starters = [
+  { id: "Hari ini aku merasa ", en: "Today I feel " },
+  { id: "Ada yang terus kupikirkan, yaitu ", en: "Something keeps going round in my head: " },
+  { id: "Aku cuma ingin didengar dulu. ", en: "I just want to be heard for now. " },
+];
+
+const COMPOSER_MAX = 3000;
 
 export function TalkPage({ user }: { user: Profile }) {
   const { path, query } = useRouter();
@@ -157,22 +177,27 @@ function TalkList() {
           <div className="s-section-title">
             <h2 id="live-title">{w("Sedang berjalan", "In progress")}</h2>
           </div>
-          <Link
-            to={"/talk/" + live.id}
-            className="s-support-card s-support-card--link"
-          >
-            <strong>
-              {live.save
-                ? w("Percakapan tersimpan", "Saved conversation")
-                : w("Percakapan yang sedang berjalan (tidak disimpan)", "Conversation in progress (not saved)")}
-            </strong>
-            <span className="s-muted s-small">
-              {live.turns.length
-                ? `${live.turns.length} ${w("pesan", "messages")}`
-                : w("Belum ada pesan", "No messages yet")}
-              {live.paused ? " · " + w("balasan dijeda", "replies paused") : ""}
-            </span>
-          </Link>
+          <div className="s-entry-list s-live-room">
+            <Link to={"/talk/" + live.id}>
+              <span className="s-live-room-icon" aria-hidden="true">
+                <Icon name="talk" size={20} />
+              </span>
+              <span>
+                <strong>
+                  {live.save
+                    ? w("Percakapan tersimpan", "Saved conversation")
+                    : w("Percakapan yang sedang berjalan (tidak disimpan)", "Conversation in progress (not saved)")}
+                </strong>
+                <small>
+                  {live.turns.length
+                    ? `${live.turns.length} ${w("pesan", "messages")}`
+                    : w("Belum ada pesan", "No messages yet")}
+                  {live.paused ? " · " + w("balasan dijeda", "replies paused") : ""}
+                </small>
+              </span>
+              <Icon name="arrow-right" />
+            </Link>
+          </div>
         </section>
       )}
       <section className="s-section" aria-labelledby="saved-title">
@@ -379,13 +404,12 @@ function NewRoom({ user }: { user: Profile }) {
   );
 }
 
-type ProviderLabel = "meta" | "deepseek" | "test" | "unknown";
-type CheckLabel = "claude" | "test" | "other" | "not_required" | "not_requested" | "unavailable" | "unknown";
+type ProviderLabel = "meta" | "test" | "unknown";
+type CheckLabel = "meta_verifier" | "test" | "not_required" | "not_requested" | "unavailable" | "unknown";
 
 function providerLabel(turn: Turn): ProviderLabel {
   const draft = turn.aiProvenance?.draftProvenance ?? turn.provenance;
   const raw = turn.aiProvenance?.generator?.provider?.toLowerCase() ?? "";
-  if (draft === "live_deepseek_fallback" || raw.includes("deepseek")) return "deepseek";
   if (draft === "test_double" || raw.includes("test")) return "test";
   if (draft === "live_meta" || raw.includes("meta")) return "meta";
   return "unknown";
@@ -395,12 +419,10 @@ function checkedBy(turn: Turn): CheckLabel {
   const v = turn.aiProvenance?.verification;
   if (!v) return "unknown";
   switch (v.provenance) {
-    case "live_anthropic":
-      return "claude";
+    case "live_meta_verifier":
+      return "meta_verifier";
     case "test_double":
       return "test";
-    case "live_deepseek_alternative":
-      return "other";
     case "not_required":
       return "not_required";
     case "not_requested":
@@ -417,20 +439,16 @@ function authorLine(turn: Turn, w: (id: string, en: string) => string): string {
   const checked = checkedBy(turn);
   if (provider === "test") return w("Sela · balasan uji (bukan AI)", "Sela · test reply (not AI)");
   const name =
-    provider === "deepseek"
-      ? w("DeepSeek, cadangan", "DeepSeek, backup")
-      : provider === "meta"
-        ? "Meta"
-        : w("penyedia tidak tercatat", "provider not recorded");
+    provider === "meta"
+      ? "Meta"
+      : w("penyedia tidak tercatat", "provider not recorded");
   const base =
     provider === "meta" && turn.provenance === "recorded_demo"
       ? w("Sela · balasan contoh terekam", "Sela · recorded example reply")
       : w("Sela · balasan AI", "Sela · AI reply") + ` (${name})`;
-  if (checked === "claude") return base + w(" · diperiksa oleh Claude", " · checked by Claude");
+  if (checked === "meta_verifier") return base + w(" · diperiksa oleh model Meta pemeriksa", " · checked by the Meta verifier model");
   if (checked === "test")
     return base + w(" · diperiksa oleh program uji (bukan AI)", " · checked by a test program (not AI)");
-  if (checked === "other")
-    return base + w(" · diperiksa oleh pemeriksa alternatif", " · checked by the alternative checker");
   return base;
 }
 
@@ -449,17 +467,28 @@ function RoomPage({ id }: { id: string }) {
   const [text, setText] = useState("");
   const [intent, setIntent] = useState<string>(query.get("intent") ?? "listen");
   const [pendingText, setPendingText] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
+  // Index of the first reply that arrived without a visible stream, so it can
+  // settle in gently; streamed replies are already on screen.
+  const [freshFrom, setFreshFrom] = useState<number | null>(null);
+  const streamed = useRef(false);
+  const [holdWarning, setHoldWarning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [stopped, setStopped] = useState(false);
   const [ended, setEnded] = useState<"saved" | "unsaved" | null>(null);
   const [detail, setDetail] = useState(false);
   const [newContent, setNewContent] = useState("");
   const [closePanel, setClosePanel] = useState(false);
+  const [reflectionBusy, setReflectionBusy] = useState(false);
+  const [reflectionsOpen, setReflectionsOpen] = useState(false);
+  const [correcting, setCorrecting] = useState<string | null>(null);
+  const [correction, setCorrection] = useState("");
 
   const focusComposer = () => (document.getElementById("composer-text") as HTMLElement | null)?.focus();
   const transcript = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
   const request = useRef<AbortController | null>(null);
+  const warnedHold = useRef<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -482,14 +511,52 @@ function RoomPage({ id }: { id: string }) {
     };
   }, [id, loadKey]);
 
+  const roomReady = Boolean(room);
   useEffect(() => {
-    focusComposer();
-  }, [id]);
+    // The composer only exists once the room has loaded. On touch screens,
+    // focusing it would pop the keyboard over the conversation, so wait for
+    // the person to tap it.
+    if (!roomReady) return;
+    const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+    if (!coarse) focusComposer();
+  }, [id, roomReady]);
 
   useEffect(() => {
     if (!room?.paused) return;
     setClosePanel(false);
   }, [room?.paused]);
+
+  // Warn once, five minutes before the server discards an unsaved hold.
+  // Every room response refreshes the server's activity timer, so a new
+  // holdExpiresIn moves the local deadline forward.
+  useEffect(() => {
+    if (!room || room.save || ended !== null || !room.holdExpiresIn) {
+      setHoldWarning(false);
+      return;
+    }
+    const deadline = Date.now() + room.holdExpiresIn * 1000;
+    if (warnedHold.current === deadline) return;
+    const check = () => {
+      if (Date.now() >= deadline - HOLD_WARNING_MS) {
+        warnedHold.current = deadline;
+        setHoldWarning(true);
+      }
+    };
+    check();
+    const interval = window.setInterval(check, HOLD_WARNING_TICK_MS);
+    return () => window.clearInterval(interval);
+  }, [room, ended]);
+
+  useEffect(() => {
+    if (!holdWarning) return;
+    announce(
+      "alert",
+      w(
+        "Percakapan ini tidak disimpan dan akan segera dibuang dari server.",
+        "This conversation isn't saved and will be discarded from the server soon.",
+      ),
+    );
+  }, [holdWarning, announce, w]);
 
   useEffect(() => {
     if (!room || room.save) return;
@@ -515,14 +582,15 @@ function RoomPage({ id }: { id: string }) {
     return () => window.removeEventListener("pagehide", onHide);
   }, [room?.id, room?.save]);
 
+  // The room scrolls as one page with the composer pinned at the bottom, so
+  // "the end of the conversation" is the end of the document.
   const scrollToBottom = () => {
-    const el = transcript.current;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
-      // In the text-zoom layout the transcript is not an internal scroller,
-      // so bring the end of the conversation into the page viewport too.
-      if (el.scrollHeight <= el.clientHeight + 4) {
-        el.scrollIntoView?.({ block: "end" });
+    const doc = document.documentElement;
+    if (typeof window.scrollTo === "function") {
+      try {
+        window.scrollTo({ top: doc.scrollHeight, behavior: "auto" });
+      } catch {
+        // jsdom and very old engines
       }
     }
     atBottom.current = true;
@@ -538,13 +606,8 @@ function RoomPage({ id }: { id: string }) {
   }, [room?.paused, announce, w]);
 
   const onScroll = () => {
-    const el = transcript.current;
-    if (el && el.scrollHeight > el.clientHeight + 4) {
-      atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
-    } else {
-      const doc = document.documentElement;
-      atBottom.current = window.innerHeight + window.scrollY >= doc.scrollHeight - 220;
-    }
+    const doc = document.documentElement;
+    atBottom.current = window.innerHeight + window.scrollY >= doc.scrollHeight - 160;
     if (atBottom.current) setNewContent("");
   };
   useEffect(() => {
@@ -552,13 +615,30 @@ function RoomPage({ id }: { id: string }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   useEffect(() => {
-    if (!room) return;
+    // An empty room opens at the top so its welcome and controls stay in view.
+    if (!room || room.turns.length === 0) return;
     const t = window.setTimeout(scrollToBottom, 40);
     return () => window.clearTimeout(t);
   }, [room?.id]);
 
+  // Browsers without `field-sizing: content` grow the writing box here.
+  useEffect(() => {
+    const el = document.getElementById("composer-text") as HTMLTextAreaElement | null;
+    if (!el) return;
+    if (typeof CSS !== "undefined" && CSS.supports?.("field-sizing", "content")) return;
+    el.style.height = "auto";
+    if (el.scrollHeight > 0) {
+      el.style.height = `${Math.min(el.scrollHeight + 2, Math.round(window.innerHeight * 0.4))}px`;
+    }
+  }, [text, roomReady]);
+
   const lastAssistant = (r: Room | null) =>
     r?.turns.filter((t) => t.role === "assistant").at(-1);
+
+  // A failed send puts the words back, unless the person has already started
+  // writing something new while waiting.
+  const restoreDraft = (value: string) =>
+    setText((current) => (current.trim() ? current : value));
 
   const send = async (e?: FormEvent) => {
     e?.preventDefault();
@@ -568,21 +648,61 @@ function RoomPage({ id }: { id: string }) {
     setStopped(false);
     setText("");
     setPendingText(value);
+    setReplyDraft("");
+    streamed.current = false;
     window.setTimeout(scrollToBottom, 30);
     setBusy(true);
     const ac = new AbortController();
     request.current = ac;
     announce("status", w("Sela sedang menulis…", "Sela is writing…"));
     try {
-      const next = await api<Room>(
-        "/conversations/" + room.id + "/turns",
-        { text: value, expectedVersion: room.version, intent },
-        "POST",
-        ac.signal,
-        110_000,
-      );
+      let next: Room;
+      try {
+        next = await streamTurn(
+          "/conversations/" + room.id + "/turns/stream",
+          { text: value, expectedVersion: room.version, intent },
+          (event) => {
+            if (event.type !== "chunk") return;
+            streamed.current = true;
+            setReplyDraft((draft) => draft + event.text);
+            if (atBottom.current) window.requestAnimationFrame(scrollToBottom);
+          },
+          ac.signal,
+          110_000,
+        );
+      } catch (streamError) {
+        if (isAbort(streamError)) throw streamError;
+        // An older server, a proxy or a dropped stream: keep the JSON route
+        // as the compatibility path. The version check prevents a retry from
+        // duplicating a turn the stream already stored on the server.
+        setReplyDraft("");
+        try {
+          next = await api<Room>(
+            "/conversations/" + room.id + "/turns",
+            { text: value, expectedVersion: room.version, intent },
+            "POST",
+            ac.signal,
+            110_000,
+          );
+        } catch (fallbackError) {
+          if ((fallbackError as { code?: string }).code === "stale_version") {
+            // The stream may have stored the turn before its done frame was
+            // lost. Adopt the latest room only when this exact turn is there;
+            // otherwise keep the writing and report the conflict.
+            const latest = await api<Room>("/conversations/" + room.id);
+            if (!latest.turns.some((turn) => turn.role === "user" && turn.text === value)) {
+              throw fallbackError;
+            }
+            next = latest;
+          } else {
+            throw fallbackError;
+          }
+        }
+      }
+      setFreshFrom(streamed.current ? null : room.turns.length + 1);
       const previousLast = lastAssistant(room);
       const nextLast = lastAssistant(next);
+      setReplyDraft("");
       setRoom(next);
       setPendingText(null);
       if (next.paused) {
@@ -615,8 +735,8 @@ function RoomPage({ id }: { id: string }) {
       if (!atBottom.current) {
         setNewContent(
           next.paused
-            ? w("Bantuan ditampilkan di bawah pesanmu ↓", "Help is shown below your message ↓")
-            : w("Pesan baru dari Sela ↓", "New message from Sela ↓"),
+            ? w("Bantuan ditampilkan di bawah pesanmu", "Help is shown below your message")
+            : w("Pesan baru dari Sela", "New message from Sela"),
         );
       } else {
         window.setTimeout(scrollToBottom, 30);
@@ -633,7 +753,7 @@ function RoomPage({ id }: { id: string }) {
                 (t) => t.role === "user" && t.text === value,
               )
             ) {
-              setText(value);
+              restoreDraft(value);
             }
             setError(e);
             announce(
@@ -645,11 +765,11 @@ function RoomPage({ id }: { id: string }) {
             );
           } catch {
             setError(e);
-            setText(value);
+            restoreDraft(value);
           }
         } else {
           setError(e);
-          setText(value);
+          restoreDraft(value);
           announce("status", w("Belum terkirim. Tulisanmu masih di sini.", "Not sent. Your writing is still here."));
         }
       }
@@ -657,16 +777,18 @@ function RoomPage({ id }: { id: string }) {
       request.current = null;
       setBusy(false);
       setPendingText(null);
+      setReplyDraft("");
       focusComposer();
     }
   };
 
   const stop = async () => {
     if (!room) return;
-    setStopped(true);
     try {
       const next = await api<Room>("/conversations/" + room.id + "/operation", undefined, "DELETE");
-      setRoom(next);
+      setStopped(true);
+      // The cancelled send answers with the settled room; keep whichever is newer.
+      setRoom((current) => (current && current.version >= next.version ? current : next));
       announce("status", w("Balasan dihentikan sebelum ditampilkan.", "Reply stopped before it was shown."));
       focusComposer();
     } catch {
@@ -714,8 +836,67 @@ function RoomPage({ id }: { id: string }) {
     }
   };
 
+  const captureReflections = async () => {
+    if (!room || reflectionBusy) return;
+    setReflectionBusy(true);
+    setError(null);
+    try {
+      const next = await api<Room>(
+        `/conversations/${room.id}/reflections`,
+        { expectedVersion: room.version },
+        "POST",
+        undefined,
+        110_000,
+      );
+      setRoom(next);
+      setReflectionsOpen(true);
+      announce(
+        "status",
+        w(
+          "Sela menangkap beberapa hal. Periksa dan koreksi jika perlu.",
+          "Sela noticed a few things. Review and correct them if needed.",
+        ),
+      );
+    } catch (e) {
+      setError(e);
+    } finally {
+      setReflectionBusy(false);
+    }
+  };
+
+  const reviewReflection = async (reflection: Reflection, action: "confirm" | "correct" | "reject" | "undo", text?: string) => {
+    if (!room) return;
+    setReflectionBusy(true);
+    setError(null);
+    try {
+      const next = await api<Room>(
+        `/conversations/${room.id}/reflections/${reflection.id}`,
+        { expectedVersion: room.version, action, text },
+        "PATCH",
+      );
+      setRoom(next);
+      setCorrecting(null);
+      setCorrection("");
+      announce(
+        "status",
+        action === "confirm"
+          ? w("Tafsiran dikonfirmasi.", "Interpretation confirmed.")
+          : action === "correct"
+            ? w("Tafsiran diganti dengan kata-katamu.", "Interpretation replaced with your words.")
+            : action === "reject"
+              ? w("Tafsiran ditolak.", "Interpretation rejected.")
+              : w("Tafsiran dikembalikan untuk diperiksa.", "Interpretation reopened for review."),
+      );
+    } catch (e) {
+      setError(e);
+    } finally {
+      setReflectionBusy(false);
+    }
+  };
+
   const end = async () => {
     if (!room) return;
+    request.current?.abort();
     try {
       const wasSaved = room.save;
       await api("/conversations/" + room.id, undefined, "DELETE");
@@ -738,6 +919,35 @@ function RoomPage({ id }: { id: string }) {
     } catch (e) {
       setError(e);
     }
+  };
+
+  // GET refreshes the server's activity timer for this hold; the room's new
+  // holdExpiresIn moves the local warning deadline forward.
+  const keepHoldOpen = async () => {
+    if (!room) return;
+    setHoldWarning(false);
+    try {
+      const next = await api<Room>("/conversations/" + room.id);
+      setRoom(next);
+      announce(
+        "status",
+        w(
+          "Percakapan tetap terbuka.",
+          "The conversation stays open.",
+        ),
+      );
+    } catch (e) {
+      if ((e as { code?: string }).code === "not_found") {
+        setMissing(true);
+      } else {
+        setError(e);
+      }
+    }
+  };
+
+  const endFromWarning = async () => {
+    setHoldWarning(false);
+    await end();
   };
 
   const deleteConversation = async () => {
@@ -837,11 +1047,13 @@ function RoomPage({ id }: { id: string }) {
           </span>
           {!showEnd && (
             <Button
-              variant="quiet"
+              variant="secondary"
               className="s-room-end"
+              aria-label={w("Akhiri percakapan", "End conversation")}
               onClick={() => void end()}
             >
-              {w("Akhiri percakapan", "End conversation")}
+              <span className="s-room-end-long">{w("Akhiri percakapan", "End conversation")}</span>
+              <span className="s-room-end-short">{w("Akhiri", "End")}</span>
             </Button>
           )}
         </div>
@@ -854,13 +1066,14 @@ function RoomPage({ id }: { id: string }) {
             <strong>
               {intents.find((i) => i.value === intent)?.[lang]}
             </strong>
-            <span aria-hidden="true"> · </span>
+            <span className="s-room-mode-dot" aria-hidden="true"> · </span>
             <button
               type="button"
-              className="s-text-button"
+              className="s-text-button s-room-adjust"
               aria-label={w("Atur percakapan", "Conversation settings")}
               onClick={() => setDetail(true)}
             >
+              <Icon name="settings" size={16} />
               {w("Atur", "Adjust")}
             </button>
           </p>
@@ -884,17 +1097,41 @@ function RoomPage({ id }: { id: string }) {
             >
               {room.turns.length === 0 && pendingText === null && !showEnd && (
                 <div className="s-room-empty">
-                  <p>{w("Ruang ini milikmu.", "This space is yours.")}</p>
+                  <span className="s-room-empty-mark" aria-hidden="true">
+                    <Mark size={44} />
+                  </span>
+                  <p className="s-room-empty-title">{w("Ruang ini milikmu.", "This space is yours.")}</p>
                   <p className="s-hint">
                     {w(
                       "Tidak perlu rapi. Sela adalah AI, bukan psikolog.",
                       "It doesn't need to be tidy. Sela is an AI, not a psychologist.",
                     )}
                   </p>
+                  <div className="s-room-starters" role="group" aria-label={w("Contoh awal kalimat", "Ways to begin")}>
+                    {starters.map((s) => (
+                      <button
+                        key={s.en}
+                        type="button"
+                        className="s-room-starter"
+                        onClick={() => {
+                          const value = w(s.id, s.en);
+                          setText((current) => (current.trim() ? current : value));
+                          requestAnimationFrame(() => {
+                            const el = document.getElementById("composer-text") as HTMLTextAreaElement | null;
+                            if (!el) return;
+                            el.focus();
+                            el.setSelectionRange(el.value.length, el.value.length);
+                          });
+                        }}
+                      >
+                        {w(s.id, s.en).replace(/[\s.,:]+$/, "")}…
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
               {room.turns.map((turn, index) => (
-                <div key={index}>
+                <div key={index} className="s-turn-row">
                   {turn.role === "user" ? (
                     <article className="s-turn s-turn--user">
                       <p className="s-turn-author">
@@ -907,12 +1144,15 @@ function RoomPage({ id }: { id: string }) {
                       </p>
                     </article>
                   ) : (
-                    <article className="s-turn s-turn--sela">
+                    <article
+                      className="s-turn s-turn--sela"
+                      data-fresh={freshFrom !== null && index >= freshFrom ? "true" : undefined}
+                    >
                       <p className="s-turn-author">
                         <span className="s-ai-mono" aria-hidden="true">
                           {"AI"}
                         </span>
-                        {authorLine(turn, w)}
+                        <span>{authorLine(turn, w)}</span>
                       </p>
                       <p className="s-turn-body">{turn.text}</p>
                       <div className="s-turn-meta">
@@ -925,11 +1165,9 @@ function RoomPage({ id }: { id: string }) {
                               <dd>
                                 {providerLabel(turn) === "test"
                                   ? w("Program uji (bukan AI)", "Test program (not AI)")
-                                  : providerLabel(turn) === "deepseek"
-                                    ? w("DeepSeek (cadangan)", "DeepSeek (backup)")
-                                    : providerLabel(turn) === "meta"
-                                      ? "Meta"
-                                      : w("Tidak tercatat", "Not recorded")}
+                                  : providerLabel(turn) === "meta"
+                                    ? "Meta"
+                                    : w("Tidak tercatat", "Not recorded")}
                               </dd>
                             </div>
                             <div>
@@ -939,12 +1177,10 @@ function RoomPage({ id }: { id: string }) {
                             <div>
                               <dt>{w("Pemeriksaan", "Check")}</dt>
                               <dd>
-                                {checkedBy(turn) === "claude"
-                                  ? w("Diperiksa oleh Claude", "Checked by Claude")
+                                {checkedBy(turn) === "meta_verifier"
+                                  ? w("Diperiksa oleh model Meta pemeriksa", "Checked by the Meta verifier model")
                                   : checkedBy(turn) === "test"
                                     ? w("Diperiksa oleh program uji (bukan AI)", "Checked by a test program (not AI)")
-                                    : checkedBy(turn) === "other"
-                                      ? w("Diperiksa oleh pemeriksa alternatif", "Checked by the alternative checker")
                                       : checkedBy(turn) === "not_required"
                                         ? w("Tidak perlu diperiksa", "No check was needed")
                                         : checkedBy(turn) === "unavailable"
@@ -984,7 +1220,7 @@ function RoomPage({ id }: { id: string }) {
               ))}
 
               {pendingText !== null && (
-                <article className="s-turn s-turn--user">
+                <article className="s-turn s-turn--user s-turn--pending">
                   <p className="s-turn-author">
                     <Icon name="quote" size={16} />
                     {w("Kamu · kata-katamu", "You · your words")}
@@ -993,10 +1229,29 @@ function RoomPage({ id }: { id: string }) {
                   <p className="s-turn-meta">{w("Mengirim…", "Sending…")}</p>
                 </article>
               )}
-              {pendingText !== null && (
+              {pendingText !== null && replyDraft === "" && !paused && (
                 <p className="s-pending">
+                  <span className="s-typing" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
                   {w("Sela sedang menulis…", "Sela is writing…")}
                 </p>
+              )}
+              {replyDraft !== "" && (
+                <article className="s-turn s-turn--sela" data-streaming="true">
+                  <p className="s-turn-author">
+                    <span className="s-ai-mono" aria-hidden="true">
+                      {"AI"}
+                    </span>
+                    <span>{w("Sela · balasan AI", "Sela · AI reply")}</span>
+                  </p>
+                  <p className="s-turn-body">{replyDraft}</p>
+                  <p className="s-turn-meta">
+                    {w("Sedang menulis…", "Writing…")}
+                  </p>
+                </article>
               )}
 
               {showEnd && (
@@ -1033,6 +1288,123 @@ function RoomPage({ id }: { id: string }) {
               )}
             </div>
           </section>
+
+          {!showEnd && room.turns.length > 0 && (
+            <details
+              className="s-reflections"
+              open={reflectionsOpen}
+              onToggle={(e) => setReflectionsOpen((e.currentTarget as HTMLDetailsElement).open)}
+            >
+              <summary>
+                <Icon name="interpretation" size={18} />
+                <span id="reflections-title">{w("Yang Sela tangkap", "What Sela noticed")}</span>
+                {(room.reflections?.length ?? 0) > 0 && (
+                  <span className="s-reflections-count">
+                    {room.reflections?.length}
+                  </span>
+                )}
+                <Icon name="chevron-down" size={18} />
+              </summary>
+              <div className="s-reflections-actions">
+                <Button
+                  variant="secondary"
+                  disabled={reflectionBusy || busy}
+                  onClick={() => void captureReflections()}
+                >
+                  {reflectionBusy
+                    ? w("Membaca ulang…", "Reading back…")
+                    : w("Tangkap dari percakapan ini", "Notice something from this conversation")}
+                </Button>
+              </div>
+              <p className="s-hint">
+                {w(
+                  "Ini tafsiran AI, bukan fakta. Kutipan di bawah adalah kata-katamu; konfirmasi, koreksi, atau tolak.",
+                  "This is an AI interpretation, not a fact. The quote below is your own wording; confirm, correct or reject it.",
+                )}
+              </p>
+              {(room.reflections ?? []).map((reflection) => (
+                <article className="s-consent" key={reflection.id}>
+                  <blockquote className="s-reflection-quote">“{reflection.quote}”</blockquote>
+                  {correcting === reflection.id ? (
+                    <TextArea
+                      label={w("Kata-katamu sendiri", "Your own words")}
+                      value={correction}
+                      onChange={(e) => setCorrection(e.target.value)}
+                      rows={3}
+                    />
+                  ) : (
+                    <p>{reflection.text}</p>
+                  )}
+                  <p className="s-hint">
+                    {reflection.reviewStatus === "confirmed"
+                      ? w("Kamu konfirmasi.", "You confirmed this.")
+                      : reflection.reviewStatus === "corrected"
+                        ? w("Kamu koreksi.", "You corrected this.")
+                        : reflection.reviewStatus === "rejected"
+                          ? w("Kamu tolak.", "You rejected this.")
+                          : w("Belum diperiksa.", "Not reviewed yet.")}
+                  </p>
+                  <div className="s-actions">
+                    {correcting === reflection.id ? (
+                      <>
+                        <Button
+                          variant="primary"
+                          disabled={reflectionBusy || correction.trim() === ""}
+                          onClick={() => void reviewReflection(reflection, "correct", correction)}
+                        >
+                          {w("Simpan koreksi", "Save correction")}
+                        </Button>
+                        <Button
+                          variant="quiet"
+                          disabled={reflectionBusy}
+                          onClick={() => {
+                            setCorrecting(null);
+                            setCorrection("");
+                          }}
+                        >
+                          {w("Batal", "Cancel")}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="secondary"
+                          disabled={reflectionBusy}
+                          onClick={() => void reviewReflection(reflection, "confirm")}
+                        >
+                          {w("Setuju", "Agree")}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          disabled={reflectionBusy}
+                          onClick={() => {
+                            setCorrecting(reflection.id);
+                            setCorrection(reflection.text);
+                          }}
+                        >
+                          {w("Koreksi", "Correct")}
+                        </Button>
+                        <Button
+                          variant="quiet"
+                          disabled={reflectionBusy}
+                          onClick={() =>
+                            void reviewReflection(
+                              reflection,
+                              reflection.reviewStatus === "rejected" ? "undo" : "reject",
+                            )
+                          }
+                        >
+                          {reflection.reviewStatus === "rejected"
+                            ? w("Batalkan tolak", "Undo rejection")
+                            : w("Bukan ini", "Not this")}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </details>
+          )}
 
           {!showEnd && (
             <div className="s-room-endbar">
@@ -1075,7 +1447,7 @@ function RoomPage({ id }: { id: string }) {
               {lastAssistant(room) && (
                 <button
                   type="button"
-                  className={buttonClass("quiet")}
+                  className={buttonClass("quiet", "s-jump-reply")}
                   onClick={() => {
                     const articles = transcript.current?.querySelectorAll(".s-turn--sela");
                     const last = articles?.[articles.length - 1] as HTMLElement | undefined;
@@ -1138,66 +1510,62 @@ function RoomPage({ id }: { id: string }) {
             )}
           {!showEnd && (
             <>
-              {newContent && (
-                <button
-                  type="button"
-                  className="s-new-content"
-                  onClick={() => {
-                    if (paused) {
-                      const heading = document.getElementById("crisis-title");
-                      heading?.scrollIntoView({ block: "center" });
-                      heading?.focus();
-                    } else {
-                      const articles = transcript.current?.querySelectorAll<HTMLElement>(
-                        ".s-turn--sela",
-                      );
-                      const last = articles?.[articles.length - 1];
-                      if (last) {
-                        last.tabIndex = -1;
-                        last.scrollIntoView({ block: "center" });
-                        last.focus();
-                      }
-                    }
-                    setNewContent("");
-                  }}
-                >
-                  {newContent} <span aria-hidden="true">↓</span>
-                </button>
-              )}
               <form className="s-composer" id="composer" onSubmit={(e) => void send(e)}>
-                <TextArea
-                  id="composer-text"
-                  label={w("Tulis untuk Sela", "Write to Sela")}
-                  hint={w(
-                    "Ctrl atau Cmd+Enter untuk mengirim.",
-                    "Ctrl or Cmd+Enter to send.",
-                  )}
-                  rows={2}
-                  value={text}
-                  maxLength={3000}
-                  onChange={(e) => setText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (
-                      prefs.enterToSend
-                        ? e.key === "Enter" && !e.shiftKey
-                        : e.key === "Enter" && (e.metaKey || e.ctrlKey)
-                    ) {
-                      e.preventDefault();
-                      void send();
-                    }
-                  }}
-                />
-                <div className="s-composer-bottom">
+                {newContent && (
+                  <button
+                    type="button"
+                    className="s-new-content"
+                    onClick={() => {
+                      if (paused) {
+                        const heading = document.getElementById("crisis-title");
+                        heading?.scrollIntoView({ block: "center" });
+                        heading?.focus();
+                      } else {
+                        const articles = transcript.current?.querySelectorAll<HTMLElement>(
+                          ".s-turn--sela",
+                        );
+                        const last = articles?.[articles.length - 1];
+                        if (last) {
+                          last.tabIndex = -1;
+                          last.scrollIntoView({ block: "center" });
+                          last.focus();
+                        }
+                      }
+                      setNewContent("");
+                    }}
+                  >
+                    {newContent} <span aria-hidden="true">↓</span>
+                  </button>
+                )}
+                <div className="s-composer-box">
+                  <TextArea
+                    id="composer-text"
+                    label={w("Tulis untuk Sela", "Write to Sela")}
+                    hideLabel
+                    describedBy="composer-hint"
+                    placeholder={w("Tulis untuk Sela…", "Write to Sela…")}
+                    rows={1}
+                    value={text}
+                    maxLength={COMPOSER_MAX}
+                    onChange={(e) => setText(e.target.value)}
+                    onKeyDown={(e) => {
+                      // Never send while an input method is still composing a word.
+                      if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+                      if (
+                        prefs.enterToSend
+                          ? e.key === "Enter" && !e.shiftKey
+                          : e.key === "Enter" && (e.metaKey || e.ctrlKey)
+                      ) {
+                        e.preventDefault();
+                        void send();
+                      }
+                    }}
+                  />
                   <div className="s-composer-actions">
                     {busy ? (
-                      <>
-                        <Button variant="secondary" icon="stop" onClick={() => void stop()}>
-                          {w("Hentikan balasan", "Stop reply")}
-                        </Button>
-                        <Button variant="primary" icon="send" disabled>
-                          {w("Kirim", "Send")}
-                        </Button>
-                      </>
+                      <Button variant="secondary" icon="stop" onClick={() => void stop()}>
+                        {w("Hentikan balasan", "Stop reply")}
+                      </Button>
                     ) : (
                       <Button
                         type="submit"
@@ -1210,14 +1578,34 @@ function RoomPage({ id }: { id: string }) {
                     )}
                   </div>
                 </div>
-                {busy && (
-                  <p className="s-hint">
-                    {w(
-                      "Tunggu balasan Sela, atau hentikan dulu. Kamu masih bisa menulis.",
-                      "Wait for Sela's reply, or stop it first. You can still write.",
-                    )}
+                <div className="s-composer-foot">
+                  <p className={"s-hint" + (busy ? "" : " s-composer-keys")} id="composer-hint">
+                    {busy
+                      ? w(
+                          "Tunggu balasan Sela, atau hentikan dulu. Kamu masih bisa menulis.",
+                          "Wait for Sela's reply, or stop it first. You can still write.",
+                        )
+                      : prefs.enterToSend
+                        ? w(
+                            "Enter untuk mengirim, Shift+Enter untuk baris baru.",
+                            "Enter to send, Shift+Enter for a new line.",
+                          )
+                        : w(
+                            "Ctrl atau Cmd+Enter untuk mengirim.",
+                            "Ctrl or Cmd+Enter to send.",
+                          )}
                   </p>
-                )}
+                  {text.length > COMPOSER_MAX * 0.8 && (
+                    <p
+                      className={
+                        "s-composer-count" +
+                        (text.length >= COMPOSER_MAX ? " s-composer-count--full" : "")
+                      }
+                    >
+                      {text.length}/{COMPOSER_MAX}
+                    </p>
+                  )}
+                </div>
                 {stopped && (
                   <StatusLine>
                     {w(
@@ -1240,8 +1628,8 @@ function RoomPage({ id }: { id: string }) {
           </p>
           <p className="s-small s-muted">
             {w(
-              "Konteks pilihanmu ada di Yang Sela ingat; memori tidak dikirim ke AI.",
-              "Your chosen context is in What Sela remembers; memory is not sent to AI.",
+              "Konteks pilihanmu ada di Yang Sela ingat. Saat izin balasan AI aktif, memori yang dikonfirmasi bisa dipakai untuk membalas.",
+              "Your chosen context is in What Sela remembers. While AI reply consent is on, confirmed memory may be used to reply.",
             )}
           </p>
           <LinkButton to="/help" variant="help" icon="help">
@@ -1270,6 +1658,31 @@ function RoomPage({ id }: { id: string }) {
           )}
         </aside>
       </div>
+
+      <Dialog
+        open={holdWarning}
+        onClose={() => setHoldWarning(false)}
+        title={w(
+          "Percakapan akan segera dibuang",
+          "This conversation will be discarded soon",
+        )}
+        alert
+      >
+        <p>
+          {w(
+            "Percakapan ini tidak disimpan. Salinan sementara di server Sela akan dibuang sekitar lima menit lagi. Kamu bisa tetap membukanya atau mengakhirinya sekarang.",
+            "This conversation isn't saved. The temporary copy on Sela's server will be discarded in about five minutes. You can keep it open or end it now.",
+          )}
+        </p>
+        <div className="s-actions">
+          <Button variant="primary" onClick={() => void keepHoldOpen()}>
+            {w("Tetap buka", "Keep it open")}
+          </Button>
+          <Button variant="secondary" onClick={() => void endFromWarning()}>
+            {w("Akhiri sekarang", "End now")}
+          </Button>
+        </div>
+      </Dialog>
 
       <Dialog
         open={detail}

@@ -18,6 +18,15 @@ func (s *Server) v3Memory(w http.ResponseWriter, r *http.Request, p account.Prin
 	writeData(w, http.StatusOK, view)
 }
 
+func (s *Server) v3MemoryItem(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	record, err := s.opt.Accounts.MemoryItem(r.Context(), p.UserID, r.PathValue("id"))
+	if err != nil {
+		s.v3Error(w, r, err)
+		return
+	}
+	writeData(w, http.StatusOK, record)
+}
+
 func (s *Server) v3CreateMemory(w http.ResponseWriter, r *http.Request, p account.Principal) {
 	var in account.RecordInput
 	if !decode(w, r, &in) {
@@ -142,6 +151,19 @@ func (s *Server) v3CreateFollowup(w http.ResponseWriter, r *http.Request, p acco
 		return
 	}
 	writeData(w, http.StatusCreated, record)
+}
+
+func (s *Server) v3UpdateFollowup(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	var in account.RecordInput
+	if !decode(w, r, &in) {
+		return
+	}
+	record, err := s.opt.Accounts.UpdateFollowup(r.Context(), p.UserID, r.PathValue("id"), r.PathValue("followupId"), in)
+	if err != nil {
+		s.v3Error(w, r, err)
+		return
+	}
+	writeData(w, http.StatusOK, record)
 }
 
 func (s *Server) v3Followups(w http.ResponseWriter, r *http.Request, p account.Principal) {

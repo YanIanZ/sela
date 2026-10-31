@@ -93,4 +93,4 @@ Compared with a static directory/manual note, a participant completing a *fictio
 
 ## Preserve attribution
 
-The current v1 Care Passport already includes source grounding and opening-line logic. Sela Relay refines a journey and state contracts; do not relabel all inherited functionality as new work. Keep [project provenance](../../SELA_PROVENANCE.md), license and authorship intact.
+The current v1 Care Passport already includes source grounding and opening-line logic. Sela Relay refines a journey and state contracts; do not relabel all inherited functionality as new work. Keep [project provenance](../../product/SELA_PROVENANCE.md), license and authorship intact.

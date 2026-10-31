@@ -54,6 +54,22 @@ const copy: Record<string, { id: string; en: string }> = {
     id: "Koneksi terlalu lama menjawab. Tulisanmu tetap di sini; coba lagi.",
     en: "The connection took too long. Your writing is still here; try again.",
   },
+  invalid_share: {
+    id: "Tautan atau kode tidak cocok, atau sudah tidak berlaku.",
+    en: "The link or code doesn't match, or it is no longer valid.",
+  },
+  name_taken: {
+    id: "Nama ini sudah ada di daftarmu.",
+    en: "This name is already on your list.",
+  },
+  name_limit_reached: {
+    id: "Daftar nama berisi paling banyak 20 nama. Hapus satu dulu untuk menambah yang lain.",
+    en: "The name list holds at most 20 names. Remove one before adding another.",
+  },
+  consent_required: {
+    id: "Izin yang diperlukan belum diberikan.",
+    en: "The required permission hasn't been given.",
+  },
   not_signed_in: {
     id: "Kamu belum masuk atau sesimu sudah berakhir. Silakan masuk lagi.",
     en: "You aren't signed in, or your session has ended. Please sign in again.",
@@ -83,8 +99,8 @@ const copy: Record<string, { id: string; en: string }> = {
     en: "Password sign-in is disabled after too many attempts. Use a recovery code to set a new password.",
   },
   age_not_supported: {
-    id: "Sela dibuat untuk usia 15 tahun ke atas.",
-    en: "Sela is made for people aged 15 and over.",
+    id: "Sela saat ini dibuat untuk usia 16 tahun ke atas.",
+    en: "Sela is currently made for people aged 16 and over.",
   },
   age_band_not_enabled: {
     id: "Sela belum tersedia untuk kelompok usia ini.",

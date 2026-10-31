@@ -21,7 +21,7 @@ var v3Messages = map[string]message{
 	"reauth_required":            {"Untuk melindungi datamu, masukkan kata sandimu sekali lagi.", "To protect your data, enter your password once more."},
 	"account_required":           {"Langkah ini memerlukan akun. Simpan data tamumu ke akun terlebih dahulu.", "This step needs an account. Save your guest data to an account first."},
 	"password_login_disabled":    {"Masuk dengan kata sandi dinonaktifkan sementara karena terlalu banyak percobaan. Pakai kode pemulihan untuk membuat kata sandi baru.", "Password sign-in is disabled after too many attempts. Use a recovery code to set a new password."},
-	"age_not_supported":          {"Sela dibuat untuk usia 15 tahun ke atas. Jika kamu butuh bantuan sekarang, lihat informasi bantuan.", "Sela is made for people aged 15 and over. If you need help now, see the help information."},
+	"age_not_supported":          {"Sela saat ini dibuat untuk usia 16 tahun ke atas. Jika kamu butuh bantuan sekarang, lihat informasi bantuan.", "Sela is currently made for people aged 16 and over. If you need help now, see the help information."},
 	"age_band_not_enabled":       {"Sela belum tersedia untuk kelompok usia ini.", "Sela is not yet available for this age group."},
 	"not_guest":                  {"Akun ini sudah terdaftar.", "This account is already registered."},
 	"required_consent":           {"Persetujuan ini diperlukan untuk memakai Sela. Jika tidak lagi setuju, kamu bisa mengekspor lalu menghapus akunmu.", "Sela cannot be used without this consent. If you no longer agree, you can export and then delete your account."},
@@ -32,6 +32,9 @@ var v3Messages = map[string]message{
 	"password_weak":              {"Kata sandi ini terlalu umum atau mudah ditebak. Pilih yang lain.", "This password is too common or easy to guess. Choose another."},
 	"store_unavailable":          {"Penyimpanan sedang tidak tersedia. Coba lagi sebentar lagi.", "Storage is unavailable right now. Try again shortly."},
 	"server_busy":                {"Server sedang sibuk. Coba lagi sebentar lagi.", "The server is busy. Try again shortly."},
+	"invalid_share":              {"Tautan atau kode tidak cocok, atau sudah tidak berlaku.", "The link or code doesn't match, or it is no longer valid."},
+	"name_taken":                 {"Nama ini sudah ada di daftarmu.", "This name is already on your list."},
+	"name_limit_reached":         {"Daftar nama berisi paling banyak 20 nama. Hapus satu dulu untuk menambah yang lain.", "The name list holds at most 20 names. Remove one before adding another."},
 }
 
 // v3Status is the documented HTTP status of every code /api/v3 returns.
@@ -48,7 +51,9 @@ var v3Status = map[string]int{
 	"password_login_disabled": http.StatusForbidden, "age_not_supported": http.StatusForbidden, "age_band_not_enabled": http.StatusForbidden,
 	"not_guest": http.StatusConflict, "required_consent": http.StatusConflict, "username_invalid": http.StatusBadRequest,
 	"username_taken": http.StatusConflict, "password_too_short": http.StatusBadRequest, "password_too_long": http.StatusBadRequest,
-	"password_weak": http.StatusBadRequest, "store_unavailable": http.StatusServiceUnavailable, "server_busy": http.StatusServiceUnavailable,
+	"password_weak": http.StatusBadRequest, "invalid_share": http.StatusUnauthorized,
+	"name_taken": http.StatusConflict, "name_limit_reached": http.StatusConflict,
+	"store_unavailable": http.StatusServiceUnavailable, "server_busy": http.StatusServiceUnavailable,
 }
 
 func init() {

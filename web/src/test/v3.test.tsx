@@ -32,16 +32,6 @@ const policies = {
       text("Tanpa izin, Sela tidak membalas dengan AI."),
     ],
   },
-  ai_provider_anthropic: {
-    version: "anth-v1",
-    title: { id: "Pemeriksa · Claude", en: "Checker · Claude" },
-    body: [text("Pemeriksa memeriksa balasan yang menyebut hal kesehatan.")],
-  },
-  ai_provider_deepseek: {
-    version: "ds-v1",
-    title: { id: "Model cadangan · DeepSeek", en: "Backup model · DeepSeek" },
-    body: [text("Hanya dipakai jika model utama tidak tersedia.")],
-  },
 };
 
 const options = {
@@ -117,25 +107,9 @@ const consents = [
     revision: 0,
     currentPolicyVersion: "ai-v1",
   },
-  {
-    purpose: "ai_provider_anthropic",
-    required: false,
-    granted: false,
-    outdated: false,
-    revision: 0,
-    currentPolicyVersion: "anth-v1",
-  },
-  {
-    purpose: "ai_provider_deepseek",
-    required: false,
-    granted: false,
-    outdated: false,
-    revision: 0,
-    currentPolicyVersion: "ds-v1",
-  },
 ];
 
-type Reply = { status?: number; data?: unknown; error?: string } | "unauth";
+type Reply = { status?: number; data?: unknown; error?: string } | "unauth" | Response;
 type Handler = (body: unknown, url: URL) => Reply | Promise<Reply>;
 
 function json(payload: unknown, status = 200) {
@@ -143,6 +117,16 @@ function json(payload: unknown, status = 200) {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function sse(frames: Array<{ event: string; data: unknown }>) {
+  return new Response(
+    frames.map((f) => `event: ${f.event}\ndata: ${JSON.stringify(f.data)}\n\n`).join(""),
+    {
+      status: 200,
+      headers: { "Content-Type": "text/event-stream; charset=utf-8" },
+    },
+  );
 }
 
 function mockApi(handlers: Record<string, Handler>, signedIn: Profile | null) {
@@ -169,6 +153,7 @@ function mockApi(handlers: Record<string, Handler>, signedIn: Profile | null) {
         return json({ error: { code: "not_found", message: "Not found" } }, 404);
       }
       const reply = await handler(body, url);
+      if (reply instanceof Response) return reply;
       if (reply === "unauth") {
         return json(
           { error: { code: "not_signed_in", message: "Not signed in" } },
@@ -452,7 +437,7 @@ describe("home, notes and conversations", () => {
           aiProvenance: {
             draftProvenance: "live_meta",
             generator: { provider: "meta", modelId: "meta-model" },
-            verification: { provenance: "live_anthropic", status: "released" },
+            verification: { provenance: "live_meta_verifier", status: "released" },
           },
         },
       ],
@@ -472,12 +457,623 @@ describe("home, notes and conversations", () => {
       await screen.findByText("Kedengarannya hari ini berat. Apa yang paling terasa?"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Sela · balasan AI \(Meta\) · diperiksa oleh Claude/),
+      screen.getByText(/Sela · balasan AI \(Meta\) · diperiksa oleh model Meta pemeriksa/),
     ).toBeInTheDocument();
     const send = calls.find((c) => c.path === "/conversations/room-1/turns");
     expect(send?.body).toMatchObject({
       text: "Aku merasa berat hari ini.",
       expectedVersion: 1,
+    });
+    // The stream route was attempted first and the JSON route is the fallback.
+    expect(calls.some((c) => c.path === "/conversations/room-1/turns/stream")).toBe(true);
+  });
+
+  it("renders validated stream chunks once and keeps the done room", async () => {
+    const user = profile();
+    const empty = {
+      id: "room-1",
+      save: false,
+      version: 1,
+      turns: [],
+      paused: false,
+      busy: false,
+      aiState: "not_requested",
+      holdExpiresIn: 1800,
+    };
+    const reply = "Kedengarannya hari ini berat.";
+    const answered = {
+      ...empty,
+      version: 3,
+      aiState: "ready",
+      turns: [
+        {
+          role: "user",
+          text: "Aku merasa berat hari ini.",
+          provenance: "user_original",
+          createdAt: "2026-10-27T10:00:00Z",
+        },
+        {
+          role: "assistant",
+          text: reply,
+          provenance: "live_meta",
+          reviewStatus: "unreviewed",
+          model: "meta-model",
+          createdAt: "2026-10-27T10:00:05Z",
+        },
+      ],
+    };
+    const calls = mockApi(
+      {
+        "GET /conversations/room-1": () => ({ data: empty }),
+        "POST /conversations/room-1/turns/stream": () =>
+          sse([
+            { event: "status", data: { state: "thinking" } },
+            { event: "chunk", data: { text: "Kedengarannya" } },
+            { event: "chunk", data: { text: " hari ini berat." } },
+            { event: "done", data: answered },
+          ]),
+      },
+      user,
+    );
+    renderPath("/talk/room-1");
+    const composer = await screen.findByLabelText("Tulis untuk Sela");
+    fireEvent.change(composer, { target: { value: "Aku merasa berat hari ini." } });
+    fireEvent.click(screen.getByRole("button", { name: "Kirim" }));
+    expect(await screen.findByText(reply)).toBeInTheDocument();
+    expect(screen.getAllByText(reply)).toHaveLength(1);
+    expect(calls.some((c) => c.path === "/conversations/room-1/turns/stream")).toBe(true);
+    expect(calls.some((c) => c.path === "/conversations/room-1/turns")).toBe(false);
+  });
+
+  it("warns before an unsaved hold expires and refreshes it", async () => {
+    const user = profile();
+    // Four minutes left: the component's threshold check runs on arrival.
+    const empty = {
+      id: "room-1",
+      save: false,
+      version: 1,
+      turns: [],
+      paused: false,
+      busy: false,
+      aiState: "not_requested",
+      holdExpiresIn: 240,
+    };
+    let firstRead = true;
+    const calls = mockApi(
+      {
+        "GET /conversations/room-1": () => {
+          // "Tetap buka" is a real GET: the server restarts the idle timer.
+          const data = firstRead ? empty : { ...empty, holdExpiresIn: 1800 };
+          firstRead = false;
+          return { data };
+        },
+      },
+      user,
+    );
+    renderPath("/talk/room-1");
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Percakapan akan segera dibuang",
+    });
+    expect(within(dialog).getByRole("button", { name: "Tetap buka" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Akhiri sekarang" })).toBeInTheDocument();
+
+    const reads = () =>
+      calls.filter((c) => c.method === "GET" && c.path === "/conversations/room-1").length;
+    const before = reads();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Tetap buka" }));
+    await waitFor(() => expect(reads()).toBeGreaterThan(before));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+
+  it("ends the room from the hold warning", async () => {
+    const user = profile();
+    const empty = {
+      id: "room-1",
+      save: false,
+      version: 1,
+      turns: [],
+      paused: false,
+      busy: false,
+      aiState: "not_requested",
+      holdExpiresIn: 240,
+    };
+    const calls = mockApi(
+      {
+        "GET /conversations/room-1": () => ({ data: empty }),
+        "DELETE /conversations/room-1": () => ({ data: { ended: true, saved: false } }),
+      },
+      user,
+    );
+    renderPath("/talk/room-1");
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Percakapan akan segera dibuang",
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Akhiri sekarang" }));
+    expect(
+      await screen.findByRole("heading", { name: "Percakapan selesai." }),
+    ).toBeInTheDocument();
+    expect(calls.some((c) => c.method === "DELETE" && c.path === "/conversations/room-1")).toBe(
+      true,
+    );
+  });
+
+  it("never warns for a saved room", async () => {
+    const user = profile();
+    const saved = {
+      id: "room-1",
+      save: true,
+      version: 1,
+      turns: [],
+      paused: false,
+      busy: false,
+      aiState: "not_requested",
+      holdExpiresIn: 240,
+    };
+    mockApi({ "GET /conversations/room-1": () => ({ data: saved }) }, user);
+    renderPath("/talk/room-1");
+    expect(await screen.findByLabelText("Tulis untuk Sela")).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+});
+
+describe("personal memory", () => {
+  it("opens a memory detail with its source and saves an edit", async () => {
+    const user = profile();
+    const memory = {
+      id: "mem-1",
+      kind: "memory",
+      title: "Konteks sintetis",
+      text: "Aku lebih tenang kalau ditanya dulu.",
+      version: 2,
+      provenance: "user_correction",
+      reviewStatus: "confirmed",
+      safety: "none",
+      sourceRefs: [{ recordId: "note-1", version: 2 }],
+      createdAt: "2026-10-27T09:00:00Z",
+      updatedAt: "2026-10-27T10:00:00Z",
+    };
+    const source = {
+      id: "note-1",
+      kind: "note",
+      title: "Catatan sumber sintetis",
+      text: "Sumber sintetis.",
+      version: 2,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt: "2026-10-27T09:00:00Z",
+      updatedAt: "2026-10-27T09:00:00Z",
+    };
+    const calls = mockApi(
+      {
+        "GET /memory": () => ({ data: { enabled: true, items: [memory] } }),
+        "GET /memory/mem-1": () => ({ data: memory }),
+        "GET /records/note-1": () => ({ data: source }),
+        "PATCH /memory/mem-1": (body) => ({
+          data: {
+            ...memory,
+            title: (body as Record<string, string>).title,
+            text: (body as Record<string, string>).text,
+            version: 3,
+            updatedAt: "2026-10-27T11:00:00Z",
+          },
+        }),
+      },
+      user,
+    );
+    renderPath("/notes/memory");
+    const link = await screen.findByRole("link", { name: /Konteks sintetis/ });
+    expect(link).toHaveAttribute("href", "/notes/memory/mem-1");
+    fireEvent.click(link);
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Konteks sintetis" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Dikonfirmasi")).toBeInTheDocument();
+    expect(screen.getByText("Koreksimu")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Catatan sumber sintetis" }),
+    ).toHaveAttribute("href", "/notes/note-1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Perbaiki" }));
+    fireEvent.change(screen.getByLabelText("Konteks pilihanmu"), {
+      target: { value: "Aku lebih tenang kalau ditanya dulu, pelan-pelan." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Simpan perbaikan" }));
+    await waitFor(() =>
+      expect(
+        calls.some((c) => c.method === "PATCH" && c.path === "/memory/mem-1"),
+      ).toBe(true),
+    );
+    expect(
+      await screen.findByText("Aku lebih tenang kalau ditanya dulu, pelan-pelan."),
+    ).toBeInTheDocument();
+    const patch = calls.find((c) => c.method === "PATCH" && c.path === "/memory/mem-1");
+    expect(patch?.body).toMatchObject({
+      title: "Konteks sintetis",
+      text: "Aku lebih tenang kalau ditanya dulu, pelan-pelan.",
+      storageGranted: true,
+      expectedVersion: 2,
+    });
+  });
+
+  it("requests a proposal from a saved conversation and reviews it", async () => {
+    const user = profile();
+    const createdAt = "2026-10-27T09:00:00Z";
+    const memory = {
+      id: "mem-1",
+      kind: "memory",
+      title: "Konteks sintetis",
+      text: "Aku lebih tenang kalau ditanya dulu.",
+      version: 1,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt,
+      updatedAt: createdAt,
+    };
+    const conversation = {
+      id: "conv-1",
+      kind: "conversation",
+      title: "Percakapan sintetis",
+      text: "",
+      version: 3,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt,
+      updatedAt: createdAt,
+      turns: [],
+    };
+    const proposal = {
+      id: "prop-1",
+      kind: "memory",
+      title: "",
+      text: "Kamu suka menulis di pagi hari.",
+      version: 1,
+      provenance: "unconfirmed_interpretation",
+      reviewStatus: "unreviewed",
+      safety: "none",
+      sourceRefs: [
+        {
+          recordId: "conv-1",
+          version: 3,
+          quote: "Aku suka menulis di pagi hari.",
+          turnKey: "turn-0",
+        },
+      ],
+      createdAt,
+      updatedAt: createdAt,
+    };
+    let items: Array<Record<string, unknown>> = [memory];
+    const calls = mockApi(
+      {
+        "GET /memory": () => ({ data: { enabled: true, items } }),
+        "GET /records": () => ({ data: { records: [conversation] } }),
+        "POST /memory/proposals": () => {
+          items = [proposal, ...items];
+          return { data: { proposals: [proposal], aiState: "released" } };
+        },
+        "PATCH /memory/prop-1/review": (body) => {
+          const action = (body as Record<string, string>).action;
+          const next = {
+            ...proposal,
+            reviewStatus:
+              action === "confirm"
+                ? "confirmed"
+                : action === "correct"
+                  ? "corrected"
+                  : "rejected",
+          };
+          items = items.map((r) => (r.id === "prop-1" ? next : r));
+          return { data: next };
+        },
+      },
+      user,
+    );
+    renderPath("/notes/memory");
+    fireEvent.click(await screen.findByRole("button", { name: "Minta usulan" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Buat usulan dari percakapan ini",
+      }),
+    );
+    expect(
+      await screen.findByText("Aku suka menulis di pagi hari."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Kamu suka menulis di pagi hari.").length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText("Tafsiran Sela")).toBeInTheDocument();
+    expect(screen.getAllByText("Belum ditinjau").length).toBeGreaterThan(0);
+    const request = calls.find(
+      (c) => c.method === "POST" && c.path === "/memory/proposals",
+    );
+    expect(request?.body).toMatchObject({
+      conversationId: "conv-1",
+      expectedVersion: 3,
+    });
+
+    expect(screen.getByRole("button", { name: "Ingat" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Jangan" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ubah dulu" }));
+    fireEvent.change(screen.getByLabelText("Kata-katamu"), {
+      target: { value: "Menulis di pagi hari membantumu." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Simpan koreksi" }));
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) => c.method === "PATCH" && c.path === "/memory/prop-1/review",
+        ),
+      ).toBe(true),
+    );
+    const patch = calls.find(
+      (c) => c.method === "PATCH" && c.path === "/memory/prop-1/review",
+    );
+    expect(patch?.body).toMatchObject({
+      expectedVersion: 1,
+      action: "correct",
+      text: "Menulis di pagi hari membantumu.",
+    });
+  });
+
+  it("shows a proposal's quote and review status on its detail and confirms it", async () => {
+    const user = profile();
+    const createdAt = "2026-10-27T09:00:00Z";
+    const proposal = {
+      id: "prop-1",
+      kind: "memory",
+      title: "",
+      text: "Kamu suka menulis di pagi hari.",
+      version: 1,
+      provenance: "unconfirmed_interpretation",
+      reviewStatus: "unreviewed",
+      safety: "none",
+      sourceRefs: [
+        {
+          recordId: "conv-1",
+          version: 3,
+          quote: "Aku suka menulis di pagi hari.",
+          turnKey: "turn-0",
+        },
+      ],
+      createdAt,
+      updatedAt: createdAt,
+    };
+    const conversation = {
+      id: "conv-1",
+      kind: "conversation",
+      title: "Percakapan sintetis",
+      text: "",
+      version: 3,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt,
+      updatedAt: createdAt,
+      turns: [],
+    };
+    const calls = mockApi(
+      {
+        "GET /memory": () => ({ data: { enabled: true, items: [proposal] } }),
+        "GET /memory/prop-1": () => ({ data: proposal }),
+        "GET /records/conv-1": () => ({ data: conversation }),
+        "PATCH /memory/prop-1/review": () => ({
+          data: { ...proposal, reviewStatus: "confirmed" },
+        }),
+      },
+      user,
+    );
+    renderPath("/notes/memory/prop-1");
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Kamu suka menulis di pagi hari.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Aku suka menulis di pagi hari.")).toBeInTheDocument();
+    expect(screen.getByText("Tafsiran Sela")).toBeInTheDocument();
+    expect(screen.getByText("Belum ditinjau")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Percakapan sintetis" }),
+    ).toHaveAttribute("href", "/talk?record=conv-1");
+    fireEvent.click(screen.getByRole("button", { name: "Konfirmasi" }));
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) => c.method === "PATCH" && c.path === "/memory/prop-1/review",
+        ),
+      ).toBe(true),
+    );
+    const patch = calls.find(
+      (c) => c.method === "PATCH" && c.path === "/memory/prop-1/review",
+    );
+    expect(patch?.body).toMatchObject({ expectedVersion: 1, action: "confirm" });
+    expect(await screen.findByText("Dikonfirmasi")).toBeInTheDocument();
+  });
+});
+
+describe("consultation follow-ups", () => {
+  const summary = {
+    id: "sum-1",
+    kind: "summary",
+    title: "Ringkasan sintetis",
+    text: "Kata-kata ringkasan sintetis.",
+    version: 1,
+    provenance: "manual",
+    reviewStatus: "confirmed",
+    safety: "none",
+    summaryState: "draft",
+    sourceRefs: [],
+    createdAt: "2026-10-27T09:00:00Z",
+    updatedAt: "2026-10-27T10:00:00Z",
+  };
+  const structured = {
+    id: "fu-1",
+    kind: "followup",
+    title: "Setelah konsultasi",
+    text: "Catatan bebas tambahan.",
+    version: 1,
+    provenance: "user_original",
+    reviewStatus: "confirmed",
+    safety: "none",
+    parentId: "sum-1",
+    sections: {
+      feeling: "Aku merasa didengar.",
+      remember: "Minum obat rutin.",
+      agreed: "Coba tidur lebih awal.",
+      askNext: "Apakah perlu kontrol lagi?",
+    },
+    createdAt: "2026-10-28T09:00:00Z",
+    updatedAt: "2026-10-28T09:00:00Z",
+  };
+  const legacy = {
+    id: "fu-2",
+    kind: "followup",
+    title: "Setelah konsultasi",
+    text: "Catatan lama tanpa bagian.",
+    version: 1,
+    provenance: "user_original",
+    reviewStatus: "confirmed",
+    safety: "none",
+    parentId: "sum-1",
+    createdAt: "2026-10-29T09:00:00Z",
+    updatedAt: "2026-10-29T09:00:00Z",
+  };
+  const baseHandlers = {
+    "GET /records": () => ({ data: { records: [] } }),
+    "GET /consultation-summaries/sum-1": () => ({ data: summary }),
+    "GET /consultation-summaries/sum-1/followups": () => ({
+      data: { followups: [structured, legacy] },
+    }),
+  };
+
+  it("renders saved sections and the legacy free text, then edits with a version", async () => {
+    const calls = mockApi(baseHandlers, profile());
+    renderPath("/support/summaries/sum-1");
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Setelah percakapan itu" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Siapkan ringkasan berikutnya" }),
+    ).toHaveAttribute("href", "/support/summaries/new");
+    const heading = screen.getAllByRole("heading", {
+      name: /Catatan setelah konsultasi/,
+    })[0]!;
+    const card = heading.closest("article")!;
+    expect(within(card).getByText("Yang aku rasakan")).toBeInTheDocument();
+    expect(within(card).getByText("Aku merasa didengar.")).toBeInTheDocument();
+    expect(within(card).getByText("Apakah perlu kontrol lagi?")).toBeInTheDocument();
+    expect(screen.getByText("Catatan lama tanpa bagian.")).toBeInTheDocument();
+
+    fireEvent.click(within(card).getByRole("button", { name: "Perbaiki" }));
+    const feeling = within(card).getByLabelText(/Yang aku rasakan/);
+    expect(feeling).toHaveValue("Aku merasa didengar.");
+    fireEvent.change(feeling, { target: { value: "Aku merasa lebih tenang." } });
+    fireEvent.click(within(card).getByRole("button", { name: "Simpan perbaikan" }));
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) =>
+            c.method === "PATCH" &&
+            c.path === "/consultation-summaries/sum-1/followups/fu-1",
+        ),
+      ).toBe(true),
+    );
+    const patch = calls.find(
+      (c) =>
+        c.method === "PATCH" &&
+        c.path === "/consultation-summaries/sum-1/followups/fu-1",
+    );
+    expect(patch?.body).toMatchObject({
+      title: "Setelah konsultasi",
+      text: "Catatan bebas tambahan.",
+      sections: {
+        feeling: "Aku merasa lebih tenang.",
+        remember: "Minum obat rutin.",
+        agreed: "Coba tidur lebih awal.",
+        askNext: "Apakah perlu kontrol lagi?",
+      },
+      storageGranted: true,
+      expectedVersion: 1,
+    });
+  });
+
+  it("keeps the standalone follow-up note read-only and points back to its summary", async () => {
+    const calls = mockApi(
+      { "GET /records/fu-1": () => ({ data: structured }) },
+      profile(),
+    );
+    renderPath("/notes/fu-1");
+    expect(await screen.findByText("Aku merasa didengar.")).toBeInTheDocument();
+    expect(screen.getByText("Yang ingin kuingat")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ubah" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Perbaiki di ringkasan" }),
+    ).toHaveAttribute("href", "/support/summaries/sum-1");
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+  });
+
+  it("creates a follow-up from the four sections and the optional free note", async () => {
+    const calls = mockApi(
+      {
+        ...baseHandlers,
+        "GET /consultation-summaries/sum-1/followups": () => ({
+          data: { followups: [] },
+        }),
+        "POST /consultation-summaries/sum-1/followups": () => ({
+          status: 201,
+          data: { ...structured },
+        }),
+      },
+      profile(),
+    );
+    renderPath("/support/summaries/sum-1");
+    const save = await screen.findByRole("button", { name: "Simpan tindak lanjut" });
+    expect(save).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Yang aku rasakan/), {
+      target: { value: "Aku merasa lebih tenang." },
+    });
+    fireEvent.change(screen.getByLabelText(/Yang ingin kuingat/), {
+      target: { value: "Minum obat setiap pagi." },
+    });
+    fireEvent.change(screen.getByLabelText(/Yang disepakati/), {
+      target: { value: "Coba tidur sebelum jam sebelas." },
+    });
+    fireEvent.change(screen.getByLabelText(/Yang ingin kutanyakan lain kali/), {
+      target: { value: "Apakah perlu kontrol bulan depan?" },
+    });
+    fireEvent.change(screen.getByLabelText(/Catatan bebas/), {
+      target: { value: "Aku ingin membawa ini ke sesi berikutnya." },
+    });
+    fireEvent.click(
+      screen.getByLabelText("Simpan catatan tindak lanjut ini"),
+    );
+    fireEvent.click(save);
+    await waitFor(() =>
+      expect(
+        calls.some(
+          (c) =>
+            c.method === "POST" &&
+            c.path === "/consultation-summaries/sum-1/followups",
+        ),
+      ).toBe(true),
+    );
+    const create = calls.find(
+      (c) =>
+        c.method === "POST" &&
+        c.path === "/consultation-summaries/sum-1/followups",
+    );
+    expect(create?.body).toMatchObject({
+      title: "Setelah konsultasi",
+      text: "Aku ingin membawa ini ke sesi berikutnya.",
+      sections: {
+        feeling: "Aku merasa lebih tenang.",
+        remember: "Minum obat setiap pagi.",
+        agreed: "Coba tidur sebelum jam sebelas.",
+        askNext: "Apakah perlu kontrol bulan depan?",
+      },
+      storageGranted: true,
     });
   });
 });
@@ -528,6 +1124,79 @@ describe("settings", () => {
     await waitFor(() =>
       expect(within(section).getAllByText(/Diizinkan/).length).toBeGreaterThan(0),
     );
+  });
+
+  it("keeps a private-name list and previews masking on the device", async () => {
+    const user = profile();
+    const calls = mockApi(
+      {
+        "GET /me/consents": () => ({ data: { consents } }),
+        "GET /me/sessions": () => ({ data: { sessions: [] } }),
+        "GET /me/audit": () => ({ data: { events: [], nextCursor: null } }),
+        "GET /me/consents/history": () => ({ data: { events: [] } }),
+        "GET /me/private-names": () => ({
+          data: { names: [{ id: "n1", name: "Raka", createdAt: "2026-11-01T00:00:00Z" }] },
+        }),
+        "POST /me/private-names": (body) => {
+          const name = (body as { name: string }).name;
+          if (name.toLowerCase() === "raka") return { status: 409, error: "name_taken" };
+          return {
+            status: 201,
+            data: { id: "n2", name, createdAt: "2026-11-01T00:00:00Z" },
+          };
+        },
+        "DELETE /me/private-names/n1": () => ({ data: { deleted: true } }),
+      },
+      user,
+    );
+    renderPath("/settings/privacy");
+    const heading = await screen.findByRole("heading", { name: "Nama yang disamarkan" });
+    const section = heading.closest("section")!;
+    expect(await within(section).findByText("Raka")).toBeInTheDocument();
+    // The preview is built from the saved name and stays in the browser.
+    expect(within(section).getByText("Aku cerita ke Raka kemarin.")).toBeInTheDocument();
+    expect(within(section).getByText(/\[NAMA-1\]/)).toBeInTheDocument();
+
+    // A case-insensitive duplicate shows the stable code's message.
+    fireEvent.change(within(section).getByLabelText("Tambah nama"), {
+      target: { value: "raka" },
+    });
+    fireEvent.click(within(section).getByRole("button", { name: "Tambah ke daftar" }));
+    expect(
+      await within(section).findByText("Nama ini sudah ada di daftarmu."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(within(section).getByLabelText("Tambah nama"), {
+      target: { value: "Dewi" },
+    });
+    fireEvent.click(within(section).getByRole("button", { name: "Tambah ke daftar" }));
+    expect(await within(section).findByText("Dewi")).toBeInTheDocument();
+    expect(
+      await within(section).findByText("Aku cerita ke Dewi kemarin."),
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(section).getByRole("button", { name: "Hapus Raka" }));
+    fireEvent.click(await within(section).findByRole("button", { name: "Hapus nama" }));
+    await waitFor(() => expect(within(section).queryByText("Raka")).not.toBeInTheDocument());
+    expect(
+      calls.some((c) => c.method === "DELETE" && c.path === "/me/private-names/n1"),
+    ).toBe(true);
+    // Only the name list itself was written; the sample text never left.
+    expect(
+      calls.filter(
+        (c) => c.method !== "GET" && !c.path.startsWith("/me/private-names"),
+      ),
+    ).toEqual([]);
+    const posts = calls.filter(
+      (c) => c.method === "POST" && c.path === "/me/private-names",
+    );
+    expect(posts.map((c) => c.body)).toEqual([{ name: "raka" }, { name: "Dewi" }]);
+    const results = await axe.run(section, {
+      rules: { "color-contrast": { enabled: false } },
+    });
+    expect(
+      results.violations.filter((v) => ["serious", "critical"].includes(v.impact ?? "")),
+    ).toEqual([]);
   });
 
   it("applies and persists a text size preference at once", async () => {

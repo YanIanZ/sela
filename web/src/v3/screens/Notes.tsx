@@ -10,7 +10,12 @@ import {
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon, MoodFace } from "../icons";
-import { MemoryPage, entryRoute } from "./Continuity";
+import {
+  FollowupSectionsView,
+  MemoryDetailPage,
+  MemoryPage,
+  entryRoute,
+} from "./Continuity";
 import { WeeklyPage } from "./Weekly";
 import { helpData } from "../helpdata";
 import {
@@ -84,6 +89,9 @@ export function NotesPage({ user, path }: { user: Profile; path: string }) {
   if (path === "/notes/patterns") return <Patterns />;
   if (path === "/notes/weekly") return <WeeklyPage />;
   if (path === "/notes/memory") return <MemoryPage />;
+  if (path.startsWith("/notes/memory/")) {
+    return <MemoryDetailPage key={path} id={path.slice("/notes/memory/".length)} />;
+  }
   const id = path.startsWith("/notes/") ? path.slice("/notes/".length) : "";
   if (id) return <EntryDetail id={id} />;
   return <Timeline user={user} />;
@@ -689,6 +697,7 @@ function EntryDetail({ id }: { id: string }) {
   }
 
   const isCheckin = record.kind === "checkin";
+  const isFollowup = record.kind === "followup";
   const tagsList = (record.tags ?? []).map((t) => {
     const found = tags.find((x) => x.value === t);
     return found ? w(found.id, found.en) : t;
@@ -760,16 +769,26 @@ function EntryDetail({ id }: { id: string }) {
               </Button>
             </div>
           </div>
+        ) : isFollowup ? (
+          <FollowupSectionsView record={record} />
         ) : (
           <p className="s-preserve s-reading-body">{record.text}</p>
         )}
         {record.safety === "crisis" && <CrisisAfterSave />}
       </article>
       <div className="s-actions">
-        {!isCheckin && !editing && (
+        {!isCheckin && !isFollowup && !editing && (
           <Button variant="secondary" onClick={() => setEditing(true)}>
             {w("Ubah", "Edit")}
           </Button>
+        )}
+        {isFollowup && record.parentId && (
+          <LinkButton
+            to={`/support/summaries/${record.parentId}`}
+            variant="secondary"
+          >
+            {w("Perbaiki di ringkasan", "Edit in the summary")}
+          </LinkButton>
         )}
         {!isCheckin && (
           <Button variant="quiet" onClick={() => void loadVersions()}>

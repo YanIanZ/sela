@@ -5,6 +5,11 @@
 .c-consent, .c-editor { display: grid; gap: 1.25rem; padding: 1.5rem; border-radius: var(--radius-4); background: var(--c-surface); }
 .c-records { display: grid; gap: 1.5rem; }
 .c-memory-item { padding-block: 1.5rem; border-top: 1px solid var(--c-border-subtle); display: grid; gap: 0.75rem; }
+.c-memory-proposals { display: grid; gap: 1.25rem; padding-top: 1.5rem; border-top: 1px solid var(--c-border-subtle); }
+.c-memory-proposals .c-state-row { border-top: 0; padding-top: 0; }
+.c-memory-proposals .c-state-row h2 { margin-bottom: 0.5rem; }
+.c-memory-quote { margin: 0; padding-left: 1rem; border-left: 4px solid var(--c-border-control); }
+.c-memory-quote p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .c-original { white-space: pre-wrap; overflow-wrap: anywhere; line-height: var(--line-height-body); }
 .c-document-list { display: grid; }
 .s-shell .c-document-link { display: flex; gap: 1rem; justify-content: space-between; align-items: center; padding: 1.5rem 0; border-top: 1px solid var(--c-border-subtle); color: var(--c-text); text-decoration: none; }
@@ -20,7 +25,14 @@
 .c-paper { padding: 1.75rem; border-radius: var(--radius-4); background: var(--c-surface); display: grid; gap: 1.5rem; }
 .c-source-references, .c-approval, .c-export, .c-followups { display: grid; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--c-border-subtle); }
 .c-followups form { display: grid; gap: 1rem; }
-.c-followup { display: grid; gap: 0.75rem; padding-block: 1rem; border-bottom: 1px solid var(--c-border-subtle); }
+.c-section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+.c-followup { display: grid; gap: 0.75rem; padding-block: 1rem; border-bottom: 1px solid var(--c-border-subtle); min-width: 0; }
+.c-followup-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem 1rem; }
+.c-followup-head h3 { font-size: var(--font-size-3); margin: 0; }
+.c-followup-sections { display: grid; gap: 1rem; min-width: 0; }
+.c-followup-sections h4 { margin-bottom: 0.35rem; }
+.c-followup-fields { margin-bottom: 0; }
+.c-followup-fields > .s-hint { margin-bottom: 1rem; }
 .c-week-nav { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
 .c-week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); list-style: none; padding: 0 !important; gap: 0.5rem; margin-bottom: 2.5rem !important; }
 .c-week-strip li { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 1rem 0.5rem; border-radius: var(--radius-3); background: var(--c-surface); color: var(--c-muted); text-align: center; }
@@ -43,7 +55,14 @@
 .c-reading { max-width: none; }
 .c-reading-intro { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 3rem; align-items: end; margin-bottom: 2.5rem; }
 .c-reading-source { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1.5rem; align-items: center; padding-block: 1.75rem; border-top: 1px solid var(--c-border-subtle); }
-.c-reading-source h2 { font-size: var(--font-size-5); margin-bottom: 0.5rem; }
+.c-reading-source h2, .c-reading-source h3 { font-size: var(--font-size-5); margin-bottom: 0.5rem; }
+.c-reading-detail { max-width: 68ch; }
+.c-reading-section { margin-top: 2rem; }
+.c-reading-section h2 { font-size: var(--font-size-5); margin-bottom: 0.75rem; }
+.c-reading-section ol, .c-reading-section ul { display: grid; gap: 0.75rem; padding-left: 1.35rem; }
+.c-reading-meta { display: grid; gap: 0.75rem; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--c-border-subtle); }
+.c-reading-meta h2 { font-size: var(--font-size-5); }
+.c-reading-meta ul { display: grid; gap: 0.5rem; padding-left: 1.35rem; }
 .c-editorial-status { max-width: 65ch; padding-top: 2rem; margin-top: 2rem; border-top: 1px solid var(--c-border-subtle); display: grid; gap: 1rem; justify-items: start; }
 @media(max-width: 48em) {
  .c-summary-grid, .c-week-content, .c-support-intro, .c-support-paths, .c-reading-intro { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }

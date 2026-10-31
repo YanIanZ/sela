@@ -1,0 +1,93 @@
+# DeepSeek-V4.1-Flash-1017 as opt-in Sela generation fallback
+
+> **2026-10-31 — superseded in part by [D-065](../decisions/DECISION_LOG.md#d-065):** the Claude verifier and the DeepSeek fallback are removed. One *different Meta model* (`muse-wonder-1.0` by default) verifies under the existing `ai_processing` consent, and there is no fallback generator or second verifier. Where this document names Anthropic/Claude, DeepSeek, `live_anthropic`, `live_deepseek_*` or `ai_provider_*` consents as current behaviour, D-065 governs; the routing, consent, minimisation, guard, provenance and "no unverified release" guarantees continue with the Meta verifier.
+**Adopted direction on 26 October 2026; implementation status: isolated Go prototype only.** The deployed Sela v2 Go API and Meta/Muse Spark integration do not exist yet. See [SPEC.md](../../SPEC.md) C13, I.fallback, V19–V21 and prototype (removed after commit e1bf7fc). No live DeepSeek call is demonstrated in this repository.
+
+## Provider/model facts, verified against official DeepSeek docs on 26 Oct 2026
+
+- Product/checkpoint **DeepSeek-V4.1-Flash-1017**, announced **17 October 2026**.
+- On the **DeepSeek official API**, use model ID **deepseek-flash**, not the full checkpoint name.
+- OpenAI-compatible chat completion URL **https://api.deepseek.com/chat/completions**.
+- Supported JSON mode request: response_format: {"type":"json_object"}, and include "JSON" plus desired object example in the system prompt.
+- For short, source-linked extraction, request thinking: {"type":"disabled"} (thinking is enabled by default). Keep max_tokens bounded. Do not forward internal reasoning.
+- Provider adapter uses **DEEPSEEK_API_KEY** stored only on a Go server. Not the same as Modal's $100 credits; DeepSeek is billed separately.
+- The alias is a **moving alias** and the checkpoint behind it can be updated later; save the observed model/version and provider date, do not claim the exact checkpoint will always be served.
+
+Primary documentation:
+- https://api-docs.deepseek.com/updates/
+- https://api-docs.deepseek.com/quick_start/pricing/
+- https://api-docs.deepseek.com/api/create-chat-completion/
+- https://api-docs.deepseek.com/guides/json_mode/
+- https://api-docs.deepseek.com/guides/thinking_mode/
+
+## Architecture: primary generation, backup generation, separate review
+
+~~~mermaid
+flowchart TD
+    A[Versioned synthetic scenario and language] --> B{Deterministic crisis and consent gates}
+    B -->|blocked| X[No model call / manual or interruption]
+    B -->|approved Meta| C[Meta Muse Spark Open via Modal]
+    C -->|valid Meta draft| V[Go evidence and schema validators]
+    C -->|eligible provider outage| D{Separate DeepSeek opt-in and consent?}
+    D -->|no| U[Unavailable + manual source-backed path]
+    D -->|yes| E[DeepSeek Flash 1017 official API]
+    E -->|structured synthetic draft| V
+    E -->|unavailable or rejected| U
+    V -->|valid| F[Clearly labeled generation provenance]
+    V -->|invalid| U
+    F --> G{Separate Anthropic verification consent?}
+    G -->|yes| H[Claude Sonnet 5.5 source fidelity review]
+    G -->|no| I[User reviews source-linked note]
+    H --> I
+    I --> J[User version approval then separate share consent]
+~~~
+
+**Meta remains the primary AI and must provide actual live Meta demonstration for the competition.** DeepSeek is an optional resilience mechanism, **not** a co-equal default router, not an undisclosed substitution for Meta, and never counted as "Meta AI Tooling." Claude remains **review-only**, not a fallback generator. A Meta-only mode and explicit no-model/manual mode remain available.
+
+## When fallback is allowed and disallowed
+
+Only attempt DeepSeek after an **eligible provider-availability failure** from Meta (e.g., timeout, transient 5xx, a documented 429, or a temporary upstream access outage), with Go checking:
+1. The scenario is explicitly synthetic and versioned; never real patient text or unlicensed full research material.
+2. Deterministic crisis gate is clear before any provider call; no provider determines crisis urgency.
+3. Meta processing consent exists and a separate DeepSeek-provider processing consent was explicitly granted by user.
+4. Fallback is **enabled for this session**, not globally switched on by silent environment fallback.
+5. Call is bounded and made server-to-server with an isolated per-provider key, quota and timeout.
+6. On completion, the Go session/brief version and both provider consents must be checked again; a stale result must be discarded.
+
+**Never fallback for:** dangerous/unsupported AI claims, hallucination detected by local validators, a crisis path, missing consent, invalid source or fixture ID, policy/clinical restriction, explicit refusal, user cancellation, or an exception that is not clearly transient/availability-related. These require honest unavailable/manual human review. **Fallback cannot "wash" bad output through a second model.**
+
+The standalone prototype implements basic input, opted-in routing, source-ID structure checks, HTTP limits and request/response format, but **not** production-grade semantic grounding, atomic session state, cancellation racing against revoke, rate-limit budgets or live Meta-to-DeepSeek integration. Those remain mandatory tasks for the Go v2 runtime.
+
+## Provenance and bilingual interface
+
+On each generation show one of:
+- live_meta: "Disusun oleh Meta Muse Spark" / "Generated by Meta Muse Spark".
+- live_deepseek_fallback: "Meta tidak tersedia; draf ini dibuat DeepSeek Flash 1017" / "Meta was unavailable; this draft was generated by DeepSeek Flash 1017".
+- manual: "Catatan manual" / "Manual note".
+- recorded_demo: "Rekaman demonstrasi, bukan panggilan AI langsung" / "Recorded demo, not a live model call".
+- unavailable: "Belum dapat dibuat dengan AI. Lanjutkan secara manual" / "AI drafting unavailable; continue manually".
+
+Separate verification display: "Diperiksa Claude" / "Reviewed by Claude" only if a real verifier review was performed, **never "clinically verified."** Any user-visible preview must preserve source quotes/negations, exact version, synthetic flag, and recipient-level consent, irrespective of provider.
+
+Proposed API: current `POST /api/v2/brief/draft` still starts Meta first, with fallback mode/config read from owned session; add `PUT /api/v2/fallback-consent` to enable/withdraw DeepSeek consent independently. Do not allow users to supply an arbitrary provider model URL or raw prompt. Use stable fallback states and no new sharing authorization from fallback or verifier reports.
+
+## Validation matrix
+
+- Meta success: DeepSeek never called even if opted in.
+- Meta unavailable with opt-in: one DeepSeek call; response clearly attributed live_deepseek_fallback.
+- Meta unavailable with no consent/disabled: zero DeepSeek calls; manual route.
+- Meta unsafe output, malformed claims, invalid source IDs: **zero** fallback calls; honest failure.
+- Crisis fixture/real input/withdrawn Meta consent: **zero** provider calls.
+- Context cancellation: no fallback.
+- DeepSeek 401/403 malformed response, empty JSON, unrelated evidence or refusal: never a successful generation.
+- Stale session, expired brief, revoked consent during inference: zero persisted output and no handoff.
+- ID/EN and code-switching, negation, uncertainty and temporal qualifier tests use held-out human-labeled synthetic examples.
+- Track Meta uptime, fallback use rate, relative task success, error rate, cost and latency separately; synthetic usability tasks do not establish clinical efficacy.
+
+## Judging/release decision
+
+The Meta competition explicitly values use of Meta's tooling. The official public event description does not grant blanket approval of any external model contribution to judged submissions. Check final rules/organizer before relying on DeepSeek in the submitted demo. Default fallback **OFF** in competition configuration. If demonstrated, disclose provider switching and present evidence of the main Meta pipeline working independently. Do not describe a fallback result as Meta generation or imply Modal hackathon credits cover DeepSeek.
+
+## Governance
+
+Preserve legacy Dengar.in/AMD authorship and archive, and do not resurrect the inherited v1 DeepSeek orchestrator. The new Go module stands alone pending verified v2 migration. This file records future integration requirements, not a claim of completed deployment.

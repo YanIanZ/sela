@@ -55,7 +55,7 @@ Environments: the user's own phone browser (often a cheap Android on slow 3G, pr
 - 100-publication research register with a rolling five-year cutoff, title/abstract-screened (not appraised); the evidence map covers the full owner brief §9 topic list. Repository: `scripts/research/corpus_pipeline.py`.
 - Verified help resources from official sources, each with verification date and re-verify-by date. Teen entries need the same verification.
 - No real user data yet. No clinical-efficacy evidence. No real-world deployment evidence.
-- SPEC.md is the single source of truth; decisions D-026 to D-056 in `docs/DECISION_LOG.md`; architecture decisions in `docs/adr/`.
+- SPEC.md is the single source of truth; decisions D-026 to D-056 in `docs/decisions/DECISION_LOG.md`; architecture decisions in `docs/adr/`.
 
 ## Operator security and Redis — owner extension, 29 October 2026
 

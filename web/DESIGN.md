@@ -322,9 +322,9 @@ Light is the token set above. Dark (explicit or following the system) moves to a
 
 One content column, at most 80rem (`--content-max`) wide and centred: the header, the daily-tool row, notices, the demo note, the page and the footer all share its edges. Side padding (`--page-pad`) is 2.5rem from 75em, 1.5rem from 48em and the 1.125rem `gutter` on phones. Narrow pages (check-in, notes, settings) centre in that column. Reading measure is 38rem.
 
-Top bar (≥64em): sprout wordmark left, the dark place pill centred, Help + Quick exit + round Menu right; signed-in workspaces add one row of daily-tool pills beneath it that never wraps: it scrolls sideways and fades at the right edge when space runs out. Below 64em the places move into a floating ink pill at the bottom (min(28rem, 100% − 1.5rem) wide), which becomes a rounded block at ≤24em or at 130–150% text.
+Top bar (≥64em): sprout wordmark left, the dark place pill centred, Help + Quick exit + round Menu right; signed-in workspaces add one row of daily-tool pills beneath it that never wraps: it scrolls sideways and fades at the right edge when space runs out. Below 64em the places move into a floating ink pill at the bottom (min(28rem, 100% − 1.5rem) wide), which keeps one row of four places down to 320px (smaller captions at ≤24em) and becomes a rounded two-row block at 130–150% text on narrow phones.
 
-Each non-focused page opens on its place sheet, 2.5rem above the content. When the sheet is wider than 52rem its lead and actions sit beside the title (`1.15fr / 1fr`). On phones (<48em) the header shares the sheet's tint and the sheet runs edge to edge with only its lower corners rounded. Focused writing and listening rooms keep a small tinted back pill instead of a sheet. On phones the conversation room scrolls as a page and the composer stays pinned to the bottom of the screen (static at 130–150% text).
+Each non-focused page opens on its place sheet, 2.5rem above the content. When the sheet is wider than 52rem its lead and actions sit beside the title (`1.15fr / 1fr`). On phones (<48em) the header shares the sheet's tint and the sheet runs edge to edge with only its lower corners rounded. Focused writing and listening rooms keep a small tinted back pill instead of a sheet. At every width the conversation room scrolls as one page: your turns sit right in blush bubbles, Sela's left in leaf-green bubbles, an empty room offers three tap-to-start sentences, "What Sela noticed" folds into one line, and the composer (one rounded box with Send inside, growing with the text) stays pinned to the bottom of the screen; on short screens it scrolls with the page.
 
 Beranda (≥60em): sheet split `1fr / 1.05fr` (greeting and way in left; two activity cards right), then the six-face mood row (`0.8fr / 1.6fr`), then the page `1.5fr / 1fr` (continue + recent records left, more spaces right). Mood faces drop to three per row below 48em; activity cards stack at ≤24em and reflow at 130–150% text. Nothing scrolls horizontally at 320px.
 
@@ -335,6 +335,10 @@ Spacing follows the `space-1`…`space-8` steps; section groups sit 2.5rem apart
 Mostly flat. Depth comes from the tint of the sheet against the near-white page and from white cards on the page. Soft shadows are reserved for things that float or invite a press: `shadow-1` on the navigation pill, white circular icon buttons, back pill, composer and menu button; `shadow-2` on the floating phone navigation, menus, dialogs and activity-card hover; a small ink lift under primary buttons. High contrast removes all of them.
 
 **The Float Rule.** A shadow means "this floats or responds to your touch". Static cards and lists get a hairline border, never a shadow.
+
+## Motion
+
+Calm and short: things settle into place with a small rise and fade (about 300–420ms, ease-out), never bounce or loop for attention. The place sheet settles first and the page follows a beat later; on phones the sheet's tint stays put and only its contents rise. Lists, cards, mood faces and the room's starter sentences arrive one after another (50ms apart). Sela's new reply and your sending bubble rise from their own side; streamed replies are not re-animated. Dialogs rise with a fading backdrop; the current place's icon gives one small nod. Every duration is scaled by `--motion` (`web/src/v3/motion.css`), which drops to 0 under reduced motion (system setting or the Display preference). Animations never leave a transform behind.
 
 ## Shapes
 
