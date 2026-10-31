@@ -360,9 +360,11 @@
   :root[data-text-scale="130"] .s-shell-inner,
   :root[data-text-scale="150"] .s-shell-inner { padding-bottom: calc(max(10rem, var(--bottom-bar-h, 0px)) + var(--top-bar-h, 0px) + env(safe-area-inset-bottom)); }
 }
+/* The smallest phones keep one row of four places; labels shrink instead. */
 @media (max-width: 23.99em) {
-  .s-shell .s-place-nav { border-radius: var(--radius-4); }
-  .s-shell-inner { padding-bottom: calc(max(9.75rem, var(--bottom-bar-h, 0px)) + var(--top-bar-h, 0px) + env(safe-area-inset-bottom)); }
+  .s-shell .s-place-nav { width: calc(100% - 1rem); padding: 0.3rem; }
+  .s-shell .s-place-nav ul { gap: 0.15rem; }
+  .s-shell .s-place-nav a { min-height: 3.25rem; padding-inline: 0.1rem; font-size: 0.6875rem; }
 }
 @media (max-width: 74.99em) {
   .s-shell .n-desktop-nav a { padding-inline: 0.75rem; }
@@ -492,7 +494,7 @@
   .s-shell .s-edition-inner p { flex-basis: 100%; }
   .s-shell .s-header-actions :is(.s-btn--help-quiet, .s-exit-wrap .s-btn) { padding-inline: 0.35rem; }
 }
-@media (max-width: 20.99em) {
+@media (max-width: 19.99em) {
   .s-shell .s-header-actions .s-btn--help-quiet { grid-column: 1 / -1; }
   .s-shell .s-header-actions .s-exit-wrap { grid-row: 3; grid-column: 1 / -1; }
 }
@@ -542,26 +544,3 @@
 .s-shell .s-shelf-bar :is(.s-workspace-context, .s-rail-label) { display: none; }
 /* Text-style actions keep their text on the row's edge even when the row wraps. */
 .s-shell main :is(.s-actions, .s-page-actions, .c-support-intro > div, .s-onboard-actions) > .s-btn--quiet { padding-inline: 0.6rem; margin-inline-start: -0.6rem; }
-
-/* Room on phones: the transcript gives way so the composer and Send stay on screen. */
-.s-shell--room .s-room-layout > div > section { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
-@media (pointer: coarse) { .s-shell--room .s-composer .s-field > .s-hint { display: none; } }
-@media (max-width: 47.99em) {
-  .s-shell--room .s-room-empty { padding: 1rem 1.15rem; border-radius: var(--radius-3); }
-}
-/* Phones: the room is one stable viewport. The transcript scrolls, the
- * writing box and Send stay at the bottom, and the layout does not leave a
- * blank field below a short conversation. Text zoom switches back to a
- * scrolling page above, so the transcript never traps a large type size. */
-@media (max-width: 47.99em) {
-  :root:not([data-text-scale="130"]):not([data-text-scale="150"]) .s-shell--room .s-shell-inner { height: 100dvh; min-height: 0; overflow: hidden; }
-  :root:not([data-text-scale="130"]):not([data-text-scale="150"]) .s-shell--room .s-transcript { min-height: 6rem; }
-  .s-shell--room .s-composer { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
-  .s-shell--room .s-room-topline { row-gap: 0.25rem; }
-  .s-shell--room .s-room-topline .s-room-end { margin-left: auto; }
-}
-@media (max-width: 47.99em) {
-  .s-shell--room .s-composer .s-textarea { field-sizing: content; min-height: 3rem; height: auto; max-height: 9rem; }
-  .s-shell--room .s-composer .s-label { font-size: var(--font-size-1); }
-  .s-shell--room .s-composer { gap: 0.35rem; }
-}
