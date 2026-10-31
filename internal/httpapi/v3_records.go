@@ -53,6 +53,20 @@ func (s *Server) v3UpdateRecord(w http.ResponseWriter, r *http.Request, p accoun
 	}
 	writeData(w, 200, record)
 }
+
+// v3DerivedImpact answers the owner-only, content-free impact of deleting
+// one source record: which owned summaries pin it and how many shares each
+// carries. The source id arrives as a query parameter; unknown, malformed
+// and foreign ids are the same 404.
+func (s *Server) v3DerivedImpact(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	impact, err := s.opt.Accounts.DerivedImpact(r.Context(), p.UserID, r.URL.Query().Get("source"))
+	if err != nil {
+		s.v3Error(w, r, err)
+		return
+	}
+	writeData(w, http.StatusOK, impact)
+}
+
 func (s *Server) v3DeleteRecord(w http.ResponseWriter, r *http.Request, p account.Principal) {
 	var in struct {
 		ExpectedVersion int `json:"expectedVersion"`
@@ -60,9 +74,17 @@ func (s *Server) v3DeleteRecord(w http.ResponseWriter, r *http.Request, p accoun
 	if !decode(w, r, &in) {
 		return
 	}
+	derived := r.URL.Query().Get("derived")
+	if derived == "" {
+		derived = account.DerivedKeep
+	}
+	if derived != account.DerivedKeep && derived != account.DerivedDelete {
+		writeError(w, r, http.StatusBadRequest, "invalid_input", "derived")
+		return
+	}
 	s.v3.listening.mu.Lock()
 	defer s.v3.listening.mu.Unlock()
-	if err := s.opt.Accounts.DeleteRecord(r.Context(), p.UserID, r.PathValue("id"), in.ExpectedVersion); err != nil {
+	if err := s.opt.Accounts.DeleteRecord(r.Context(), p.UserID, r.PathValue("id"), in.ExpectedVersion, derived); err != nil {
 		s.v3Error(w, r, err)
 		return
 	}

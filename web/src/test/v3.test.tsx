@@ -130,7 +130,7 @@ function sse(frames: Array<{ event: string; data: unknown }>) {
 }
 
 function mockApi(handlers: Record<string, Handler>, signedIn: Profile | null) {
-  const calls: Array<{ method: string; path: string; body: unknown }> = [];
+  const calls: Array<{ method: string; path: string; body: unknown; search: string }> = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
@@ -138,7 +138,7 @@ function mockApi(handlers: Record<string, Handler>, signedIn: Profile | null) {
       const method = (init.method ?? "GET").toUpperCase();
       const path = url.pathname.replace(/^\/api\/v3/, "");
       const body = typeof init.body === "string" ? JSON.parse(init.body) : undefined;
-      calls.push({ method, path, body });
+      calls.push({ method, path, body, search: url.search });
       if (path === "/policies") return json({ data: { policies } });
       if (path === "/auth/options") return json({ data: options });
       const handler = handlers[`${method} ${path}`];
@@ -403,6 +403,244 @@ describe("home, notes and conversations", () => {
       kind: "note",
       storageGranted: true,
     });
+  });
+
+  it("checks derived impact and keeps summaries by default", async () => {
+    const user = profile();
+    const note = {
+      id: "note-1",
+      kind: "note",
+      title: "Catatan sumber sintetis",
+      text: "Isi catatan sumber sintetis.",
+      version: 2,
+      provenance: "user_correction",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt: "2026-10-27T09:00:00Z",
+      updatedAt: "2026-10-27T10:00:00Z",
+    };
+    const impact = {
+      sourceId: "note-1",
+      summaries: [
+        {
+          id: "sum-1",
+          title: "Ringkasan sintetis",
+          version: 3,
+          approved: true,
+          shareCount: 2,
+        },
+      ],
+      totals: { summaries: 1, shares: 2 },
+    };
+    const calls = mockApi(
+      {
+        "GET /records": () => ({ data: { records: [note] } }),
+        "GET /records/note-1": () => ({ data: note }),
+        "GET /derived": (_body, url) => {
+          expect(url.searchParams.get("source")).toBe("note-1");
+          return { data: impact };
+        },
+        "DELETE /records/note-1": () => ({ data: { deleted: true } }),
+      },
+      user,
+    );
+    renderPath("/notes/note-1");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Hapus catatan" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Hapus catatan ini?",
+    });
+    expect(
+      await within(dialog).findByText("Catatan ini dipakai di 1 ringkasan."),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("2 tautan dibagikan dari ringkasan itu."),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("radio", { name: /Simpan ringkasan \(jadikan usang\)/ }),
+    ).toBeChecked();
+    expect(
+      within(dialog).getByRole("radio", { name: /Hapus juga ringkasan turunannya/ }),
+    ).not.toBeChecked();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Ya, hapus" }));
+    await waitFor(() => expect(window.location.pathname).toBe("/notes"));
+    const remove = calls.find(
+      (c) => c.method === "DELETE" && c.path === "/records/note-1",
+    );
+    expect(remove?.body).toMatchObject({ expectedVersion: 2 });
+    expect(remove?.search).toBe("?derived=keep");
+  });
+
+  it("shows the derived choice in English", async () => {
+    const user = profile({ locale: "en" });
+    const note = {
+      id: "note-1",
+      kind: "note",
+      title: "Synthetic source note",
+      text: "Synthetic source text.",
+      version: 1,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt: "2026-10-27T09:00:00Z",
+      updatedAt: "2026-10-27T10:00:00Z",
+    };
+    mockApi(
+      {
+        "GET /records": () => ({ data: { records: [note] } }),
+        "GET /records/note-1": () => ({ data: note }),
+        "GET /derived": () => ({
+          data: {
+            sourceId: "note-1",
+            summaries: [
+              {
+                id: "sum-1",
+                title: "Synthetic summary",
+                version: 1,
+                approved: true,
+                shareCount: 1,
+              },
+            ],
+            totals: { summaries: 1, shares: 1 },
+          },
+        }),
+      },
+      user,
+    );
+    renderPath("/notes/note-1", "en");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Delete note" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Delete this note?",
+    });
+    expect(
+      await within(dialog).findByText("This note is used in 1 summary."),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("1 link is shared from that summary."),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("radio", {
+        name: /Keep summaries \(mark them stale\)/,
+      }),
+    ).toBeChecked();
+    expect(
+      within(dialog).getByRole("radio", {
+        name: /Delete the derived summaries too/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("sends derived=delete when the owner removes derived summaries", async () => {
+    const user = profile();
+    const note = {
+      id: "note-1",
+      kind: "note",
+      title: "",
+      text: "Isi catatan sumber sintetis.",
+      version: 1,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt: "2026-10-27T09:00:00Z",
+      updatedAt: "2026-10-27T10:00:00Z",
+    };
+    const calls = mockApi(
+      {
+        "GET /records": () => ({ data: { records: [note] } }),
+        "GET /records/note-1": () => ({ data: note }),
+        "GET /derived": () => ({
+          data: {
+            sourceId: "note-1",
+            summaries: [
+              {
+                id: "sum-1",
+                title: "Ringkasan sintetis",
+                version: 1,
+                approved: false,
+                shareCount: 0,
+              },
+            ],
+            totals: { summaries: 1, shares: 0 },
+          },
+        }),
+        "DELETE /records/note-1": () => ({ data: { deleted: true } }),
+      },
+      user,
+    );
+    renderPath("/notes/note-1");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Hapus catatan" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Hapus catatan ini?",
+    });
+    const removeDerived = await within(dialog).findByRole("radio", {
+      name: /Hapus juga ringkasan turunannya/,
+    });
+    fireEvent.click(removeDerived);
+    expect(removeDerived).toBeChecked();
+    expect(
+      within(dialog).getByText(/Belum ada tautan yang dibagikan/),
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Ya, hapus" }));
+    await waitFor(() => expect(window.location.pathname).toBe("/notes"));
+    const remove = calls.find(
+      (c) => c.method === "DELETE" && c.path === "/records/note-1",
+    );
+    expect(remove?.search).toBe("?derived=delete");
+  });
+
+  it("keeps the plain confirmation when no summary uses the note", async () => {
+    const user = profile();
+    const note = {
+      id: "note-1",
+      kind: "note",
+      title: "",
+      text: "Isi catatan sintetis.",
+      version: 1,
+      provenance: "user_original",
+      reviewStatus: "confirmed",
+      safety: "none",
+      createdAt: "2026-10-27T09:00:00Z",
+      updatedAt: "2026-10-27T10:00:00Z",
+    };
+    const calls = mockApi(
+      {
+        "GET /records": () => ({ data: { records: [note] } }),
+        "GET /records/note-1": () => ({ data: note }),
+        "GET /derived": () => ({
+          data: {
+            sourceId: "note-1",
+            summaries: [],
+            totals: { summaries: 0, shares: 0 },
+          },
+        }),
+        "DELETE /records/note-1": () => ({ data: { deleted: true } }),
+      },
+      user,
+    );
+    renderPath("/notes/note-1");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Hapus catatan" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Hapus catatan ini?",
+    });
+    expect(
+      await within(dialog).findByText(
+        "Catatan ini tidak dipakai di ringkasan mana pun. Semua versinya ikut terhapus.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("alertdialog")).toHaveLength(1);
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Ya, hapus" }));
+    await waitFor(() => expect(window.location.pathname).toBe("/notes"));
+    const remove = calls.find(
+      (c) => c.method === "DELETE" && c.path === "/records/note-1",
+    );
+    expect(remove?.search).toBe("?derived=keep");
   });
 
   it("sends a message and names the generator on the released reply", async () => {

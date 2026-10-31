@@ -4,6 +4,7 @@ import { useI18n } from "../../i18n";
 import {
   api,
   localDay,
+  type DerivedImpact,
   type Entry,
   type Profile,
 } from "../api";
@@ -22,6 +23,7 @@ import {
   Button,
   CheckboxRow,
   ChoiceGroup,
+  Dialog,
   EmptyState,
   ErrorNotice,
   InlineConfirm,
@@ -604,6 +606,212 @@ function CheckIn() {
   );
 }
 
+function DerivedDelete({
+  record,
+  isCheckin,
+  label,
+  onDeleted,
+}: {
+  record: Entry;
+  isCheckin: boolean;
+  label: string;
+  onDeleted: () => void;
+}) {
+  const w = useWords();
+  const { announce } = useAnnounce();
+  const [open, setOpen] = useState(false);
+  const [impact, setImpact] = useState<DerivedImpact | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"keep" | "delete">("keep");
+  const [busy, setBusy] = useState(false);
+  const [reload, setReload] = useState(0);
+  const subjectID = isCheckin ? "Cek perasaan ini" : "Catatan ini";
+  const subjectEN = isCheckin ? "This check-in" : "This note";
+  const count = impact?.totals.summaries ?? 0;
+  const shares = impact?.totals.shares ?? 0;
+
+  // The impact route is read on open, before the owner chooses. A loading
+  // failure keeps the dialog open with a retry; nothing is deleted yet.
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    setMode("keep");
+    setImpact(null);
+    setError(null);
+    setBusy(false);
+    setLoading(true);
+    api<DerivedImpact>("/derived?source=" + encodeURIComponent(record.id))
+      .then((data) => {
+        if (live) setImpact(data);
+      })
+      .catch((e) => {
+        if (live) setError(e);
+      })
+      .finally(() => {
+        if (live) setLoading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [open, record.id, reload]);
+
+  const remove = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await api(
+        "/records/" + record.id + "?derived=" + mode,
+        { expectedVersion: record.version },
+        "DELETE",
+      );
+      announce("status", w("Entri dihapus.", "Entry deleted."));
+      setOpen(false);
+      onDeleted();
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const shareLine =
+    shares === 0
+      ? w(
+          "Belum ada tautan yang dibagikan dari ringkasan itu.",
+          "No links have been shared from those summaries.",
+        )
+      : w(
+          `${shares} tautan dibagikan dari ringkasan itu.`,
+          `${shares} ${shares === 1 ? "link is" : "links are"} shared from ${
+            count === 1 ? "that summary" : "those summaries"
+          }.`,
+        );
+  const deleteHint =
+    shares === 0
+      ? w(
+          "Ringkasan dan catatan tindak lanjutnya ikut terhapus. Tindakan ini tidak bisa dibatalkan.",
+          "The summaries and their follow-ups are deleted. This can't be undone.",
+        )
+      : w(
+          `Ringkasan, catatan tindak lanjut, dan ${shares} tautan yang dibagikan ikut terhapus. Tindakan ini tidak bisa dibatalkan.`,
+          `The summaries, their follow-ups and ${shares} shared ${
+            shares === 1 ? "link is" : "links are"
+          } deleted. This can't be undone.`,
+        );
+
+  return (
+    <>
+      <Button variant="danger" icon="trash" onClick={() => setOpen(true)}>
+        {label}
+      </Button>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={
+          isCheckin
+            ? w("Hapus cek perasaan ini?", "Delete this check-in?")
+            : w("Hapus catatan ini?", "Delete this note?")
+        }
+        alert
+      >
+        {loading && (
+          <Loading label={w("Memeriksa ringkasan turunan…", "Checking derived summaries…")} />
+        )}
+        {!loading && (
+          <ErrorNotice
+            error={error}
+            onRetry={impact === null ? () => setReload((n) => n + 1) : undefined}
+          />
+        )}
+        {impact && (
+          <>
+            {count === 0 ? (
+              <p>
+                {w(
+                  `${subjectID} tidak dipakai di ringkasan mana pun. Semua versinya ikut terhapus.`,
+                  `${subjectEN} isn't used in any summary. Every version is deleted with it.`,
+                )}
+              </p>
+            ) : (
+              <>
+                <p>
+                  {w(
+                    `${subjectID} dipakai di ${count} ringkasan.`,
+                    `${subjectEN} is used in ${count} ${
+                      count === 1 ? "summary" : "summaries"
+                    }.`,
+                  )}
+                </p>
+                <p className="s-hint">{shareLine}</p>
+                <ul className="s-small">
+                  {impact.summaries.map((s) => (
+                    <li key={s.id}>
+                      {s.title.trim() || w("Ringkasan tanpa judul", "Untitled summary")}
+                      {" · "}
+                      {w("versi ", "version ")}
+                      {s.version}
+                      {" · "}
+                      {s.shareCount} {s.shareCount === 1 ? w("tautan", "link") : w("tautan", "links")}
+                      {" · "}
+                      {s.approved ? w("disetujui", "approved") : w("draf", "draft")}
+                    </li>
+                  ))}
+                </ul>
+                <ChoiceGroup
+                  legend={w(
+                    "Apa yang terjadi pada ringkasan turunannya?",
+                    "What happens to the derived summaries?",
+                  )}
+                  name="derived-choice"
+                  value={mode}
+                  onChange={setMode}
+                  options={[
+                    {
+                      value: "keep",
+                      label: w(
+                        "Simpan ringkasan (jadikan usang)",
+                        "Keep summaries (mark them stale)",
+                      ),
+                      hint: w(
+                        "Ringkasan tetap ada, tetapi ditandai usang karena sumbernya hilang. Tautan yang sudah dibagikan tetap berlaku.",
+                        "Summaries stay but become stale because the source is gone. Links already shared keep working.",
+                      ),
+                    },
+                    {
+                      value: "delete",
+                      label: w(
+                        "Hapus juga ringkasan turunannya",
+                        "Delete the derived summaries too",
+                      ),
+                      hint: deleteHint,
+                    },
+                  ]}
+                />
+              </>
+            )}
+            <div className="s-actions">
+              <Button variant="danger" busy={busy} onClick={() => void remove()}>
+                {w("Ya, hapus", "Yes, delete")}
+              </Button>
+              <Button variant="quiet" onClick={() => setOpen(false)}>
+                {w("Batal", "Cancel")}
+              </Button>
+            </div>
+          </>
+        )}
+        {!impact && !loading && (
+          <div className="s-actions">
+            <Button variant="quiet" onClick={() => setOpen(false)}>
+              {w("Batal", "Cancel")}
+            </Button>
+          </div>
+        )}
+      </Dialog>
+    </>
+  );
+}
+
 function EntryDetail({ id }: { id: string }) {
   const w = useWords();
   const { lang } = useI18n();
@@ -800,17 +1008,22 @@ function EntryDetail({ id }: { id: string }) {
             {w("Cek perasaan lagi", "Check in again")}
           </LinkButton>
         )}
-        <InlineConfirm
-          label={isCheckin ? w("Hapus cek perasaan ini", "Delete this check-in") : w("Hapus catatan", "Delete note")}
-          question={
-            isCheckin
-              ? w("Hapus cek perasaan ini?", "Delete this check-in?")
-              : w("Hapus catatan ini? Semua versinya ikut terhapus.", "Delete this note? Every version goes with it.")
-          }
-          confirmLabel={w("Ya, hapus", "Yes, delete")}
-          onConfirm={() => void remove()}
-          busy={busy}
-        />
+        {isCheckin || record.kind === "note" ? (
+          <DerivedDelete
+            record={record}
+            isCheckin={isCheckin}
+            label={isCheckin ? w("Hapus cek perasaan ini", "Delete this check-in") : w("Hapus catatan", "Delete note")}
+            onDeleted={() => navigate("/notes")}
+          />
+        ) : (
+          <InlineConfirm
+            label={w("Hapus", "Delete")}
+            question={w("Hapus entri ini? Semua versinya ikut terhapus.", "Delete this entry? Every version goes with it.")}
+            confirmLabel={w("Ya, hapus", "Yes, delete")}
+            onConfirm={() => void remove()}
+            busy={busy}
+          />
+        )}
       </div>
       {!isCheckin && (
         <p className="s-hint" style={{ marginTop: "var(--space-3)" }}>
