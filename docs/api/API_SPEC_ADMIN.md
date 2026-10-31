@@ -1,6 +1,6 @@
 # Sela | Operator API v1
 
-**Status:** implemented locally (2026-10-30, branch `feat/admin-redis-foundation`); not verified live. The operator UI and directory/research workflows are not part of this slice.
+**Status:** implemented locally (2026-10-30, branch `feat/admin-redis-foundation`); reading review added locally 2026-11-01 on `feat/reading-operator`; not verified live. The operator UI covers the dashboard, staff, planned care and reading review; research review queues are not part of this slice.
 
 The operator console is a **separate trust domain**. It shares no cookie, session, table or authorization decision with the anonymous `/api/v3` product. Staff are provisioned out of band (`sela admin create`); there is no signup or invitation route in the API.
 
@@ -10,7 +10,7 @@ The operator console is a **separate trust domain**. It shares no cookie, sessio
 - Cookie: `__Host-sela_admin` (development over plain HTTP: `sela_admin`). `HttpOnly`, `SameSite=Strict`, `Secure` when `SELA_SECURE_COOKIES=true`. It never authorizes `/api/v3`.
 - Every mutation requires `X-Sela-Request: 1` and a same-origin `Origin`, as `/api/v3` does; failures are `403 cross_origin`.
 - JSON bodies, `Content-Type: application/json`, at most 16 KiB; otherwise `415 unsupported_media` / `413 too_large`.
-- Errors use the shared envelope `{"error":{"code","message","field?"}}`. Codes added by this surface: `admin_unavailable` 503, `admin_invalid_credentials` 401, `admin_throttled` 429, `admin_not_signed_in` 401, `admin_forbidden` 403, `admin_last_owner` 409, `directory_forbidden` 403, `directory_conflict` 409, `cache_disabled` 503.
+- Errors use the shared envelope `{"error":{"code","message","field?"}}`. Codes added by this surface: `admin_unavailable` 503, `admin_invalid_credentials` 401, `admin_throttled` 429, `admin_not_signed_in` 401, `admin_forbidden` 403, `admin_last_owner` 409, `directory_forbidden` 403, `directory_conflict` 409, `cache_disabled` 503, `confirmation_required` 400, `reading_content_changed` 409, `reading_not_approved` 409.
 - No response contains user text, a user id, a session token, a provider key or a Redis key dump.
 
 ## 2. Routes
@@ -30,6 +30,10 @@ The operator console is a **separate trust domain**. It shares no cookie, sessio
 | `POST /directory/{id}/reject` | `directory/verify` | Pending → rejected with a reason. |
 | `POST /directory/{id}/unpublish` | `directory/verify` | Verified/stale → unpublished. |
 | `GET /directory/audit` | `directory/write` or `directory/verify` | Recent directory/sandbox events, content-free. |
+| `GET /reading` | `research/review` or `safety-content/review` | Every embedded reading item (38) with its full detail/preview, `contentHash`, embedded review record, current or most recent operator `approval`, `hashMatches` and `published`. Reviewer names and notes are editorial metadata; no user data. |
+| `GET /reading/audit` | `research/review` or `safety-content/review` | Newest 50 reading review events: actor username when available, `reading.approve` or `reading.revoke`, slug, old/new state and reason. Content-free. |
+| `POST /reading/{slug}/approve` | `research/review` or `safety-content/review` | Body `{reviewerName, reviewedOn, note, verifierStatus:"supported", contentHash?, confirm:true}`. `confirm` must be literally true (`400 confirmation_required`); the verifier must be `supported`; the reviewer name is 1–160 characters and the date is a real `YYYY-MM-DD` not in the future. `contentHash` is optional but, when present, must equal the current embedded item hash (`409 reading_content_changed`); the stored hash is always the current one. Upserts the single current approval and records the operator id/time plus `reading.approve` in the same transaction. Never auto-approves. |
+| `POST /reading/{slug}/revoke` | `research/review` or `safety-content/review` | Body `{reason?}`. Ends publication at once; the public routes stop serving the slug. Idempotent for an already-revoked approval. A slug with no approval row answers `409 reading_not_approved`. Records `reading.revoke`. |
 | `GET /sandbox/requests` | `sandbox/write` | Fictional planned-support requests only. |
 | `POST /sandbox/requests` | `sandbox/write` | Create a labelled simulation request. |
 | `POST /sandbox/requests/{id}/transition` | `sandbox/write` | `prepared → pending → received → acknowledged → closed`, or revoked from any non-terminal state. Never calls a partner, sends email or books anything. |
@@ -50,7 +54,7 @@ The operator console is a **separate trust domain**. It shares no cookie, sessio
 | `safety_reviewer` | `ops/read`, `safety-content/review` |
 | `ops` | `ops/read`, `ops/cache/write` |
 
-Permissions are re-checked on the server for every route; hiding a button is never the control. `staff/manage` covers the read-only staff list and revocation; role editing and two-person approval are not implemented. `directory/*` covers the planned-care demo (creator ≠ reviewer for real entries); `research/*` and `safety-content/*` still have no route. `sandbox/write` is held by owner and ops and only changes labelled synthetic rows.
+Permissions are re-checked on the server for every route; hiding a button is never the control. `staff/manage` covers the read-only staff list and revocation; role editing and two-person approval are not implemented. `directory/*` covers the planned-care demo (creator ≠ reviewer for real entries); reading review is open to either `research/review` (research editor) or `safety-content/review` (safety reviewer), because the library includes mental-health support content. `sandbox/write` is held by owner and ops and only changes labelled synthetic rows.
 
 ## 4. Provisioning
 
@@ -73,6 +77,13 @@ Migration `0910_admin`:
 
 Migration `0700_care_directory`: `care_directory_entries` (sourced public metadata and editorial state), `care_sandbox_requests` (fictional, always `synthetic = true`) and `care_audit`. No table references a consumer user; `created_by`/`verified_by` are opaque staff uuid values. The public route returns only `verified` entries whose `reverifyAt` is current; synthetic rows appear only in development/test/demo and are labelled.
 
+Migration `0600_reading_reviews` (range 600–699):
+
+- `reading_reviews` — one row per slug: `reviewer_name`, `reviewed_on`, `note`, `verifier_status` (checked to `supported`), `content_hash` (checked 64 hex characters), `approved_by` operator uuid, `approved_at`, `revoked_at`, `version`. The hash is the SHA-256 of the exact raw JSON item object in the embedded content set, so any text or formatting change invalidates the approval.
+- `reading_review_audit` — append-only `reading.approve`/`reading.revoke` events with the actor uuid and the same shape as `care_audit`/`admin_audit`. `admin_audit` keeps a closed action check, so reading events live here and are read by `GET /reading/audit`; the two tables are not silently merged.
+
+`approved_by` and the audit actor are opaque uuids without a foreign key to `admin_users`: the reading range (0600) is applied before the operator range (0910), so a foreign key would make one migration range depend on another. `REVOKE ALL ... FROM PUBLIC` applies to both reading tables. They never reference or copy consumer records.
+
 ## 6. Deliberately absent
 
-Role editing, two-person approval for staff grants, real partner onboarding or booking, research/safety review queues, provider budget editing, WebAuthn/passkeys and IP allowlisting. The first UI slice at `/operator` consumes the routes above, including the staff list and guarded revocation; these remaining workflows are target design in [Admin Console](../vision/ADMIN_CONSOLE.md) and must not be inferred from the presence of a role name.
+Role editing, two-person approval for staff grants, real partner onboarding or booking, research/safety review queues, provider budget editing, WebAuthn/passkeys and IP allowlisting. The UI at `/operator` consumes the routes above (dashboard, staff, planned care and reading review); these remaining workflows are target design in [Admin Console](../vision/ADMIN_CONSOLE.md) and must not be inferred from the presence of a role name or of the reading reviewer permission.

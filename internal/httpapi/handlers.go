@@ -75,6 +75,7 @@ func (s *Server) routes() {
 	// Separate operator identity, audit, cache and planned-care controls.
 	s.adminRoutes()
 	s.adminCareRoutes()
+	s.adminReadingRoutes()
 
 	m.HandleFunc("/api/", s.apiFallback)
 	m.Handle("/", s.static())

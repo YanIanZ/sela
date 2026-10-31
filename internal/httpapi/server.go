@@ -30,6 +30,7 @@ import (
 	"github.com/YanIanZ/sela/internal/cache"
 	"github.com/YanIanZ/sela/internal/care"
 	"github.com/YanIanZ/sela/internal/journey"
+	"github.com/YanIanZ/sela/internal/reading"
 	"github.com/YanIanZ/sela/internal/research"
 )
 
@@ -83,6 +84,9 @@ type Options struct {
 	// Care is the public planned-care directory and synthetic sandbox. Nil
 	// disables those routes.
 	Care *care.Store
+	// ReadingReviews is the operator sign-off store for the embedded reading
+	// library. Nil keeps the public routes on the embedded-only gate.
+	ReadingReviews *reading.ReviewStore
 
 	// Accounts is the /api/v3 store. Nil (no database configured, a
 	// development setup) makes every /api/v3 route except the policies and

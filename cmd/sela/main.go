@@ -36,6 +36,7 @@ import (
 	"github.com/YanIanZ/sela/internal/httpapi"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/llm"
+	"github.com/YanIanZ/sela/internal/reading"
 	"github.com/YanIanZ/sela/internal/research"
 	"github.com/YanIanZ/sela/internal/store"
 )
@@ -100,6 +101,7 @@ func run() error {
 	var accounts *account.Store
 	var adminStore *admin.Store
 	var careStore *care.Store
+	var readingReviews *reading.ReviewStore
 	var budgetGate *budget.Gate
 	var dbStatus func(context.Context) (string, string)
 	if cfg.DatabaseURL != "" {
@@ -125,6 +127,10 @@ func run() error {
 			return fmt.Errorf("database: cannot read the password hash parameters (%s)", db.Classify(err))
 		}
 		careStore, err = care.New(pool, time.Now)
+		if err != nil {
+			return err
+		}
+		readingReviews, err = reading.NewReviewStore(pool, time.Now)
 		if err != nil {
 			return err
 		}
@@ -173,7 +179,8 @@ func run() error {
 		PublicOrigin: cfg.PublicOrigin, SecureCookies: cfg.SecureCookies, TrustProxy: cfg.TrustProxy,
 		WebDir: cfg.WebDir, Research: index, Logger: logger, Version: version, MetricsToken: cfg.MetricsToken,
 		Cache: pubCache, Admin: adminStore, Budget: budgetGate, Care: careStore,
-		AIRouter: aiRouter, Accounts: accounts, AccountConfig: acctCfg, Database: dbStatus, DatabaseRequired: cfg.RequiresDatabase(),
+		ReadingReviews: readingReviews,
+		AIRouter:       aiRouter, Accounts: accounts, AccountConfig: acctCfg, Database: dbStatus, DatabaseRequired: cfg.RequiresDatabase(),
 		DisableV2Journey: cfg.Store != "memory", HSTS: cfg.Env == config.EnvProduction,
 	})
 

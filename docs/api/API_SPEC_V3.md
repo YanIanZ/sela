@@ -172,8 +172,8 @@ Reserved names for later milestones (not listed by `GET /me/consents` until acti
 | `GET /api/v2/ready` | **Unchanged path and existing fields**, plus additive fields `database` (`"ok"`, `"unavailable"` or `"not_configured"`) and `schema` (`"current"`, `"pending"`, `"mismatch"` or `"not_configured"`); `store` keeps describing the v2 journey store (`"memory"` or `"disabled"`). Answers `503` with `status: "not_ready"` only when the environment requires the database and it is unreachable or not current. |
 | `GET /api/v3/policies` | Current versioned policy texts: `{"policies": {"terms_privacy": {"version", "title": {"id","en"}, "body": [{"id","en"}, …]}, "guest_storage": …, "guardian_information": …}}`. Read bucket. |
 | `GET /api/v3/help-content` | Public reviewed content ported from v1: `{"selfHelpCards": [{"id","topics","title","summary","steps","why","seekHelpWhen","cautions","source","evidenceNote"}], "helpDestinations": [{"id","label","description","speakingTo","vocative","ask","checklist","sources","caveat","verifiedOn"}], "supportOptions": [{"id","category","name","summary","phone","whatsapp","website","hours","cost","limits","source","lastVerified"}]}`. Read bucket. The model may only choose card ids; card text never comes from a model. |
-| `GET /api/v3/reading` | Public reading library: `{"items": [{"id","version","kind","topics","audience","title":{"id","en"},"summary":{"id","en"},"readingTimeMinutes":{"id","en"},"sources":[…],"reviewedOn"}]}`. Only items that pass the runtime editorial gate appear; the rest are absent. No user data. Read bucket. |
-| `GET /api/v3/reading/{slug}` | One approved reading item: the list fields plus `steps`, `why`, `seekHelpWhen`, `cautions`, `sections`, `source` (`relation`, `locator`, `sources`), `licence`, `attribution`, `adaptationNotice`, `adaptationNote`, `evidenceNote` and `review` (`status`, `reviewedOn`, `verifier`). Unknown, unpublished or forged slugs answer `404 not_found`, deliberately indistinguishable. No reviewer name or user data. Read bucket. |
+| `GET /api/v3/reading` | Public reading library: `{"items": [{"id","version","kind","topics","audience","title":{"id","en"},"summary":{"id","en"},"readingTimeMinutes":{"id","en"},"sources":[…],"reviewedOn"}]}`. Only items that pass the runtime editorial gate appear: the embedded review is human-approved with all evidence, **or** a current operator approval (`0600_reading_reviews`) binds this exact item's SHA-256 content hash and records `verifier_status = supported`. A changed text makes the approval stale and the item absent. No user data. Read bucket. |
+| `GET /api/v3/reading/{slug}` | One published reading item: the list fields plus `steps`, `why`, `seekHelpWhen`, `cautions`, `sections`, `source` (`relation`, `locator`, `sources`), `licence`, `attribution`, `adaptationNotice`, `adaptationNote`, `evidenceNote` and `review` (`status`, `reviewedOn`, `verifier`). Unknown, unpublished, stale-approval, revoked or forged slugs answer `404 not_found`, deliberately indistinguishable. No reviewer name or user data. Read bucket. |
 | `GET /api/v3/auth/options` | Rules the UI must show before asking: `{"username": {"minLength": 3, "maxLength": 32}, "password": {"minLength": 15, "maxLength": 256}, "recoveryCodes": {"count": 10, "groups": 4, "groupLength": 4}, "ageBands": {"allowed": ["18_plus"]}, "guest": {"available": true, "inactiveTtlHours": 168, "maxAgeDays": 30}, "sessions": {"idleHours": 2, "absoluteHours": 12, "trustedIdleDays": 7, "trustedAbsoluteDays": 30}, "guardianConsentRequired": true, "environment": "production", "synthetic": false}`. Read bucket. |
 
 Without a configured database (development only), every `/api/v3` route except the public routes in this section answers `503 store_unavailable`; so does every other route, with `Retry-After: 5`, while the configured database cannot be reached.
@@ -415,20 +415,39 @@ a reflection is saved only after permission as an ordinary encrypted note.
 
 Each entry carries `{id, kind, name, city, description, contactUrl, sourceUrl, sourcePublisher, sourceAccessedAt, status, synthetic, version, verifiedAt, reverifyAt, createdAt, updatedAt}`. There is no user id, appointment, availability, referral or contact action. In development, test and demo, clearly synthetic demo entries are included and marked `synthetic: true`; staging and production return only sourced real entries. A stale or unpublished entry is not returned. The page says that Sela does not contact a provider and does not claim a partnership.
 
-## 6.11 Reading library (2026-10-31)
+## 6.11 Reading library (2026-10-31; operator approval added 2026-11-01)
 
 `GET /api/v3/reading` and `GET /api/v3/reading/{slug}` are public and read
 the embedded content set at `data/content/reading` (the same files
 `tests/content/reading_validator.py` checks). The runtime gate is applied on
-every request, independently of the authoring validator: an item is served
-only when `review.status` is `human_approved`, `review.publishable` is true,
-`review.human_editor` is a non-blank name, `review.reviewed_on` is a real
-`YYYY-MM-DD` date and the authoring-time `review.verifier.status` is
-`supported`. Everything else is absent from the list and answers
-`404 not_found` on detail, so an unpublished, forged or unknown slug cannot
-be distinguished. The public response omits the reviewer's name, contacts,
-source-claim working data and every other internal field. The list is an
-empty `items` array until the first item passes the gate.
+every request, independently of the authoring validator. An item is published
+when **either** the embedded file already carries a complete human approval
+(`review.status = human_approved`, `review.publishable = true`, a non-blank
+`review.human_editor`, a real `YYYY-MM-DD` `review.reviewed_on` and
+`review.verifier.status = supported`) **or** a current row in the operator
+table `reading_reviews` (migration `0600_reading_reviews`) exists for the slug.
+That row must be unrevoked, record `verifier_status = supported`, and its
+`content_hash` must equal the SHA-256 of the exact raw JSON item object in the
+content set. The operator approval also supplies the public `reviewedOn` and
+`verifier`, and is reported as `review.status = human_approved`; the public
+response still omits the reviewer's name, note and operator id.
+
+An approval is bound to the item bytes, not to a slug alone: any text,
+version or formatting change to the item changes its hash, so the item is
+absent from the list and answers `404 not_found` on detail until a human
+re-approves the new text. The public handlers read the approval rows on every
+request (no approval cache), so `POST /api/admin/v1/reading/{slug}/revoke` stops
+publication immediately; a revoked row also vetoes an item whose embedded file
+still claims approval. If the approval store cannot be read, only the
+embedded-content gate applies: a database-backed approval is never served on
+trust. Forged or incomplete embedded approvals stay absent, as before.
+
+Operators use `GET /api/admin/v1/reading`, `POST /reading/{slug}/approve` and
+`POST /reading/{slug}/revoke` (API_SPEC_ADMIN §2). Approval requires an
+explicit `confirm: true`, a reviewer name and date, `verifierStatus:
+"supported"`, and the previewed `contentHash`; the server refuses a stale hash
+with `409 reading_content_changed`. It never auto-approves and does not change
+the content files.
 
 ## 6.12 Private names (2026-11-01 local implementation)
 
