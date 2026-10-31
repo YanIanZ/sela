@@ -103,6 +103,7 @@ func TestInvalidValues(t *testing.T) {
 		"env":          {"SELA_ENV": "prod"},
 		"profile":      {"SELA_AI_PROFILE": "all"},
 		"bands":        {"SELA_ALLOWED_AGE_BANDS": "under_15"},
+		"explicit 15":  {"SELA_ALLOWED_AGE_BANDS": "under_16"},
 		"timeout":      {"SELA_META_VERIFIER_TIMEOUT": "10m"},
 		"op":           {"SELA_LLM_OP_TIMEOUT": "1s"},
 		"op long":      {"SELA_LLM_OP_TIMEOUT": "16m"},

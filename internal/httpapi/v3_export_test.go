@@ -6,13 +6,15 @@ package httpapi
 type RouteInfo struct {
 	Method, Path     string
 	Mutation, Public bool
+	GuardianGate     bool
 }
 
 // V3RouteTable lists the routes the server registered.
 func V3RouteTable(s *Server) []RouteInfo {
 	out := make([]RouteInfo, 0, len(s.v3.routes))
 	for _, rt := range s.v3.routes {
-		out = append(out, RouteInfo{Method: rt.method, Path: rt.path, Mutation: rt.mutation, Public: rt.public})
+		out = append(out, RouteInfo{Method: rt.method, Path: rt.path, Mutation: rt.mutation, Public: rt.public,
+			GuardianGate: rt.guardianGate})
 	}
 	return out
 }

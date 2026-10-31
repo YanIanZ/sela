@@ -40,9 +40,13 @@ export const emptyDraft: OnboardingDraft = {
   codes: null,
 };
 
+// under_16 is sent only for a self-declared 15-year-old. It is input-only:
+// the server refuses it with age_not_supported and stores nothing, while
+// 15_17 remains the stored band for existing 16-17 records.
 function apiBand(value: string): string {
   if (value === "18_plus") return "18_plus";
-  if (value === "16_17" || value === "15") return "15_17";
+  if (value === "16_17") return "15_17";
+  if (value === "15") return "under_16";
   if (value === "unknown") return "unknown";
   return value;
 }
@@ -115,15 +119,15 @@ function AgeStep({
     }
     setError("");
     setDraft({ ...draft, ageBand: age });
+    const band = apiBand(age);
     if (age === "under_15") {
       navigate("/start/blocked?reason=under15");
       return;
     }
-    if (age === "15") {
+    if (band === "under_16") {
       navigate("/start/blocked?reason=age15");
       return;
     }
-    const band = apiBand(age);
     if (!allowed.includes(band)) {
       navigate("/start/blocked?reason=band");
       return;

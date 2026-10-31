@@ -86,6 +86,7 @@ func TestV3Register(t *testing.T) {
 		"username in password":     {map[string]any{"username": "baru.tiga", "password": "baru.tiga suka hujan"}, 400, "password_weak", "password"},
 		"old terms":                {map[string]any{"username": "baru.empat", "termsPolicyVersion": "terms-privacy-2020-01-01.1"}, 409, "policy_outdated", "termsPolicyVersion"},
 		"under 15":                 {map[string]any{"username": "baru.lima", "ageBand": "under_15"}, 403, "age_not_supported", "ageBand"},
+		"explicit 15":              {map[string]any{"username": "baru.lima.lima", "ageBand": "under_16"}, 403, "age_not_supported", "ageBand"},
 		"bad band":                 {map[string]any{"username": "baru.enam", "ageBand": "adult"}, 400, "invalid_input", "ageBand"},
 		"bad locale":               {map[string]any{"username": "baru.tujuh", "locale": "fr"}, 400, "invalid_input", "locale"},
 	} {
@@ -744,9 +745,11 @@ func TestV3GuestStart(t *testing.T) {
 			t.Errorf("%s: %d %s", name, r.status, r.raw)
 		}
 	}
-	if r := e.client().call("POST", "/api/v3/auth/guest", map[string]any{"locale": "id", "ageBand": "under_15", "termsPolicyVersion": policyVersion("terms_privacy"),
-		"guestNoticeVersion": policyVersion("guest_storage")}); r.status != 403 || r.code() != "age_not_supported" {
-		t.Fatalf("under 15: %d", r.status)
+	for _, band := range []string{"under_15", "under_16"} {
+		if r := e.client().call("POST", "/api/v3/auth/guest", map[string]any{"locale": "id", "ageBand": band, "termsPolicyVersion": policyVersion("terms_privacy"),
+			"guestNoticeVersion": policyVersion("guest_storage")}); r.status != 403 || r.code() != "age_not_supported" {
+			t.Fatalf("%s: %d", band, r.status)
+		}
 	}
 	// Live-guest capacity.
 	e2 := newV3(t, v3opt{mutateC: func(c *account.Config) { c.MaxGuests = 1 }})

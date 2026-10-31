@@ -200,7 +200,9 @@ var kekIDPattern = regexp.MustCompile(`^(dev|test|demo|staging|prod)-[a-z0-9-]{1
 // KEKPrefix is the KEK id prefix an environment requires.
 var KEKPrefix = map[string]string{EnvDevelopment: "dev", EnvTest: "test", EnvDemo: "demo", EnvStaging: "staging", EnvProduction: "prod"}
 
-// AllAgeBands are the bands that can be enabled.
+// AllAgeBands are the stored bands that can be enabled. under_15 and
+// under_16 are accepted as input only and always refused, so they are not
+// configurable here.
 var AllAgeBands = []string{"15_17", "18_plus", "unknown"}
 
 const day = 24 * time.Hour

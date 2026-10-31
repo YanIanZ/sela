@@ -17,12 +17,18 @@ import (
 	"github.com/YanIanZ/sela/internal/vault"
 )
 
-// Age bands. "under_15" is accepted as input only and always refused.
+// Age bands. "under_15" and "under_16" are accepted as input only and
+// always refused; neither is ever stored. "15_17" stays the stored band for
+// existing 16-17 records, so no legacy row is rewritten.
 const (
 	AgeBand15to17  = "15_17"
 	AgeBand18Plus  = "18_plus"
 	AgeBandUnknown = "unknown"
 	AgeBandUnder15 = "under_15"
+	// AgeBandUnder16 is the explicit self-declared 15 band. It is refused
+	// with age_not_supported before anything is stored, which lets the
+	// server distinguish a 15-year-old from a stored 16-17 record.
+	AgeBandUnder16 = "under_16"
 	KindGuest      = "guest"
 	KindAccount    = "account"
 	PolicyTerms    = "terms_privacy"
@@ -162,6 +168,7 @@ type OwnerStore interface {
 	SetConsent(ctx context.Context, owner UserID, current SessionID, purpose string, granted bool, policyVersion string) (ConsentView, bool, error)
 	ConsentHistory(ctx context.Context, owner UserID, purpose string, page Page) ([]ConsentEvent, string, error)
 	GuardianConsent(ctx context.Context, owner UserID) (GuardianView, error)
+	RequireGuardianConsent(ctx context.Context, owner UserID) error
 	SetGuardianConsent(ctx context.Context, owner UserID, current SessionID, in GuardianInput) (GuardianRecord, error)
 	WithdrawGuardianConsent(ctx context.Context, owner UserID, current SessionID) error
 	AuditEvents(ctx context.Context, owner UserID, current SessionID, page Page) ([]AuditEvent, string, error)

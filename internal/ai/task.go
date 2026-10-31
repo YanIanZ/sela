@@ -240,12 +240,17 @@ const (
 	Band18Plus  AgeBand = "18_plus"
 	Band15To17  AgeBand = "15_17"
 	BandUnknown AgeBand = "unknown"
+	// BandUnder16 is the explicit self-declared 15 band. It is accepted as
+	// input only, refused by the account store with age_not_supported and
+	// never stored. Even if it reaches this layer, Valid is false and every
+	// provider is refused before a call.
+	BandUnder16 AgeBand = "under_16"
 )
 
 // Adult reports whether the band is 18+ (unknown is treated as not 18+).
 func (b AgeBand) Adult() bool { return b == Band18Plus }
 
-// Valid reports whether b is a known band.
+// Valid reports whether b is a known storable band. Under-16 is not.
 func (b AgeBand) Valid() bool { return b == Band18Plus || b == Band15To17 || b == BandUnknown }
 
 // Audience returns the audience class sent to providers (never the age).
