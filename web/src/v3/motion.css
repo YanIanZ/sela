@@ -1,6 +1,7 @@
 /*
- * Motion: calm and short. Things settle into place (a small rise and fade),
- * never bounce or loop for attention. Every duration and delay is scaled by
+ * Motion: calm and short. Things settle into place (a small rise, never a
+ * fade on text, which would transiently lower contrast), never bounce or
+ * loop for attention. Every duration and delay is scaled by
  * --motion, which drops to 0 under reduced motion (system setting or the
  * Display preference), so nothing moves for people who asked for stillness.
  * Fill mode is `backwards` so no transform lingers after an animation ends
@@ -13,13 +14,13 @@
 }
 :root[data-motion="reduced"] { --motion: 0; }
 
-@keyframes s-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@keyframes s-rise-small { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes s-rise { from { transform: translateY(10px); } to { transform: none; } }
+@keyframes s-rise-small { from { transform: translateY(5px); } to { transform: none; } }
 @keyframes s-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes s-sheet-in { from { opacity: 0; transform: translateY(6px) scale(0.99); } to { opacity: 1; transform: none; } }
-@keyframes s-pop { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
-@keyframes s-bubble { from { opacity: 0; transform: translateY(8px) scale(0.96); } }
-@keyframes s-pill-in { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+@keyframes s-sheet-in { from { transform: translateY(6px) scale(0.99); } to { transform: none; } }
+@keyframes s-pop { from { transform: translateY(8px) scale(0.97); } to { transform: none; } }
+@keyframes s-bubble { from { transform: translateY(8px) scale(0.96); } }
+@keyframes s-pill-in { from { translate: 0 8px; } to { translate: 0 0; } }
 @keyframes s-nudge { 0% { transform: none; } 40% { transform: translateY(-3px) scale(1.08); } 100% { transform: none; } }
 @keyframes s-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 @keyframes s-sparkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.94); } }
