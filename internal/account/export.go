@@ -210,6 +210,13 @@ func foundationExporters() []Exporter {
 		exporterFunc{"guardianConsents", []string{"guardian_consents"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
 			return b.store.guardianRecords(ctx, tx, owner)
 		}},
+		// The owner's own export includes the names they marked private,
+		// decrypted, because the list is their data and this file is only
+		// ever delivered to them (after a recent password proof). The list
+		// is never part of a share or a recipient projection.
+		exporterFunc{"privateNames", []string{"private_names"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
+			return b.store.privateNames(ctx, tx, owner)
+		}},
 		exporterFunc{"sessions", []string{"sessions"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
 			rows, err := tx.Query(ctx, `SELECT id, kind, trusted_device, device_browser, device_os, created_at, last_seen_at,
 				idle_timeout_seconds, absolute_expires_at, revoked_at, revoke_reason FROM sessions WHERE user_id = $1 ORDER BY created_at DESC, id DESC`, owner)
@@ -345,6 +352,7 @@ var sectionTitles = map[string][2]string{
 	"consentHistory":   {"Riwayat persetujuan", "Consent history"},
 	"guardianConsents": {"Persetujuan orang tua atau wali", "Parent or guardian consent"},
 	"sessions":         {"Sesi masuk", "Sign-in sessions"},
+	"privateNames":     {"Nama yang disamarkan", "Names kept private"},
 	"audit":            {"Catatan aktivitas keamanan", "Security activity log"},
 }
 

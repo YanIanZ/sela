@@ -94,7 +94,8 @@ func Codes() []string {
 	all := []*Error{ErrInvalidInput, ErrNotFound, ErrNotSignedIn, ErrInvalidCredentials, ErrRecoveryFailed,
 		ErrCurrentPasswordIncorrect, ErrReauthRequired, ErrAccountRequired, ErrPasswordLoginDisabled, ErrAgeNotSupported,
 		ErrAgeBandNotEnabled, ErrNotGuest, ErrRequiredConsent, ErrUsernameInvalid, ErrUsernameTaken, ErrPasswordTooShort,
-		ErrPasswordTooLong, ErrPasswordWeak, ErrServerBusy, ErrPolicyOutdated, ErrStaleVersion, ErrInvalidTransition, ErrRateLimited, ErrShareInvalid}
+		ErrPasswordTooLong, ErrPasswordWeak, ErrServerBusy, ErrPolicyOutdated, ErrStaleVersion, ErrInvalidTransition, ErrRateLimited, ErrShareInvalid,
+		ErrNameTaken, ErrNameLimitReached}
 	out := make([]string, len(all))
 	for i, e := range all {
 		out[i] = e.Code

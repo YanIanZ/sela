@@ -58,6 +58,14 @@ const copy: Record<string, { id: string; en: string }> = {
     id: "Tautan atau kode tidak cocok, atau sudah tidak berlaku.",
     en: "The link or code doesn't match, or it is no longer valid.",
   },
+  name_taken: {
+    id: "Nama ini sudah ada di daftarmu.",
+    en: "This name is already on your list.",
+  },
+  name_limit_reached: {
+    id: "Daftar nama berisi paling banyak 20 nama. Hapus satu dulu untuk menambah yang lain.",
+    en: "The name list holds at most 20 names. Remove one before adding another.",
+  },
   consent_required: {
     id: "Izin yang diperlukan belum diberikan.",
     en: "The required permission hasn't been given.",

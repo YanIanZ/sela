@@ -745,6 +745,79 @@ describe("settings", () => {
     );
   });
 
+  it("keeps a private-name list and previews masking on the device", async () => {
+    const user = profile();
+    const calls = mockApi(
+      {
+        "GET /me/consents": () => ({ data: { consents } }),
+        "GET /me/sessions": () => ({ data: { sessions: [] } }),
+        "GET /me/audit": () => ({ data: { events: [], nextCursor: null } }),
+        "GET /me/consents/history": () => ({ data: { events: [] } }),
+        "GET /me/private-names": () => ({
+          data: { names: [{ id: "n1", name: "Raka", createdAt: "2026-11-01T00:00:00Z" }] },
+        }),
+        "POST /me/private-names": (body) => {
+          const name = (body as { name: string }).name;
+          if (name.toLowerCase() === "raka") return { status: 409, error: "name_taken" };
+          return {
+            status: 201,
+            data: { id: "n2", name, createdAt: "2026-11-01T00:00:00Z" },
+          };
+        },
+        "DELETE /me/private-names/n1": () => ({ data: { deleted: true } }),
+      },
+      user,
+    );
+    renderPath("/settings/privacy");
+    const heading = await screen.findByRole("heading", { name: "Nama yang disamarkan" });
+    const section = heading.closest("section")!;
+    expect(await within(section).findByText("Raka")).toBeInTheDocument();
+    // The preview is built from the saved name and stays in the browser.
+    expect(within(section).getByText("Aku cerita ke Raka kemarin.")).toBeInTheDocument();
+    expect(within(section).getByText(/\[NAMA-1\]/)).toBeInTheDocument();
+
+    // A case-insensitive duplicate shows the stable code's message.
+    fireEvent.change(within(section).getByLabelText("Tambah nama"), {
+      target: { value: "raka" },
+    });
+    fireEvent.click(within(section).getByRole("button", { name: "Tambah ke daftar" }));
+    expect(
+      await within(section).findByText("Nama ini sudah ada di daftarmu."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(within(section).getByLabelText("Tambah nama"), {
+      target: { value: "Dewi" },
+    });
+    fireEvent.click(within(section).getByRole("button", { name: "Tambah ke daftar" }));
+    expect(await within(section).findByText("Dewi")).toBeInTheDocument();
+    expect(
+      await within(section).findByText("Aku cerita ke Dewi kemarin."),
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(section).getByRole("button", { name: "Hapus Raka" }));
+    fireEvent.click(await within(section).findByRole("button", { name: "Hapus nama" }));
+    await waitFor(() => expect(within(section).queryByText("Raka")).not.toBeInTheDocument());
+    expect(
+      calls.some((c) => c.method === "DELETE" && c.path === "/me/private-names/n1"),
+    ).toBe(true);
+    // Only the name list itself was written; the sample text never left.
+    expect(
+      calls.filter(
+        (c) => c.method !== "GET" && !c.path.startsWith("/me/private-names"),
+      ),
+    ).toEqual([]);
+    const posts = calls.filter(
+      (c) => c.method === "POST" && c.path === "/me/private-names",
+    );
+    expect(posts.map((c) => c.body)).toEqual([{ name: "raka" }, { name: "Dewi" }]);
+    const results = await axe.run(section, {
+      rules: { "color-contrast": { enabled: false } },
+    });
+    expect(
+      results.violations.filter((v) => ["serious", "critical"].includes(v.impact ?? "")),
+    ).toEqual([]);
+  });
+
   it("applies and persists a text size preference at once", async () => {
     mockApi({}, null);
     renderPath("/settings/display");

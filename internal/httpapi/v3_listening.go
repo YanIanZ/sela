@@ -631,7 +631,7 @@ func (s *Server) runListeningTurn(r *http.Request, p account.Principal, id strin
 	if err == nil {
 		memory := memoryContextSpans(memories)
 		spans := listeningSpans(turns, memory)
-		input := ai.Input{Subject: ai.Subject(p.UserID.String()), Language: profile.Locale, Spans: spans, Intent: in.Intent, Commit: func(ctx context.Context) error {
+		input := ai.Input{Subject: ai.Subject(p.UserID.String()), Language: profile.Locale, Spans: spans, Intent: in.Intent, PrivateNames: s.privateNamesFor(ctx, p.UserID, "listening_reply"), Commit: func(ctx context.Context) error {
 			principal, e := s.opt.Accounts.Authenticate(ctx, s.authToken(r))
 			if e != nil || principal.UserID != p.UserID {
 				return errors.New("session ended")

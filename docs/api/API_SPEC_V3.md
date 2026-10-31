@@ -82,6 +82,8 @@ New v3 codes (messages to add to `internal/httpapi/errors.go`; every code needs 
 | `store_unavailable` | 503 | Database not configured (development; `Retry-After: 30`) or unreachable at run time: refused or lost connection, network error or timeout, closed pool, server shutting down or out of connections (`Retry-After: 5`); on every store-backed route, sign-in and session lookup included | Penyimpanan sedang tidak tersedia. Coba lagi sebentar lagi. | Storage is unavailable right now. Try again shortly. |
 | `server_busy` | 503 | Hashing slots or guest capacity exhausted (`Retry-After`) | Server sedang sibuk. Coba lagi sebentar lagi. | The server is busy. Try again shortly. |
 | `invalid_share` | 401 | Unknown link, wrong access code, ended or expired share (deliberately indistinguishable) | Tautan atau kode tidak cocok, atau sudah tidak berlaku. | The link or code doesn't match, or it is no longer valid. |
+| `name_taken` | 409 | A private name already on the owner's list (case-insensitive, `field: "name"`) | Nama ini sudah ada di daftarmu. | This name is already on your list. |
+| `name_limit_reached` | 409 | A 21st private name (`field: "name"`); the list holds at most 20 | Daftar nama berisi paling banyak 20 nama. Hapus satu dulu untuk menambah yang lain. | The name list holds at most 20 names. Remove one before adding another. |
 
 **Guardian gate (D-031).** With `SELA_GUARDIAN_CONSENT_REQUIRED=true` (the default), a signed-in `15_17` owner whose guardian consent is missing or withdrawn is refused on content writes before the handler reads the body or changes anything: `403 consent_required`, `field: "guardianConsent"`. The server checks the database on every gated write, never a UI flag. Gated routes: record create/update/delete; memory create/update/delete; consultation-summary create/update/delete/approve and follow-up create; share create/revoke; conversation create/turn/resume/storage; and reflection create/review. Reads, export, account deletion, consents, guardian-consent recording/withdrawal, session actions and recipient routes are never gated. `18_plus` and `unknown` owners are unchanged. An explicit 15 (`under_16`) is refused with `age_not_supported` at registration, guest start and profile update and is never stored.
 
@@ -285,6 +287,7 @@ Headers: `Content-Disposition: attachment; filename="sela-export-YYYYMMDD.<json|
     "consents": [ "Consent…" ],
     "consentHistory": [ "Consent event…" ],
     "guardianConsents": [ "Guardian consent record…" ],
+    "privateNames": [ { "id": "…", "name": "Raka", "createdAt": "…" } ],
     "sessions": [ "Session… (live and ended within retention)" ],
     "audit": [ "Audit event…" ]
   },
@@ -391,6 +394,18 @@ be distinguished. The public response omits the reviewer's name, contacts,
 source-claim working data and every other internal field. The list is an
 empty `items` array until the first item passes the gate.
 
+## 6.12 Private names (2026-11-01 local implementation)
+
+The owner's "names kept private" list is an explicit privacy control: names are redacted from every provider payload before a call, but the list is not a guarantee against re-identification by other details. It does not rewrite text the owner writes or shares: a shared summary carries the words the owner approved, so a name written there stays visible to the recipient. Names are sealed with the owner's data key (`private_name/<id>/name`); the database stores only ciphertext (migration `0800_private_names`), at most 20 names of 1–120 runes each.
+
+| Route | Body / response |
+| --- | --- |
+| `GET /api/v3/me/private-names` | `{names: [{id,name,createdAt}…]}` oldest first; own list only |
+| `POST /api/v3/me/private-names` | `{name}` → **201** `{id,name,createdAt}`. Edges are trimmed; empty, invalid UTF-8, control characters or more than 120 runes → `400 invalid_input` (`field: "name"`); a case-insensitive duplicate → `409 name_taken` (`field: "name"`); a 21st name → `409 name_limit_reached` (`field: "name"`) |
+| `DELETE /api/v3/me/private-names/{id}` | → **200** `{deleted: true}`. Another owner's id, an unknown id and a malformed id all → `404 not_found` |
+
+Every listening reply and reflection request loads the owner's list and passes it to `ai.Input.PrivateNames`; the minimiser replaces each occurrence with `[NAMA-n]` before the payload exists. If the list cannot be read, the request is not blocked: the server logs a content-free warning and continues with the deterministic contact-detail redaction only. The settings preview is computed in the browser from the saved names and is never sent to a provider. The owner's own export includes the decrypted list (`sections.privateNames`) because it is their data; a share or recipient projection never includes it. Deleting the account removes the rows and crypto-shreds the key, so copies of the ciphertext cannot be opened.
+
 ## 7. Guest and account differences (foundation)
 
 | Capability | Guest | Account |
@@ -420,3 +435,4 @@ Each milestone adds its routes here, with bodies, errors, limits, exporter secti
 | P5 AI routing records and provider consents | `/api/v3/ai` | 0500–0599 |
 | P6 Reading and support content | `/api/v3/reading` | 0600–0699 |
 | Planned care (directory and synthetic sandbox) | `/api/v3/care-directory` | 0700–0799 |
+| Privacy controls (names kept private) | `/api/v3/me/private-names` | 0800–0899 |

@@ -154,6 +154,10 @@ type OwnerStore interface {
 	CreateShare(context.Context, UserID, string, string, string, int) (Share, string, string, error)
 	RevokeShare(context.Context, UserID, string, int) (Share, error)
 
+	PrivateNames(context.Context, UserID) ([]PrivateName, error)
+	CreatePrivateName(context.Context, UserID, string) (PrivateName, error)
+	DeletePrivateName(context.Context, UserID, string) error
+
 	Profile(ctx context.Context, owner UserID) (Profile, error)
 	UpdateProfile(ctx context.Context, owner UserID, current SessionID, in ProfileUpdate) (Profile, error)
 	AcknowledgeRecoveryCodes(ctx context.Context, owner UserID, current SessionID) (Profile, error)
