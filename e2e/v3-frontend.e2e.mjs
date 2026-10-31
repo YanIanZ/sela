@@ -304,7 +304,7 @@ try {
 
   await snap('summary-approved-desktop');
   await page.getByRole('button',{name:'Perbaiki kata-kata',exact:true}).click();
-  await page.getByLabel('Perbaiki ringkasan',{exact:true}).fill('Aku ingin membicarakan jadwalku yang terasa penuh. Ini koreksi pilihanku.');
+  await page.getByLabel(/^Perbaiki ringkasan/).fill('Aku ingin membicarakan jadwalku yang terasa penuh. Ini koreksi pilihanku.');
   await page.getByRole('button',{name:'Simpan perbaikan',exact:true}).click();
   await page.getByLabel('Aku sudah memeriksa versi ini dan isinya mewakili yang ingin kusampaikan').waitFor();
   check('editing summary invalidates approval',await page.getByRole('button',{name:'Unduh HTML (untuk dicetak)',exact:true}).count()===0);
