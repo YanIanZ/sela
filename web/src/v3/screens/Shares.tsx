@@ -24,6 +24,21 @@ type Share = {
   version: number;
   expiresAt: string;
   createdAt: string;
+  acknowledged: boolean;
+  openedCount: number;
+  acknowledgedCount: number;
+  lastOpenedAt: string | null;
+};
+
+type ShareEvent = {
+  kind: "created" | "opened" | "acknowledged" | "revoked" | string;
+  at: string;
+};
+
+type HistoryState = {
+  loading: boolean;
+  events?: ShareEvent[];
+  error?: boolean;
 };
 
 type Projection = {
@@ -58,6 +73,8 @@ export function SharesPage() {
   const [consent, setConsent] = useState(false);
   const [form, setForm] = useState({ summaryId: "", label: "", purpose: "consultation", hours: 24 });
   const [created, setCreated] = useState<{ token: string; code: string; share: Share } | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [history, setHistory] = useState<Record<string, HistoryState>>({});
 
   const load = () => {
     setError(null);
@@ -108,11 +125,45 @@ export function SharesPage() {
     setError(null);
     try {
       await api(`/shares/${share.id}/revoke`, { expectedVersion: share.version }, "POST");
+      setHistory((h) => {
+        const next = { ...h };
+        delete next[share.id];
+        return next;
+      });
       load();
+      if (expanded[share.id]) loadHistory(share.id);
     } catch (err) {
       setError(err);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const loadHistory = (id: string) => {
+    setHistory((h) => ({ ...h, [id]: { loading: true } }));
+    api<{ events: ShareEvent[] }>(`/shares/${id}/events`)
+      .then((r) => setHistory((h) => ({ ...h, [id]: { loading: false, events: r.events } })))
+      .catch(() => setHistory((h) => ({ ...h, [id]: { loading: false, error: true } })));
+  };
+
+  const toggleHistory = (id: string) => {
+    const next = !expanded[id];
+    setExpanded((x) => ({ ...x, [id]: next }));
+    if (next && !history[id]) loadHistory(id);
+  };
+
+  const eventLabel = (kind: string) => {
+    switch (kind) {
+      case "created":
+        return w("Tautan dibuat", "Link created");
+      case "opened":
+        return w("Dibuka dengan kode akses", "Opened with the access code");
+      case "acknowledged":
+        return w("Ditandai sudah dibaca", "Marked as read");
+      case "revoked":
+        return w("Akses dicabut", "Access revoked");
+      default:
+        return kind;
     }
   };
 
@@ -147,24 +198,95 @@ export function SharesPage() {
       <section>
         <h2>{w("Tautan aktif", "Your links")}</h2>
         {shares.length === 0 && <p className="s-hint">{w("Belum ada tautan.", "No links yet.")}</p>}
-        {shares.map((share) => (
-          <article className="s-consent" key={share.id}>
-            <h3>{share.label}</h3>
-            <p className="s-hint">
-              {(loc.lang === "id" ? purposes.find((p) => p.value === share.purpose)?.id : purposes.find((p) => p.value === share.purpose)?.en) ?? share.purpose + " · "}
-              {share.state === "active"
-                ? w("Aktif sampai ", "Active until ") + loc.dateTime(share.expiresAt)
-                : share.state === "revoked"
-                  ? w("Dicabut", "Revoked")
-                  : w("Kedaluwarsa", "Expired")}
-            </p>
-            {share.state === "active" && (
-              <Button variant="quiet" disabled={busy} onClick={() => void revoke(share)}>
-                {w("Cabut akses", "Revoke access")}
-              </Button>
-            )}
-          </article>
-        ))}
+        {shares.map((share) => {
+          const state = history[share.id];
+          const open = expanded[share.id] === true;
+          return (
+            <article className="s-consent" key={share.id}>
+              <h3>{share.label}</h3>
+              <p className="s-hint">
+                {(loc.lang === "id" ? purposes.find((p) => p.value === share.purpose)?.id : purposes.find((p) => p.value === share.purpose)?.en) ?? share.purpose + " · "}
+                {share.state === "active"
+                  ? w("Aktif sampai ", "Active until ") + loc.dateTime(share.expiresAt)
+                  : share.state === "revoked"
+                    ? w("Dicabut", "Revoked")
+                    : w("Kedaluwarsa", "Expired")}
+              </p>
+              <p className="s-hint">
+                {share.openedCount === 0
+                  ? w("Belum pernah dibuka", "Not opened yet")
+                  : w(`Dibuka ${share.openedCount} kali`, `Opened ${share.openedCount} times`)}
+                {" · "}
+                {share.acknowledgedCount === 0
+                  ? w("Belum ada konfirmasi dibaca", "No read confirmation yet")
+                  : w(
+                      `Dikonfirmasi dibaca ${share.acknowledgedCount} kali`,
+                      `Marked read ${share.acknowledgedCount} times`,
+                    )}
+              </p>
+              {share.lastOpenedAt && (
+                <p className="s-hint">
+                  {w("Terakhir dibuka ", "Last opened ") + loc.dateTime(share.lastOpenedAt)}
+                </p>
+              )}
+              <div className="s-actions">
+                {share.state === "active" && (
+                  <Button variant="quiet" disabled={busy} onClick={() => void revoke(share)}>
+                    {w("Cabut akses", "Revoke access")}
+                  </Button>
+                )}
+                <Button
+                  variant="quiet"
+                  aria-expanded={open}
+                  aria-controls={`share-history-${share.id}`}
+                  onClick={() => toggleHistory(share.id)}
+                >
+                  {open ? w("Tutup riwayat akses", "Hide access history") : w("Riwayat akses", "Access history")}
+                </Button>
+              </div>
+              <section id={`share-history-${share.id}`} hidden={!open}>
+                {state?.loading && (
+                  <p className="s-hint" role="status">
+                    {w("Memuat riwayat akses…", "Loading access history…")}
+                  </p>
+                )}
+                {state?.error && (
+                  <>
+                    <p className="s-hint" role="alert">
+                      {w("Riwayat akses tidak bisa dimuat.", "Access history could not be loaded.")}
+                    </p>
+                    <Button variant="quiet" onClick={() => loadHistory(share.id)}>
+                      {w("Coba lagi", "Try again")}
+                    </Button>
+                  </>
+                )}
+                {state?.events && state.events.length === 0 && (
+                  <p className="s-hint" role="status">
+                    {w("Belum ada riwayat.", "No history yet.")}
+                  </p>
+                )}
+                {state?.events && state.events.length > 0 && (
+                  <ol>
+                    {state.events.map((event, i) => (
+                      <li key={`${event.kind}-${event.at}-${i}`}>
+                        <span>{eventLabel(event.kind)}</span>{" "}
+                        <time className="s-hint" dateTime={event.at}>
+                          {loc.dateTime(event.at)}
+                        </time>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <p className="s-hint">
+                  {w(
+                    "Riwayat ini mencatat tautan dan kode akses, bukan identitas penerima.",
+                    "This history records the link and access code, not the recipient's identity.",
+                  )}
+                </p>
+              </section>
+            </article>
+          );
+        })}
       </section>
 
       <form onSubmit={(e) => void create(e)}>

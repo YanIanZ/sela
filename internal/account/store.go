@@ -154,6 +154,7 @@ type OwnerStore interface {
 	UpdateFollowup(context.Context, UserID, string, string, RecordInput) (PersonalRecord, error)
 	Followups(context.Context, UserID, string) ([]PersonalRecord, error)
 	Shares(context.Context, UserID) ([]Share, error)
+	ShareEvents(context.Context, UserID, string) ([]ShareEvent, error)
 	CreateShare(context.Context, UserID, string, string, string, int) (Share, string, string, error)
 	RevokeShare(context.Context, UserID, string, int) (Share, error)
 

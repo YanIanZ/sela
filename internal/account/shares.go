@@ -29,18 +29,30 @@ const (
 var sharePurposes = map[string]bool{"consultation": true, "second_opinion": true, "family": true, "other": true}
 
 // Share is the owner-facing metadata of one share. It never carries the
-// link token, access code or projection content.
+// link token, access code or projection content. The access counters are
+// derived from share_events: they count links opened and read receipts,
+// not people and not care.
 type Share struct {
-	ID             string    `json:"id"`
-	SummaryID      string    `json:"summaryId"`
-	SummaryVersion int       `json:"summaryVersion"`
-	Label          string    `json:"label"`
-	Purpose        string    `json:"purpose"`
-	State          string    `json:"state"`
-	Version        int       `json:"version"`
-	ExpiresAt      time.Time `json:"expiresAt"`
-	CreatedAt      time.Time `json:"createdAt"`
-	Acknowledged   bool      `json:"acknowledged"`
+	ID                string     `json:"id"`
+	SummaryID         string     `json:"summaryId"`
+	SummaryVersion    int        `json:"summaryVersion"`
+	Label             string     `json:"label"`
+	Purpose           string     `json:"purpose"`
+	State             string     `json:"state"`
+	Version           int        `json:"version"`
+	ExpiresAt         time.Time  `json:"expiresAt"`
+	CreatedAt         time.Time  `json:"createdAt"`
+	Acknowledged      bool       `json:"acknowledged"`
+	OpenedCount       int        `json:"openedCount"`
+	AcknowledgedCount int        `json:"acknowledgedCount"`
+	LastOpenedAt      *time.Time `json:"lastOpenedAt"`
+}
+
+// ShareEvent is one access-history entry the owner may see. It carries no
+// recipient identity, IP address, code, token or projection content.
+type ShareEvent struct {
+	Kind string    `json:"kind"`
+	At   time.Time `json:"at"`
 }
 
 // SharedProjection is exactly what a recipient may see: an immutable
@@ -177,10 +189,18 @@ func (s *Store) CreateShare(ctx context.Context, owner UserID, summaryID, label,
 	return share, token, code, nil
 }
 
-// Shares lists the owner's shares, newest first, without secrets.
+// Shares lists the owner's shares, newest first, without secrets. The
+// per-share counters come from one grouped join over share_events, so the
+// list stays a single query.
 func (s *Store) Shares(ctx context.Context, owner UserID) ([]Share, error) {
-	rows, err := s.pool.Query(ctx, `SELECT id,summary_id,summary_version,label,purpose,state,version,expires_at,created_at
-		FROM shares WHERE user_id=$1 ORDER BY updated_at DESC, id DESC`, owner)
+	rows, err := s.pool.Query(ctx, `SELECT s.id,s.summary_id,s.summary_version,s.label,s.purpose,s.state,s.version,s.expires_at,s.created_at,
+			count(ev.id) FILTER (WHERE ev.kind='opened'),
+			count(ev.id) FILTER (WHERE ev.kind='acknowledged'),
+			max(ev.at) FILTER (WHERE ev.kind='opened')
+		FROM shares s LEFT JOIN share_events ev ON ev.share_id=s.id
+		WHERE s.user_id=$1
+		GROUP BY s.id
+		ORDER BY s.updated_at DESC, s.id DESC`, owner)
 	if err != nil {
 		return nil, err
 	}
@@ -189,14 +209,50 @@ func (s *Store) Shares(ctx context.Context, owner UserID) ([]Share, error) {
 	for rows.Next() {
 		var sh Share
 		var id, summaryID pgtype.UUID
-		if err := rows.Scan(&id, &summaryID, &sh.SummaryVersion, &sh.Label, &sh.Purpose, &sh.State, &sh.Version, &sh.ExpiresAt, &sh.CreatedAt); err != nil {
+		var lastOpened *time.Time
+		if err := rows.Scan(&id, &summaryID, &sh.SummaryVersion, &sh.Label, &sh.Purpose, &sh.State, &sh.Version,
+			&sh.ExpiresAt, &sh.CreatedAt, &sh.OpenedCount, &sh.AcknowledgedCount, &lastOpened); err != nil {
 			return nil, err
 		}
 		sh.ID, sh.SummaryID = uuidText(id.Bytes), uuidText(summaryID.Bytes)
+		sh.LastOpenedAt = lastOpened
+		sh.Acknowledged = sh.AcknowledgedCount > 0
 		if sh.State == ShareActive && s.clock().After(sh.ExpiresAt) {
 			sh.State = ShareExpired
 		}
 		out = append(out, sh)
+	}
+	return out, rows.Err()
+}
+
+// ShareEvents returns one share's access history, newest first, scoped to
+// its owner. Unknown and foreign ids are the same ErrNotFound. Revoked and
+// expired shares keep their history readable by the owner.
+func (s *Store) ShareEvents(ctx context.Context, owner UserID, id string) ([]ShareEvent, error) {
+	if _, err := ParseUUID(id); err != nil {
+		return nil, ErrNotFound
+	}
+	var exists bool
+	err := s.pool.QueryRow(ctx, "SELECT true FROM shares WHERE user_id=$1 AND id=$2", owner, id).Scan(&exists)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	rows, err := s.pool.Query(ctx, `SELECT ev.kind,ev.at FROM share_events ev
+		WHERE ev.share_id=$1 ORDER BY ev.at DESC, ev.id DESC`, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []ShareEvent{}
+	for rows.Next() {
+		var ev ShareEvent
+		if err := rows.Scan(&ev.Kind, &ev.At); err != nil {
+			return nil, err
+		}
+		out = append(out, ev)
 	}
 	return out, rows.Err()
 }
@@ -344,22 +400,26 @@ func (s *Store) RecipientShare(ctx context.Context, session string) (SharedProje
 }
 
 // AcknowledgeShare records that the recipient confirmed they read the
-// projection. It is idempotent.
+// projection. It is idempotent: a repeat call writes no second event, so
+// the owner-facing count stays a count of acknowledgements, not clicks.
 func (s *Store) AcknowledgeShare(ctx context.Context, session string) error {
 	now := s.clock()
-	var shareID string
 	err := s.tx(ctx, func(tx pgx.Tx) error {
 		var id pgtype.UUID
-		err := tx.QueryRow(ctx, `UPDATE share_recipient_sessions SET acknowledged_at=COALESCE(acknowledged_at,$2)
-			WHERE token_hash=$1 RETURNING share_id`, tokenHash(session), now).Scan(&id)
+		err := tx.QueryRow(ctx, `UPDATE share_recipient_sessions SET acknowledged_at=$2
+			WHERE token_hash=$1 AND acknowledged_at IS NULL RETURNING share_id`, tokenHash(session), now).Scan(&id)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrShareInvalid
+			var exists bool
+			err := tx.QueryRow(ctx, "SELECT true FROM share_recipient_sessions WHERE token_hash=$1", tokenHash(session)).Scan(&exists)
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ErrShareInvalid
+			}
+			return err
 		}
 		if err != nil {
 			return err
 		}
-		shareID = uuidText(id.Bytes)
-		return s.shareEvent(ctx, tx, shareID, "acknowledged", now)
+		return s.shareEvent(ctx, tx, uuidText(id.Bytes), "acknowledged", now)
 	})
 	return err
 }

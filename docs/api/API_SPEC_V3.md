@@ -340,7 +340,8 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | `PATCH /api/v3/memory/{id}` | Same, plus `expectedVersion` |
 | `PATCH /api/v3/memory/{id}/review` | `{expectedVersion,action:"confirm"\|"correct"\|"reject",text?}` → reviewed memory record. `confirm` keeps the AI wording and sets `confirmed`; `correct` replaces the text in a new revision with `provenance: "user_correction"` and status `corrected`; `reject` sets `rejected`. Owner-scoped and versioned: a stale `expectedVersion` is `409 stale_version`, a foreign or non-memory id is `404 not_found`, and a missing current `personal_memory` consent is `403 consent_required`. Every review action appends a revision; confirm and reject keep the text, a correction replaces it. A rejected item can be confirmed or corrected again |
 | `DELETE /api/v3/memory/{id}` | `{expectedVersion}`; also allowed after consent withdrawal |
-| `GET /api/v3/shares` | `{shares}` (owner metadata, no token or code) |
+| `GET /api/v3/shares` | `{shares}` owner metadata, newest first: `openedCount`, `acknowledgedCount`, `lastOpenedAt`, `acknowledged` derived from events; no token, code, hash or content |
+| `GET /api/v3/shares/{id}/events` | `{events:[{kind,at}]}` newest first; owner only; `404 not_found` for another owner, an unknown or a malformed id; no token, code, content, recipient identity or IP address |
 | `POST /api/v3/shares` | `{summaryId,label,purpose,durationHours}` → `{share,token,code}` once; requires `sharing` |
 | `POST /api/v3/shares/{id}/revoke` | `{expectedVersion}` → ended share; every recipient session ends |
 | `POST /api/v3/recipient/session` | `{token,code}` → `{share}` and the recipient cookie |
@@ -357,6 +358,7 @@ The existing cookie principal, mutation guards, ownership, export, revisions, an
 | `GET /api/v3/consultation-summaries/{id}/followups` | `{followups}`; each record may carry `sections` |
 | `PATCH /api/v3/consultation-summaries/{id}/followups/{followupId}` | Same fields plus `expectedVersion`; the follow-up must belong to this summary; nil `sections` keeps the stored sections, an explicit empty object clears them |
 
+Sharing metadata and history are read-only for the owner. `openedCount`, `acknowledgedCount` and `lastOpenedAt` come from the append-only `share_events`; an idempotent re-acknowledgement adds no second event. These values describe link and access-code use, never the recipient's identity, whether care happened, or the content that was viewed. Revoked and expired shares keep their history readable by their owner.
 `sourceRefs` is an array of `{recordId,version}`, maximum 12, minimum one for a summary.
 An AT-3 memory proposal adds the optional `quote` and `turnKey` fields, sealed with the rest of the record, so its review card can show the user's exact words without opening the conversation; existing records without them read unchanged.
 Sources must be current, owner-owned notes/check-ins/conversations. Derived records cannot be sources.
