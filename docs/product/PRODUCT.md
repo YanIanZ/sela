@@ -177,7 +177,7 @@ Readiness is separate from implementation (owner brief §1, §6). The gates are 
 
 | | Demo | Controlled pilot | Public release |
 | --- | --- | --- | --- |
-| Data | Synthetic only, labelled, demo environment (V42) | Real users' data in production | Real users' data in production |
+| Data | Synthetic/test data in development and test; planned-care synthetic rows labelled "Simulasi" (D-068) | Real users' data in production | Real users' data in production |
 | Ages | All bands, synthetic | `18_plus` only until B-10 clears minors; 15-year-olds blocked until the low-risk assessment | As decided after B-10 |
 | AI | Live providers on synthetic data, or labelled test doubles (D-046); every output names its source and a test double is never shown as live (V35). D-046 governs; ADR-0002 §12 and the config guard currently allow only live providers or an honest "unavailable", which is narrower, and are being aligned ([conflict matrix](../status/CONFLICT_MATRIX.md#documentation-and-contract-follow-ups-open) row 52). The DeepSeek fallback is off by default here, as in hackathon mode (C13, V19) | Meta and the Claude verifier verified live; DeepSeek only after EV-5, B-9 and B-10 | As in the pilot |
 | Content | WHO cards with notices | Non-commercial use with notices | Commercial use needs B-14 |

@@ -55,7 +55,7 @@ The v1 Next.js app and its root `npm` checks were retired on 2026-10-29; see [de
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `SELA_ENV` | `production` | `production`, `staging`, `demo`, `development` or `test` (guards per environment: ADR-0002 §12 and §7 below). Production, staging and demo forbid the test double and require Secure cookies, an https `SELA_PUBLIC_ORIGIN`, `SELA_DATABASE_URL` and a KEK |
+| `SELA_ENV` | `production` | `production`, `staging`, `development` or `test` (guards per environment: ADR-0002 §12 and §7 below). Production and staging forbid the test double and require Secure cookies, an https `SELA_PUBLIC_ORIGIN`, `SELA_DATABASE_URL` and a KEK |
 | `SELA_ADDR` | `:8080` | Listen address |
 | `SELA_WEB_DIR` | `web/dist` | Built frontend |
 | `SELA_PUBLIC_ORIGIN` | (request host) | Exact origin accepted for mutations, e.g. `https://sela.example` |
@@ -82,7 +82,7 @@ The v1 Next.js app and its root `npm` checks were retired on 2026-10-29; see [de
 | `SELA_LLM_COLD_START_ESTIMATE` | `4m` | Shown to users while the model starts |
 | `SELA_LLM_REASONING_EFFORT` | `minimal` | `meta_api` only: `minimal`, `low`, `medium`, `high` or `xhigh`. Muse Spark rejects `none` |
 | `SELA_MAX_AI_OPS_PER_SESSION` | `8` | Per-session AI operations per 10 minutes |
-| `SELA_STORE` | `memory` (development, test, demo), `disabled` (staging, production) | v2 in-memory journey store; `memory` is refused in staging and production, where v2 journey routes are not served. Alias: `SELA_V2_JOURNEY=on\|off` |
+| `SELA_STORE` | `memory` (development, test), `disabled` (staging, production) | v2 in-memory journey store; `memory` is refused in staging and production, where v2 journey routes are not served. Alias: `SELA_V2_JOURNEY=on\|off` |
 | `SELA_DATABASE_URL` | — | `postgres://` URL of the v3 store (secret; never logged or printed). Staging and production require `sslmode=verify-full` unless the host is a unix socket or loopback |
 | `SELA_DB_AUTO_MIGRATE` | `false` | `true` applies pending **schema** migrations at start; development and test only |
 | `SELA_DB_MAX_CONNS`, `SELA_DB_STATEMENT_TIMEOUT` | `10`, `30s` | Pool size (1–200) and per-statement timeout (1s–10m). Every size works: a request holds one connection at a time, and the guest purge and the retention job run on the one connection that holds their advisory lock; at 1, requests wait while a job runs |

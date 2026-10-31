@@ -367,33 +367,3 @@ export function ReadingItemPage({ slug }: { slug: string }) {
   );
 }
 
-export function RecipientUnavailablePage() {
-  const w = useWords();
-  return (
-    <div className="s-narrow">
-      <PageHeader
-        title={w("Halaman penerima", "Recipient page")}
-        lead={w(
-          "Halaman ini untuk orang yang diundang membaca ringkasan. Versi Sela v3 belum bisa membuat atau membuka undangan.",
-          "This page is for someone invited to read a summary. This build of Sela v3 can't make or open an invitation yet.",
-        )}
-      />
-      <Notice tone="info" title={w("Belum tersedia", "Not available yet")}>
-        <p>
-          {w(
-            "Tautan dan kode akses belum bisa dibuat karena layanan berbagi belum tersambung. Halaman penerima versi lama tetap tersedia hanya di demo sintetis.",
-            "Links and access codes can't be made because the sharing service isn't connected. The earlier recipient page remains available only in the synthetic demo.",
-          )}
-        </p>
-      </Notice>
-      <div className="s-actions">
-        <LinkButton to="/help" variant="help" icon="help">
-          {w("Bantuan sekarang", "Help now")}
-        </LinkButton>
-        <LinkButton to="/" variant="quiet">
-          {w("Ke pengenalan", "Go to Introduction")}
-        </LinkButton>
-      </div>
-    </div>
-  );
-}

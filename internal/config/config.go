@@ -26,7 +26,6 @@ import (
 const (
 	EnvDevelopment = "development"
 	EnvTest        = "test"
-	EnvDemo        = "demo"
 	EnvStaging     = "staging"
 	EnvProduction  = "production"
 )
@@ -98,7 +97,7 @@ type Config struct {
 	AIMonthlyBudgetUSD float64
 	AIReserveUSD       float64
 
-	// Store is the v2 journey store: "memory" (development, test, demo
+	// Store is the v2 journey store: "memory" (development and test
 	// only) or "disabled" (v2 journey routes not served).
 	Store string
 	// DatabaseURL is SELA_DATABASE_URL (secret); empty = no /api/v3 store.
@@ -195,10 +194,10 @@ func envDuration(key string, def, min, max time.Duration) (time.Duration, error)
 const minMetricsToken = 16
 
 // kekIDPattern is the KEK id shape; its prefix names the environment.
-var kekIDPattern = regexp.MustCompile(`^(dev|test|demo|staging|prod)-[a-z0-9-]{1,40}$`)
+var kekIDPattern = regexp.MustCompile(`^(dev|test|staging|prod)-[a-z0-9-]{1,40}$`)
 
 // KEKPrefix is the KEK id prefix an environment requires.
-var KEKPrefix = map[string]string{EnvDevelopment: "dev", EnvTest: "test", EnvDemo: "demo", EnvStaging: "staging", EnvProduction: "prod"}
+var KEKPrefix = map[string]string{EnvDevelopment: "dev", EnvTest: "test", EnvStaging: "staging", EnvProduction: "prod"}
 
 // AllAgeBands are the stored bands that can be enabled. under_15 and
 // under_16 are accepted as input only and always refused, so they are not
@@ -222,9 +221,9 @@ func LoadMode(mode Mode) (Config, error) {
 	var err error
 	c.Env = env("SELA_ENV", EnvProduction)
 	if KEKPrefix[c.Env] == "" {
-		add(errors.New("SELA_ENV: must be production, staging, demo, development or test"))
+		add(errors.New("SELA_ENV: must be production, staging, development or test"))
 	}
-	public := c.Env == EnvProduction || c.Env == EnvStaging || c.Env == EnvDemo
+	public := c.Env == EnvProduction || c.Env == EnvStaging
 	c.Addr = env("SELA_ADDR", ":8080")
 	c.WebDir = env("SELA_WEB_DIR", "web/dist")
 	c.PublicOrigin = env("SELA_PUBLIC_ORIGIN", "")
@@ -302,13 +301,13 @@ func LoadMode(mode Mode) (Config, error) {
 		if c.ModelRevision == "" {
 			c.ModelRevision = c.ModelID
 		}
-		if mode == ModeServer && c.Env != EnvDevelopment && c.Env != EnvTest && c.Env != EnvDemo {
-			add(errors.New("SELA_LLM_MODE=meta_api is limited to development, test and demo until B-10 clears real-user processing"))
+		if mode == ModeServer && c.Env != EnvDevelopment && c.Env != EnvTest {
+			add(errors.New("SELA_LLM_MODE=meta_api is limited to development and test until B-10 clears real-user processing"))
 		}
 	case "test_double":
 		allow, _ := envBool("SELA_ALLOW_TEST_DOUBLE", false)
 		if mode == ModeServer && (!allow || public) {
-			add(errors.New("SELA_LLM_MODE=test_double requires SELA_ALLOW_TEST_DOUBLE=true and SELA_ENV development or test (never demo, staging or production)"))
+			add(errors.New("SELA_LLM_MODE=test_double requires SELA_ALLOW_TEST_DOUBLE=true and SELA_ENV development or test (never staging or production)"))
 		}
 		if c.LLMBaseURL == "" {
 			c.LLMBaseURL = "http://127.0.0.1:8090"
@@ -524,7 +523,7 @@ func decodeKEK(name, s string) ([]byte, error) {
 
 func checkKEKID(name, id, env string) error {
 	if !kekIDPattern.MatchString(id) {
-		return fmt.Errorf("%s: must match (dev|test|demo|staging|prod)-[a-z0-9-]{1,40}", name)
+		return fmt.Errorf("%s: must match (dev|test|staging|prod)-[a-z0-9-]{1,40}", name)
 	}
 	if want := KEKPrefix[env]; want != "" && !strings.HasPrefix(id, want+"-") {
 		return fmt.Errorf("%s: a %s key cannot be used when SELA_ENV=%s (prefix %q required)", name, strings.SplitN(id, "-", 2)[0], env, want)
@@ -580,7 +579,7 @@ func loadKEKs(envName string, add func(error)) (KEK, []KEK) {
 // RequiresDatabase reports environments whose readiness depends on the
 // database.
 func (c Config) RequiresDatabase() bool {
-	return c.Env == EnvProduction || c.Env == EnvStaging || c.Env == EnvDemo
+	return c.Env == EnvProduction || c.Env == EnvStaging
 }
 
 // String describes the configuration without secrets: the database URL

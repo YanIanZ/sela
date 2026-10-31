@@ -18,7 +18,6 @@ import (
 const (
 	EnvDevelopment = "development"
 	EnvTest        = "test"
-	EnvDemo        = "demo"
 	EnvStaging     = "staging"
 	EnvProduction  = "production"
 )
@@ -93,11 +92,11 @@ type Config struct {
 }
 
 // Production reports whether c is the production environment. It fails
-// closed: any value other than development, test, demo or staging (an
+// closed: any value other than development, test or staging (an
 // empty Env, "prod", "Production") is production.
 func (c Config) Production() bool {
 	switch c.Env {
-	case EnvDevelopment, EnvTest, EnvDemo, EnvStaging:
+	case EnvDevelopment, EnvTest, EnvStaging:
 		return false
 	}
 	return true
@@ -155,7 +154,7 @@ func MinOpTimeout() time.Duration {
 //
 // Variables:
 //
-//	SELA_ENV                       development | test | demo | staging | production (default production)
+//	SELA_ENV                       development | test | staging | production (default production)
 //	SELA_ALLOW_TEST_DOUBLE         true to allow test doubles outside production
 //	SELA_AI_PROFILE                full (default) | meta_only
 //	SELA_ALLOWED_AGE_BANDS         comma list of 15_17, 18_plus, unknown (production: 18_plus only)
@@ -184,9 +183,9 @@ func LoadFromEnv(getenv func(string) string) (Config, error) {
 		c.Env = EnvProduction
 	}
 	switch c.Env {
-	case EnvDevelopment, EnvTest, EnvDemo, EnvStaging, EnvProduction:
+	case EnvDevelopment, EnvTest, EnvStaging, EnvProduction:
 	default:
-		add(errors.New("SELA_ENV: must be development, test, demo, staging or production"))
+		add(errors.New("SELA_ENV: must be development, test, staging or production"))
 	}
 	var err error
 	c.AllowTestDouble, err = boolVar(get, "SELA_ALLOW_TEST_DOUBLE")
@@ -273,9 +272,9 @@ func LoadFromEnv(getenv func(string) string) (Config, error) {
 func (c Config) validateCore() error {
 	var errs []error
 	switch c.Env {
-	case EnvDevelopment, EnvTest, EnvDemo, EnvStaging, EnvProduction:
+	case EnvDevelopment, EnvTest, EnvStaging, EnvProduction:
 	default:
-		errs = append(errs, errors.New("SELA_ENV: must be development, test, demo, staging or production"))
+		errs = append(errs, errors.New("SELA_ENV: must be development, test, staging or production"))
 	}
 	switch c.Profile {
 	case "", ProfileFull, ProfileMetaOnly:

@@ -1793,7 +1793,20 @@ function RoomPage({ id }: { id: string }) {
 // start with a bullet become a list, so a longer reply stays easy to read.
 function ReplyText({ text }: { text: string }) {
   const blocks: Array<{ kind: "p"; text: string } | { kind: "ul"; items: string[] }> = [];
-  for (const raw of text.split("\n")) {
+  // The model sometimes writes "• a • b" on one line; give each item its own.
+  const lines = text
+    .split("\n")
+    .flatMap((raw) => {
+      const parts = raw.split(/\s+•\s+/);
+      if (parts.length < 2) return [raw];
+      const [lead, ...items] = parts;
+      // A closing question run onto the last item becomes its own line.
+      const last = items.pop() ?? "";
+      const tail = /^(.*?[.!])\s+([^.!?]+\?)$/.exec(last);
+      const end = tail ? ["• " + tail[1], tail[2] ?? ""] : ["• " + last];
+      return [lead ?? "", ...items.map((item) => "• " + item), ...end];
+    });
+  for (const raw of lines) {
     const line = raw.trim();
     if (!line) continue;
     const bullet = /^(?:[•\-*]|\d+[.)])\s+(.*)$/.exec(line);

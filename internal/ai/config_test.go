@@ -90,7 +90,7 @@ func TestTestDoublesOutsideProduction(t *testing.T) {
 	if v := c.metaVerifierConfig(); !v.TestDouble || v.Production {
 		t.Fatalf("verifier config %+v", v)
 	}
-	for _, e := range []string{EnvTest, EnvDemo, EnvStaging} {
+	for _, e := range []string{EnvTest, EnvStaging} {
 		vars["SELA_ENV"] = e
 		if _, err := LoadFromEnv(env(vars)); err != nil {
 			t.Errorf("%s: %v", e, err)

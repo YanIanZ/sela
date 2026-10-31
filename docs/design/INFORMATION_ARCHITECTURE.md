@@ -169,7 +169,7 @@ Every bar wraps **by available space**, never by the text-size setting, so the s
 - **owner**: a signed-in guest or account.
 - **account**: accounts only.
 - **recipient**: the separate recipient principal.
-- **demo**: the demo environment only.
+- **synthetic development/test data**: never a product edition. Planned-care synthetic rows are the only explicit demo category (D-068).
 
 **API** labels:
 
@@ -378,7 +378,7 @@ v3:  Cerita & Catatanku (many conversations, notes, check-ins over time)
 | Public content (reading, help directory, destination checklists) | `/reading`, `/help`, Preparation | Copied into a person's notes. A bookmark stores only a reference |
 | Personal data (conversations, notes, check-ins, memory, summaries, shares, audit) | The four places and settings, for its owner only | Shown to another user. Shown to a recipient beyond the consented projection |
 | Community content | None in the pilot (the forum is paused, D-038) | — |
-| Demo data | The demo environment only, labelled "sintetis" | Mixed into production |
+| Demo data | Planned-care synthetic sandbox only, labelled "Simulasi" (D-068) | Mixed into production |
 | Research corpus | The reviewer page `/research` | Linked to any user's history; shown as evidence in Sela's replies |
 
 ## 11. Where each record appears and how it leaves

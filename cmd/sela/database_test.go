@@ -116,7 +116,7 @@ func TestStartRefusesSchemaMismatch(t *testing.T) {
 func TestStartRefusesEnvironmentMismatch(t *testing.T) {
 	t.Parallel()
 	d := dbtest.New(t) // marked "test"
-	for _, env := range []string{"development", "demo", "staging", "production"} {
+	for _, env := range []string{"development", "staging", "production"} {
 		if err := prepareDatabase(bg, d.Pool, cfgFor(d, env), db.MustEmbedded(), discard); err == nil || !strings.Contains(err.Error(), "environment") {
 			t.Errorf("%s opened a test database: %v", env, err)
 		}
@@ -133,10 +133,10 @@ func TestStartRefusesEnvironmentMismatch(t *testing.T) {
 
 func TestStartRefusesPendingMigrations(t *testing.T) {
 	t.Parallel()
-	for _, env := range []string{"demo", "staging", "production", "development", "test"} {
+	for _, env := range []string{"staging", "production", "development", "test"} {
 		d := dbtest.NewEmpty(t)
 		cfg := cfgFor(d, env)
-		cfg.DBAutoMigrate = env == "demo" || env == "staging" || env == "production" // ignored there
+		cfg.DBAutoMigrate = env == "staging" || env == "production" // ignored there
 		if env == "development" || env == "test" {
 			cfg.DBAutoMigrate = false
 		}
@@ -153,11 +153,11 @@ func TestStartRefusesPendingMigrations(t *testing.T) {
 	if _, err := d.Pool.Exec(bg, `DELETE FROM schema_migrations WHERE version = 900; DROP TABLE ops_canary`); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Pool.Exec(bg, `UPDATE instance_meta SET environment = 'demo'`); err != nil {
+	if _, err := d.Pool.Exec(bg, `UPDATE instance_meta SET environment = 'staging'`); err != nil {
 		t.Fatal(err)
 	}
-	if err := prepareDatabase(bg, d.Pool, cfgFor(d, "demo"), db.MustEmbedded(), discard); err == nil || !strings.Contains(err.Error(), "1 database migrations are pending") {
-		t.Fatalf("demo with one pending: %v", err)
+	if err := prepareDatabase(bg, d.Pool, cfgFor(d, "staging"), db.MustEmbedded(), discard); err == nil || !strings.Contains(err.Error(), "1 database migrations are pending") {
+		t.Fatalf("staging with one pending: %v", err)
 	}
 }
 
@@ -287,7 +287,7 @@ func TestOpsCommands(t *testing.T) {
 	if code, out, _ := runMain(t, env, "restore reconcile --dry-run"); code != 0 || !strings.Contains(out, "users with a destroyed key: 0") {
 		t.Fatalf("reconcile: %d\n%s", code, out)
 	}
-	if code, out, _ := runMain(t, map[string]string{"SELA_ENV": "demo"}, "keys generate-kek"); code != 0 || !strings.Contains(out, "SELA_DATA_KEK_ID=demo-") {
+	if code, out, _ := runMain(t, map[string]string{"SELA_ENV": "staging"}, "keys generate-kek"); code != 0 || !strings.Contains(out, "SELA_DATA_KEK_ID=staging-") {
 		t.Fatalf("generate-kek: %d\n%s", code, out)
 	}
 	// Rotation through the commands: old key moves to _PREVIOUS, rewrap, status.

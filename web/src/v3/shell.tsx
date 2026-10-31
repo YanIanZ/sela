@@ -612,19 +612,6 @@ export function AppShell({
         </nav>
       )}
 
-      {user?.synthetic && user.environment !== "design-preview" && (
-        <div className="s-edition" role="note">
-          <div className="s-edition-inner">
-            <span className="s-edition-stamp">{w("Edisi demo", "Demo edition")}</span>
-            <p>
-              {w(
-                "Data sintetis; semua fitur berjalan sungguhan.",
-                "Synthetic data; every feature really works.",
-              )}
-            </p>
-          </div>
-        </div>
-      )}
       <section className="s-notices" aria-label={w("Pemberitahuan", "Notices")}>
         {expired && (
           <div className="s-banner s-banner--warning">

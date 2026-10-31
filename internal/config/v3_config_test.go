@@ -23,7 +23,7 @@ var v3Keys = []string{"SELA_STORE", "SELA_V2_JOURNEY", "SELA_DATABASE_URL", "SEL
 	"SELA_ARGON2_PARALLELISM", "SELA_SESSION_IDLE", "SELA_SESSION_ABSOLUTE", "SELA_SESSION_TRUSTED_IDLE",
 	"SELA_SESSION_TRUSTED_ABSOLUTE", "SELA_REAUTH_WINDOW"}
 
-var prefixes = map[string]string{"development": "dev", "test": "test", "demo": "demo", "staging": "staging", "production": "prod"}
+var prefixes = map[string]string{"development": "dev", "test": "test", "staging": "staging", "production": "prod"}
 
 // valid sets a complete valid configuration for an environment.
 func valid(t *testing.T, env string) {
@@ -47,22 +47,22 @@ func TestLoadEnvironmentMatrix(t *testing.T) {
 		// refused lists the environments that must refuse the setting.
 		refused []string
 	}
-	all := []string{"development", "test", "demo", "staging", "production"}
+	all := []string{"development", "test", "staging", "production"}
 	rules := []rule{
-		{"no database", map[string]string{"SELA_DATABASE_URL": "", "SELA_DATA_KEK": "", "SELA_DATA_KEK_ID": ""}, []string{"demo", "staging", "production"}},
+		{"no database", map[string]string{"SELA_DATABASE_URL": "", "SELA_DATA_KEK": "", "SELA_DATA_KEK_ID": ""}, []string{"staging", "production"}},
 		{"no KEK with a database", map[string]string{"SELA_DATA_KEK": "", "SELA_DATA_KEK_ID": ""}, all},
 		{"plain-text remote database", map[string]string{"SELA_DATABASE_URL": "postgres://u:p@db.example:5432/sela?sslmode=require"}, []string{"staging", "production"}},
 		{"remote database without sslmode", map[string]string{"SELA_DATABASE_URL": "postgres://u:p@10.0.0.5/sela"}, []string{"staging", "production"}},
 		{"loopback database", map[string]string{"SELA_DATABASE_URL": "postgres://u:p@127.0.0.1:5432/sela?sslmode=disable"}, nil},
 		{"unix socket database", map[string]string{"SELA_DATABASE_URL": "postgres://u:p@/sela?host=/var/run/postgresql"}, nil},
 		{"not a postgres URL", map[string]string{"SELA_DATABASE_URL": "mysql://u:p@127.0.0.1/sela"}, all},
-		{"insecure cookies", map[string]string{"SELA_SECURE_COOKIES": "false"}, []string{"demo", "staging", "production"}},
-		{"http public origin", map[string]string{"SELA_PUBLIC_ORIGIN": "http://sela.example"}, []string{"demo", "staging", "production"}},
-		{"no public origin", map[string]string{"SELA_PUBLIC_ORIGIN": ""}, []string{"demo", "staging", "production"}},
-		{"test double", map[string]string{"SELA_LLM_MODE": "test_double", "SELA_ALLOW_TEST_DOUBLE": "true"}, []string{"demo", "staging", "production"}},
+		{"insecure cookies", map[string]string{"SELA_SECURE_COOKIES": "false"}, []string{"staging", "production"}},
+		{"http public origin", map[string]string{"SELA_PUBLIC_ORIGIN": "http://sela.example"}, []string{"staging", "production"}},
+		{"no public origin", map[string]string{"SELA_PUBLIC_ORIGIN": ""}, []string{"staging", "production"}},
+		{"test double", map[string]string{"SELA_LLM_MODE": "test_double", "SELA_ALLOW_TEST_DOUBLE": "true"}, []string{"staging", "production"}},
 		{"memory journey store", map[string]string{"SELA_STORE": "memory"}, []string{"staging", "production"}},
 		{"memory journey store (alias)", map[string]string{"SELA_V2_JOURNEY": "on"}, []string{"staging", "production"}},
-		{"auto-migrate", map[string]string{"SELA_DB_AUTO_MIGRATE": "true"}, []string{"demo", "staging", "production"}},
+		{"auto-migrate", map[string]string{"SELA_DB_AUTO_MIGRATE": "true"}, []string{"staging", "production"}},
 		{"bad band", map[string]string{"SELA_ALLOWED_AGE_BANDS": "under_15"}, all},
 		{"bad explicit 15 band", map[string]string{"SELA_ALLOWED_AGE_BANDS": "under_16"}, all},
 		{"argon2 below floor", map[string]string{"SELA_ARGON2_MEMORY_KIB": "19455"}, all},
@@ -107,7 +107,6 @@ func TestLoadEnvironmentDefaults(t *testing.T) {
 	}{
 		"production":  {[]string{"18_plus"}, "disabled", true},
 		"staging":     {[]string{"15_17", "18_plus", "unknown"}, "disabled", true},
-		"demo":        {[]string{"15_17", "18_plus", "unknown"}, "memory", true},
 		"development": {[]string{"15_17", "18_plus", "unknown"}, "memory", false},
 		"test":        {[]string{"15_17", "18_plus", "unknown"}, "memory", false},
 	} {
@@ -167,9 +166,9 @@ func TestKEKConfig(t *testing.T) {
 			}
 		})
 	}
-	// The id prefix must match SELA_ENV, so a demo key never loads in
+	// The id prefix must match SELA_ENV, so a staging key never loads in
 	// production and the reverse.
-	for _, env := range []string{"development", "test", "demo", "staging", "production"} {
+	for _, env := range []string{"development", "test", "staging", "production"} {
 		for envKey, prefix := range prefixes {
 			t.Run(env+"/"+prefix, func(t *testing.T) {
 				valid(t, env)
@@ -246,7 +245,7 @@ func TestLoadModes(t *testing.T) {
 	if _, err := LoadMode(ModeModel); err != nil {
 		t.Fatalf("model mode needs a database: %v", err)
 	}
-	if !(Config{Env: "demo"}).RequiresDatabase() || (Config{Env: "development"}).RequiresDatabase() {
+	if !(Config{Env: "staging"}).RequiresDatabase() || (Config{Env: "development"}).RequiresDatabase() {
 		t.Fatal("RequiresDatabase")
 	}
 }

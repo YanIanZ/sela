@@ -93,7 +93,7 @@ export function OnboardingPage({
     );
   if (step === "guardian")
     return <GuardianStep policies={policies} onCreated={onCreated} />;
-  if (step === "ai") return <AIStep policies={policies} options={options} />;
+  if (step === "ai") return <AIStep policies={policies} />;
   return <AgeStep draft={draft} setDraft={setDraft} options={options} />;
 }
 
@@ -761,10 +761,8 @@ function GuardianStep({
 
 function AIStep({
   policies,
-  options,
 }: {
   policies: Record<string, Policy>;
-  options: Options | null;
 }) {
   const w = useWords();
   const { lang } = useI18n();
@@ -898,16 +896,6 @@ function AIStep({
               en: "AI replies and checker · Meta (United States)",
             })}
         </>
-      )}
-      {options?.synthetic && (
-        <Notice tone="demo" title={w("Demo", "Demo")}>
-          <p>
-            {w(
-              "Data di lingkungan ini sintetis. Fitur berjalan sungguhan, dan setiap hasil AI tetap diberi label penyedianya.",
-              "Data in this environment is synthetic. Features really run, and every AI result still names its provider.",
-            )}
-          </p>
-        </Notice>
       )}
       <div className="s-onboard-actions">
         <Button
