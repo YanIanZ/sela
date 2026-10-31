@@ -142,6 +142,13 @@ export type Entry = {
   reviewStatus: string;
   safety: string;
   summaryState?: "draft" | "approved";
+  sections?: {
+    feeling: string;
+    remember: string;
+    agreed: string;
+    askNext: string;
+  };
+  parentId?: string;
   createdAt: string;
   updatedAt: string;
   turns?: Turn[];

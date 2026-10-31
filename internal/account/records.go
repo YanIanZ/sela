@@ -65,6 +65,7 @@ type RecordInput struct {
 	ExpectedVersion int                `json:"expectedVersion"`
 	SourceRefs      []SourceRef        `json:"sourceRefs"`
 	Prepared        *SummaryPrepared   `json:"prepared"`
+	Sections        *FollowupSections  `json:"sections"`
 	ParentID        string             `json:"-"`
 	Reflections     []Reflection       `json:"-"`
 }
@@ -89,6 +90,7 @@ type PersonalRecord struct {
 	SummaryState    string             `json:"summaryState,omitempty"`
 	ApprovedVersion int                `json:"approvedVersion,omitempty"`
 	Prepared        *SummaryPrepared   `json:"prepared,omitempty"`
+	Sections        *FollowupSections  `json:"sections,omitempty"`
 	ParentID        string             `json:"parentId,omitempty"`
 	Reflections     []Reflection       `json:"reflections,omitempty"`
 	CreatedAt       time.Time          `json:"createdAt"`
@@ -121,6 +123,11 @@ func validateRecord(in RecordInput) error {
 	}
 	if !utf8.ValidString(in.Text) || utf8.RuneCountInString(in.Text) > 6000 || utf8.RuneCountInString(in.Title) > 120 {
 		return invalid("text")
+	}
+	// Structured sections belong to a follow-up only; the generic record
+	// surface must not silently drop them.
+	if in.Sections != nil {
+		return invalid("sections")
 	}
 	if in.Kind != "note" && in.Kind != "checkin" && in.Kind != "conversation" {
 		return invalid("kind")
@@ -320,7 +327,7 @@ func (s *Store) Records(ctx context.Context, owner UserID) ([]PersonalRecord, er
 }
 func (s *Store) UpdateRecord(ctx context.Context, owner UserID, id string, in RecordInput) (PersonalRecord, error) {
 	if in.Kind == KindFollowup {
-		return s.updateFollowup(ctx, owner, id, in)
+		return s.updateFollowup(ctx, owner, "", id, in)
 	}
 	if err := validateRecord(in); err != nil {
 		return PersonalRecord{}, err

@@ -21,10 +21,17 @@ import {
 } from "../ui";
 
 export type SourceRef = { recordId: string; version: number };
+export type FollowupSections = {
+  feeling: string;
+  remember: string;
+  agreed: string;
+  askNext: string;
+};
 export type ContinuityRecord = Entry & {
   sourceRefs?: SourceRef[];
   summaryState?: "draft" | "approved";
   prepared?: { goal: string; questions: string; bring: string };
+  sections?: FollowupSections;
   parentId?: string;
 };
 export const sourceText = (r: Entry) =>
@@ -42,6 +49,138 @@ export const entryRoute = (r: Entry) =>
       : r.kind === "conversation"
         ? `/talk?record=${r.id}`
         : `/notes/${r.id}`;
+
+type FollowupDraft = FollowupSections & { note: string };
+
+const blankFollowupDraft: FollowupDraft = {
+  feeling: "",
+  remember: "",
+  agreed: "",
+  askNext: "",
+  note: "",
+};
+
+// The four owner-facing sections. Each one is optional; the free note
+// below them stays available for anything that does not fit.
+const followupParts = [
+  { key: "feeling", id: "Yang aku rasakan", en: "What I felt" },
+  { key: "remember", id: "Yang ingin kuingat", en: "What I want to remember" },
+  { key: "agreed", id: "Yang disepakati", en: "What we agreed" },
+  {
+    key: "askNext",
+    id: "Yang ingin kutanyakan lain kali",
+    en: "What I want to ask next time",
+  },
+] as const;
+
+const followupDraftFilled = (draft: FollowupDraft) =>
+  [...followupParts.map((part) => draft[part.key]), draft.note].some(
+    (value) => value.trim() !== "",
+  );
+
+const followupDraftFor = (record: ContinuityRecord): FollowupDraft => ({
+  feeling: record.sections?.feeling ?? "",
+  remember: record.sections?.remember ?? "",
+  agreed: record.sections?.agreed ?? "",
+  askNext: record.sections?.askNext ?? "",
+  note: record.text,
+});
+
+const followupPayload = (draft: FollowupDraft) => ({
+  text: draft.note,
+  sections: {
+    feeling: draft.feeling,
+    remember: draft.remember,
+    agreed: draft.agreed,
+    askNext: draft.askNext,
+  },
+  storageGranted: true,
+});
+
+function FollowupFields({
+  value,
+  onChange,
+  disabled,
+  autoFocusFirst,
+}: {
+  value: FollowupDraft;
+  onChange: (next: FollowupDraft) => void;
+  disabled?: boolean;
+  autoFocusFirst?: boolean;
+}) {
+  const w = useWords();
+  return (
+    <fieldset className="s-fieldset c-followup-fields">
+      <legend className="s-legend">
+        {w("Empat bagian catatan", "Four parts of the note")}
+      </legend>
+      <p className="s-hint">
+        {w(
+          "Isi bagian yang berguna. Satu bagian atau catatan bebas sudah cukup.",
+          "Fill the parts that help. One section or the free note is enough.",
+        )}
+      </p>
+      {followupParts.map((part, index) => (
+        <TextArea
+          key={part.key}
+          label={w(part.id, part.en)}
+          value={value[part.key]}
+          onChange={(e) => onChange({ ...value, [part.key]: e.target.value })}
+          maxLength={2000}
+          rows={2}
+          optional
+          disabled={disabled}
+          autoFocus={autoFocusFirst && index === 0}
+        />
+      ))}
+      <TextArea
+        label={w("Catatan bebas", "Free note")}
+        value={value.note}
+        onChange={(e) => onChange({ ...value, note: e.target.value })}
+        maxLength={6000}
+        rows={3}
+        optional
+        disabled={disabled}
+        hint={w(
+          "Tambahan singkat di luar empat bagian.",
+          "A short addition beyond the four parts.",
+        )}
+      />
+    </fieldset>
+  );
+}
+
+export function FollowupSectionsView({
+  record,
+}: {
+  record: { text: string; sections?: FollowupSections };
+}) {
+  const w = useWords();
+  const filled = followupParts.filter(
+    (part) => (record.sections?.[part.key] ?? "").trim() !== "",
+  );
+  if (filled.length === 0) {
+    return <p className="c-original">{record.text}</p>;
+  }
+  return (
+    <div className="c-followup-sections">
+      <dl className="s-dl">
+        {filled.map((part) => (
+          <div key={part.key}>
+            <dt>{w(part.id, part.en)}</dt>
+            <dd className="c-original">{record.sections![part.key]}</dd>
+          </div>
+        ))}
+      </dl>
+      {record.text.trim() !== "" && (
+        <div>
+          <h4>{w("Catatan bebas", "Free note")}</h4>
+          <p className="c-original">{record.text}</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ContinuityHelp({ records }: { records: Entry[] }) {
   const w = useWords();
@@ -810,11 +949,15 @@ function SummaryDetail({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
-  const [after, setAfter] = useState("");
+  const [after, setAfter] = useState<FollowupDraft>(blankFollowupDraft);
   const [saveAfter, setSaveAfter] = useState(false);
+  const [editingFollowup, setEditingFollowup] = useState<string | null>(null);
+  const [followupDraft, setFollowupDraft] =
+    useState<FollowupDraft>(blankFollowupDraft);
   const load = () => {
     setError(null);
     setReviewed(false);
+    setEditingFollowup(null);
     Promise.all([
       api<ContinuityRecord>(`/consultation-summaries/${id}`),
       api<{ records: Entry[] }>("/records"),
@@ -1083,8 +1226,18 @@ function SummaryDetail({ id }: { id: string }) {
               </div>
             </section>
           )}
-          <section className="c-followups">
-            <h2>{w("Setelah percakapan itu", "After that conversation")}</h2>
+          <section className="c-followups" aria-labelledby="followups-title">
+            <div className="c-section-heading">
+              <h2 id="followups-title">
+                {w("Setelah percakapan itu", "After that conversation")}
+              </h2>
+              <LinkButton to="/support/summaries/new" variant="secondary">
+                {w(
+                  "Siapkan ringkasan berikutnya",
+                  "Prepare the next summary",
+                )}
+              </LinkButton>
+            </div>
             <p>
               {w(
                 "Catat yang ingin kamu ingat. Ini catatan pribadimu, bukan catatan resmi profesional.",
@@ -1092,6 +1245,7 @@ function SummaryDetail({ id }: { id: string }) {
               )}
             </p>
             <form
+              className="c-followup-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 void run(async () => {
@@ -1099,26 +1253,19 @@ function SummaryDetail({ id }: { id: string }) {
                     `/consultation-summaries/${id}/followups`,
                     {
                       title: w("Setelah konsultasi", "After the consultation"),
-                      text: after,
-                      storageGranted: true,
+                      ...followupPayload(after),
                     },
                     "POST",
                   );
-                  setAfter("");
+                  setAfter(blankFollowupDraft);
                   setSaveAfter(false);
                 });
               }}
             >
-              <TextArea
-                label={w(
-                  "Catatan setelah konsultasi",
-                  "Note after the consultation",
-                )}
+              <FollowupFields
                 value={after}
-                onChange={(e) => setAfter(e.target.value)}
-                maxLength={6000}
-                rows={4}
-                required
+                onChange={setAfter}
+                disabled={busy}
               />
               <CheckboxRow checked={saveAfter} onChange={setSaveAfter}>
                 {w(
@@ -1129,20 +1276,98 @@ function SummaryDetail({ id }: { id: string }) {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={busy || !after.trim() || !saveAfter}
+                disabled={busy || !followupDraftFilled(after) || !saveAfter}
               >
                 {w("Simpan tindak lanjut", "Save follow-up")}
               </Button>
             </form>
-            {followups.map((f) => (
-              <article className="c-followup" key={f.id}>
-                <p className="s-hint">{loc.dateTime(f.createdAt)}</p>
-                <p className="c-original">{f.text}</p>
-                <Link to={`/notes/${f.id}`}>
-                  {w("Buka catatan", "Open note")}
-                </Link>
-              </article>
-            ))}
+            {followups.map((f) => {
+              const headingId = `followup-${f.id}-title`;
+              const isEditing = editingFollowup === f.id;
+              return (
+                <article
+                  className="c-followup"
+                  key={f.id}
+                  aria-labelledby={headingId}
+                >
+                  <div className="c-followup-head">
+                    <h3 id={headingId}>
+                      {w(
+                        "Catatan setelah konsultasi",
+                        "After-consultation note",
+                      )}{" "}
+                      · {loc.shortDate(f.createdAt)}
+                    </h3>
+                    <span className="s-hint">
+                      {w("versi ", "version ")}
+                      {f.version}
+                    </span>
+                  </div>
+                  {isEditing ? (
+                    <form
+                      className="c-followup-form"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void run(async () => {
+                          await api(
+                            `/consultation-summaries/${id}/followups/${f.id}`,
+                            {
+                              title: f.title,
+                              ...followupPayload(followupDraft),
+                              expectedVersion: f.version,
+                            },
+                            "PATCH",
+                          );
+                        });
+                      }}
+                    >
+                      <FollowupFields
+                        value={followupDraft}
+                        onChange={setFollowupDraft}
+                        disabled={busy}
+                        autoFocusFirst
+                      />
+                      <div className="s-actions">
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          disabled={
+                            busy || !followupDraftFilled(followupDraft)
+                          }
+                        >
+                          {w("Simpan perbaikan", "Save changes")}
+                        </Button>
+                        <Button
+                          onClick={() => setEditingFollowup(null)}
+                          disabled={busy}
+                        >
+                          {w("Batal", "Cancel")}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <FollowupSectionsView record={f} />
+                      <div className="s-actions">
+                        <Button
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            setEditingFollowup(f.id);
+                            setFollowupDraft(followupDraftFor(f));
+                          }}
+                        >
+                          {w("Perbaiki", "Edit")}
+                        </Button>
+                        <Link to={`/notes/${f.id}`}>
+                          {w("Buka catatan", "Open note")}
+                        </Link>
+                      </div>
+                    </>
+                  )}
+                </article>
+              );
+            })}
           </section>
           <div className="s-actions">
             <InlineConfirm

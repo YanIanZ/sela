@@ -88,8 +88,13 @@ func exerciseGatedWrites(t *testing.T, c *v3client) {
 		"expectedVersion": summaryVersion,
 	}).data()
 	summaryVersion = int(summary["version"].(float64))
-	c.must(201, "POST", "/api/v3/consultation-summaries/"+summaryID+"/followups", map[string]any{
+	followup := c.must(201, "POST", "/api/v3/consultation-summaries/"+summaryID+"/followups", map[string]any{
 		"title": "Synthetic follow-up", "text": "Synthetic follow-up text.", "storageGranted": true,
+		"sections": map[string]any{"feeling": "Synthetic feeling.", "remember": "", "agreed": "", "askNext": ""},
+	}).data()
+	c.must(200, "PATCH", "/api/v3/consultation-summaries/"+summaryID+"/followups/"+followup["id"].(string), map[string]any{
+		"title": "Synthetic follow-up", "text": "Synthetic corrected follow-up text.", "expectedVersion": 1, "storageGranted": true,
+		"sections": map[string]any{"feeling": "Synthetic corrected feeling.", "remember": "", "agreed": "", "askNext": ""},
 	})
 
 	// Share: create and revoke.
@@ -167,6 +172,7 @@ var gatedRouteBodies = []struct {
 	{"DELETE", "/api/v3/consultation-summaries/6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11", map[string]any{"expectedVersion": 1}},
 	{"POST", "/api/v3/consultation-summaries/6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11/approve", map[string]any{"expectedVersion": 1}},
 	{"POST", "/api/v3/consultation-summaries/6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11/followups", map[string]any{"title": "Synthetic.", "text": "Synthetic.", "storageGranted": true}},
+	{"PATCH", "/api/v3/consultation-summaries/6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11/followups/0b9c2d3e-4f50-4a61-8b72-9c8d7e6f5a40", map[string]any{"title": "Synthetic.", "text": "Synthetic.", "storageGranted": true, "expectedVersion": 1}},
 	{"POST", "/api/v3/shares", map[string]any{"summaryId": "6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11", "label": "Synthetic.", "purpose": "consultation", "durationHours": 24}},
 	{"POST", "/api/v3/shares/6f1c0e8a-3b5d-4c47-9a7e-2f9d1b0c4e11/revoke", map[string]any{"expectedVersion": 1}},
 	{"POST", "/api/v3/conversations", map[string]any{"save": false}},

@@ -42,7 +42,10 @@ func TestV3CrossUserNotFound(t *testing.T) {
 	}
 	for _, rt := range httpapi.V3RouteTable(e.h) {
 		for _, seg := range strings.Split(rt.Path, "/") {
-			if strings.HasPrefix(seg, "{") && seg != "{id}" && seg != "{purpose}" && seg != "{reflectionId}" && seg != "{slug}" {
+			// Named child parameters are owner-scoped record ids, never a
+			// user id: reflectionId and followupId both name a record the
+			// signed-in owner must already hold.
+			if strings.HasPrefix(seg, "{") && seg != "{id}" && seg != "{purpose}" && seg != "{reflectionId}" && seg != "{followupId}" && seg != "{slug}" {
 				t.Errorf("%s %s takes a path parameter %s", rt.Method, rt.Path, seg)
 			}
 		}

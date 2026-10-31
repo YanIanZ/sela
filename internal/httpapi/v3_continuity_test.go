@@ -231,11 +231,82 @@ func TestV3ConsultationSummaryApprovalFollowupsAndCascade(t *testing.T) {
 		t.Fatalf("foreign follow-up create: %d %s", r.status, r.raw)
 	}
 	followupID := followup["id"].(string)
+	if _, ok := followup["sections"]; ok {
+		t.Fatalf("legacy follow-up grew sections: %v", followup)
+	}
 
-	// Deleting the summary cascades to the follow-up.
+	// A structured follow-up may hold only sections. It is read back from
+	// the same sealed record and edited through its own route with a
+	// version check; the generic record route no longer accepts followup.
+	structured := a.must(201, "POST", "/api/v3/consultation-summaries/"+id+"/followups", map[string]any{
+		"title": "Synthetic structured follow-up", "text": "", "storageGranted": true,
+		"sections": map[string]any{
+			"feeling": "Synthetic feeling.", "remember": "Synthetic memory.",
+			"agreed": "Synthetic agreement.", "askNext": "Synthetic question.",
+		},
+	}).data()
+	structuredID := structured["id"].(string)
+	if structured["kind"] != "followup" || structured["text"] != "" ||
+		structured["sections"].(map[string]any)["askNext"] != "Synthetic question." {
+		t.Fatalf("structured follow-up: %v", structured)
+	}
+	list = a.must(200, "GET", "/api/v3/consultation-summaries/"+id+"/followups", nil).data()["followups"].([]any)
+	if len(list) != 2 {
+		t.Fatalf("follow-up list after structured create: %v", list)
+	}
+	edited := a.must(200, "PATCH", "/api/v3/consultation-summaries/"+id+"/followups/"+structuredID, map[string]any{
+		"title": "Synthetic structured follow-up", "text": "Synthetic free note.", "expectedVersion": 1, "storageGranted": true,
+		"sections": map[string]any{
+			"feeling": "Synthetic corrected feeling.", "remember": "", "agreed": "", "askNext": "Synthetic corrected question.",
+		},
+	}).data()
+	if edited["version"].(float64) != 2 || edited["parentId"] != id || edited["text"] != "Synthetic free note." ||
+		edited["sections"].(map[string]any)["feeling"] != "Synthetic corrected feeling." {
+		t.Fatalf("structured follow-up edit: %v", edited)
+	}
+	if r := a.call("PATCH", "/api/v3/consultation-summaries/"+id+"/followups/"+structuredID, map[string]any{
+		"title": "Synthetic stale", "text": "Synthetic stale.", "expectedVersion": 1, "storageGranted": true,
+	}); r.status != 409 || r.code() != "stale_version" {
+		t.Fatalf("stale structured follow-up edit: %d %s", r.status, r.raw)
+	}
+	if r := b.call("PATCH", "/api/v3/consultation-summaries/"+id+"/followups/"+structuredID, map[string]any{
+		"title": "Synthetic foreign", "text": "Synthetic foreign.", "expectedVersion": 2, "storageGranted": true,
+	}); r.status != 404 || r.code() != "not_found" {
+		t.Fatalf("foreign structured follow-up edit: %d %s", r.status, r.raw)
+	}
+	other := a.must(201, "POST", "/api/v3/consultation-summaries", map[string]any{
+		"title": "Synthetic other summary", "text": "Synthetic other summary body.", "storageGranted": true,
+		"sourceRefs": []map[string]any{{"recordId": noteID, "version": noteVersion + 1}},
+	}).data()
+	if r := a.call("PATCH", "/api/v3/consultation-summaries/"+other["id"].(string)+"/followups/"+structuredID, map[string]any{
+		"title": "Synthetic wrong parent", "text": "Synthetic wrong parent.", "expectedVersion": 2, "storageGranted": true,
+	}); r.status != 404 || r.code() != "not_found" {
+		t.Fatalf("follow-up edited through another summary: %d %s", r.status, r.raw)
+	}
+	a.must(200, "DELETE", "/api/v3/consultation-summaries/"+other["id"].(string), map[string]any{"expectedVersion": 1})
+	if r := a.call("PATCH", "/api/v3/records/"+structuredID, map[string]any{
+		"kind": "followup", "title": "Synthetic", "text": "Synthetic", "expectedVersion": 2, "storageGranted": true,
+	}); r.status != 400 || r.field() != "kind" {
+		t.Fatalf("generic follow-up patch: %d %s", r.status, r.raw)
+	}
+	if r := a.call("POST", "/api/v3/consultation-summaries/"+id+"/followups", map[string]any{
+		"title": "Synthetic unknown section", "storageGranted": true,
+		"sections": map[string]any{"feeling": "Synthetic.", "mood": "Synthetic."},
+	}); r.status != 400 || r.field() != "body" {
+		t.Fatalf("unknown section field: %d %s", r.status, r.raw)
+	}
+	if r := a.call("POST", "/api/v3/consultation-summaries/"+id+"/followups", map[string]any{
+		"title": "Synthetic long section", "storageGranted": true,
+		"sections": map[string]any{"remember": strings.Repeat("a", 2001)},
+	}); r.status != 400 || r.field() != "sections" {
+		t.Fatalf("over-long section: %d %s", r.status, r.raw)
+	}
+
+	// Deleting the summary cascades to every follow-up.
 	a.must(200, "DELETE", "/api/v3/consultation-summaries/"+id, map[string]any{"expectedVersion": 3})
 	a.must(404, "GET", "/api/v3/consultation-summaries/"+id, nil)
 	a.must(404, "GET", "/api/v3/records/"+followupID, nil)
+	a.must(404, "GET", "/api/v3/records/"+structuredID, nil)
 	summaries := a.must(200, "GET", "/api/v3/consultation-summaries", nil).data()["summaries"].([]any)
 	if len(summaries) != 0 {
 		t.Fatalf("deleted summary listed: %v", summaries)
