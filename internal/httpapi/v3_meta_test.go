@@ -267,11 +267,14 @@ func TestV3StoreUnavailable(t *testing.T) {
 		if rt.Public {
 			continue
 		}
+		// One client per route: the mutation bucket is per client address,
+		// and this loop intentionally hits every write route in a row.
+		one := e.client()
 		var body any
 		if rt.Mutation {
 			body = map[string]any{}
 		}
-		r := c.call(rt.Method, fillPath(rt.Path), body)
+		r := one.call(rt.Method, fillPath(rt.Path), body)
 		if r.status != 503 || r.code() != "store_unavailable" || r.header.Get("Retry-After") == "" {
 			t.Errorf("%s %s: %d %s", rt.Method, rt.Path, r.status, r.raw)
 		}
