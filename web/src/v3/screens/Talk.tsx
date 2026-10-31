@@ -40,6 +40,8 @@ const intents = [
     value: "discuss",
     id: "Ngobrol & cari solusi",
     en: "Talk it through",
+    shortId: "Ngobrol",
+    shortEn: "Talk",
     hintId: "Sela ikut berpikir dan menawarkan jalan keluar.",
     hintEn: "Sela thinks it through with you and offers ways forward.",
   },
@@ -47,6 +49,8 @@ const intents = [
     value: "listen",
     id: "Didengarkan saja",
     en: "Just listen",
+    shortId: "Didengarkan",
+    shortEn: "Listen",
     hintId: "Sela fokus mendengarkan, lalu menawarkan satu langkah kecil.",
     hintEn: "Sela focuses on listening, then offers one small step.",
   },
@@ -1084,7 +1088,8 @@ function RoomPage({ id }: { id: string }) {
                       announce("status", w(i.hintId, i.hintEn));
                     }}
                   />
-                  <span>{w(i.id, i.en)}</span>
+                  <span className="s-room-mode-long">{w(i.id, i.en)}</span>
+                  <span className="s-room-mode-short">{w(i.shortId, i.shortEn)}</span>
                 </label>
               ))}
             </div>

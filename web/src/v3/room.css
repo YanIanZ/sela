@@ -180,3 +180,8 @@
 .s-shell--room .s-turn-meta details[open] { flex: 1 1 100%; }
 /* Phones: in the room the demo stamp alone is enough; its sentence returns elsewhere. */
 @media (max-width: 47.99em) { .s-shell--room .s-edition-inner p { display: none; } }
+.s-room-mode-short { display: none; }
+@media (max-width: 29.99em) {
+  .s-room-mode-long { display: none; }
+  .s-room-mode-short { display: inline; }
+}
