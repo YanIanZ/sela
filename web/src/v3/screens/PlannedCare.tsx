@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { api } from "../api";
+import { api, type Policy, type Profile } from "../api";
+import { ConditionMapSection, DemoPractitioners } from "./ConditionMap";
 import { useLocale, useWords } from "../shared";
 import { ErrorNotice, Loading, PageHeader, TextField } from "../ui";
 import { LinkButton } from "../ui";
@@ -25,7 +26,7 @@ const kinds = [
   { value: "practitioner", id: "Praktisi", en: "Practitioner" },
 ] as const;
 
-export function PlannedCarePage() {
+export function PlannedCarePage({ user, policies }: { user?: Profile | null; policies?: Record<string, Policy> }) {
   const w = useWords();
   const loc = useLocale();
   const [q, setQ] = useState("");
@@ -67,6 +68,8 @@ export function PlannedCarePage() {
           "Find organizations, facilities or practitioners from public sources. You choose and contact them; Sela does not book or send a request.",
         )}
       />
+      {user && <ConditionMapSection policy={policies?.condition_map} />}
+      <h2 className="c-care-directory-title">{w("Direktori dari sumber publik", "Directory from public sources")}</h2>
       <div className="c-care-intro">
         <p>
           {w(
@@ -159,6 +162,7 @@ export function PlannedCarePage() {
           ))}
         </div>
       )}
+      {!user && <DemoPractitioners />}
       <p className="s-hint c-care-foot">
         {w(
           "Sela tidak menghubungi siapa pun dan tidak membagikan ceritamu ke entri ini. Untuk bantuan mendesak, buka Bantuan sekarang.",

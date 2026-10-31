@@ -1,0 +1,76 @@
+/* Condition map, demo professionals and the sharing space (D-071, D-072). */
+
+/* Condition map: a soft panel with a four-step track; the tint follows the
+   stage but the words always say it, so colour never carries it alone. */
+.s-shell .c-condition { display: grid; gap: 1rem; margin-bottom: 2.5rem; padding: clamp(1.25rem, 2.5vw, 1.75rem); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-4); background: var(--c-surface); }
+.s-shell .c-condition-head h2 { margin: 0 0 0.3rem; }
+.s-shell .c-condition-head .s-hint { margin: 0; }
+.s-shell .c-condition-consent { display: grid; gap: 0.85rem; }
+.s-shell .c-condition-consent > p { max-width: 62ch; }
+
+.c-stage { --stage: var(--c-surface-quiet); --stage-ink: var(--c-text); display: grid; gap: 0.75rem; padding: 1.25rem; border-radius: var(--radius-3); background: var(--stage); color: var(--stage-ink); }
+.c-stage--everyday { --stage: color-mix(in srgb, var(--place-home) 70%, var(--c-surface)); }
+.c-stage--attention { --stage: color-mix(in srgb, var(--place-notes) 75%, var(--c-surface)); }
+.c-stage--support { --stage: color-mix(in srgb, var(--place-support) 85%, var(--c-surface)); }
+.c-stage--urgent { --stage: var(--c-help-bg); --stage-ink: var(--c-help-text); border: 2px solid var(--c-help); }
+.c-stage p { margin: 0; max-width: 64ch; }
+.c-stage-track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; margin: 0; padding: 0; list-style: none; counter-reset: stage; }
+.c-stage-track li { position: relative; padding-top: 0.75rem; font-family: var(--font-display); font-size: var(--font-size-1); font-weight: 500; color: color-mix(in srgb, currentColor 60%, transparent); line-height: 1.25; }
+.c-stage-track li::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 0.4rem; border-radius: var(--radius-pill); background: color-mix(in srgb, currentColor 18%, transparent); }
+.c-stage-track li.is-current { color: inherit; font-weight: 600; }
+.c-stage-track li.is-current::before { background: currentColor; }
+.c-stage-label { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-display); font-size: var(--font-size-5); }
+.c-stage-signals { display: grid; gap: 0.3rem; margin: 0; padding-inline-start: 1.15rem; }
+.s-shell .c-stage .s-hint { color: inherit; opacity: 0.85; }
+.s-shell .c-stage-help { padding: 0 0.25rem; }
+.s-shell .c-stage-help h3 { margin: 0 0 0.5rem; }
+.s-shell .c-stage-help ul { display: grid; gap: 0.3rem; margin: 0; }
+.c-condition-off { margin: 0; }
+.s-shell .c-care-directory-title { margin: 0 0 1rem; }
+
+/* Demo professionals: clearly fictional. */
+.s-shell .c-demo { display: grid; gap: 0.75rem; padding: 1.25rem; border: 1.5px dashed var(--c-border-control); border-radius: var(--radius-3); background: var(--c-surface-quiet); }
+.c-demo-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.s-shell .c-demo-head h3 { margin: 0; }
+.c-demo-badge { padding: 0.15rem 0.7rem; border-radius: var(--radius-pill); background: var(--c-demo-bg, #eee9f8); color: var(--c-demo, #5e4a99); font-family: var(--font-display); font-size: var(--font-size-1); font-weight: 500; }
+.c-demo-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+.c-demo-list li { display: grid; gap: 0.35rem; padding: 0.9rem 1rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-2); background: var(--c-surface); }
+.c-demo-list li.is-match { border-color: var(--c-leaf); box-shadow: inset 3px 0 0 var(--c-leaf); }
+.c-demo-list li > div { display: grid; gap: 0.1rem; }
+.c-demo-list p { margin: 0; }
+
+/* Sharing space. */
+.s-shell .c-community { display: grid; gap: 0; }
+.s-shell .c-community-consent { display: grid; gap: 0.85rem; max-width: 46rem; padding: clamp(1.25rem, 2.5vw, 1.75rem); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-4); background: var(--c-surface); }
+.s-shell .c-community-consent p { margin: 0; }
+.s-shell .c-community-compose { display: grid; gap: 0.85rem; margin-bottom: 2rem; padding: clamp(1.25rem, 2.5vw, 1.75rem); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-4); background: var(--c-surface); }
+.s-shell .c-community-compose h2 { margin: 0; }
+.s-shell .c-community-compose--reply { margin: 1.25rem 0 0; }
+.c-community-topics, .c-community-filter, .c-community-reasons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.s-shell .c-community-filter { margin-bottom: 1rem; }
+.c-community-list { display: grid; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+.s-shell .c-community-card { display: grid; gap: 0.5rem; padding: 1.1rem 1.25rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); background: var(--c-surface); color: var(--c-text); text-decoration: none; transition: border-color var(--duration-quick) var(--ease-standard), box-shadow var(--duration-gentle) var(--ease-standard); }
+.s-shell .c-community-card:hover { border-color: var(--c-border-control); box-shadow: var(--shadow-1); }
+.s-shell .c-community-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; margin: 0; font-family: var(--font-display); font-size: var(--font-size-1); color: var(--c-muted); }
+.c-community-alias { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--c-text); font-weight: 600; }
+.c-community-alias::before { content: ""; width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--place-talk); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-leaf) 40%, transparent); }
+.c-community-mine { padding: 0 0.5rem; border-radius: var(--radius-pill); background: var(--c-accent-soft); color: var(--c-text); }
+.c-community-body { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; font-size: 1.0625rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.c-community-body--full { display: block; -webkit-line-clamp: none; line-clamp: none; overflow: visible; }
+.c-community-foot { display: inline-flex; align-items: center; gap: 0.35rem; font-size: var(--font-size-1); color: var(--c-muted); }
+.s-shell .c-community-thread { display: grid; gap: 0.75rem; margin-bottom: 2rem; padding: clamp(1.25rem, 2.5vw, 1.75rem); border-radius: var(--radius-4); background: color-mix(in srgb, var(--place-support) 55%, var(--c-surface)); }
+.s-shell .c-community-thread .c-community-body { font-size: 1.125rem; }
+.s-shell .c-community-replies h2 { margin-bottom: 1rem; }
+.s-shell .c-community-reply { display: grid; gap: 0.4rem; padding: 0.9rem 1.1rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); background: var(--c-surface); }
+.c-community-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.s-shell .c-community-report { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--c-muted); font-size: var(--font-size-1); }
+.c-community-status { display: flex; align-items: center; gap: 0.4rem; margin: 0.35rem 0 0; padding: 0.5rem 0.75rem; border-radius: var(--radius-2); font-size: var(--font-size-1); }
+.c-community-status--held { background: var(--c-warning-bg); color: var(--c-warning); }
+.c-community-status--hidden { background: var(--c-danger-bg); color: var(--c-danger); }
+.c-community-support { margin: 0; padding: 0.6rem 0.85rem; border-radius: var(--radius-2); background: var(--c-help-bg); color: var(--c-help-text); font-size: var(--font-size-2); }
+
+@media (max-width: 47.99em) {
+  .c-stage-track li { font-size: 0.6875rem; }
+  .c-stage-label { font-size: var(--font-size-4); }
+}
+:root[data-scheme^="contrast"] :is(.c-stage, .s-shell .c-demo, .s-shell .c-community-card, .s-shell .c-community-reply, .s-shell .c-community-thread) { border: 2px solid var(--c-text); background: var(--c-bg); }

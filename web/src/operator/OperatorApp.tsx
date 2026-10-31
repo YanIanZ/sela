@@ -26,6 +26,7 @@ import {
 import { DirectoryPanel, SandboxPanel } from "./CarePanels";
 import { LanguageToggle, OperatorHeader, roleLabel } from "./chrome";
 import { ReadingPage } from "./ReadingPanel";
+import { CommunityPanel } from "./CommunityPanel";
 import "./operator.css";
 
 type Words = (id: string, en: string) => string;
@@ -349,6 +350,7 @@ function Console({
     admin.permissions.includes("directory/write") ||
     admin.permissions.includes("directory/verify");
   const canSandbox = admin.permissions.includes("sandbox/write");
+  const canModerate = admin.permissions.includes("community/moderate");
 
   const handleError = useCallback(
     (err: unknown) => {
@@ -627,6 +629,8 @@ function Console({
             onAction={(id, action, version) => void directoryAction(id, action, version)}
           />
         )}
+
+        {canModerate && <CommunityPanel onExpired={onExpired} />}
 
         {canSandbox && (
           <SandboxPanel

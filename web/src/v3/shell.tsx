@@ -582,8 +582,9 @@ export function AppShell({
               ["/notes/weekly", "Refleksi mingguan", "Weekly reflection"],
               ["/notes/memory", "Yang Sela ingat", "What Sela remembers"],
               ["/support/summaries", "Ringkasan konsultasi", "Consultation summaries"],
+              ["/support/community", "Ruang berbagi", "Sharing space"],
               ["/reading", "Bacaan", "Reading"],
-            ] as const).map(([to, id, en]) => <li key={to}><Link to={to} aria-current={path === to || (to === "/support/summaries" && path.startsWith(to + "/")) ? "page" : undefined}>{w(id, en)}</Link></li>)}</ul>
+            ] as const).map(([to, id, en]) => <li key={to}><Link to={to} aria-current={path === to || ((to === "/support/summaries" || to === "/support/community") && path.startsWith(to + "/")) ? "page" : undefined}>{w(id, en)}</Link></li>)}</ul>
           </nav>
           <nav className="s-rail-personal" aria-label={w("Pengaturan pribadi", "Personal settings")}>
             <Link to="/settings/privacy" aria-current={path === "/settings/privacy" ? "page" : undefined}><Icon name="shield" /><span>{w("Privasi & data", "Privacy & data")}</span></Link>

@@ -55,6 +55,9 @@ const RecoverPage = lazy(() =>
 const UpgradePage = lazy(() =>
   import("./screens/Auth").then((m) => ({ default: m.UpgradePage })),
 );
+const CommunityPage = lazy(() =>
+  import("./screens/Community").then((m) => ({ default: m.CommunityPage })),
+);
 const PlannedCarePage = lazy(() =>
   import("./screens/PlannedCare").then((m) => ({ default: m.PlannedCarePage })),
 );
@@ -111,6 +114,7 @@ function titleFor(path: string, lang: string): string {
   if (path.startsWith("/notes/")) return t("Catatan", "Note");
   if (path === "/support") return t("Dukungan", "Support");
   if (path === "/support/directory") return t("Bantuan terencana", "Planned support");
+  if (path === "/support/community" || path.startsWith("/support/community/")) return t("Ruang berbagi", "Sharing space");
   if (path.startsWith("/support/summaries")) return t("Ringkasan untuk konsultasi", "Summary for a consultation");
   if (path.startsWith("/support/shares")) return t("Status berbagi", "Sharing status");
   if (path === "/help") return t("Bantuan sekarang", "Help now");
@@ -275,11 +279,13 @@ function AppRoutes() {
   } else if (user && (path === "/notes" || path.startsWith("/notes/"))) {
     screen = <NotesPage user={user} path={path} />;
   } else if (path === "/support/directory") {
-    screen = <PlannedCarePage />;
+    screen = <PlannedCarePage user={user} policies={policies} />;
   } else if (user && path === "/support") {
     screen = <SupportPage />;
   } else if (user && (path.startsWith("/support/summaries") || path === "/support/prepare" || path === "/support/after")) {
     screen = <SummariesPage path={path.startsWith("/support/summaries") ? path : "/support/summaries"} />;
+  } else if (user && (path === "/support/community" || path.startsWith("/support/community/"))) {
+    screen = <CommunityPage user={user} policies={policies} />;
   } else if (user && path.startsWith("/support/shares")) {
     screen = <SharesPage />;
   } else if (user && path.startsWith("/support/")) {

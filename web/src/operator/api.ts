@@ -205,6 +205,18 @@ export type CacheHealth = {
   error?: string;
 };
 
+export type CommunityQueueItem = {
+  kind: "post" | "reply";
+  id: string;
+  postId?: string;
+  alias: string;
+  body: string;
+  status: "published" | "held" | "hidden" | "removed";
+  labels: string[];
+  reports: number;
+  updatedAt: string;
+};
+
 export class AdminError extends Error {
   readonly status: number;
   readonly code: string;
@@ -251,6 +263,14 @@ async function request<T>(
 }
 
 export const adminApi = {
+  communityQueue: () =>
+    request<{ items: CommunityQueueItem[] }>("/community/queue").then((r) => r.items),
+  communityDecide: (kind: string, id: string, action: "restore" | "remove", reason: string) =>
+    request<{ status: string }>(
+      `/community/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/decision`,
+      { method: "POST", body: JSON.stringify({ action, reason }) },
+      true,
+    ),
   me: () => request<{ admin: Admin }>("/me").then((r) => r.admin),
   login: (username: string, password: string, totp: string) =>
     request<{ admin: Admin }>(

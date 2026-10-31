@@ -1760,3 +1760,68 @@ describe("accessibility smoke", () => {
     ).toEqual([]);
   });
 });
+
+describe("planned care and the sharing space", () => {
+  it("shows the condition map stage with its reasons and the demo professionals", async () => {
+    const user = profile();
+    mockApi(
+      {
+        "GET /me/consents": () => ({
+          data: { consents: [{ purpose: "condition_map", granted: true, outdated: false, revision: 1, currentPolicyVersion: "cm-1" }] },
+        }),
+        "GET /condition-map": () => ({
+          data: {
+            stage: "support",
+            signals: [{ key: "heavy_streak", count: 3, days: 14 }],
+            dataPoints: 6,
+            windowDays: 30,
+            dataLimited: false,
+            sources: { checkin: 6 },
+            computedAt: "2026-11-01T10:00:00Z",
+          },
+        }),
+        "GET /care-demo": () => ({
+          data: {
+            synthetic: true,
+            practitioners: [
+              { id: "demo-1", name: "Psikolog Klinis Demo A", role: { id: "Psikolog klinis (fiktif)", en: "Clinical psychologist (fictional)" }, focus: { id: "Stres", en: "Stress" }, modes: ["online"], city: "Surabaya", languages: ["id"], stages: ["support"], synthetic: true },
+            ],
+          },
+        }),
+        "GET /care-directory": () => ({ data: { entries: [] } }),
+      },
+      user,
+    );
+    renderPath("/support/directory");
+    expect(await screen.findByText("Butuh dukungan", { selector: "strong" })).toBeInTheDocument();
+    expect(screen.getByText("3 cek perasaan terakhir berturut-turut berat")).toBeInTheDocument();
+    expect(await screen.findByText("Psikolog Klinis Demo A")).toBeInTheDocument();
+    expect(screen.getByText(/Simulasi produk · fiktif/)).toBeInTheDocument();
+  });
+
+  it("opens quick-help mode when a community post reads as danger", async () => {
+    const user = profile();
+    mockApi(
+      {
+        "GET /me/consents": () => ({
+          data: { consents: [{ purpose: "community", granted: true, outdated: false, revision: 1, currentPolicyVersion: "c-1" }] },
+        }),
+        "GET /community/posts": () => ({ data: { posts: [] } }),
+        "POST /community/posts": () => json({ error: { code: "crisis", message: "crisis" } }, 422),
+      },
+      user,
+    );
+    renderPath("/support/community");
+    const box = await screen.findByLabelText("Ceritamu");
+    fireEvent.change(box, { target: { value: "aku mau bunuh diri" } });
+    fireEvent.click(screen.getByRole("button", { name: "Bagikan" }));
+    expect(await screen.findByRole("alertdialog", { name: "Kamu tidak sendirian" })).toBeInTheDocument();
+  });
+
+  it("keeps the sharing space closed to people under 18", async () => {
+    mockApi({}, profile({ ageBand: "15_17" }));
+    renderPath("/support/community");
+    expect(await screen.findByText("Khusus 18 tahun ke atas")).toBeInTheDocument();
+  });
+});
+

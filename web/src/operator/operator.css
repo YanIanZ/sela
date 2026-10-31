@@ -671,3 +671,13 @@
     animation: none !important;
   }
 }
+
+/* Community moderation queue (D-072). */
+.op-community-list { display: grid; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+.op-community-item { display: grid; gap: 0.5rem; padding: 0.9rem 1rem; border: 1px solid var(--op-line, #d9ded9); border-radius: 12px; }
+.op-community-meta { margin: 0; color: var(--op-muted); font-size: 0.875rem; }
+.op-community-body { margin: 0; padding-left: 0.75rem; border-left: 3px solid var(--op-line, #d9ded9); white-space: pre-wrap; overflow-wrap: anywhere; }
+.op-community-labels { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0; }
+.op-community-labels span { padding: 0.1rem 0.55rem; border-radius: 999px; background: #fde8e4; color: #8c2c17; font-size: 0.8125rem; }
+.op-community-reason { display: grid; gap: 0.2rem; font-size: 0.8125rem; }
+.op-community-reason input { min-height: 2.5rem; padding: 0.35rem 0.6rem; border: 1px solid var(--op-line, #c8cfc9); border-radius: 8px; font: inherit; }
