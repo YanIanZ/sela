@@ -10,7 +10,7 @@
 
 **Sela bukan terapis, dokter, layanan diagnosis, sistem triase, atau pengganti layanan krisis.** Sela tidak menghubungi profesional atau rumah sakit atas nama pengguna tanpa tindakan dan persetujuan eksplisit.
 
-> **Status — 29 October 2026:** This README presents the **new owner-approved product direction**, not a claim of completed implementation. The previous v3 specification and code still contain optional username accounts and a Glimmer/Modal AI path. Live Meta/Claude/DeepSeek inference, anonymous-only cutover, Meaning Integrity Engine, and real partner integrations are **not verified as operational**. The work is tracked in [the vision documentation](docs/vision/README.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md). No public clinical or pilot-readiness claim is made.
+> **Status — 29 October 2026:** This README presents the **new owner-approved product direction**, not a claim of completed implementation. The previous v3 specification and code still contain optional username accounts and a Glimmer/Modal AI path. Live Meta inference (generator and a different Meta verifier, no fallback) is used in development/demo; production hosting, anonymous-only cutover, Meaning Integrity Engine, and real partner integrations are **not verified as operational**. The work is tracked in [the vision documentation](docs/vision/README.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md). No public clinical or pilot-readiness claim is made.
 
 ## What makes Sela different?
 

@@ -1,5 +1,6 @@
 # Sela verifier: Claude Sonnet 5.5 (EvidenceGuard → v3 integration)
 
+> **2026-10-31 — superseded in part by [D-065](DECISION_LOG.md#d-065):** the Claude verifier and the DeepSeek fallback are removed. One *different Meta model* (`muse-wonder-1.0` by default) verifies under the existing `ai_processing` consent, and there is no fallback generator or second verifier. Where this document names Anthropic/Claude, DeepSeek, `live_anthropic`, `live_deepseek_*` or `ai_provider_*` consents as current behaviour, D-065 governs; the routing, consent, minimisation, guard, provenance and "no unverified release" guarantees continue with the Meta verifier.
 Status:
 - **Role accepted** (PM decision D-030). The contract is in [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md) §6–§7, and the stored verification status in §10.1.
 - **Runtime integration in progress** (milestone P5): committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`; `internal/ai/anthropic`, `internal/ai/verifier`, `eval/verifier`), not merged; nothing verified; live use **blocked externally** (B-8). Nothing of it is wired into the delivery branch (`feat/sela-v3-pilot`): no verifier route, consent purpose or persistence exists there yet.

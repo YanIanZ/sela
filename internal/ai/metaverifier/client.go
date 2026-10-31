@@ -1,17 +1,17 @@
-// Package anthropic is Sela's Claude verifier client (ADR-0003 VC-4,
-// VC-6, VC-7): one Messages API call per verifier request, with
-// grammar-constrained JSON output (output_config.format json_schema),
-// thinking "between_tools" and effort "low".
+// Package metaverifier is Sela's Meta verifier client (SPEC V36): one
+// Chat Completions call per verifier request to the Meta Model API, with
+// grammar-constrained JSON output (response_format json_schema) and
+// reasoning effort "minimal".
 //
-// It never sends sampling parameters, assistant prefill, tools,
-// tool_choice, Citations, metadata.user_id or the server-side "fallbacks"
-// option (a fallback would route around a refusal, RR-6). A refusal,
-// max_tokens truncation, schema or enum violation, model mismatch or
-// transport failure is an error; nothing is ever treated as a pass.
+// The verifier is always a different Meta model from the generator, so a
+// model never verifies its own output. There is no fallback and no second
+// verifier: a refusal, truncation, schema or enum violation, model
+// mismatch or transport failure is an error, and nothing is ever treated
+// as a pass.
 //
 // The client never logs. The API key comes from configuration and appears
 // only in the Authorization header; errors and Identity never contain it.
-package anthropic
+package metaverifier
 
 import (
 	"context"
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -29,53 +28,39 @@ import (
 )
 
 // Provider is the provider name used in errors and provenance.
-const Provider = "anthropic"
+const Provider = "meta_verifier"
 
-// Defaults (observed provider facts, 2026-10-26; ADR-0003 §2, VC-4).
+// Defaults (Meta Model API, observed 2026-10-31).
 const (
-	DefaultBaseURL        = "https://api.anthropic.com"
-	DefaultVersion        = "2026-10-21"
-	DefaultModel          = "claude-sonnet-5-5"
-	DefaultInferenceGeo   = "us"
-	DefaultEffort         = "low"
-	DefaultMaxTokens      = 2000
+	DefaultBaseURL        = "https://api.meta.ai/v1"
+	DefaultModel          = "muse-wonder-1.0"
+	DefaultMaxTokens      = 3000
 	DefaultAttemptTimeout = 30 * time.Second
 	// LiveHost is the only host production accepts.
-	LiveHost = "api.anthropic.com"
+	LiveHost = "api.meta.ai"
 )
 
 // Test-double identity (cmd/fakellm). A test-double client sends and
-// expects TestDoubleModel, so its reports can never pass as Claude's.
+// expects TestDoubleModel, so its reports can never pass as the Meta
+// verifier's.
 const (
-	TestDoubleModel = "test-double-not-claude"
-	TestDoubleLabel = "TEST DOUBLE — not Claude"
+	TestDoubleModel = "test-double-not-meta-verifier"
+	TestDoubleLabel = "TEST DOUBLE — not the Meta verifier"
 )
 
 // Config configures the client.
 type Config struct {
-	// APIKey is a workspace-scoped server key, sent as
-	// "Authorization: Bearer". Required unless TestDouble; never sent to a
-	// test double.
+	// APIKey is sent as "Authorization: Bearer". Required unless
+	// TestDouble; never sent to a test double.
 	APIKey transport.Secret
 	// TestDoubleAPIKey is the only key a test-double client sends
-	// (SELA_TEST_DOUBLE_API_KEY, optional). It is never sent to Anthropic.
+	// (SELA_TEST_DOUBLE_API_KEY, optional). It is never sent to Meta.
 	TestDoubleAPIKey transport.Secret
 	// BaseURL defaults to DefaultBaseURL (DefaultTestDoubleURL for a test
-	// double). The client appends /v1/messages.
+	// double). The client appends /chat/completions.
 	BaseURL string
-	// WorkspaceID is sent as anthropic-workspace-id when set (never to a
-	// test double); only a key that is not scoped to a workspace needs it.
-	WorkspaceID transport.Secret
-	// Version is the anthropic-version header (default DefaultVersion).
-	Version string
 	// Model defaults to DefaultModel (TestDoubleModel for a test double).
 	Model string
-	// InferenceGeo is "us" (default; ×1.1 price, makes the "processed in
-	// the US" disclosure true) or "global".
-	InferenceGeo string
-	// Effort is "low" (default), "medium" or "high"; between_tools thinking
-	// is accepted only at high or below.
-	Effort string
 	// MaxTokens bounds the report (default DefaultMaxTokens).
 	MaxTokens int
 	// TestDouble selects a labelled test double.
@@ -95,14 +80,12 @@ type Config struct {
 // DefaultTestDoubleURL is cmd/fakellm's default address.
 const DefaultTestDoubleURL = "http://127.0.0.1:8090"
 
-// Client is a Claude verifier. It is safe for concurrent use.
+// Client is a Meta verifier. It is safe for concurrent use.
 type Client struct {
 	cfg      Config
 	hc       *http.Client
 	endpoint string
 }
-
-var versionRe = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 
 // New validates cfg and returns a client. Errors name fields, never
 // values.
@@ -113,20 +96,11 @@ func New(cfg Config) (*Client, error) {
 			cfg.BaseURL = DefaultTestDoubleURL
 		}
 	}
-	if cfg.Version == "" {
-		cfg.Version = DefaultVersion
-	}
 	if cfg.Model == "" {
 		cfg.Model = DefaultModel
 		if cfg.TestDouble {
 			cfg.Model = TestDoubleModel
 		}
-	}
-	if cfg.InferenceGeo == "" {
-		cfg.InferenceGeo = DefaultInferenceGeo
-	}
-	if cfg.Effort == "" {
-		cfg.Effort = DefaultEffort
 	}
 	if cfg.MaxTokens == 0 {
 		cfg.MaxTokens = DefaultMaxTokens
@@ -153,21 +127,11 @@ func New(cfg Config) (*Client, error) {
 	if !cfg.TestDouble && !cfg.APIKey.IsSet() {
 		problems = append(problems, "APIKey is required")
 	}
-	if !transport.ValidCredential(cfg.APIKey.Reveal()) || !transport.ValidCredential(cfg.WorkspaceID.Reveal()) ||
-		!transport.ValidCredential(cfg.TestDoubleAPIKey.Reveal()) || len(cfg.WorkspaceID.Reveal()) > 128 {
-		problems = append(problems, "APIKey, TestDoubleAPIKey and WorkspaceID must be single-line values")
-	}
-	if !versionRe.MatchString(cfg.Version) {
-		problems = append(problems, "Version must be a YYYY-MM-DD API version")
+	if !transport.ValidCredential(cfg.APIKey.Reveal()) || !transport.ValidCredential(cfg.TestDoubleAPIKey.Reveal()) {
+		problems = append(problems, "APIKey and TestDoubleAPIKey must be single-line values")
 	}
 	if cfg.TestDouble != (cfg.Model == TestDoubleModel) {
 		problems = append(problems, "Model must be the test-double name exactly when TestDouble is set")
-	}
-	if cfg.InferenceGeo != "us" && cfg.InferenceGeo != "global" {
-		problems = append(problems, "InferenceGeo must be us or global")
-	}
-	if cfg.Effort != "low" && cfg.Effort != "medium" && cfg.Effort != "high" {
-		problems = append(problems, "Effort must be low, medium or high (between_tools thinking)")
 	}
 	if cfg.MaxTokens < 256 || cfg.MaxTokens > 16000 {
 		problems = append(problems, "MaxTokens must be within [256, 16000]")
@@ -176,14 +140,14 @@ func New(cfg Config) (*Client, error) {
 		problems = append(problems, "durations must not be negative")
 	}
 	if len(problems) > 0 {
-		return nil, errors.New("anthropic: invalid config: " + strings.Join(problems, "; "))
+		return nil, errors.New("metaverifier: invalid config: " + strings.Join(problems, "; "))
 	}
-	return &Client{cfg: cfg, hc: transport.HTTPClient(cfg.HTTPClient), endpoint: transport.JoinPath(base, "/v1/messages")}, nil
+	return &Client{cfg: cfg, hc: transport.HTTPClient(cfg.HTTPClient), endpoint: transport.JoinPath(base, "/chat/completions")}, nil
 }
 
 // Identity describes the verifier without secrets.
 func (c *Client) Identity() verifier.Identity {
-	id := verifier.Identity{Provider: Provider, Model: c.cfg.Model, TestDouble: c.cfg.TestDouble, InferenceGeo: c.cfg.InferenceGeo}
+	id := verifier.Identity{Provider: Provider, Model: c.cfg.Model, TestDouble: c.cfg.TestDouble}
 	if c.cfg.TestDouble {
 		id.Label = TestDoubleLabel
 	}
@@ -194,10 +158,10 @@ func (c *Client) Identity() verifier.Identity {
 // fmt verb (the unexported config would otherwise be printed raw).
 func (c *Client) Format(f fmt.State, _ rune) {
 	if c == nil {
-		_, _ = io.WriteString(f, "anthropic.Client(nil)")
+		_, _ = io.WriteString(f, "metaverifier.Client(nil)")
 		return
 	}
-	_, _ = fmt.Fprintf(f, "anthropic.Client{model=%s testDouble=%t geo=%s key=%s}", c.cfg.Model, c.cfg.TestDouble, c.cfg.InferenceGeo,
+	_, _ = fmt.Fprintf(f, "metaverifier.Client{model=%s testDouble=%t key=%s}", c.cfg.Model, c.cfg.TestDouble,
 		setOrUnset(c.cfg.APIKey))
 }
 
@@ -208,79 +172,59 @@ func setOrUnset(s transport.Secret) string {
 	return "unset"
 }
 
-// APIVersion is the anthropic-version the client sends.
-func (c *Client) APIVersion() string { return c.cfg.Version }
-
-// InferenceGeo is the inference_geo the client sends.
-func (c *Client) InferenceGeo() string { return c.cfg.InferenceGeo }
-
 type message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-type thinking struct {
-	Type string `json:"type"`
-}
-
-type format struct {
-	Type   string          `json:"type"`
+type jsonSchema struct {
+	Name   string          `json:"name"`
+	Strict bool            `json:"strict"`
 	Schema json.RawMessage `json:"schema"`
 }
 
-type outputConfig struct {
-	Effort string `json:"effort"`
-	Format format `json:"format"`
+type responseFormat struct {
+	Type       string     `json:"type"`
+	JSONSchema jsonSchema `json:"json_schema"`
 }
 
-// messagesRequest is the complete request body; there is deliberately no
-// field for sampling, tools, metadata or fallbacks.
-type messagesRequest struct {
-	Model        string       `json:"model"`
-	MaxTokens    int          `json:"max_tokens"`
-	System       string       `json:"system"`
-	Messages     []message    `json:"messages"`
-	Thinking     thinking     `json:"thinking"`
-	OutputConfig outputConfig `json:"output_config"`
-	InferenceGeo string       `json:"inference_geo"`
+// chatRequest is the complete request body; there is deliberately no
+// field for sampling, tools or metadata.
+type chatRequest struct {
+	Model           string         `json:"model"`
+	MaxTokens       int            `json:"max_tokens"`
+	Messages        []message      `json:"messages"`
+	ReasoningEffort string         `json:"reasoning_effort"`
+	ResponseFormat  responseFormat `json:"response_format"`
 }
 
-// messagesResponse decodes only what VC-6 checks. Thinking text, if a
+// chatResponse decodes only what the verifier checks. Reasoning text, if a
 // response ever carried any, is not decoded.
-type messagesResponse struct {
-	Type        string `json:"type"`
-	Model       string `json:"model"`
-	StopReason  string `json:"stop_reason"`
-	StopDetails *struct {
-		Category *string `json:"category"`
-	} `json:"stop_details"`
-	Content []struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
-	} `json:"content"`
+type chatResponse struct {
+	Model   string `json:"model"`
+	Choices []struct {
+		FinishReason string `json:"finish_reason"`
+		Message      struct {
+			Content *string `json:"content"`
+			Refusal *string `json:"refusal"`
+		} `json:"message"`
+	} `json:"choices"`
 	Usage struct {
-		InputTokens  int `json:"input_tokens"`
-		OutputTokens int `json:"output_tokens"`
+		PromptTokens     int `json:"prompt_tokens"`
+		CompletionTokens int `json:"completion_tokens"`
 	} `json:"usage"`
 }
 
-// knownRefusalCategories are the observed stop_details categories; any
-// other value is recorded as "other" so provider strings never reach a
-// record.
-var knownRefusalCategories = map[string]bool{
-	"cyber": true, "bio": true, "frontier_llm": true, "reasoning_extraction": true, "general_harms": true,
-}
-
-// Verify sends one VC-4 request and validates the report (VC-6).
+// Verify sends one request and validates the report.
 //
-// Retries (ADR-0003 §3.2): one retry by default, only for a connection
-// failure, 429 (not a spend cap), 500, 502, 503, 504 or 529, waiting the
-// server's Retry-After when it is at most MaxRetryAfter (a longer one ends
-// the retries) and never past the context deadline. A 200 response is
-// never retried: a refusal, truncation or invalid report is final (RR-10).
+// Retries: one retry by default, only for a connection failure, 429 (not a
+// spend cap), 500, 502, 503, 504 or 529, waiting the server's Retry-After
+// when it is at most MaxRetryAfter and never past the context deadline. A
+// 200 response is never retried: a refusal, truncation or invalid report is
+// final.
 func (c *Client) Verify(ctx context.Context, req verifier.Request, opts verifier.CallOptions) (verifier.Result, error) {
 	start := time.Now()
-	res := verifier.Result{Identity: c.Identity(), APIVersion: c.cfg.Version}
+	res := verifier.Result{Identity: c.Identity()}
 	if err := req.Validate(); err != nil {
 		return res, transport.NewError(Provider, transport.ReasonRejected, 0, "request violates VC-1")
 	}
@@ -288,14 +232,18 @@ func (c *Client) Verify(ctx context.Context, req verifier.Request, opts verifier
 	if err != nil {
 		return res, transport.NewError(Provider, transport.ReasonRejected, 0, "request cannot be encoded")
 	}
-	body, err := json.Marshal(messagesRequest{
-		Model:        c.cfg.Model,
-		MaxTokens:    c.cfg.MaxTokens,
-		System:       verifier.Instructions,
-		Messages:     []message{{Role: "user", Content: user}},
-		Thinking:     thinking{Type: "between_tools"},
-		OutputConfig: outputConfig{Effort: c.cfg.Effort, Format: format{Type: "json_schema", Schema: verifier.Schema()}},
-		InferenceGeo: c.cfg.InferenceGeo,
+	body, err := json.Marshal(chatRequest{
+		Model:     c.cfg.Model,
+		MaxTokens: c.cfg.MaxTokens,
+		Messages: []message{
+			{Role: "system", Content: verifier.Instructions},
+			{Role: "user", Content: user},
+		},
+		ReasoningEffort: "minimal",
+		ResponseFormat: responseFormat{
+			Type:       "json_schema",
+			JSONSchema: jsonSchema{Name: "verifier_report", Strict: true, Schema: verifier.Schema()},
+		},
 	})
 	if err != nil {
 		return res, transport.NewError(Provider, transport.ReasonRejected, 0, "request cannot be encoded")
@@ -303,16 +251,12 @@ func (c *Client) Verify(ctx context.Context, req verifier.Request, opts verifier
 	header := http.Header{}
 	switch {
 	case c.cfg.TestDouble:
-		// A test double never receives the live key or workspace.
+		// A test double never receives the live key.
 		if c.cfg.TestDoubleAPIKey.IsSet() {
 			header.Set("Authorization", "Bearer "+c.cfg.TestDoubleAPIKey.Reveal())
 		}
 	case c.cfg.APIKey.IsSet():
 		header.Set("Authorization", "Bearer "+c.cfg.APIKey.Reveal())
-	}
-	header.Set("anthropic-version", c.cfg.Version)
-	if !c.cfg.TestDouble && c.cfg.WorkspaceID.IsSet() {
-		header.Set("anthropic-workspace-id", c.cfg.WorkspaceID.Reveal())
 	}
 	header.Set("Content-Type", "application/json")
 	header.Set("Accept", "application/json")
@@ -358,7 +302,7 @@ func (c *Client) Verify(ctx context.Context, req verifier.Request, opts verifier
 	return res, nil
 }
 
-// decode applies VC-6 to one 200 response.
+// decode applies the report checks to one 200 response.
 func (c *Client) decode(resp transport.Response, req verifier.Request, res *verifier.Result) (verifier.Report, error) {
 	fail := func(reason transport.Reason, detail string) (verifier.Report, error) {
 		return verifier.Report{}, transport.NewError(Provider, reason, resp.Status, detail)
@@ -369,35 +313,37 @@ func (c *Client) decode(resp transport.Response, req verifier.Request, res *veri
 	if resp.TooLarge {
 		return fail(transport.ReasonInvalidOutput, "response body above 64 KiB")
 	}
-	var m messagesResponse
+	var m chatResponse
 	if err := json.Unmarshal(resp.Body, &m); err != nil {
-		return fail(transport.ReasonInvalidOutput, "response is not a Messages API object")
+		return fail(transport.ReasonInvalidOutput, "response is not a Chat Completions object")
 	}
-	res.InputTokens, res.OutputTokens = m.Usage.InputTokens, m.Usage.OutputTokens
+	res.InputTokens, res.OutputTokens = m.Usage.PromptTokens, m.Usage.CompletionTokens
 	if m.Model != c.cfg.Model {
 		return fail(transport.ReasonModelMismatch, "response model differs from the configured model")
 	}
 	res.ServedModel = m.Model
-	switch m.StopReason {
-	case "end_turn":
-	case "refusal":
+	if len(m.Choices) != 1 {
+		return fail(transport.ReasonInvalidOutput, "response must carry exactly one choice")
+	}
+	choice := m.Choices[0]
+	if choice.Message.Refusal != nil && strings.TrimSpace(*choice.Message.Refusal) != "" {
 		res.RefusalCategory = "other"
-		if m.StopDetails != nil && m.StopDetails.Category != nil && knownRefusalCategories[*m.StopDetails.Category] {
-			res.RefusalCategory = *m.StopDetails.Category
-		}
-		return fail(transport.ReasonRefused, "stop_reason refusal")
-	case "max_tokens", "model_context_window_exceeded":
+		return fail(transport.ReasonRefused, "response refusal")
+	}
+	switch choice.FinishReason {
+	case "stop":
+	case "content_filter":
+		res.RefusalCategory = "other"
+		return fail(transport.ReasonRefused, "finish_reason content_filter")
+	case "length":
 		return fail(transport.ReasonTruncated, "output truncated")
 	default:
-		return fail(transport.ReasonInvalidOutput, "unexpected stop_reason")
+		return fail(transport.ReasonInvalidOutput, "unexpected finish_reason")
 	}
-	if len(m.Content) != 1 || m.Content[0].Type != "text" {
-		return fail(transport.ReasonInvalidOutput, "response must be exactly one text block")
-	}
-	if strings.TrimSpace(m.Content[0].Text) == "" {
+	if choice.Message.Content == nil || strings.TrimSpace(*choice.Message.Content) == "" {
 		return fail(transport.ReasonInvalidOutput, "empty report")
 	}
-	rep, err := verifier.Parse(m.Content[0].Text, req)
+	rep, err := verifier.Parse(*choice.Message.Content, req)
 	if err != nil {
 		return fail(transport.ReasonInvalidOutput, "report violates VC-6")
 	}

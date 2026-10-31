@@ -32,16 +32,6 @@ const policies = {
       text("Tanpa izin, Sela tidak membalas dengan AI."),
     ],
   },
-  ai_provider_anthropic: {
-    version: "anth-v1",
-    title: { id: "Pemeriksa · Claude", en: "Checker · Claude" },
-    body: [text("Pemeriksa memeriksa balasan yang menyebut hal kesehatan.")],
-  },
-  ai_provider_deepseek: {
-    version: "ds-v1",
-    title: { id: "Model cadangan · DeepSeek", en: "Backup model · DeepSeek" },
-    body: [text("Hanya dipakai jika model utama tidak tersedia.")],
-  },
 };
 
 const options = {
@@ -116,22 +106,6 @@ const consents = [
     outdated: false,
     revision: 0,
     currentPolicyVersion: "ai-v1",
-  },
-  {
-    purpose: "ai_provider_anthropic",
-    required: false,
-    granted: false,
-    outdated: false,
-    revision: 0,
-    currentPolicyVersion: "anth-v1",
-  },
-  {
-    purpose: "ai_provider_deepseek",
-    required: false,
-    granted: false,
-    outdated: false,
-    revision: 0,
-    currentPolicyVersion: "ds-v1",
   },
 ];
 
@@ -452,7 +426,7 @@ describe("home, notes and conversations", () => {
           aiProvenance: {
             draftProvenance: "live_meta",
             generator: { provider: "meta", modelId: "meta-model" },
-            verification: { provenance: "live_anthropic", status: "released" },
+            verification: { provenance: "live_meta_verifier", status: "released" },
           },
         },
       ],
@@ -472,7 +446,7 @@ describe("home, notes and conversations", () => {
       await screen.findByText("Kedengarannya hari ini berat. Apa yang paling terasa?"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Sela · balasan AI \(Meta\) · diperiksa oleh Claude/),
+      screen.getByText(/Sela · balasan AI \(Meta\) · diperiksa oleh model Meta pemeriksa/),
     ).toBeInTheDocument();
     const send = calls.find((c) => c.path === "/conversations/room-1/turns");
     expect(send?.body).toMatchObject({

@@ -38,12 +38,7 @@ import {
 } from "../ui";
 
 const purposePlace: Record<string, { id: string; en: string }> = {
-  ai_processing: { id: "Meta, diproses di Modal (Amerika Serikat)", en: "Meta, processed on Modal (United States)" },
-  ai_provider_anthropic: {
-    id: "Claude dari Anthropic (Amerika Serikat)",
-    en: "Claude by Anthropic (United States)",
-  },
-  ai_provider_deepseek: { id: "DeepSeek (Tiongkok)", en: "DeepSeek (China)" },
+  ai_processing: { id: "Meta: balasan dan pemeriksa (Amerika Serikat)", en: "Meta: replies and checker (United States)" },
   personal_memory: { id: "Disimpan di server Sela", en: "Stored on Sela's server" },
 };
 

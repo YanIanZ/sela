@@ -19,30 +19,24 @@ const (
 	StatusNotRequested            = "not_requested"
 )
 
-// V35 draft and verification provenance values (ADR-0003 §10). A draft
-// that DeepSeek wrote as the fallback generator is the owner's
-// live_deepseek_fallback (SPEC V20, ADR-0003 §17 O-4); verdicts of DeepSeek
-// as the alternative verifier keep their own, distinct value
-// live_deepseek_alternative (O-5). "test_double" for a verifier report is
-// the value proposed in ADR-0003 §10.1 (pending SPEC). A run that produced
-// no AI draft (the no-AI path, or an abstention, stop or stale discard
-// before any draft passed the guards) carries the owner's "unavailable"
-// (docs/DEEPSEEK_FALLBACK.md: AI drafting unavailable); there is no other
-// "no draft" value.
+// V35 draft and verification provenance values (ADR-0003 §10). The
+// verifier is always a Meta model, recorded as live_meta_verifier. A run
+// that produced no AI draft (the no-AI path, or an abstention, stop or
+// stale discard before any draft passed the guards) carries the owner's
+// "unavailable".
 const (
-	DraftLiveMeta             = "live_meta"
-	DraftLiveDeepSeekFallback = "live_deepseek_fallback"
-	DraftTestDouble           = "test_double"
-	DraftManual               = "manual"
-	DraftRecordedDemo         = "recorded_demo"
-	DraftUnavailable          = "unavailable"
+	DraftLiveMeta     = "live_meta"
+	DraftLiveMetaAPI  = "live_meta_api"
+	DraftTestDouble   = "test_double"
+	DraftManual       = "manual"
+	DraftRecordedDemo = "recorded_demo"
+	DraftUnavailable  = "unavailable"
 
-	VerifiedLiveAnthropic   = "live_anthropic"
-	VerifiedLiveDeepSeekAlt = "live_deepseek_alternative"
-	VerifiedTestDouble      = "test_double"
-	VerifiedUnavailable     = "unavailable"
-	VerifiedNotRequired     = "not_required"
-	VerifiedNotRequested    = "not_requested"
+	VerifiedLiveMetaVerifier = "live_meta_verifier"
+	VerifiedTestDouble       = "test_double"
+	VerifiedUnavailable      = "unavailable"
+	VerifiedNotRequired      = "not_required"
+	VerifiedNotRequested     = "not_requested"
 )
 
 // Provenance is the per-output record of ADR-0003 §10. It holds enums,
@@ -56,18 +50,11 @@ type Provenance struct {
 	PromptVersion   string `json:"promptVersion,omitempty"`
 	SchemaVersion   string `json:"schemaVersion,omitempty"`
 	// Route is the generator route of the released output.
-	Route Route `json:"route"`
-	// FallbackReason is the upstream Meta availability failure that led to
-	// the DeepSeek fallback: one of FallbackReasons (ADR-0003 §10, §17
-	// O-1), or empty when no fallback was attempted.
-	FallbackReason string `json:"fallbackReason,omitempty"`
-	CircuitOpen    bool   `json:"circuitOpen,omitempty"`
-	// DeepSeekData is the server's DeepSeek data setting when DeepSeek is
-	// configured ("synthetic_only" or "real_user", V21, §17 O-3), and
-	// Synthetic whether the caller marked this operation's data as
+	Route       Route `json:"route"`
+	CircuitOpen bool  `json:"circuitOpen,omitempty"`
+	// Synthetic says whether the caller marked this operation's data as
 	// synthetic demo or test data.
-	DeepSeekData DeepSeekData `json:"deepseekData,omitempty"`
-	Synthetic    bool         `json:"synthetic,omitempty"`
+	Synthetic bool `json:"synthetic,omitempty"`
 	// DraftProvenance is the V35 draft value.
 	DraftProvenance string `json:"draftProvenance"`
 	// Generator is the generator whose output is used (nil when none).
@@ -132,10 +119,9 @@ type VerificationRecord struct {
 	Provider   ProviderName      `json:"provider,omitempty"`
 	ModelID    string            `json:"modelId,omitempty"`
 	// ServedModel is the response model.
-	ServedModel  string `json:"servedModel,omitempty"`
-	APIVersion   string `json:"anthropicVersion,omitempty"`
-	InferenceGeo string `json:"inferenceGeo,omitempty"`
-	// Label marks alternative-verifier and test-double verdicts.
+	ServedModel string `json:"servedModel,omitempty"`
+	APIVersion  string `json:"apiVersion,omitempty"`
+	// Label marks test-double verdicts.
 	Label  string `json:"label,omitempty"`
 	Calls  int    `json:"calls,omitempty"`
 	Claims int    `json:"claims,omitempty"`
@@ -150,9 +136,7 @@ type VerificationRecord struct {
 	QuoteFallback int            `json:"quoteFallback"`
 	Dropped       int            `json:"dropped"`
 	WithheldAll   bool           `json:"withheldAll,omitempty"`
-	// UnavailableReasons are in order of occurrence (§10). When the
-	// alternative verifier produced the checked report, Claude's failure
-	// reason stays here.
+	// UnavailableReasons are in order of occurrence (§10).
 	UnavailableReasons []string `json:"unavailableReasons,omitempty"`
 	// SafetyPassIncomplete is the reason ("timeout", "user_limit", ...)
 	// the requests after a withholding report could not all be checked.
@@ -177,8 +161,7 @@ type VerifierAttempt struct {
 	Provider     ProviderName      `json:"provider"`
 	ModelID      string            `json:"modelId,omitempty"`
 	ServedModel  string            `json:"servedModel,omitempty"`
-	APIVersion   string            `json:"anthropicVersion,omitempty"`
-	InferenceGeo string            `json:"inferenceGeo,omitempty"`
+	APIVersion   string            `json:"apiVersion,omitempty"`
 	Label        string            `json:"label,omitempty"`
 	Calls        int               `json:"calls"`
 	Reports      int               `json:"reports"`
@@ -291,38 +274,17 @@ func OutcomeOf(err error) Outcome {
 	return OutcomeNoAI
 }
 
-// peak reports DeepSeek peak pricing: 01:00-04:00 and 06:00-10:00 UTC on
-// weekdays (observed 2026-10-26).
-func peak(t time.Time) bool {
-	t = t.UTC()
-	if wd := t.Weekday(); wd == time.Saturday || wd == time.Sunday {
-		return false
-	}
-	h := t.Hour()
-	return (h >= 1 && h < 4) || (h >= 6 && h < 10)
-}
-
 // estimateCost returns an API cost estimate in USD from token counts
 // (cache misses assumed). Self-hosted Meta GPU time and test doubles cost 0
-// here; Meta Model API tokens use the Standard-mode list prices.
-func estimateCost(role ProviderName, testDouble bool, inferenceGeo string, in, out int, at time.Time) float64 {
+// here; Meta Model API tokens (generator and verifier) use the
+// Standard-mode list prices observed on 2026-10-30.
+func estimateCost(role ProviderName, testDouble bool, in, out int) float64 {
 	if testDouble {
 		return 0
 	}
 	var inPrice, outPrice float64
 	switch role {
-	case ProviderAnthropic:
-		inPrice, outPrice = 2.00, 10.00
-		if inferenceGeo == "us" {
-			inPrice, outPrice = inPrice*1.1, outPrice*1.1
-		}
-	case ProviderDeepSeek:
-		inPrice, outPrice = 0.15, 0.60
-		if peak(at) {
-			inPrice, outPrice = 0.30, 1.20
-		}
-	case ProviderMetaAPI:
-		// Muse Spark 1.3 Standard mode, observed 2026-10-30.
+	case ProviderMetaAPI, ProviderMetaVerifier:
 		inPrice, outPrice = 1.25, 4.25
 	default:
 		return 0

@@ -15,8 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YanIanZ/sela/internal/ai/anthropic"
-	"github.com/YanIanZ/sela/internal/ai/deepseek"
 	"github.com/YanIanZ/sela/internal/ai/transport"
 	"github.com/YanIanZ/sela/internal/ai/verifier"
 	"github.com/YanIanZ/sela/internal/llm"
@@ -89,15 +87,15 @@ func TestAT1CurrentTurnAlwaysVerified(t *testing.T) {
 	latest := "LATEST-TURN Ternyata dokternya salah, aku nggak insomnia sama sekali."
 	h := newHarness(t)
 	h.meta.steps = []genStep{{text: reply("Insomnia memang berat ya. Kamu boleh cerita lagi.")}}
-	h.claude.steps = []verStep{{report: func(r verifier.Request) verifier.Report {
+	h.verifier.steps = []verStep{{report: func(r verifier.Request) verifier.Report {
 		// The verifier sees the latest turn and finds the reply contradicts it.
 		return withVerdicts(r, map[int]verifier.Verdict{0: verifier.Contradicted})
 	}}}
 	_, re := h.run(TaskListeningReply, inReply(old, "Oke.", latest))
-	if h.claude.count() != 1 {
-		t.Fatalf("verifier calls %d (%v)", h.claude.count(), re)
+	if h.verifier.count() != 1 {
+		t.Fatalf("verifier calls %d (%v)", h.verifier.count(), re)
 	}
-	for _, req := range h.claude.reqs {
+	for _, req := range h.verifier.reqs {
 		text := map[string]string{}
 		for _, s := range req.Spans {
 			text[s.ID] = s.Text
@@ -116,7 +114,7 @@ func TestAT1CurrentTurnAlwaysVerified(t *testing.T) {
 	if _, re := h2.run(TaskListeningReply, inReply("Aku sering susah tidur.", "Oke.", latest)); re != nil {
 		t.Fatal(re)
 	}
-	if got := strings.Join(h2.claude.reqs[0].Claims[0].SpanIDs, ","); got != "s1,s2,s3" {
+	if got := strings.Join(h2.verifier.reqs[0].Claims[0].SpanIDs, ","); got != "s1,s2,s3" {
 		t.Fatalf("cited %s", got)
 	}
 
@@ -125,8 +123,8 @@ func TestAT1CurrentTurnAlwaysVerified(t *testing.T) {
 	h3.meta.steps = []genStep{{text: reply("Insomnia memang berat ya.")}}
 	_, re = h3.run(TaskListeningReply, inReply(strings.Repeat("ééééé ", 1000)))
 	expect(t, re, OutcomeAbstain, ReasonInputTooLarge)
-	if h3.claude.count() != 0 || re.Provenance.Verification.Status != StatusAbstained {
-		t.Fatalf("verifier calls %d status %s", h3.claude.count(), re.Provenance.Verification.Status)
+	if h3.verifier.count() != 0 || re.Provenance.Verification.Status != StatusAbstained {
+		t.Fatalf("verifier calls %d status %s", h3.verifier.count(), re.Provenance.Verification.Status)
 	}
 }
 
@@ -140,7 +138,7 @@ func TestVerifierEvidenceNeverTruncated(t *testing.T) {
 	h.meta.steps = []genStep{{text: genJSON("none", false, [2]string{"Saya sulit tidur.", "s1,s2,s3"})}}
 	_, re := h.run(TaskMemoryProposal, in)
 	expect(t, re, OutcomeAbstain, ReasonInputTooLarge)
-	if h.claude.count() != 0 {
+	if h.verifier.count() != 0 {
 		t.Fatal("partial evidence was sent to the verifier")
 	}
 }
@@ -159,8 +157,8 @@ func TestAT2EarlierReplyIsNotEvidence(t *testing.T) {
 	h.meta.steps = []genStep{{text: genJSON("none", false, [2]string{"Kamu sedang burnout dan mengalami insomnia karena skripsi.", "s2"})}}
 	out, re := h.run(TaskReflection, in)
 	expect(t, re, OutcomeAbstain, ReasonNoUserEvidence)
-	if h.claude.count() != 0 || len(out.Items) != 0 || re.Provenance.Verification.Status != StatusAbstained {
-		t.Fatalf("verifier calls %d, items %d, status %s", h.claude.count(), len(out.Items), re.Provenance.Verification.Status)
+	if h.verifier.count() != 0 || len(out.Items) != 0 || re.Provenance.Verification.Status != StatusAbstained {
+		t.Fatalf("verifier calls %d, items %d, status %s", h.verifier.count(), len(out.Items), re.Provenance.Verification.Status)
 	}
 
 	// A card citing both: only the user's span is sent and cited, and the
@@ -171,11 +169,11 @@ func TestAT2EarlierReplyIsNotEvidence(t *testing.T) {
 	if re != nil {
 		t.Fatal(re)
 	}
-	req := h2.claude.reqs[0]
+	req := h2.verifier.reqs[0]
 	if len(req.Spans) != 1 || req.Spans[0].ID != "s1" || strings.Join(req.Claims[0].SpanIDs, ",") != "s1" {
 		t.Fatalf("VC-1 spans %+v claim %+v", req.Spans, req.Claims[0])
 	}
-	if strings.Contains(fmtJSON(t, h2.claude.reqs), "Sepertinya") {
+	if strings.Contains(fmtJSON(t, h2.verifier.reqs), "Sepertinya") {
 		t.Fatal("the earlier reply reached the verifier")
 	}
 	if len(out.Items) != 1 || strings.Join(out.Items[0].SpanKeys, ",") != "turn-a" {
@@ -207,8 +205,8 @@ func TestAT6WithholdsOnOutputLevelIssue(t *testing.T) {
 	} {
 		t.Run(string(tc.cat)+"/"+tc.claim, func(t *testing.T) {
 			h := newHarness(t)
-			h.claude.consent = nil
-			h.claude.steps = []verStep{{report: func(r verifier.Request) verifier.Report {
+			h.verifier.consent = nil
+			h.verifier.steps = []verStep{{report: func(r verifier.Request) verifier.Report {
 				return withVerdicts(r, nil, verifier.Issue{Category: tc.cat, ClaimID: tc.claim, SpanIDs: []string{}, Reason: "whole item"})
 			}}}
 			out, re := h.run(TaskReadingVerification, in)
@@ -228,7 +226,7 @@ func TestClaimScopedOutputLevelIssueWithholdsAll(t *testing.T) {
 	items := []string{"Aku susah tidur sejak dua bulan.", "Aku sering pusing di kampus.", "Aku jarang makan siang."}
 	for _, cat := range []verifier.Category{verifier.Manipulation, verifier.InformationLeak, verifier.MedicalLanguage, verifier.AgeInappropriate} {
 		h, in := summaryHarness(t, items...)
-		h.claude.steps = []verStep{{report: func(r verifier.Request) verifier.Report {
+		h.verifier.steps = []verStep{{report: func(r verifier.Request) verifier.Report {
 			return withVerdicts(r, nil, verifier.Issue{Category: cat, ClaimID: "c2", SpanIDs: []string{"s2"}, Reason: "x"})
 		}}}
 		out, re := h.run(TaskSummaryDraft, in)
@@ -238,7 +236,7 @@ func TestClaimScopedOutputLevelIssueWithholdsAll(t *testing.T) {
 		}
 	}
 	h, in := summaryHarness(t, items...)
-	h.claude.steps = []verStep{{report: func(r verifier.Request) verifier.Report {
+	h.verifier.steps = []verStep{{report: func(r verifier.Request) verifier.Report {
 		return withVerdicts(r, nil, verifier.Issue{Category: verifier.LostContext, ClaimID: "c2", SpanIDs: []string{"s2"}, Reason: "x"})
 	}}}
 	out, re := h.run(TaskSummaryDraft, in)
@@ -275,75 +273,6 @@ func cutServer(t *testing.T) (*httptest.Server, *atomic.Int32) {
 	return srv, &n
 }
 
-// §4 (any failure after the first content is content class), RR-10, and
-// anthropic.Verify's contract ("a 200 response is never retried"): a 200
-// whose body breaks off is invalid output. It is not retried, never
-// reaches the alternative verifier, and a broken DeepSeek fallback ends in
-// no-AI without a retry.
-func TestBody200BreakIsContentFailure(t *testing.T) {
-	t.Run("claude", func(t *testing.T) {
-		srv, n := cutServer(t)
-		cl, err := anthropic.New(anthropic.Config{TestDouble: true, BaseURL: srv.URL})
-		if err != nil {
-			t.Fatal(err)
-		}
-		h, in := summaryHarness(t, "Aku susah tidur sejak dua bulan.")
-		h.meta.consent, h.alt.consent = nil, nil
-		r, err := NewRouter(h.cfg, Deps{Meta: h.meta, Claude: cl, AltVerifier: h.alt, Consent: h.c, Screener: screenFake{}})
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = r.Run(context.Background(), TaskSummaryDraft, in)
-		re, _ := err.(*RunError)
-		if re == nil || re.Outcome != OutcomeAbstain || n.Load() != 1 || h.alt.count() != 0 ||
-			re.Provenance.Verification.Status != StatusVerificationUnavailable ||
-			strings.Join(re.Provenance.Verification.UnavailableReasons, ",") != string(transport.ReasonInvalidOutput) {
-			t.Fatalf("err %v, Claude requests %d, alternative calls %d", err, n.Load(), h.alt.count())
-		}
-	})
-	t.Run("deepseek alternative verifier", func(t *testing.T) {
-		srv, n := cutServer(t)
-		ds, err := deepseek.New(deepseek.Config{TestDouble: true, BaseURL: srv.URL})
-		if err != nil {
-			t.Fatal(err)
-		}
-		h, in := summaryHarness(t, "Aku susah tidur sejak dua bulan.")
-		h.meta.consent, h.claude.consent = nil, nil
-		h.claude.steps = []verStep{{err: verr(transport.ReasonUnavailable)}}
-		r, err := NewRouter(h.cfg, Deps{Meta: h.meta, Claude: h.claude, AltVerifier: ds.AsVerifier(), Consent: h.c, Screener: screenFake{}})
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = r.Run(context.Background(), TaskSummaryDraft, in)
-		re, _ := err.(*RunError)
-		if re == nil || re.Outcome != OutcomeAbstain || n.Load() != 1 ||
-			strings.Join(re.Provenance.Verification.UnavailableReasons, ",") != "unavailable,alternative_invalid_output" {
-			t.Fatalf("err %v, DeepSeek requests %d", err, n.Load())
-		}
-	})
-	t.Run("deepseek fallback generator", func(t *testing.T) {
-		srv, n := cutServer(t)
-		ds, err := deepseek.New(deepseek.Config{TestDouble: true, BaseURL: srv.URL})
-		if err != nil {
-			t.Fatal(err)
-		}
-		h := newHarness(t)
-		h.meta.consent = nil
-		h.meta.steps = []genStep{unavailableErr()}
-		// Claude is configured: DeepSeek writes an AT-1 reply only when the
-		// Claude check it needs is permitted (RR-4 i).
-		r, err := NewRouter(h.cfg, Deps{Meta: h.meta, DeepSeek: NewDeepSeekGenerator(ds), Claude: h.claude, Consent: h.c, Screener: screenFake{}})
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = r.Run(context.Background(), TaskListeningReply, inReply())
-		re, _ := err.(*RunError)
-		if re == nil || re.Outcome != OutcomeNoAI || n.Load() != 1 || !strings.Contains(strings.Join(re.Reasons, ","), "fallback_invalid_output") {
-			t.Fatalf("err %v, DeepSeek requests %d", err, n.Load())
-		}
-	})
-}
-
 // countLimiter counts Allow per provider.
 type countLimiter struct {
 	mu sync.Mutex
@@ -367,29 +296,18 @@ func (l *countLimiter) get(p ProviderName) int {
 }
 
 // §11, the Limiter contract ("called right before every provider call"):
-// Allow is asked once per call; the alternative verifier's first call is
-// not counted twice, and a limit that stops it before any call is recorded
-// as "not tried" (§10.1), after Claude's reason.
+// Allow is asked once per generator or verifier call.
 func TestLimiterAskedOncePerProviderCall(t *testing.T) {
 	h, in := summaryHarness(t, "Aku susah tidur sejak dua bulan.")
 	lim := &countLimiter{n: map[ProviderName]int{}}
 	h.lim = lim
-	h.claude.steps = []verStep{{err: verr(transport.ReasonUnavailable)}}
 	if _, re := h.run(TaskSummaryDraft, in); re != nil {
 		t.Fatal(re)
 	}
-	for p, calls := range map[ProviderName]int{ProviderMeta: h.meta.count(), ProviderAnthropic: h.claude.count(), ProviderDeepSeek: h.alt.count()} {
+	for p, calls := range map[ProviderName]int{ProviderMeta: h.meta.count(), ProviderMetaVerifier: h.verifier.count()} {
 		if calls != 1 || lim.get(p) != calls {
 			t.Errorf("%s: %d calls, Allow asked %d times", p, calls, lim.get(p))
 		}
-	}
-	h2, in2 := summaryHarness(t, "Aku susah tidur sejak dua bulan.")
-	h2.lim = limiter{provider: ProviderDeepSeek, err: ErrUserLimit}
-	h2.claude.steps = []verStep{{err: verr(transport.ReasonUnavailable)}}
-	_, re := h2.run(TaskSummaryDraft, in2)
-	expect(t, re, OutcomeAbstain, StatusVerificationUnavailable)
-	if got := strings.Join(re.Provenance.Verification.UnavailableReasons, ","); got != "unavailable,user_limit" || h2.alt.count() != 0 {
-		t.Fatalf("reasons %s, alternative calls %d", got, h2.alt.count())
 	}
 }
 
@@ -401,11 +319,7 @@ func sentText(t *testing.T, h *harness) string {
 	for i := 0; i < h.meta.count(); i++ {
 		b.WriteString(h.meta.req(i).User)
 	}
-	for i := 0; i < h.ds.count(); i++ {
-		b.WriteString(h.ds.req(i).User)
-	}
-	b.WriteString(fmtJSON(t, h.claude.reqs))
-	b.WriteString(fmtJSON(t, h.alt.reqs))
+	b.WriteString(fmtJSON(t, h.verifier.reqs))
 	return b.String()
 }
 
@@ -422,19 +336,18 @@ func TestPrivateNameFormsNeverReachProviders(t *testing.T) {
 		"Dewi2 itu temenku, DEWI marah, dewi_lestari bilang, Dewinyalah yang salah.",
 	}
 	h := newHarness(t)
-	h.meta.steps = []genStep{unavailableErr()}
 	var gen [][2]string
 	for i := range texts {
 		gen = append(gen, [2]string{"Saya menulis hal nomor " + itoa(i+1) + ".", "s" + itoa(i+1)})
 	}
-	h.ds.steps = []genStep{{text: genJSON("none", false, gen...)}}
+	h.meta.steps = []genStep{{text: genJSON("none", false, gen...)}}
 	in := inItems(texts...)
 	in.PrivateNames = []string{"Raka", "Dewi"}
 	if _, re := h.run(TaskSummaryDraft, in); re != nil {
 		t.Fatal(re)
 	}
-	if h.meta.count() != 1 || h.ds.count() != 1 || h.claude.count() != 1 {
-		t.Fatalf("calls: meta %d deepseek %d claude %d", h.meta.count(), h.ds.count(), h.claude.count())
+	if h.meta.count() != 1 || h.verifier.count() != 1 {
+		t.Fatalf("calls: meta %d verifier %d", h.meta.count(), h.verifier.count())
 	}
 	sent := strings.ToLower(sentText(t, h))
 	for _, name := range []string{"raka", "dewi"} {
@@ -651,7 +564,7 @@ func TestMetaTestDoubleNeverGetsLiveKeys(t *testing.T) {
 		t.Fatalf("test double received %v", h)
 	}
 	cfg := testConfig()
-	cfg.Anthropic.Mode, cfg.DeepSeek.Mode = ModeDisabled, ModeDisabled
+	cfg.MetaVerifier.Mode = ModeDisabled
 	cfg.TestDoubleAPIKey = transport.NewSecret("td-key")
 	r, err := Build(cfg, live(srv.URL), Deps{Consent: allConsent()})
 	if err != nil {

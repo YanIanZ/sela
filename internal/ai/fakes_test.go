@@ -34,7 +34,7 @@ func newConsent(purposes ...Purpose) *consentFake {
 }
 
 func allConsent() *consentFake {
-	return newConsent(PurposeAIProcessing, PurposeAnthropic, PurposeDeepSeek, PurposePersonalMemory)
+	return newConsent(PurposeAIProcessing, PurposePersonalMemory)
 }
 
 func (c *consentFake) Consent(_ context.Context, _ Subject, p Purpose) (Consent, error) {
@@ -107,11 +107,7 @@ type genFake struct {
 }
 
 func newGen(t *testing.T, role ProviderName, c *consentFake, steps ...genStep) *genFake {
-	model := "meta-models/Muse-Glimmer-30B"
-	if role == ProviderDeepSeek {
-		model = "deepseek-flash"
-	}
-	return &genFake{t: t, id: GeneratorIdentity{Role: role, ModelID: model, Revision: "cec94fc"}, consent: c, steps: steps}
+	return &genFake{t: t, id: GeneratorIdentity{Role: role, ModelID: "meta-models/Muse-Glimmer-30B", Revision: "cec94fc"}, consent: c, steps: steps}
 }
 
 func (g *genFake) Identity() GeneratorIdentity { return g.id }
@@ -144,9 +140,6 @@ func (g *genFake) Generate(ctx context.Context, req GenerateRequest) (GenerateRe
 		}
 	}
 	served := "sela-glimmer-cec94fc"
-	if g.id.Role == ProviderDeepSeek {
-		served = "DeepSeek-V4.1-Flash-1017"
-	}
 	if s.err != nil {
 		return GenerateResult{Latency: time.Millisecond, Attempts: 1}, s.err
 	}
@@ -183,13 +176,9 @@ type verFake struct {
 	reqs    []verifier.Request
 }
 
-func newClaude(t *testing.T, c *consentFake, steps ...verStep) *verFake {
-	return &verFake{t: t, id: verifier.Identity{Provider: "anthropic", Model: "claude-sonnet-5-5"}, role: ProviderAnthropic, consent: c, steps: steps}
-}
-
-func newAlt(t *testing.T, c *consentFake, steps ...verStep) *verFake {
-	return &verFake{t: t, id: verifier.Identity{Provider: "deepseek", Model: "deepseek-flash", Label: "alternative verifier (DeepSeek)"},
-		role: ProviderDeepSeek, consent: c, steps: steps}
+func newVerifier(t *testing.T, c *consentFake, steps ...verStep) *verFake {
+	return &verFake{t: t, id: verifier.Identity{Provider: "meta_verifier", Model: "muse-wonder-1.0"},
+		role: ProviderMetaVerifier, consent: c, steps: steps}
 }
 
 func (v *verFake) Identity() verifier.Identity { return v.id }
@@ -256,7 +245,7 @@ func withVerdicts(req verifier.Request, verdicts map[int]verifier.Verdict, issue
 	return rep
 }
 
-func verr(r transport.Reason) error { return transport.NewError("anthropic", r, 0, "") }
+func verr(r transport.Reason) error { return transport.NewError("meta_verifier", r, 0, "") }
 
 // genJSON builds a generation text.
 func genJSON(risk string, declined bool, items ...[2]string) string {
@@ -346,45 +335,34 @@ func (l limiter) Check(ctx context.Context, s Subject, p ProviderName, t Task) e
 }
 
 func testConfig() Config {
-	return Config{Env: EnvTest, AllowTestDouble: true, Profile: ProfileFull, Fallback: true, AltVerifier: true,
+	return Config{Env: EnvTest, AllowTestDouble: true, Profile: ProfileFull,
 		AllowedBands: Bands(Band18Plus, Band15To17, BandUnknown),
-		OpTimeout:    DefaultOpTimeout, Anthropic: AnthropicConfig{Mode: ModeLive}, DeepSeek: DeepSeekConfig{Mode: ModeLive}}
+		OpTimeout:    DefaultOpTimeout, MetaVerifier: MetaVerifierConfig{Mode: ModeLive}}
 }
 
 // harness wires a router with fakes.
 type harness struct {
-	t      *testing.T
-	cfg    Config
-	c      *consentFake
-	meta   *genFake
-	ds     *genFake
-	claude *verFake
-	alt    *verFake
-	ev     *events
-	lim    Limiter
-	noDS   bool
-	noCl   bool
-	noAlt  bool
+	t        *testing.T
+	cfg      Config
+	c        *consentFake
+	meta     *genFake
+	verifier *verFake
+	ev       *events
+	lim      Limiter
+	noVer    bool
 }
 
 func newHarness(t *testing.T) *harness {
 	c := allConsent()
 	return &harness{t: t, cfg: testConfig(), c: c,
-		meta:   newGen(t, ProviderMeta, c, genStep{text: reply("Terima kasih sudah cerita.")}),
-		ds:     newGen(t, ProviderDeepSeek, c, genStep{text: reply("Terima kasih sudah cerita.")}),
-		claude: newClaude(t, c), alt: newAlt(t, c), ev: &events{}}
+		meta:     newGen(t, ProviderMeta, c, genStep{text: reply("Terima kasih sudah cerita.")}),
+		verifier: newVerifier(t, c), ev: &events{}}
 }
 
 func (h *harness) router() *Router {
 	d := Deps{Meta: h.meta, Consent: h.c, Screener: screenFake{}, Observer: h.ev, Limits: h.lim}
-	if !h.noDS {
-		d.DeepSeek = h.ds
-	}
-	if !h.noCl {
-		d.Claude = h.claude
-	}
-	if !h.noAlt {
-		d.AltVerifier = h.alt
+	if !h.noVer {
+		d.Verifier = h.verifier
 	}
 	r, err := NewRouter(h.cfg, d)
 	if err != nil {
@@ -411,9 +389,8 @@ const subject = Subject("acct-7f3a-SUBJECT-CANARY")
 // okCommit is a commit re-check that finds nothing changed.
 func okCommit(context.Context) error { return nil }
 
-// inReply and inItems build synthetic test inputs (the data DeepSeek may
-// receive while it is limited to synthetic data, V21) with a version
-// re-check that finds nothing changed (every fallback needs one, V21).
+// inReply and inItems build synthetic test inputs with a version re-check
+// that finds nothing changed.
 func inReply(texts ...string) Input {
 	if len(texts) == 0 {
 		texts = []string{"Aku capek banget sama skripsi."}

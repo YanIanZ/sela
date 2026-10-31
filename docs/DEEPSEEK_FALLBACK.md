@@ -1,5 +1,6 @@
 # DeepSeek-V4.1-Flash-1017 as opt-in Sela generation fallback
 
+> **2026-10-31 — superseded in part by [D-065](DECISION_LOG.md#d-065):** the Claude verifier and the DeepSeek fallback are removed. One *different Meta model* (`muse-wonder-1.0` by default) verifies under the existing `ai_processing` consent, and there is no fallback generator or second verifier. Where this document names Anthropic/Claude, DeepSeek, `live_anthropic`, `live_deepseek_*` or `ai_provider_*` consents as current behaviour, D-065 governs; the routing, consent, minimisation, guard, provenance and "no unverified release" guarantees continue with the Meta verifier.
 **Adopted direction on 26 October 2026; implementation status: isolated Go prototype only.** The deployed Sela v2 Go API and Meta/Muse Spark integration do not exist yet. See [SPEC.md](../SPEC.md) C13, I.fallback, V19–V21 and [prototype](../prototypes/generationfallback/README.md). No live DeepSeek call is demonstrated in this repository.
 
 ## Provider/model facts, verified against official DeepSeek docs on 26 Oct 2026

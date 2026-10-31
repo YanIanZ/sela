@@ -947,11 +947,9 @@ export function GeneratorLine({
 }) {
   const w = useWords();
   const name =
-    provider === "deepseek"
-      ? w("DeepSeek, cadangan", "DeepSeek, backup")
-      : provider === "test_double"
-        ? w("program uji (bukan AI)", "a test program (not AI)")
-        : "Meta";
+    provider === "test_double"
+      ? w("program uji (bukan AI)", "a test program (not AI)")
+      : "Meta";
   return (
     <p className="s-generator">
       {provider === "test_double"
@@ -959,7 +957,7 @@ export function GeneratorLine({
         : w("Ditulis dengan bantuan AI", "Written with AI help") +
           ` (${name})`}
       {checked &&
-        w(" · diperiksa oleh Claude", " · checked by Claude")}
+        w(" · diperiksa oleh model Meta pemeriksa", " · checked by the Meta verifier model")}
     </p>
   );
 }

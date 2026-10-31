@@ -1,5 +1,6 @@
 # Sela AI policy
 
+> **2026-10-31 — superseded in part by [D-065](DECISION_LOG.md#d-065):** the Claude verifier and the DeepSeek fallback are removed. One *different Meta model* (`muse-wonder-1.0` by default) verifies under the existing `ai_processing` consent, and there is no fallback generator or second verifier. Where this document names Anthropic/Claude, DeepSeek, `live_anthropic`, `live_deepseek_*` or `ai_provider_*` consents as current behaviour, D-065 governs; the routing, consent, minimisation, guard, provenance and "no unverified release" guarantees continue with the Meta verifier.
 Status:
 - The **v3 routing policy is accepted as design** in [ADR-0003](adr/ADR-0003-ai-routing-verifier-fallback.md), following PM decisions D-030 and D-049. Its implementation (milestone P5) is **in progress**: committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified; live use **blocked externally** (B-1, B-8, B-9).
 - The **v2 pipeline is implemented** in `internal/journey` (pipeline, prompts) and `internal/ledger` (validation). Live model behaviour is unverified ([B-1](BLOCKERS.md)).

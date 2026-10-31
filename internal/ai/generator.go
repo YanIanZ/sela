@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/YanIanZ/sela/internal/ai/deepseek"
 	"github.com/YanIanZ/sela/internal/ai/transport"
 	"github.com/YanIanZ/sela/internal/llm"
 )
@@ -579,36 +577,4 @@ func ctxGenerateError(ctx context.Context) *GenerateError {
 		return &GenerateError{Class: transport.ClassAvailability, Reason: transport.ReasonTimeout, FallbackReason: FallbackTimeout}
 	}
 	return &GenerateError{Class: transport.ClassPolicy, Reason: transport.ReasonCanceled}
-}
-
-// NewDeepSeekGenerator wraps a DeepSeek client as the fallback generator.
-func NewDeepSeekGenerator(c *deepseek.Client) Generator { return &deepseekGenerator{c: c} }
-
-type deepseekGenerator struct{ c *deepseek.Client }
-
-func (g *deepseekGenerator) Identity() GeneratorIdentity {
-	return GeneratorIdentity{Role: ProviderDeepSeek, ModelID: g.c.Model(), TestDouble: g.c.TestDouble()}
-}
-
-// Format prints the generator without the client's secrets.
-func (g *deepseekGenerator) Format(f fmt.State, verb rune) {
-	_, _ = io.WriteString(f, "ai.deepseekGenerator{")
-	g.c.Format(f, verb)
-	_, _ = io.WriteString(f, "}")
-}
-
-func (g *deepseekGenerator) Generate(ctx context.Context, req GenerateRequest) (GenerateResult, error) {
-	comp, err := g.c.Complete(ctx, deepseek.Request{System: req.System, User: req.User, MaxTokens: req.MaxTokens,
-		MaxRetryAfter: req.MaxRetryAfter, AttemptTimeout: req.AttemptTimeout, BeforeAttempt: req.BeforeAttempt})
-	res := GenerateResult{Latency: comp.Latency, InputTokens: comp.InputTokens, OutputTokens: comp.OutputTokens,
-		Attempts: comp.Attempts, ServedModel: comp.ServedModel}
-	if err != nil {
-		// DeepSeek is the last generator of an operation (RR-6): its
-		// failures carry no fallback reason.
-		reason := transport.ReasonOf(err)
-		return res, &GenerateError{Class: reason.Class(), Reason: reason, Status: comp.Status}
-	}
-	res.Text = comp.Text
-	res.FirstContent = comp.Latency
-	return res, nil
 }

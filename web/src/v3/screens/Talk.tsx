@@ -379,13 +379,12 @@ function NewRoom({ user }: { user: Profile }) {
   );
 }
 
-type ProviderLabel = "meta" | "deepseek" | "test" | "unknown";
-type CheckLabel = "claude" | "test" | "other" | "not_required" | "not_requested" | "unavailable" | "unknown";
+type ProviderLabel = "meta" | "test" | "unknown";
+type CheckLabel = "meta_verifier" | "test" | "not_required" | "not_requested" | "unavailable" | "unknown";
 
 function providerLabel(turn: Turn): ProviderLabel {
   const draft = turn.aiProvenance?.draftProvenance ?? turn.provenance;
   const raw = turn.aiProvenance?.generator?.provider?.toLowerCase() ?? "";
-  if (draft === "live_deepseek_fallback" || raw.includes("deepseek")) return "deepseek";
   if (draft === "test_double" || raw.includes("test")) return "test";
   if (draft === "live_meta" || raw.includes("meta")) return "meta";
   return "unknown";
@@ -395,12 +394,10 @@ function checkedBy(turn: Turn): CheckLabel {
   const v = turn.aiProvenance?.verification;
   if (!v) return "unknown";
   switch (v.provenance) {
-    case "live_anthropic":
-      return "claude";
+    case "live_meta_verifier":
+      return "meta_verifier";
     case "test_double":
       return "test";
-    case "live_deepseek_alternative":
-      return "other";
     case "not_required":
       return "not_required";
     case "not_requested":
@@ -417,20 +414,16 @@ function authorLine(turn: Turn, w: (id: string, en: string) => string): string {
   const checked = checkedBy(turn);
   if (provider === "test") return w("Sela · balasan uji (bukan AI)", "Sela · test reply (not AI)");
   const name =
-    provider === "deepseek"
-      ? w("DeepSeek, cadangan", "DeepSeek, backup")
-      : provider === "meta"
-        ? "Meta"
-        : w("penyedia tidak tercatat", "provider not recorded");
+    provider === "meta"
+      ? "Meta"
+      : w("penyedia tidak tercatat", "provider not recorded");
   const base =
     provider === "meta" && turn.provenance === "recorded_demo"
       ? w("Sela · balasan contoh terekam", "Sela · recorded example reply")
       : w("Sela · balasan AI", "Sela · AI reply") + ` (${name})`;
-  if (checked === "claude") return base + w(" · diperiksa oleh Claude", " · checked by Claude");
+  if (checked === "meta_verifier") return base + w(" · diperiksa oleh model Meta pemeriksa", " · checked by the Meta verifier model");
   if (checked === "test")
     return base + w(" · diperiksa oleh program uji (bukan AI)", " · checked by a test program (not AI)");
-  if (checked === "other")
-    return base + w(" · diperiksa oleh pemeriksa alternatif", " · checked by the alternative checker");
   return base;
 }
 
@@ -925,11 +918,9 @@ function RoomPage({ id }: { id: string }) {
                               <dd>
                                 {providerLabel(turn) === "test"
                                   ? w("Program uji (bukan AI)", "Test program (not AI)")
-                                  : providerLabel(turn) === "deepseek"
-                                    ? w("DeepSeek (cadangan)", "DeepSeek (backup)")
-                                    : providerLabel(turn) === "meta"
-                                      ? "Meta"
-                                      : w("Tidak tercatat", "Not recorded")}
+                                  : providerLabel(turn) === "meta"
+                                    ? "Meta"
+                                    : w("Tidak tercatat", "Not recorded")}
                               </dd>
                             </div>
                             <div>
@@ -939,12 +930,10 @@ function RoomPage({ id }: { id: string }) {
                             <div>
                               <dt>{w("Pemeriksaan", "Check")}</dt>
                               <dd>
-                                {checkedBy(turn) === "claude"
-                                  ? w("Diperiksa oleh Claude", "Checked by Claude")
+                                {checkedBy(turn) === "meta_verifier"
+                                  ? w("Diperiksa oleh model Meta pemeriksa", "Checked by the Meta verifier model")
                                   : checkedBy(turn) === "test"
                                     ? w("Diperiksa oleh program uji (bukan AI)", "Checked by a test program (not AI)")
-                                    : checkedBy(turn) === "other"
-                                      ? w("Diperiksa oleh pemeriksa alternatif", "Checked by the alternative checker")
                                       : checkedBy(turn) === "not_required"
                                         ? w("Tidak perlu diperiksa", "No check was needed")
                                         : checkedBy(turn) === "unavailable"

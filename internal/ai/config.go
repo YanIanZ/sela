@@ -10,8 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YanIanZ/sela/internal/ai/anthropic"
-	"github.com/YanIanZ/sela/internal/ai/deepseek"
+	"github.com/YanIanZ/sela/internal/ai/metaverifier"
 	"github.com/YanIanZ/sela/internal/ai/transport"
 )
 
@@ -29,10 +28,11 @@ type Profile string
 
 // Profiles.
 const (
-	// ProfileFull uses Meta, Claude and, when enabled, DeepSeek.
+	// ProfileFull uses the configured Meta generator and the Meta verifier.
 	ProfileFull Profile = "full"
-	// ProfileMetaOnly is the Meta-only hackathon path (D-049): no Claude,
-	// no DeepSeek; verifier-gated tasks abstain.
+	// ProfileMetaOnly keeps the Meta-only hackathon path (D-049). Both
+	// provider slots are Meta, so the verifier still runs; verifier-gated
+	// tasks abstain only when the verifier is disabled.
 	ProfileMetaOnly Profile = "meta_only"
 )
 
@@ -50,49 +50,15 @@ const (
 // a labelled test double. An empty or unknown mode is off (fail closed).
 func (m ProviderMode) on() bool { return m == ModeLive || m == ModeTestDouble }
 
-// AnthropicConfig configures the Claude verifier. The key and workspace
-// are Secrets: printing or encoding the config never shows them.
-type AnthropicConfig struct {
+// MetaVerifierConfig configures the Meta verifier. It is always a
+// different Meta model from the generator, so a model never verifies its
+// own output (SPEC V36). The key is a Secret.
+type MetaVerifierConfig struct {
 	Mode           ProviderMode
 	APIKey         transport.Secret
 	BaseURL        string
-	WorkspaceID    transport.Secret
-	Version        string
 	Model          string
-	InferenceGeo   string
 	AttemptTimeout time.Duration
-}
-
-// DeepSeekData says which data DeepSeek may receive (SPEC V21, ADR-0003
-// §17 O-3).
-type DeepSeekData string
-
-// DeepSeek data settings.
-const (
-	// DeepSeekSyntheticOnly is the default in every environment: DeepSeek
-	// (fallback generator and alternative verifier) receives only an
-	// operation the caller marked as synthetic, versioned demo or test
-	// data (Input.Synthetic), and never in production, which has no demo
-	// data (C21, C24). Real-user text waits for the legal review of PRC
-	// processing (B-10) and the owner's confirmation that V21's limit is
-	// lifted (O-3).
-	DeepSeekSyntheticOnly DeepSeekData = "synthetic_only"
-	// DeepSeekRealUser lets DeepSeek receive minimised real-user text under
-	// the user's ai_provider_deepseek consent (owner brief v3, V41). It is
-	// an explicit operator decision: production refuses it unless
-	// DeepSeekRealUserCleared is also set (SELA_DEEPSEEK_REAL_USER_B10).
-	DeepSeekRealUser DeepSeekData = "real_user"
-)
-
-// DeepSeekConfig configures DeepSeek. The key is a Secret.
-type DeepSeekConfig struct {
-	Mode             ProviderMode
-	APIKey           transport.Secret
-	BaseURL          string
-	Model            string
-	ExpectedVersion  string
-	PinServedVersion bool
-	AttemptTimeout   time.Duration
 }
 
 // Config is the AI layer's configuration. Read it with LoadFromEnv. It
@@ -103,48 +69,27 @@ type Config struct {
 	// production by Production and refused by Validate and NewRouter.
 	Env             string
 	AllowTestDouble bool
-	// TestDoubleAPIKey is the only key sent to a test-double verifier or
-	// DeepSeek double (SELA_TEST_DOUBLE_API_KEY, optional). Live keys are
-	// never sent to a test double.
+	// TestDoubleAPIKey is the only key sent to a test-double verifier
+	// (SELA_TEST_DOUBLE_API_KEY, optional). Live keys are never sent to a
+	// test double.
 	TestDoubleAPIKey transport.Secret
 	Profile          Profile
-	// Fallback enables DeepSeek as fallback generator (SELA_AI_FALLBACK,
-	// RR-4 e). It is off by default in every environment, hackathon mode
-	// and the demo included (C13, V19, RR-15): only an explicit server
-	// setting turns it on, and even then DeepSeek is called only for a
-	// user whose stored ai_provider_deepseek consent is current (RR-4 c,
-	// h); no request field can enable it.
-	Fallback bool
-	// AltVerifier enables DeepSeek as alternative verifier
-	// (SELA_AI_ALT_VERIFIER, default off; RR-9 e).
-	AltVerifier bool
 	// AllowedBands are the age bands that may reach an AI provider
 	// (SELA_ALLOWED_AGE_BANDS), checked per band (ADR-0003 §8.3: "only
 	// where the band is enabled"). A nil set allows 18_plus only. 15_17
-	// and unknown may use Meta and Claude where enabled, never DeepSeek
-	// and never in production (B-10).
+	// and unknown may use Meta where enabled, and never in production
+	// (B-10).
 	AllowedBands map[AgeBand]bool
 	// OpTimeout is the AT-3/AT-4 operation budget (SELA_LLM_OP_TIMEOUT),
 	// at least MinOpTimeout.
 	OpTimeout time.Duration
-	// DeepSeekData is the data DeepSeek may receive (SELA_DEEPSEEK_DATA;
-	// empty means DeepSeekSyntheticOnly). It is recorded in the provenance
-	// of every operation for which DeepSeek is configured.
-	DeepSeekData DeepSeekData
-	// DeepSeekRealUserCleared records that the legal review (B-10) and the
-	// owner's confirmation allow real-user text to reach DeepSeek
-	// (SELA_DEEPSEEK_REAL_USER_B10=cleared). Production refuses
-	// DeepSeekRealUser without it.
-	DeepSeekRealUserCleared bool
-	// VerifierDailyUSD is Sela's daily spend ceiling for Claude
+	// VerifierDailyUSD is Sela's daily spend ceiling for the Meta verifier
 	// (SELA_VERIFIER_DAILY_USD, ADR-0003 §11), estimated from tokens per
 	// UTC day by this router; zero sets no ceiling here (a Limiter may
 	// still enforce one). Reaching it is an availability failure of the
-	// Claude route (spend_cap), and DeepSeek is then not called for a
-	// reply that Claude would have to check (RR-4 i).
+	// verifier route (spend_cap), and a verifier-gated output abstains.
 	VerifierDailyUSD float64
-	Anthropic        AnthropicConfig
-	DeepSeek         DeepSeekConfig
+	MetaVerifier     MetaVerifierConfig
 }
 
 // Production reports whether c is the production environment. It fails
@@ -158,27 +103,11 @@ func (c Config) Production() bool {
 	return true
 }
 
-// VerifierEnabled reports whether a Claude route is configured. The mode
-// is authoritative: SELA_VERIFIER_MODE=disabled (or an empty mode) turns
-// the route off even for a client passed in Deps (RR-15).
+// VerifierEnabled reports whether a Meta verifier route is configured. The
+// mode is authoritative: SELA_VERIFIER_MODE=disabled (or an empty mode)
+// turns the route off even for a client passed in Deps (RR-15).
 func (c Config) VerifierEnabled() bool {
-	return (c.Profile == ProfileFull || c.Profile == "") && c.Anthropic.Mode.on()
-}
-
-// DeepSeekEnabled reports whether DeepSeek is configured, as fallback
-// generator or alternative verifier. SELA_DEEPSEEK_MODE=disabled turns it
-// off even for clients passed in Deps.
-func (c Config) DeepSeekEnabled() bool {
-	return (c.Profile == ProfileFull || c.Profile == "") && c.DeepSeek.Mode.on()
-}
-
-// deepseekData is the effective DeepSeek data setting (empty means
-// synthetic only: fail closed).
-func (c Config) deepseekData() DeepSeekData {
-	if c.DeepSeekData == DeepSeekRealUser {
-		return DeepSeekRealUser
-	}
-	return DeepSeekSyntheticOnly
+	return c.MetaVerifier.Mode.on()
 }
 
 // bandAllowed reports whether band may reach any AI provider.
@@ -207,9 +136,9 @@ const (
 	MaxOpTimeout     = 15 * time.Minute
 )
 
-// MinOpTimeout is the smallest SELA_LLM_OP_TIMEOUT: the AT-3/AT-4 fallback
-// and verification reserves, the minimum Meta window and the reserve
-// margin. A shorter budget could not wait for Meta at all.
+// MinOpTimeout is the smallest SELA_LLM_OP_TIMEOUT: the verification
+// reserve, the minimum Meta window and the reserve margin. A shorter budget
+// could not wait for Meta at all.
 func MinOpTimeout() time.Duration {
 	var floor time.Duration
 	for _, p := range policies {
@@ -222,40 +151,22 @@ func MinOpTimeout() time.Duration {
 
 // LoadFromEnv reads the AI configuration. getenv may be nil (os.Getenv).
 // It fails closed: an unknown value is an error, production defaults to
-// no test doubles, no fallback and no alternative verifier, and errors
-// name variables, never their values.
+// no test doubles, and errors name variables, never their values.
 //
 // Variables:
 //
 //	SELA_ENV                       development | test | demo | staging | production (default production)
 //	SELA_ALLOW_TEST_DOUBLE         true to allow test doubles outside production
 //	SELA_AI_PROFILE                full (default) | meta_only
-//	SELA_AI_FALLBACK               on | off (default off; "deepseek" means on)
-//	SELA_AI_ALT_VERIFIER           on | off (default off; "deepseek" means on)
-//	SELA_AI_FALLBACK_EV5           pass: required to turn the fallback on in production
-//	SELA_AI_ALT_VERIFIER_EV6       pass: required to turn the alternative verifier on in production
 //	SELA_ALLOWED_AGE_BANDS         comma list of 15_17, 18_plus, unknown (production: 18_plus only)
 //	SELA_LLM_OP_TIMEOUT            AT-3/AT-4 budget (default 6m, MinOpTimeout..15m)
-//	SELA_DEEPSEEK_DATA             synthetic_only (default, every environment) | real_user
-//	SELA_DEEPSEEK_REAL_USER_B10    cleared: required for real_user in production (B-10, O-3)
-//	SELA_VERIFIER_DAILY_USD        Claude daily spend ceiling in USD (optional, e.g. 5 or 2.50)
+//	SELA_VERIFIER_DAILY_USD        Meta verifier daily spend ceiling in USD (optional, e.g. 5 or 2.50)
 //	SELA_TEST_DOUBLE_API_KEY       optional key sent to test doubles only (never a live key)
-//	SELA_VERIFIER_MODE             anthropic | test_double | disabled (default anthropic with a key, else disabled)
-//	SELA_ANTHROPIC_API_KEY         workspace-scoped server key
-//	SELA_ANTHROPIC_BASE_URL        default https://api.anthropic.com
-//	SELA_ANTHROPIC_WORKSPACE_ID    optional
-//	SELA_ANTHROPIC_VERSION         default 2026-10-21
-//	SELA_VERIFIER_MODEL            default claude-sonnet-5-5
-//	SELA_VERIFIER_INFERENCE_GEO    us (default) | global (production: us only; Claude gets
-//	                               personal data only with us, the consent's location)
-//	SELA_ANTHROPIC_TIMEOUT         per attempt (default 30s, 1s..2m)
-//	SELA_DEEPSEEK_MODE             deepseek | test_double | disabled (default deepseek with a key, else disabled)
-//	SELA_DEEPSEEK_API_KEY
-//	SELA_DEEPSEEK_BASE_URL         default https://api.deepseek.com
-//	SELA_DEEPSEEK_MODEL            default deepseek-flash
-//	SELA_DEEPSEEK_EXPECTED_VERSION default DeepSeek-V4.1-Flash-1017
-//	SELA_DEEPSEEK_PIN_VERSION      on | off (default off until the response field is calibrated, B-9)
-//	SELA_DEEPSEEK_TIMEOUT          per attempt (default 60s, 1s..5m)
+//	SELA_VERIFIER_MODE             meta_api | test_double | disabled (default meta_api with a key, else disabled)
+//	SELA_META_VERIFIER_API_KEY     Meta API key (falls back to SELA_LLM_API_KEY)
+//	SELA_META_VERIFIER_BASE_URL    default https://api.meta.ai/v1 (falls back to SELA_LLM_BASE_URL)
+//	SELA_VERIFIER_MODEL            default muse-wonder-1.0 (must differ from the generator's model)
+//	SELA_META_VERIFIER_TIMEOUT     per attempt (default 30s, 1s..2m)
 func LoadFromEnv(getenv func(string) string) (Config, error) {
 	if getenv == nil {
 		getenv = os.Getenv
@@ -288,10 +199,6 @@ func LoadFromEnv(getenv func(string) string) (Config, error) {
 	default:
 		add(errors.New("SELA_AI_PROFILE: must be full or meta_only"))
 	}
-	c.Fallback, err = switchVar(get, "SELA_AI_FALLBACK", "deepseek")
-	add(err)
-	c.AltVerifier, err = switchVar(get, "SELA_AI_ALT_VERIFIER", "deepseek")
-	add(err)
 	bands := get("SELA_ALLOWED_AGE_BANDS")
 	if bands == "" {
 		bands = "15_17,18_plus,unknown"
@@ -310,21 +217,6 @@ func LoadFromEnv(getenv func(string) string) (Config, error) {
 	}
 	c.OpTimeout, err = durationVar(get, "SELA_LLM_OP_TIMEOUT", DefaultOpTimeout, MinOpTimeout(), MaxOpTimeout)
 	add(err)
-	switch v := get("SELA_DEEPSEEK_DATA"); v {
-	case "", string(DeepSeekSyntheticOnly):
-		c.DeepSeekData = DeepSeekSyntheticOnly
-	case string(DeepSeekRealUser):
-		c.DeepSeekData = DeepSeekRealUser
-	default:
-		add(errors.New("SELA_DEEPSEEK_DATA: must be synthetic_only or real_user"))
-	}
-	switch v := get("SELA_DEEPSEEK_REAL_USER_B10"); v {
-	case "":
-	case "cleared":
-		c.DeepSeekRealUserCleared = true
-	default:
-		add(errors.New("SELA_DEEPSEEK_REAL_USER_B10: must be cleared or unset"))
-	}
 	if v := get("SELA_VERIFIER_DAILY_USD"); v != "" {
 		usd, perr := strconv.ParseFloat(v, 64)
 		if perr != nil || !(usd > 0 && usd <= MaxVerifierDailyUSD) {
@@ -335,63 +227,34 @@ func LoadFromEnv(getenv func(string) string) (Config, error) {
 	}
 	c.TestDoubleAPIKey = transport.NewSecret(getenv("SELA_TEST_DOUBLE_API_KEY"))
 
-	a := &c.Anthropic
-	a.APIKey = transport.NewSecret(getenv("SELA_ANTHROPIC_API_KEY"))
-	a.BaseURL = get("SELA_ANTHROPIC_BASE_URL")
-	a.WorkspaceID = transport.NewSecret(get("SELA_ANTHROPIC_WORKSPACE_ID"))
-	a.Version = get("SELA_ANTHROPIC_VERSION")
-	a.Model = get("SELA_VERIFIER_MODEL")
-	a.InferenceGeo = get("SELA_VERIFIER_INFERENCE_GEO")
-	a.AttemptTimeout, err = durationVar(get, "SELA_ANTHROPIC_TIMEOUT", anthropic.DefaultAttemptTimeout, time.Second, 2*time.Minute)
-	add(err)
-	switch m := get("SELA_VERIFIER_MODE"); m {
-	case "":
-		a.Mode = ModeDisabled
-		if a.APIKey.IsSet() {
-			a.Mode = ModeLive
-		}
-	case "anthropic", string(ModeLive):
-		a.Mode = ModeLive
-	case string(ModeTestDouble):
-		a.Mode = ModeTestDouble
-	case string(ModeDisabled):
-		a.Mode = ModeDisabled
-	default:
-		add(errors.New("SELA_VERIFIER_MODE: must be anthropic, test_double or disabled"))
+	m := &c.MetaVerifier
+	m.APIKey = transport.NewSecret(getenv("SELA_META_VERIFIER_API_KEY"))
+	if !m.APIKey.IsSet() {
+		// One Meta API key may serve generator and verifier; the verifier
+		// reads its own variable first so the two can be split later.
+		m.APIKey = transport.NewSecret(getenv("SELA_LLM_API_KEY"))
 	}
-
-	d := &c.DeepSeek
-	d.APIKey = transport.NewSecret(getenv("SELA_DEEPSEEK_API_KEY"))
-	d.BaseURL = get("SELA_DEEPSEEK_BASE_URL")
-	d.Model = get("SELA_DEEPSEEK_MODEL")
-	d.ExpectedVersion = get("SELA_DEEPSEEK_EXPECTED_VERSION")
-	d.PinServedVersion, err = switchVar(get, "SELA_DEEPSEEK_PIN_VERSION", "")
-	add(err)
-	d.AttemptTimeout, err = durationVar(get, "SELA_DEEPSEEK_TIMEOUT", deepseek.DefaultAttemptTimeout, time.Second, 5*time.Minute)
-	add(err)
-	switch m := get("SELA_DEEPSEEK_MODE"); m {
-	case "":
-		d.Mode = ModeDisabled
-		if d.APIKey.IsSet() {
-			d.Mode = ModeLive
-		}
-	case "deepseek", string(ModeLive):
-		d.Mode = ModeLive
-	case string(ModeTestDouble):
-		d.Mode = ModeTestDouble
-	case string(ModeDisabled):
-		d.Mode = ModeDisabled
-	default:
-		add(errors.New("SELA_DEEPSEEK_MODE: must be deepseek, test_double or disabled"))
+	m.BaseURL = get("SELA_META_VERIFIER_BASE_URL")
+	if m.BaseURL == "" {
+		m.BaseURL = get("SELA_LLM_BASE_URL")
 	}
-
-	if c.Production() {
-		if c.Fallback && get("SELA_AI_FALLBACK_EV5") != "pass" {
-			add(errors.New("SELA_AI_FALLBACK: stays off in production until EV-5 passes (set SELA_AI_FALLBACK_EV5=pass with the recorded result)"))
+	m.Model = get("SELA_VERIFIER_MODEL")
+	m.AttemptTimeout, err = durationVar(get, "SELA_META_VERIFIER_TIMEOUT", metaverifier.DefaultAttemptTimeout, time.Second, 2*time.Minute)
+	add(err)
+	switch mode := get("SELA_VERIFIER_MODE"); mode {
+	case "":
+		m.Mode = ModeDisabled
+		if m.APIKey.IsSet() {
+			m.Mode = ModeLive
 		}
-		if c.AltVerifier && get("SELA_AI_ALT_VERIFIER_EV6") != "pass" {
-			add(errors.New("SELA_AI_ALT_VERIFIER: stays off in production until EV-6 passes (set SELA_AI_ALT_VERIFIER_EV6=pass with the recorded result)"))
-		}
+	case "meta_api", "meta_verifier", string(ModeLive):
+		m.Mode = ModeLive
+	case string(ModeTestDouble):
+		m.Mode = ModeTestDouble
+	case string(ModeDisabled):
+		m.Mode = ModeDisabled
+	default:
+		add(errors.New("SELA_VERIFIER_MODE: must be meta_api, test_double or disabled"))
 	}
 	if len(errs) == 0 {
 		add(c.Validate())
@@ -404,9 +267,9 @@ func LoadFromEnv(getenv func(string) string) (Config, error) {
 
 // validateCore checks what NewRouter relies on, without building
 // clients: a known environment and profile, known modes, an operation
-// budget that can hold Meta's window and the reserves, known age bands
-// (production: 18_plus only), test doubles only where allowed, and in
-// production Claude processing in the US only.
+// budget that can hold Meta's window and the verification reserve, known
+// age bands (production: 18_plus only), and test doubles only where
+// allowed.
 func (c Config) validateCore() error {
 	var errs []error
 	switch c.Env {
@@ -419,21 +282,16 @@ func (c Config) validateCore() error {
 	default:
 		errs = append(errs, errors.New("SELA_AI_PROFILE: must be full or meta_only"))
 	}
-	for _, m := range []struct {
-		name string
-		mode ProviderMode
-	}{{"SELA_VERIFIER_MODE", c.Anthropic.Mode}, {"SELA_DEEPSEEK_MODE", c.DeepSeek.Mode}} {
-		switch m.mode {
-		case "", ModeLive, ModeTestDouble, ModeDisabled:
-		default:
-			errs = append(errs, fmt.Errorf("%s: unknown mode", m.name))
-		}
-		if m.mode == ModeTestDouble && (c.Production() || !c.AllowTestDouble) {
-			errs = append(errs, fmt.Errorf("%s=test_double requires SELA_ALLOW_TEST_DOUBLE=true and SELA_ENV other than production", m.name))
-		}
+	switch c.MetaVerifier.Mode {
+	case "", ModeLive, ModeTestDouble, ModeDisabled:
+	default:
+		errs = append(errs, errors.New("SELA_VERIFIER_MODE: unknown mode"))
+	}
+	if c.MetaVerifier.Mode == ModeTestDouble && (c.Production() || !c.AllowTestDouble) {
+		errs = append(errs, errors.New("SELA_VERIFIER_MODE=test_double requires SELA_ALLOW_TEST_DOUBLE=true and SELA_ENV other than production"))
 	}
 	if c.OpTimeout != 0 && (c.OpTimeout < MinOpTimeout() || c.OpTimeout > MaxOpTimeout) {
-		errs = append(errs, fmt.Errorf("SELA_LLM_OP_TIMEOUT: must be within [%s, %s]: the AT-3/AT-4 fallback and verification reserves plus a minimum Meta window",
+		errs = append(errs, fmt.Errorf("SELA_LLM_OP_TIMEOUT: must be within [%s, %s]: the verification reserve plus a minimum Meta window",
 			MinOpTimeout(), MaxOpTimeout))
 	}
 	for b, ok := range c.AllowedBands {
@@ -445,75 +303,38 @@ func (c Config) validateCore() error {
 			errs = append(errs, errors.New("SELA_ALLOWED_AGE_BANDS: production allows only 18_plus for AI providers until the legal review (B-10)"))
 		}
 	}
-	switch c.DeepSeekData {
-	case "", DeepSeekSyntheticOnly:
-	case DeepSeekRealUser:
-		if c.Production() && !c.DeepSeekRealUserCleared {
-			// O-3, V21: real-user text reaches DeepSeek only after the legal
-			// review (B-10) and the owner's confirmation, set explicitly.
-			errs = append(errs, errors.New("SELA_DEEPSEEK_DATA=real_user: production requires SELA_DEEPSEEK_REAL_USER_B10=cleared (legal review B-10 and the owner's confirmation, ADR-0003 §17 O-3)"))
-		}
-	default:
-		errs = append(errs, errors.New("SELA_DEEPSEEK_DATA: must be synthetic_only or real_user"))
-	}
 	if c.VerifierDailyUSD < 0 || c.VerifierDailyUSD > MaxVerifierDailyUSD || math.IsNaN(c.VerifierDailyUSD) {
 		errs = append(errs, fmt.Errorf("SELA_VERIFIER_DAILY_USD: must be a positive amount up to %g", float64(MaxVerifierDailyUSD)))
-	}
-	if c.Production() && c.Anthropic.InferenceGeo != "" && c.Anthropic.InferenceGeo != anthropic.DefaultInferenceGeo {
-		// ai_provider_anthropic is "Anthropic, US (inference_geo: us)"; a
-		// region change is a new policy version (ADR-0003 §8, §8.1).
-		errs = append(errs, errors.New("SELA_VERIFIER_INFERENCE_GEO: production allows only us, the location the consent names"))
 	}
 	return errors.Join(errs...)
 }
 
 // Validate checks the whole configuration: validateCore, then the
-// provider settings. It builds the clients' configs and lets them
-// validate URLs, keys and models, so the rules live in one place;
-// production refuses test doubles and any test-double base URL.
+// provider settings. It builds the client's config and lets it validate
+// URLs, keys and models, so the rules live in one place; production
+// refuses test doubles and any test-double base URL.
 func (c Config) Validate() error {
 	errs := []error{c.validateCore()}
-	if c.Production() {
-		for _, u := range []struct{ name, url, host string }{
-			{"SELA_ANTHROPIC_BASE_URL", c.Anthropic.BaseURL, anthropic.LiveHost},
-			{"SELA_DEEPSEEK_BASE_URL", c.DeepSeek.BaseURL, deepseek.LiveHost},
-		} {
-			// Checked even for a disabled provider: production refuses a
-			// test-double base URL wherever it is configured.
-			if u.url == "" {
-				continue
-			}
-			if _, err := transport.ParseBaseURL(u.url, transport.BaseURLOptions{Production: true, LiveHosts: []string{u.host}}); err != nil {
-				errs = append(errs, fmt.Errorf("%s: %v", u.name, err))
-			}
+	if c.Production() && c.MetaVerifier.BaseURL != "" {
+		// Checked even for a disabled provider: production refuses a
+		// test-double base URL wherever it is configured.
+		if _, err := transport.ParseBaseURL(c.MetaVerifier.BaseURL, transport.BaseURLOptions{Production: true, LiveHosts: []string{metaverifier.LiveHost}}); err != nil {
+			errs = append(errs, fmt.Errorf("SELA_META_VERIFIER_BASE_URL: %v", err))
 		}
 	}
-	if c.Anthropic.Mode.on() {
-		if _, err := anthropic.New(c.anthropicConfig()); err != nil {
-			errs = append(errs, fmt.Errorf("SELA_ANTHROPIC_*: %v", err))
-		}
-	}
-	if c.DeepSeek.Mode.on() {
-		if _, err := deepseek.New(c.deepseekConfig()); err != nil {
-			errs = append(errs, fmt.Errorf("SELA_DEEPSEEK_*: %v", err))
+	if c.MetaVerifier.Mode.on() {
+		if _, err := metaverifier.New(c.metaVerifierConfig()); err != nil {
+			errs = append(errs, fmt.Errorf("SELA_META_VERIFIER_*: %v", err))
 		}
 	}
 	return errors.Join(errs...)
 }
 
-func (c Config) anthropicConfig() anthropic.Config {
-	return anthropic.Config{
-		APIKey: c.Anthropic.APIKey, TestDoubleAPIKey: c.TestDoubleAPIKey, BaseURL: c.Anthropic.BaseURL, WorkspaceID: c.Anthropic.WorkspaceID,
-		Version: c.Anthropic.Version, Model: c.Anthropic.Model, InferenceGeo: c.Anthropic.InferenceGeo,
-		TestDouble: c.Anthropic.Mode == ModeTestDouble, Production: c.Production(), AttemptTimeout: c.Anthropic.AttemptTimeout,
-	}
-}
-
-func (c Config) deepseekConfig() deepseek.Config {
-	return deepseek.Config{
-		APIKey: c.DeepSeek.APIKey, TestDoubleAPIKey: c.TestDoubleAPIKey, BaseURL: c.DeepSeek.BaseURL, Model: c.DeepSeek.Model,
-		ExpectedVersion: c.DeepSeek.ExpectedVersion, PinServedVersion: c.DeepSeek.PinServedVersion,
-		TestDouble: c.DeepSeek.Mode == ModeTestDouble, Production: c.Production(), AttemptTimeout: c.DeepSeek.AttemptTimeout,
+func (c Config) metaVerifierConfig() metaverifier.Config {
+	return metaverifier.Config{
+		APIKey: c.MetaVerifier.APIKey, TestDoubleAPIKey: c.TestDoubleAPIKey, BaseURL: c.MetaVerifier.BaseURL,
+		Model: c.MetaVerifier.Model, TestDouble: c.MetaVerifier.Mode == ModeTestDouble,
+		Production: c.Production(), AttemptTimeout: c.MetaVerifier.AttemptTimeout,
 	}
 }
 
@@ -525,18 +346,9 @@ func (c Config) String() string {
 		}
 		return "set"
 	}
-	onOff := func(b bool) string {
-		if b {
-			return "on"
-		}
-		return "off"
-	}
-	claudeModel, dsModel := anthropic.DefaultModel, deepseek.DefaultModel
-	if c.Anthropic.Mode == ModeTestDouble {
-		claudeModel = anthropic.TestDoubleModel
-	}
-	if c.DeepSeek.Mode == ModeTestDouble {
-		dsModel = deepseek.TestDoubleModel
+	model := metaverifier.DefaultModel
+	if c.MetaVerifier.Mode == ModeTestDouble {
+		model = metaverifier.TestDoubleModel
 	}
 	var bands []string
 	for b, ok := range c.AllowedBands {
@@ -548,11 +360,9 @@ func (c Config) String() string {
 	if c.AllowedBands == nil {
 		bands = []string{string(Band18Plus)}
 	}
-	return fmt.Sprintf("env=%s profile=%s verifier=%s(key=%s workspace=%s model=%s version=%s geo=%s) deepseek=%s(key=%s model=%s data=%s) fallback=%s alt_verifier=%s bands=%s",
-		c.Env, c.Profile, c.Anthropic.Mode, set(c.Anthropic.APIKey), set(c.Anthropic.WorkspaceID), orDefault(c.Anthropic.Model, claudeModel),
-		orDefault(c.Anthropic.Version, anthropic.DefaultVersion), orDefault(c.Anthropic.InferenceGeo, anthropic.DefaultInferenceGeo),
-		c.DeepSeek.Mode, set(c.DeepSeek.APIKey), orDefault(c.DeepSeek.Model, dsModel), c.deepseekData(),
-		onOff(c.Fallback), onOff(c.AltVerifier), strings.Join(bands, ","))
+	return fmt.Sprintf("env=%s profile=%s verifier=%s(key=%s model=%s) bands=%s",
+		c.Env, c.Profile, c.MetaVerifier.Mode, set(c.MetaVerifier.APIKey), orDefault(c.MetaVerifier.Model, model),
+		strings.Join(bands, ","))
 }
 
 func orDefault(v, d string) string {
@@ -572,22 +382,6 @@ func boolVar(get func(string) string, key string) (bool, error) {
 		return false, fmt.Errorf("%s: invalid boolean", key)
 	}
 	return b, nil
-}
-
-// switchVar reads on/off (also true/false, 1/0). alias, when set, is
-// another spelling of "on" (the ADR writes SELA_AI_FALLBACK=deepseek).
-func switchVar(get func(string) string, key, alias string) (bool, error) {
-	switch v := strings.ToLower(get(key)); v {
-	case "", "off", "false", "0", "no":
-		return false, nil
-	case "on", "true", "1", "yes":
-		return true, nil
-	default:
-		if alias != "" && v == alias {
-			return true, nil
-		}
-		return false, fmt.Errorf("%s: must be on or off", key)
-	}
 }
 
 func durationVar(get func(string) string, key string, def, lo, hi time.Duration) (time.Duration, error) {
