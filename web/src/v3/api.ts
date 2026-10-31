@@ -141,6 +141,60 @@ export type Entry = {
   paused?: boolean;
 };
 
+export type ReadingSource = {
+  id: string;
+  title: string;
+  publisher: string;
+  url: string;
+  licence: string;
+};
+
+export type ReadingListItem = {
+  id: string;
+  version: number;
+  kind: string;
+  topics: string[];
+  audience: string;
+  title: Localized;
+  summary: Localized;
+  readingTimeMinutes: { id: number; en: number };
+  sources: ReadingSource[];
+  reviewedOn: string;
+};
+
+export type ReadingSection = {
+  heading: Localized;
+  paragraphs: Localized[];
+};
+
+export type ReadingItem = ReadingListItem & {
+  steps?: { id: string[]; en: string[] };
+  why?: Localized;
+  seekHelpWhen?: Localized;
+  cautions?: Localized;
+  sections?: ReadingSection[];
+  source: {
+    relation: string;
+    locator: string;
+    sources: ReadingSource[];
+  };
+  licence: {
+    itemTextLicence: string;
+    sourceLicence: string;
+    commercialUse: string;
+    note?: string;
+  };
+  attribution: Localized;
+  adaptationNotice?: Localized;
+  adaptationNote?: string;
+  evidenceNote?: string;
+  review: {
+    status: string;
+    reviewedOn: string;
+    verifier: string;
+  };
+};
+
 export type Options = {
   username: { minLength: number; maxLength: number };
   password: { minLength: number; maxLength: number };

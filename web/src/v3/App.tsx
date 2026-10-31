@@ -25,6 +25,9 @@ const HelpPage = lazy(() =>
 const ReadingPage = lazy(() =>
   import("./screens/Reading").then((m) => ({ default: m.ReadingPage })),
 );
+const ReadingItemPage = lazy(() =>
+  import("./screens/Reading").then((m) => ({ default: m.ReadingItemPage })),
+);
 const SharesPage = lazy(() =>
   import("./screens/Shares").then((m) => ({ default: m.SharesPage })),
 );
@@ -111,6 +114,7 @@ function titleFor(path: string, lang: string): string {
   if (path.startsWith("/support/shares")) return t("Status berbagi", "Sharing status");
   if (path === "/help") return t("Bantuan sekarang", "Help now");
   if (path === "/reading") return t("Bacaan & latihan kecil", "Reading & small exercises");
+  if (path.startsWith("/reading/")) return t("Bacaan", "Reading");
   if (path === "/about") return t("Tentang Sela", "About Sela");
   if (path === "/policies" || path.startsWith("/policies/")) return t("Kebijakan", "Policies");
   if (path === "/signin") return t("Masuk", "Sign in");
@@ -136,13 +140,21 @@ function isOwnerPath(path: string): boolean {
   return OWNER_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));
 }
 
+function readingSlug(path: string): string {
+  try {
+    return decodeURIComponent(path.slice("/reading/".length));
+  } catch {
+    return "";
+  }
+}
+
 function isGuardianExempt(path: string): boolean {
   return (
     path.startsWith("/settings/privacy") ||
     path.startsWith("/settings/display") ||
     path.startsWith("/settings/account") ||
     path === "/help" ||
-    path === "/reading" ||
+    path.startsWith("/reading") ||
     path.startsWith("/policies") ||
     path.startsWith("/start/guardian")
   );
@@ -213,6 +225,8 @@ function AppRoutes() {
     screen = <HelpPage />;
   } else if (path === "/reading") {
     screen = <ReadingPage />;
+  } else if (path.startsWith("/reading/")) {
+    screen = <ReadingItemPage slug={readingSlug(path)} />;
   } else if (path === "/policies") {
     screen = <PoliciesPage />;
   } else if (path.startsWith("/policies/")) {
@@ -338,7 +352,7 @@ function isPolicyExempt(path: string): boolean {
     path.startsWith("/settings/display") ||
     path.startsWith("/settings/account") ||
     path === "/help" ||
-    path === "/reading" ||
+    path.startsWith("/reading") ||
     path.startsWith("/policies")
   );
 }

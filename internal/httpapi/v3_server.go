@@ -8,6 +8,7 @@ import (
 
 	"github.com/YanIanZ/sela/internal/account"
 	"github.com/YanIanZ/sela/internal/fixtures"
+	"github.com/YanIanZ/sela/internal/reading"
 )
 
 // v3 cookie names: the __Host- prefix makes browsers insist on Secure,
@@ -19,14 +20,16 @@ const (
 
 // v3State is what the /api/v3 surface needs beyond Options.
 type v3State struct {
-	listening *listeningStore
-	cfg       account.Config
-	policies  map[string]fixtures.PolicyNotice
-	routes    []v3Route
+	listening  *listeningStore
+	cfg        account.Config
+	policies   map[string]fixtures.PolicyNotice
+	readingLib *reading.Library
+	routes     []v3Route
 }
 
 func (s *Server) initV3() {
 	s.v3.listening = newListeningStore()
+	s.v3.readingLib = reading.Embedded()
 	cfg := s.opt.AccountConfig
 	if s.opt.Accounts != nil {
 		cfg = s.opt.Accounts.Config()
@@ -96,6 +99,8 @@ func (s *Server) v3Routes() {
 		{method: "GET", path: "/api/v3/policies", public: true, h: s.v3Policies},
 		{method: "GET", path: "/api/v3/help-content", public: true, h: s.v3HelpContent},
 		{method: "GET", path: "/api/v3/care-directory", public: true, h: s.v3CareDirectory},
+		{method: "GET", path: "/api/v3/reading", public: true, h: s.v3ReadingList},
+		{method: "GET", path: "/api/v3/reading/{slug}", public: true, h: s.v3ReadingItem},
 		{method: "POST", path: "/api/v3/recipient/session", mutation: true, h: s.v3RecipientSession},
 		{method: "GET", path: "/api/v3/recipient/share", h: s.v3RecipientShare},
 		{method: "POST", path: "/api/v3/recipient/acknowledge", mutation: true, h: s.v3RecipientAcknowledge},

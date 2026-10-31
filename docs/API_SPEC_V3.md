@@ -167,9 +167,11 @@ Reserved names for later milestones (not listed by `GET /me/consents` until acti
 | `GET /api/v2/ready` | **Unchanged path and existing fields**, plus additive fields `database` (`"ok"`, `"unavailable"` or `"not_configured"`) and `schema` (`"current"`, `"pending"`, `"mismatch"` or `"not_configured"`); `store` keeps describing the v2 journey store (`"memory"` or `"disabled"`). Answers `503` with `status: "not_ready"` only when the environment requires the database and it is unreachable or not current. |
 | `GET /api/v3/policies` | Current versioned policy texts: `{"policies": {"terms_privacy": {"version", "title": {"id","en"}, "body": [{"id","en"}, …]}, "guest_storage": …, "guardian_information": …}}`. Read bucket. |
 | `GET /api/v3/help-content` | Public reviewed content ported from v1: `{"selfHelpCards": [{"id","topics","title","summary","steps","why","seekHelpWhen","cautions","source","evidenceNote"}], "helpDestinations": [{"id","label","description","speakingTo","vocative","ask","checklist","sources","caveat","verifiedOn"}], "supportOptions": [{"id","category","name","summary","phone","whatsapp","website","hours","cost","limits","source","lastVerified"}]}`. Read bucket. The model may only choose card ids; card text never comes from a model. |
+| `GET /api/v3/reading` | Public reading library: `{"items": [{"id","version","kind","topics","audience","title":{"id","en"},"summary":{"id","en"},"readingTimeMinutes":{"id","en"},"sources":[…],"reviewedOn"}]}`. Only items that pass the runtime editorial gate appear; the rest are absent. No user data. Read bucket. |
+| `GET /api/v3/reading/{slug}` | One approved reading item: the list fields plus `steps`, `why`, `seekHelpWhen`, `cautions`, `sections`, `source` (`relation`, `locator`, `sources`), `licence`, `attribution`, `adaptationNotice`, `adaptationNote`, `evidenceNote` and `review` (`status`, `reviewedOn`, `verifier`). Unknown, unpublished or forged slugs answer `404 not_found`, deliberately indistinguishable. No reviewer name or user data. Read bucket. |
 | `GET /api/v3/auth/options` | Rules the UI must show before asking: `{"username": {"minLength": 3, "maxLength": 32}, "password": {"minLength": 15, "maxLength": 256}, "recoveryCodes": {"count": 10, "groups": 4, "groupLength": 4}, "ageBands": {"allowed": ["18_plus"]}, "guest": {"available": true, "inactiveTtlHours": 168, "maxAgeDays": 30}, "sessions": {"idleHours": 2, "absoluteHours": 12, "trustedIdleDays": 7, "trustedAbsoluteDays": 30}, "guardianConsentRequired": true, "environment": "production", "synthetic": false}`. Read bucket. |
 
-Without a configured database (development only), every `/api/v3` route except these two answers `503 store_unavailable`; so does every other route, with `Retry-After: 5`, while the configured database cannot be reached.
+Without a configured database (development only), every `/api/v3` route except the public routes in this section answers `503 store_unavailable`; so does every other route, with `Retry-After: 5`, while the configured database cannot be reached.
 
 ## 5. Authentication
 
@@ -363,6 +365,21 @@ a reflection is saved only after permission as an ordinary encrypted note.
 `GET /api/v3/care-directory?q=&kind=&city=` is public and returns only entries with `status = "verified"` whose `reverifyAt` is null or in the future. `kind` is `organization`, `facility` or `practitioner`; `q` searches the name, description and source publisher; `city` is an optional manually typed filter. The API never reads a browser location.
 
 Each entry carries `{id, kind, name, city, description, contactUrl, sourceUrl, sourcePublisher, sourceAccessedAt, status, synthetic, version, verifiedAt, reverifyAt, createdAt, updatedAt}`. There is no user id, appointment, availability, referral or contact action. In development, test and demo, clearly synthetic demo entries are included and marked `synthetic: true`; staging and production return only sourced real entries. A stale or unpublished entry is not returned. The page says that Sela does not contact a provider and does not claim a partnership.
+
+## 6.11 Reading library (2026-10-31)
+
+`GET /api/v3/reading` and `GET /api/v3/reading/{slug}` are public and read
+the embedded content set at `data/content/reading` (the same files
+`tests/content/reading_validator.py` checks). The runtime gate is applied on
+every request, independently of the authoring validator: an item is served
+only when `review.status` is `human_approved`, `review.publishable` is true,
+`review.human_editor` is a non-blank name, `review.reviewed_on` is a real
+`YYYY-MM-DD` date and the authoring-time `review.verifier.status` is
+`supported`. Everything else is absent from the list and answers
+`404 not_found` on detail, so an unpublished, forged or unknown slug cannot
+be distinguished. The public response omits the reviewer's name, contacts,
+source-claim working data and every other internal field. The list is an
+empty `items` array until the first item passes the gate.
 
 ## 7. Guest and account differences (foundation)
 

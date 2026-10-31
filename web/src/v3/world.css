@@ -240,7 +240,7 @@
 .s-shell .c-week-strip span { font-family: var(--font-display); }
 .s-shell .c-reading-source { padding: 1.5rem; margin-bottom: 0.75rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); background: var(--c-surface); }
 .s-shell .c-reading-list { border: 0; }
-.s-shell .c-reading-source h2 a { text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.s-shell .c-reading-source h2 a, .s-shell .c-reading-source h3 a { text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
 .s-shell .c-document-link { padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); background: var(--c-surface); }
 .s-shell .c-document-link:hover { background: var(--c-surface-quiet); }
 .s-shell .s-support-card { padding: 1.5rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); background: var(--c-surface); }
