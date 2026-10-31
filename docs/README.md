@@ -4,6 +4,7 @@ Start with the [product vision](vision/README.md) for where Sela is going, and [
 
 | Folder | What lives there |
 | --- | --- |
+| [roadmap/](roadmap/SAFE_FLOW_AND_TODO.md) | The current plan: safer flow, weaknesses found and TODO |
 | [vision/](vision/README.md) | Product direction, requirements, Meaning Integrity Engine, care network, admin console, Redis and AI cost |
 | [product/](product/PRODUCT.md) | Product description, roadmap, backlog, demo data, Dengar.in lineage and provenance |
 | [architecture/](architecture/ARCHITECTURE.md) | System architecture, AI policy, safety, Meta integration, verifier and fallback notes |

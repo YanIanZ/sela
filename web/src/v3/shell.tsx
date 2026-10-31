@@ -751,12 +751,12 @@ export function AppShell({
               <Link to="/help" className="s-colophon-help">{w("Butuh bantuan sekarang", "Need help now")}</Link>
             </nav>
             <p className="s-attribution">
-              <span className="s-attribution-label">{w("Melanjutkan", "Continuing")}</span>
-              <span className="s-attribution-name">{w("Dengar.in", "Dengar.in")}</span>
+              <span className="s-attribution-label">{"© 2026"}</span>
+              <span className="s-attribution-name">{"Sela — YanIanZ"}</span>
               <span className="s-attribution-note">
                 {w(
-                  "Dirintis tim Telkom University Surabaya; kreditnya tetap tercatat.",
-                  "Started by a Telkom University Surabaya team; its credits are kept.",
+                  "Fork dari Dengar.in — lanjutan individual yang menggantikan Dengar.in lama. Kredit tim Telkom University Surabaya tetap tercatat.",
+                  "Forked from Dengar.in — an individual continuation that replaces the original Dengar.in. The Telkom University Surabaya team's credits are kept.",
                 )}
               </span>
             </p>

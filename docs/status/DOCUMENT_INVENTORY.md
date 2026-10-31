@@ -4,6 +4,8 @@ Updated: 26 October 2026 (v3 planning documents added; classifications updated a
 
 **Reorganisation — 1 November 2026:** the flat `docs/` root was grouped by purpose into `product/`, `architecture/`, `api/`, `operations/`, `status/`, `decisions/` and `validation/` (see the [docs index](../README.md)); every link and code reference was rewritten, and no document was deleted. `OWNER_TESTER.md` moved to [validation/OWNER_ACCEPTANCE_GUIDE.md](../validation/OWNER_ACCEPTANCE_GUIDE.md), `docs/API_SPEC.md` became [api/API_SPEC_V2.md](../api/API_SPEC_V2.md), the 27 October plan moved to [archive/plans/](../archive/plans/2026-10-27-v3-core-journey.md), and the v1 `proto/carebridge/dataset.proto` moved to [archive/v1/carebridge/](../archive/v1/carebridge/dataset.proto). The superseded EvidenceGuard and DeepSeek generation-fallback prototypes (`prototypes/`, D-065) and their CI workflows were removed; they remain in git history up to `e1bf7fc`.
 
+**Added — 1 November 2026:** [roadmap/SAFE_FLOW_AND_TODO.md](../roadmap/SAFE_FLOW_AND_TODO.md) (plan, weaknesses, TODO), `CODE_OF_CONDUCT.md`; `CONTRIBUTING.md` and `SECURITY.md` rewritten (D-069).
+
 ## Current files
 
 | Document | Classification |

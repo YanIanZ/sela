@@ -98,8 +98,8 @@ export function AboutPage() {
       <h2 className="s-mt-5">{w("Kredit", "Credits")}</h2>
       <p>
         {w(
-          "Sela melanjutkan Dengar.in. Ikon mengikuti Lucide (lisensi ISC). Bacaan yang dikutip dari WHO memakai lisensi CC BY-NC-SA 3.0 IGO dan tidak ditampilkan sebelum ditinjau editor.",
-          "Sela continues Dengar.in. Icons follow Lucide (ISC licence). Reading adapted from WHO uses CC BY-NC-SA 3.0 IGO and isn't shown before an editor reviews it.",
+          "© 2026 Sela — YanIanZ. Sela adalah fork dari Dengar.in dan menggantikannya. Ikon mengikuti Lucide (lisensi ISC). Bacaan yang dikutip dari WHO memakai lisensi CC BY-NC-SA 3.0 IGO dan tidak ditampilkan sebelum ditinjau editor.",
+          "© 2026 Sela — YanIanZ. Sela is a fork of Dengar.in and replaces it. Icons follow Lucide (ISC licence). Reading adapted from WHO uses CC BY-NC-SA 3.0 IGO and isn't shown before an editor reviews it.",
         )}
       </p>
       <div className="s-actions">

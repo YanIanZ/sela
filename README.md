@@ -6,6 +6,8 @@
 
 A private, bilingual place to talk, write and check in — and to bring only the context you choose when you look for professional help.
 
+**[Open Sela → sela.vertalt.my.id](https://sela.vertalt.my.id)**
+
 [![CI](https://github.com/YanIanZ/sela/actions/workflows/v2.yml/badge.svg)](https://github.com/YanIanZ/sela/actions/workflows/v2.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Go 1.26](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)
@@ -25,19 +27,21 @@ Most wellbeing apps decide what to remember about you. Sela is built to **respec
 - **Your words stay yours.** Every AI reflection quotes what you actually wrote, is labelled as an interpretation, and can be confirmed, corrected or rejected.
 - **You decide what is kept.** Each conversation is saved or not saved by your choice; storage, AI processing and sharing are separate consents.
 - **Honest AI.** Every reply shows which model wrote it and whether it was checked. When AI is unavailable or not allowed, Sela says so and still works as a writing space.
-- **Help is always one tap away.** "Need help now" and Quick exit are on every screen, and a deterministic crisis check runs before any AI.
+- **Help is always one tap away.** "Need help now" and Quick exit are on every screen. A deterministic safety router — multilingual, typo-tolerant and jailbreak-aware — runs before any AI, and words that read as danger open quick-help mode at once.
 
 ## Features
 
 | | |
 | --- | --- |
-| **Talk** | A calm conversation room with streamed replies, a choice of how Sela listens, save / don't save per conversation, and "What Sela noticed" reflection cards you can review |
+| **Talk** | A calm conversation room with streamed replies in two modes — *talk it through* (options, honest views, feedback) or *just listen* (one small step) — save / don't save per conversation, and "What Sela noticed" reflection cards you can review |
 | **My notes** | Free writing, mood check-ins with drawn mood faces, a timeline, and a weekly look-back without automatic conclusions |
 | **What Sela remembers** | Memory you add and edit yourself — never extracted automatically — behind its own consent |
 | **Support** | Build a consultation summary from chosen notes, approve the exact version, export it (HTML / Markdown) or share it through a revocable link with an access code; record follow-ups afterwards |
-| **Help & reading** | Verified help services with source and verification dates, and curated reading from official publishers |
+| **Planned care** | An opt-in **condition map** that reads your saved check-ins, notes, reflections and conversations and shows one of four stages — everyday to needs help now — with its reasons (not a diagnosis), the help that fits, a public directory and simulated professionals for the product demo |
+| **Sharing space** | Share stories anonymously with other adults and reply with support; every post and reply passes the safety router and Meta moderation before it appears, bullying is hidden at once, and reports go to an operator |
+| **Help & reading** | Verified help services with source and verification dates, quick-help mode with one-tap call buttons, and curated reading from official publishers |
 | **Your device, your rules** | Indonesian and English, light / dark / two high-contrast schemes, text up to 150 %, reduced motion, hidden previews and neutral tab titles for shared phones |
-| **Operator console** | A separate, strongly authenticated staff area for source verification, catalogue quality, AI budgets and audit — staff cannot read personal journals |
+| **Operator console** | A separate, strongly authenticated staff area for source verification, catalogue quality, community moderation, AI budgets and audit — staff cannot read personal journals |
 
 <p align="center">
   <img src="docs/assets/screenshots/talk-desktop.png" alt="Conversation room on a laptop: the person's words on the right, Sela's labelled replies on the left, and a writing box pinned to the bottom" width="640">
@@ -116,7 +120,7 @@ SPEC.md      Requirements, invariants and task status — the source of truth
 
 ## Status
 
-Sela is in **active development** toward a controlled pilot. The features above run end to end locally against PostgreSQL with the live Meta model in development; they are covered by Go, frontend and browser tests. There is **no public deployment yet**, and Sela makes no clinical-efficacy claim. Current progress and open blockers: [implementation status](docs/status/IMPLEMENTATION_STATUS.md) · [blockers](docs/status/BLOCKERS.md) · [roadmap](docs/product/ROADMAP.md).
+Sela runs in **production at [sela.vertalt.my.id](https://sela.vertalt.my.id)** and is in active development toward a controlled pilot. Features run end to end against PostgreSQL with live Meta inference and are covered by Go, frontend and browser tests. Sela makes no clinical-efficacy claim, and professionals shown in planned care are fictional demo data. Current plan and open work: [safer flow and TODO](docs/roadmap/SAFE_FLOW_AND_TODO.md) · [implementation status](docs/status/IMPLEMENTATION_STATUS.md) · [blockers](docs/status/BLOCKERS.md).
 
 ## Documentation
 
@@ -125,14 +129,17 @@ Sela is in **active development** toward a controlled pilot. The features above 
 | [Product vision](docs/vision/README.md) | Where Sela is going and why |
 | [Product](docs/product/PRODUCT.md) · [Design system](web/DESIGN.md) | What Sela does and how it looks |
 | [API](docs/api/API_SPEC_V3.md) | HTTP contracts |
+| [Safer flow and TODO](docs/roadmap/SAFE_FLOW_AND_TODO.md) | The current plan, weaknesses found and what is next |
 | [Docs index](docs/README.md) | Everything else, grouped by purpose |
 
 ## Contributing and security
 
-Contributions are welcome — read [CONTRIBUTING.md](CONTRIBUTING.md) first. Use synthetic data only; never put real personal stories in issues, tests or fixtures. Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+Contributions are welcome — read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md) first. Use synthetic data only; never put real personal stories in issues, tests or fixtures. Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
-## Origins and license
+## Credits and license
 
-Sela continues **Dengar.in**, started by a Telkom University Surabaya team; their authorship is kept ([provenance](docs/product/SELA_PROVENANCE.md)). Sela is maintained by [YanIanZ](https://github.com/YanIanZ) and released under the [MIT License](LICENSE). Third-party data and content keep their own terms.
+**© 2026 Sela — [YanIanZ](https://github.com/YanIanZ).** Released under the [MIT License](LICENSE).
+
+**Forked from Dengar.in.** Sela is an individual continuation that replaces the original Dengar.in, started by a Telkom University Surabaya team. Code carried over from Dengar.in keeps the Dengar.in Team copyright notice, and its contributors' authorship is recorded in the [provenance record](docs/product/SELA_PROVENANCE.md). Third-party data and content keep their own terms.
 
 <p align="center"><b>Built for people to be heard — not to be classified.</b></p>
