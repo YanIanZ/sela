@@ -39,10 +39,17 @@ Status legend: **existing baseline**, **planned**, **owner-reported/pending veri
 | H-018 | P2 | True token-level streaming | guarded streaming architecture | Deferred rather than emitting unvalidated tokens |
 | H-019 | P2 | Multi-facility actual integrations | legal partners | Deferred; no fabricated provider network |
 | H-020 | P2 | Expanded content corpus | human licensing/appraisal | Deferred; no unreviewed literature claims |
+| H-021 | P0 | Guardrails: danger lexicon, quick-help mode, anti-jailbreak, typo tolerance, multilingual | internal/safety, internal/ai (D-068, D-070) | **Implemented on main**; vectors and tests pass; evaluation set pending |
+| H-022 | P1 | Condition map (opt-in, deterministic, not diagnosis) | internal/account/condition.go, /api/v3/condition-map (D-071) | **Implemented on main**; unit and UI tests pass |
+| H-023 | P1 | Simulated professionals for the product demo | /api/v3/care-demo (D-071) | **Implemented on main**; fictional, cannot receive data |
+| H-024 | P1 | Moderated anonymous sharing space + operator queue | internal/community, migration 1000 (D-072) | **Implemented on main**; DB tests and live Meta moderation check pass |
+| H-025 | P1 | Moderation evaluation set and false-positive review | eval/, roadmap S-036 | planned |
+| H-026 | P0 | Expose the release SHA in production health and fix duplicated headers | config/deploy, roadmap S-001/S-002 | planned |
 
 ## 3. Dependencies and parallelism
 
 - H-001/H-002 before *any* hosted rehearsal.
+- H-021–H-024 are built on main (2026-11-01) and may be shown in the demo only with synthetic data and their labels; they never displace the P0 MIE slice (H-003–H-009).
 - H-003 before H-004/H-006; H-006 before H-007; H-007 before H-008; H-003–H-009 before demo A/B/C release.
 - H-010 can start in parallel with H-003; H-011 must freeze test split before final prompt tuning.
 - H-012 covers completed implementations only; H-013 records the exact commit on which H-012 passes.

@@ -1,6 +1,6 @@
 # Production verification & controlled hackathon demonstration
 
-Status: **production hosting exists per owner report (2026-11-01); not independently confirmed here**. This is a **verification runbook**, not a new hosting build/deployment request. Do not claim production readiness or real-user safety from the presence of a URL.
+Status: **production hosting confirmed by the owner at https://sela.vertalt.my.id and answering read-only checks (2026-11-01); deployed build SHA still unverified**. This is a **verification runbook**, not a new hosting build/deployment request. Do not claim production readiness or real-user safety from the presence of a URL.
 
 Current main baseline `docs/status/IMPLEMENTATION_STATUS.md` predates the owner's update and says “no hosted deployment”. Its claim should be interpreted as **previously observed**, now requiring reconciliation. B-3 (hosting) should be reclassified on evidence; B-1 (Modal live provider), B-10 (privacy/legal) and B-15 (region) are independent gates. The owner-reported host does not resolve them automatically.
 
@@ -19,17 +19,17 @@ Owner/SRE fills the table only from actual evidence, with secrets redacted.
 
 | Field | Expected source | Status / evidence |
 | --- | --- | --- |
-| Public URL / hostname | owner confirms exact published endpoint | **Not supplied in this review; don't invent** |
+| Public URL / hostname | owner confirms exact published endpoint | **https://sela.vertalt.my.id** (owner-confirmed 2026-11-01) |
 | Deployment provider | owner hosting dashboard | UNKNOWN |
-| Release commit SHA / container digest | image labels, release dashboard | UNKNOWN |
-| Build timestamp and health status | deployment dashboard | UNKNOWN |
-| TLS certificate, HSTS and redirects | authorized safe check/browser | NOT CHECKED |
-| CSP / cache-control for private responses | read-only header inspection | NOT CHECKED |
+| Release commit SHA / container digest | image labels, release dashboard | UNKNOWN — `version` is the literal `prod`; expose the SHA (roadmap S-001) |
+| Build timestamp and health status | deployment dashboard | `/api/v2/health` → `mode: production`, `status: ok`, `version: prod` (read-only, 2026-11-01); build timestamp UNKNOWN |
+| TLS certificate, HSTS and redirects | authorized safe check/browser | HTTPS 200; HSTS `max-age=31536000; includeSubDomains` present **twice** (proxy and app; roadmap S-002) |
+| CSP / cache-control for private responses | read-only header inspection | Strict CSP (`default-src 'self'`, no inline script, `frame-ancestors 'none'`), `X-Frame-Options: DENY`, `nosniff` (duplicated) |
 | Production profile (`SELA_ENV`) | redacted config key names, not values | NOT CHECKED |
-| AI generator/provider/model ID | true observability/provenance, no prompt | NOT CHECKED |
+| AI generator/provider/model ID | true observability/provenance, no prompt | `/api/v2/ready` reports `ai: meta_api`; model ID NOT CHECKED |
 | Verifier provider/model (must differ) | true Meta provenance | NOT CHECKED |
 | Regional storage / backup / KEK location | vendor configuration record | NOT CHECKED |
-| PostgreSQL backup/restore status | operations evidence | NOT CHECKED |
+| PostgreSQL backup/restore status | operations evidence | `/api/v2/ready` reports `database: ok`, `schema: current`; backup/restore NOT CHECKED |
 | Redis role and fallback | operations evidence | NOT CHECKED |
 | Safety and consent policy versions | committed code/published UI | NOT CHECKED |
 | Production users / sensitive data present? | owner privacy assessment, yes/no only | UNKNOWN |

@@ -36,7 +36,10 @@ Official event page: https://cerebralvalley.ai/e/meta-ai-developer-hackathon and
 | Operator | Separate MFA, audit, cache and spend visibility | Human operations, role editing stretch |
 | Accessibility | Automated checks recorded | Independent/manual user task checks |
 | Security/compliance | Encryption, consent and safeguards designed/tested | No independent assessment or real-user pilot |
-| **Production hosting** | **Owner reports hosting is already in production** in conversation on 2026-11-01 | **Runtime, model, region and release SHA not independently verified; see PRODUCTION_VERIFICATION.md** |
+| **Production hosting** | **https://sela.vertalt.my.id** — owner-confirmed; read-only health/ready checks pass (`mode: production`, `ai: meta_api`, `database: ok`) | **Release SHA, model ID and region not yet verified; see PRODUCTION_VERIFICATION.md** |
+| Listening modes and safety (D-066–D-068, D-070) | Two reply modes; danger lexicon, quick-help mode; anti-jailbreak, typo tolerance, 13 more languages | Moderation and multilingual evaluation sets |
+| Condition map and demo professionals (D-071) | Opt-in, deterministic four-stage map from saved records; fictional practitioners | Hand-off to a simulated practitioner after H-008 |
+| Sharing space (D-072) | Adults-only anonymous posts; safety router + Meta moderation before publish; reports, operator queue | Moderation evaluation (false positives) |
 
 Hosting is **not** to be scoped as “build hosting from scratch”. Verify the deployed state instead. An existing production endpoint does **not** by itself imply permission for real-person wellbeing data or clinical readiness. Never use a production user's story, a real credential or a real consultation in evaluation.
 
@@ -54,6 +57,7 @@ Source-of-truth pointers: [implementation status](../status/IMPLEMENTATION_STATU
 | [PRODUCTION_VERIFICATION.md](PRODUCTION_VERIFICATION.md) | Verify owner-reported production without changing live data | SRE / owner |
 | [DELIVERY_PLAN.md](DELIVERY_PLAN.md) | Sequencing, granular work items, stop/ship criteria | PM / engineering |
 | [DEMO_AND_SUBMISSION.md](DEMO_AND_SUBMISSION.md) | 3-minute primary demo, backup demo, evidence, attribution | Owner / submission |
+| [ROADMAP_ALIGNMENT.md](ROADMAP_ALIGNMENT.md) | How this plan maps to the 2026-11-01 owner direction and the repository TODO | PM / owner |
 
 ## 5. Scope and dependency order
 
@@ -62,7 +66,8 @@ Source-of-truth pointers: [implementation status](../status/IMPLEMENTATION_STATU
 3. **P0 measurable gain**: preregistered synthetic benchmark with the *same* Meta generator between baseline and Sela, human-reviewed ground truth and failures disclosed.
 4. **P0 demonstrable story**: one coherent user journey (listen → tentative interpretation → correction → memory/summary invalidation → chosen share → revoke), clearly synthetic.
 5. **P1 hardening**: low-end mobile, Indonesian/English, keyboard/screen reader walkthrough, no-AI and crisis fixture.
-6. **P2 only if P0 green**: admin conveniences, directory breadth, additional content. No real hospital partner integrations, TTS/avatar, model shopping, unapproved research publication or broad refactors in the event window.
+6. **Owner-added scope (2026-11-01, D-069)**: guardrails, condition map with simulated professionals, and the moderated sharing space are built on the main branch with their own tests; they consume only saved, user-approved material so MIE invalidation applies to them once it lands. See [ROADMAP_ALIGNMENT.md](ROADMAP_ALIGNMENT.md).
+7. **P2 only if P0 green**: admin conveniences, directory breadth, additional content. No real hospital partner integrations, TTS/avatar, model shopping, unapproved research publication or broad refactors in the event window.
 
 Dependency graph:
 
