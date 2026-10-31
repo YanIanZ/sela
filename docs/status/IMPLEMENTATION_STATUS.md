@@ -9,7 +9,7 @@
 > | Consultation summaries | Implemented: text plus optional quote-backed statements, approval, HTML/Markdown export, structured follow-ups. |
 > | Sharing | Implemented: frozen projection, link token + access code, recipient session, revoke, access history, recipient acknowledgement. Recipient identity is not verified by design. |
 > | Reading | API, runtime editorial gate and operator approve/revoke workflow implemented. **0 of 38 items approved**, so the public list is empty. |
-> | AI routing | Meta-only since D-065: Meta generator + a different Meta verifier, no fallback. Live in development/demo; production Modal/hosted path unverified. |
+> | AI routing | Meta-only since D-065: Meta generator + a different Meta verifier, no fallback. Live in development and test; production Modal/hosted path unverified. |
 > | Minors | Server-enforced guardian gate; self-declared 15 refused (`under_16`). Legacy `15_17` rows cannot be split into 15 vs 16–17 without new data. |
 > | Operator console | Password+TOTP console, AI spend, cache, audit, staff list, care directory demo and reading review. Staff/role editing, two-person approval and the warm/cold benchmark are not built. |
 > | Accessibility | Automated axe WCAG 2.2 AA gate in CI; manual screen-reader/usability audit not done. |
