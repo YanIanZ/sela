@@ -10,7 +10,7 @@ import {
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon, MoodFace } from "../icons";
-import { MemoryPage, entryRoute } from "./Continuity";
+import { MemoryDetailPage, MemoryPage, entryRoute } from "./Continuity";
 import { WeeklyPage } from "./Weekly";
 import { helpData } from "../helpdata";
 import {
@@ -84,6 +84,9 @@ export function NotesPage({ user, path }: { user: Profile; path: string }) {
   if (path === "/notes/patterns") return <Patterns />;
   if (path === "/notes/weekly") return <WeeklyPage />;
   if (path === "/notes/memory") return <MemoryPage />;
+  if (path.startsWith("/notes/memory/")) {
+    return <MemoryDetailPage key={path} id={path.slice("/notes/memory/".length)} />;
+  }
   const id = path.startsWith("/notes/") ? path.slice("/notes/".length) : "";
   if (id) return <EntryDetail id={id} />;
   return <Timeline user={user} />;

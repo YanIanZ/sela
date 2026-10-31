@@ -132,6 +132,7 @@ type OwnerStore interface {
 	DeleteRecord(context.Context, UserID, string, int) error
 
 	Memory(context.Context, UserID) (MemoryView, error)
+	MemoryItem(context.Context, UserID, string) (PersonalRecord, error)
 	CreateMemory(context.Context, UserID, RecordInput) (PersonalRecord, error)
 	UpdateMemory(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
 	DeleteMemory(context.Context, UserID, string, int) error

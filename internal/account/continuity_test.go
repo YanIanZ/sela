@@ -45,6 +45,23 @@ func TestContinuityMemoryConsentEncryptionAndIsolation(t *testing.T) {
 	if created.Kind != account.KindMemory || created.Version != 1 || created.Provenance != "user_original" || created.SummaryState != "" {
 		t.Fatalf("memory record: %+v", created)
 	}
+	one, err := f.store.MemoryItem(ctx, pa.UserID, created.ID)
+	if err != nil || one.ID != created.ID || one.Kind != account.KindMemory {
+		t.Fatalf("memory detail: %+v %v", one, err)
+	}
+	if _, err := f.store.MemoryItem(ctx, pb.UserID, created.ID); !errors.Is(err, account.ErrNotFound) {
+		t.Fatalf("foreign memory detail: %v", err)
+	}
+	note, err := f.store.CreateRecord(ctx, pa.UserID, account.RecordInput{Kind: "note", Text: "Synthetic note, not memory.", StorageGranted: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.store.MemoryItem(ctx, pa.UserID, note.ID); !errors.Is(err, account.ErrNotFound) {
+		t.Fatalf("non-memory record on memory detail: %v", err)
+	}
+	if _, err := f.store.MemoryItem(ctx, pa.UserID, "not-a-uuid"); !errors.Is(err, account.ErrNotFound) {
+		t.Fatalf("invalid memory id: %v", err)
+	}
 	var sealed, sealedVersion []byte
 	if err := f.db.Pool.QueryRow(ctx, "SELECT content_ct FROM personal_records WHERE id=$1", created.ID).Scan(&sealed); err != nil {
 		t.Fatal(err)
@@ -91,6 +108,9 @@ func TestContinuityMemoryConsentEncryptionAndIsolation(t *testing.T) {
 	}
 	if _, err := f.store.Record(ctx, pa.UserID, created.ID); !errors.Is(err, account.ErrNotFound) {
 		t.Fatalf("generic record bypass after withdrawal: %v", err)
+	}
+	if _, err := f.store.MemoryItem(ctx, pa.UserID, created.ID); !errors.Is(err, account.ErrNotFound) {
+		t.Fatalf("memory detail bypass after withdrawal: %v", err)
 	}
 	if _, err := f.store.RecordHistory(ctx, pa.UserID, created.ID); !errors.Is(err, account.ErrNotFound) {
 		t.Fatalf("history bypass after withdrawal: %v", err)

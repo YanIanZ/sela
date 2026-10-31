@@ -374,6 +374,20 @@ func (s *Store) Memory(ctx context.Context, owner UserID) (MemoryView, error) {
 	return MemoryView{Enabled: true, Items: items}, nil
 }
 
+// MemoryItem returns one explicit memory item under the same consent rules
+// as Memory: without the current personal_memory consent, or when another
+// owner holds the id, the item is not found.
+func (s *Store) MemoryItem(ctx context.Context, owner UserID, id string) (PersonalRecord, error) {
+	r, err := s.Record(ctx, owner, id)
+	if err != nil {
+		return PersonalRecord{}, err
+	}
+	if r.Kind != KindMemory {
+		return PersonalRecord{}, ErrNotFound
+	}
+	return r, nil
+}
+
 // CreateMemory stores one explicit memory item. It requires the
 // personal_memory consent and storageGranted.
 func (s *Store) CreateMemory(ctx context.Context, owner UserID, in RecordInput) (PersonalRecord, error) {

@@ -373,6 +373,94 @@ func (s *Server) v3RoomStorage(w http.ResponseWriter, r *http.Request, p account
 	c.Version++
 	writeData(w, 200, roomCopy(c))
 }
+
+// memoryContextSpans selects confirmed/corrected memory items for AT-1.
+// The store returns items newest first. At most five items and 600 runes
+// are sent, and an item is included whole only when it fits the remaining
+// allowance, so memory text is never cut mid-sentence. Items that would
+// exceed the allowance are skipped deterministically; if none fit, no
+// memory is sent.
+func memoryContextSpans(items []account.PersonalRecord) []ai.Span {
+	const maxItems, maxRunes = 5, 600
+	out := []ai.Span{}
+	used := 0
+	for _, r := range items {
+		if len(out) >= maxItems {
+			break
+		}
+		if r.ReviewStatus != "confirmed" && r.ReviewStatus != "corrected" {
+			continue
+		}
+		text := strings.TrimSpace(r.Text)
+		if title := strings.TrimSpace(r.Title); title != "" {
+			text = title + "\n" + text
+		}
+		n := utf8.RuneCountInString(text)
+		if n == 0 || used+n > maxRunes {
+			continue
+		}
+		out = append(out, ai.Span{Key: "memory-" + strconv.Itoa(len(out)), Role: ai.RoleMemory, Text: text})
+		used += n
+	}
+	return out
+}
+
+// listeningSpans builds the AT-1 payload: memory first, then the newest
+// conversation turns. When memory is present the turn count and total
+// runes are capped so the router's DropOldest cannot discard the memory
+// context first; memory spans are never dropped here.
+func listeningSpans(turns []account.ConversationTurn, memory []ai.Span) []ai.Span {
+	pol, ok := ai.PolicyFor(ai.TaskListeningReply)
+	if !ok {
+		return append([]ai.Span{}, memory...)
+	}
+	spans := append([]ai.Span{}, memory...)
+	total := 0
+	for _, s := range memory {
+		total += utf8.RuneCountInString(s.Text)
+	}
+	maxTurns := pol.MaxSpans - len(memory)
+	if maxTurns > 12 {
+		maxTurns = 12
+	}
+	selected := []ai.Span{}
+	for i := len(turns) - 1; i >= 0 && len(selected) < maxTurns; i-- {
+		t := turns[i]
+		if t.Role == "user" && safety.Assess(t.Text).Level == safety.LevelCrisis {
+			continue
+		}
+		role := ai.RoleUser
+		if t.Role == "assistant" {
+			role = ai.RoleEarlierReply
+		}
+		n := utf8.RuneCountInString(t.Text)
+		if pol.MaxTotalRunes > 0 && total+n > pol.MaxTotalRunes {
+			break
+		}
+		selected = append(selected, ai.Span{Key: "turn-" + strconv.Itoa(i), Role: role, Text: t.Text})
+		total += n
+	}
+	for i := len(selected) - 1; i >= 0; i-- {
+		spans = append(spans, selected[i])
+	}
+	return spans
+}
+
+// isRoleLimit reports whether a run failed because the redacted payload
+// exceeded a per-role limit (the router makes no provider call in that case).
+func isRoleLimit(err error) bool {
+	var re *ai.RunError
+	if !errors.As(err, &re) {
+		return false
+	}
+	for _, reason := range re.Reasons {
+		if reason == ai.ReasonRoleLimit {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Principal) {
 	var in struct {
 		Text            string `json:"text"`
@@ -427,6 +515,7 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 		return
 	}
 	granted := false
+	memoryGranted := false
 	cs, consentErr := s.opt.Accounts.Consents(r.Context(), p.UserID)
 	if consentErr != nil {
 		l.mu.Unlock()
@@ -436,6 +525,9 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	for _, consent := range cs {
 		if consent.Purpose == "ai_processing" && consent.Granted && !consent.Outdated {
 			granted = true
+		}
+		if consent.Purpose == "personal_memory" && consent.Granted && !consent.Outdated {
+			memoryGranted = true
 		}
 	}
 	if !granted {
@@ -481,22 +573,22 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	turns := append([]account.ConversationTurn{}, c.Turns...)
 	l.mu.Unlock()
 	defer cancel()
+	// Memory is context only: a failed read never blocks the reply, and
+	// nothing is loaded unless the current personal_memory consent is on.
+	var memories []account.PersonalRecord
+	if memoryGranted {
+		if view, memErr := s.opt.Accounts.Memory(ctx, p.UserID); memErr != nil {
+			s.log.Warn("ai_memory_context_failed", "task", "listening_reply", "error", memErr.Error())
+		} else if view.Enabled {
+			memories = view.Items
+		}
+	}
 	profile, err := s.opt.Accounts.Profile(ctx, p.UserID)
 	var output ai.Output
 	if err == nil {
-		spans := []ai.Span{}
-		start := max(0, len(turns)-12)
-		for i, t := range turns[start:] {
-			role := ai.RoleUser
-			if t.Role == "assistant" {
-				role = ai.RoleEarlierReply
-			}
-			if t.Role == "user" && safety.Assess(t.Text).Level == safety.LevelCrisis {
-				continue
-			}
-			spans = append(spans, ai.Span{Key: strconv.Itoa(i), Role: role, Text: t.Text})
-		}
-		output, err = s.opt.AIRouter.Run(ctx, ai.TaskListeningReply, ai.Input{Subject: ai.Subject(p.UserID.String()), Language: profile.Locale, Spans: spans, Intent: in.Intent, Commit: func(ctx context.Context) error {
+		memory := memoryContextSpans(memories)
+		spans := listeningSpans(turns, memory)
+		input := ai.Input{Subject: ai.Subject(p.UserID.String()), Language: profile.Locale, Spans: spans, Intent: in.Intent, Commit: func(ctx context.Context) error {
 			principal, e := s.opt.Accounts.Authenticate(ctx, s.authToken(r))
 			if e != nil || principal.UserID != p.UserID {
 				return errors.New("session ended")
@@ -508,7 +600,15 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 				return errors.New("stale conversation")
 			}
 			return nil
-		}})
+		}}
+		output, err = s.opt.AIRouter.Run(ctx, ai.TaskListeningReply, input)
+		if err != nil && len(memory) > 0 && isRoleLimit(err) {
+			// Per-role limits apply after redaction, which can lengthen
+			// text. Retry once without memory instead of losing the reply;
+			// the role-limit failure made no provider call.
+			input.Spans = input.Spans[len(memory):]
+			output, err = s.opt.AIRouter.Run(ctx, ai.TaskListeningReply, input)
+		}
 	}
 	if err != nil {
 		// The router's error text is a content-free outcome/reason code.

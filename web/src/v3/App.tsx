@@ -104,6 +104,7 @@ function titleFor(path: string, lang: string): string {
   if (path === "/notes/check-in") return t("Cek perasaan", "Check-in");
   if (path === "/notes/patterns") return t("Pola dari cek perasaanmu", "Patterns in your check-ins");
   if (path === "/notes/memory") return t("Yang Sela ingat", "What Sela remembers");
+  if (path.startsWith("/notes/memory/")) return t("Yang Sela ingat", "What Sela remembers");
   if (path.startsWith("/notes/")) return t("Catatan", "Note");
   if (path === "/support") return t("Dukungan", "Support");
   if (path === "/support/directory") return t("Bantuan terencana", "Planned support");

@@ -55,6 +55,13 @@ func TestV3MemoryConsentOwnerAndAtRest(t *testing.T) {
 	if view["enabled"] != true || len(view["items"].([]any)) != 1 {
 		t.Fatalf("memory list: %v", view)
 	}
+	detail := a.must(200, "GET", "/api/v3/memory/"+id, nil).data()
+	if detail["id"] != id || detail["kind"] != "memory" || detail["text"] != body["text"] {
+		t.Fatalf("memory detail: %v", detail)
+	}
+	if r := b.call("GET", "/api/v3/memory/"+id, nil); r.status != 404 || r.code() != "not_found" {
+		t.Fatalf("foreign memory detail: %d %s", r.status, r.raw)
+	}
 	if b.must(200, "GET", "/api/v3/memory", nil).data()["enabled"] != false {
 		t.Fatal("memory visible without consent")
 	}
@@ -79,7 +86,8 @@ func TestV3MemoryConsentOwnerAndAtRest(t *testing.T) {
 	a.must(404, "GET", "/api/v3/records/"+id, nil)
 
 	// Revocation stops reads and writes at once; it does not destroy rows.
-	a.must(201, "POST", "/api/v3/memory", body)
+	kept := a.must(201, "POST", "/api/v3/memory", body).data()
+	keptID := kept["id"].(string)
 	a.must(200, "PUT", "/api/v3/me/consents/personal_memory", map[string]any{
 		"granted": false, "policyVersion": policyVersion("personal_memory"),
 	})
@@ -87,9 +95,16 @@ func TestV3MemoryConsentOwnerAndAtRest(t *testing.T) {
 	if view["enabled"] != false || len(view["items"].([]any)) != 0 {
 		t.Fatalf("memory after revocation: %v", view)
 	}
+	if r := a.call("GET", "/api/v3/memory/"+keptID, nil); r.status != 404 || r.code() != "not_found" {
+		t.Fatalf("memory detail after revocation: %d %s", r.status, r.raw)
+	}
 	if r := a.call("POST", "/api/v3/memory", body); r.status != 403 || r.code() != "consent_required" {
 		t.Fatalf("memory write after revocation: %d %s", r.status, r.raw)
 	}
+	// The rows survived the revocation and become readable again only
+	// after a current consent is granted again.
+	grantMemoryConsent(t, a)
+	a.must(200, "GET", "/api/v3/memory/"+keptID, nil)
 }
 
 func TestV3ConsultationSummaryApprovalFollowupsAndCascade(t *testing.T) {

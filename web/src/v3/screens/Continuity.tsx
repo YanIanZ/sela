@@ -14,6 +14,8 @@ import {
   Loading,
   Notice,
   PageHeader,
+  ProvenanceBadge,
+  ReviewStatusChip,
   TextArea,
   TextField,
 } from "../ui";
@@ -36,7 +38,7 @@ export const entryRoute = (r: Entry) =>
   r.kind === "summary"
     ? `/support/summaries/${r.id}`
     : r.kind === "memory"
-      ? "/notes/memory"
+      ? `/notes/memory/${r.id}`
       : r.kind === "conversation"
         ? `/talk?record=${r.id}`
         : `/notes/${r.id}`;
@@ -65,6 +67,7 @@ function ContinuityHelp({ records }: { records: Entry[] }) {
 
 export function MemoryPage() {
   const w = useWords();
+  const loc = useLocale();
   const { policies } = useSession();
   const [data, setData] = useState<{
     enabled: boolean;
@@ -72,7 +75,6 @@ export function MemoryPage() {
   } | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  const [editing, setEditing] = useState<ContinuityRecord | null>(null);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [allow, setAllow] = useState(false);
@@ -104,7 +106,6 @@ export function MemoryPage() {
         "PUT",
       );
       setAllow(false);
-      setEditing(null);
       setTitle("");
       setText("");
       load();
@@ -120,30 +121,12 @@ export function MemoryPage() {
     setError(null);
     try {
       await api(
-        editing ? `/memory/${editing.id}` : "/memory",
-        {
-          title,
-          text,
-          storageGranted: true,
-          ...(editing ? { expectedVersion: editing.version } : {}),
-        },
-        editing ? "PATCH" : "POST",
+        "/memory",
+        { title, text, storageGranted: true },
+        "POST",
       );
-      setEditing(null);
       setTitle("");
       setText("");
-      load();
-    } catch (e) {
-      setError(e);
-    } finally {
-      setBusy(false);
-    }
-  };
-  const del = async (r: Entry) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await api(`/memory/${r.id}`, { expectedVersion: r.version }, "DELETE");
       load();
     } catch (e) {
       setError(e);
@@ -168,8 +151,8 @@ export function MemoryPage() {
           <h2>{w("Mulai dengan izinmu", "Start with your permission")}</h2>
           <p>
             {w(
-              "Memori mati secara default. Jika diaktifkan, hanya hal yang kamu tulis di halaman ini yang disimpan, terenkripsi di server Sela. Tidak ada pengambilan cerita otomatis atau pengiriman memori ke AI.",
-              "Memory is off by default. When enabled, only what you write here is saved, encrypted on Sela's server. Stories are not collected automatically and memory is not sent to AI.",
+              "Memori mati secara default. Jika diaktifkan, hanya hal yang kamu tulis di halaman ini yang disimpan, terenkripsi di server Sela. Tidak ada pengambilan cerita otomatis.",
+              "Memory is off by default. When enabled, only what you write here is saved, encrypted on Sela's server. Stories are not collected automatically.",
             )}
           </p>
           <details className="c-policy-details">
@@ -202,8 +185,8 @@ export function MemoryPage() {
           <div className="c-state-row">
             <span>
               {w(
-                "Aktif · ditulis olehmu, tanpa AI",
-                "On · written by you, without AI",
+                "Aktif · ditulis olehmu · dipakai membalas hanya saat izin AI aktif",
+                "On · written by you · used for replies only while AI consent is on",
               )}
             </span>
             <Button
@@ -216,18 +199,22 @@ export function MemoryPage() {
           </div>
           <p className="s-hint">
             {w(
+              "Saat izin balasan AI juga aktif, Sela dapat memakai memori yang sudah dikonfirmasi (paling banyak 5, dari yang terbaru) untuk membalas. Tanpa izin AI atau saat memori dimatikan, tidak ada memori yang dikirim.",
+              "When AI reply consent is also on, Sela may use confirmed memory (at most 5, newest first) to reply. Without AI consent, or while memory is off, no memory is sent.",
+            )}
+          </p>
+          <p className="s-hint">
+            {w(
               "Mematikan menghentikan penggunaan memori; isi tersimpan tetap bisa dihapus setelah diaktifkan kembali atau lewat hapus semua data.",
               "Turning memory off stops its use; saved items can be deleted after re-enabling it, or by deleting all data.",
             )}
           </p>
           <form className="c-editor" onSubmit={save}>
             <h2>
-              {editing
-                ? w("Perbaiki konteks", "Edit context")
-                : w(
-                    "Apa yang ingin kamu simpan?",
-                    "What would you like to keep?",
-                  )}
+              {w(
+                "Apa yang ingin kamu simpan?",
+                "What would you like to keep?",
+              )}
             </h2>
             <TextField
               label={w("Judul", "Title")}
@@ -254,26 +241,13 @@ export function MemoryPage() {
                 variant="primary"
                 disabled={busy || !text.trim()}
               >
-                {editing
-                  ? w("Simpan perbaikan", "Save changes")
-                  : w("Simpan konteks", "Save context")}
+                {w("Simpan konteks", "Save context")}
               </Button>
-              {editing && (
-                <Button
-                  onClick={() => {
-                    setEditing(null);
-                    setText("");
-                    setTitle("");
-                  }}
-                >
-                  {w("Batal", "Cancel")}
-                </Button>
-              )}
             </div>
           </form>
           <ContinuityHelp records={data.items} />
           <section
-            className="c-records"
+            className="c-document-list"
             aria-label={w("Memori tersimpan", "Saved memories")}
           >
             {data.items.length === 0 && (
@@ -286,30 +260,241 @@ export function MemoryPage() {
               />
             )}
             {data.items.map((r) => (
-              <article key={r.id} className="c-memory-item">
-                <h2>{r.title || w("Konteks pribadi", "Personal context")}</h2>
-                <p className="c-original">{r.text}</p>
+              <Link
+                key={r.id}
+                to={`/notes/memory/${r.id}`}
+                className="c-document-link"
+              >
+                <div>
+                  <h2>{r.title || w("Konteks pribadi", "Personal context")}</h2>
+                  <p className="s-muted">
+                    {r.reviewStatus === "corrected"
+                      ? w("Dikoreksi olehmu", "Corrected by you")
+                      : w("Dikonfirmasi olehmu", "Confirmed by you")}{" "}
+                    · {loc.shortDate(r.updatedAt)}
+                  </p>
+                </div>
+                <Icon name="arrow-right" />
+              </Link>
+            ))}
+          </section>
+        </>
+      )}
+    </div>
+  );
+}
+
+// MemoryDetailPage shows one owner-scoped memory with its provenance, its
+// pinned sources and the same edit/delete actions as the memory form.
+export function MemoryDetailPage({ id }: { id: string }) {
+  const w = useWords();
+  const loc = useLocale();
+  const { navigate } = useRouter();
+  const [record, setRecord] = useState<ContinuityRecord | null>(null);
+  const [sources, setSources] = useState<
+    Array<{ ref: SourceRef; entry: Entry | null }>
+  >([]);
+  const [error, setError] = useState<unknown>(null);
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = () => {
+    setError(null);
+    api<ContinuityRecord>(`/memory/${id}`)
+      .then(async (r) => {
+        setRecord(r);
+        setTitle(r.title);
+        setText(r.text);
+        const refs = r.sourceRefs ?? [];
+        setSources(
+          await Promise.all(
+            refs.map(async (ref) => {
+              try {
+                return { ref, entry: await api<Entry>(`/records/${ref.recordId}`) };
+              } catch {
+                return { ref, entry: null };
+              }
+            }),
+          ),
+        );
+      })
+      .catch(setError);
+  };
+  useEffect(load, [id]);
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!record) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const next = await api<ContinuityRecord>(
+        `/memory/${record.id}`,
+        { title, text, storageGranted: true, expectedVersion: record.version },
+        "PATCH",
+      );
+      setRecord(next);
+      setTitle(next.title);
+      setText(next.text);
+      setEditing(false);
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const sourceLabel = (r: Entry) =>
+    r.title ||
+    (r.kind === "conversation"
+      ? w("Percakapan", "Conversation")
+      : r.kind === "checkin"
+        ? w("Cek perasaan", "Check-in")
+        : w("Catatan", "Note"));
+  return (
+    <div className="s-narrow c-memory">
+      <PageHeader
+        back={{ to: "/notes/memory", label: w("Yang Sela ingat", "What Sela remembers") }}
+        title={record?.title || w("Konteks pribadi", "Personal context")}
+        lead={w(
+          "Konteks ini kamu pilih sendiri. Saat izin balasan AI aktif, memori yang dikonfirmasi bisa dipakai Sela untuk membalas.",
+          "You chose this context yourself. While AI reply consent is on, confirmed memory may be used by Sela to reply.",
+        )}
+      />
+      <ErrorNotice error={error} onRetry={load} />
+      {!record && !error && <Loading label={w("Membuka…", "Opening…")} />}
+      {record && (
+        <>
+          <ContinuityHelp records={[record]} />
+          <article className="c-paper">
+            <p className="s-hint">
+              {record.reviewStatus === "corrected"
+                ? w(
+                    "Kamu sudah mengoreksi konteks ini.",
+                    "You corrected this context.",
+                  )
+                : w(
+                    "Kamu sudah mengonfirmasi konteks ini.",
+                    "You confirmed this context.",
+                  )}{" "}
+              {record.provenance === "user_correction"
+                ? w(
+                    "Yang tersimpan adalah versi koreksimu.",
+                    "The saved version is your correction.",
+                  )
+                : w(
+                    "Kata-katanya kamu tulis sendiri.",
+                    "You wrote these words yourself.",
+                  )}
+            </p>
+            <div className="s-record-meta">
+              <ProvenanceBadge value={record.provenance} />
+              <ReviewStatusChip value={record.reviewStatus} />
+              <span>
+                {w("versi ", "version ")}
+                {record.version}
+              </span>
+            </div>
+            <dl className="s-dl">
+              <div>
+                <dt>{w("Dibuat", "Created")}</dt>
+                <dd>{loc.dateTime(record.createdAt)}</dd>
+              </div>
+              <div>
+                <dt>{w("Terakhir diubah", "Last updated")}</dt>
+                <dd>{loc.dateTime(record.updatedAt)}</dd>
+              </div>
+            </dl>
+            {editing ? (
+              <form className="c-editor" onSubmit={(e) => void save(e)}>
+                <TextField
+                  label={w("Judul", "Title")}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={120}
+                  optional
+                />
+                <TextArea
+                  label={w("Konteks pilihanmu", "Your chosen context")}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  required
+                  maxLength={6000}
+                  rows={6}
+                />
                 <div className="s-actions">
                   <Button
-                    variant="quiet"
+                    type="submit"
+                    variant="primary"
+                    disabled={busy || !text.trim()}
+                  >
+                    {w("Simpan perbaikan", "Save changes")}
+                  </Button>
+                  <Button
                     onClick={() => {
-                      setEditing(r);
-                      setTitle(r.title);
-                      setText(r.text);
+                      setEditing(false);
+                      setTitle(record.title);
+                      setText(record.text);
                     }}
                   >
+                    {w("Batal", "Cancel")}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <p className="c-original">{record.text}</p>
+                <div className="s-actions">
+                  <Button variant="secondary" onClick={() => setEditing(true)}>
                     {w("Perbaiki", "Edit")}
                   </Button>
                   <InlineConfirm
                     label={w("Hapus", "Delete")}
                     question={w("Hapus konteks ini?", "Delete this context?")}
                     confirmLabel={w("Hapus", "Delete")}
-                    onConfirm={() => void del(r)}
+                    onConfirm={() => {
+                      setBusy(true);
+                      setError(null);
+                      api(
+                        `/memory/${record.id}`,
+                        { expectedVersion: record.version },
+                        "DELETE",
+                      )
+                        .then(() => navigate("/notes/memory"))
+                        .catch(setError)
+                        .finally(() => setBusy(false));
+                    }}
                     busy={busy}
                   />
                 </div>
-              </article>
-            ))}
+              </>
+            )}
+          </article>
+          <section className="c-source-references">
+            <h2>{w("Sumber pilihanmu", "Your chosen sources")}</h2>
+            {sources.length === 0 ? (
+              <p>
+                {w(
+                  "Ditulis langsung olehmu tanpa sumber tersimpan.",
+                  "Written directly by you without saved sources.",
+                )}
+              </p>
+            ) : (
+              <ul>
+                {sources.map(({ ref, entry }) => (
+                  <li key={ref.recordId}>
+                    {entry ? (
+                      <Link to={entryRoute(entry)}>{sourceLabel(entry)}</Link>
+                    ) : (
+                      w(
+                        "Sumber sudah dihapus atau tidak dapat dibuka",
+                        "Source deleted or unavailable",
+                      )
+                    )}{" "}
+                    · v{ref.version}
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </>
       )}
