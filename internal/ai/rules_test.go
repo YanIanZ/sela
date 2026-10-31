@@ -30,6 +30,10 @@ func TestAgeBandMatrix(t *testing.T) {
 		{ProviderMeta, Band15To17, prod, false},
 		{ProviderMetaVerifier, Band15To17, prod, false},
 		{ProviderMeta, "under_15", dev, false},
+		{ProviderMeta, BandUnder16, dev, false},
+		{ProviderMetaVerifier, BandUnder16, dev, false},
+		// A configured set cannot make the explicit 15 band valid.
+		{ProviderMeta, BandUnder16, Config{Env: EnvDevelopment, AllowedBands: Bands(Band18Plus, Band15To17, BandUnknown, BandUnder16)}, false},
 		{ProviderMeta, "", dev, false},
 	}
 	for _, tc := range cases {

@@ -171,30 +171,35 @@ func TestV3Consents(t *testing.T) {
 func TestV3AgeBand(t *testing.T) {
 	t.Parallel()
 	e := newV3(t, v3opt{})
-	// under_15 is refused everywhere with nothing stored.
-	for path, body := range map[string]map[string]any{
-		"/api/v3/auth/register": {"username": "anak.kecil", "password": v3Password, "locale": "id", "ageBand": "under_15",
-			"termsPolicyVersion": policyVersion("terms_privacy")},
-		"/api/v3/auth/guest": {"locale": "id", "ageBand": "under_15", "termsPolicyVersion": policyVersion("terms_privacy"),
-			"guestNoticeVersion": policyVersion("guest_storage")},
-	} {
-		r := e.client().call("POST", path, body)
-		if r.status != 403 || r.code() != "age_not_supported" || !strings.Contains(string(r.raw), "15 tahun") {
-			t.Fatalf("%s: %d %s", path, r.status, r.raw)
+	// under_15 and the explicit 15 band are refused everywhere with nothing
+	// stored; 15_17 stays for existing 16-17 records.
+	for _, band := range []string{"under_15", "under_16"} {
+		for path, body := range map[string]map[string]any{
+			"/api/v3/auth/register": {"username": "anak." + strings.ReplaceAll(band, "_", "."), "password": v3Password, "locale": "id", "ageBand": band,
+				"termsPolicyVersion": policyVersion("terms_privacy")},
+			"/api/v3/auth/guest": {"locale": "id", "ageBand": band, "termsPolicyVersion": policyVersion("terms_privacy"),
+				"guestNoticeVersion": policyVersion("guest_storage")},
+		} {
+			r := e.client().call("POST", path, body)
+			if r.status != 403 || r.code() != "age_not_supported" || r.field() != "ageBand" || !strings.Contains(string(r.raw), "16 tahun") {
+				t.Fatalf("%s %s: %d %s", band, path, r.status, r.raw)
+			}
 		}
 	}
 	if n := e.count(`SELECT count(*) FROM users`); n != 0 {
-		t.Fatalf("%d users stored for under 15", n)
+		t.Fatalf("%d users stored for an under-16 band", n)
 	}
 	c := e.client()
 	c.register("usia.saya")
 	p := c.profile()
 	id := userID(t, c.must(200, "GET", "/api/v3/me", nil))
-	if r := c.call("PATCH", "/api/v3/me", map[string]any{"expectedVersion": 1, "ageBand": "under_15"}); r.status != 403 || r.code() != "age_not_supported" {
-		t.Fatalf("patch under 15: %d", r.status)
+	for _, band := range []string{"under_15", "under_16"} {
+		if r := c.call("PATCH", "/api/v3/me", map[string]any{"expectedVersion": 1, "ageBand": band}); r.status != 403 || r.code() != "age_not_supported" {
+			t.Fatalf("patch %s: %d", band, r.status)
+		}
 	}
 	if q := c.profile(); q["ageBand"] != "18_plus" || q["version"].(float64) != 1 {
-		t.Fatalf("under_15 changed the profile: %v", q)
+		t.Fatalf("an under-16 band changed the profile: %v", q)
 	}
 	// Repeating the band confirms it.
 	e.clock.Advance(time.Hour)

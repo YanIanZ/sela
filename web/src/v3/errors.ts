@@ -91,8 +91,8 @@ const copy: Record<string, { id: string; en: string }> = {
     en: "Password sign-in is disabled after too many attempts. Use a recovery code to set a new password.",
   },
   age_not_supported: {
-    id: "Sela dibuat untuk usia 15 tahun ke atas.",
-    en: "Sela is made for people aged 15 and over.",
+    id: "Sela saat ini dibuat untuk usia 16 tahun ke atas.",
+    en: "Sela is currently made for people aged 16 and over.",
   },
   age_band_not_enabled: {
     id: "Sela belum tersedia untuk kelompok usia ini.",

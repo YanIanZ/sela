@@ -102,6 +102,16 @@ func TestRR2Preflight(t *testing.T) {
 		expect(t, re, OutcomeNoAI, ReasonAgeBand)
 		noCalls(t, h)
 	})
+	t.Run("explicit 15 never reaches a provider", func(t *testing.T) {
+		h := newHarness(t)
+		// Even where the surrounding minor bands are enabled, under_16 is
+		// not a valid band and every provider is refused.
+		h.cfg.AllowedBands = Bands(Band18Plus, Band15To17, BandUnknown)
+		h.c.band = BandUnder16
+		_, re := h.run(TaskListeningReply, inReply())
+		expect(t, re, OutcomeNoAI, ReasonAgeBand)
+		noCalls(t, h)
+	})
 	t.Run("user limit is not an outage", func(t *testing.T) {
 		h := newHarness(t)
 		h.lim = limiter{provider: ProviderMeta, err: ErrUserLimit}

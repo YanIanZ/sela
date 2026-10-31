@@ -21,7 +21,7 @@ var v3Messages = map[string]message{
 	"reauth_required":            {"Untuk melindungi datamu, masukkan kata sandimu sekali lagi.", "To protect your data, enter your password once more."},
 	"account_required":           {"Langkah ini memerlukan akun. Simpan data tamumu ke akun terlebih dahulu.", "This step needs an account. Save your guest data to an account first."},
 	"password_login_disabled":    {"Masuk dengan kata sandi dinonaktifkan sementara karena terlalu banyak percobaan. Pakai kode pemulihan untuk membuat kata sandi baru.", "Password sign-in is disabled after too many attempts. Use a recovery code to set a new password."},
-	"age_not_supported":          {"Sela dibuat untuk usia 15 tahun ke atas. Jika kamu butuh bantuan sekarang, lihat informasi bantuan.", "Sela is made for people aged 15 and over. If you need help now, see the help information."},
+	"age_not_supported":          {"Sela saat ini dibuat untuk usia 16 tahun ke atas. Jika kamu butuh bantuan sekarang, lihat informasi bantuan.", "Sela is currently made for people aged 16 and over. If you need help now, see the help information."},
 	"age_band_not_enabled":       {"Sela belum tersedia untuk kelompok usia ini.", "Sela is not yet available for this age group."},
 	"not_guest":                  {"Akun ini sudah terdaftar.", "This account is already registered."},
 	"required_consent":           {"Persetujuan ini diperlukan untuk memakai Sela. Jika tidak lagi setuju, kamu bisa mengekspor lalu menghapus akunmu.", "Sela cannot be used without this consent. If you no longer agree, you can export and then delete your account."},

@@ -296,11 +296,11 @@ type ProfileUpdate struct {
 
 func validLocale(l string) bool { return l == "id" || l == "en" }
 
-// checkBand refuses under_15 (nothing is stored), unknown values and bands
-// this deployment does not enable.
+// checkBand refuses under_15 and under_16 (nothing is stored), unknown
+// values and bands this deployment does not enable.
 func (s *Store) checkBand(b string) error {
 	switch b {
-	case AgeBandUnder15:
+	case AgeBandUnder15, AgeBandUnder16:
 		return ErrAgeNotSupported
 	case AgeBand15to17, AgeBand18Plus, AgeBandUnknown:
 	default:

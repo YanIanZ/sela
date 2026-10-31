@@ -51,6 +51,11 @@ type v3Route struct {
 	method   string
 	path     string
 	mutation bool
+	// guardianGate refuses a 15_17 owner without active guardian consent
+	// before the handler runs (store.RequireGuardianConsent). It is set on
+	// content writes only; reads, export, deletion of the account and every
+	// consent route stay open.
+	guardianGate bool
 	// public routes never need a store (policies, auth options).
 	public bool
 	h      http.HandlerFunc
@@ -63,39 +68,39 @@ func (rt v3Route) pattern() string { return rt.method + " " + rt.path }
 func (s *Server) v3Routes() {
 	s.v3.routes = []v3Route{
 		{method: "GET", path: "/api/v3/conversations", owner: s.v3Rooms},
-		{method: "POST", path: "/api/v3/conversations", mutation: true, owner: s.v3CreateRoom},
+		{method: "POST", path: "/api/v3/conversations", mutation: true, guardianGate: true, owner: s.v3CreateRoom},
 		{method: "GET", path: "/api/v3/conversations/{id}", owner: s.v3Room},
 		{method: "DELETE", path: "/api/v3/conversations/{id}", mutation: true, owner: s.v3EndRoom},
-		{method: "POST", path: "/api/v3/conversations/{id}/turns", mutation: true, owner: s.v3SendTurn},
-		{method: "POST", path: "/api/v3/conversations/{id}/turns/stream", mutation: true, owner: s.v3StreamTurn},
+		{method: "POST", path: "/api/v3/conversations/{id}/turns", mutation: true, guardianGate: true, owner: s.v3SendTurn},
+		{method: "POST", path: "/api/v3/conversations/{id}/turns/stream", mutation: true, guardianGate: true, owner: s.v3StreamTurn},
 		{method: "DELETE", path: "/api/v3/conversations/{id}/operation", mutation: true, owner: s.v3StopRoom},
-		{method: "POST", path: "/api/v3/conversations/{id}/resume", mutation: true, owner: s.v3ResumeRoom},
-		{method: "PATCH", path: "/api/v3/conversations/{id}/storage", mutation: true, owner: s.v3RoomStorage},
-		{method: "POST", path: "/api/v3/conversations/{id}/reflections", mutation: true, owner: s.v3CreateReflection},
-		{method: "PATCH", path: "/api/v3/conversations/{id}/reflections/{reflectionId}", mutation: true, owner: s.v3ReviewReflection},
+		{method: "POST", path: "/api/v3/conversations/{id}/resume", mutation: true, guardianGate: true, owner: s.v3ResumeRoom},
+		{method: "PATCH", path: "/api/v3/conversations/{id}/storage", mutation: true, guardianGate: true, owner: s.v3RoomStorage},
+		{method: "POST", path: "/api/v3/conversations/{id}/reflections", mutation: true, guardianGate: true, owner: s.v3CreateReflection},
+		{method: "PATCH", path: "/api/v3/conversations/{id}/reflections/{reflectionId}", mutation: true, guardianGate: true, owner: s.v3ReviewReflection},
 		{method: "GET", path: "/api/v3/records", owner: s.v3Records},
-		{method: "POST", path: "/api/v3/records", mutation: true, owner: s.v3CreateRecord},
+		{method: "POST", path: "/api/v3/records", mutation: true, guardianGate: true, owner: s.v3CreateRecord},
 		{method: "GET", path: "/api/v3/records/{id}", owner: s.v3Record},
-		{method: "PATCH", path: "/api/v3/records/{id}", mutation: true, owner: s.v3UpdateRecord},
-		{method: "DELETE", path: "/api/v3/records/{id}", mutation: true, owner: s.v3DeleteRecord},
+		{method: "PATCH", path: "/api/v3/records/{id}", mutation: true, guardianGate: true, owner: s.v3UpdateRecord},
+		{method: "DELETE", path: "/api/v3/records/{id}", mutation: true, guardianGate: true, owner: s.v3DeleteRecord},
 		{method: "GET", path: "/api/v3/records/{id}/versions", owner: s.v3RecordHistory},
 
 		{method: "GET", path: "/api/v3/memory", owner: s.v3Memory},
 		{method: "GET", path: "/api/v3/memory/{id}", owner: s.v3MemoryItem},
-		{method: "POST", path: "/api/v3/memory", mutation: true, owner: s.v3CreateMemory},
-		{method: "PATCH", path: "/api/v3/memory/{id}", mutation: true, owner: s.v3UpdateMemory},
-		{method: "DELETE", path: "/api/v3/memory/{id}", mutation: true, owner: s.v3DeleteMemory},
+		{method: "POST", path: "/api/v3/memory", mutation: true, guardianGate: true, owner: s.v3CreateMemory},
+		{method: "PATCH", path: "/api/v3/memory/{id}", mutation: true, guardianGate: true, owner: s.v3UpdateMemory},
+		{method: "DELETE", path: "/api/v3/memory/{id}", mutation: true, guardianGate: true, owner: s.v3DeleteMemory},
 		{method: "GET", path: "/api/v3/shares", owner: s.v3Shares},
-		{method: "POST", path: "/api/v3/shares", mutation: true, owner: s.v3CreateShare},
-		{method: "POST", path: "/api/v3/shares/{id}/revoke", mutation: true, owner: s.v3RevokeShare},
+		{method: "POST", path: "/api/v3/shares", mutation: true, guardianGate: true, owner: s.v3CreateShare},
+		{method: "POST", path: "/api/v3/shares/{id}/revoke", mutation: true, guardianGate: true, owner: s.v3RevokeShare},
 		{method: "GET", path: "/api/v3/consultation-summaries", owner: s.v3Summaries},
-		{method: "POST", path: "/api/v3/consultation-summaries", mutation: true, owner: s.v3CreateSummary},
+		{method: "POST", path: "/api/v3/consultation-summaries", mutation: true, guardianGate: true, owner: s.v3CreateSummary},
 		{method: "GET", path: "/api/v3/consultation-summaries/{id}", owner: s.v3Summary},
 		{method: "GET", path: "/api/v3/consultation-summaries/{id}/export", owner: s.v3ExportSummary},
-		{method: "PATCH", path: "/api/v3/consultation-summaries/{id}", mutation: true, owner: s.v3UpdateSummary},
-		{method: "DELETE", path: "/api/v3/consultation-summaries/{id}", mutation: true, owner: s.v3DeleteSummary},
-		{method: "POST", path: "/api/v3/consultation-summaries/{id}/approve", mutation: true, owner: s.v3ApproveSummary},
-		{method: "POST", path: "/api/v3/consultation-summaries/{id}/followups", mutation: true, owner: s.v3CreateFollowup},
+		{method: "PATCH", path: "/api/v3/consultation-summaries/{id}", mutation: true, guardianGate: true, owner: s.v3UpdateSummary},
+		{method: "DELETE", path: "/api/v3/consultation-summaries/{id}", mutation: true, guardianGate: true, owner: s.v3DeleteSummary},
+		{method: "POST", path: "/api/v3/consultation-summaries/{id}/approve", mutation: true, guardianGate: true, owner: s.v3ApproveSummary},
+		{method: "POST", path: "/api/v3/consultation-summaries/{id}/followups", mutation: true, guardianGate: true, owner: s.v3CreateFollowup},
 		{method: "GET", path: "/api/v3/consultation-summaries/{id}/followups", owner: s.v3Followups},
 
 		{method: "GET", path: "/api/v3/policies", public: true, h: s.v3Policies},
@@ -146,7 +151,11 @@ func (s *Server) v3Routes() {
 func (s *Server) v3Wrap(rt v3Route) http.HandlerFunc {
 	inner := rt.h
 	if rt.owner != nil {
-		inner = s.withOwner(rt.owner)
+		h := rt.owner
+		if rt.guardianGate {
+			h = s.withGuardianGate(h)
+		}
+		inner = s.withOwner(h)
 	}
 	if !rt.public {
 		next := inner
@@ -206,6 +215,19 @@ func (s *Server) withOwner(h ownerHandler) http.HandlerFunc {
 		}
 		p, err := s.opt.Accounts.Authenticate(r.Context(), tok)
 		if err != nil {
+			s.v3Error(w, r, err)
+			return
+		}
+		h(w, r, p)
+	}
+}
+
+// withGuardianGate applies the guardian gate after the principal is known
+// and before the gated handler reads or changes anything. The decision
+// lives in account.Store.RequireGuardianConsent; the UI is not trusted.
+func (s *Server) withGuardianGate(h ownerHandler) ownerHandler {
+	return func(w http.ResponseWriter, r *http.Request, p account.Principal) {
+		if err := s.opt.Accounts.RequireGuardianConsent(r.Context(), p.UserID); err != nil {
 			s.v3Error(w, r, err)
 			return
 		}
