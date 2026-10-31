@@ -23,7 +23,7 @@ const (
 // Assess classifies text and returns the routing decision. It is
 // deterministic, free of I/O and safe for concurrent use.
 // The routing policy is described in the package documentation.
-func Assess(text string) Assessment { return assess(text, true) }
+func Assess(text string) Assessment { return withDanger(assess(text, true), text) }
 
 // assess matches every variant of text (see variants) and folds the
 // outcomes. With skip, a derived variant only re-matches its context units

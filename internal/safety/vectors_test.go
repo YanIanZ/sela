@@ -83,7 +83,7 @@ func TestVectorsSchema(t *testing.T) {
 		if isV1 := strings.HasPrefix(v.Source, "v1:"); isV1 != slices.Contains(v.Tags, "v1") {
 			t.Errorf("vector %d: the v1 tag must be set exactly for v1 sources", i)
 		}
-		if v.Category != "" && !slices.Contains([]Category{CategorySuicide, CategorySelfHarm, CategoryViolence, CategoryHopelessness}, v.Category) {
+		if v.Category != "" && !slices.Contains([]Category{CategorySuicide, CategorySelfHarm, CategoryViolence, CategoryHopelessness, CategoryInDanger}, v.Category) {
 			t.Errorf("vector %d: invalid category %q", i, v.Category)
 		}
 	}

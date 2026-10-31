@@ -180,3 +180,23 @@
 .s-shell .s-help-list details.s-service > :last-child { margin-bottom: 1.25rem; }
 .s-shell .s-help-list details.s-service ol { display: grid; gap: 0.35rem; margin-block: 0.75rem; }
 .s-shell .s-help-list + .s-hint { margin-top: 0.85rem; }
+
+/* Quick-help mode: help colours, big call buttons, one calm way back. */
+.s-dialog.s-emergency-sheet { width: min(36rem, calc(100vw - 1.5rem)); border: 2px solid var(--c-help); }
+.s-emergency-sheet .s-dialog-head h2 { color: var(--c-help-text); }
+.s-emergency-sheet .s-dialog-head { background: var(--c-help-bg); margin: -1.5rem -1.5rem 1rem; padding: 1.25rem 1.5rem; border-radius: var(--radius-4) var(--radius-4) 0 0; }
+.s-emergency-body { display: grid; gap: 0.85rem; }
+.s-emergency-lead { font-family: var(--font-display); font-size: 1.0625rem; line-height: 1.5; color: var(--c-text); }
+.s-emergency-services { display: grid; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+.s-emergency-services li { display: grid; gap: 0.5rem; padding: 0.85rem 1rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); background: var(--c-surface); }
+.s-emergency-service-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; }
+.s-emergency-service-head .s-hint { margin: 0; font-size: var(--font-size-1); }
+.s-emergency-channels { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.s-emergency-channels .s-btn { min-height: 3rem; flex: 1 1 12rem; justify-content: center; }
+.s-emergency-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; padding-top: 0.25rem; }
+.s-emergency-actions .s-btn--quiet { margin-left: auto; }
+@media (max-width: 30em) {
+  .s-emergency-actions .s-btn { flex: 1 1 100%; justify-content: center; }
+  .s-emergency-actions .s-btn--quiet { margin-left: 0; }
+}
+:root[data-scheme^="contrast"] .s-emergency-sheet .s-dialog-head { background: transparent; border-bottom: 2px solid var(--c-text); }

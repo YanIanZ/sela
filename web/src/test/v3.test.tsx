@@ -706,6 +706,47 @@ describe("home, notes and conversations", () => {
     expect(calls.some((c) => c.path === "/conversations/room-1/turns/stream")).toBe(true);
   });
 
+  it("opens quick-help mode at once when a message reads as danger", async () => {
+    const user = profile();
+    const empty = {
+      id: "room-1",
+      save: false,
+      version: 1,
+      turns: [],
+      paused: false,
+      busy: false,
+      aiState: "not_requested",
+    };
+    const paused = {
+      ...empty,
+      version: 2,
+      paused: true,
+      aiState: "paused",
+      turns: [
+        {
+          role: "user",
+          text: "Aku mau bunuh dia.",
+          provenance: "user_original",
+          createdAt: "2026-11-01T10:00:00Z",
+        },
+      ],
+    };
+    mockApi(
+      {
+        "GET /conversations/room-1": () => ({ data: empty }),
+        "POST /conversations/room-1/turns": () => ({ data: paused }),
+      },
+      user,
+    );
+    renderPath("/talk/room-1");
+    const composer = await screen.findByLabelText("Tulis untuk Sela");
+    fireEvent.change(composer, { target: { value: "Aku mau bunuh dia." } });
+    fireEvent.click(screen.getByRole("button", { name: "Kirim" }));
+    const sheet = await screen.findByRole("alertdialog", { name: "Kamu tidak sendirian" });
+    expect(within(sheet).getByRole("link", { name: /Lihat semua bantuan/ })).toHaveAttribute("href", "/help");
+    expect(within(sheet).getByRole("button", { name: /Keluar cepat/ })).toBeInTheDocument();
+  });
+
   it("renders validated stream chunks once and keeps the done room", async () => {
     const user = profile();
     const empty = {

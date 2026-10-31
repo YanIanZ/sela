@@ -73,8 +73,12 @@ func TestAssessmentHasNoInputText(t *testing.T) {
 		ids[r.id] = true
 		fmt.Fprintf(&vocab, "%s %s ", r.id, r.category)
 	}
+	for _, r := range dangerRules {
+		ids[r.id] = true
+		fmt.Fprintf(&vocab, "%s %s ", r.id, r.category)
+	}
 	vocab.WriteString(RulesetVersion + " none elevated crisis level ruleIds categories thirdParty denial ruleset true false")
-	cats := map[Category]bool{CategorySuicide: true, CategorySelfHarm: true, CategoryViolence: true, CategoryHopelessness: true}
+	cats := map[Category]bool{CategorySuicide: true, CategorySelfHarm: true, CategoryViolence: true, CategoryHopelessness: true, CategoryInDanger: true}
 	allowedKeys := map[string]bool{"level": true, "ruleIds": true, "categories": true, "thirdParty": true, "denial": true, "ruleset": true}
 
 	inputs := []string{"my secret is: Aku mau bunuh diri malam ini di rumah nenek", "\"I want to die\" she said, call 555-0100"}
@@ -128,13 +132,24 @@ func checkInvariants(t *testing.T, in string, a Assessment) {
 	t.Helper()
 	prev := -1
 	cats := map[Category]bool{}
+	// The danger lexicon's rules follow the catalogue, in their own order.
 	for _, id := range a.RuleIDs {
 		i, ok := ruleIndex[id]
+		c := Category("")
+		if ok {
+			c = catalogue[i].category
+		} else {
+			for k, r := range dangerRules {
+				if r.id == id {
+					i, ok, c = len(catalogue)+k, true, r.category
+				}
+			}
+		}
 		if !ok || i <= prev {
 			t.Fatalf("Assess(%q): rule ids not unique and in catalogue order: %v", in, a.RuleIDs)
 		}
 		prev = i
-		cats[catalogue[i].category] = true
+		cats[c] = true
 	}
 	if len(cats) != len(a.Categories) {
 		t.Fatalf("Assess(%q): categories %v do not match rules %v", in, a.Categories, a.RuleIDs)

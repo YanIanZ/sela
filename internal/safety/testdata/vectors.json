@@ -211,7 +211,7 @@
   {"text": "lagi mikirin sewer slide", "want": "crisis", "langs": ["mixed"], "tags": ["slang", "codeswitch"], "source": "new", "note": "algospeak for suicide (en-slang-suicide); intended: v1 returned none"},
   {"text": "aku pengen end it all", "want": "crisis", "langs": ["mixed"], "tags": ["codeswitch", "slang"], "source": "new"},
   {"text": "I'm so done, pengen mati aja", "want": "crisis", "langs": ["mixed"], "tags": ["codeswitch", "slang"], "source": "new"},
-  {"text": "rasanya mau hilang dari dunia ini", "want": "elevated", "langs": ["id"], "tags": ["slang", "ambiguous"], "source": "new", "note": "decision: vanishing from the world without 'selamanya' is ambiguous, so elevated (id-vanish-from-world); v1 returned none"},
+  {"text": "rasanya mau hilang dari dunia ini", "want": "crisis", "langs": ["id"], "tags": ["slang", "ambiguous"], "source": "new", "note": "decision (ruleset 2026.11.01-1, owner): a wish to vanish from the world now takes the safer path, crisis (danger-id-vanish); earlier elevated (id-vanish-from-world); v1 returned none"},
   {"text": "pengen ngilang aja dari dunia ini selamanya", "want": "crisis", "langs": ["id"], "tags": ["slang"], "source": "new", "note": "decision: vanishing forever is treated like v1 'aku mau menghilang selamanya' without a pronoun (id-vanish-forever); intended: v1 returned none"},
   {"text": "aku ga mau idup lagi", "want": "crisis", "langs": ["id"], "tags": ["slang", "negation"], "source": "new", "note": "v1 returned none ('idup')"},
   {"text": "aku nggak mau hidup lagi", "want": "crisis", "langs": ["id"], "tags": ["negation"], "source": "new", "note": "v1 returned none: its \\bg cannot match inside 'nggak'"},

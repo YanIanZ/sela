@@ -15,6 +15,7 @@ import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon, Mark } from "../icons";
 import { helpData, channelHref } from "../helpdata";
+import { EmergencySheet } from "../emergency";
 import {
   Button,
   ChoiceGroup,
@@ -481,6 +482,8 @@ function RoomPage({ id }: { id: string }) {
   const [freshFrom, setFreshFrom] = useState<number | null>(null);
   const streamed = useRef(false);
   const [holdWarning, setHoldWarning] = useState(false);
+  // Quick-help mode opens by itself when this turn tipped the room into a pause.
+  const [emergency, setEmergency] = useState(false);
   const [busy, setBusy] = useState(false);
   const [stopped, setStopped] = useState(false);
   const [ended, setEnded] = useState<"saved" | "unsaved" | null>(null);
@@ -713,6 +716,7 @@ function RoomPage({ id }: { id: string }) {
       setReplyDraft("");
       setRoom(next);
       setPendingText(null);
+      if (next.paused && !room.paused) setEmergency(true);
       if (next.paused) {
         // announced by the paused effect
       } else if (nextLast && nextLast !== previousLast) {
@@ -756,6 +760,7 @@ function RoomPage({ id }: { id: string }) {
           try {
             const latest = await api<Room>("/conversations/" + room.id);
             setRoom(latest);
+            if (latest.paused && !room.paused) setEmergency(true);
             if (
               !latest.turns.some(
                 (t) => t.role === "user" && t.text === value,
@@ -1684,6 +1689,14 @@ function RoomPage({ id }: { id: string }) {
           )}
         </aside>
       </div>
+
+      <EmergencySheet
+        open={emergency}
+        onClose={() => {
+          setEmergency(false);
+          focusComposer();
+        }}
+      />
 
       <Dialog
         open={holdWarning}

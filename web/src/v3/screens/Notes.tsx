@@ -18,6 +18,7 @@ import {
   entryRoute,
 } from "./Continuity";
 import { WeeklyPage } from "./Weekly";
+import { EmergencySheet } from "../emergency";
 import { helpData } from "../helpdata";
 import {
   Button,
@@ -982,7 +983,7 @@ function EntryDetail({ id }: { id: string }) {
         ) : (
           <p className="s-preserve s-reading-body">{record.text}</p>
         )}
-        {record.safety === "crisis" && <CrisisAfterSave />}
+        {record.safety === "crisis" && <CrisisAfterSave recordId={record.id} version={record.version} />}
       </article>
       <div className="s-actions">
         {!isCheckin && !isFollowup && !editing && (
@@ -1052,11 +1053,31 @@ function EntryDetail({ id }: { id: string }) {
   );
 }
 
-function CrisisAfterSave() {
+function CrisisAfterSave({ recordId, version }: { recordId: string; version: number }) {
   const w = useWords();
   const { lang } = useI18n();
   const service = helpData.help[0];
+  // Quick-help mode opens once for each saved version that read as danger,
+  // not every time the note is reopened.
+  const key = `sela.emergency.${recordId}.${version}`;
+  const [open, setOpen] = useState(() => {
+    try {
+      return window.sessionStorage.getItem(key) !== "1";
+    } catch {
+      return true;
+    }
+  });
+  const close = () => {
+    setOpen(false);
+    try {
+      window.sessionStorage.setItem(key, "1");
+    } catch {
+      // non-sensitive flag only
+    }
+  };
   return (
+    <>
+    <EmergencySheet open={open} onClose={close} context="note" />
     <section className="s-crisis-panel" aria-labelledby="crisis-save-title">
       <h2 id="crisis-save-title">{w("Tersimpan. Kamu tidak sendirian.", "Saved. You're not alone.")}</h2>
       <p>
@@ -1077,6 +1098,7 @@ function CrisisAfterSave() {
         </LinkButton>
       </div>
     </section>
+    </>
   );
 }
 
