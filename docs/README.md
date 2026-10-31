@@ -1,5 +1,7 @@
 # Sela documentation
 
+> **Meta Hackathon 2026 plan (proposed):** [submission engineering package](hackathon/README.md) — scoring evidence, MIE implementation, seven synthetic scenarios, evaluation, QA, owner-reported production verification and demo. It is a planning PR, not an implemented feature or verified live deployment.
+
 Start with the [product vision](vision/README.md) for where Sela is going, and [SPEC.md](../SPEC.md) for the requirements the code must meet. Everything else is grouped by purpose:
 
 | Folder | What lives there |
