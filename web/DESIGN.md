@@ -336,6 +336,10 @@ Mostly flat. Depth comes from the tint of the sheet against the near-white page 
 
 **The Float Rule.** A shadow means "this floats or responds to your touch". Static cards and lists get a hairline border, never a shadow.
 
+## Motion
+
+Calm and short: things settle into place with a small rise and fade (about 300–420ms, ease-out), never bounce or loop for attention. The place sheet settles first and the page follows a beat later; on phones the sheet's tint stays put and only its contents rise. Lists, cards, mood faces and the room's starter sentences arrive one after another (50ms apart). Sela's new reply and your sending bubble rise from their own side; streamed replies are not re-animated. Dialogs rise with a fading backdrop; the current place's icon gives one small nod. Every duration is scaled by `--motion` (`web/src/v3/motion.css`), which drops to 0 under reduced motion (system setting or the Display preference). Animations never leave a transform behind.
+
 ## Shapes
 
 Round everywhere. Sheets use the largest radius (`sheet`); large cards, editors, dialogs and the footer use `radius-4`; lists, activity cards, notices and tiles `radius-3`; fields, choice rows and prompts `radius-2`; checkboxes and the person's speech-bubble tail `tail`. Every button, chip, tab, filter, badge and navigation segment is a full pill; icon buttons, mood faces and icon wells are circles. Borders are 1px hairlines, 1.5px for outlined pills, 2px for selected choices and in high contrast. The only decorative silhouettes are the sprout, the four-point sparkle and the drawn faces.

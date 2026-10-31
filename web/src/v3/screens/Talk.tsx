@@ -468,6 +468,10 @@ function RoomPage({ id }: { id: string }) {
   const [intent, setIntent] = useState<string>(query.get("intent") ?? "listen");
   const [pendingText, setPendingText] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
+  // Index of the first reply that arrived without a visible stream, so it can
+  // settle in gently; streamed replies are already on screen.
+  const [freshFrom, setFreshFrom] = useState<number | null>(null);
+  const streamed = useRef(false);
   const [holdWarning, setHoldWarning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [stopped, setStopped] = useState(false);
@@ -645,6 +649,7 @@ function RoomPage({ id }: { id: string }) {
     setText("");
     setPendingText(value);
     setReplyDraft("");
+    streamed.current = false;
     window.setTimeout(scrollToBottom, 30);
     setBusy(true);
     const ac = new AbortController();
@@ -658,6 +663,7 @@ function RoomPage({ id }: { id: string }) {
           { text: value, expectedVersion: room.version, intent },
           (event) => {
             if (event.type !== "chunk") return;
+            streamed.current = true;
             setReplyDraft((draft) => draft + event.text);
             if (atBottom.current) window.requestAnimationFrame(scrollToBottom);
           },
@@ -693,6 +699,7 @@ function RoomPage({ id }: { id: string }) {
           }
         }
       }
+      setFreshFrom(streamed.current ? null : room.turns.length + 1);
       const previousLast = lastAssistant(room);
       const nextLast = lastAssistant(next);
       setReplyDraft("");
@@ -1137,7 +1144,10 @@ function RoomPage({ id }: { id: string }) {
                       </p>
                     </article>
                   ) : (
-                    <article className="s-turn s-turn--sela">
+                    <article
+                      className="s-turn s-turn--sela"
+                      data-fresh={freshFrom !== null && index >= freshFrom ? "true" : undefined}
+                    >
                       <p className="s-turn-author">
                         <span className="s-ai-mono" aria-hidden="true">
                           {"AI"}
