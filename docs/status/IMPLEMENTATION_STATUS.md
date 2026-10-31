@@ -3,7 +3,7 @@
 > | Area | Status on 2026-11-01 |
 > | --- | --- |
 > | Accounts, guest mode, recovery, sessions, consents, guardian consent, export, deletion | Implemented locally; PostgreSQL + Docker browser journey passing. No hosted deployment. |
-> | Conversation room | Implemented: saved/unsaved holds, hold warning, crisis pause, reflections with confirm/correct/reject, post-validation streaming, no-AI path. True provider-token streaming is not implemented. |
+> | Conversation room | Implemented: saved/unsaved holds, hold warning, crisis pause, reflections with confirm/correct/reject, post-validation streaming with SSE keep-alives, no-AI path. True provider-token streaming is not implemented (V22 keeps unvalidated text off the wire). |
 > | Journal, check-in, weekly reflection, notes, home | Implemented locally; weekly reflection is computed in the browser and saved as a normal note. |
 > | Memory | Implemented: confirmed/corrected items can enter AT-1 (max 5 / 600 runes), AT-3 proposals, review/versioning, private names redaction. |
 > | Consultation summaries | Implemented: text plus optional quote-backed statements, approval, HTML/Markdown export, structured follow-ups. |

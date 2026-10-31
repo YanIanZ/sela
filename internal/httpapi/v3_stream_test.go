@@ -1,10 +1,12 @@
 package httpapi_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/YanIanZ/sela/internal/account"
 	"github.com/YanIanZ/sela/internal/ai"
@@ -186,5 +188,59 @@ func TestV3StreamTurnCrisisHasNoChunks(t *testing.T) {
 	}
 	if done["paused"] != true || done["aiState"] != "paused" {
 		t.Fatalf("crisis room: %v", done)
+	}
+}
+
+type slowStreamGenerator struct{ delay time.Duration }
+
+func (g slowStreamGenerator) Identity() ai.GeneratorIdentity { return reflectionGenerator{}.Identity() }
+func (g slowStreamGenerator) Generate(ctx context.Context, req ai.GenerateRequest) (ai.GenerateResult, error) {
+	select {
+	case <-time.After(g.delay):
+	case <-ctx.Done():
+		return ai.GenerateResult{}, ctx.Err()
+	}
+	return reflectionGenerator{}.Generate(ctx, req)
+}
+
+func TestV3StreamTurnKeepsSlowCallsAlive(t *testing.T) {
+	router, err := ai.NewRouter(ai.Config{Env: ai.EnvTest, AllowedBands: ai.Bands(ai.Band18Plus),
+		OpTimeout: ai.DefaultOpTimeout}, ai.Deps{Meta: slowStreamGenerator{delay: 80 * time.Millisecond}, Consent: reflectionConsent{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := newV3(t, v3opt{
+		mutateC: func(c *account.Config) {
+			c.Purposes = append(c.Purposes, account.Purpose{Name: "ai_processing", Kinds: []string{account.KindGuest, account.KindAccount}})
+		},
+		mutateO: func(_ *v3env, o *httpapi.Options) {
+			o.AIRouter = router
+			o.StreamHeartbeat = 5 * time.Millisecond
+		},
+	})
+	c := e.client()
+	c.guest("18_plus")
+	c.must(200, "PUT", "/api/v3/me/consents/ai_processing", map[string]any{
+		"granted": true, "policyVersion": policyVersion("ai_processing"),
+	})
+	id := c.must(201, "POST", "/api/v3/conversations", map[string]any{"save": false}).data()["id"].(string)
+	res := c.call("POST", "/api/v3/conversations/"+id+"/turns/stream", map[string]any{
+		"text": "Aku capek banget sama kuliahku.", "expectedVersion": 1,
+	}, "Accept", "text/event-stream")
+	if res.status != 200 {
+		t.Fatalf("stream status %d: %s", res.status, res.raw)
+	}
+	frames := parseStreamFrames(t, res.raw)
+	heartbeats := 0
+	for _, f := range frames {
+		if f.event == "heartbeat" {
+			heartbeats++
+		}
+	}
+	if heartbeats == 0 {
+		t.Fatalf("no heartbeat in %d frames", len(frames))
+	}
+	if last := frames[len(frames)-1]; last.event != "done" {
+		t.Fatalf("last frame %q, want done", last.event)
 	}
 }

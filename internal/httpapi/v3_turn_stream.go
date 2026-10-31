@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/YanIanZ/sela/internal/account"
 )
@@ -14,10 +16,13 @@ import (
 // has released the complete validated output; only then are small
 // UTF-8-safe chunks of that released text sent, followed by the final room.
 //
-// Frames: status (once), zero or more chunk, then done, or error with a
-// stable code. A refusal before the stream opens (invalid input, stale
-// version, missing room) uses the normal JSON error envelope, so a client
-// can fall back to the JSON route without parsing a partial stream.
+// Frames: status (once), optional heartbeat while the router runs, zero or
+// more chunk, then done, or error with a stable code. A refusal before the
+// stream opens (invalid input, stale version, missing room) uses the normal
+// JSON error envelope, so a client can fall back to the JSON route without
+// parsing a partial stream. Heartbeats keep proxies and clients from timing
+// out during a slow model call; they carry no content and are ignored by
+// clients that do not know them.
 func (s *Server) v3StreamTurn(w http.ResponseWriter, r *http.Request, p account.Principal) {
 	var in listeningTurnInput
 	if !decode(w, r, &in) {
@@ -27,6 +32,10 @@ func (s *Server) v3StreamTurn(w http.ResponseWriter, r *http.Request, p account.
 	if !ok {
 		writeError(w, r, http.StatusInternalServerError, "internal", "")
 		return
+	}
+	heartbeat := s.opt.StreamHeartbeat
+	if heartbeat <= 0 {
+		heartbeat = 10 * time.Second
 	}
 	opened := false
 	open := func(state string) {
@@ -42,42 +51,80 @@ func (s *Server) v3StreamTurn(w http.ResponseWriter, r *http.Request, p account.
 		_ = writeSSE(w, "status", map[string]string{"state": state})
 		flusher.Flush()
 	}
-	out, reject, err := s.runListeningTurn(r, p, r.PathValue("id"), in, func() { open("thinking") })
-	if reject != nil {
-		if opened {
-			_ = writeSSE(w, "error", map[string]string{"code": reject.code})
-			flusher.Flush()
-			return
-		}
-		reject.write(w, r)
-		return
+
+	// The turn runs in a goroutine so this handler can emit keep-alives
+	// while the model is working. Only this handler writes to w; the
+	// pipeline signals when the router is about to start.
+	started := make(chan struct{})
+	var startOnce sync.Once
+	type result struct {
+		out    listeningTurn
+		reject *turnRejection
+		err    error
 	}
-	if err != nil {
-		if opened {
-			_ = writeSSE(w, "error", map[string]string{"code": "internal"})
-			flusher.Flush()
-			return
-		}
-		s.v3Error(w, r, err)
-		return
-	}
-	// A turn that stopped before the router (paused, no consent, a limit or
-	// no AI) is still a complete answer; open the stream with its state and
-	// send the room without chunks.
-	open(out.Room.AIState)
-	if len(out.Released) > 0 {
-		text := strings.Join(out.Released, "\n\n")
-		for _, piece := range streamPieces(text, 16) {
-			if writeSSE(w, "chunk", map[string]string{"text": piece}) != nil {
+	done := make(chan result, 1)
+	go func() {
+		out, reject, err := s.runListeningTurn(r, p, r.PathValue("id"), in, func() {
+			startOnce.Do(func() { close(started) })
+		})
+		done <- result{out: out, reject: reject, err: err}
+	}()
+
+	ticker := time.NewTicker(heartbeat)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-started:
+			started = nil
+			open("thinking")
+		case <-ticker.C:
+			if opened {
+				if writeSSE(w, "heartbeat", map[string]string{"state": "thinking"}) != nil {
+					return
+				}
+				flusher.Flush()
+			}
+		case res := <-done:
+			if res.reject != nil {
+				if opened {
+					_ = writeSSE(w, "error", map[string]string{"code": res.reject.code})
+					flusher.Flush()
+					return
+				}
+				res.reject.write(w, r)
+				return
+			}
+			if res.err != nil {
+				if opened {
+					_ = writeSSE(w, "error", map[string]string{"code": "internal"})
+					flusher.Flush()
+					return
+				}
+				s.v3Error(w, r, res.err)
+				return
+			}
+			// A turn that stopped before the router (paused, no consent, a
+			// limit or no AI) is still a complete answer; open the stream
+			// with its state and send the room without chunks.
+			open(res.out.Room.AIState)
+			if len(res.out.Released) > 0 {
+				text := strings.Join(res.out.Released, "\n\n")
+				for _, piece := range streamPieces(text, 16) {
+					if writeSSE(w, "chunk", map[string]string{"text": piece}) != nil {
+						return
+					}
+					flusher.Flush()
+				}
+			}
+			if writeSSE(w, "done", res.out.Room) != nil {
 				return
 			}
 			flusher.Flush()
+			return
+		case <-r.Context().Done():
+			return
 		}
 	}
-	if err := writeSSE(w, "done", out.Room); err != nil {
-		return
-	}
-	flusher.Flush()
 }
 
 func writeSSE(w http.ResponseWriter, event string, v any) error {

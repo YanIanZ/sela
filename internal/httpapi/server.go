@@ -58,6 +58,9 @@ type Options struct {
 	PublicOrigin string
 	// SecureCookies sets the Secure attribute (required behind HTTPS).
 	SecureCookies bool
+	// StreamHeartbeat is the SSE keep-alive interval for a running turn;
+	// zero uses 10s. It is test/ops tuning only and carries no content.
+	StreamHeartbeat time.Duration
 	// TrustProxy uses the last X-Forwarded-For hop (across all header
 	// lines) as the client address for rate limiting. Enable only behind a
 	// proxy that appends it.
