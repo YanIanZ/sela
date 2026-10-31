@@ -77,7 +77,7 @@ func TestTermsPrivacyStatesBackupWindows(t *testing.T) {
 			}
 		}
 	}
-	if p.Version != "terms-privacy-2026-11-01.2" {
+	if p.Version != "terms-privacy-2026-11-01.3" {
 		t.Fatalf("version %s: a changed text needs a new version", p.Version)
 	}
 }

@@ -182,3 +182,55 @@ func onlyShare(t *testing.T, f *fixture, owner account.UserID) account.Share {
 	}
 	return list[0]
 }
+
+func TestShareProjectionMasksPrivateNames(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	owner := f.register("pemilik.nama.privat")
+	op := f.principal(owner.Token)
+
+	note, err := f.store.CreateRecord(ctx, op.UserID, account.RecordInput{
+		Kind: "note", Title: "Catatan Raka", Text: "Aku cerita ke Raka Putra kemarin.", StorageGranted: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	summary, err := f.store.CreateSummary(ctx, op.UserID, account.RecordInput{
+		Title: "Ringkasan untuk Raka Putra", Text: "Aku cerita ke Raka Putra kemarin.", StorageGranted: true,
+		SourceRefs: []account.SourceRef{{RecordID: note.ID, Version: note.Version}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	approved, err := f.store.ApproveSummary(ctx, op.UserID, summary.ID, summary.Version)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.store.CreatePrivateName(ctx, op.UserID, "Raka Putra"); err != nil {
+		t.Fatal(err)
+	}
+	_, token, code, err := f.store.CreateShare(ctx, op.UserID, approved.ID, "Dr. Sintetis", "consultation", 24)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projection, _, err := f.store.OpenShare(ctx, token, code)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{projection.Title, projection.Text, strings.Join(projection.Sources, " ")} {
+		if strings.Contains(field, "Raka") {
+			t.Fatalf("a private name reached the share projection: %q", field)
+		}
+		if !strings.Contains(field, "[NAMA-1]") && field != "" {
+			t.Fatalf("projection field was not masked: %q", field)
+		}
+	}
+	// The owner's own summary still keeps the original words.
+	own, err := f.store.Summary(ctx, op.UserID, approved.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(own.Text, "Raka Putra") {
+		t.Fatal("the owner's summary was altered")
+	}
+}

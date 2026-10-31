@@ -479,7 +479,7 @@ export function PrivacyPage({
             <p>
               {w(
                 "Nama di daftar ini diganti sebelum permintaan AI dikirim. Teks yang kamu tulis sendiri, termasuk ringkasan yang kamu bagikan, bisa tetap memuat nama itu. Ini mengurangi risiko, bukan jaminan: detail lain masih bisa membuatmu dikenali.",
-                "Names on this list are replaced before an AI request is sent. Text you write yourself, including a summary you share, can still contain the name. This reduces the risk, not a guarantee: other details can still identify you.",
+                "Names on this list are replaced before an AI request is sent and in a summary you share. Text in your own notes can still contain the name. This reduces the risk, not a guarantee: other details can still identify you.",
               )}
             </p>
             {namesError !== null && <ErrorNotice error={namesError} onRetry={() => void loadNames()} />}

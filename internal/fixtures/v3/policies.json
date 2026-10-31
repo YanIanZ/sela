@@ -1,6 +1,6 @@
 {
   "terms_privacy": {
-    "version": "terms-privacy-2026-11-01.2",
+    "version": "terms-privacy-2026-11-01.3",
     "title": {
       "id": "Ketentuan layanan dan pemberitahuan privasi",
       "en": "Terms of service and privacy notice"
@@ -15,8 +15,8 @@
         "en": "Sela is a space to tell your story and reflect on your experiences. Sela is not an emergency service or a psychologist and gives no diagnosis, prescription or therapy."
       },
       {
-        "id": "Sela dibuat untuk usia 15 tahun ke atas. Kelompok usia yang tersedia diatur per lingkungan; di bawah 15 tahun tidak dapat mendaftar.",
-        "en": "Sela is made for people aged 15 and over. Which age groups can sign up is configured per environment; people under 15 cannot sign up."
+        "id": "Sela dibuat untuk usia 16 tahun ke atas. Pengguna 16–17 tahun memerlukan persetujuan orang tua atau wali; usia 15 tahun ke bawah tidak dapat mendaftar. Kelompok usia yang tersedia juga diatur per lingkungan.",
+        "en": "Sela is made for people aged 16 and over. Users aged 16–17 need a parent or guardian’s consent; people aged 15 or under cannot sign up. Which age groups are available is also configured per environment."
       },
       {
         "id": "Catatan pribadimu disimpan di basis data server Sela dan isinya dienkripsi dengan kunci khusus untukmu. Server Sela dapat mendekripsinya untuk menampilkannya kepadamu dan menjalankan fitur yang kamu pilih.",
@@ -37,6 +37,10 @@
       {
         "id": "Log operasional hanya mencatat rute, status, durasi, dan hasil masuk. Isi tulisanmu, nama pengguna, kata sandi, kode pemulihan, dan token sesi tidak dicatat.",
         "en": "Operational logs record only route, status, duration and the outcome of sign-ins. Your writing, username, password, recovery codes and session tokens are not logged."
+      },
+      {
+        "id": "Kamu dapat menyalakan ingatan pribadi dan membagikan ringkasan yang sudah kamu setujui. Nama yang kamu tandai privat disamarkan sebelum permintaan AI dan di ringkasan yang dibagikan. Penerima tautan tidak diverifikasi identitasnya, dan kamu dapat mencabut aksesnya kapan saja.",
+        "en": "You can turn on personal memory and share a summary you have approved. Names you mark private are masked before AI requests and in a shared summary. A link recipient is not identity-verified, and you can revoke access at any time."
       }
     ]
   },
@@ -78,15 +82,15 @@
     ]
   },
   "guardian_information": {
-    "version": "guardian-information-2026-11-01.1",
+    "version": "guardian-information-2026-11-01.2",
     "title": {
       "id": "Informasi untuk orang tua atau wali (usia 15-17)",
       "en": "Information for a parent or guardian (ages 15-17)"
     },
     "body": [
       {
-        "id": "Untuk pengguna berusia 15-17 tahun, Sela mencatat bahwa orang tua atau wali sah menyetujui pemakaian Sela. Persetujuan ini dicatat di perangkat pengguna saat orang tua atau wali hadir.",
-        "en": "For users aged 15-17, Sela records that a parent or legal guardian agreed to the use of Sela. The agreement is recorded on the user's device while the parent or guardian is present."
+        "id": "Untuk pengguna berusia 16–17 tahun, Sela mencatat bahwa orang tua atau wali sah menyetujui pemakaian Sela. Persetujuan ini dicatat di perangkat pengguna saat orang tua atau wali hadir. Pengguna berusia 15 tahun ke bawah tidak dapat mendaftar.",
+        "en": "For users aged 16–17, Sela records that a parent or legal guardian agreed to the use of Sela. The agreement is recorded on the user’s device while the parent or guardian is present. People aged 15 or under cannot sign up."
       },
       {
         "id": "Persetujuan bukan akses. Orang tua atau wali tidak mendapat akun, tautan, pemberitahuan, laporan, atau ekspor, dan tidak ada tulisan pengguna yang dibagikan kepada mereka karena catatan ini.",
@@ -103,15 +107,15 @@
     ]
   },
   "personal_memory": {
-    "version": "personal-memory-2026-11-01.2",
+    "version": "personal-memory-2026-11-01.3",
     "title": {
       "id": "Ingatan pribadi",
       "en": "Personal memory"
     },
     "body": [
       {
-        "id": "Sela hanya menyimpan hal yang kamu tulis sendiri sebagai ingatan, dan hanya jika kamu menyalakannya. Tidak ada ingatan yang dibuat otomatis, ditambang dari percakapan, atau disimpan tanpa kamu lihat.",
-        "en": "Sela keeps only items you write yourself as memory, and only when you turn this on. Nothing is captured automatically, mined from conversations, or stored without you seeing it."
+        "id": "Sela dapat mengusulkan ingatan dari percakapan yang kamu simpan, tetapi usulan itu disimpan sebagai belum dikonfirmasi dan tidak dipakai sampai kamu konfirmasi atau koreksi. Kamu juga dapat menulis ingatan sendiri. Tidak ada ingatan yang dipakai tanpa kamu lihat.",
+        "en": "Sela may propose memory from a conversation you saved, but a proposal is stored as unconfirmed and is not used until you confirm or correct it. You can also write memory yourself. Nothing is used without you seeing it."
       },
       {
         "id": "Kamu dapat mengubah atau menghapus setiap ingatan, dan mematikan ingatan kapan saja. Saat dimatikan, Sela tidak membaca atau memakai ingatanmu; isinya tetap tersimpan sampai kamu menghapusnya.",
@@ -137,15 +141,15 @@
     ]
   },
   "sharing": {
-    "version": "sharing-2026-10-31.1",
+    "version": "sharing-2026-11-01.2",
     "title": {
       "id": "Berbagi ringkasan",
       "en": "Sharing a summary"
     },
     "body": [
       {
-        "id": "Kamu memilih isi ringkasan yang dibagikan dan kepada siapa. Tautan dan kode akses hanya ditampilkan sekali; penerima tidak diverifikasi identitasnya, dan kamu bisa mencabut akses kapan saja. Salinan yang sudah diunduh atau dicetak tidak bisa ditarik kembali.",
-        "en": "You choose what the summary contains and who it is for. The link and access code are shown once; the recipient is not identity-verified, and you can revoke access at any time. Copies already downloaded or printed cannot be recalled."
+        "id": "Kamu memilih isi ringkasan yang dibagikan dan kepada siapa. Tautan dan kode akses hanya ditampilkan sekali; penerima tidak diverifikasi identitasnya, dan kamu bisa mencabut akses kapan saja. Nama yang kamu tandai privat disamarkan di ringkasan yang dibagikan. Salinan yang sudah diunduh atau dicetak tidak bisa ditarik kembali.",
+        "en": "You choose what the summary contains and who it is for. The link and access code are shown once; the recipient is not identity-verified, and you can revoke access at any time. Names you mark private are masked in the shared summary. Copies already downloaded or printed cannot be recalled."
       }
     ]
   }

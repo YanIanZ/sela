@@ -8,9 +8,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -193,6 +196,13 @@ func (s *Store) CreateShare(ctx context.Context, owner UserID, summaryID, label,
 			Items: items, Sources: sources,
 			CreatedAt: now, ExpiresAt: share.ExpiresAt,
 		}
+		// Names the owner marked private are masked in the frozen projection
+		// too: sharing must not undo the privacy control the AI path honours.
+		privateNames, err := s.privateNames(ctx, tx, owner)
+		if err != nil {
+			return err
+		}
+		projection = maskProjection(projection, privateNames)
 		raw, err := json.Marshal(projection)
 		if err != nil {
 			return err
@@ -454,4 +464,56 @@ func (s *Store) AcknowledgeShare(ctx context.Context, session string) error {
 func (s *Store) shareEvent(ctx context.Context, q pgx.Tx, shareID, kind string, at time.Time) error {
 	_, err := q.Exec(ctx, "INSERT INTO share_events(id,share_id,kind,at) VALUES($1,$2,$3,$4)", newID().String(), shareID, kind, at)
 	return err
+}
+
+// maskProjection replaces the owner's private names, case-insensitively,
+// with stable [NAMA-n] placeholders in everything a recipient can read.
+// The owner's own summary is unchanged; only the frozen share is masked.
+func maskProjection(p SharedProjection, names []PrivateName) SharedProjection {
+	if len(names) == 0 {
+		return p
+	}
+	type term struct {
+		text string
+		idx  int
+	}
+	var terms []term
+	for i, n := range names {
+		name := strings.TrimSpace(n.Name)
+		if name == "" {
+			continue
+		}
+		terms = append(terms, term{text: name, idx: i + 1})
+		for _, part := range strings.Fields(name) {
+			if utf8.RuneCountInString(part) >= 3 {
+				terms = append(terms, term{text: part, idx: i + 1})
+			}
+		}
+	}
+	sort.SliceStable(terms, func(i, j int) bool { return len(terms[i].text) > len(terms[j].text) })
+	mask := func(s string) string {
+		for _, t := range terms {
+			re := regexp.MustCompile(`(?i)` + regexp.QuoteMeta(t.text))
+			s = re.ReplaceAllString(s, "[NAMA-"+strconv.Itoa(t.idx)+"]")
+		}
+		return s
+	}
+	p.Title = mask(p.Title)
+	p.Text = mask(p.Text)
+	if p.Prepared != nil {
+		prepared := *p.Prepared
+		prepared.Goal = mask(prepared.Goal)
+		prepared.Questions = mask(prepared.Questions)
+		prepared.Bring = mask(prepared.Bring)
+		p.Prepared = &prepared
+	}
+	for i := range p.Items {
+		p.Items[i].Text = mask(p.Items[i].Text)
+		p.Items[i].Quote = mask(p.Items[i].Quote)
+		p.Items[i].SourceLabel = mask(p.Items[i].SourceLabel)
+	}
+	for i := range p.Sources {
+		p.Sources[i] = mask(p.Sources[i])
+	}
+	return p
 }
