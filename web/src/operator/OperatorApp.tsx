@@ -24,19 +24,11 @@ import {
   type TaskSpend,
 } from "./api";
 import { DirectoryPanel, SandboxPanel } from "./CarePanels";
+import { LanguageToggle, OperatorHeader, roleLabel } from "./chrome";
+import { ReadingPage } from "./ReadingPanel";
 import "./operator.css";
 
 type Words = (id: string, en: string) => string;
-
-const ROLE_LABELS: Record<string, [string, string]> = {
-  owner: ["Pemilik platform", "Platform owner"],
-  security_admin: ["Admin keamanan", "Security admin"],
-  directory_editor: ["Editor direktori", "Directory editor"],
-  directory_reviewer: ["Peninjau direktori", "Directory reviewer"],
-  research_editor: ["Editor riset", "Research editor"],
-  safety_reviewer: ["Peninjau keselamatan", "Safety reviewer"],
-  ops: ["Operasional", "Ops"],
-};
 
 const ACTION_LABELS: Record<string, [string, string]> = {
   "admin.create": ["Staf dibuat", "Staff created"],
@@ -46,11 +38,6 @@ const ACTION_LABELS: Record<string, [string, string]> = {
   "admin.revoke": ["Staf dicabut", "Staff revoked"],
   "admin.cache_invalidate": ["Cache publik dibersihkan", "Public cache invalidated"],
 };
-
-function roleLabel(role: string, w: Words): string {
-  const label = ROLE_LABELS[role];
-  return label ? w(label[0], label[1]) : role;
-}
 
 function actionLabel(action: string, w: Words): string {
   const label = ACTION_LABELS[action];
@@ -134,31 +121,6 @@ function useFormatters() {
   );
 }
 
-function LanguageToggle() {
-  const { lang, setLang } = useI18n();
-  const w = useWords();
-  return (
-    <div className="op-lang" role="group" aria-label={w("Bahasa", "Language")}>
-      <button
-        type="button"
-        lang="id"
-        aria-pressed={lang === "id"}
-        onClick={() => setLang("id")}
-      >
-        {"Indonesia"}
-      </button>
-      <button
-        type="button"
-        lang="en"
-        aria-pressed={lang === "en"}
-        onClick={() => setLang("en")}
-      >
-        {"English"}
-      </button>
-    </div>
-  );
-}
-
 export function OperatorApp() {
   const w = useWords();
   const { lang } = useI18n();
@@ -212,6 +174,16 @@ export function OperatorApp() {
           setBootError("");
           setAdmin(a);
         }}
+      />
+    );
+  }
+  const onReading = window.location.pathname.replace(/\/+$/, "") === "/operator/reading";
+  if (onReading) {
+    return (
+      <ReadingPage
+        admin={admin}
+        onSignOut={() => setAdmin(null)}
+        onExpired={onExpired}
       />
     );
   }
@@ -560,27 +532,12 @@ function Console({
       <a className="op-skip" href="#op-main">
         {w("Lewati ke konten", "Skip to content")}
       </a>
-      <header className="op-header">
-        <div className="op-brand">
-          <span className="op-brand-word">{w("Sela", "Sela")}</span>
-          <span className="op-badge">{w("Operator", "Operator")}</span>
-        </div>
-        <div className="op-header-side">
-          <LanguageToggle />
-          <span className="op-user">
-            <strong>{admin.username}</strong>
-            <span className="op-user-role">{roleLabel(admin.role, w)}</span>
-          </span>
-          <button
-            type="button"
-            className="op-btn op-btn--quiet"
-            onClick={() => void signOut()}
-            disabled={signingOut}
-          >
-            {signingOut ? w("Keluar…", "Signing out…") : w("Keluar", "Sign out")}
-          </button>
-        </div>
-      </header>
+      <OperatorHeader
+        admin={admin}
+        active="console"
+        signingOut={signingOut}
+        onSignOut={() => void signOut()}
+      />
 
       <main className="op-main" id="op-main">
         <div className="op-intro">

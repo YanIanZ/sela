@@ -107,6 +107,97 @@ export type CareAudit = {
   createdAt: string;
 };
 
+export type ReadingLocalized = { id: string; en: string };
+
+export type ReadingSourceRef = {
+  id: string;
+  title: string;
+  publisher: string;
+  url: string;
+  licence: string;
+};
+
+export type ReadingDetail = {
+  id: string;
+  version: number;
+  kind: string;
+  topics: string[];
+  audience: string;
+  title: ReadingLocalized;
+  summary: ReadingLocalized;
+  steps?: { id: string[]; en: string[] };
+  why?: ReadingLocalized;
+  seekHelpWhen?: ReadingLocalized;
+  cautions?: ReadingLocalized;
+  sections?: {
+    heading: ReadingLocalized;
+    paragraphs: ReadingLocalized[];
+  }[];
+  readingTimeMinutes: { id: number; en: number };
+  source: {
+    relation: string;
+    locator: string;
+    sources: ReadingSourceRef[];
+  };
+  licence: {
+    itemTextLicence: string;
+    sourceLicence: string;
+    commercialUse: string;
+    note?: string;
+  };
+  attribution: ReadingLocalized;
+  adaptationNotice?: ReadingLocalized;
+  adaptationNote?: string;
+  evidenceNote?: string;
+  review: { status: string; reviewedOn: string; verifier: string };
+};
+
+export type ReadingEmbeddedReview = {
+  status: string;
+  humanEditor?: string;
+  reviewedOn?: string;
+  approvedTextSha256?: string;
+  teenReview?: string;
+  verifierStatus: string;
+  verifierNote?: string;
+  publishable: boolean;
+};
+
+export type ReadingApproval = {
+  slug: string;
+  reviewerName: string;
+  reviewedOn: string;
+  note?: string;
+  verifierStatus: string;
+  contentHash: string;
+  approvedBy: string;
+  approvedAt: string;
+  revokedAt?: string;
+  version: number;
+};
+
+export type ReadingAdminItem = {
+  slug: string;
+  detail: ReadingDetail;
+  contentHash: string;
+  embeddedReview: ReadingEmbeddedReview;
+  approval?: ReadingApproval;
+  hashMatches: boolean;
+  published: boolean;
+};
+
+export type ReadingAudit = {
+  id: string;
+  actor?: string;
+  action: string;
+  objectKind: string;
+  objectId: string;
+  oldStatus?: string;
+  newStatus?: string;
+  reason?: string;
+  createdAt: string;
+};
+
 export type CacheHealth = {
   enabled: boolean;
   ok: boolean;
@@ -222,4 +313,30 @@ export const adminApi = {
       { method: "POST" },
       true,
     ).then((r) => r.invalidated),
+  reading: () =>
+    request<{ items: ReadingAdminItem[] }>("/reading").then((r) => r.items),
+  readingAudit: () =>
+    request<{ events: ReadingAudit[] }>("/reading/audit").then((r) => r.events),
+  approveReading: (
+    slug: string,
+    input: {
+      reviewerName: string;
+      reviewedOn: string;
+      note: string;
+      verifierStatus: "supported";
+      contentHash: string;
+      confirm: boolean;
+    },
+  ) =>
+    request<{ slug: string; approval: ReadingApproval }>(
+      `/reading/${encodeURIComponent(slug)}/approve`,
+      { method: "POST", body: JSON.stringify(input) },
+      true,
+    ),
+  revokeReading: (slug: string, reason: string) =>
+    request<{ slug: string; approval: ReadingApproval }>(
+      `/reading/${encodeURIComponent(slug)}/revoke`,
+      { method: "POST", body: JSON.stringify({ reason }) },
+      true,
+    ),
 };

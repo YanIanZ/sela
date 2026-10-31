@@ -139,6 +139,31 @@
   letter-spacing: -0.04em;
 }
 
+.op-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.op-nav a {
+  padding: 0.3rem 0.15rem;
+  border-bottom: 2px solid transparent;
+  color: var(--op-muted);
+  text-decoration: none;
+}
+
+.op-nav a:hover {
+  color: var(--op-ink);
+}
+
+.op-nav a[aria-current="page"] {
+  border-bottom-color: var(--op-accent);
+  color: var(--op-ink);
+}
+
 .op-badge {
   padding: 0.1rem 0.5rem;
   border: 1px solid var(--op-line-strong);
@@ -628,6 +653,11 @@
 
   .op-intro {
     align-items: flex-start;
+  }
+
+  .op-nav {
+    order: 3;
+    width: 100%;
   }
 
   .op-login-card {

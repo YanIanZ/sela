@@ -175,6 +175,54 @@ try {
   });
 
   await page.setViewportSize({ width: 1366, height: 900 });
+
+  // Reading review: inspect only. The browser run must not approve content;
+  // a human editor's sign-off is a real assertion, not a test fixture.
+  await page.getByRole("link", { name: "Reading reviews" }).click();
+  await page
+    .getByRole("heading", { name: "Reading reviews", exact: true })
+    .waitFor();
+  await page.locator(".op-reading-row").first().waitFor();
+  check(
+    "reading review lists every embedded item",
+    (await page.locator(".op-reading-row").count()) === 38,
+    `${await page.locator(".op-reading-row").count()} rows`,
+  );
+  await page.locator(".op-reading-row").first().click();
+  await page.locator(".op-reading-preview").waitFor();
+  check(
+    "preview shows the text, source and embedded review record",
+    (await page.locator(".op-reading-body").count()) === 1 &&
+      (await page.getByText("Embedded review record", { exact: true }).count()) === 1,
+  );
+  check(
+    "approval is not prefilled and starts disabled",
+    (await page.getByLabel("Reviewer name").inputValue()) === "" &&
+      !(await page.getByRole("checkbox").isChecked()) &&
+      (await page.getByRole("button", { name: "Approve for publication" }).isDisabled()),
+  );
+  await audit(page, "reading review has no serious/critical WCAG 2.2 AA findings");
+  await page.screenshot({
+    path: join(OUT, "operator-reading.png"),
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.waitForTimeout(250);
+  const readingOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  check(
+    "reading review 320 px layout does not scroll horizontally",
+    readingOverflow <= 1,
+    `${readingOverflow}px`,
+  );
+  await page.screenshot({
+    path: join(OUT, "operator-reading-320.png"),
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 1366, height: 900 });
   await page.getByRole("button", { name: "Sign out" }).click();
   await page
     .getByRole("heading", { name: "Sign in to the operator console", exact: true })
