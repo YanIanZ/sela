@@ -99,6 +99,21 @@ func TestLoadEnvironmentMatrix(t *testing.T) {
 	}
 }
 
+func TestMetaAPIProductionAck(t *testing.T) {
+	valid(t, "production")
+	t.Setenv("SELA_LLM_MODE", "meta_api")
+	t.Setenv("SELA_LLM_API_KEY", "test-key")
+	t.Setenv("SELA_LLM_SERVED_MODEL", "muse-spark-1.3")
+	t.Setenv("SELA_LLM_MODEL_ID", "muse-spark-1.3")
+	if _, err := Load(); err == nil {
+		t.Fatal("production accepted meta_api without the owner acknowledgement")
+	}
+	t.Setenv("SELA_META_API_PRODUCTION_ACK", "B-10-owner")
+	if _, err := Load(); err != nil {
+		t.Fatalf("production with the owner acknowledgement: %v", err)
+	}
+}
+
 func TestLoadEnvironmentDefaults(t *testing.T) {
 	for env, want := range map[string]struct {
 		bands  []string

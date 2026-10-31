@@ -302,7 +302,13 @@ func LoadMode(mode Mode) (Config, error) {
 			c.ModelRevision = c.ModelID
 		}
 		if mode == ModeServer && c.Env != EnvDevelopment && c.Env != EnvTest {
-			add(errors.New("SELA_LLM_MODE=meta_api is limited to development and test until B-10 clears real-user processing"))
+			// The Meta API path was limited to development/test until the
+			// legal review (B-10). The owner may explicitly accept that
+			// risk for one production deployment with this acknowledgement;
+			// it is not a default and does not close B-10.
+			if c.Env != EnvProduction || env("SELA_META_API_PRODUCTION_ACK", "") != "B-10-owner" {
+				add(errors.New("SELA_LLM_MODE=meta_api is limited to development and test until B-10 clears real-user processing (production requires SELA_META_API_PRODUCTION_ACK=B-10-owner)"))
+			}
 		}
 	case "test_double":
 		allow, _ := envBool("SELA_ALLOW_TEST_DOUBLE", false)
