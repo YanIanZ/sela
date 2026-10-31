@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
 import { useI18n } from "../../i18n";
-import { api, isAbort, type Entry, type Profile, type Room, type Turn } from "../api";
+import { api, isAbort, type Entry, type Profile, type Reflection, type Room, type Turn } from "../api";
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon } from "../icons";
@@ -448,6 +448,9 @@ function RoomPage({ id }: { id: string }) {
   const [detail, setDetail] = useState(false);
   const [newContent, setNewContent] = useState("");
   const [closePanel, setClosePanel] = useState(false);
+  const [reflectionBusy, setReflectionBusy] = useState(false);
+  const [correcting, setCorrecting] = useState<string | null>(null);
+  const [correction, setCorrection] = useState("");
 
   const focusComposer = () => (document.getElementById("composer-text") as HTMLElement | null)?.focus();
   const transcript = useRef<HTMLDivElement>(null);
@@ -704,6 +707,63 @@ function RoomPage({ id }: { id: string }) {
       announce("status", w("Balasan Sela dilanjutkan.", "Sela's replies are resumed."));
     } catch (e) {
       setError(e);
+    }
+  };
+
+  const captureReflections = async () => {
+    if (!room || reflectionBusy) return;
+    setReflectionBusy(true);
+    setError(null);
+    try {
+      const next = await api<Room>(
+        `/conversations/${room.id}/reflections`,
+        { expectedVersion: room.version },
+        "POST",
+        undefined,
+        110_000,
+      );
+      setRoom(next);
+      announce(
+        "status",
+        w(
+          "Sela menangkap beberapa hal. Periksa dan koreksi jika perlu.",
+          "Sela noticed a few things. Review and correct them if needed.",
+        ),
+      );
+    } catch (e) {
+      setError(e);
+    } finally {
+      setReflectionBusy(false);
+    }
+  };
+
+  const reviewReflection = async (reflection: Reflection, action: "confirm" | "correct" | "reject" | "undo", text?: string) => {
+    if (!room) return;
+    setReflectionBusy(true);
+    setError(null);
+    try {
+      const next = await api<Room>(
+        `/conversations/${room.id}/reflections/${reflection.id}`,
+        { expectedVersion: room.version, action, text },
+        "PATCH",
+      );
+      setRoom(next);
+      setCorrecting(null);
+      setCorrection("");
+      announce(
+        "status",
+        action === "confirm"
+          ? w("Tafsiran dikonfirmasi.", "Interpretation confirmed.")
+          : action === "correct"
+            ? w("Tafsiran diganti dengan kata-katamu.", "Interpretation replaced with your words.")
+            : action === "reject"
+              ? w("Tafsiran ditolak.", "Interpretation rejected.")
+              : w("Tafsiran dikembalikan untuk diperiksa.", "Interpretation reopened for review."),
+      );
+    } catch (e) {
+      setError(e);
+    } finally {
+      setReflectionBusy(false);
     }
   };
 
@@ -1022,6 +1082,110 @@ function RoomPage({ id }: { id: string }) {
               )}
             </div>
           </section>
+
+          {!showEnd && room.turns.length > 0 && (
+            <section className="s-reflections" aria-labelledby="reflections-title">
+              <div className="s-actions">
+                <h2 id="reflections-title">{w("Yang Sela tangkap", "What Sela noticed")}</h2>
+                <Button
+                  variant="secondary"
+                  disabled={reflectionBusy || busy}
+                  onClick={() => void captureReflections()}
+                >
+                  {reflectionBusy
+                    ? w("Membaca ulang…", "Reading back…")
+                    : w("Tangkap dari percakapan ini", "Notice something from this conversation")}
+                </Button>
+              </div>
+              <p className="s-hint">
+                {w(
+                  "Ini tafsiran AI, bukan fakta. Kutipan di bawah adalah kata-katamu; konfirmasi, koreksi, atau tolak.",
+                  "This is an AI interpretation, not a fact. The quote below is your own wording; confirm, correct or reject it.",
+                )}
+              </p>
+              {(room.reflections ?? []).map((reflection) => (
+                <article className="s-consent" key={reflection.id}>
+                  <blockquote className="s-reflection-quote">“{reflection.quote}”</blockquote>
+                  {correcting === reflection.id ? (
+                    <TextArea
+                      label={w("Kata-katamu sendiri", "Your own words")}
+                      value={correction}
+                      onChange={(e) => setCorrection(e.target.value)}
+                      rows={3}
+                    />
+                  ) : (
+                    <p>{reflection.text}</p>
+                  )}
+                  <p className="s-hint">
+                    {reflection.reviewStatus === "confirmed"
+                      ? w("Kamu konfirmasi.", "You confirmed this.")
+                      : reflection.reviewStatus === "corrected"
+                        ? w("Kamu koreksi.", "You corrected this.")
+                        : reflection.reviewStatus === "rejected"
+                          ? w("Kamu tolak.", "You rejected this.")
+                          : w("Belum diperiksa.", "Not reviewed yet.")}
+                  </p>
+                  <div className="s-actions">
+                    {correcting === reflection.id ? (
+                      <>
+                        <Button
+                          variant="primary"
+                          disabled={reflectionBusy || correction.trim() === ""}
+                          onClick={() => void reviewReflection(reflection, "correct", correction)}
+                        >
+                          {w("Simpan koreksi", "Save correction")}
+                        </Button>
+                        <Button
+                          variant="quiet"
+                          disabled={reflectionBusy}
+                          onClick={() => {
+                            setCorrecting(null);
+                            setCorrection("");
+                          }}
+                        >
+                          {w("Batal", "Cancel")}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="secondary"
+                          disabled={reflectionBusy}
+                          onClick={() => void reviewReflection(reflection, "confirm")}
+                        >
+                          {w("Setuju", "Agree")}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          disabled={reflectionBusy}
+                          onClick={() => {
+                            setCorrecting(reflection.id);
+                            setCorrection(reflection.text);
+                          }}
+                        >
+                          {w("Koreksi", "Correct")}
+                        </Button>
+                        <Button
+                          variant="quiet"
+                          disabled={reflectionBusy}
+                          onClick={() =>
+                            void reviewReflection(
+                              reflection,
+                              reflection.reviewStatus === "rejected" ? "undo" : "reject",
+                            )
+                          }
+                        >
+                          {reflection.reviewStatus === "rejected"
+                            ? w("Batalkan tolak", "Undo rejection")
+                            : w("Bukan ini", "Not this")}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </section>
+          )}
 
           {!showEnd && (
             <div className="s-room-endbar">

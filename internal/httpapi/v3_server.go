@@ -67,6 +67,8 @@ func (s *Server) v3Routes() {
 		{method: "DELETE", path: "/api/v3/conversations/{id}/operation", mutation: true, owner: s.v3StopRoom},
 		{method: "POST", path: "/api/v3/conversations/{id}/resume", mutation: true, owner: s.v3ResumeRoom},
 		{method: "PATCH", path: "/api/v3/conversations/{id}/storage", mutation: true, owner: s.v3RoomStorage},
+		{method: "POST", path: "/api/v3/conversations/{id}/reflections", mutation: true, owner: s.v3CreateReflection},
+		{method: "PATCH", path: "/api/v3/conversations/{id}/reflections/{reflectionId}", mutation: true, owner: s.v3ReviewReflection},
 		{method: "GET", path: "/api/v3/records", owner: s.v3Records},
 		{method: "POST", path: "/api/v3/records", mutation: true, owner: s.v3CreateRecord},
 		{method: "GET", path: "/api/v3/records/{id}", owner: s.v3Record},

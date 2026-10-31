@@ -309,6 +309,8 @@ All routes below require the owner cookie and normal same-origin mutation guards
 | `POST /api/v3/conversations` | `{save:boolean,recordId?:string}`; storage choice mandatory; optionally resume an owned saved conversation; at most 5 live rooms per session and 500 globally |
 | `GET /api/v3/conversations/{id}` | `{id,save,version,turns,paused,busy,aiState,recordId?}` |
 | `POST /api/v3/conversations/{id}/turns` | `{text,expectedVersion,intent?}`; 1–3000 characters, at most 64 turns. Stores the user's words only when saving was chosen. Contextual Meta-primary reply through `internal/ai`; current per-provider consent required. Eight AI operations per owner per 10 minutes, admission-limited; request budget 90 seconds. Response includes only released, guarded output with provider/model provenance; unavailable AI never invents a reply |
+| `POST /api/v3/conversations/{id}/reflections` | `{expectedVersion}` → room with `reflections` (AT-2 cards; requires `ai_processing`) |
+| `PATCH /api/v3/conversations/{id}/reflections/{reflectionId}` | `{expectedVersion, action: confirm\|correct\|reject\|undo, text?}` → room |
 | `PATCH /api/v3/conversations/{id}/storage` | `{save:boolean,expectedVersion}`; turning off deletes the saved snapshot and revisions, keeping only the live hold |
 | `DELETE /api/v3/conversations/{id}/operation` | Cancel in-flight reply; retain the user's words |
 | `POST /api/v3/conversations/{id}/resume` | `{expectedVersion}`; explicit continuation after inline crisis support; does not call a provider |

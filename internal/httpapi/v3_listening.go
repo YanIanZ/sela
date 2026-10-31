@@ -25,6 +25,7 @@ type room struct {
 	Save          bool                       `json:"save"`
 	Version       int                        `json:"version"`
 	Turns         []account.ConversationTurn `json:"turns"`
+	Reflections   []account.Reflection       `json:"reflections,omitempty"`
 	Paused        bool                       `json:"paused"`
 	Busy          bool                       `json:"busy"`
 	AIState       string                     `json:"aiState"`
@@ -125,6 +126,7 @@ func (l *listeningStore) purgeSession(owner account.UserID, session account.Sess
 func roomCopy(c *room) room {
 	r := *c
 	r.Turns = append([]account.ConversationTurn{}, c.Turns...)
+	r.Reflections = append([]account.Reflection(nil), c.Reflections...)
 	return r
 }
 
@@ -151,7 +153,8 @@ func (s *Server) persistRoom(ctx context.Context, c *room) error {
 	if len(runes) > 80 {
 		title = string(runes[:80]) + "…"
 	}
-	in := account.RecordInput{Paused: c.Paused, Kind: "conversation", Title: title, Turns: c.Turns, StorageGranted: true, ExpectedVersion: c.recordVersion}
+	in := account.RecordInput{Paused: c.Paused, Kind: "conversation", Title: title, Turns: c.Turns,
+		Reflections: c.Reflections, StorageGranted: true, ExpectedVersion: c.recordVersion}
 	var record account.PersonalRecord
 	var err error
 	if c.RecordID == "" {
@@ -212,6 +215,7 @@ func (s *Server) v3CreateRoom(w http.ResponseWriter, r *http.Request, p account.
 		c.RecordID = rec.ID
 		c.recordVersion = rec.Version
 		c.Turns = rec.Turns
+		c.Reflections = rec.Reflections
 		c.Paused = rec.Paused
 	}
 	if err := s.persistRoom(r.Context(), c); err != nil {

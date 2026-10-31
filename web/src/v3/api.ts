@@ -98,11 +98,23 @@ export type Turn = {
   };
 };
 
+export type Reflection = {
+  id: string;
+  turnId?: string;
+  quote: string;
+  text: string;
+  reviewStatus: "unreviewed" | "confirmed" | "corrected" | "rejected";
+  provenance: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Room = {
   id: string;
   save: boolean;
   version: number;
   turns: Turn[];
+  reflections?: Reflection[];
   paused: boolean;
   busy: boolean;
   aiState: string;

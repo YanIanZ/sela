@@ -1887,3 +1887,19 @@
 .s-system .s-actions {
   margin-top: var(--space-5);
 }
+
+/* "Sela menangkap…" reflection cards (AT-2) */
+.s-reflections {
+  margin-top: 1.5rem;
+}
+.s-reflections > .s-actions {
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.s-reflection-quote {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--c-border-strong, #8a8a8a);
+  font-style: italic;
+}

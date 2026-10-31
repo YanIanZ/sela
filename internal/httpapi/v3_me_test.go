@@ -42,7 +42,7 @@ func TestV3CrossUserNotFound(t *testing.T) {
 	}
 	for _, rt := range httpapi.V3RouteTable(e.h) {
 		for _, seg := range strings.Split(rt.Path, "/") {
-			if strings.HasPrefix(seg, "{") && seg != "{id}" && seg != "{purpose}" {
+			if strings.HasPrefix(seg, "{") && seg != "{id}" && seg != "{purpose}" && seg != "{reflectionId}" {
 				t.Errorf("%s %s takes a path parameter %s", rt.Method, rt.Path, seg)
 			}
 		}

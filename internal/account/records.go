@@ -18,6 +18,29 @@ import (
 
 var ErrStorageRequired = &Error{Code: "storage_required"}
 
+// Reflection is one "Sela menangkap…" card: a quote from the user's own
+// words, the AI interpretation, and the user's review. It is stored inside
+// the sealed conversation content, so it inherits the room's encryption,
+// revision, export and deletion behaviour.
+type Reflection struct {
+	ID           string    `json:"id"`
+	TurnID       string    `json:"turnId,omitempty"`
+	Quote        string    `json:"quote"`
+	Text         string    `json:"text"`
+	ReviewStatus string    `json:"reviewStatus"`
+	Provenance   string    `json:"provenance"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+// Reflection review states.
+const (
+	ReflectionUnreviewed = "unreviewed"
+	ReflectionConfirmed  = "confirmed"
+	ReflectionCorrected  = "corrected"
+	ReflectionRejected   = "rejected"
+)
+
 type ConversationTurn struct {
 	AIProvenance json.RawMessage `json:"aiProvenance,omitempty"`
 	ReviewStatus string          `json:"reviewStatus"`
@@ -43,6 +66,7 @@ type RecordInput struct {
 	SourceRefs      []SourceRef        `json:"sourceRefs"`
 	Prepared        *SummaryPrepared   `json:"prepared"`
 	ParentID        string             `json:"-"`
+	Reflections     []Reflection       `json:"-"`
 }
 
 type PersonalRecord struct {
@@ -66,6 +90,7 @@ type PersonalRecord struct {
 	ApprovedVersion int                `json:"approvedVersion,omitempty"`
 	Prepared        *SummaryPrepared   `json:"prepared,omitempty"`
 	ParentID        string             `json:"parentId,omitempty"`
+	Reflections     []Reflection       `json:"reflections,omitempty"`
 	CreatedAt       time.Time          `json:"createdAt"`
 	UpdatedAt       time.Time          `json:"updatedAt"`
 }
@@ -79,6 +104,20 @@ func validateRecord(in RecordInput) error {
 	}
 	if len(in.Turns) > 64 {
 		return invalid("turns")
+	}
+	if len(in.Reflections) > 50 {
+		return invalid("reflections")
+	}
+	for _, r := range in.Reflections {
+		if !utf8.ValidString(r.Quote) || !utf8.ValidString(r.Text) || utf8.RuneCountInString(r.Quote) > 1200 ||
+			utf8.RuneCountInString(r.Text) > 1200 {
+			return invalid("reflections")
+		}
+		switch r.ReviewStatus {
+		case ReflectionUnreviewed, ReflectionConfirmed, ReflectionCorrected, ReflectionRejected:
+		default:
+			return invalid("reflections")
+		}
 	}
 	if !utf8.ValidString(in.Text) || utf8.RuneCountInString(in.Text) > 6000 || utf8.RuneCountInString(in.Title) > 120 {
 		return invalid("text")
@@ -135,7 +174,7 @@ func makeRecord(id string, in RecordInput, version int, created, now time.Time) 
 	if version > 1 {
 		prov = "user_correction"
 	}
-	return PersonalRecord{Paused: in.Paused, Turns: in.Turns, ID: id, Kind: in.Kind, Title: in.Title, Text: in.Text, Mood: in.Mood, Energy: in.Energy, Tags: in.Tags, Day: in.Day, Version: version, Provenance: prov, ReviewStatus: "confirmed", Safety: string(a.Level), Ruleset: a.Ruleset, CreatedAt: created, UpdatedAt: now}
+	return PersonalRecord{Paused: in.Paused, Turns: in.Turns, Reflections: append([]Reflection(nil), in.Reflections...), ID: id, Kind: in.Kind, Title: in.Title, Text: in.Text, Mood: in.Mood, Energy: in.Energy, Tags: in.Tags, Day: in.Day, Version: version, Provenance: prov, ReviewStatus: "confirmed", Safety: string(a.Level), Ruleset: a.Ruleset, CreatedAt: created, UpdatedAt: now}
 }
 func (s *Store) CreateRecord(ctx context.Context, owner UserID, in RecordInput) (PersonalRecord, error) {
 	if err := validateRecord(in); err != nil {
