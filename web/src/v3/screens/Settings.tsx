@@ -10,6 +10,7 @@ import {
   type ConsentEvent,
   type Options,
   type Policy,
+  type PrivateName,
   type Profile,
   type SessionView,
 } from "../api";
@@ -33,7 +34,6 @@ import {
   StatusLine,
   Switch,
   TextField,
-  UnavailableFeature,
   buttonClass,
 } from "../ui";
 
@@ -42,6 +42,14 @@ const purposePlace: Record<string, { id: string; en: string }> = {
   personal_memory: { id: "Disimpan di server Sela", en: "Stored on Sela's server" },
   sharing: { id: "Membagikan ringkasan lewat tautan", en: "Sharing a summary by link" },
 };
+
+/** The server replaces each private name with a numbered placeholder before
+ * a provider call. This mirrors that replacement for the local preview only;
+ * sample text never leaves the browser. */
+function maskPrivateName(text: string, name: string): string {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return text.replace(new RegExp(escaped, "giu"), "[NAMA-1]");
+}
 
 export function PrivacyPage({
   user,
@@ -63,6 +71,11 @@ export function PrivacyPage({
   const [audit, setAudit] = useState<AuditEvent[] | null>(null);
   const [auditCursor, setAuditCursor] = useState<string | null>(null);
   const [history, setHistory] = useState<ConsentEvent[] | null>(null);
+  const [names, setNames] = useState<PrivateName[] | null>(null);
+  const [namesError, setNamesError] = useState<unknown>(null);
+  const [nameInput, setNameInput] = useState("");
+  const [nameBusy, setNameBusy] = useState(false);
+  const [nameNotice, setNameNotice] = useState("");
   const [error, setError] = useState<unknown>(null);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -74,8 +87,22 @@ export function PrivacyPage({
   const [understand, setUnderstand] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
 
+  // The name list loads on its own: an unavailable list never blocks the
+  // rest of the privacy page, and the section shows its own retry.
+  const loadNames = async () => {
+    setNamesError(null);
+    try {
+      const r = await api<{ names: PrivateName[] }>("/me/private-names");
+      setNames(r.names);
+    } catch (e) {
+      setNamesError(e);
+      setNames([]);
+    }
+  };
+
   const load = async () => {
     setError(null);
+    await loadNames();
     try {
       const [c, s, a, h] = await Promise.all([
         api<{ consents: Consent[] }>("/me/consents"),
@@ -130,6 +157,42 @@ export function PrivacyPage({
       setError(e);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const addName = async (e: FormEvent) => {
+    e.preventDefault();
+    const name = nameInput.trim();
+    if (!name) return;
+    setNameBusy(true);
+    setNamesError(null);
+    setNameNotice("");
+    try {
+      const created = await api<PrivateName>("/me/private-names", { name });
+      setNames((list) => [...(list ?? []), created]);
+      setNameInput("");
+      setNameNotice(w("Nama ditambahkan.", "Name added."));
+      announce("status", w("Nama ditambahkan.", "Name added."));
+    } catch (err) {
+      setNamesError(err);
+    } finally {
+      setNameBusy(false);
+    }
+  };
+
+  const removeName = async (n: PrivateName) => {
+    setNameBusy(true);
+    setNamesError(null);
+    setNameNotice("");
+    try {
+      await api("/me/private-names/" + n.id, undefined, "DELETE");
+      setNames((list) => (list ?? []).filter((x) => x.id !== n.id));
+      setNameNotice(w("Nama dihapus.", "Name removed."));
+      announce("status", w("Nama dihapus.", "Name removed."));
+    } catch (err) {
+      setNamesError(err);
+    } finally {
+      setNameBusy(false);
     }
   };
 
@@ -260,6 +323,14 @@ export function PrivacyPage({
         c.purpose === "personal_memory"),
   );
   const region = user.guest?.storage.region;
+  const nameLimit = 20;
+  const latestName = names && names.length > 0 ? names[names.length - 1]!.name : "";
+  const sampleText = latestName
+    ? lang === "id"
+      ? `Aku cerita ke ${latestName} kemarin.`
+      : `I told ${latestName} yesterday.`
+    : "";
+  const maskedText = sampleText ? maskPrivateName(sampleText, latestName) : "";
 
   return (
     <>
@@ -405,14 +476,96 @@ export function PrivacyPage({
 
           <section className="s-settings-section" id="nama" aria-labelledby="names-title">
             <h2 id="names-title">{w("Nama yang disamarkan", "Names kept private")}</h2>
-            <UnavailableFeature
-              title={w("Daftar nama belum tersedia", "The name list isn't available yet")}
-              body={w(
-                "Sela selalu menyamarkan kontak sebelum mengirim apa pun ke AI. Daftar nama pilihanmu menunggu layanan penyimpanan yang terpisah.",
-                "Sela always masks contact details before sending anything to AI. Your own name list is waiting for its separate storage service.",
+            <p>
+              {w(
+                "Nama di daftar ini diganti sebelum permintaan AI dikirim. Teks yang kamu tulis sendiri, termasuk ringkasan yang kamu bagikan, bisa tetap memuat nama itu. Ini mengurangi risiko, bukan jaminan: detail lain masih bisa membuatmu dikenali.",
+                "Names on this list are replaced before an AI request is sent. Text you write yourself, including a summary you share, can still contain the name. This reduces the risk, not a guarantee: other details can still identify you.",
               )}
-              dependency={w("API nama yang disamarkan belum ada.", "The names API doesn't exist yet.")}
-            />
+            </p>
+            {namesError !== null && <ErrorNotice error={namesError} onRetry={() => void loadNames()} />}
+            {nameNotice && <StatusLine tone="success">{nameNotice}</StatusLine>}
+            {names === null ? (
+              <Loading label={w("Memuat daftar nama…", "Loading the name list…")} />
+            ) : names.length === 0 ? (
+              <p className="s-hint">{w("Belum ada nama di daftar.", "No names on the list yet.")}</p>
+            ) : (
+              <ul className="s-name-list" aria-label={w("Nama yang disamarkan", "Names kept private")}>
+                {names.map((n) => (
+                  <li className="s-session-row" key={n.id}>
+                    <span className="s-name-value">{n.name}</span>
+                    <InlineConfirm
+                      label={w(`Hapus ${n.name}`, `Remove ${n.name}`)}
+                      question={w(
+                        `Hapus "${n.name}" dari daftar? Sela berhenti menyamarkan nama ini.`,
+                        `Remove "${n.name}" from the list? Sela stops masking this name.`,
+                      )}
+                      confirmLabel={w("Hapus nama", "Remove name")}
+                      onConfirm={() => void removeName(n)}
+                      busy={nameBusy}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <form className="s-name-form s-narrow-sm" onSubmit={(e) => void addName(e)}>
+              <TextField
+                label={w("Tambah nama", "Add a name")}
+                hint={w(
+                  "1–120 karakter. Hanya kamu yang melihat daftar ini. Paling banyak 20 nama.",
+                  "1–120 characters. Only you see this list. At most 20 names.",
+                )}
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                maxLength={120}
+                autoComplete="off"
+                required
+                disabled={names === null || names.length >= nameLimit}
+              />
+              <Button
+                type="submit"
+                variant="secondary"
+                busy={nameBusy}
+                disabled={
+                  names === null || !nameInput.trim() || names.length >= nameLimit
+                }
+              >
+                {w("Tambah ke daftar", "Add to the list")}
+              </Button>
+            </form>
+            {names !== null && names.length >= nameLimit && (
+              <p className="s-hint">
+                {w(
+                  "Daftar sudah penuh (20 nama). Hapus satu untuk menambah yang lain.",
+                  "The list is full (20 names). Remove one to add another.",
+                )}
+              </p>
+            )}
+            <div className="s-preview-box" role="group" aria-labelledby="names-preview-title">
+              <h3 id="names-preview-title">{w("Pratinjau penyamaran", "Masking preview")}</h3>
+              {maskedText ? (
+                <>
+                  <p className="s-small s-muted">{w("Sebelum dikirim ke AI", "Before it is sent to AI")}</p>
+                  <p className="s-preview-text">{sampleText}</p>
+                  <p className="s-small s-muted">{w("Yang diterima AI", "What the AI receives")}</p>
+                  <p className="s-preview-text">
+                    <strong>{maskedText}</strong>
+                  </p>
+                  <p className="s-hint">
+                    {w(
+                      "Contoh ini dihitung di perangkatmu dari nama terbaru di daftar. Teks contoh tidak pernah dikirim ke penyedia.",
+                      "This example is computed on your device from the newest name on the list. The sample text is never sent to a provider.",
+                    )}
+                  </p>
+                </>
+              ) : (
+                <p className="s-hint">
+                  {w(
+                    "Tambahkan satu nama untuk melihat contoh penyamaran.",
+                    "Add one name to see a masking example.",
+                  )}
+                </p>
+              )}
+            </div>
           </section>
 
           <section className="s-settings-section" id="ai" aria-labelledby="ai-title">

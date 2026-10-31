@@ -69,6 +69,7 @@ var Ranges = []Range{
 	{500, 599, "AI routing records"},
 	{600, 699, "reading content"},
 	{700, 799, "planned-care directory and synthetic sandbox"},
+	{800, 899, "privacy controls"},
 	{900, 999, "ops"},
 }
 

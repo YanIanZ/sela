@@ -238,6 +238,14 @@ export type SessionView = {
   absoluteExpiresAt: string;
 };
 
+/** One name the owner marked private. The list is redacted before any AI
+ * request; it is not a guarantee against re-identification by other details. */
+export type PrivateName = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
+
 export type AuditEvent = {
   id: string;
   at: string;

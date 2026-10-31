@@ -104,6 +104,7 @@ func (s *Server) v3CreateReflection(w http.ResponseWriter, r *http.Request, p ac
 	defer cancel()
 	output, err := s.opt.AIRouter.Run(ctx, ai.TaskReflection, ai.Input{
 		Subject: ai.Subject(p.UserID.String()), Language: profile.Locale, Spans: spans, Synthetic: s.v3.cfg.Synthetic(),
+		PrivateNames: s.privateNamesFor(ctx, p.UserID, "reflection"),
 		Commit: func(ctx context.Context) error {
 			principal, e := s.opt.Accounts.Authenticate(ctx, s.authToken(r))
 			if e != nil || principal.UserID != p.UserID {

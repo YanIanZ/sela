@@ -141,6 +141,9 @@ func (s *Server) v3Routes() {
 		{method: "PUT", path: "/api/v3/me/guardian-consent", mutation: true, owner: s.v3PutGuardianConsent},
 		{method: "DELETE", path: "/api/v3/me/guardian-consent", mutation: true, owner: s.v3DeleteGuardianConsent},
 		{method: "GET", path: "/api/v3/me/audit", owner: s.v3Audit},
+		{method: "GET", path: "/api/v3/me/private-names", owner: s.v3PrivateNames},
+		{method: "POST", path: "/api/v3/me/private-names", mutation: true, owner: s.v3CreatePrivateName},
+		{method: "DELETE", path: "/api/v3/me/private-names/{id}", mutation: true, owner: s.v3DeletePrivateName},
 		{method: "GET", path: "/api/v3/me/export", owner: s.v3Export},
 	}
 	for _, rt := range s.v3.routes {
