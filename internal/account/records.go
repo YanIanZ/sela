@@ -367,14 +367,36 @@ func (s *Store) UpdateRecord(ctx context.Context, owner UserID, id string, in Re
 	})
 	return result, err
 }
-func (s *Store) DeleteRecord(ctx context.Context, owner UserID, id string, version int) error {
+
+// DeleteRecord removes one owned record and every revision. derived is
+// DerivedKeep (the default) or DerivedDelete: keep leaves summaries that
+// pin the source in place, where enrichSummaryState demotes their effective
+// approval; delete removes those summaries, their follow-ups and (through
+// the existing foreign keys) their shares in the same transaction.
+func (s *Store) DeleteRecord(ctx context.Context, owner UserID, id string, version int, derived string) error {
+	if derived == "" {
+		derived = DerivedKeep
+	}
+	if derived != DerivedKeep && derived != DerivedDelete {
+		return invalid("derived")
+	}
 	return s.tx(ctx, func(tx pgx.Tx) error {
+		if derived == DerivedDelete {
+			if err := lockOwnerSummaries(ctx, tx, owner); err != nil {
+				return err
+			}
+		}
 		r, err := s.record(ctx, tx, owner, id, true)
 		if err != nil {
 			return err
 		}
 		if version != r.Version {
 			return ErrStaleVersion
+		}
+		if derived == DerivedDelete {
+			if err := s.deleteDerivedSummaries(ctx, tx, owner, r.ID); err != nil {
+				return err
+			}
 		}
 		if r.Kind == KindSummary {
 			if err := s.deleteSummaryChildren(ctx, tx, owner, id); err != nil {

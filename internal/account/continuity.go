@@ -47,6 +47,15 @@ const (
 	SummaryApproved = "approved"
 )
 
+// Derived deletion modes for a source record. Keep is the default: the
+// source goes and its summaries become stale on read. Delete removes every
+// owned summary that pins the source in the same transaction, together
+// with their follow-ups; existing foreign keys cascade their shares.
+const (
+	DerivedKeep   = "keep"
+	DerivedDelete = "delete"
+)
+
 // SourceRef pins one explicitly selected source record and the exact
 // revision the owner saw. The reference is stored inside the sealed
 // content, so it is encrypted and owner-scoped like the text. Quote and
@@ -859,6 +868,156 @@ func (s *Store) ReviewMemory(ctx context.Context, owner UserID, id string, expec
 		return s.updateContinuityRecord(ctx, tx, owner, r)
 	})
 	return result, err
+}
+
+// DerivedSummaryImpact is one owned summary that pins a source record. It
+// carries owner-visible metadata only: the title already belongs to the
+// owner's summary list; no summary text, source text or share secret is
+// included.
+type DerivedSummaryImpact struct {
+	ID         string `json:"id"`
+	Title      string `json:"title"`
+	Version    int    `json:"version"`
+	Approved   bool   `json:"approved"`
+	ShareCount int    `json:"shareCount"`
+}
+
+// DerivedImpactTotals counts what a derived deletion would remove. A share
+// counts every row for an affected summary, whatever its state, because
+// deletion removes its history too.
+type DerivedImpactTotals struct {
+	Summaries int `json:"summaries"`
+	Shares    int `json:"shares"`
+}
+
+// DerivedImpact is the content-free answer of GET /api/v3/derived.
+type DerivedImpact struct {
+	SourceID  string                 `json:"sourceId"`
+	Summaries []DerivedSummaryImpact `json:"summaries"`
+	Totals    DerivedImpactTotals    `json:"totals"`
+}
+
+// sourceRefsContain reports whether the sealed refs pin sourceID. The ids
+// are compared canonically because sourceRefs are stored as the caller
+// wrote them.
+func sourceRefsContain(refs []SourceRef, sourceID string) bool {
+	id, err := ParseUUID(sourceID)
+	if err != nil {
+		return false
+	}
+	source := uuidText(id)
+	for _, ref := range refs {
+		refID, err := ParseUUID(ref.RecordID)
+		if err == nil && uuidText(refID) == source {
+			return true
+		}
+	}
+	return false
+}
+
+// shareCountsBySummary returns the owner's share rows per summary in one
+// query. The impact view never needs the link token, code or projection.
+func (s *Store) shareCountsBySummary(ctx context.Context, q db.DBTX, owner UserID) (map[string]int, error) {
+	rows, err := q.Query(ctx, `SELECT summary_id, count(*) FROM shares WHERE user_id=$1 GROUP BY summary_id`, owner)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var id pgtype.UUID
+		var n int
+		if err := rows.Scan(&id, &n); err != nil {
+			return nil, err
+		}
+		out[uuidText(id.Bytes)] = n
+	}
+	return out, rows.Err()
+}
+
+// DerivedImpact lists the owner's summaries that pin one source record,
+// with their effective approval and share counts. Unknown, malformed and
+// foreign source ids are the same ErrNotFound, so the route never reveals
+// another owner's record.
+func (s *Store) DerivedImpact(ctx context.Context, owner UserID, sourceID string) (DerivedImpact, error) {
+	id, err := ParseUUID(sourceID)
+	if err != nil {
+		return DerivedImpact{}, ErrNotFound
+	}
+	source := uuidText(id)
+	var exists bool
+	if err := s.pool.QueryRow(ctx, `SELECT EXISTS(
+		SELECT 1 FROM personal_records WHERE user_id=$1 AND id=$2)`, owner, source).Scan(&exists); err != nil {
+		return DerivedImpact{}, err
+	}
+	if !exists {
+		return DerivedImpact{}, ErrNotFound
+	}
+	list, err := s.recordsByKind(ctx, s.pool, owner, KindSummary)
+	if err != nil {
+		return DerivedImpact{}, err
+	}
+	counts, err := s.shareCountsBySummary(ctx, s.pool, owner)
+	if err != nil {
+		return DerivedImpact{}, err
+	}
+	out := DerivedImpact{SourceID: source, Summaries: []DerivedSummaryImpact{}, Totals: DerivedImpactTotals{}}
+	for i := range list {
+		r := &list[i]
+		if !sourceRefsContain(r.SourceRefs, source) {
+			continue
+		}
+		if err := s.enrichSummaryState(ctx, s.pool, owner, r); err != nil {
+			return DerivedImpact{}, err
+		}
+		shares := counts[r.ID]
+		out.Summaries = append(out.Summaries, DerivedSummaryImpact{
+			ID: r.ID, Title: r.Title, Version: r.Version,
+			Approved:   r.SummaryState == SummaryApproved && r.ApprovedVersion == r.Version,
+			ShareCount: shares,
+		})
+		out.Totals.Summaries++
+		out.Totals.Shares += shares
+	}
+	return out, nil
+}
+
+// lockOwnerSummaries takes FOR UPDATE on every owned summary before a
+// derived deletion reads sealed refs. Summary edits also lock their row
+// first and then the source (validateSourceRefs FOR SHARE), so the lock
+// order matches and a concurrent edit cannot move a summary off the source
+// between the scan and the delete.
+func lockOwnerSummaries(ctx context.Context, tx pgx.Tx, owner UserID) error {
+	rows, err := tx.Query(ctx, `SELECT id FROM personal_records
+		WHERE user_id=$1 AND kind=$2 FOR UPDATE`, owner, KindSummary)
+	if err != nil {
+		return err
+	}
+	rows.Close()
+	return rows.Err()
+}
+
+// deleteDerivedSummaries removes every owned summary whose sealed refs pin
+// sourceID, with its follow-ups. Shares, recipient sessions and share
+// events cascade through the existing 0400 foreign keys; no other owner's
+// row is touched.
+func (s *Store) deleteDerivedSummaries(ctx context.Context, tx pgx.Tx, owner UserID, sourceID string) error {
+	list, err := s.recordsByKind(ctx, tx, owner, KindSummary)
+	if err != nil {
+		return err
+	}
+	for _, r := range list {
+		if r.ID == sourceID || !sourceRefsContain(r.SourceRefs, sourceID) {
+			continue
+		}
+		if err := s.deleteSummaryChildren(ctx, tx, owner, r.ID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, "DELETE FROM personal_records WHERE user_id=$1 AND id=$2", owner, r.ID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Summaries lists the owner's consultation summaries with the effective

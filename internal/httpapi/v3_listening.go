@@ -380,7 +380,7 @@ func (s *Server) v3RoomStorage(w http.ResponseWriter, r *http.Request, p account
 		return
 	}
 	if !*in.Save && c.RecordID != "" {
-		if err := s.opt.Accounts.DeleteRecord(r.Context(), p.UserID, c.RecordID, c.recordVersion); err != nil {
+		if err := s.opt.Accounts.DeleteRecord(r.Context(), p.UserID, c.RecordID, c.recordVersion, account.DerivedKeep); err != nil {
 			s.v3Error(w, r, err)
 			return
 		}

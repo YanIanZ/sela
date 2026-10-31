@@ -155,6 +155,22 @@ export type Entry = {
   paused?: boolean;
 };
 
+/** One owned summary that pins a source record (content-free). */
+export type DerivedSummaryImpact = {
+  id: string;
+  title: string;
+  version: number;
+  approved: boolean;
+  shareCount: number;
+};
+
+/** GET /derived: what deleting one source record would affect. */
+export type DerivedImpact = {
+  sourceId: string;
+  summaries: DerivedSummaryImpact[];
+  totals: { summaries: number; shares: number };
+};
+
 export type ReadingSource = {
   id: string;
   title: string;

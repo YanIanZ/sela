@@ -262,7 +262,7 @@ func TestContinuitySummarySourcesApprovalAndState(t *testing.T) {
 	}
 
 	// Deleting a quoted source also invalidates the approval on read.
-	if err := f.store.DeleteRecord(ctx, pa.UserID, note.ID, 2); err != nil {
+	if err := f.store.DeleteRecord(ctx, pa.UserID, note.ID, 2, account.DerivedKeep); err != nil {
 		t.Fatal(err)
 	}
 	deletedSource, err := f.store.Summary(ctx, pa.UserID, summary.ID)

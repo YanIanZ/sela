@@ -34,7 +34,7 @@ func TestV27V28V33PersonalRecords(t *testing.T) {
 	if _, err = f.store.Record(ctx, pb.UserID, first.ID); !errors.Is(err, account.ErrNotFound) {
 		t.Fatalf("isolation read: %v", err)
 	}
-	if err = f.store.DeleteRecord(ctx, pb.UserID, first.ID, 1); !errors.Is(err, account.ErrNotFound) {
+	if err = f.store.DeleteRecord(ctx, pb.UserID, first.ID, 1, account.DerivedKeep); !errors.Is(err, account.ErrNotFound) {
 		t.Fatalf("isolation delete: %v", err)
 	}
 	input.Text = "Synthetic correction: saya ingin menulis malam ini."
@@ -61,7 +61,7 @@ func TestV27V28V33PersonalRecords(t *testing.T) {
 	if err != nil || got.Text != input.Text {
 		t.Fatalf("restart: %v", err)
 	}
-	if err = f.store.DeleteRecord(ctx, pa.UserID, first.ID, 2); err != nil {
+	if err = f.store.DeleteRecord(ctx, pa.UserID, first.ID, 2, account.DerivedKeep); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = f.store.Record(ctx, pa.UserID, first.ID); !errors.Is(err, account.ErrNotFound) {

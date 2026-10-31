@@ -135,7 +135,8 @@ type OwnerStore interface {
 	Record(context.Context, UserID, string) (PersonalRecord, error)
 	RecordHistory(context.Context, UserID, string) ([]PersonalRecord, error)
 	UpdateRecord(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
-	DeleteRecord(context.Context, UserID, string, int) error
+	DeleteRecord(context.Context, UserID, string, int, string) error
+	DerivedImpact(context.Context, UserID, string) (DerivedImpact, error)
 
 	Memory(context.Context, UserID) (MemoryView, error)
 	MemoryItem(context.Context, UserID, string) (PersonalRecord, error)
