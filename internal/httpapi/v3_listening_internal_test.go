@@ -37,6 +37,9 @@ func TestMemoryContextSpansHonoursAT1Limits(t *testing.T) {
 	if got := memoryContextSpans([]account.PersonalRecord{{Text: "unreviewed", ReviewStatus: "unreviewed"}}); len(got) != 0 {
 		t.Fatalf("unreviewed memory was sent: %v", got)
 	}
+	if got := memoryContextSpans([]account.PersonalRecord{{Text: "rejected", ReviewStatus: "rejected"}}); len(got) != 0 {
+		t.Fatalf("rejected memory was sent: %v", got)
+	}
 }
 
 func TestListeningSpansKeepsMemoryInsideAT1(t *testing.T) {

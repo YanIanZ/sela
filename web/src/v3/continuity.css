@@ -5,6 +5,11 @@
 .c-consent, .c-editor { display: grid; gap: 1.25rem; padding: 1.5rem; border-radius: var(--radius-4); background: var(--c-surface); }
 .c-records { display: grid; gap: 1.5rem; }
 .c-memory-item { padding-block: 1.5rem; border-top: 1px solid var(--c-border-subtle); display: grid; gap: 0.75rem; }
+.c-memory-proposals { display: grid; gap: 1.25rem; padding-top: 1.5rem; border-top: 1px solid var(--c-border-subtle); }
+.c-memory-proposals .c-state-row { border-top: 0; padding-top: 0; }
+.c-memory-proposals .c-state-row h2 { margin-bottom: 0.5rem; }
+.c-memory-quote { margin: 0; padding-left: 1rem; border-left: 4px solid var(--c-border-control); }
+.c-memory-quote p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .c-original { white-space: pre-wrap; overflow-wrap: anywhere; line-height: var(--line-height-body); }
 .c-document-list { display: grid; }
 .s-shell .c-document-link { display: flex; gap: 1rem; justify-content: space-between; align-items: center; padding: 1.5rem 0; border-top: 1px solid var(--c-border-subtle); color: var(--c-text); text-decoration: none; }

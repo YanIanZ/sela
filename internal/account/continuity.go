@@ -40,10 +40,39 @@ const (
 
 // SourceRef pins one explicitly selected source record and the exact
 // revision the owner saw. The reference is stored inside the sealed
-// content, so it is encrypted and owner-scoped like the text.
+// content, so it is encrypted and owner-scoped like the text. Quote and
+// TurnKey are set only for an AT-3 memory proposal: they carry the user's
+// own words and the caller's turn key, so the review card can show the
+// exact sentence without opening the conversation.
 type SourceRef struct {
 	RecordID string `json:"recordId"`
 	Version  int    `json:"version"`
+	Quote    string `json:"quote,omitempty"`
+	TurnKey  string `json:"turnKey,omitempty"`
+}
+
+// Review states shared by a memory item and its proposal. They match the
+// reflection review states; an AI proposal starts unreviewed.
+const (
+	ReviewUnreviewed = "unreviewed"
+	ReviewConfirmed  = "confirmed"
+	ReviewCorrected  = "corrected"
+	ReviewRejected   = "rejected"
+)
+
+// Memory review actions accepted by ReviewMemory.
+const (
+	MemoryReviewConfirm = "confirm"
+	MemoryReviewCorrect = "correct"
+	MemoryReviewReject  = "reject"
+)
+
+// MemoryProposalInput is one released AT-3 proposal. Text is the AI
+// wording after the router released it; SourceRefs pin the saved
+// conversation and the user's quote it rests on.
+type MemoryProposalInput struct {
+	Text       string
+	SourceRefs []SourceRef
 }
 
 // SummaryPrepared is the optional preparation the owner writes for a
@@ -278,6 +307,10 @@ func (s *Store) validateSourceRefs(ctx context.Context, q db.DBTX, owner UserID,
 		if err != nil || ref.Version <= 0 {
 			return invalid("sourceRefs")
 		}
+		if !utf8.ValidString(ref.Quote) || utf8.RuneCountInString(ref.Quote) > ContinuityTextMax ||
+			!utf8.ValidString(ref.TurnKey) || utf8.RuneCountInString(ref.TurnKey) > 64 {
+			return invalid("sourceRefs")
+		}
 		key := uuidText(id)
 		if seen[key] {
 			return invalid("sourceRefs")
@@ -473,6 +506,140 @@ func (s *Store) DeleteMemory(ctx context.Context, owner UserID, id string, versi
 		_, err = tx.Exec(ctx, "DELETE FROM personal_records WHERE user_id=$1 AND id=$2", owner, id)
 		return err
 	})
+}
+
+// validateMemoryProposal checks one released AT-3 proposal before it is
+// stored. The quote is the owner's own words from the cited turn, so it is
+// required; nothing without a source quote becomes a proposal.
+func validateMemoryProposal(in MemoryProposalInput) error {
+	if !utf8.ValidString(in.Text) || strings.TrimSpace(in.Text) == "" || utf8.RuneCountInString(in.Text) > ContinuityTextMax {
+		return invalid("text")
+	}
+	if len(in.SourceRefs) == 0 || len(in.SourceRefs) > MaxSourceRefs {
+		return invalid("sourceRefs")
+	}
+	for _, ref := range in.SourceRefs {
+		if !utf8.ValidString(ref.Quote) || strings.TrimSpace(ref.Quote) == "" ||
+			utf8.RuneCountInString(ref.Quote) > ContinuityTextMax {
+			return invalid("sourceRefs")
+		}
+		if !utf8.ValidString(ref.TurnKey) || utf8.RuneCountInString(ref.TurnKey) > 64 {
+			return invalid("sourceRefs")
+		}
+	}
+	return nil
+}
+
+// CreateMemoryProposals stores released AT-3 proposals as explicit memory
+// items in one transaction. Every item starts unreviewed with the
+// unconfirmed-interpretation class; only the owner's later review can make
+// it usable as reply context. A proposal without a source quote, or with a
+// source that is not current and owner-owned, is refused.
+func (s *Store) CreateMemoryProposals(ctx context.Context, owner UserID, proposals []MemoryProposalInput) ([]PersonalRecord, error) {
+	if len(proposals) == 0 {
+		return []PersonalRecord{}, nil
+	}
+	if len(proposals) > 5 {
+		return nil, invalid("proposals")
+	}
+	now := s.clock()
+	out := make([]PersonalRecord, 0, len(proposals))
+	for _, in := range proposals {
+		if err := validateMemoryProposal(in); err != nil {
+			return nil, err
+		}
+		a := safety.Assess(in.Text)
+		out = append(out, PersonalRecord{
+			ID: newID().String(), Kind: KindMemory, Text: in.Text, Version: 1,
+			Provenance: "unconfirmed_interpretation", ReviewStatus: ReviewUnreviewed,
+			Safety: string(a.Level), Ruleset: a.Ruleset,
+			SourceRefs: cloneSourceRefs(in.SourceRefs), CreatedAt: now, UpdatedAt: now,
+		})
+	}
+	err := s.tx(ctx, func(tx pgx.Tx) error {
+		if _, err := userKind(ctx, tx, owner, true); err != nil {
+			return err
+		}
+		enabled, err := s.memoryEnabled(ctx, tx, owner)
+		if err != nil {
+			return err
+		}
+		if !enabled {
+			return withField(ErrConsentRequired, "personalMemory")
+		}
+		for i := range out {
+			if err := s.validateSourceRefs(ctx, tx, owner, out[i].SourceRefs, true); err != nil {
+				return err
+			}
+		}
+		for _, r := range out {
+			if err := s.insertContinuityRecord(ctx, tx, owner, r); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ReviewMemory applies the owner's review to one memory proposal. Every
+// action appends a revision: confirm and reject keep the text and change
+// only the status, while correct replaces the text with the
+// user-correction class. The exact expected version is required, so a stale
+// tab never overwrites a newer review.
+func (s *Store) ReviewMemory(ctx context.Context, owner UserID, id string, expectedVersion int, action, text string) (PersonalRecord, error) {
+	switch action {
+	case MemoryReviewConfirm, MemoryReviewReject:
+	case MemoryReviewCorrect:
+		if !utf8.ValidString(text) || strings.TrimSpace(text) == "" || utf8.RuneCountInString(text) > ContinuityTextMax {
+			return PersonalRecord{}, invalid("text")
+		}
+	default:
+		return PersonalRecord{}, invalid("action")
+	}
+	var result PersonalRecord
+	err := s.tx(ctx, func(tx pgx.Tx) error {
+		if _, err := userKind(ctx, tx, owner, true); err != nil {
+			return err
+		}
+		r, err := s.record(ctx, tx, owner, id, true)
+		if err != nil {
+			return err
+		}
+		if r.Kind != KindMemory {
+			return ErrNotFound
+		}
+		if r.Version != expectedVersion {
+			return ErrStaleVersion
+		}
+		enabled, err := s.memoryEnabled(ctx, tx, owner)
+		if err != nil {
+			return err
+		}
+		if !enabled {
+			return withField(ErrConsentRequired, "personalMemory")
+		}
+		r.UpdatedAt = s.clock()
+		switch action {
+		case MemoryReviewConfirm:
+			r.ReviewStatus = ReviewConfirmed
+		case MemoryReviewReject:
+			r.ReviewStatus = ReviewRejected
+		case MemoryReviewCorrect:
+			r.Text = text
+			r.Provenance = "user_correction"
+			r.ReviewStatus = ReviewCorrected
+			a := safety.Assess(r.Title + "\n" + r.Text)
+			r.Safety, r.Ruleset = string(a.Level), a.Ruleset
+		}
+		r.Version++
+		result = r
+		return s.updateContinuityRecord(ctx, tx, owner, r)
+	})
+	return result, err
 }
 
 // Summaries lists the owner's consultation summaries with the effective

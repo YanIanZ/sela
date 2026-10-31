@@ -16,16 +16,66 @@ import {
   PageHeader,
   ProvenanceBadge,
   ReviewStatusChip,
+  SelectField,
   TextArea,
   TextField,
 } from "../ui";
 
-export type SourceRef = { recordId: string; version: number };
+export type SourceRef = {
+  recordId: string;
+  version: number;
+  /** The user's exact words, set only for an AT-3 proposal. */
+  quote?: string;
+  turnKey?: string;
+};
 export type ContinuityRecord = Entry & {
   sourceRefs?: SourceRef[];
   summaryState?: "draft" | "approved";
   prepared?: { goal: string; questions: string; bring: string };
   parentId?: string;
+};
+
+type Words = (id: string, en: string) => string;
+
+const excerpt = (text: string) => {
+  const line = text.trim().split("\n")[0] ?? "";
+  return line.length > 90 ? `${line.slice(0, 90)}…` : line;
+};
+
+const memoryHeading = (r: Entry, w: Words) =>
+  r.title.trim() || excerpt(r.text) || w("Konteks pribadi", "Personal context");
+
+const memoryStatusLabel = (status: string, w: Words) => {
+  switch (status) {
+    case "unreviewed":
+      return w("Belum ditinjau", "Not reviewed");
+    case "rejected":
+      return w("Ditolak", "Rejected");
+    case "corrected":
+      return w("Dikoreksi olehmu", "Corrected by you");
+    default:
+      return w("Dikonfirmasi olehmu", "Confirmed by you");
+  }
+};
+
+const provenanceLine = (provenance: string, w: Words) => {
+  switch (provenance) {
+    case "unconfirmed_interpretation":
+      return w(
+        "Kata-katanya disusun Sela sebagai tafsiran, bukan kata-katamu.",
+        "The wording is Sela's interpretation, not your own words.",
+      );
+    case "user_correction":
+      return w(
+        "Kata-katanya kamu tulis sendiri setelah mengoreksi usulan Sela.",
+        "You wrote these words yourself after correcting Sela's suggestion.",
+      );
+    default:
+      return w(
+        "Kata-katanya kamu tulis sendiri.",
+        "You wrote these words yourself.",
+      );
+  }
 };
 export const sourceText = (r: Entry) =>
   r.kind === "conversation"
@@ -62,6 +112,280 @@ function ContinuityHelp({ records }: { records: Entry[] }) {
         {w("Butuh bantuan sekarang", "Need help now")}
       </LinkButton>
     </Notice>
+  );
+}
+
+/**
+ * MemoryProposals asks AT-3 for suggestions from one saved conversation and
+ * keeps every unreviewed card in view with the user's quote and the AI
+ * wording. Nothing here is used as reply context until the user confirms or
+ * corrects it.
+ */
+function MemoryProposals({
+  items,
+  onChanged,
+}: {
+  items: ContinuityRecord[];
+  onChanged: () => void;
+}) {
+  const w = useWords();
+  const loc = useLocale();
+  const [open, setOpen] = useState(false);
+  const [conversations, setConversations] = useState<Entry[] | null>(null);
+  const [chosen, setChosen] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const [note, setNote] = useState("");
+  const [reviewed, setReviewed] = useState<Record<string, true>>({});
+  const [correcting, setCorrecting] = useState<string | null>(null);
+  const [correction, setCorrection] = useState("");
+  const unreviewed = items.filter(
+    (r) => r.reviewStatus === "unreviewed" && !reviewed[r.id],
+  );
+  const loadConversations = () => {
+    setLoading(true);
+    setError(null);
+    api<{ records: Entry[] }>("/records")
+      .then((d) => {
+        const list = d.records.filter((r) => r.kind === "conversation");
+        setConversations(list);
+        setChosen((current) => current || list[0]?.id || "");
+      })
+      .catch(setError)
+      .finally(() => setLoading(false));
+  };
+  const openPanel = () => {
+    setOpen(true);
+    // Reload on every open so a conversation saved or continued in another
+    // tab is offered at its current version.
+    if (!loading) loadConversations();
+  };
+  const request = async () => {
+    const conv = (conversations ?? []).find((r) => r.id === chosen);
+    if (!conv) return;
+    setBusy(true);
+    setError(null);
+    setNote("");
+    try {
+      const out = await api<{ proposals: ContinuityRecord[]; aiState: string }>(
+        "/memory/proposals",
+        { conversationId: conv.id, expectedVersion: conv.version },
+        "POST",
+      );
+      setNote(
+        out.aiState === "unavailable"
+          ? w(
+              "Sela belum bisa membuat usulan sekarang. Coba lagi nanti.",
+              "Sela can't suggest anything right now. Try again later.",
+            )
+          : out.aiState === "no_input"
+            ? w(
+                "Percakapan ini belum punya tulisanmu yang bisa dijadikan usulan.",
+                "This conversation has no writing of yours to base a suggestion on.",
+              )
+            : out.proposals.length === 0
+              ? w(
+                  "Tidak ada hal baru yang perlu diingat dari percakapan ini.",
+                  "There is nothing new worth remembering from this conversation.",
+                )
+              : w(
+                  "Sela mengusulkan hal di bawah. Periksa dulu sebelum dipakai untuk membalas.",
+                  "Sela suggested the items below. Review them before they are used for replies.",
+                ),
+      );
+      onChanged();
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const review = async (
+    r: ContinuityRecord,
+    action: "confirm" | "correct" | "reject",
+    text?: string,
+  ) => {
+    setBusy(true);
+    setError(null);
+    setNote("");
+    try {
+      await api<ContinuityRecord>(
+        `/memory/${r.id}/review`,
+        {
+          expectedVersion: r.version,
+          action,
+          ...(action === "correct" ? { text } : {}),
+        },
+        "PATCH",
+      );
+      setReviewed((current) => ({ ...current, [r.id]: true }));
+      setCorrecting(null);
+      setCorrection("");
+      onChanged();
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section
+      className="c-memory-proposals"
+      aria-labelledby="memory-proposals-heading"
+      aria-busy={busy || loading}
+    >
+      <div className="c-state-row">
+        <div>
+          <h2 id="memory-proposals-heading">
+            {w("Usulan dari Sela", "Suggestions from Sela")}
+          </h2>
+          <p className="s-hint">
+            {w(
+              "Dari percakapan yang sudah kamu simpan. Setiap usulan masih tafsiran sampai kamu periksa. Memerlukan izin memori dan izin balasan AI.",
+              "From conversations you already saved. Every suggestion stays an interpretation until you review it. Needs memory and AI reply consent.",
+            )}
+          </p>
+        </div>
+        <Button variant="secondary" onClick={openPanel} disabled={loading || busy}>
+          {w("Minta usulan", "Ask for suggestions")}
+        </Button>
+      </div>
+      {open && (
+        <div className="c-editor">
+          {loading && <Loading label={w("Membuka percakapan…", "Opening conversations…")} />}
+          {!loading && conversations?.length === 0 && (
+            <p className="s-hint">
+              {w(
+                "Belum ada percakapan tersimpan. Simpan percakapan dulu, lalu minta usulan.",
+                "No saved conversation yet. Save a conversation first, then ask for suggestions.",
+              )}
+            </p>
+          )}
+          {(conversations?.length ?? 0) > 0 && (
+            <SelectField
+              label={w("Pilih percakapan tersimpan", "Choose a saved conversation")}
+              value={chosen}
+              onChange={(e) => setChosen(e.target.value)}
+            >
+              {(conversations ?? []).map((r) => (
+                <option key={r.id} value={r.id}>
+                  {memoryHeading(r, w)} · {loc.shortDate(r.updatedAt)}
+                </option>
+              ))}
+            </SelectField>
+          )}
+          <div className="s-actions">
+            <Button
+              variant="primary"
+              onClick={() => void request()}
+              disabled={!chosen || busy || loading}
+            >
+              {w(
+                "Buat usulan dari percakapan ini",
+                "Create suggestions from this conversation",
+              )}
+            </Button>
+            <Button variant="quiet" onClick={() => setOpen(false)} disabled={busy}>
+              {w("Tutup", "Close")}
+            </Button>
+          </div>
+        </div>
+      )}
+      {note && (
+        <p className="s-hint" role="status">
+          {note}
+        </p>
+      )}
+      <ErrorNotice error={error} onRetry={open ? loadConversations : openPanel} />
+      {unreviewed.length > 0 && (
+        <div
+          className="c-document-list"
+          aria-label={w("Usulan yang belum ditinjau", "Suggestions to review")}
+        >
+          {unreviewed.map((r) => {
+            const quote = r.sourceRefs?.find((ref) => ref.quote)?.quote;
+            return (
+              <article className="c-memory-item" key={r.id}>
+                <div className="s-record-meta">
+                  <ProvenanceBadge value={r.provenance} />
+                  <ReviewStatusChip value={r.reviewStatus} />
+                </div>
+                {quote && (
+                  <blockquote className="c-memory-quote">
+                    <p>{quote}</p>
+                  </blockquote>
+                )}
+                <p className="c-original">{r.text}</p>
+                {correcting === r.id ? (
+                  <form
+                    className="c-editor"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void review(r, "correct", correction);
+                    }}
+                  >
+                    <TextArea
+                      label={w("Kata-katamu", "Your wording")}
+                      value={correction}
+                      onChange={(e) => setCorrection(e.target.value)}
+                      required
+                      maxLength={6000}
+                      rows={4}
+                    />
+                    <div className="s-actions">
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        disabled={busy || !correction.trim()}
+                      >
+                        {w("Simpan koreksi", "Save correction")}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setCorrecting(null);
+                          setCorrection("");
+                        }}
+                        disabled={busy}
+                      >
+                        {w("Batal", "Cancel")}
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="s-actions">
+                    <Button
+                      variant="primary"
+                      onClick={() => void review(r, "confirm")}
+                      disabled={busy}
+                    >
+                      {w("Ingat", "Remember")}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setCorrecting(r.id);
+                        setCorrection(r.text);
+                      }}
+                      disabled={busy}
+                    >
+                      {w("Ubah dulu", "Edit first")}
+                    </Button>
+                    <Button
+                      variant="quiet"
+                      onClick={() => void review(r, "reject")}
+                      disabled={busy}
+                    >
+                      {w("Jangan", "No")}
+                    </Button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -185,8 +509,8 @@ export function MemoryPage() {
           <div className="c-state-row">
             <span>
               {w(
-                "Aktif · ditulis olehmu · dipakai membalas hanya saat izin AI aktif",
-                "On · written by you · used for replies only while AI consent is on",
+                "Aktif · kamu yang menentukan · dipakai membalas hanya saat izin AI aktif",
+                "On · you decide · used for replies only while AI consent is on",
               )}
             </span>
             <Button
@@ -245,6 +569,7 @@ export function MemoryPage() {
               </Button>
             </div>
           </form>
+          <MemoryProposals items={data.items} onChanged={load} />
           <ContinuityHelp records={data.items} />
           <section
             className="c-document-list"
@@ -266,12 +591,10 @@ export function MemoryPage() {
                 className="c-document-link"
               >
                 <div>
-                  <h2>{r.title || w("Konteks pribadi", "Personal context")}</h2>
+                  <h2>{memoryHeading(r, w)}</h2>
                   <p className="s-muted">
-                    {r.reviewStatus === "corrected"
-                      ? w("Dikoreksi olehmu", "Corrected by you")
-                      : w("Dikonfirmasi olehmu", "Confirmed by you")}{" "}
-                    · {loc.shortDate(r.updatedAt)}
+                    {memoryStatusLabel(r.reviewStatus, w)} ·{" "}
+                    {loc.shortDate(r.updatedAt)}
                   </p>
                 </div>
                 <Icon name="arrow-right" />
@@ -296,6 +619,8 @@ export function MemoryDetailPage({ id }: { id: string }) {
   >([]);
   const [error, setError] = useState<unknown>(null);
   const [editing, setEditing] = useState(false);
+  const [correctingReview, setCorrectingReview] = useState(false);
+  const [correction, setCorrection] = useState("");
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -343,6 +668,34 @@ export function MemoryDetailPage({ id }: { id: string }) {
       setBusy(false);
     }
   };
+  const review = async (
+    action: "confirm" | "correct" | "reject",
+    nextText?: string,
+  ) => {
+    if (!record) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const next = await api<ContinuityRecord>(
+        `/memory/${record.id}/review`,
+        {
+          expectedVersion: record.version,
+          action,
+          ...(action === "correct" ? { text: nextText } : {}),
+        },
+        "PATCH",
+      );
+      setRecord(next);
+      setTitle(next.title);
+      setText(next.text);
+      setCorrectingReview(false);
+      setCorrection("");
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
   const sourceLabel = (r: Entry) =>
     r.title ||
     (r.kind === "conversation"
@@ -350,15 +703,32 @@ export function MemoryDetailPage({ id }: { id: string }) {
       : r.kind === "checkin"
         ? w("Cek perasaan", "Check-in")
         : w("Catatan", "Note"));
+  const quote = record?.sourceRefs?.find((ref) => ref.quote)?.quote;
+  const unreviewed = record?.reviewStatus === "unreviewed";
+  const rejected = record?.reviewStatus === "rejected";
+  const editable =
+    record?.reviewStatus === "confirmed" || record?.reviewStatus === "corrected";
   return (
     <div className="s-narrow c-memory">
       <PageHeader
         back={{ to: "/notes/memory", label: w("Yang Sela ingat", "What Sela remembers") }}
-        title={record?.title || w("Konteks pribadi", "Personal context")}
-        lead={w(
-          "Konteks ini kamu pilih sendiri. Saat izin balasan AI aktif, memori yang dikonfirmasi bisa dipakai Sela untuk membalas.",
-          "You chose this context yourself. While AI reply consent is on, confirmed memory may be used by Sela to reply.",
-        )}
+        title={record ? memoryHeading(record, w) : w("Konteks pribadi", "Personal context")}
+        lead={
+          unreviewed
+            ? w(
+                "Usulan Sela ini belum dipakai untuk membalas sampai kamu periksa.",
+                "Sela's suggestion isn't used for replies until you review it.",
+              )
+            : rejected
+              ? w(
+                  "Kamu menolak usulan ini. Kamu bisa meninjaunya lagi kapan saja.",
+                  "You rejected this suggestion. You can review it again at any time.",
+                )
+              : w(
+                  "Konteks ini kamu pilih sendiri. Saat izin balasan AI aktif, memori yang dikonfirmasi bisa dipakai Sela untuk membalas.",
+                  "You chose this context yourself. While AI reply consent is on, confirmed memory may be used by Sela to reply.",
+                )
+        }
       />
       <ErrorNotice error={error} onRetry={load} />
       {!record && !error && <Loading label={w("Membuka…", "Opening…")} />}
@@ -367,24 +737,26 @@ export function MemoryDetailPage({ id }: { id: string }) {
           <ContinuityHelp records={[record]} />
           <article className="c-paper">
             <p className="s-hint">
-              {record.reviewStatus === "corrected"
+              {unreviewed
                 ? w(
-                    "Kamu sudah mengoreksi konteks ini.",
-                    "You corrected this context.",
+                    "Usulan Sela ini belum kamu tinjau. Konfirmasi, perbaiki, atau tolak sebelum dipakai untuk membalas.",
+                    "You haven't reviewed this suggestion yet. Confirm, correct or reject it before it is used for replies.",
                   )
-                : w(
-                    "Kamu sudah mengonfirmasi konteks ini.",
-                    "You confirmed this context.",
-                  )}{" "}
-              {record.provenance === "user_correction"
-                ? w(
-                    "Yang tersimpan adalah versi koreksimu.",
-                    "The saved version is your correction.",
-                  )
-                : w(
-                    "Kata-katanya kamu tulis sendiri.",
-                    "You wrote these words yourself.",
-                  )}
+                : rejected
+                  ? w(
+                      "Kamu menolak usulan ini. Kamu bisa menerima atau memperbaikinya lagi kapan saja.",
+                      "You rejected this suggestion. You can accept or correct it again at any time.",
+                    )
+                  : record.reviewStatus === "corrected"
+                    ? w(
+                        "Kamu sudah mengoreksi konteks ini.",
+                        "You corrected this context.",
+                      )
+                    : w(
+                        "Kamu sudah mengonfirmasi konteks ini.",
+                        "You confirmed this context.",
+                      )}{" "}
+              {provenanceLine(record.provenance, w)}
             </p>
             <div className="s-record-meta">
               <ProvenanceBadge value={record.provenance} />
@@ -404,6 +776,11 @@ export function MemoryDetailPage({ id }: { id: string }) {
                 <dd>{loc.dateTime(record.updatedAt)}</dd>
               </div>
             </dl>
+            {quote && (
+              <blockquote className="c-memory-quote">
+                <p>{quote}</p>
+              </blockquote>
+            )}
             {editing ? (
               <form className="c-editor" onSubmit={(e) => void save(e)}>
                 <TextField
@@ -440,13 +817,83 @@ export function MemoryDetailPage({ id }: { id: string }) {
                   </Button>
                 </div>
               </form>
+            ) : correctingReview ? (
+              <form
+                className="c-editor"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void review("correct", correction);
+                }}
+              >
+                <TextArea
+                  label={w("Kata-katamu", "Your wording")}
+                  value={correction}
+                  onChange={(e) => setCorrection(e.target.value)}
+                  required
+                  maxLength={6000}
+                  rows={6}
+                  hint={w(
+                    "Yang tersimpan menjadi versi koreksimu, bukan kata-kata Sela.",
+                    "The saved version becomes your correction, not Sela's wording.",
+                  )}
+                />
+                <div className="s-actions">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={busy || !correction.trim()}
+                  >
+                    {w("Simpan koreksi", "Save correction")}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setCorrectingReview(false);
+                      setCorrection("");
+                    }}
+                  >
+                    {w("Batal", "Cancel")}
+                  </Button>
+                </div>
+              </form>
             ) : (
               <>
                 <p className="c-original">{record.text}</p>
                 <div className="s-actions">
-                  <Button variant="secondary" onClick={() => setEditing(true)}>
-                    {w("Perbaiki", "Edit")}
-                  </Button>
+                  {(unreviewed || rejected) && (
+                    <Button
+                      variant="primary"
+                      onClick={() => void review("confirm")}
+                      disabled={busy}
+                    >
+                      {w("Konfirmasi", "Confirm")}
+                    </Button>
+                  )}
+                  {(unreviewed || rejected) && (
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setCorrectingReview(true);
+                        setCorrection(record.text);
+                      }}
+                      disabled={busy}
+                    >
+                      {w("Perbaiki", "Correct")}
+                    </Button>
+                  )}
+                  {unreviewed && (
+                    <Button
+                      variant="quiet"
+                      onClick={() => void review("reject")}
+                      disabled={busy}
+                    >
+                      {w("Tolak", "Reject")}
+                    </Button>
+                  )}
+                  {editable && (
+                    <Button variant="secondary" onClick={() => setEditing(true)}>
+                      {w("Perbaiki", "Edit")}
+                    </Button>
+                  )}
                   <InlineConfirm
                     label={w("Hapus", "Delete")}
                     question={w("Hapus konteks ini?", "Delete this context?")}

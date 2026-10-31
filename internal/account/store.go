@@ -140,6 +140,8 @@ type OwnerStore interface {
 	Memory(context.Context, UserID) (MemoryView, error)
 	MemoryItem(context.Context, UserID, string) (PersonalRecord, error)
 	CreateMemory(context.Context, UserID, RecordInput) (PersonalRecord, error)
+	CreateMemoryProposals(context.Context, UserID, []MemoryProposalInput) ([]PersonalRecord, error)
+	ReviewMemory(context.Context, UserID, string, int, string, string) (PersonalRecord, error)
 	UpdateMemory(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
 	DeleteMemory(context.Context, UserID, string, int) error
 	Summaries(context.Context, UserID) ([]PersonalRecord, error)
