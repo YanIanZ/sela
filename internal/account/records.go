@@ -66,6 +66,7 @@ type RecordInput struct {
 	SourceRefs      []SourceRef        `json:"sourceRefs"`
 	Prepared        *SummaryPrepared   `json:"prepared"`
 	Sections        *FollowupSections  `json:"sections"`
+	Items           []SummaryItem      `json:"items"`
 	ParentID        string             `json:"-"`
 	Reflections     []Reflection       `json:"-"`
 }
@@ -91,6 +92,7 @@ type PersonalRecord struct {
 	ApprovedVersion int                `json:"approvedVersion,omitempty"`
 	Prepared        *SummaryPrepared   `json:"prepared,omitempty"`
 	Sections        *FollowupSections  `json:"sections,omitempty"`
+	Items           []SummaryItem      `json:"items,omitempty"`
 	ParentID        string             `json:"parentId,omitempty"`
 	Reflections     []Reflection       `json:"reflections,omitempty"`
 	CreatedAt       time.Time          `json:"createdAt"`
@@ -125,9 +127,13 @@ func validateRecord(in RecordInput) error {
 		return invalid("text")
 	}
 	// Structured sections belong to a follow-up only; the generic record
-	// surface must not silently drop them.
+	// surface must not silently drop them. Statement items belong to a
+	// consultation summary only.
 	if in.Sections != nil {
 		return invalid("sections")
+	}
+	if len(in.Items) > 0 {
+		return invalid("items")
 	}
 	if in.Kind != "note" && in.Kind != "checkin" && in.Kind != "conversation" {
 		return invalid("kind")

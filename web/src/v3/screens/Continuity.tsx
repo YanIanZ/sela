@@ -34,11 +34,22 @@ export type FollowupSections = {
   agreed: string;
   askNext: string;
 };
+/** One optional quote-backed statement in a consultation summary. */
+export type SummaryItem = {
+  id: string;
+  text: string;
+  quote?: string;
+  sourceRef: { recordId: string; version: number };
+  provenance: "user_original" | "user_correction" | string;
+  reviewStatus: string;
+  position: number;
+};
 export type ContinuityRecord = Entry & {
   sourceRefs?: SourceRef[];
   summaryState?: "draft" | "approved";
   prepared?: { goal: string; questions: string; bring: string };
   sections?: FollowupSections;
+  items?: SummaryItem[];
   parentId?: string;
 };
 
@@ -48,6 +59,18 @@ const excerpt = (text: string) => {
   const line = text.trim().split("\n")[0] ?? "";
   return line.length > 90 ? `${line.slice(0, 90)}…` : line;
 };
+
+const sourceLabel = (r: Entry, w: Words) =>
+  r.title ||
+  (r.kind === "conversation"
+    ? w("Percakapan", "Conversation")
+    : r.kind === "checkin"
+      ? w("Cek perasaan", "Check-in")
+      : w("Catatan", "Note"));
+
+/** The first 1200 code points of a source, used as the item's quote. */
+const sourceQuote = (r: Entry) =>
+  [...sourceText(r).trim()].slice(0, 1200).join("");
 
 const memoryHeading = (r: Entry, w: Words) =>
   r.title.trim() || excerpt(r.text) || w("Konteks pribadi", "Personal context");
@@ -196,6 +219,219 @@ function FollowupFields({
           "A short addition beyond the four parts.",
         )}
       />
+    </fieldset>
+  );
+}
+
+/** A builder-local statement; the server assigns an id on save. */
+type SummaryItemDraft = {
+  id: string;
+  text: string;
+  quote: string;
+  sourceRef: { recordId: string; version: number };
+};
+
+const summaryItemDraft = (r: Entry): SummaryItemDraft => {
+  const quote = sourceQuote(r);
+  return {
+    id: "",
+    // The quote may be up to 1200 code points while the owner's wording
+    // is capped at 800; start the wording at the shorter excerpt.
+    text: [...quote].slice(0, 800).join(""),
+    quote,
+    sourceRef: { recordId: r.id, version: r.version },
+  };
+};
+
+const MAX_SUMMARY_ITEMS = 36;
+const MAX_SUMMARY_ITEM_TEXT = 800;
+
+/**
+ * SummaryItemsEditor turns chosen sources into quote-backed statements.
+ * Every item keeps the exact source quote read-only while the owner edits
+ * the wording. Items can be reordered or removed; an empty id means a new
+ * item the server will assign once.
+ */
+function SummaryItemsEditor({
+  items,
+  sources,
+  onChange,
+  disabled,
+}: {
+  items: SummaryItemDraft[];
+  sources: Entry[];
+  onChange: (next: SummaryItemDraft[]) => void;
+  disabled?: boolean;
+}) {
+  const w = useWords();
+  const [chosen, setChosen] = useState("");
+  const selected =
+    sources.find((r) => r.id === chosen) ?? sources[0] ?? null;
+  const full = items.length >= MAX_SUMMARY_ITEMS;
+  const add = () => {
+    if (!selected || full) return;
+    onChange([...items, summaryItemDraft(selected)]);
+  };
+  const move = (index: number, delta: number) => {
+    const next = [...items];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target]!, next[index]!];
+    onChange(next);
+  };
+  return (
+    <fieldset
+      className="c-summary-items-editor"
+      aria-describedby="summary-items-hint"
+    >
+      <legend className="s-legend">
+        {w("Bagian dari sumber", "Statements from a source")}
+      </legend>
+      <p className="s-hint" id="summary-items-hint">
+        {w(
+          "Setiap bagian membawa kutipan dari sumber yang kamu pilih. Kata-katanya boleh kamu ubah.",
+          "Each statement carries a quote from a source you chose. You can edit the wording.",
+        )}
+      </p>
+      <p className="s-hint" role="status">
+        {items.length === 0
+          ? w("Belum ada bagian.", "No statements yet.")
+          : w(
+              `${items.length} bagian · maksimal ${MAX_SUMMARY_ITEMS}`,
+              `${items.length} statements · up to ${MAX_SUMMARY_ITEMS}`,
+            )}
+      </p>
+      {sources.length === 0 ? (
+        <p className="s-hint">
+          {w(
+            "Pilih setidaknya satu sumber di sebelah kiri untuk membuat bagian.",
+            "Choose at least one source on the left to create a statement.",
+          )}
+        </p>
+      ) : (
+        <>
+          <SelectField
+            label={w(
+              "Sumber untuk bagian baru",
+              "Source for a new statement",
+            )}
+            value={selected?.id ?? ""}
+            onChange={(e) => setChosen(e.target.value)}
+            disabled={disabled || full}
+          >
+            {sources.map((r) => (
+              <option key={r.id} value={r.id}>
+                {sourceLabel(r, w)}
+              </option>
+            ))}
+          </SelectField>
+          <div className="s-actions">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={add}
+              disabled={disabled || full || !selected}
+            >
+              {w("Tambah bagian dari sumber", "Add a statement from a source")}
+            </Button>
+          </div>
+        </>
+      )}
+      {items.map((item, index) => {
+        const source = sources.find(
+          (r) => r.id === item.sourceRef.recordId,
+        );
+        const label = source
+          ? sourceLabel(source, w)
+          : w("Sumber tidak tersedia", "Source unavailable");
+        return (
+          <article
+            className="c-summary-item-editor"
+            key={item.id || `new-${index}`}
+            aria-labelledby={`summary-item-heading-${index}`}
+          >
+            <div className="c-summary-item-head">
+              <h3 id={`summary-item-heading-${index}`}>
+                {w(`Bagian ${index + 1}`, `Statement ${index + 1}`)}
+              </h3>
+              <span className="s-hint">
+                {label} · v{item.sourceRef.version}
+              </span>
+            </div>
+            {item.quote.trim() !== "" && (
+              <figure className="c-summary-quote">
+                <blockquote>
+                  <p>{item.quote}</p>
+                </blockquote>
+                <figcaption>
+                  {w("Kutipan dari", "Quoted from")} {label}
+                </figcaption>
+              </figure>
+            )}
+            <TextArea
+              label={w(
+                `Kata-katamu untuk bagian ${index + 1}`,
+                `Your wording for statement ${index + 1}`,
+              )}
+              value={item.text}
+              onChange={(e) => {
+                const next = items.map((current, i) =>
+                  i === index ? { ...current, text: e.target.value } : current,
+                );
+                onChange(next);
+              }}
+              maxLength={MAX_SUMMARY_ITEM_TEXT}
+              rows={3}
+              required
+              disabled={disabled}
+              hint={w(
+                "Kutipan di atas tetap dari sumber; bagian ini kata-katamu.",
+                "The quote above stays with the source; this part is your wording.",
+              )}
+            />
+            <div className="s-actions">
+              <Button
+                type="button"
+                variant="quiet"
+                onClick={() => move(index, -1)}
+                disabled={disabled || index === 0}
+                aria-label={w(
+                  `Naikkan bagian ${index + 1}`,
+                  `Move statement ${index + 1} up`,
+                )}
+              >
+                {w("Naik", "Up")}
+              </Button>
+              <Button
+                type="button"
+                variant="quiet"
+                onClick={() => move(index, 1)}
+                disabled={disabled || index === items.length - 1}
+                aria-label={w(
+                  `Turunkan bagian ${index + 1}`,
+                  `Move statement ${index + 1} down`,
+                )}
+              >
+                {w("Turun", "Down")}
+              </Button>
+              <Button
+                type="button"
+                variant="quiet"
+                onClick={() =>
+                  onChange(items.filter((_, i) => i !== index))
+                }
+                disabled={disabled}
+                aria-label={w(
+                  `Hapus bagian ${index + 1}`,
+                  `Remove statement ${index + 1}`,
+                )}
+              >
+                {w("Hapus", "Remove")}
+              </Button>
+            </div>
+          </article>
+        );
+      })}
     </fieldset>
   );
 }
@@ -1177,6 +1413,7 @@ function SummaryEditor() {
   const [selected, setSelected] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
+  const [items, setItems] = useState<SummaryItemDraft[]>([]);
   const [goal, setGoal] = useState("");
   const [questions, setQuestions] = useState("");
   const [bring, setBring] = useState("");
@@ -1211,6 +1448,10 @@ function SummaryEditor() {
         .map(sourceText)
         .join("\n\n"),
     );
+    // A statement cannot outlive the source it quotes.
+    setItems((current) =>
+      current.filter((item) => next.includes(item.sourceRef.recordId)),
+    );
   };
   const save = async (e: FormEvent) => {
     e.preventDefault();
@@ -1227,6 +1468,13 @@ function SummaryEditor() {
             recordId: r.id,
             version: r.version,
           })),
+          items: items.map((item, index) => ({
+            ...(item.id ? { id: item.id } : {}),
+            text: item.text,
+            quote: item.quote,
+            sourceRef: item.sourceRef,
+            position: index,
+          })),
           prepared: { goal, questions, bring },
           storageGranted: true,
         },
@@ -1239,6 +1487,14 @@ function SummaryEditor() {
       setBusy(false);
     }
   };
+  const chosenSources = (records ?? []).filter((r) =>
+    selected.includes(r.id),
+  );
+  const itemInvalid = items.some(
+    (item) =>
+      item.text.trim() === "" ||
+      [...item.text].length > MAX_SUMMARY_ITEM_TEXT,
+  );
   return (
     <div className="c-summary-workspace">
       <PageHeader
@@ -1321,11 +1577,17 @@ function SummaryEditor() {
             onChange={(e) => setText(e.target.value)}
             maxLength={6000}
             rows={10}
-            required
+            optional
             hint={w(
-              "Memilih ulang sumber akan menyusun ulang kutipan. Kamu boleh memperbaiki kata-katanya sebelum menyimpan.",
-              "Changing source selection rebuilds the excerpts. You can edit the words before saving.",
+              "Catatan bebas untuk seluruh ringkasan. Kamu juga bisa menambah bagian dari sumber di bawah; salah satunya sudah cukup. Memilih ulang sumber akan menyusun ulang kutipan.",
+              "A free note for the whole summary. You can also add statements from a source below; either is enough. Changing source selection rebuilds the excerpts.",
             )}
+          />
+          <SummaryItemsEditor
+            items={items}
+            sources={chosenSources}
+            onChange={setItems}
+            disabled={busy}
           />
           <details className="c-preparation">
             <summary>
@@ -1371,9 +1633,11 @@ function SummaryEditor() {
             disabled={
               !allow ||
               selected.length === 0 ||
-              !text.trim() ||
+              (text.trim() === "" && items.length === 0) ||
+              itemInvalid ||
               busy ||
-              text.length > 6000
+              text.length > 6000 ||
+              items.length > MAX_SUMMARY_ITEMS
             }
           >
             {w("Simpan draf untuk diperiksa", "Save draft to review")}
@@ -1521,9 +1785,45 @@ function SummaryDetail({ id }: { id: string }) {
                 onChange={(e) => setText(e.target.value)}
                 maxLength={6000}
                 rows={10}
+                optional
               />
             ) : (
-              <p className="c-original">{r.text}</p>
+              r.text.trim() !== "" && (
+                <p className="c-original">{r.text}</p>
+              )
+            )}
+            {r.items && r.items.length > 0 && (
+              <section
+                className="c-summary-items"
+                aria-labelledby={`summary-items-title-${r.id}`}
+              >
+                <h2 id={`summary-items-title-${r.id}`}>
+                  {w("Bagian dari sumbermu", "Statements from your sources")}
+                </h2>
+                <ol className="c-summary-items-list">
+                  {r.items.map((item) => {
+                    const src = sources.find(
+                      (x) => x.id === item.sourceRef.recordId,
+                    );
+                    const label = src
+                      ? sourceLabel(src, w)
+                      : w("Sumber sudah dihapus", "Source deleted");
+                    return (
+                      <li key={item.id} className="c-summary-item">
+                        {item.quote?.trim() !== "" && (
+                          <blockquote className="c-memory-quote">
+                            <p>{item.quote}</p>
+                          </blockquote>
+                        )}
+                        <p className="c-original">{item.text}</p>
+                        <p className="s-hint">
+                          {label} · v{item.sourceRef.version}
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
             )}
             {r.prepared && Object.values(r.prepared).some(Boolean) && (
               <section className="c-preparation">
@@ -1550,7 +1850,10 @@ function SummaryDetail({ id }: { id: string }) {
                 <>
                   <Button
                     variant="primary"
-                    disabled={busy || !text.trim()}
+                    disabled={
+                      busy ||
+                      (text.trim() === "" && (r.items?.length ?? 0) === 0)
+                    }
                     onClick={() =>
                       void run(async () => {
                         await api(

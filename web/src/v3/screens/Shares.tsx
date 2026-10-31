@@ -49,6 +49,12 @@ type Projection = {
   title: string;
   text: string;
   prepared?: { goal: string; questions: string; bring: string };
+  items?: {
+    text: string;
+    quote?: string;
+    sourceLabel: string;
+    position: number;
+  }[];
   sources: string[];
   createdAt: string;
   expiresAt: string;
@@ -435,7 +441,27 @@ export function RecipientPage() {
         <p>{w("Ringkasan ini ditulis dan disetujui pemiliknya. Ini bukan diagnosis atau catatan tenaga profesional.", "This summary was written and approved by its owner. It is not a diagnosis or a professional record.")}</p>
       </Notice>
       <article className="s-consent">
-        <p>{share.text}</p>
+        {share.text.trim() !== "" && <p>{share.text}</p>}
+        {share.items && share.items.length > 0 && (
+          <section className="c-summary-items" aria-labelledby="recipient-items">
+            <h2 id="recipient-items">
+              {w("Bagian dari sumber", "Statements from sources")}
+            </h2>
+            <ol className="c-summary-items-list">
+              {share.items.map((item, index) => (
+                <li key={index} className="c-summary-item">
+                  {item.quote?.trim() !== "" && (
+                    <blockquote className="c-memory-quote">
+                      <p>{item.quote}</p>
+                    </blockquote>
+                  )}
+                  <p>{item.text}</p>
+                  <p className="s-hint">{item.sourceLabel}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
         {share.prepared?.goal && (
           <>
             <h2>{w("Yang ingin diceritakan", "What they want to discuss")}</h2>

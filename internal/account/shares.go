@@ -55,20 +55,32 @@ type ShareEvent struct {
 	At   time.Time `json:"at"`
 }
 
+// SharedSummaryItem is one frozen statement in a shared summary. It
+// carries only what a recipient needs: the owner's wording, the exact
+// source quote it rests on and the label of the pinned source. Internal
+// ids, review state and provenance do not leave the owner's surface.
+type SharedSummaryItem struct {
+	Text        string `json:"text"`
+	Quote       string `json:"quote,omitempty"`
+	SourceLabel string `json:"sourceLabel"`
+	Position    int    `json:"position"`
+}
+
 // SharedProjection is exactly what a recipient may see: an immutable
 // snapshot of the approved summary, with no owner, account or session id.
 type SharedProjection struct {
-	ShareID        string           `json:"shareId"`
-	Label          string           `json:"label"`
-	Purpose        string           `json:"purpose"`
-	SummaryVersion int              `json:"summaryVersion"`
-	Title          string           `json:"title"`
-	Text           string           `json:"text"`
-	Prepared       *SummaryPrepared `json:"prepared,omitempty"`
-	Sources        []string         `json:"sources"`
-	CreatedAt      time.Time        `json:"createdAt"`
-	ExpiresAt      time.Time        `json:"expiresAt"`
-	Acknowledged   bool             `json:"acknowledged"`
+	ShareID        string              `json:"shareId"`
+	Label          string              `json:"label"`
+	Purpose        string              `json:"purpose"`
+	SummaryVersion int                 `json:"summaryVersion"`
+	Title          string              `json:"title"`
+	Text           string              `json:"text"`
+	Prepared       *SummaryPrepared    `json:"prepared,omitempty"`
+	Items          []SharedSummaryItem `json:"items,omitempty"`
+	Sources        []string            `json:"sources"`
+	CreatedAt      time.Time           `json:"createdAt"`
+	ExpiresAt      time.Time           `json:"expiresAt"`
+	Acknowledged   bool                `json:"acknowledged"`
 }
 
 // ErrShareInvalid covers an unknown link, a wrong code and an ended share;
@@ -150,6 +162,7 @@ func (s *Store) CreateShare(ctx context.Context, owner UserID, summaryID, label,
 		share.SummaryVersion = summary.Version
 		share.Acknowledged = false
 		sources := make([]string, 0, len(summary.SourceRefs))
+		sourceLabels := make(map[string]string, len(summary.SourceRefs))
 		for _, ref := range summary.SourceRefs {
 			label := ref.RecordID
 			if src, err := s.record(ctx, tx, owner, ref.RecordID, false); err == nil {
@@ -159,11 +172,25 @@ func (s *Store) CreateShare(ctx context.Context, owner UserID, summaryID, label,
 					label = src.Kind
 				}
 			}
-			sources = append(sources, label+" · v"+strconv.Itoa(ref.Version))
+			display := label + " · v" + strconv.Itoa(ref.Version)
+			sources = append(sources, display)
+			sourceLabels[summarySourceKey(ref)] = display
+		}
+		items := make([]SharedSummaryItem, 0, len(summary.Items))
+		for _, item := range summary.Items {
+			itemLabel := sourceLabels[summaryItemSourceKey(item.SourceRef)]
+			if itemLabel == "" {
+				itemLabel = item.SourceRef.RecordID + " · v" + strconv.Itoa(item.SourceRef.Version)
+			}
+			items = append(items, SharedSummaryItem{
+				Text: item.Text, Quote: item.Quote, Position: item.Position,
+				SourceLabel: itemLabel,
+			})
 		}
 		projection := SharedProjection{
 			ShareID: share.ID, Label: label, Purpose: purpose, SummaryVersion: summary.Version,
-			Title: summary.Title, Text: summary.Text, Prepared: clonePrepared(summary.Prepared), Sources: sources,
+			Title: summary.Title, Text: summary.Text, Prepared: clonePrepared(summary.Prepared),
+			Items: items, Sources: sources,
 			CreatedAt: now, ExpiresAt: share.ExpiresAt,
 		}
 		raw, err := json.Marshal(projection)

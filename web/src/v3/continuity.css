@@ -19,6 +19,19 @@
 .c-source { border-top: 1px solid var(--c-border-subtle); padding-block: 1rem; }
 .c-source > p { padding-left: 2.25rem; color: var(--c-muted); font-size: var(--font-size-2); overflow-wrap: anywhere; }
 .c-summary-draft { display: grid; gap: 1.25rem; padding: 1.5rem; border-radius: var(--radius-4); background: var(--c-surface); min-width: 0; }
+.c-summary-items-editor { display: grid; gap: 1rem; min-width: 0; border: 0; padding: 0; margin: 0; }
+.c-summary-items-editor .s-legend { margin-bottom: 0.5rem; }
+.c-summary-item-editor { display: grid; gap: 0.75rem; padding: 1rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); min-width: 0; }
+.c-summary-item-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; }
+.c-summary-item-head h3 { margin: 0; font-size: var(--font-size-3); }
+.c-summary-quote { margin: 0; display: grid; gap: 0.25rem; }
+.c-summary-quote blockquote { margin: 0; padding-left: 1rem; border-left: 4px solid var(--c-border-control); }
+.c-summary-quote blockquote p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.c-summary-quote figcaption { color: var(--c-muted); font-size: var(--font-size-2); }
+.c-summary-items { display: grid; gap: 1rem; }
+.c-summary-items-list { display: grid; gap: 1.25rem; margin: 0; padding-left: 1.25rem; }
+.c-summary-item { display: grid; gap: 0.5rem; min-width: 0; }
+.c-summary-item > p { overflow-wrap: anywhere; white-space: pre-wrap; }
 .c-preparation { display: grid; gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--c-border-subtle); }
 .c-preparation summary { cursor: pointer; min-height: var(--target-min); }
 .c-preparation[open] .s-field { margin-top: 1rem; }
