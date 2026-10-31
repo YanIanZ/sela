@@ -21,15 +21,19 @@ import (
 )
 
 type room struct {
-	ID            string                     `json:"id"`
-	Save          bool                       `json:"save"`
-	Version       int                        `json:"version"`
-	Turns         []account.ConversationTurn `json:"turns"`
-	Reflections   []account.Reflection       `json:"reflections,omitempty"`
-	Paused        bool                       `json:"paused"`
-	Busy          bool                       `json:"busy"`
-	AIState       string                     `json:"aiState"`
-	RecordID      string                     `json:"recordId,omitempty"`
+	ID          string                     `json:"id"`
+	Save        bool                       `json:"save"`
+	Version     int                        `json:"version"`
+	Turns       []account.ConversationTurn `json:"turns"`
+	Reflections []account.Reflection       `json:"reflections,omitempty"`
+	Paused      bool                       `json:"paused"`
+	Busy        bool                       `json:"busy"`
+	AIState     string                     `json:"aiState"`
+	RecordID    string                     `json:"recordId,omitempty"`
+	// HoldExpiresIn is the number of seconds before the server discards a
+	// held room: 30 idle minutes, capped at 2 hours from creation. It is
+	// relative to this response so a wrong client clock cannot hide expiry.
+	HoldExpiresIn int `json:"holdExpiresIn,omitempty"`
 	owner         account.UserID
 	session       account.SessionID
 	created, last time.Time
@@ -123,10 +127,30 @@ func (l *listeningStore) purgeSession(owner account.UserID, session account.Sess
 		}
 	}
 }
+
+// holdExpiresIn is the server's hold deadline as a relative duration. The
+// room is discarded at the earlier of 30 minutes without a request and 2
+// hours from creation, matching sweep and the idle timer.
+func holdExpiresIn(c *room, now time.Time) int {
+	if c.created.IsZero() || c.last.IsZero() {
+		return 0
+	}
+	expires := c.last.Add(30 * time.Minute)
+	if absolute := c.created.Add(2 * time.Hour); absolute.Before(expires) {
+		expires = absolute
+	}
+	left := expires.Sub(now)
+	if left <= 0 {
+		return 0
+	}
+	return int((left + time.Second - 1) / time.Second)
+}
+
 func roomCopy(c *room) room {
 	r := *c
 	r.Turns = append([]account.ConversationTurn{}, c.Turns...)
 	r.Reflections = append([]account.Reflection(nil), c.Reflections...)
+	r.HoldExpiresIn = holdExpiresIn(c, time.Now())
 	return r
 }
 
@@ -461,36 +485,58 @@ func isRoleLimit(err error) bool {
 	return false
 }
 
-func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Principal) {
-	var in struct {
-		Text            string `json:"text"`
-		ExpectedVersion int    `json:"expectedVersion"`
-		Intent          string `json:"intent"`
-	}
-	if !decode(w, r, &in) {
-		return
-	}
+// listeningTurnInput is the body of both turn routes. The streaming route
+// accepts exactly the same fields and pipeline as the JSON route.
+type listeningTurnInput struct {
+	Text            string `json:"text"`
+	ExpectedVersion int    `json:"expectedVersion"`
+	Intent          string `json:"intent"`
+}
+
+// listeningTurn is the result of a completed turn. Released is non-empty
+// only when the router released validated text and it was stored in the
+// room; it is the only text a streaming route may emit.
+type listeningTurn struct {
+	Room     room
+	Released []string
+}
+
+// turnRejection is a pre-stream refusal with a stable API error code.
+type turnRejection struct {
+	status int
+	code   string
+	field  string
+}
+
+func (e *turnRejection) write(w http.ResponseWriter, r *http.Request) {
+	writeError(w, r, e.status, e.code, e.field)
+}
+
+// runListeningTurn is the one turn pipeline: validation, the user turn,
+// persistence, crisis pause, consent, usage and budget limits, the AI
+// router (AT-1 plus prompt/output guards and the verifier), settlement and
+// storing the released reply. beforeAI, when set, runs once after every
+// pre-AI check passed and immediately before the router call; the SSE
+// handler uses it to open the stream and send status without any content.
+func (s *Server) runListeningTurn(r *http.Request, p account.Principal, id string, in listeningTurnInput, beforeAI func()) (listeningTurn, *turnRejection, error) {
+	var out listeningTurn
 	if strings.TrimSpace(in.Text) == "" || utf8.RuneCountInString(in.Text) > 3000 {
-		writeError(w, r, 400, "invalid_input", "text")
-		return
+		return out, &turnRejection{status: 400, code: "invalid_input", field: "text"}, nil
 	}
 	l := s.v3.listening
 	l.mu.Lock()
-	c := l.owned(r.PathValue("id"), p)
+	c := l.owned(id, p)
 	if c == nil {
 		l.mu.Unlock()
-		writeError(w, r, 404, "not_found", "")
-		return
+		return out, &turnRejection{status: 404, code: "not_found"}, nil
 	}
 	if c.Busy || c.Version != in.ExpectedVersion {
 		l.mu.Unlock()
-		writeError(w, r, 409, "stale_version", "")
-		return
+		return out, &turnRejection{status: 409, code: "stale_version"}, nil
 	}
 	if len(c.Turns) >= 62 {
 		l.mu.Unlock()
-		writeError(w, r, 409, "limit_reached", "")
-		return
+		return out, &turnRejection{status: 409, code: "limit_reached"}, nil
 	}
 	c.Turns = append(c.Turns, account.ConversationTurn{Role: "user", ReviewStatus: "confirmed", Text: in.Text, Provenance: "user_original", CreatedAt: time.Now()})
 	c.Version++
@@ -501,26 +547,23 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 		c.Turns = c.Turns[:len(c.Turns)-1]
 		c.Version--
 		l.mu.Unlock()
-		s.v3Error(w, r, err)
-		return
+		return out, nil, err
 	}
 	if c.Paused || s.opt.AIRouter == nil {
 		c.AIState = "unavailable"
 		if c.Paused {
 			c.AIState = "paused"
 		}
-		out := roomCopy(c)
+		out.Room = roomCopy(c)
 		l.mu.Unlock()
-		writeData(w, 200, out)
-		return
+		return out, nil, nil
 	}
 	granted := false
 	memoryGranted := false
 	cs, consentErr := s.opt.Accounts.Consents(r.Context(), p.UserID)
 	if consentErr != nil {
 		l.mu.Unlock()
-		s.v3Error(w, r, consentErr)
-		return
+		return out, nil, consentErr
 	}
 	for _, consent := range cs {
 		if consent.Purpose == "ai_processing" && consent.Granted && !consent.Outdated {
@@ -532,10 +575,9 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	}
 	if !granted {
 		c.AIState = "not_consented"
-		out := roomCopy(c)
+		out.Room = roomCopy(c)
 		l.mu.Unlock()
-		writeData(w, 200, out)
-		return
+		return out, nil, nil
 	}
 	u := l.usage[p.UserID]
 	if time.Since(u.at) > 10*time.Minute {
@@ -543,10 +585,9 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	}
 	if u.n >= 8 {
 		c.AIState = "rate_limited"
-		out := roomCopy(c)
+		out.Room = roomCopy(c)
 		l.mu.Unlock()
-		writeData(w, 200, out)
-		return
+		return out, nil, nil
 	}
 	var reservation budget.Reservation
 	if s.opt.Budget != nil && s.opt.Budget.Enabled() {
@@ -557,10 +598,9 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 			if errors.Is(admErr, budget.ErrExceeded) {
 				c.AIState = "budget_limited"
 			}
-			out := roomCopy(c)
+			out.Room = roomCopy(c)
 			l.mu.Unlock()
-			writeData(w, 200, out)
-			return
+			return out, nil, nil
 		}
 	}
 	u.n++
@@ -582,6 +622,9 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 		} else if view.Enabled {
 			memories = view.Items
 		}
+	}
+	if beforeAI != nil {
+		beforeAI()
 	}
 	profile, err := s.opt.Accounts.Profile(ctx, p.UserID)
 	var output ai.Output
@@ -637,8 +680,7 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	defer l.mu.Unlock()
 	live := l.owned(c.ID, p)
 	if live == nil {
-		writeError(w, r, 404, "not_found", "")
-		return
+		return out, &turnRejection{status: 404, code: "not_found"}, nil
 	}
 	live.Busy = false
 	live.cancel = nil
@@ -647,8 +689,8 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 		if live.Version != version {
 			live.AIState = "canceled"
 		}
-		writeData(w, 200, roomCopy(live))
-		return
+		out.Room = roomCopy(live)
+		return out, nil, nil
 	}
 	model := ""
 	if output.Provenance.Generator != nil {
@@ -660,10 +702,38 @@ func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Pr
 	}
 	live.Version++
 	live.AIState = "ready"
+	stored := true
 	if err := s.persistRoom(r.Context(), live); err != nil {
 		live.Turns = live.Turns[:len(live.Turns)-len(output.Items)]
 		live.Version--
 		live.AIState = "storage_unavailable"
+		stored = false
 	}
-	writeData(w, 200, roomCopy(live))
+	if stored {
+		out.Released = make([]string, 0, len(output.Items))
+		for _, item := range output.Items {
+			out.Released = append(out.Released, item.Text)
+		}
+	}
+	out.Room = roomCopy(live)
+	return out, nil, nil
+}
+
+// v3SendTurn is the JSON route. It keeps the existing response shape while
+// sharing the pipeline with the streaming route.
+func (s *Server) v3SendTurn(w http.ResponseWriter, r *http.Request, p account.Principal) {
+	var in listeningTurnInput
+	if !decode(w, r, &in) {
+		return
+	}
+	out, reject, err := s.runListeningTurn(r, p, r.PathValue("id"), in, nil)
+	if reject != nil {
+		reject.write(w, r)
+		return
+	}
+	if err != nil {
+		s.v3Error(w, r, err)
+		return
+	}
+	writeData(w, 200, out.Room)
 }

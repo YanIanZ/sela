@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
 import { useI18n } from "../../i18n";
-import { api, isAbort, type Entry, type Profile, type Reflection, type Room, type Turn } from "../api";
+import {
+  api,
+  isAbort,
+  streamTurn,
+  type Entry,
+  type Profile,
+  type Reflection,
+  type Room,
+  type Turn,
+} from "../api";
 import { usePrefs } from "../prefs";
 import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon } from "../icons";
@@ -20,6 +29,9 @@ import {
   TextArea,
   buttonClass,
 } from "../ui";
+
+const HOLD_WARNING_MS = 5 * 60_000;
+const HOLD_WARNING_TICK_MS = 30_000;
 
 const intents = [
   { value: "listen", id: "Didengarkan saja", en: "Just listen" },
@@ -442,6 +454,8 @@ function RoomPage({ id }: { id: string }) {
   const [text, setText] = useState("");
   const [intent, setIntent] = useState<string>(query.get("intent") ?? "listen");
   const [pendingText, setPendingText] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
+  const [holdWarning, setHoldWarning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [stopped, setStopped] = useState(false);
   const [ended, setEnded] = useState<"saved" | "unsaved" | null>(null);
@@ -456,6 +470,7 @@ function RoomPage({ id }: { id: string }) {
   const transcript = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
   const request = useRef<AbortController | null>(null);
+  const warnedHold = useRef<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -486,6 +501,38 @@ function RoomPage({ id }: { id: string }) {
     if (!room?.paused) return;
     setClosePanel(false);
   }, [room?.paused]);
+
+  // Warn once, five minutes before the server discards an unsaved hold.
+  // Every room response refreshes the server's activity timer, so a new
+  // holdExpiresIn moves the local deadline forward.
+  useEffect(() => {
+    if (!room || room.save || ended !== null || !room.holdExpiresIn) {
+      setHoldWarning(false);
+      return;
+    }
+    const deadline = Date.now() + room.holdExpiresIn * 1000;
+    if (warnedHold.current === deadline) return;
+    const check = () => {
+      if (Date.now() >= deadline - HOLD_WARNING_MS) {
+        warnedHold.current = deadline;
+        setHoldWarning(true);
+      }
+    };
+    check();
+    const interval = window.setInterval(check, HOLD_WARNING_TICK_MS);
+    return () => window.clearInterval(interval);
+  }, [room, ended]);
+
+  useEffect(() => {
+    if (!holdWarning) return;
+    announce(
+      "alert",
+      w(
+        "Percakapan ini tidak disimpan dan akan segera dibuang dari server.",
+        "This conversation isn't saved and will be discarded from the server soon.",
+      ),
+    );
+  }, [holdWarning, announce, w]);
 
   useEffect(() => {
     if (!room || room.save) return;
@@ -564,21 +611,61 @@ function RoomPage({ id }: { id: string }) {
     setStopped(false);
     setText("");
     setPendingText(value);
+    setReplyDraft("");
     window.setTimeout(scrollToBottom, 30);
     setBusy(true);
     const ac = new AbortController();
     request.current = ac;
     announce("status", w("Sela sedang menulis…", "Sela is writing…"));
     try {
-      const next = await api<Room>(
-        "/conversations/" + room.id + "/turns",
-        { text: value, expectedVersion: room.version, intent },
-        "POST",
-        ac.signal,
-        110_000,
-      );
+      let next: Room;
+      try {
+        next = await streamTurn(
+          "/conversations/" + room.id + "/turns/stream",
+          { text: value, expectedVersion: room.version, intent },
+          (event) => {
+            if (event.type !== "chunk") return;
+            setReplyDraft((draft) => draft + event.text);
+            if (atBottom.current) {
+              const el = transcript.current;
+              if (el) el.scrollTop = el.scrollHeight;
+            }
+          },
+          ac.signal,
+          110_000,
+        );
+      } catch (streamError) {
+        if (isAbort(streamError)) throw streamError;
+        // An older server, a proxy or a dropped stream: keep the JSON route
+        // as the compatibility path. The version check prevents a retry from
+        // duplicating a turn the stream already stored on the server.
+        setReplyDraft("");
+        try {
+          next = await api<Room>(
+            "/conversations/" + room.id + "/turns",
+            { text: value, expectedVersion: room.version, intent },
+            "POST",
+            ac.signal,
+            110_000,
+          );
+        } catch (fallbackError) {
+          if ((fallbackError as { code?: string }).code === "stale_version") {
+            // The stream may have stored the turn before its done frame was
+            // lost. Adopt the latest room only when this exact turn is there;
+            // otherwise keep the writing and report the conflict.
+            const latest = await api<Room>("/conversations/" + room.id);
+            if (!latest.turns.some((turn) => turn.role === "user" && turn.text === value)) {
+              throw fallbackError;
+            }
+            next = latest;
+          } else {
+            throw fallbackError;
+          }
+        }
+      }
       const previousLast = lastAssistant(room);
       const nextLast = lastAssistant(next);
+      setReplyDraft("");
       setRoom(next);
       setPendingText(null);
       if (next.paused) {
@@ -653,6 +740,7 @@ function RoomPage({ id }: { id: string }) {
       request.current = null;
       setBusy(false);
       setPendingText(null);
+      setReplyDraft("");
       focusComposer();
     }
   };
@@ -791,6 +879,35 @@ function RoomPage({ id }: { id: string }) {
     } catch (e) {
       setError(e);
     }
+  };
+
+  // GET refreshes the server's activity timer for this hold; the room's new
+  // holdExpiresIn moves the local warning deadline forward.
+  const keepHoldOpen = async () => {
+    if (!room) return;
+    setHoldWarning(false);
+    try {
+      const next = await api<Room>("/conversations/" + room.id);
+      setRoom(next);
+      announce(
+        "status",
+        w(
+          "Percakapan tetap terbuka.",
+          "The conversation stays open.",
+        ),
+      );
+    } catch (e) {
+      if ((e as { code?: string }).code === "not_found") {
+        setMissing(true);
+      } else {
+        setError(e);
+      }
+    }
+  };
+
+  const endFromWarning = async () => {
+    setHoldWarning(false);
+    await end();
   };
 
   const deleteConversation = async () => {
@@ -1042,10 +1159,24 @@ function RoomPage({ id }: { id: string }) {
                   <p className="s-turn-meta">{w("Mengirim…", "Sending…")}</p>
                 </article>
               )}
-              {pendingText !== null && (
+              {pendingText !== null && replyDraft === "" && (
                 <p className="s-pending">
                   {w("Sela sedang menulis…", "Sela is writing…")}
                 </p>
+              )}
+              {replyDraft !== "" && (
+                <article className="s-turn s-turn--sela" data-streaming="true">
+                  <p className="s-turn-author">
+                    <span className="s-ai-mono" aria-hidden="true">
+                      {"AI"}
+                    </span>
+                    {w("Sela · balasan AI", "Sela · AI reply")}
+                  </p>
+                  <p className="s-turn-body">{replyDraft}</p>
+                  <p className="s-turn-meta">
+                    {w("Sedang menulis…", "Writing…")}
+                  </p>
+                </article>
               )}
 
               {showEnd && (
@@ -1423,6 +1554,31 @@ function RoomPage({ id }: { id: string }) {
           )}
         </aside>
       </div>
+
+      <Dialog
+        open={holdWarning}
+        onClose={() => setHoldWarning(false)}
+        title={w(
+          "Percakapan akan segera dibuang",
+          "This conversation will be discarded soon",
+        )}
+        alert
+      >
+        <p>
+          {w(
+            "Percakapan ini tidak disimpan. Salinan sementara di server Sela akan dibuang sekitar lima menit lagi. Kamu bisa tetap membukanya atau mengakhirinya sekarang.",
+            "This conversation isn't saved. The temporary copy on Sela's server will be discarded in about five minutes. You can keep it open or end it now.",
+          )}
+        </p>
+        <div className="s-actions">
+          <Button variant="primary" onClick={() => void keepHoldOpen()}>
+            {w("Tetap buka", "Keep it open")}
+          </Button>
+          <Button variant="secondary" onClick={() => void endFromWarning()}>
+            {w("Akhiri sekarang", "End now")}
+          </Button>
+        </div>
+      </Dialog>
 
       <Dialog
         open={detail}
