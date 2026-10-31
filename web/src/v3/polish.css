@@ -200,3 +200,5 @@
   .s-emergency-actions .s-btn--quiet { margin-left: 0; }
 }
 :root[data-scheme^="contrast"] .s-emergency-sheet .s-dialog-head { background: transparent; border-bottom: 2px solid var(--c-text); }
+.s-dialog .s-emergency-services { padding: 0; margin: 0; }
+.s-emergency-sheet .s-dialog-head h2:focus { outline: none; }
