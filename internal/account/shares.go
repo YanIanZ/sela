@@ -177,6 +177,11 @@ func (s *Store) createShareTx(ctx context.Context, tx pgx.Tx, owner UserID, shar
 		if summary.SummaryState != SummaryApproved || summary.ApprovedVersion != summary.Version {
 			return ErrInvalidTransition
 		}
+		if stale, err := s.staleOf(ctx, tx, owner, summary.ID, summary.Version); err != nil {
+			return err
+		} else if stale != nil {
+			return ErrInvalidTransition
+		}
 		share.SummaryVersion = summary.Version
 		share.Acknowledged = false
 		sources := make([]string, 0, len(summary.SourceRefs))
@@ -233,7 +238,12 @@ func (s *Store) createShareTx(ctx context.Context, tx pgx.Tx, owner UserID, shar
 			share.ExpiresAt, now); err != nil {
 			return err
 		}
-		return s.shareEvent(ctx, tx, share.ID, "created", now)
+		if err := s.shareEvent(ctx, tx, share.ID, "created", now); err != nil {
+			return err
+		}
+		// The share rests on this exact summary version (D-078).
+		return s.mieEdge(ctx, tx, owner, MIENode{Kind: MIESummary, ID: summaryID, Version: share.SummaryVersion},
+			MIENode{Kind: MIEShare, ID: share.ID, Version: 1})
 	}
 }
 
@@ -369,6 +379,16 @@ func (s *Store) OpenShare(ctx context.Context, token, code string) (SharedProjec
 		if state != ShareActive || now.After(expires) || attempts >= 5 {
 			return ErrShareInvalid
 		}
+		// Read-time gate (MIE-I05): a share whose summary version an
+		// invalidation reached is never opened, even if a revocation race
+		// left it active.
+		var current bool
+		if err := tx.QueryRow(ctx, `SELECT NOT EXISTS (SELECT 1 FROM mie_stale ms WHERE ms.record_id = sh.summary_id AND ms.version = sh.summary_version) FROM shares sh WHERE sh.id=$1`, shareID).Scan(&current); err != nil {
+			return err
+		}
+		if !current {
+			return ErrShareInvalid
+		}
 		if subtle.ConstantTimeCompare(codeDigest, codeHash(token, code)) != 1 {
 			_, _ = tx.Exec(ctx, "UPDATE shares SET attempts=attempts+1,updated_at=$2 WHERE id=$1", shareID, now)
 			return ErrShareInvalid
@@ -424,7 +444,7 @@ func (s *Store) RecipientShare(ctx context.Context, session string) (SharedProje
 	)
 	err := s.pool.QueryRow(ctx, `SELECT s.user_id,s.id,s.state,s.expires_at,s.projection_ct,rs.expires_at,rs.acknowledged_at
 		FROM share_recipient_sessions rs JOIN shares s ON s.id=rs.share_id
-		WHERE rs.token_hash=$1`, tokenHash(session)).
+		WHERE rs.token_hash=$1 AND NOT EXISTS (SELECT 1 FROM mie_stale ms WHERE ms.record_id = s.summary_id AND ms.version = s.summary_version)`, tokenHash(session)).
 		Scan(&owner, &shareID, &state, &shareEnd, &ct, &expires, &ack)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return SharedProjection{}, ErrShareInvalid

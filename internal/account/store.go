@@ -163,6 +163,9 @@ type OwnerStore interface {
 	CreateCareRequest(context.Context, UserID, CareRequestInput, bool) (CareRequest, error)
 	ConfirmCareRequest(context.Context, UserID, string, time.Time, int) (CareRequest, error)
 	CancelCareRequest(context.Context, UserID, string, int) (CareRequest, error)
+	MeaningImpact(context.Context, UserID, string) (MIEImpact, error)
+	MeaningLineage(context.Context, UserID, string) (MIELineage, error)
+	MeaningEvents(context.Context, UserID) ([]MIEImpact, error)
 
 	PrivateNames(context.Context, UserID) ([]PrivateName, error)
 	CreatePrivateName(context.Context, UserID, string) (PrivateName, error)

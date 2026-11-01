@@ -155,13 +155,14 @@ func TestDeleteRecordDerivedKeepAndDelete(t *testing.T) {
 	if _, err := f.store.Record(ctx, pa.UserID, followup.ID); err != nil {
 		t.Fatalf("kept follow-up: %v", err)
 	}
+	// The kept summary is owner history; its share stays listed but is
+	// revoked for future readers (MIE-I05, D-078).
 	shares, err := f.store.Shares(ctx, pa.UserID)
-	if err != nil || len(shares) != 1 || shares[0].ID != share.ID || shares[0].State != account.ShareActive {
+	if err != nil || len(shares) != 1 || shares[0].ID != share.ID || shares[0].State != account.ShareRevoked {
 		t.Fatalf("kept share: %+v %v", shares, err)
 	}
-	projection, _, err := f.store.OpenShare(ctx, token, code)
-	if err != nil || projection.Text != summary.Text {
-		t.Fatalf("kept share projection: %+v %v", projection, err)
+	if _, _, err := f.store.OpenShare(ctx, token, code); err == nil {
+		t.Fatal("a share whose source was deleted still opens")
 	}
 
 	// Delete: the source, its summary, follow-up, share and access history

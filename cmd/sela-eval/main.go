@@ -4,7 +4,8 @@
 // Modes:
 //
 //	-mode offline      deterministic checks only (safety lexicon, gold
-//	                   qualifiers, retrieval, citations, authorization)
+//	                   qualifiers, retrieval, citations, authorization,
+//	                   MIE Meaning Diff on eval/mie/cases.jsonl)
 //	-mode test_double  offline + ledger/fault runs against the in-process
 //	                   cmd/fakellm handler (TEST ONLY; never Meta inference)
 //	-mode live         offline + ledger runs against the configured Modal
@@ -34,8 +35,29 @@ type threshold struct {
 }
 
 type thresholds struct {
-	Version string               `json:"version"`
-	Metrics map[string]threshold `json:"metrics"`
+	Version  string               `json:"version"`
+	Metrics  map[string]threshold `json:"metrics"`
+	Versions []struct {
+		Version string               `json:"version"`
+		Harness string               `json:"harness"`
+		Metrics map[string]threshold `json:"metrics"`
+	} `json:"versions"`
+}
+
+// merge adds the metrics of the extending versions this harness judges
+// ("harness": "sela-eval"); other versions belong to other harnesses.
+func (th *thresholds) merge() {
+	for _, v := range th.Versions {
+		if v.Harness != "sela-eval" {
+			continue
+		}
+		for k, m := range v.Metrics {
+			if _, dup := th.Metrics[k]; !dup {
+				th.Metrics[k] = m
+			}
+		}
+		th.Version += "+" + v.Version
+	}
 }
 
 // Metric is one measured value with its verdict.
@@ -136,6 +158,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "sela-eval: thresholds:", err)
 		os.Exit(2)
 	}
+	th.merge()
 	rep := &Report{Started: time.Now().UTC(), Mode: *mode, Thresholds: th.Version, Provider: map[string]string{}, Versions: versions()}
 	steps := []struct {
 		name string
@@ -146,6 +169,7 @@ func main() {
 		{"retrieval", runRetrieval},
 		{"authorization", runAuthorization},
 		{"crisis_path", runCrisisPath},
+		{"mie", runMIE},
 	}
 	for _, s := range steps {
 		if err := s.fn(rep, *root); err != nil {

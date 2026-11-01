@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/YanIanZ/sela/internal/ledger"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -23,14 +24,17 @@ var ErrStorageRequired = &Error{Code: "storage_required"}
 // the sealed conversation content, so it inherits the room's encryption,
 // revision, export and deletion behaviour.
 type Reflection struct {
-	ID           string    `json:"id"`
-	TurnID       string    `json:"turnId,omitempty"`
-	Quote        string    `json:"quote"`
-	Text         string    `json:"text"`
-	ReviewStatus string    `json:"reviewStatus"`
-	Provenance   string    `json:"provenance"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	ID           string `json:"id"`
+	TurnID       string `json:"turnId,omitempty"`
+	Quote        string `json:"quote"`
+	Text         string `json:"text"`
+	ReviewStatus string `json:"reviewStatus"`
+	Provenance   string `json:"provenance"`
+	// Meaning is the deterministic Meaning Diff of the AI wording against
+	// the quote (D-078); cleared when the owner corrects the wording.
+	Meaning   *ledger.MeaningCheck `json:"meaning,omitempty"`
+	CreatedAt time.Time            `json:"createdAt"`
+	UpdatedAt time.Time            `json:"updatedAt"`
 }
 
 // Reflection review states.
@@ -95,8 +99,14 @@ type PersonalRecord struct {
 	Items           []SummaryItem      `json:"items,omitempty"`
 	ParentID        string             `json:"parentId,omitempty"`
 	Reflections     []Reflection       `json:"reflections,omitempty"`
-	CreatedAt       time.Time          `json:"createdAt"`
-	UpdatedAt       time.Time          `json:"updatedAt"`
+	// Stale is set on read when an invalidation reached this version
+	// (D-078). It is never sealed into storage.
+	Stale *StaleInfo `json:"stale,omitempty"`
+	// Meaning is the Meaning Diff of an AI claim against its quote; nil
+	// for the owner's own wording.
+	Meaning   *ledger.MeaningCheck `json:"meaning,omitempty"`
+	CreatedAt time.Time            `json:"createdAt"`
+	UpdatedAt time.Time            `json:"updatedAt"`
 }
 
 func recordRef(id string, version int) vault.Ref {
@@ -274,7 +284,11 @@ func (s *Store) Record(ctx context.Context, owner UserID, id string) (PersonalRe
 	if err := s.enrichSummaryState(ctx, s.pool, owner, &r); err != nil {
 		return PersonalRecord{}, err
 	}
-	return r, nil
+	one := []PersonalRecord{r}
+	if err := s.enrichStale(ctx, s.pool, owner, one); err != nil {
+		return PersonalRecord{}, err
+	}
+	return one[0], nil
 }
 func (s *Store) records(ctx context.Context, q db.DBTX, owner UserID) ([]PersonalRecord, error) {
 	rows, err := q.Query(ctx, "SELECT id,version,content_ct FROM personal_records WHERE user_id=$1 ORDER BY updated_at DESC,id DESC", owner)
@@ -311,6 +325,9 @@ func (s *Store) records(ctx context.Context, q db.DBTX, owner UserID) ([]Persona
 		if err := s.enrichSummaryState(ctx, q, owner, &out[i]); err != nil {
 			return nil, err
 		}
+	}
+	if err := s.enrichStale(ctx, q, owner, out); err != nil {
+		return nil, err
 	}
 	return out, nil
 }
@@ -362,7 +379,15 @@ func (s *Store) UpdateRecord(ctx context.Context, owner UserID, id string, in Re
 		if _, err = tx.Exec(ctx, "UPDATE personal_records SET version=$3,content_ct=$4,updated_at=$5 WHERE user_id=$1 AND id=$2", owner, id, result.Version, ct, result.UpdatedAt); err != nil {
 			return err
 		}
-		_, err = tx.Exec(ctx, "INSERT INTO personal_record_versions VALUES($1,$2,$3,$4,$5)", id, owner, result.Version, ct, result.UpdatedAt)
+		if _, err = tx.Exec(ctx, "INSERT INTO personal_record_versions VALUES($1,$2,$3,$4,$5)", id, owner, result.Version, ct, result.UpdatedAt); err != nil {
+			return err
+		}
+		// An edited note or check-in invalidates what rested on the old
+		// version (D-078). Conversation turns are append-only, so a saved
+		// room's new revision changes no earlier quote.
+		if before.Kind == KindNote || before.Kind == KindCheckin {
+			_, err = s.invalidate(ctx, tx, owner, MIENode{Kind: MIERecord, ID: id, Version: before.Version}, MIESourceEdited)
+		}
 		return err
 	})
 	return result, err
@@ -392,6 +417,23 @@ func (s *Store) DeleteRecord(ctx context.Context, owner UserID, id string, versi
 		}
 		if version != r.Version {
 			return ErrStaleVersion
+		}
+		// Whatever rested on the deleted record stops being current, kept
+		// or not (D-078): kept summaries become owner history and their
+		// shares stop for future readers.
+		switch r.Kind {
+		case KindSummary:
+		case KindMemory:
+			if _, err := s.invalidate(ctx, tx, owner, MIENode{Kind: MIEMemory, ID: id, Version: r.Version}, MIEClaimDeleted); err != nil {
+				return err
+			}
+		default:
+			if _, err := s.invalidate(ctx, tx, owner, MIENode{Kind: MIERecord, ID: id, Version: r.Version}, MIESourceDeleted); err != nil {
+				return err
+			}
+		}
+		if err := mieForget(ctx, tx, owner, id); err != nil {
+			return err
 		}
 		if derived == DerivedDelete {
 			if err := s.deleteDerivedSummaries(ctx, tx, owner, r.ID); err != nil {

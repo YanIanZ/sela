@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/YanIanZ/sela/internal/ledger"
 	"strconv"
 	"strings"
 	"time"
@@ -120,13 +121,20 @@ type SummaryItemSource struct {
 // whole list. Position mirrors the array order and is assigned by the
 // server.
 type SummaryItem struct {
-	ID           string            `json:"id"`
-	Text         string            `json:"text"`
-	Quote        string            `json:"quote,omitempty"`
-	SourceRef    SummaryItemSource `json:"sourceRef"`
-	Provenance   string            `json:"provenance"`
-	ReviewStatus string            `json:"reviewStatus"`
-	Position     int               `json:"position"`
+	ID        string            `json:"id"`
+	Text      string            `json:"text"`
+	Quote     string            `json:"quote,omitempty"`
+	SourceRef SummaryItemSource `json:"sourceRef"`
+	// ClaimRef optionally pins the confirmed memory claim (an owner-reviewed
+	// interpretation) this statement rests on (D-078). Correcting,
+	// rejecting or deleting that claim invalidates the summary.
+	ClaimRef *SummaryItemSource `json:"claimRef,omitempty"`
+	// Meaning compares the statement with its quote (D-078); advisory, the
+	// owner decides.
+	Meaning      *ledger.MeaningCheck `json:"meaning,omitempty"`
+	Provenance   string               `json:"provenance"`
+	ReviewStatus string               `json:"reviewStatus"`
+	Position     int                  `json:"position"`
 }
 
 // FollowupSections is the optional structured after-consultation note.
@@ -288,13 +296,18 @@ func normalizeSummaryItems(in, before []SummaryItem) []SummaryItem {
 			if provenance == "" {
 				provenance = "user_original"
 			}
-			if prev.Text != item.Text || prev.Quote != item.Quote || prev.SourceRef != item.SourceRef {
+			if prev.Text != item.Text || prev.Quote != item.Quote || prev.SourceRef != item.SourceRef || !sameClaim(prev.ClaimRef, item.ClaimRef) {
 				provenance = "user_correction"
 			}
 		}
+		var meaning *ledger.MeaningCheck
+		if strings.TrimSpace(item.Quote) != "" {
+			m := ledger.CompareMeaning(item.Quote, item.Text)
+			meaning = &m
+		}
 		out = append(out, SummaryItem{
-			ID: id, Text: item.Text, Quote: item.Quote, SourceRef: item.SourceRef,
-			Provenance: provenance, ReviewStatus: ReviewConfirmed, Position: i,
+			ID: id, Text: item.Text, Quote: item.Quote, SourceRef: item.SourceRef, ClaimRef: item.ClaimRef,
+			Meaning: meaning, Provenance: provenance, ReviewStatus: ReviewConfirmed, Position: i,
 		})
 	}
 	return out
@@ -412,6 +425,7 @@ func continuityRecord(id string, in RecordInput, version int, created, now time.
 }
 
 func (s *Store) insertContinuityRecord(ctx context.Context, tx pgx.Tx, owner UserID, r PersonalRecord) error {
+	r.Stale = nil
 	raw, err := json.Marshal(r)
 	if err != nil {
 		return err
@@ -430,6 +444,7 @@ func (s *Store) insertContinuityRecord(ctx context.Context, tx pgx.Tx, owner Use
 }
 
 func (s *Store) updateContinuityRecord(ctx context.Context, tx pgx.Tx, owner UserID, r PersonalRecord) error {
+	r.Stale = nil
 	raw, err := json.Marshal(r)
 	if err != nil {
 		return err
@@ -450,6 +465,7 @@ func (s *Store) updateContinuityRecord(ctx context.Context, tx pgx.Tx, owner Use
 // place. It is used only for server-controlled state (approval) that is
 // not a text edit and therefore does not create a new revision.
 func (s *Store) rewriteCurrentVersion(ctx context.Context, tx pgx.Tx, owner UserID, r PersonalRecord) error {
+	r.Stale = nil
 	raw, err := json.Marshal(r)
 	if err != nil {
 		return err
@@ -520,6 +536,9 @@ func (s *Store) recordsByKind(ctx context.Context, q db.DBTX, owner UserID, kind
 			return nil, err
 		}
 		out = append(out, r)
+	}
+	if err := s.enrichStale(ctx, q, owner, out); err != nil {
+		return nil, err
 	}
 	return out, nil
 }
@@ -673,7 +692,10 @@ func (s *Store) CreateMemory(ctx context.Context, owner UserID, in RecordInput) 
 		if err := s.validateSourceRefs(ctx, tx, owner, r.SourceRefs, true); err != nil {
 			return err
 		}
-		return s.insertContinuityRecord(ctx, tx, owner, r)
+		if err := s.insertContinuityRecord(ctx, tx, owner, r); err != nil {
+			return err
+		}
+		return s.mieRecordEdges(ctx, tx, owner, r)
 	})
 	return r, err
 }
@@ -711,7 +733,15 @@ func (s *Store) UpdateMemory(ctx context.Context, owner UserID, id string, in Re
 			return err
 		}
 		result = continuityRecord(id, in, before.Version+1, before.CreatedAt, s.clock())
-		return s.updateContinuityRecord(ctx, tx, owner, result)
+		if err := s.updateContinuityRecord(ctx, tx, owner, result); err != nil {
+			return err
+		}
+		if err := s.mieRecordEdges(ctx, tx, owner, result); err != nil {
+			return err
+		}
+		// An owner edit of a claim is a correction of what rested on it.
+		_, err = s.invalidate(ctx, tx, owner, MIENode{Kind: MIEMemory, ID: id, Version: before.Version}, MIEClaimCorrected)
+		return err
 	})
 	return result, err
 }
@@ -730,6 +760,12 @@ func (s *Store) DeleteMemory(ctx context.Context, owner UserID, id string, versi
 		}
 		if r.Version != version {
 			return ErrStaleVersion
+		}
+		if _, err := s.invalidate(ctx, tx, owner, MIENode{Kind: MIEMemory, ID: id, Version: r.Version}, MIEClaimDeleted); err != nil {
+			return err
+		}
+		if err := mieForget(ctx, tx, owner, id); err != nil {
+			return err
 		}
 		_, err = tx.Exec(ctx, "DELETE FROM personal_records WHERE user_id=$1 AND id=$2", owner, id)
 		return err
@@ -777,10 +813,12 @@ func (s *Store) CreateMemoryProposals(ctx context.Context, owner UserID, proposa
 			return nil, err
 		}
 		a := safety.Assess(in.Text)
+		// Meaning Diff of the AI wording against the user's own words.
+		meaning := ledger.CompareMeaning(in.SourceRefs[0].Quote, in.Text)
 		out = append(out, PersonalRecord{
 			ID: newID().String(), Kind: KindMemory, Text: in.Text, Version: 1,
 			Provenance: "unconfirmed_interpretation", ReviewStatus: ReviewUnreviewed,
-			Safety: string(a.Level), Ruleset: a.Ruleset,
+			Safety: string(a.Level), Ruleset: a.Ruleset, Meaning: &meaning,
 			SourceRefs: cloneSourceRefs(in.SourceRefs), CreatedAt: now, UpdatedAt: now,
 		})
 	}
@@ -802,6 +840,9 @@ func (s *Store) CreateMemoryProposals(ctx context.Context, owner UserID, proposa
 		}
 		for _, r := range out {
 			if err := s.insertContinuityRecord(ctx, tx, owner, r); err != nil {
+				return err
+			}
+			if err := s.mieRecordEdges(ctx, tx, owner, r); err != nil {
 				return err
 			}
 		}
@@ -860,12 +901,29 @@ func (s *Store) ReviewMemory(ctx context.Context, owner UserID, id string, expec
 			r.Text = text
 			r.Provenance = "user_correction"
 			r.ReviewStatus = ReviewCorrected
+			r.Meaning = nil
 			a := safety.Assess(r.Title + "\n" + r.Text)
 			r.Safety, r.Ruleset = string(a.Level), a.Ruleset
 		}
+		prior := MIENode{Kind: MIEMemory, ID: r.ID, Version: r.Version}
 		r.Version++
 		result = r
-		return s.updateContinuityRecord(ctx, tx, owner, r)
+		if err := s.updateContinuityRecord(ctx, tx, owner, r); err != nil {
+			return err
+		}
+		// The new revision keeps its sources; a correction or rejection
+		// takes the authority of the earlier wording away from everything
+		// built on it (MIE-I04).
+		if err := s.mieRecordEdges(ctx, tx, owner, r); err != nil {
+			return err
+		}
+		switch action {
+		case MemoryReviewCorrect:
+			_, err = s.invalidate(ctx, tx, owner, prior, MIEClaimCorrected)
+		case MemoryReviewReject:
+			_, err = s.invalidate(ctx, tx, owner, prior, MIEClaimRejected)
+		}
+		return err
 	})
 	return result, err
 }
@@ -1067,7 +1125,13 @@ func (s *Store) CreateSummary(ctx context.Context, owner UserID, in RecordInput)
 		if err := s.validateSourceRefs(ctx, tx, owner, r.SourceRefs, true); err != nil {
 			return err
 		}
-		return s.insertContinuityRecord(ctx, tx, owner, r)
+		if err := s.validateItemBindings(ctx, tx, owner, r.Items); err != nil {
+			return err
+		}
+		if err := s.insertContinuityRecord(ctx, tx, owner, r); err != nil {
+			return err
+		}
+		return s.mieRecordEdges(ctx, tx, owner, r)
 	})
 	return r, err
 }
@@ -1106,8 +1170,14 @@ func (s *Store) UpdateSummary(ctx context.Context, owner UserID, id string, in R
 			return err
 		}
 		in.Items = normalizeSummaryItems(in.Items, before.Items)
+		if err := s.validateItemBindings(ctx, tx, owner, in.Items); err != nil {
+			return err
+		}
 		result = continuityRecord(id, in, before.Version+1, before.CreatedAt, s.clock())
-		return s.updateContinuityRecord(ctx, tx, owner, result)
+		if err := s.updateContinuityRecord(ctx, tx, owner, result); err != nil {
+			return err
+		}
+		return s.mieRecordEdges(ctx, tx, owner, result)
 	})
 	return result, err
 }
@@ -1135,6 +1205,15 @@ func (s *Store) ApproveSummary(ctx context.Context, owner UserID, id string, exp
 		}
 		if !current {
 			return withField(ErrStaleVersion, "sourceRefs")
+		}
+		// A version an invalidation reached is history: it cannot be
+		// approved again; the owner edits it into a new version (MIE-I04).
+		stale, err := s.staleOf(ctx, tx, owner, r.ID, r.Version)
+		if err != nil {
+			return err
+		}
+		if stale != nil {
+			return withField(ErrStaleVersion, "claimRefs")
 		}
 		if r.SummaryState == SummaryApproved && r.ApprovedVersion == r.Version {
 			result = r
@@ -1314,4 +1393,11 @@ func (s *Store) updateFollowup(ctx context.Context, owner UserID, parentID, id s
 		return s.updateContinuityRecord(ctx, tx, owner, result)
 	})
 	return result, err
+}
+
+func sameClaim(a, b *SummaryItemSource) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
 }

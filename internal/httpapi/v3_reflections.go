@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"github.com/YanIanZ/sela/internal/ledger"
 	"net/http"
 	"strconv"
 	"strings"
@@ -148,10 +149,11 @@ func (s *Server) v3CreateReflection(w http.ResponseWriter, r *http.Request, p ac
 		if strings.TrimSpace(quote) == "" || strings.TrimSpace(item.Text) == "" {
 			continue
 		}
+		meaning := ledger.CompareMeaning(quote, item.Text)
 		added = append(added, account.Reflection{
 			ID: newReflectionID(), TurnID: turnID, Quote: quote, Text: item.Text,
 			ReviewStatus: account.ReflectionUnreviewed, Provenance: "unconfirmed_interpretation",
-			CreatedAt: now, UpdatedAt: now,
+			Meaning: &meaning, CreatedAt: now, UpdatedAt: now,
 		})
 	}
 	l.mu.Lock()
@@ -227,6 +229,7 @@ func (s *Server) v3ReviewReflection(w http.ResponseWriter, r *http.Request, p ac
 		}
 		status, provenance = account.ReflectionCorrected, "user_correction"
 		c.Reflections[idx].Text = text
+		c.Reflections[idx].Meaning = nil
 	default:
 		writeError(w, r, 400, "invalid_input", "action")
 		return

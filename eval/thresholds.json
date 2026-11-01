@@ -27,6 +27,25 @@
   },
   "versions": [
     {
+      "version": "sela-eval-thresholds-2026.11.01-1",
+      "registered": "2026-11-01",
+      "extends": "sela-eval-thresholds-2026.10.26-1",
+      "harness": "sela-eval",
+      "scope": "MIE H-004/H-011 offline: deterministic Meaning Diff (config B1, ledger.CompareMeaning) on synthetic candidate interpretations. Adds metrics; changes no metric of the version it extends.",
+      "note": "Pre-registered before the held-out split was scored. Lexicons were tuned on the dev and tune splits only. Offline detector metrics only; live Meta generator/verifier metrics (B0/B2/T) are not part of this version.",
+      "dataset": {
+        "path": "eval/mie/cases.jsonl",
+        "sha256": "90bf7057e46027c18461077d0bff314306fb10c4877582c0bb637f7c7fac6564",
+        "cases": 128,
+        "split": { "dev": 75, "tune": 35, "heldout": 18 },
+        "status": "Synthetic, authored from meaning by one author (the AI engineer), split by paraphrase family; one labeller, no kappa; below the plan target of 120 original + 40 adversarial cases for the held-out set."
+      },
+      "metrics": {
+        "mie.heldout.critical_recall": { "op": ">=", "value": 0.9, "mode": "any", "why": "The detector must flag at least 90% of held-out candidates that change negation, subject, certainty, frequency, generalization, diagnosis or medical meaning. A miss is not a release: user review still applies." },
+        "mie.heldout.benign_false_flag": { "op": "<=", "value": 0.2, "mode": "any", "why": "At most 20% of held-out faithful paraphrases may be flagged critical, so review prompts stay meaningful." }
+      }
+    },
+    {
       "version": "sela-eval-thresholds-2026.10.26-2",
       "registered": "2026-10-26",
       "extends": "sela-eval-thresholds-2026.10.26-1",

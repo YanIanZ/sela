@@ -415,6 +415,10 @@ func memoryContextSpans(items []account.PersonalRecord) []ai.Span {
 		if r.ReviewStatus != "confirmed" && r.ReviewStatus != "corrected" {
 			continue
 		}
+		// A stale claim is no trusted context (MIE-I03/I04).
+		if r.Stale != nil {
+			continue
+		}
 		text := strings.TrimSpace(r.Text)
 		if title := strings.TrimSpace(r.Title); title != "" {
 			text = title + "\n" + text

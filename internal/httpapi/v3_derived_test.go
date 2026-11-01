@@ -96,7 +96,8 @@ func TestV3DerivedImpactAndDeleteModes(t *testing.T) {
 		t.Fatalf("stale delete changed impact: %v", got)
 	}
 
-	// Keep: the source goes, the summary and its frozen share stay.
+	// Keep: the source goes; the summary stays as owner history and its
+	// frozen share stays listed but revoked for future readers (D-078).
 	owner.must(200, "DELETE", "/api/v3/records/"+sourceID+"?derived=keep",
 		map[string]any{"expectedVersion": source["version"]})
 	kept := owner.must(200, "GET", "/api/v3/consultation-summaries/"+summaryID, nil).data()
@@ -105,7 +106,7 @@ func TestV3DerivedImpactAndDeleteModes(t *testing.T) {
 	}
 	owner.must(200, "GET", "/api/v3/records/"+followup["id"].(string), nil)
 	shares := owner.must(200, "GET", "/api/v3/shares", nil).data()["shares"].([]any)
-	if len(shares) != 1 || shares[0].(map[string]any)["id"] != share.ID {
+	if len(shares) != 1 || shares[0].(map[string]any)["id"] != share.ID || shares[0].(map[string]any)["state"] != "revoked" {
 		t.Fatalf("kept share: %v", shares)
 	}
 

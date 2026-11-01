@@ -14,6 +14,11 @@ func summaryItemsV3(t *testing.T) *v3env {
 	}})
 }
 
+// summaryItemSourceText holds every quote these tests use verbatim: a
+// statement quote must be in its pinned source revision (MIE-I02, D-078).
+const summaryItemSourceText = "Synthetic item source text. Synthetic quote one. Synthetic quote two. Synthetic quote three. " +
+	"Synthetic quote four. Synthetic quote. Synthetic shared quote."
+
 func summaryItemBody(noteID string, noteVersion int, text, quote string) map[string]any {
 	return map[string]any{
 		"text": text, "quote": quote,
@@ -31,7 +36,7 @@ func TestV3SummaryItemsLifecycle(t *testing.T) {
 	b.guest("18_plus")
 
 	note := a.must(201, "POST", "/api/v3/records", map[string]any{
-		"kind": "note", "title": "Synthetic item source", "text": "Synthetic item source text.", "storageGranted": true,
+		"kind": "note", "title": "Synthetic item source", "text": summaryItemSourceText, "storageGranted": true,
 	}).data()
 	noteID, noteVersion := note["id"].(string), int(note["version"].(float64))
 	sourceRefs := []map[string]any{{"recordId": noteID, "version": noteVersion}}
@@ -147,7 +152,7 @@ func TestV3SummaryItemsValidation(t *testing.T) {
 	b.guest("18_plus")
 
 	note := a.must(201, "POST", "/api/v3/records", map[string]any{
-		"kind": "note", "title": "Synthetic item source", "text": "Synthetic item source text.", "storageGranted": true,
+		"kind": "note", "title": "Synthetic item source", "text": summaryItemSourceText, "storageGranted": true,
 	}).data()
 	noteID, noteVersion := note["id"].(string), int(note["version"].(float64))
 	foreign := b.must(201, "POST", "/api/v3/records", map[string]any{
@@ -235,7 +240,7 @@ func TestV3SummaryItemsShareProjection(t *testing.T) {
 		"granted": true, "policyVersion": policyVersion("sharing"),
 	})
 	note := owner.must(201, "POST", "/api/v3/records", map[string]any{
-		"kind": "note", "title": "Synthetic item source", "text": "Synthetic item source text.", "storageGranted": true,
+		"kind": "note", "title": "Synthetic item source", "text": summaryItemSourceText, "storageGranted": true,
 	}).data()
 	noteID, noteVersion := note["id"].(string), int(note["version"].(float64))
 	sourceRefs := []map[string]any{{"recordId": noteID, "version": noteVersion}}

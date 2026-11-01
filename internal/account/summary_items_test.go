@@ -33,7 +33,9 @@ func itemSummaryInput(note, other account.PersonalRecord) account.RecordInput {
 func summaryItemSources(t *testing.T, f *fixture, owner account.UserID) (account.PersonalRecord, account.PersonalRecord) {
 	t.Helper()
 	note, err := f.store.CreateRecord(ctx, owner, account.RecordInput{
-		Kind: "note", Title: "Synthetic item source one", Text: "Synthetic item source one.", StorageGranted: true,
+		// Every quote a test uses is verbatim in its source (MIE-I02, D-078).
+		Kind: "note", Title: "Synthetic item source one", StorageGranted: true,
+		Text: "Synthetic item source one. Synthetic exported quote. " + strings.Repeat("a", account.SummaryItemQuoteMax),
 	})
 	if err != nil {
 		t.Fatal(err)

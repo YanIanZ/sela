@@ -34,6 +34,9 @@ var v3Messages = map[string]message{
 	"server_busy":                {"Server sedang sibuk. Coba lagi sebentar lagi.", "The server is busy. Try again shortly."},
 	"invalid_share":              {"Tautan atau kode tidak cocok, atau sudah tidak berlaku.", "The link or code doesn't match, or it is no longer valid."},
 	"care_org_unavailable":       {"Layanan ini sedang tidak menerima permintaan. Pilih layanan lain.", "This service isn't taking requests right now. Choose another one."},
+	"meaning_graph_limit":        {"Terlalu banyak hal bergantung pada catatan ini untuk diubah sekaligus. Hapus beberapa ringkasan atau tautan dulu.", "Too much rests on this entry to change it at once. Remove some summaries or links first."},
+	"quote_not_in_source":        {"Kutipan ini tidak ada di versi sumber yang dipilih.", "This quote is not in the selected version of its source."},
+	"claim_not_usable":           {"Pemahaman yang dirujuk belum kamu konfirmasi, sudah berubah, atau perlu ditinjau ulang.", "The meaning this cites isn't confirmed by you, has changed, or needs review again."},
 	"name_taken":                 {"Nama ini sudah ada di daftarmu.", "This name is already on your list."},
 	"name_limit_reached":         {"Daftar nama berisi paling banyak 20 nama. Hapus satu dulu untuk menambah yang lain.", "The name list holds at most 20 names. Remove one before adding another."},
 }
@@ -55,7 +58,8 @@ var v3Status = map[string]int{
 	"password_weak": http.StatusBadRequest, "invalid_share": http.StatusUnauthorized,
 	"name_taken": http.StatusConflict, "name_limit_reached": http.StatusConflict,
 	"care_org_unavailable": http.StatusConflict,
-	"store_unavailable":    http.StatusServiceUnavailable, "server_busy": http.StatusServiceUnavailable,
+	"meaning_graph_limit":  http.StatusConflict, "quote_not_in_source": http.StatusBadRequest, "claim_not_usable": http.StatusConflict,
+	"store_unavailable": http.StatusServiceUnavailable, "server_busy": http.StatusServiceUnavailable,
 }
 
 func init() {

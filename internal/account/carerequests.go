@@ -191,7 +191,10 @@ func (s *Store) CreateCareRequest(ctx context.Context, owner UserID, in CareRequ
 			id, owner, in.OrgID, in.PractitionerID, share.ID, ref, in.Mode, synthetic, now); err != nil {
 			return err
 		}
-		return s.careEvent(ctx, tx, id.String(), CareSent, "user", now)
+		if err := s.careEvent(ctx, tx, id.String(), CareSent, "user", now); err != nil {
+			return err
+		}
+		return s.mieEdge(ctx, tx, owner, MIENode{Kind: MIEShare, ID: share.ID, Version: 1}, MIENode{Kind: MIECare, ID: id.String(), Version: 1})
 	})
 	if err != nil {
 		return CareRequest{}, err
@@ -389,7 +392,7 @@ func (s *Store) CancelCareRequest(ctx context.Context, owner UserID, id string, 
 
 const carePartnerSelect = `SELECT r.id::text, r.reference, COALESCE(r.practitioner_id::text,''), COALESCE(u.display_name,''),
 	r.mode, r.state, r.synthetic, r.proposal, r.confirmed_slot, COALESCE(r.decline_reason,''), r.version,
-	(sh.state='active' AND sh.expires_at > $2), sh.expires_at, r.created_at, r.updated_at
+	(sh.state='active' AND sh.expires_at > $2 AND NOT EXISTS (SELECT 1 FROM mie_stale ms WHERE ms.record_id = sh.summary_id AND ms.version = sh.summary_version)), sh.expires_at, r.created_at, r.updated_at
 	FROM care_requests r JOIN shares sh ON sh.id = r.share_id LEFT JOIN admin_users u ON u.id = r.practitioner_id`
 
 func scanPartnerCare(row pgx.Row) (PartnerCareRequest, error) {
@@ -450,7 +453,7 @@ func (s *Store) PartnerCareRequest(ctx context.Context, orgID, id string, conten
 		var shareID string
 		var ct []byte
 		if err := tx.QueryRow(ctx, `SELECT sh.user_id, sh.id::text, sh.projection_ct FROM care_requests r JOIN shares sh ON sh.id = r.share_id
-			WHERE r.id::text=$1 AND r.org_id::text=$2 AND sh.state='active' AND sh.expires_at > $3`, id, orgID, now).Scan(&owner, &shareID, &ct); err != nil {
+			WHERE r.id::text=$1 AND r.org_id::text=$2 AND sh.state='active' AND sh.expires_at > $3 AND NOT EXISTS (SELECT 1 FROM mie_stale ms WHERE ms.record_id = sh.summary_id AND ms.version = sh.summary_version)`, id, orgID, now).Scan(&owner, &shareID, &ct); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return nil
 			}

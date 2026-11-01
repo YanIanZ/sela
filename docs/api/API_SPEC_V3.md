@@ -503,6 +503,18 @@ Full contract, including the professional workspace: [API_SPEC_CARE_NETWORK](API
 
 The export gains a `careRequests` section (requests and their history).
 
+## 6.16 Meaning Integrity Engine (2026-11-01 local implementation, D-078)
+
+A plain-id lineage graph (`mie_edges`, migration `1200_meaning_integrity`) records what rests on what: a source record version feeds a memory claim or a summary, a confirmed memory claim feeds a summary statement (`items[].claimRef`), an approved summary version feeds a share, a share feeds a care request. Correcting or rejecting a claim (`PATCH /api/v3/memory/{id}/review`, `PATCH /api/v3/memory/{id}`), editing a note or check-in, or deleting a source or claim invalidates every current descendant **in the same transaction**: memory and summary versions get a stale mark (`stale: {reason, eventId, at}` on reads; a stale summary is never effectively approved and cannot be approved again), active shares built on them are revoked with `end_reason = meaning_invalidated`, and open care requests on those shares are cancelled. Share recipients, partner workspaces and exports refuse a stale summary version even if a race left its share active. Stale confirmed memory is never sent as AT-1 context. Summary statement quotes must be verbatim (whitespace folded) in the pinned source revision (`400 quote_not_in_source`); a `claimRef` must name the owner's current confirmed or corrected, non-stale memory claim (`409 claim_not_usable`). A walk above 500 descendants or 6 levels refuses the change (`409 meaning_graph_limit`).
+
+| Route | Behaviour |
+| --- | --- |
+| `GET /api/v3/meaning/impact?id=` | Preview, writes nothing: `{impact:{origin:{kind,id,version}, memories, summaries, shares, careRequests, nodes:[{kind,id,version}]}}` for the record's current version |
+| `GET /api/v3/meaning/lineage?id=` | `{lineage:{node, stale?, parents:[{kind,id,version,current}], descendants:[...]}}` — "why did Sela say this?" |
+| `GET /api/v3/meaning/events` | The owner's latest 20 invalidations: `{events:[{eventId, reason, origin, memories, summaries, shares, careRequests, at}]}`; reasons `source_edited`, `source_deleted`, `claim_corrected`, `claim_rejected`, `claim_deleted` |
+
+Ids, versions, counts and reasons only: no quote, claim text, title or hash is stored in the graph or returned here.
+
 ## 7. Guest and account differences (foundation)
 
 | Capability | Guest | Account |
