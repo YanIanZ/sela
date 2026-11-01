@@ -1060,7 +1060,8 @@ function EntryDetail({ id }: { id: string }) {
 function CrisisAfterSave({ recordId, version }: { recordId: string; version: number }) {
   const w = useWords();
   const { lang } = useI18n();
-  const service = helpData.help[0];
+  // the mental-health line, not the general emergency number
+  const service = helpData.help.find((s) => s.id === "healing119-kemenkes") ?? helpData.help[0];
   // Quick-help mode opens once for each saved version that read as danger,
   // not every time the note is reopened.
   const key = `sela.emergency.${recordId}.${version}`;

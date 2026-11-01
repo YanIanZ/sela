@@ -24,7 +24,9 @@ export function EmergencySheet({
 }) {
   const w = useWords();
   const { lang } = useI18n();
-  const services = helpData.help.slice(0, 2);
+  // The services marked urgent: the emergency number, the ambulance and
+  // the 24-hour mental-health line, in the catalogue order.
+  const services = helpData.help.filter((s) => s.urgent);
   return (
     <Dialog
       open={open}

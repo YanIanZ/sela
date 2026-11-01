@@ -21,7 +21,7 @@ import (
 )
 
 // Version identifies the catalogue contents. Bump on any data change.
-const Version = "sela-fixtures-2026.10.26-2"
+const Version = "sela-fixtures-2026.11.01-1"
 
 //go:embed data/*.json
 var dataFS embed.FS
@@ -157,6 +157,8 @@ type HelpResource struct {
 	LastVerified       string    `json:"lastVerified"`
 	VerifiedBy         string    `json:"verifiedBy"`
 	ReverifyBy         string    `json:"reverifyBy"`
+	// Urgent services lead the quick-help sheet (D-077).
+	Urgent bool `json:"urgent,omitempty"`
 }
 
 // Catalog is the whole validated catalogue.

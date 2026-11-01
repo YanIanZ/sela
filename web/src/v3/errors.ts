@@ -6,6 +6,10 @@ import type { Lang } from "./api";
  * when a code is newer than this client.
  */
 const copy: Record<string, { id: string; en: string }> = {
+  policy_unavailable: {
+    id: "Teks kebijakan untuk izin ini belum termuat. Muat ulang halaman lalu coba lagi.",
+    en: "The policy text for this permission hasn't loaded. Reload the page and try again.",
+  },
   invalid_input: {
     id: "Ada isian yang belum bisa dipakai. Periksa lagi bagian yang ditandai.",
     en: "Something in this form can't be used yet. Check the part that is marked.",

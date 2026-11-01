@@ -16,6 +16,8 @@ export type HelpResource = {
   lastVerified: string;
   verifiedBy: string;
   reverifyBy: string;
+  /** urgent services lead quick-help mode (D-077) */
+  urgent?: boolean;
 };
 
 export const helpData = fallback as unknown as {
@@ -30,9 +32,16 @@ export function telHref(value: string): string {
   return `tel:${main.replace(/[^0-9+]/g, "")}`;
 }
 
+/** waNumber is the international form wa.me needs: an Indonesian number
+ * written with a leading 0 ("0811-843-6633") becomes 62… ("628118436633"). */
+export function waNumber(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  return digits.startsWith("0") ? "62" + digits.slice(1) : digits;
+}
+
 export function channelHref(channel: { kind: string; value: string }): string {
   if (channel.kind === "phone") return telHref(channel.value);
-  if (channel.kind === "whatsapp") return "https://wa.me/" + channel.value.replace(/\D/g, "");
+  if (channel.kind === "whatsapp") return "https://wa.me/" + waNumber(channel.value);
   return channel.value;
 }
 

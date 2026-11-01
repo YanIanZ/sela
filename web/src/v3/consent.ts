@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, type Consent, type Policy } from "./api";
+import { api, V3Error, type Consent, type Policy } from "./api";
 
 /**
  * useConsent reads one optional consent and lets the page grant or
@@ -24,7 +24,8 @@ export function useConsent(purpose: string, policy?: Policy) {
   const set = useCallback(
     async (granted: boolean) => {
       const version = consent?.currentPolicyVersion ?? policy?.version;
-      if (!version) throw new Error("policy");
+      // a translated, retryable error instead of the bare word "policy"
+      if (!version) throw new V3Error("policy_unavailable", "policy_unavailable");
       await api(`/me/consents/${purpose}`, { granted, policyVersion: version }, "PUT");
       load();
     },
