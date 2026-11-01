@@ -35,6 +35,20 @@ func TestDangerLexicon(t *testing.T) {
 		{"someone is threatening to kill me", LevelCrisis},
 		{"I was raped", LevelCrisis},
 		{"I'm not safe at home", LevelCrisis},
+		// active "X hits me" in its base form (ruleset 2026.11.01-2)
+		{"ayah pukul aku", LevelCrisis},
+		{"ayah masih pukul aku tiap malam", LevelCrisis},
+		{"suamiku tampar aku kemarin", LevelCrisis},
+		{"pacarku tendang aku", LevelCrisis},
+		{"kakak gebukin aku", LevelCrisis},
+		{"bapak tonjok gue", LevelCrisis},
+		{"aku digebukin sama bapak", LevelCrisis},
+		{"aku dikeroyok anak kelas sebelah", LevelCrisis},
+		// mass harm at a place (ruleset 2026.11.01-2)
+		{"I'm gonna shoot up the school tomorrow", LevelCrisis},
+		{"i will shoot up my school", LevelCrisis},
+		{"I'm going to blow up the mall", LevelCrisis},
+		{"I want to open fire at the church", LevelCrisis},
 		// prepared means, farewells, vanishing, self-harm
 		{"aku udah nyiapin tali", LevelCrisis},
 		{"ini pesan terakhirku", LevelCrisis},
@@ -50,6 +64,9 @@ func TestDangerLexicon(t *testing.T) {
 		{"aku nggak pernah dipukul ortu", LevelElevated},
 		{"aku mau habisin dia di ranked", LevelElevated},
 		{"I'm gonna kill him in fortnite", LevelElevated},
+		{"ayah nggak pernah pukul aku", LevelElevated},
+		{"dia udah nggak mukul aku lagi", LevelElevated},
+		{"I'm gonna shoot up the school in roblox", LevelElevated},
 		// everyday and figurative
 		{"aku mau nembak dia besok", LevelNone},
 		{"dia mau nembak aku katanya", LevelNone},
@@ -69,6 +86,11 @@ func TestDangerLexicon(t *testing.T) {
 		{"I'm going to kill it at the interview", LevelNone},
 		{"I killed the presentation", LevelNone},
 		{"my boss hits me with deadlines", LevelNone},
+		{"aku berangkat pukul 7 pagi", LevelNone},
+		{"aku digebukin tugas minggu ini", LevelNone},
+		{"I'm going to bomb this exam", LevelNone},
+		{"I'm gonna blow up the group chat", LevelNone},
+		{"prices will shoot up at the mall", LevelNone},
 		{"I'm not suicidal just need a break or i'll hurt someone's feelings", LevelNone},
 	}
 	for _, c := range cases {

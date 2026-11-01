@@ -734,7 +734,7 @@ func slotIdentity(g Generator, _ Route) GeneratorIdentity {
 func (st *run) callGen(ctx context.Context, g Generator, route Route, regen bool, constraints []string, c genCall) (GenerateResult, *GenerateError, string) {
 	id := slotIdentity(g, route)
 	system, user, err := prompt(st.task, st.in.Language, st.aud, st.in.Intent, st.in.Purpose, constraints, st.payload.Spans)
-	if latestUserJailbreak(st.payload.Spans) && !slices.Contains(st.prov.InputFlags, "jailbreak_attempt") {
+	if userJailbreak(st.payload.Spans) && !slices.Contains(st.prov.InputFlags, "jailbreak_attempt") {
 		st.prov.InputFlags = append(st.prov.InputFlags, "jailbreak_attempt")
 	}
 	if err != nil {

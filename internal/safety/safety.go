@@ -447,7 +447,7 @@ package safety
 
 // RulesetVersion identifies the lexicon and routing policy. Change it whenever
 // a rule, normalisation step or routing decision changes.
-const RulesetVersion = "sela-safety-2026.11.01-1"
+const RulesetVersion = "sela-safety-2026.11.01-2"
 
 // Level is the routing decision.
 type Level string

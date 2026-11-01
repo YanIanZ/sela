@@ -5,7 +5,8 @@ import (
 	"strings"
 )
 
-// The danger lexicon (ruleset 2026.11.01-1) closes gaps the v1 catalogue left
+// The danger lexicon (ruleset 2026.11.01-1, extended in -2 with base-form
+// "X hits me" verbs and English mass harm at a place) closes gaps the v1 catalogue left
 // open: a threat to hurt someone else, the speaker being hurt, threatened or
 // in danger, prepared means, a written farewell and a few self-harm and
 // suicide phrasings. It runs on the normalised text (lower case, leetspeak
@@ -34,10 +35,23 @@ const (
 	dangerWeaponID = `(?:pisau|golok|parang|celurit|clurit|pistol|senjata|senapan|bom|air\s+keras|samurai|badik)`
 	dangerHurtMeID = `(?:bunuh|bunuhin|ngebunuh|membunuh|bacok|ngebacok|tusuk|nusuk|habisin|habisi|bakar|tembak\s+mati|cekik|nyekik|pukul|mukul|mukulin|hajar|ngehajar|` +
 		`perkosa|memperkosa|siksa|nyiksa|menyiksa|aniaya|culik|nyulik)`
-	dangerVictimID = `(?:dipukul|dipukulin|dipukuli|dihajar|ditampar|ditendang|dicekik|ditusuk|dibacok|disiksa|diperkosa|dirudapaksa|dilecehkan|dicabuli|` +
+	dangerVictimID = `(?:dipukul|dipukulin|dipukuli|dihajar|ditampar|ditamparin|ditendang|ditendangin|digebuk|digebukin|digebuki|ditonjok|ditonjokin|dijambak|dikeroyok|` +
+		`dicekik|ditusuk|dibacok|disiksa|diperkosa|dirudapaksa|dilecehkan|dicabuli|` +
 		`disekap|dikurung|diculik|dianiaya|ditodong|dijual|diancam\s+(?:dibunuh|dibacok|ditusuk|dipukul|disebar|disebarin)|digrepe|digrepein)`
-	dangerHitMeID = `(?:mukul|mukulin|memukul|memukuli|nampar|menampar|nendang|menendang|cekik|nyekik|mencekik|hajar|ngehajar|menghajar|siksa|nyiksa|menyiksa|` +
+	// dangerHitMeID also takes the bare base forms people type in chat
+	// ("ayah pukul aku", "dia tampar aku").
+	dangerHitMeID = `(?:pukul|pukulin|pukuli|mukul|mukulin|memukul|memukuli|tampar|tamparin|nampar|menampar|tendang|tendangin|nendang|menendang|` +
+		`gebuk|gebukin|ngegebukin|tonjok|tonjokin|nonjok|nonjokin|jambak|jambakin|ngejambak|` +
+		`cekik|nyekik|mencekik|hajar|ngehajar|menghajar|siksa|nyiksa|menyiksa|` +
 		`perkosa|memperkosa|lecehin|ngelecehin|melecehkan|nyekap|menyekap|ngurung|mengurung|culik|nyulik|menculik|grepe|grepein)`
+	// dangerNegPrefixID is a negator directly before the verb, taken into
+	// the match so "dia udah nggak mukul aku lagi" counts as a denial.
+	dangerNegPrefixID = `(?:\b(?:nggak|ngga|gak|ga|tidak|tak|enggak|engga|belum|bukan)\s+(?:pernah\s+|lagi\s+|mau\s+)?)?`
+	// dangerPlaceEN is a place full of people.
+	dangerPlaceEN = `(?:the\s+|my\s+|our\s+|this\s+|that\s+|a\s+|his\s+|her\s+|their\s+)?(?:school|campus|office|workplace|church|mosque|temple|synagogue|mall|concert|crowd|stadium|hospital|airport|station)`
+	// dangerRoomEN is a room or gathering that only a shooting makes a
+	// target; "bomb this class" is failing it.
+	dangerRoomEN      = `(?:the\s+|my\s+|our\s+|this\s+|that\s+|a\s+)?(?:class|classroom|party|lecture)`
 	dangerOtherEN     = `(?:him|her|them|everyone|everybody|people|you|someone|somebody|all\s+of\s+them|my\s+(?:dad|father|mom|mother|husband|wife|boyfriend|girlfriend|ex|boss|teacher|brother|sister|family|neighbou?r|classmates?|coworkers?)|that\s+(?:guy|girl|man|woman|person|teacher|boss|bitch|bastard|kid))`
 	dangerHarmEN      = `(?:kill|murder|stab|shoot|strangle|choke|poison|burn\s+down|bomb|blow\s+up|slaughter|massacre|hurt|beat\s+up)`
 	dangerIntentEN    = `(?:'m\s+going\s+to|\s+am\s+going\s+to|'m\s+gonna|\s+am\s+gonna|\s+gonna|'ll|\s+will|\s+want\s+to|\s+wanna|\s+plan\s+to|\s+need\s+to|\s+have\s+to|\s+am\s+about\s+to|'m\s+about\s+to|\s+should|\s+could)`
@@ -96,6 +110,14 @@ var dangerRules = []dangerRule{
 		r.after = regexp.MustCompile(`^(?:'s|s'|\s+in\s+(?:the\s+)?(?:game|match))`)
 		return r
 	}(),
+	func() dangerRule {
+		r := dRule("danger-en-mass-harm", CategoryViolence,
+			`\bi`+dangerIntentEN+`(?:\s+(?:just|really|literally|actually|seriously|finally|fucking|go))?\s+`+
+				`(?:(?:shoot\s+up|blow\s+up|burn\s+down|bomb|attack|open\s+fire\s+(?:at|on|in|inside))\s+`+dangerPlaceEN+
+				`|(?:shoot\s+up|open\s+fire\s+(?:at|on|in|inside))\s+`+dangerRoomEN+`)\b`)
+		r.others = true
+		return r
+	}(),
 	dRule("danger-en-weapon", CategoryViolence,
 		`\bi(?:'m|\s+am|'ll|\s+will)?\s+(?:bringing|bring|taking|take|got|have|bought)\s+(?:a\s+|my\s+)?(?:gun|knife|rifle|bomb|weapon)\s+(?:to|into)\s+(?:school|class|work|the\s+office|church|the\s+mall)\b`),
 
@@ -109,7 +131,7 @@ var dangerRules = []dangerRule{
 		return r
 	}(),
 	dRule("danger-id-hurt-me", CategoryInDanger,
-		`\b`+dangerHitMeID+`\s+(?:aku|saya|gue|gw|aq|ak|sy)\b`),
+		dangerNegPrefixID+`\b`+dangerHitMeID+`\s+(?:aku|saya|gue|gw|aq|ak|sy)\b`),
 	dRule("danger-id-not-safe", CategoryInDanger,
 		`\b`+dangerSelfID+`\b(?:\s+\S+){0,2}?\s+(?:(?:lagi\s+|sedang\s+)?dalam\s+bahaya|(?:nggak|gak|ga|tidak|enggak|ngga|tak)\s+aman\s+(?:di\s+rumah|di\s+sini|disini|(?:sama|dengan|dekat|deket)\s+`+dangerPerson+`))\b|`+
 			`\b`+dangerSelfID+`\b(?:\s+\S+){0,2}?\s+korban\s+(?:kdrt|kekerasan|perkosaan|pemerkosaan|pelecehan|penganiayaan|perdagangan\s+orang)\b`),
@@ -184,7 +206,7 @@ const dangerPerson = `(?:dia|dy|mereka|orang\s+itu|ayah|ayahku|bapak|bapakku|ibu
 var (
 	// dangerFigurative is what follows a figurative "hit by": a ball, a
 	// fact, a deadline, life ("aku ditampar realita", "dihajar tugas").
-	dangerFigurative = regexp.MustCompile(`^\s+(?:oleh\s+|sama\s+|ama\s+)?(?:bola|realita|realitas|kenyataan|keadaan|tugas|deadline|kerjaan|pekerjaan|ujian|pr|nilai|hidup|nasib|takdir|angin|ombak|hujan|rindu|kangen|cinta|rasa|tagihan|cicilan|macet|rutinitas|lagu|film|meme|komentar|pertanyaan)\b`)
+	dangerFigurative = regexp.MustCompile(`^\s+(?:oleh\s+|sama\s+|ama\s+)?(?:bola|realita|realitas|kenyataan|keadaan|tugas|deadline|kerjaan|pekerjaan|ujian|pr|nilai|hidup|nasib|takdir|angin|ombak|hujan|nyamuk|rindu|kangen|cinta|rasa|tagihan|cicilan|macet|rutinitas|lagu|film|meme|komentar|pertanyaan)\b`)
 	dangerNegator    = regexp.MustCompile(`\b(?:nggak|ngga|gak|ga|tidak|tak|enggak|engga|bukan|jangan|belum|pernah\s+nggak|never|not|don'?t|won'?t|wouldn'?t|didn'?t|isn'?t|wasn'?t|can'?t|cannot)\b`)
 	dangerGame       = regexp.MustCompile(`\b(?:game|gaming|ranked|rank|mabar|main\s+(?:game|ml|ff|pubg)|ml|mobile\s+legends?|ff|free\s+fire|pubg|valorant|minecraft|roblox|genshin|boss|level|ronde|round|match|karakter|character|npc|zombie|zombi|mode\s+cerita|fortnite|apex|cod|call\s+of\s+duty|overwatch|dota|csgo|cs2|counter-strike|gta|among\s+us|chess|catur|tekken|pvp|lobby|squad|respawn)\b`)
 )
