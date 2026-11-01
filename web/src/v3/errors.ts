@@ -6,6 +6,18 @@ import type { Lang } from "./api";
  * when a code is newer than this client.
  */
 const copy: Record<string, { id: string; en: string }> = {
+  quote_not_in_source: {
+    id: "Kutipan ini tidak ada di versi sumber yang dipilih. Ambil ulang kutipan dari sumbernya.",
+    en: "This quote is not in the selected version of its source. Take the quote again from the source.",
+  },
+  claim_not_usable: {
+    id: "Pemahaman yang dirujuk belum kamu konfirmasi, sudah berubah, atau perlu ditinjau ulang. Perbarui bagiannya dari pemahaman terbaru.",
+    en: "The meaning this cites isn't confirmed by you, has changed, or needs review again. Update the statement from your latest meaning.",
+  },
+  meaning_graph_limit: {
+    id: "Terlalu banyak hal bergantung pada catatan ini untuk diubah sekaligus. Hapus beberapa ringkasan atau tautan dulu.",
+    en: "Too much rests on this entry to change it at once. Remove some summaries or links first.",
+  },
   policy_unavailable: {
     id: "Teks kebijakan untuk izin ini belum termuat. Muat ulang halaman lalu coba lagi.",
     en: "The policy text for this permission hasn't loaded. Reload the page and try again.",

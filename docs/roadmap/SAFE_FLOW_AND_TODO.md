@@ -90,7 +90,7 @@ Status legend: `.` planned · `~` in progress · `x` done with evidence · `!` b
 - [x] S-044 README: product link https://sela.vertalt.my.id, credits, fork note
 - [x] S-045 Favicon and app icons refreshed (SVG + PNG + manifest)
 - [x] S-046 In-app credit: "© 2026 Sela — YanIanZ", forked from Dengar.in, in the footer and About
-- [ ] S-001 Expose the build SHA on `/api/v2/health` and tie evidence to it (PR #28 H-001)
+- [x] S-001 Expose the build SHA on `/api/v2/health` — `scripts/compose-up.sh` (production must deploy with it)
 - [ ] S-002 Remove the duplicated HSTS / nosniff headers at the proxy (owner, hosting)
 
 ### Guardrails
@@ -103,7 +103,7 @@ Status legend: `.` planned · `~` in progress · `x` done with evidence · `!` b
 - [x] S-020 Condition map (opt-in consent `condition_map`): deterministic stage from saved material, with the signals that produced it
 - [x] S-021 Planned-care page shows the stage, what it means, and suggested kinds of help
 - [x] S-022 Simulated professional directory for the product demo (clearly fictional, cannot receive real data)
-- [ ] S-023 Hand-off from an approved summary to a simulated practitioner through the existing synthetic sandbox (after MIE H-008 read-time gate)
+- [x] S-023 Hand-off from an approved summary to a simulated practitioner — care requests (D-076), protected by the MIE read-time gate (D-078)
 - [ ] S-024 Evaluation of stage stability on synthetic journeys (PR #28 H-010/H-011)
 
 ### Anonymous peer sharing
@@ -116,8 +116,8 @@ Status legend: `.` planned · `~` in progress · `x` done with evidence · `!` b
 - [ ] S-036 Moderation evaluation set (bullying, banter, quotes, reclaimed words) with false-positive review
 
 ### Meaning Integrity Engine (unchanged from PR #28)
-- [ ] H-003–H-009 claim graph, corrections, invalidation, read-time gate, review UI
-- [ ] H-010–H-013 scenarios, evaluation, end-to-end evidence, video and submission
+- [x] H-003–H-009 claim graph, corrections, invalidation, read-time gate, review UI — MIE 1.0 (D-078): backend `a19b876`, review/impact/stale UI; scenario B passes in `TestMeaningCorrectionPropagates` and in one browser run against a local server
+- [~] H-010–H-013 scenarios, evaluation, end-to-end evidence, video and submission — synthetic MIE set (128 cases) and offline B1 evaluation done; live Meta B0/B2/T comparison, video and submission open
 
 ## 5. Evidence (2026-11-01, branch `feat/sela-roadmap-nov`)
 

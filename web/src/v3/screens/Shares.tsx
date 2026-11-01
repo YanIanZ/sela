@@ -28,6 +28,8 @@ type Share = {
   openedCount: number;
   acknowledgedCount: number;
   lastOpenedAt: string | null;
+  /** Why an ended link stopped (D-078). */
+  endReason?: "owner_revoked" | "expired" | "source_deleted" | "account_deleted" | "meaning_invalidated" | string;
 };
 
 type ShareEvent = {
@@ -214,9 +216,13 @@ export function SharesPage() {
                 {(loc.lang === "id" ? purposes.find((p) => p.value === share.purpose)?.id : purposes.find((p) => p.value === share.purpose)?.en) ?? share.purpose + " · "}
                 {share.state === "active"
                   ? w("Aktif sampai ", "Active until ") + loc.dateTime(share.expiresAt)
-                  : share.state === "revoked"
-                    ? w("Dicabut", "Revoked")
-                    : w("Kedaluwarsa", "Expired")}
+                  : share.endReason === "meaning_invalidated"
+                    ? w("Dihentikan karena makna dikoreksi", "Stopped because the meaning was corrected")
+                    : share.endReason === "source_deleted"
+                      ? w("Dihentikan karena sumbernya dihapus", "Stopped because its source was deleted")
+                      : share.state === "revoked"
+                        ? w("Dicabut olehmu", "Revoked by you")
+                        : w("Kedaluwarsa", "Expired")}
               </p>
               <p className="s-hint">
                 {share.openedCount === 0

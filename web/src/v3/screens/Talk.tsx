@@ -16,6 +16,7 @@ import { useAnnounce, useLocale, useWords } from "../shared";
 import { Icon, Mark } from "../icons";
 import { helpData, channelHref } from "../helpdata";
 import { EmergencySheet } from "../emergency";
+import { MeaningDiff } from "../meaning";
 import {
   Button,
   ChoiceGroup,
@@ -1355,16 +1356,33 @@ function RoomPage({ id }: { id: string }) {
               </p>
               {(room.reflections ?? []).map((reflection) => (
                 <article className="s-consent" key={reflection.id}>
-                  <blockquote className="s-reflection-quote">“{reflection.quote}”</blockquote>
                   {correcting === reflection.id ? (
-                    <TextArea
-                      label={w("Kata-katamu sendiri", "Your own words")}
-                      value={correction}
-                      onChange={(e) => setCorrection(e.target.value)}
-                      rows={3}
+                    <>
+                      <blockquote className="s-reflection-quote">“{reflection.quote}”</blockquote>
+                      <TextArea
+                        label={w("Kata-katamu sendiri", "Your own words")}
+                        value={correction}
+                        onChange={(e) => setCorrection(e.target.value)}
+                        rows={3}
+                      />
+                    </>
+                  ) : reflection.meaning ? (
+                    <MeaningDiff
+                      quote={reflection.quote}
+                      wording={reflection.text}
+                      meaning={reflection.meaning}
+                      busy={reflectionBusy}
+                      onUseMine={
+                        reflection.reviewStatus === "unreviewed"
+                          ? () => void reviewReflection(reflection, "correct", [...reflection.quote].slice(0, 1200).join(""))
+                          : undefined
+                      }
                     />
                   ) : (
-                    <p>{reflection.text}</p>
+                    <>
+                      <blockquote className="s-reflection-quote">“{reflection.quote}”</blockquote>
+                      <p>{reflection.text}</p>
+                    </>
                   )}
                   <p className="s-hint">
                     {reflection.reviewStatus === "confirmed"

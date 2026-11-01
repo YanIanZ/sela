@@ -19,6 +19,7 @@ import {
 } from "./Continuity";
 import { WeeklyPage } from "./Weekly";
 import { EmergencySheet } from "../emergency";
+import { ImpactSummary, latestMeaningEvent, resultText, useMeaningImpact } from "../meaning";
 import { helpData } from "../helpdata";
 import {
   Button,
@@ -627,6 +628,9 @@ function DerivedDelete({
   const [mode, setMode] = useState<"keep" | "delete">("keep");
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0);
+  // The lineage graph also counts remembered meanings and requests to a
+  // professional that rest on this entry (D-078).
+  const meaningImpact = useMeaningImpact(record.id, open);
   const subjectID = isCheckin ? "Cek perasaan ini" : "Catatan ini";
   const subjectEN = isCheckin ? "This check-in" : "This note";
   const count = impact?.totals.summaries ?? 0;
@@ -725,6 +729,7 @@ function DerivedDelete({
             onRetry={impact === null ? () => setReload((n) => n + 1) : undefined}
           />
         )}
+        {impact && <ImpactSummary impact={meaningImpact} />}
         {impact && (
           <>
             {count === 0 ? (
@@ -775,8 +780,8 @@ function DerivedDelete({
                         "Keep summaries (mark them stale)",
                       ),
                       hint: w(
-                        "Ringkasan tetap ada, tetapi ditandai usang karena sumbernya hilang. Tautan yang sudah dibagikan tetap berlaku.",
-                        "Summaries stay but become stale because the source is gone. Links already shared keep working.",
+                        "Ringkasan tetap ada sebagai riwayatmu, tetapi ditandai usang karena sumbernya hilang. Tautan yang sudah dibagikan dihentikan untuk pembaca berikutnya; yang sudah dibaca tidak bisa ditarik kembali.",
+                        "Summaries stay as your history but become stale because the source is gone. Links already shared stop for future readers; what was already read can't be recalled.",
                       ),
                     },
                     {
@@ -838,6 +843,7 @@ function EntryDetail({ id }: { id: string }) {
       .catch(setError);
   };
   useEffect(load, [id]);
+  const editImpact = useMeaningImpact(record?.id, editing, record?.version);
 
   const saveEdit = async () => {
     if (!record) return;
@@ -861,7 +867,15 @@ function EntryDetail({ id }: { id: string }) {
       );
       setRecord(next);
       setEditing(false);
-      announce("status", w("Perubahan tersimpan sebagai versi baru.", "Saved as a new version."));
+      const event = await latestMeaningEvent();
+      const carried =
+        event && event.origin.id === next.id && event.at && Date.now() - Date.parse(event.at) < 5 * 60 * 1000
+          ? resultText(event, w)
+          : "";
+      announce(
+        "status",
+        [w("Perubahan tersimpan sebagai versi baru.", "Saved as a new version."), carried].filter(Boolean).join(" "),
+      );
     } catch (e) {
       setError(e);
     } finally {
@@ -969,6 +983,7 @@ function EntryDetail({ id }: { id: string }) {
               maxLength={6000}
               onChange={(e) => setText(e.target.value)}
             />
+            <ImpactSummary impact={editImpact} />
             <div className="s-actions">
               <Button variant="primary" busy={busy} onClick={() => void saveEdit()}>
                 {w("Simpan perubahan", "Save changes")}

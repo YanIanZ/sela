@@ -1,0 +1,18 @@
+/* Meaning Integrity Engine: your words next to Sela's wording (D-078). */
+.c-meaning { display: grid; gap: 0.75rem; min-width: 0; }
+.c-meaning-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 0.75rem; }
+.c-meaning-side { margin: 0; display: grid; gap: 0.35rem; align-content: start; padding: 0.75rem 0.9rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-2); background: var(--c-surface); min-width: 0; }
+.c-meaning-side--sela { background: var(--c-surface-quiet); }
+.c-meaning-side figcaption { color: var(--c-muted); font-size: var(--font-size-1); font-weight: 600; }
+.c-meaning-side blockquote { margin: 0; }
+.c-meaning-side p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.c-meaning-list { display: grid; gap: 0.35rem; margin: 0.5rem 0 0; padding-left: 1.1rem; overflow-wrap: anywhere; }
+.c-meaning-list--review { margin: 0; color: var(--c-muted); font-size: var(--font-size-2); list-style: none; padding-left: 0; }
+.c-meaning-chip { display: inline-flex; align-items: center; padding: 0.05rem 0.55rem; border: 1px solid var(--c-border-control); border-radius: var(--radius-pill); font-size: var(--font-size-1); font-weight: 600; color: var(--c-text); white-space: nowrap; }
+.c-meaning-chip--stale { background: var(--c-warning-bg); border-color: transparent; color: var(--c-warning); }
+.c-meaning-impact { margin: 0; padding: 0.6rem 0.8rem; border-radius: var(--radius-2); background: var(--c-warning-bg); color: var(--c-text); font-size: var(--font-size-2); overflow-wrap: anywhere; }
+.c-meaning-lineage { display: grid; gap: 0.5rem; }
+.c-meaning-lineage summary { cursor: pointer; min-height: var(--target-min); display: flex; align-items: center; font-weight: 600; }
+.c-meaning-lineage ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.35rem; overflow-wrap: anywhere; }
+.c-meaning-event { margin: 0; }
+:root[data-scheme^="contrast"] :is(.c-meaning-side, .c-meaning-impact) { border: 2px solid var(--c-text); background: var(--c-bg); }

@@ -1,3 +1,4 @@
+import type { MeaningCheck, StaleInfo } from "./meaning";
 /*
  * The /api/v3 client. One place for envelopes, the mutation guard headers,
  * request timeouts and the stable error codes. No component calls fetch
@@ -105,6 +106,8 @@ export type Reflection = {
   text: string;
   reviewStatus: "unreviewed" | "confirmed" | "corrected" | "rejected";
   provenance: string;
+  /** Meaning Diff of Sela's wording against the quote (D-078). */
+  meaning?: MeaningCheck;
   createdAt: string;
   updatedAt: string;
 };
@@ -153,6 +156,10 @@ export type Entry = {
   updatedAt: string;
   turns?: Turn[];
   paused?: boolean;
+  /** Set when an invalidation reached this version (D-078). */
+  stale?: StaleInfo;
+  /** Meaning Diff of an AI claim against its quote (D-078). */
+  meaning?: MeaningCheck;
 };
 
 /** One owned summary that pins a source record (content-free). */

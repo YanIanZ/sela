@@ -2087,3 +2087,200 @@ describe("planned support path (D-076)", () => {
     expect(screen.queryByRole("button", { name: "Batalkan permintaan" })).not.toBeInTheDocument();
   });
 });
+
+describe("meaning integrity (D-078)", () => {
+  const source = {
+    id: "note-mie",
+    kind: "note",
+    title: "Catatan MIE",
+    text: "Akhir-akhir ini capek. Kadang aku ingin sendiri, tapi bukan berarti membenci teman.",
+    version: 1,
+    provenance: "user_original",
+    reviewStatus: "confirmed",
+    safety: "none",
+    createdAt: "2026-11-01T08:00:00Z",
+    updatedAt: "2026-11-01T08:00:00Z",
+  };
+  const quote = "Kadang aku ingin sendiri, tapi bukan berarti membenci teman.";
+  const proposal = {
+    id: "mem-mie",
+    kind: "memory",
+    title: "",
+    text: "Kamu menghindari semua teman.",
+    version: 1,
+    provenance: "unconfirmed_interpretation",
+    reviewStatus: "unreviewed",
+    safety: "none",
+    sourceRefs: [{ recordId: source.id, version: 1, quote }],
+    meaning: {
+      version: "sela-meaning-2026.11.01-1",
+      critical: true,
+      differences: [
+        { code: "negation", severity: "critical", source: "bukan" },
+        { code: "frequency", severity: "critical", source: "kadang", wording: "" },
+        { code: "generalization", severity: "critical", wording: "semua" },
+      ],
+    },
+    createdAt: "2026-11-01T09:00:00Z",
+    updatedAt: "2026-11-01T09:00:00Z",
+  };
+
+  it("shows the meaning diff and replaces Sela's wording with the user's own words", async () => {
+    const calls = mockApi(
+      {
+        "GET /memory": () => ({ data: { enabled: true, items: [proposal] } }),
+        "GET /meaning/events": () => ({ data: { events: [] } }),
+        "PATCH /memory/mem-mie/review": (body) => ({
+          data: { ...proposal, version: 2, reviewStatus: "corrected", text: (body as { text: string }).text, meaning: undefined },
+        }),
+      },
+      profile(),
+    );
+    renderPath("/notes/memory");
+    expect(await screen.findByText("Sela mungkin mengubah maknamu")).toBeInTheDocument();
+    expect(screen.getByText(/Digeneralisasi: “semua”/)).toBeInTheDocument();
+    expect(screen.getByText(/Frekuensi berubah: “kadang”/)).toBeInTheDocument();
+    expect(screen.getByText("Kata-katamu")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Pakai kata-kataku" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "PATCH" && c.path === "/memory/mem-mie/review")).toBe(true));
+    expect(calls.find((c) => c.path === "/memory/mem-mie/review")!.body).toEqual({ expectedVersion: 1, action: "correct", text: quote });
+  });
+
+  it("previews what a correction will reach before the owner saves it", async () => {
+    const confirmed = { ...proposal, version: 2, reviewStatus: "confirmed" };
+    mockApi(
+      {
+        "GET /memory/mem-mie": () => ({ data: confirmed }),
+        "GET /records/note-mie": () => ({ data: source }),
+        "GET /meaning/impact": () => ({
+          data: { impact: { origin: { kind: "memory", id: "mem-mie", version: 2 }, memories: 0, summaries: 1, shares: 2, careRequests: 1, nodes: [] } },
+        }),
+      },
+      profile(),
+    );
+    renderPath("/notes/memory/mem-mie");
+    fireEvent.click(await screen.findByRole("button", { name: "Perbaiki" }));
+    expect(
+      await screen.findByText(
+        "Ini akan menandai 1 ringkasan perlu ditinjau, menghentikan 2 tautan berbagi, dan membatalkan 1 permintaan ke tenaga profesional. Yang sudah dibaca orang lain tidak bisa ditarik kembali.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("marks a stale summary, hides approval and offers to update from the latest meanings", async () => {
+    const summary = {
+      id: "sum-mie",
+      kind: "summary",
+      title: "Untuk konsultasi",
+      text: "Ringkasan sintetis.",
+      version: 1,
+      provenance: "manual",
+      reviewStatus: "confirmed",
+      safety: "none",
+      summaryState: "draft",
+      stale: { reason: "claim_corrected", eventId: "ev-1", at: "2026-11-01T10:00:00Z" },
+      sourceRefs: [{ recordId: source.id, version: 1 }],
+      items: [
+        {
+          id: "item-mie",
+          text: "Aku menghindari semua teman.",
+          quote,
+          sourceRef: { recordId: source.id, version: 1 },
+          claimRef: { recordId: "mem-mie", version: 2 },
+          provenance: "user_original",
+          reviewStatus: "confirmed",
+          position: 0,
+        },
+      ],
+      createdAt: "2026-11-01T09:00:00Z",
+      updatedAt: "2026-11-01T09:30:00Z",
+    };
+    const corrected = { ...proposal, version: 3, reviewStatus: "corrected", text: "Kamu sesekali butuh waktu sendiri.", meaning: undefined };
+    const calls = mockApi(
+      {
+        "GET /records": () => ({ data: { records: [source] } }),
+        "GET /consultation-summaries/sum-mie": () => ({ data: summary }),
+        "GET /consultation-summaries/sum-mie/followups": () => ({ data: { followups: [] } }),
+        "GET /memory/mem-mie": () => ({ data: corrected }),
+        "PATCH /consultation-summaries/sum-mie": () => ({ data: { ...summary, version: 2, stale: undefined } }),
+      },
+      profile(),
+    );
+    renderPath("/support/summaries/sum-mie");
+    expect(await screen.findByText("Pemahaman yang dirujuk sudah kamu koreksi")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Setujui versi ini" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Perbarui dari pemahaman terbaru" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "PATCH" && c.path === "/consultation-summaries/sum-mie")).toBe(true));
+    const body = calls.find((c) => c.method === "PATCH" && c.path === "/consultation-summaries/sum-mie")!.body as {
+      items: Array<Record<string, unknown>>;
+      expectedVersion: number;
+    };
+    expect(body.expectedVersion).toBe(1);
+    expect(body.items[0]).toMatchObject({ text: "Kamu sesekali butuh waktu sendiri.", claimRef: { recordId: "mem-mie", version: 3 }, quote });
+  });
+
+  it("labels a link stopped by a meaning correction", async () => {
+    mockApi(
+      {
+        "GET /shares": () => ({
+          data: {
+            shares: [
+              {
+                id: "sh-mie",
+                summaryId: "sum-mie",
+                summaryVersion: 1,
+                label: "Konselor sintetis",
+                purpose: "consultation",
+                state: "revoked",
+                endReason: "meaning_invalidated",
+                version: 2,
+                expiresAt: "2026-11-03T09:00:00Z",
+                createdAt: "2026-11-01T09:00:00Z",
+                acknowledged: false,
+                openedCount: 1,
+                acknowledgedCount: 0,
+                lastOpenedAt: null,
+              },
+            ],
+          },
+        }),
+        "GET /consultation-summaries": () => ({ data: { summaries: [] } }),
+      },
+      profile(),
+    );
+    renderPath("/support/shares");
+    expect(await screen.findByText(/Dihentikan karena makna dikoreksi/)).toBeInTheDocument();
+  });
+
+  it("adds a statement backed by a confirmed meaning with its claim and source pins", async () => {
+    const claim = { ...proposal, version: 2, reviewStatus: "confirmed", text: "Kamu sesekali butuh waktu sendiri.", meaning: undefined };
+    const calls = mockApi(
+      {
+        "GET /records": () => ({ data: { records: [source] } }),
+        "GET /memory": () => ({ data: { enabled: true, items: [claim] } }),
+        "POST /consultation-summaries": () => ({ status: 201, data: { id: "sum-new", kind: "summary" } }),
+        "GET /consultation-summaries/sum-new": () => ({ data: { id: "sum-new", kind: "summary", title: "", text: "", version: 1, provenance: "manual", reviewStatus: "confirmed", safety: "none", summaryState: "draft", createdAt: "2026-11-01T09:00:00Z", updatedAt: "2026-11-01T09:00:00Z" } }),
+        "GET /consultation-summaries/sum-new/followups": () => ({ data: { followups: [] } }),
+      },
+      profile(),
+    );
+    renderPath("/support/summaries/new");
+    fireEvent.click(await screen.findByRole("button", { name: "Tambah bagian dari pemahaman ini" }));
+    // The claim's source is selected automatically.
+    expect(screen.getByRole("checkbox", { name: /Catatan MIE/ })).toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Simpan draf ini/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Simpan draf untuk diperiksa" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "POST" && c.path === "/consultation-summaries")).toBe(true));
+    const body = calls.find((c) => c.method === "POST" && c.path === "/consultation-summaries")!.body as {
+      sourceRefs: unknown[];
+      items: Array<Record<string, unknown>>;
+    };
+    expect(body.sourceRefs).toEqual([{ recordId: source.id, version: 1 }]);
+    expect(body.items[0]).toMatchObject({
+      text: "Kamu sesekali butuh waktu sendiri.",
+      quote,
+      sourceRef: { recordId: source.id, version: 1 },
+      claimRef: { recordId: "mem-mie", version: 2 },
+    });
+  });
+});

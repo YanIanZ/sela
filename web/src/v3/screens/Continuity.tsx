@@ -2,6 +2,20 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
 import { api, download as downloadFile, type Consent, type Entry } from "../api";
 import { Icon } from "../icons";
+import {
+  ImpactSummary,
+  MeaningChips,
+  MeaningDiff,
+  StaleBadge,
+  StaleNotice,
+  impactText,
+  latestMeaningEvent,
+  resultText,
+  useMeaningImpact,
+  type MeaningCheck,
+  type MeaningImpact,
+  type MeaningNode,
+} from "../meaning";
 import { useSession } from "../session";
 import { useLocale, useWords } from "../shared";
 import {
@@ -40,6 +54,9 @@ export type SummaryItem = {
   text: string;
   quote?: string;
   sourceRef: { recordId: string; version: number };
+  /** The confirmed memory claim this statement rests on (D-078). */
+  claimRef?: { recordId: string; version: number };
+  meaning?: MeaningCheck;
   provenance: "user_original" | "user_correction" | string;
   reviewStatus: string;
   position: number;
@@ -229,6 +246,7 @@ type SummaryItemDraft = {
   text: string;
   quote: string;
   sourceRef: { recordId: string; version: number };
+  claimRef?: { recordId: string; version: number };
 };
 
 const summaryItemDraft = (r: Entry): SummaryItemDraft => {
@@ -257,14 +275,56 @@ function SummaryItemsEditor({
   sources,
   onChange,
   disabled,
+  claims = [],
+  records = [],
+  onAddSource,
 }: {
   items: SummaryItemDraft[];
   sources: Entry[];
   onChange: (next: SummaryItemDraft[]) => void;
   disabled?: boolean;
+  /** Memory claims the owner may cite (D-078). */
+  claims?: ContinuityRecord[];
+  /** Every source record, to pin a claim's source at its current version. */
+  records?: Entry[];
+  /** Adds a source to the summary's selection without rebuilding text. */
+  onAddSource?: (recordId: string) => void;
 }) {
   const w = useWords();
   const [chosen, setChosen] = useState("");
+  const [chosenClaim, setChosenClaim] = useState("");
+  // A claim can back a statement when the owner confirmed or corrected it,
+  // it is not stale, and its quoted source still exists (D-078).
+  const usable = claims.filter((c) => {
+    const ref = c.sourceRefs?.find((r) => r.quote);
+    return (
+      (c.reviewStatus === "confirmed" || c.reviewStatus === "corrected") &&
+      !c.stale &&
+      ref &&
+      records.some((r) => r.id === ref.recordId) &&
+      !items.some((item) => item.claimRef?.recordId === c.id)
+    );
+  });
+  const claim = usable.find((c) => c.id === chosenClaim) ?? usable[0] ?? null;
+  const addClaim = () => {
+    if (!claim || items.length >= MAX_SUMMARY_ITEMS) return;
+    const ref = claim.sourceRefs?.find((r) => r.quote);
+    const source = ref && records.find((r) => r.id === ref.recordId);
+    if (!ref || !source) return;
+    onAddSource?.(source.id);
+    onChange([
+      ...items,
+      {
+        id: "",
+        text: [...claim.text].slice(0, MAX_SUMMARY_ITEM_TEXT).join(""),
+        quote: ref.quote ?? "",
+        // The source's current version: a saved conversation only grows,
+        // so the quoted turn is still there.
+        sourceRef: { recordId: source.id, version: source.version },
+        claimRef: { recordId: claim.id, version: claim.version },
+      },
+    ]);
+  };
   const selected =
     sources.find((r) => r.id === chosen) ?? sources[0] ?? null;
   const full = items.length >= MAX_SUMMARY_ITEMS;
@@ -337,10 +397,40 @@ function SummaryItemsEditor({
           </div>
         </>
       )}
+      {usable.length > 0 && (
+        <div className="c-claim-picker">
+          <SelectField
+            label={w(
+              "Tambah dari pemahaman yang kamu konfirmasi",
+              "Add from a meaning you confirmed",
+            )}
+            value={claim?.id ?? ""}
+            onChange={(e) => setChosenClaim(e.target.value)}
+            disabled={disabled || full}
+          >
+            {usable.map((c) => (
+              <option key={c.id} value={c.id}>
+                {excerpt(c.text)}
+              </option>
+            ))}
+          </SelectField>
+          <p className="s-hint">
+            {w(
+              "Bagian ini terikat pada pemahaman itu. Jika nanti kamu mengoreksinya, ringkasan ini ditandai perlu ditinjau dan tautannya dihentikan.",
+              "This statement is tied to that meaning. If you correct it later, this summary is marked for review and its links stop.",
+            )}
+          </p>
+          <div className="s-actions">
+            <Button type="button" variant="secondary" onClick={addClaim} disabled={disabled || full || !claim}>
+              {w("Tambah bagian dari pemahaman ini", "Add a statement from this meaning")}
+            </Button>
+          </div>
+        </div>
+      )}
       {items.map((item, index) => {
-        const source = sources.find(
-          (r) => r.id === item.sourceRef.recordId,
-        );
+        const source =
+          sources.find((r) => r.id === item.sourceRef.recordId) ??
+          records.find((r) => r.id === item.sourceRef.recordId);
         const label = source
           ? sourceLabel(source, w)
           : w("Sumber tidak tersedia", "Source unavailable");
@@ -356,6 +446,7 @@ function SummaryItemsEditor({
               </h3>
               <span className="s-hint">
                 {label} · v{item.sourceRef.version}
+                {item.claimRef ? ` · ${w("dari pemahaman yang kamu konfirmasi", "from a meaning you confirmed")}` : ""}
               </span>
             </div>
             {item.quote.trim() !== "" && (
@@ -686,12 +777,13 @@ function MemoryProposals({
                   <ProvenanceBadge value={r.provenance} />
                   <ReviewStatusChip value={r.reviewStatus} />
                 </div>
-                {quote && (
-                  <blockquote className="c-memory-quote">
-                    <p>{quote}</p>
-                  </blockquote>
-                )}
-                <p className="c-original">{r.text}</p>
+                <MeaningDiff
+                  quote={quote}
+                  wording={r.text}
+                  meaning={r.meaning}
+                  busy={busy}
+                  onUseMine={quote ? () => void review(r, "correct", [...quote].slice(0, 6000).join("")) : undefined}
+                />
                 {correcting === r.id ? (
                   <form
                     className="c-editor"
@@ -761,6 +853,29 @@ function MemoryProposals({
         </div>
       )}
     </section>
+  );
+}
+
+/** RecentMeaningEvent shows the latest invalidation of the last 7 days. */
+function RecentMeaningEvent() {
+  const w = useWords();
+  const loc = useLocale();
+  const [event, setEvent] = useState<MeaningImpact | null>(null);
+  useEffect(() => {
+    let live = true;
+    void latestMeaningEvent().then((e) => live && setEvent(e));
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (!event?.at || Date.now() - Date.parse(event.at) > 7 * 24 * 3600 * 1000) return null;
+  const text = resultText(event, w);
+  if (!text) return null;
+  return (
+    <Notice tone="info" title={w("Integritas makna", "Meaning integrity")}>
+      <p className="c-meaning-event">{text}</p>
+      <p className="s-hint">{loc.dateTime(event.at)}</p>
+    </Notice>
   );
 }
 
@@ -944,6 +1059,7 @@ export function MemoryPage() {
               </Button>
             </div>
           </form>
+          <RecentMeaningEvent />
           <MemoryProposals items={data.items} onChanged={load} />
           <ContinuityHelp records={data.items} />
           <section
@@ -971,6 +1087,7 @@ export function MemoryPage() {
                     {memoryStatusLabel(r.reviewStatus, w)} ·{" "}
                     {loc.shortDate(r.updatedAt)}
                   </p>
+                  {r.stale && <StaleBadge />}
                 </div>
                 <Icon name="arrow-right" />
               </Link>
@@ -999,6 +1116,16 @@ export function MemoryDetailPage({ id }: { id: string }) {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState("");
+  // What a correction, edit or deletion would reach (D-078), refreshed
+  // for every version.
+  const impact = useMeaningImpact(id, true, record?.version);
+  const showResult = async () => {
+    const event = await latestMeaningEvent();
+    if (event && event.origin.id === id && event.at && Date.now() - Date.parse(event.at) < 5 * 60 * 1000) {
+      setResult(resultText(event, w));
+    }
+  };
   const load = () => {
     setError(null);
     api<ContinuityRecord>(`/memory/${id}`)
@@ -1037,6 +1164,7 @@ export function MemoryDetailPage({ id }: { id: string }) {
       setTitle(next.title);
       setText(next.text);
       setEditing(false);
+      void showResult();
     } catch (e) {
       setError(e);
     } finally {
@@ -1065,6 +1193,7 @@ export function MemoryDetailPage({ id }: { id: string }) {
       setText(next.text);
       setCorrectingReview(false);
       setCorrection("");
+      if (action !== "confirm") void showResult();
     } catch (e) {
       setError(e);
     } finally {
@@ -1110,6 +1239,12 @@ export function MemoryDetailPage({ id }: { id: string }) {
       {record && (
         <>
           <ContinuityHelp records={[record]} />
+          {record.stale && <StaleNotice stale={record.stale} />}
+          {result && (
+            <Notice tone="success" title={w("Koreksimu sudah diteruskan", "Your correction was carried through")}>
+              <p role="status">{result}</p>
+            </Notice>
+          )}
           <article className="c-paper">
             <p className="s-hint">
               {unreviewed
@@ -1151,7 +1286,7 @@ export function MemoryDetailPage({ id }: { id: string }) {
                 <dd>{loc.dateTime(record.updatedAt)}</dd>
               </div>
             </dl>
-            {quote && (
+            {quote && !record.meaning && (
               <blockquote className="c-memory-quote">
                 <p>{quote}</p>
               </blockquote>
@@ -1173,6 +1308,7 @@ export function MemoryDetailPage({ id }: { id: string }) {
                   maxLength={6000}
                   rows={6}
                 />
+                <ImpactSummary impact={impact} />
                 <div className="s-actions">
                   <Button
                     type="submit"
@@ -1212,6 +1348,7 @@ export function MemoryDetailPage({ id }: { id: string }) {
                     "The saved version becomes your correction, not Sela's wording.",
                   )}
                 />
+                <ImpactSummary impact={impact} />
                 <div className="s-actions">
                   <Button
                     type="submit"
@@ -1232,7 +1369,21 @@ export function MemoryDetailPage({ id }: { id: string }) {
               </form>
             ) : (
               <>
-                <p className="c-original">{record.text}</p>
+                {record.meaning ? (
+                  <MeaningDiff
+                    quote={quote}
+                    wording={record.text}
+                    meaning={record.meaning}
+                    busy={busy}
+                    onUseMine={
+                      quote && (unreviewed || rejected)
+                        ? () => void review("correct", [...quote].slice(0, 6000).join(""))
+                        : undefined
+                    }
+                  />
+                ) : (
+                  <p className="c-original">{record.text}</p>
+                )}
                 <div className="s-actions">
                   {(unreviewed || rejected) && (
                     <Button
@@ -1271,7 +1422,7 @@ export function MemoryDetailPage({ id }: { id: string }) {
                   )}
                   <InlineConfirm
                     label={w("Hapus", "Delete")}
-                    question={w("Hapus konteks ini?", "Delete this context?")}
+                    question={[w("Hapus konteks ini?", "Delete this context?"), impactText(impact, w)].filter(Boolean).join(" ")}
                     confirmLabel={w("Hapus", "Delete")}
                     onConfirm={() => {
                       setBusy(true);
@@ -1318,9 +1469,75 @@ export function MemoryDetailPage({ id }: { id: string }) {
               </ul>
             )}
           </section>
+          <MeaningLineage
+            id={record.id}
+            version={record.version}
+            label={(node) => {
+              const entry = sources.find((s) => s.ref.recordId === node.id)?.entry;
+              return entry ? sourceLabel(entry) : node.kind === "memory" ? w("Pemahaman", "Meaning") : w("Tulisan asli", "Original writing");
+            }}
+          />
         </>
       )}
     </div>
+  );
+}
+
+type Lineage = {
+  node: MeaningNode;
+  parents: Array<MeaningNode & { current: boolean }>;
+  descendants: MeaningNode[];
+};
+
+/** MeaningLineage answers "why did Sela say this?" on demand. */
+function MeaningLineage({ id, version, label }: { id: string; version: number; label: (n: MeaningNode) => string }) {
+  const w = useWords();
+  const [lineage, setLineage] = useState<Lineage | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    setError(null);
+    api<{ lineage: Lineage }>(`/meaning/lineage?id=${encodeURIComponent(id)}`)
+      .then((d) => live && setLineage(d.lineage))
+      .catch((e) => live && setError(e));
+    return () => {
+      live = false;
+    };
+  }, [open, id, version]);
+  return (
+    <details className="c-meaning-lineage" onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
+      <summary>{w("Kenapa Sela bilang begini?", "Why did Sela say this?")}</summary>
+      <ErrorNotice error={error} />
+      {open && !lineage && !error && <Loading label={w("Membuka asal-usulnya…", "Opening where it came from…")} />}
+      {lineage && (
+        <>
+          {lineage.parents.length === 0 ? (
+            <p className="s-hint">{w("Tidak ada sumber tersimpan; kamu menulisnya sendiri.", "No saved source; you wrote it yourself.")}</p>
+          ) : (
+            <ul>
+              {lineage.parents.map((p) => (
+                <li key={p.kind + p.id + p.version}>
+                  {label(p)} · v{p.version} ·{" "}
+                  {p.current
+                    ? w("masih versi yang sama", "still the same version")
+                    : w("sudah berubah sejak itu", "changed since then")}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="s-hint">
+            {lineage.descendants.length === 0
+              ? w("Belum ada ringkasan atau tautan yang memakai ini.", "No summary or link uses this yet.")
+              : w(
+                  `${lineage.descendants.length} hal saat ini memakai ini (ringkasan, tautan, atau permintaan).`,
+                  `${lineage.descendants.length} item(s) currently rest on this (summaries, links or requests).`,
+                )}
+          </p>
+        </>
+      )}
+    </details>
   );
 }
 
@@ -1419,6 +1636,12 @@ function SummaryEditor() {
   const [bring, setBring] = useState("");
   const [allow, setAllow] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [claims, setClaims] = useState<ContinuityRecord[]>([]);
+  useEffect(() => {
+    api<{ enabled: boolean; items: ContinuityRecord[] }>("/memory")
+      .then((d) => setClaims(d.enabled ? d.items : []))
+      .catch(() => setClaims([]));
+  }, []);
   const load = () => {
     setError(null);
     api<{ records: Entry[] }>("/records")
@@ -1473,6 +1696,7 @@ function SummaryEditor() {
             text: item.text,
             quote: item.quote,
             sourceRef: item.sourceRef,
+            ...(item.claimRef ? { claimRef: item.claimRef } : {}),
             position: index,
           })),
           prepared: { goal, questions, bring },
@@ -1588,6 +1812,11 @@ function SummaryEditor() {
             sources={chosenSources}
             onChange={setItems}
             disabled={busy}
+            claims={claims}
+            records={records ?? []}
+            onAddSource={(id) =>
+              setSelected((current) => (current.includes(id) ? current : [...current, id]))
+            }
           />
           <details className="c-preparation">
             <summary>
@@ -1685,13 +1914,58 @@ function SummaryDetail({ id }: { id: string }) {
       .catch(setError);
   };
   useEffect(load, [id]);
-  const stale =
+  const sourceStale =
     r?.sourceRefs?.some(
       (ref) =>
         !sources.some(
           (s) => s.id === ref.recordId && s.version === ref.version,
         ),
     ) ?? false;
+  // The server's stale mark (D-078) covers corrected claims too; the
+  // client-side source check stays as a fallback.
+  const serverStale = r?.stale ?? null;
+  const stale = sourceStale || serverStale !== null;
+  const claimStale = Boolean(serverStale && serverStale.reason.startsWith("claim_"));
+  // Rebuild claim-backed statements from the owner's latest meanings: a
+  // corrected claim brings its new wording and version, a rejected,
+  // deleted or stale one drops its statement.
+  const refreshFromClaims = () =>
+    run(async () => {
+      if (!r) return;
+      const next: Array<Record<string, unknown>> = [];
+      for (const item of r.items ?? []) {
+        const base = { id: item.id, text: item.text, quote: item.quote ?? "", sourceRef: item.sourceRef };
+        if (!item.claimRef) {
+          next.push(base);
+          continue;
+        }
+        try {
+          const claim = await api<ContinuityRecord>(`/memory/${item.claimRef.recordId}`);
+          if ((claim.reviewStatus === "confirmed" || claim.reviewStatus === "corrected") && !claim.stale) {
+            next.push({
+              ...base,
+              text: [...claim.text].slice(0, MAX_SUMMARY_ITEM_TEXT).join(""),
+              claimRef: { recordId: claim.id, version: claim.version },
+            });
+          }
+        } catch {
+          // a deleted claim drops its statement
+        }
+      }
+      await api(
+        `/consultation-summaries/${id}`,
+        {
+          title: r.title,
+          text: r.text,
+          sourceRefs: r.sourceRefs ?? [],
+          prepared: r.prepared,
+          items: next,
+          storageGranted: true,
+          expectedVersion: r.version,
+        },
+        "PATCH",
+      );
+    });
   const run = async (action: () => Promise<unknown>) => {
     setError(null);
     setBusy(true);
@@ -1755,7 +2029,21 @@ function SummaryDetail({ id }: { id: string }) {
               v{r.version} · {loc.shortDate(r.updatedAt)}
             </span>
           </div>
-          {stale && (
+          {serverStale && !sourceStale && (
+            <StaleNotice
+              stale={serverStale}
+              actions={
+                claimStale ? (
+                  <Button variant="primary" disabled={busy} onClick={() => void refreshFromClaims()}>
+                    {w("Perbarui dari pemahaman terbaru", "Update from your latest meanings")}
+                  </Button>
+                ) : (
+                  <LinkButton to="/support/summaries/new">{w("Susun ulang", "Rebuild summary")}</LinkButton>
+                )
+              }
+            />
+          )}
+          {sourceStale && (
             <Notice
               tone="warning"
               title={w("Sumber sudah berubah", "A source has changed")}
@@ -1816,8 +2104,10 @@ function SummaryDetail({ id }: { id: string }) {
                           </blockquote>
                         )}
                         <p className="c-original">{item.text}</p>
+                        <MeaningChips meaning={item.meaning} />
                         <p className="s-hint">
                           {label} · v{item.sourceRef.version}
+                          {item.claimRef ? ` · ${w("dari pemahaman yang kamu konfirmasi", "from a meaning you confirmed")}` : ""}
                         </p>
                       </li>
                     );
@@ -1918,7 +2208,7 @@ function SummaryDetail({ id }: { id: string }) {
               })}
             </ul>
           </section>
-          {!editing && r.summaryState !== "approved" && (
+          {!editing && r.summaryState !== "approved" && !serverStale && (
             <section className="c-approval">
               <h2>
                 {w(
