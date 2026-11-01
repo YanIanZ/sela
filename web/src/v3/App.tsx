@@ -61,6 +61,9 @@ const CommunityPage = lazy(() =>
 const PlannedCarePage = lazy(() =>
   import("./screens/PlannedCare").then((m) => ({ default: m.PlannedCarePage })),
 );
+const CarePlanPage = lazy(() =>
+  import("./screens/CarePlan").then((m) => ({ default: m.CarePlanPage })),
+);
 const OnboardingPage = lazy(() =>
   import("./screens/Onboarding").then((m) => ({ default: m.OnboardingPage })),
 );
@@ -113,7 +116,8 @@ function titleFor(path: string, lang: string): string {
   if (path.startsWith("/notes/memory/")) return t("Yang Sela ingat", "What Sela remembers");
   if (path.startsWith("/notes/")) return t("Catatan", "Note");
   if (path === "/support") return t("Dukungan", "Support");
-  if (path === "/support/directory") return t("Bantuan terencana", "Planned support");
+  if (path === "/support/directory") return t("Direktori & peta kondisi", "Directory & condition map");
+  if (path === "/support/plan") return t("Bantuan terencana", "Planned support");
   if (path === "/support/community" || path.startsWith("/support/community/")) return t("Ruang berbagi", "Sharing space");
   if (path.startsWith("/support/summaries")) return t("Ringkasan untuk konsultasi", "Summary for a consultation");
   if (path.startsWith("/support/shares")) return t("Status berbagi", "Sharing status");
@@ -282,6 +286,8 @@ function AppRoutes() {
     screen = <PlannedCarePage user={user} policies={policies} />;
   } else if (user && path === "/support") {
     screen = <SupportPage />;
+  } else if (user && path === "/support/plan") {
+    screen = <CarePlanPage />;
   } else if (user && (path.startsWith("/support/summaries") || path === "/support/prepare" || path === "/support/after")) {
     screen = <SummariesPage path={path.startsWith("/support/summaries") ? path : "/support/summaries"} />;
   } else if (user && (path === "/support/community" || path.startsWith("/support/community/"))) {

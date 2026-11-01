@@ -1,0 +1,38 @@
+/* Professional care network (D-076): internal network panel and the
+   partner workspace. Everything wraps; nothing may push the page wider
+   than a 320 px screen. */
+.op-check { display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 0.9rem; font-size: 0.9rem; }
+.op-check input { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; }
+.op-network-set { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0; }
+.op-network-set legend { width: 100%; margin-bottom: 0.3rem; font-weight: 600; font-size: 0.85rem; }
+.op-network-sim { color: var(--op-warning); }
+.op-network-toggle { justify-self: start; margin-top: 0.2rem; }
+.op-network-members { display: grid; gap: 0.6rem; margin-top: 0.4rem; padding: 0.75rem; border: 1px solid var(--op-line); border-radius: 8px; background: var(--op-surface-quiet); min-width: 0; }
+.op-network-member-list { list-style: none; padding: 0; margin: 0; display: grid; }
+.op-network-member-list > li { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.5rem; padding: 0.55rem 0; border-top: 1px solid var(--op-line); }
+.op-network-member-list > li:first-child { border-top: 0; }
+.op-network-cli { display: grid; gap: 0.4rem; min-width: 0; }
+.op-network-cli code { display: block; padding: 0.5rem 0.6rem; border: 1px solid var(--op-line); border-radius: 6px; background: var(--op-surface); font-size: 0.8rem; overflow-wrap: anywhere; white-space: pre-wrap; }
+.op-network-cli .op-btn { justify-self: start; }
+
+.op-partner-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.op-partner-layout { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.op-partner-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
+.op-partner-list button { width: 100%; display: grid; gap: 0.2rem; padding: 0.65rem 0.75rem; border: 1px solid var(--op-line); border-radius: 8px; background: var(--op-surface); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.op-partner-list button[aria-current="true"] { border-color: var(--op-line-strong); box-shadow: inset 3px 0 0 var(--op-line-strong); }
+.op-partner-ref { font-variant-numeric: tabular-nums; letter-spacing: 0.04em; font-weight: 600; }
+.op-partner-detail { display: grid; gap: 0.9rem; min-width: 0; padding: 1rem; border: 1px solid var(--op-line); border-radius: 8px; }
+.op-partner-detail h3 { margin: 0; }
+.op-partner-summary { display: grid; gap: 0.5rem; padding: 0.85rem; border-radius: 8px; background: var(--op-surface-quiet); overflow-wrap: anywhere; }
+.op-partner-summary h4 { margin: 0; }
+.op-partner-summary ol, .op-partner-summary ul { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+.op-partner-summary blockquote { margin: 0.2rem 0 0; padding: 0.4rem 0.6rem; border-radius: 6px; background: var(--op-surface, #fff); color: var(--op-muted); font-size: 0.88rem; font-style: italic; }
+.op-partner-note { padding: 0.6rem 0.75rem; border: 1px dashed var(--op-line-strong); border-radius: 8px; font-size: 0.9rem; }
+.op-partner-form { display: grid; gap: 0.7rem; padding: 0.9rem; border: 1px solid var(--op-line); border-radius: 8px; background: var(--op-surface-quiet); }
+.op-partner-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 0.6rem; }
+.op-partner-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.6rem; }
+.op-partner-row > .op-field { flex: 1 1 12rem; min-width: 0; }
+.op-partner-proposal { display: grid; gap: 0.3rem; overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .op-partner-layout { grid-template-columns: minmax(0, 1fr); }
+}

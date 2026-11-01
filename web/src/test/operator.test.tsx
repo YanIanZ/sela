@@ -443,3 +443,190 @@ describe("operator planned care", () => {
     });
   });
 });
+
+describe("professional care network (D-076)", () => {
+  const networkOwner: Admin = {
+    username: "owner.net",
+    role: "owner",
+    orgId: "",
+    permissions: ["ops/read", "network/manage", "network/verify"],
+  };
+  const practitioner: Admin = {
+    username: "psy.demo",
+    role: "practitioner",
+    orgId: "",
+    careOrgId: "org-1",
+    displayName: "Psikolog Demo",
+    partner: true,
+    permissions: ["care-requests/read", "care-requests/content", "care-requests/respond"],
+  };
+  const staff: Admin = {
+    ...practitioner,
+    username: "desk.demo",
+    role: "partner_staff",
+    displayName: "Front desk",
+    permissions: ["care-requests/read"],
+  };
+  const org = {
+    id: "org-1",
+    kind: "clinic",
+    name: "Klinik Teduh (simulasi)",
+    city: "Bandung",
+    modes: ["online"],
+    stages: ["support"],
+    synthetic: true,
+    status: "pending",
+    acceptsRequests: true,
+    createdAt: "2026-11-01T00:00:00Z",
+    members: 1,
+  };
+  const request = {
+    id: "r1",
+    reference: "SR-ABC234",
+    practitionerName: "Psikolog Demo",
+    mode: "online",
+    state: "sent",
+    synthetic: true,
+    version: 1,
+    contentAvailable: true,
+    expiresAt: "2026-11-09T00:00:00Z",
+    createdAt: "2026-11-02T00:00:00Z",
+    updatedAt: "2026-11-02T00:00:00Z",
+  };
+  const summary = {
+    label: "Klinik Teduh (simulasi)",
+    purpose: "consultation",
+    summaryVersion: 1,
+    title: "Rangkuman sintetis",
+    text: "Teks rangkuman sintetis.",
+    prepared: { goal: "Tujuan sintetis", questions: ["Pertanyaan sintetis?"] },
+    items: [{ text: "Pernyataan sintetis", quote: "Kutipan sintetis", sourceLabel: "Catatan · v1", position: 0 }],
+    sources: ["Catatan · v1"],
+    createdAt: "2026-11-02T00:00:00Z",
+    expiresAt: "2026-11-09T00:00:00Z",
+  };
+
+  function stubNetwork(session: Admin): Call[] {
+    const calls: Call[] = [];
+    let currentOrg = { ...org };
+    let members = [
+      { username: "psy.demo", role: "practitioner", displayName: "Psikolog Demo", professionalType: "psychologist", licenseNo: "STR-SIM-1", licenseVerified: false, status: "active" },
+    ];
+    let current = { ...request } as Record<string, unknown>;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+        const url = String(input);
+        calls.push({ url, init });
+        const method = init.method ?? "GET";
+        if (url.endsWith("/api/admin/v1/me")) return reply(200, { data: { admin: session } });
+        if (url.endsWith("/api/admin/v1/overview")) return reply(200, { data: overview });
+        if (url.endsWith("/api/admin/v1/cache/health")) return reply(200, { data: { cache: { enabled: false, ok: true } } });
+        if (url.endsWith("/api/admin/v1/network/orgs") && method === "GET") {
+          return reply(200, { data: { orgs: [currentOrg], realPartners: false } });
+        }
+        if (url.endsWith("/api/admin/v1/network/orgs") && method === "POST") {
+          return reply(201, { data: { org: { ...org, id: "org-2", name: "Praktik Baru" } } });
+        }
+        if (url.endsWith("/api/admin/v1/network/orgs/org-1/status")) {
+          currentOrg = { ...currentOrg, status: "verified" };
+          return reply(200, { data: { org: currentOrg } });
+        }
+        if (url.endsWith("/api/admin/v1/network/orgs/org-1/members")) return reply(200, { data: { members } });
+        if (url.endsWith("/api/admin/v1/network/members/psy.demo/verify-license")) {
+          members = members.map((m) => ({ ...m, licenseVerified: true }));
+          return reply(200, { data: { username: "psy.demo", licenseVerified: true } });
+        }
+        if (url.endsWith("/api/admin/v1/partner/org")) {
+          return reply(200, { data: { org: { ...org, status: "verified" }, displayName: session.displayName } });
+        }
+        if (url.endsWith("/api/admin/v1/partner/requests")) return reply(200, { data: { requests: [current] } });
+        if (url.endsWith("/api/admin/v1/partner/requests/r1")) {
+          const content = session.permissions.includes("care-requests/content");
+          return reply(200, { data: { request: content ? { ...current, summary } : current, canReadContent: content } });
+        }
+        if (url.endsWith("/api/admin/v1/partner/requests/r1/respond")) {
+          const body = JSON.parse(String(init.body));
+          current = { ...current, state: "proposed", version: 2, proposal: body.proposal };
+          return reply(200, { data: { request: current } });
+        }
+        throw new Error(`unexpected request ${method} ${url}`);
+      }),
+    );
+    return calls;
+  }
+
+  it("lets an internal owner create and verify a simulated clinic and verify a licence", async () => {
+    const calls = stubNetwork(networkOwner);
+    renderOperator();
+    await screen.findByRole("heading", { name: "Professional network" });
+    expect(await screen.findByText("Klinik Teduh (simulasi)")).toBeInTheDocument();
+    expect(screen.getByText(/allows simulated organisations only/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add organisation" }));
+    const simulated = screen.getByRole("checkbox", { name: /Simulated organisation/ });
+    expect(simulated).toBeChecked();
+    expect(simulated).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Organisation name"), { target: { value: "Praktik Baru" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create organisation" }));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith("/network/orgs") && c.init.method === "POST")).toBe(true));
+    const created = calls.find((c) => c.url.endsWith("/network/orgs") && c.init.method === "POST");
+    expect(JSON.parse(String(created?.init.body))).toMatchObject({ kind: "clinic", name: "Praktik Baru", modes: ["online"], synthetic: true });
+    expect(new Headers(created?.init.headers).get("X-Sela-Request")).toBe("1");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Verify" }));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith("/network/orgs/org-1/status"))).toBe(true));
+    expect(JSON.parse(String(calls.find((c) => c.url.endsWith("/status"))?.init.body))).toEqual({ status: "verified" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Show accounts" }));
+    expect(await screen.findByText(/STR-SIM-1/)).toBeInTheDocument();
+    expect(screen.getByText(/--org org-1/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Verify licence" }));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith("/network/members/psy.demo/verify-license"))).toBe(true));
+    expect(await screen.findByText(/verified$/)).toBeInTheDocument();
+  });
+
+  it("shows a practitioner only the workspace, the shared summary and a proposal form", async () => {
+    const calls = stubNetwork(practitioner);
+    renderOperator();
+    await screen.findByRole("heading", { name: "Professional workspace" });
+    expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
+    expect(calls.some((c) => c.url.endsWith("/overview"))).toBe(false);
+    expect(await screen.findByText("Klinik Teduh (simulasi)")).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole("button", { name: /SR-ABC234/ }));
+    expect(await screen.findByRole("heading", { name: "Rangkuman sintetis" })).toBeInTheDocument();
+    expect(screen.getByText("Kutipan sintetis")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Time 1"), { target: { value: "2026-11-05T10:00" } });
+    fireEvent.change(screen.getByLabelText("How to reach the clinic"), { target: { value: "WhatsApp klinik, sebut SR-ABC234" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send proposal" }));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith("/partner/requests/r1/respond"))).toBe(true));
+    const sent = JSON.parse(String(calls.find((c) => c.url.endsWith("/respond"))?.init.body));
+    expect(sent.decision).toBe("propose");
+    expect(sent.expectedVersion).toBe(1);
+    expect(sent.proposal.mode).toBe("online");
+    expect(sent.proposal.contact).toBe("WhatsApp klinik, sebut SR-ABC234");
+    expect(sent.proposal.slots).toEqual([new Date("2026-11-05T10:00").toISOString()]);
+    expect(await screen.findByText(/Proposed times sent/)).toBeInTheDocument();
+  });
+
+  it("has no serious or critical axe findings in the partner workspace", async () => {
+    stubNetwork(practitioner);
+    const { container } = renderOperator();
+    fireEvent.click(await screen.findByRole("button", { name: /SR-ABC234/ }));
+    await screen.findByRole("heading", { name: "Rangkuman sintetis" });
+    const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
+    expect(results.violations.filter((v) => ["serious", "critical"].includes(v.impact ?? "")).map((v) => v.id)).toEqual([]);
+  });
+
+  it("never shows clinic staff the summary or a respond form", async () => {
+    stubNetwork(staff);
+    renderOperator();
+    fireEvent.click(await screen.findByRole("button", { name: /SR-ABC234/ }));
+    expect(await screen.findByText(/only for practitioners and clinic administrators/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Rangkuman sintetis" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Send proposal" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Decline request" })).not.toBeInTheDocument();
+  });
+});

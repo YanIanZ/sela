@@ -246,6 +246,9 @@ export function ConditionMapSection({ policy }: { policy?: Policy }) {
                   {w("Cek perasaan sekarang", "Check in now")}
                 </LinkButton>
               )}
+              <LinkButton to="/support/plan" variant="secondary">
+                {w("Mulai bantuan terencana", "Start planned support")}
+              </LinkButton>
               <LinkButton to="/support/summaries/new" variant="quiet">
                 {w("Siapkan ringkasan", "Prepare a summary")}
               </LinkButton>

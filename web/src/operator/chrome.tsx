@@ -12,6 +12,9 @@ const ROLE_LABELS: Record<string, [string, string]> = {
   research_editor: ["Editor riset", "Research editor"],
   safety_reviewer: ["Peninjau keselamatan", "Safety reviewer"],
   ops: ["Operasional", "Ops"],
+  partner_admin: ["Admin klinik", "Clinic administrator"],
+  practitioner: ["Tenaga profesional", "Practitioner"],
+  partner_staff: ["Staf klinik", "Clinic staff"],
 };
 
 export function roleLabel(role: string, w: Words): string {

@@ -1902,3 +1902,188 @@ describe("planned care and the sharing space", () => {
   });
 });
 
+
+describe("planned support path (D-076)", () => {
+  const summaryEntry = (over: Record<string, unknown> = {}) => ({
+    id: "s1",
+    kind: "summary",
+    title: "Ringkasan untuk klinik",
+    text: "Isi ringkasan.",
+    version: 2,
+    provenance: "user_original",
+    reviewStatus: "confirmed",
+    safety: "none",
+    summaryState: "approved",
+    createdAt: "2026-11-01T08:00:00Z",
+    updatedAt: "2026-11-01T09:00:00Z",
+    ...over,
+  });
+  const simOrg = {
+    id: "org1",
+    kind: "clinic",
+    name: "Klinik Teduh (simulasi)",
+    city: "Bandung",
+    modes: ["online", "in_person"],
+    stages: ["attention", "support"],
+    synthetic: true,
+    practitioners: [{ id: "p1", displayName: "Psikolog Demo", professionalType: "psychologist", licenseVerified: true }],
+  };
+  const request = (over: Record<string, unknown> = {}) => ({
+    id: "r1",
+    reference: "SR-ABC234",
+    orgId: "org1",
+    orgName: "Klinik Teduh (simulasi)",
+    orgSynthetic: true,
+    shareId: "sh1",
+    summaryId: "s1",
+    summaryVersion: 2,
+    mode: "online",
+    state: "sent",
+    version: 1,
+    expiresAt: "2026-11-08T09:00:00Z",
+    createdAt: "2026-11-01T09:00:00Z",
+    updatedAt: "2026-11-01T09:00:00Z",
+    ...over,
+  });
+  const sharingConsent = (granted: boolean) => ({
+    data: { consents: [{ purpose: "sharing", granted, outdated: false, revision: granted ? 1 : 0, currentPolicyVersion: "sh-1" }] },
+  });
+
+  it("sends an approved summary to a chosen simulated service and shows it as sent", async () => {
+    let requests: unknown[] = [];
+    const calls = mockApi(
+      {
+        "GET /me/consents": () => sharingConsent(true),
+        "GET /consultation-summaries": () => ({ data: { summaries: [summaryEntry(), summaryEntry({ id: "s2", title: "Draf lain", summaryState: "draft" })] } }),
+        "GET /care-network": () => ({ data: { orgs: [simOrg], realPartners: false } }),
+        "GET /care-requests": () => ({ data: { requests } }),
+        "POST /care-requests": () => {
+          requests = [request()];
+          return { status: 201, data: { request: request() } };
+        },
+      },
+      profile(),
+    );
+    renderPath("/support/plan?summary=s1");
+    expect(await screen.findByRole("heading", { name: "Bantuan terencana", level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Ringkasan untuk klinik/ })).toBeChecked();
+    expect(screen.getAllByText("Simulasi").length).toBeGreaterThan(0);
+    expect(screen.getByText(/simulasi yang dijalankan tim Sela/)).toBeInTheDocument();
+    expect(screen.getByText("Lisensi terverifikasi")).toBeInTheDocument();
+    expect(screen.getByText(/tidak membagikan nomor telepon atau emailmu/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Pilih Klinik Teduh (simulasi)" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Daring" }));
+    const send = screen.getByRole("button", { name: "Kirim permintaan" });
+    expect(send).toBeDisabled();
+    fireEvent.click(screen.getByLabelText(/Aku setuju mengirim versi 2 ringkasan ini ke Klinik Teduh/));
+    fireEvent.click(send);
+
+    expect(await screen.findByText("Permintaan terkirim")).toBeInTheDocument();
+    expect(screen.getAllByText("SR-ABC234").length).toBeGreaterThan(0);
+    expect(await screen.findByText("Terkirim")).toBeInTheDocument();
+    const posts = calls.filter((c) => c.method === "POST" && c.path === "/care-requests");
+    expect(posts).toHaveLength(1);
+    expect(posts[0]!.body).toEqual({ summaryId: "s1", orgId: "org1", practitionerId: "", mode: "online" });
+  });
+
+  it("confirms one proposed time once however often it is pressed", async () => {
+    const slot1 = "2026-11-04T09:00:00Z";
+    const slot2 = "2026-11-05T09:00:00Z";
+    let release: () => void = () => {};
+    const calls = mockApi(
+      {
+        "GET /me/consents": () => sharingConsent(true),
+        "GET /consultation-summaries": () => ({ data: { summaries: [summaryEntry()] } }),
+        "GET /care-network": () => ({ data: { orgs: [simOrg] } }),
+        "GET /care-requests": () => ({
+          data: {
+            requests: [
+              request({
+                state: "proposed",
+                version: 3,
+                proposal: { slots: [slot1, slot2], mode: "online", contact: "WhatsApp klinik simulasi 0800-SIM", note: "Sesi 45 menit." },
+              }),
+            ],
+          },
+        }),
+        "POST /care-requests/r1/confirm": () => new Promise((resolve) => (release = () => resolve({ data: { request: request({ state: "confirmed" }) } }))),
+      },
+      profile(),
+    );
+    renderPath("/support/plan");
+    expect(await screen.findByText("Ada usulan waktu")).toBeInTheDocument();
+    expect(screen.getByText(/WhatsApp klinik simulasi 0800-SIM/)).toBeInTheDocument();
+    const list = screen.getByText("Usulan waktu").closest("li")!;
+    const choose = within(list as HTMLElement).getAllByRole("button", { name: /^Pilih / });
+    expect(choose).toHaveLength(2);
+    fireEvent.click(choose[0]!);
+    fireEvent.click(choose[0]!);
+    fireEvent.click(choose[1]!);
+    release();
+    await waitFor(() => expect(calls.filter((c) => c.path === "/care-requests/r1/confirm")).toHaveLength(1));
+    expect(calls.find((c) => c.path === "/care-requests/r1/confirm")!.body).toEqual({ slot: slot1, expectedVersion: 3 });
+  });
+
+  it("turns on sharing first, and shows the error instead of sending when that fails", async () => {
+    let granted = false;
+    let failPut = true;
+    const calls = mockApi(
+      {
+        "GET /me/consents": () => sharingConsent(granted),
+        "PUT /me/consents/sharing": () => {
+          if (failPut) return json({ error: { code: "internal", message: "internal" } }, 500);
+          granted = true;
+          return { data: { ok: true } };
+        },
+        "GET /consultation-summaries": () => ({ data: { summaries: [summaryEntry()] } }),
+        "GET /care-network": () => ({ data: { orgs: [simOrg] } }),
+        "GET /care-requests": () => ({ data: { requests: [] } }),
+        "POST /care-requests": () => ({ status: 201, data: { request: request() } }),
+      },
+      profile(),
+    );
+    renderPath("/support/plan?summary=s1");
+    fireEvent.click(await screen.findByRole("button", { name: "Pilih Klinik Teduh (simulasi)" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Mana saja" }));
+    expect(screen.getByText(/Ini juga mengaktifkan izin berbagi ringkasan/)).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/Aku setuju mengirim versi 2/));
+    fireEvent.click(screen.getByRole("button", { name: "Kirim permintaan" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "PUT" && c.path === "/me/consents/sharing")).toBe(true));
+    expect((await screen.findAllByRole("alert")).length).toBeGreaterThan(0);
+    expect(calls.some((c) => c.method === "POST" && c.path === "/care-requests")).toBe(false);
+
+    failPut = false;
+    fireEvent.click(screen.getByRole("button", { name: "Kirim permintaan" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "POST" && c.path === "/care-requests")).toBe(true));
+    const put = calls.filter((c) => c.method === "PUT" && c.path === "/me/consents/sharing").at(-1)!;
+    expect(put.body).toEqual({ granted: true, policyVersion: "sh-1" });
+    const post = calls.find((c) => c.method === "POST" && c.path === "/care-requests")!;
+    expect(post.body).toEqual({ summaryId: "s1", orgId: "org1", practitionerId: "", mode: "either" });
+  });
+
+  it("cancels a request after confirming", async () => {
+    let state = "sent";
+    const calls = mockApi(
+      {
+        "GET /me/consents": () => sharingConsent(true),
+        "GET /consultation-summaries": () => ({ data: { summaries: [] } }),
+        "GET /care-network": () => ({ data: { orgs: [] } }),
+        "GET /care-requests": () => ({ data: { requests: [request({ state })] } }),
+        "POST /care-requests/r1/cancel": () => {
+          state = "cancelled";
+          return { data: { request: request({ state }) } };
+        },
+      },
+      profile(),
+    );
+    renderPath("/support/plan");
+    expect(await screen.findByText("Terkirim")).toBeInTheDocument();
+    expect(screen.getByText(/Belum ada ringkasan yang kamu setujui/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Batalkan permintaan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Batalkan" }));
+    expect(await screen.findByText("Dibatalkan")).toBeInTheDocument();
+    expect(calls.find((c) => c.path === "/care-requests/r1/cancel")!.body).toEqual({ expectedVersion: 1 });
+    expect(screen.queryByRole("button", { name: "Batalkan permintaan" })).not.toBeInTheDocument();
+  });
+});

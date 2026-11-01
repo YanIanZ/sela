@@ -9,6 +9,76 @@ export type Admin = {
   role: string;
   orgId: string;
   permissions: string[];
+  /** Set for partner accounts (D-076): the one care organisation they act in. */
+  careOrgId?: string;
+  displayName?: string;
+  partner?: boolean;
+};
+
+export type CareOrg = {
+  id: string;
+  kind: string;
+  name: string;
+  city?: string;
+  description?: string;
+  modes: string[];
+  stages: string[];
+  synthetic: boolean;
+  status: "pending" | "verified" | "suspended";
+  acceptsRequests: boolean;
+  createdAt: string;
+  verifiedAt?: string;
+  members: number;
+};
+
+export type CareOrgMember = {
+  username: string;
+  role: string;
+  displayName?: string;
+  professionalType?: string;
+  licenseNo?: string;
+  licenseVerified: boolean;
+  licenseVerifiedAt?: string;
+  status: string;
+};
+
+export type CareProposal = {
+  slots: string[];
+  mode: "online" | "in_person";
+  contact: string;
+  note?: string;
+};
+
+export type SharedSummary = {
+  label: string;
+  purpose: string;
+  summaryVersion: number;
+  title: string;
+  text: string;
+  prepared?: { goal?: string; questions?: string[]; bring?: string[] };
+  items?: { text: string; quote?: string; sourceLabel: string; position: number }[];
+  sources: string[];
+  createdAt: string;
+  expiresAt: string;
+};
+
+export type PartnerCareRequest = {
+  id: string;
+  reference: string;
+  practitionerId?: string;
+  practitionerName?: string;
+  mode: "online" | "in_person" | "either";
+  state: "sent" | "proposed" | "declined" | "confirmed" | "completed" | "cancelled" | "expired";
+  synthetic: boolean;
+  proposal?: CareProposal;
+  confirmedSlot?: string;
+  declineReason?: string;
+  version: number;
+  contentAvailable: boolean;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+  summary?: SharedSummary;
 };
 
 export type AISpend = {
@@ -263,6 +333,50 @@ async function request<T>(
 }
 
 export const adminApi = {
+  networkOrgs: () =>
+    request<{ orgs: CareOrg[]; realPartners: boolean }>("/network/orgs"),
+  createNetworkOrg: (input: Record<string, unknown>) =>
+    request<{ org: CareOrg }>(
+      "/network/orgs",
+      { method: "POST", body: JSON.stringify(input) },
+      true,
+    ).then((r) => r.org),
+  setNetworkOrgStatus: (id: string, status: "verified" | "suspended") =>
+    request<{ org: CareOrg }>(
+      `/network/orgs/${encodeURIComponent(id)}/status`,
+      { method: "POST", body: JSON.stringify({ status }) },
+      true,
+    ).then((r) => r.org),
+  networkMembers: (id: string) =>
+    request<{ members: CareOrgMember[] }>(
+      `/network/orgs/${encodeURIComponent(id)}/members`,
+    ).then((r) => r.members),
+  verifyLicense: (username: string) =>
+    request<{ username: string; licenseVerified: boolean }>(
+      `/network/members/${encodeURIComponent(username)}/verify-license`,
+      { method: "POST" },
+      true,
+    ),
+  partnerOrg: () =>
+    request<{ org: CareOrg; displayName: string }>("/partner/org"),
+  partnerRequests: () =>
+    request<{ requests: PartnerCareRequest[] }>("/partner/requests").then((r) => r.requests),
+  partnerRequest: (id: string) =>
+    request<{ request: PartnerCareRequest; canReadContent: boolean }>(
+      `/partner/requests/${encodeURIComponent(id)}`,
+    ),
+  partnerRespond: (id: string, input: Record<string, unknown>) =>
+    request<{ request: PartnerCareRequest }>(
+      `/partner/requests/${encodeURIComponent(id)}/respond`,
+      { method: "POST", body: JSON.stringify(input) },
+      true,
+    ).then((r) => r.request),
+  partnerComplete: (id: string, expectedVersion: number) =>
+    request<{ request: PartnerCareRequest }>(
+      `/partner/requests/${encodeURIComponent(id)}/complete`,
+      { method: "POST", body: JSON.stringify({ expectedVersion }) },
+      true,
+    ).then((r) => r.request),
   communityQueue: () =>
     request<{ items: CommunityQueueItem[] }>("/community/queue").then((r) => r.items),
   communityDecide: (kind: string, id: string, action: "restore" | "remove", reason: string) =>

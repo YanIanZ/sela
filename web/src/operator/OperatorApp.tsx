@@ -27,6 +27,8 @@ import { DirectoryPanel, SandboxPanel } from "./CarePanels";
 import { LanguageToggle, OperatorHeader, roleLabel } from "./chrome";
 import { ReadingPage } from "./ReadingPanel";
 import { CommunityPanel } from "./CommunityPanel";
+import { NetworkPanel } from "./NetworkPanel";
+import { PartnerConsole } from "./PartnerRequestsPanel";
 import "./operator.css";
 
 type Words = (id: string, en: string) => string;
@@ -177,6 +179,11 @@ export function OperatorApp() {
         }}
       />
     );
+  }
+  // A partner account (D-076) acts inside one organisation and sees only
+  // its care requests: none of the internal console panels apply.
+  if (admin.partner) {
+    return <PartnerConsole admin={admin} onSignOut={() => setAdmin(null)} onExpired={onExpired} />;
   }
   const onReading = window.location.pathname.replace(/\/+$/, "") === "/operator/reading";
   if (onReading) {
@@ -351,6 +358,8 @@ function Console({
     admin.permissions.includes("directory/verify");
   const canSandbox = admin.permissions.includes("sandbox/write");
   const canModerate = admin.permissions.includes("community/moderate");
+  const canNetworkManage = admin.permissions.includes("network/manage");
+  const canNetworkVerify = admin.permissions.includes("network/verify");
 
   const handleError = useCallback(
     (err: unknown) => {
@@ -631,6 +640,10 @@ function Console({
         )}
 
         {canModerate && <CommunityPanel onExpired={onExpired} />}
+
+        {(canNetworkManage || canNetworkVerify) && (
+          <NetworkPanel canManage={canNetworkManage} canVerify={canNetworkVerify} onExpired={onExpired} />
+        )}
 
         {canSandbox && (
           <SandboxPanel

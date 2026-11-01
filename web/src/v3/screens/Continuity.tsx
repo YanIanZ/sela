@@ -1974,6 +1974,17 @@ function SummaryDetail({ id }: { id: string }) {
                   {w("Unduh Markdown", "Download Markdown")}
                 </Button>
               </div>
+              <p className="s-hint">
+                {w(
+                  "Atau kirim versi ini ke tenaga profesional terverifikasi lewat bantuan terencana. Kamu yang memilih penerimanya dan bisa membatalkannya.",
+                  "Or send this version to a verified professional through planned support. You choose who receives it and can cancel.",
+                )}
+              </p>
+              <div className="s-actions">
+                <LinkButton to={`/support/plan?summary=${encodeURIComponent(r.id)}`} variant="secondary" icon="share">
+                  {w("Kirim ke tenaga profesional", "Send to a professional")}
+                </LinkButton>
+              </div>
             </section>
           )}
           <section className="c-followups" aria-labelledby="followups-title">

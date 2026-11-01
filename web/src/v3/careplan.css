@@ -1,0 +1,46 @@
+/* Bantuan terencana (D-076): one guided path from the condition map and an
+   approved summary to a request and its answer. Every row may wrap; codes
+   and contact lines break anywhere so nothing widens the page at 320 px. */
+.c-plan { display: grid; gap: var(--space-4); max-width: 60rem; }
+.c-plan-rules { display: grid; gap: 0.35rem; margin: 0; padding-left: 1.1rem; }
+.s-shell .c-plan-steps { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.c-plan-step > section { display: grid; gap: var(--space-3); min-width: 0; padding: var(--space-4); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); background: var(--c-surface); }
+.s-shell .c-plan-step h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0; font-size: var(--font-size-5); }
+.c-plan-num { display: inline-grid; place-items: center; flex: 0 0 auto; width: 1.9rem; height: 1.9rem; border-radius: var(--radius-pill); background: var(--c-accent-soft); color: var(--c-accent); font-family: var(--font-display); font-size: var(--font-size-2); font-weight: 600; }
+.c-plan-step p { margin: 0; max-width: 64ch; }
+
+.s-shell .c-plan-orgs, .s-shell .c-plan-requests { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.c-plan-org, .c-plan-request { display: grid; align-content: start; gap: 0.5rem; min-width: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-2); background: var(--c-surface); overflow-wrap: anywhere; }
+.c-plan-org.is-match { box-shadow: inset 3px 0 0 var(--c-leaf); }
+.c-plan-org.is-selected { border-color: var(--c-accent); box-shadow: 0 0 0 2px var(--c-accent); }
+.c-plan-org-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.4rem 0.75rem; }
+.s-shell .c-plan-org-head h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: 0; font-size: var(--font-size-4); min-width: 0; }
+.c-plan-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.c-plan-badge { display: inline-flex; align-items: center; padding: 0.12rem 0.6rem; border-radius: var(--radius-pill); background: var(--c-accent-soft); color: var(--c-accent); font-size: var(--font-size-1); font-weight: 600; white-space: nowrap; }
+.c-plan-badge--sim { background: var(--c-demo-bg, #eee9f8); color: var(--c-demo, #5e4a99); }
+.c-plan-badge--ok { background: var(--c-success-bg, #e6f4ea); color: var(--c-success, #1e6b3a); }
+.c-plan-sim { padding: 0.5rem 0.75rem; border: 1px dashed var(--c-demo, #5e4a99); border-radius: var(--radius-2); background: var(--c-demo-bg, #eee9f8); font-size: var(--font-size-2); }
+.s-shell .c-plan-people { display: grid; gap: 0.35rem; margin: 0; padding: 0; list-style: none; }
+.c-plan-people li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.35rem 0.6rem; padding-top: 0.35rem; border-top: 1px solid var(--c-border-subtle); }
+
+.c-plan-send { display: grid; gap: var(--space-3); }
+.c-plan-preview { display: grid; gap: 0.5rem; margin: 0; padding: var(--space-3); border-radius: var(--radius-2); background: var(--c-surface-quiet); }
+.c-plan-preview > div { display: grid; grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: 0.25rem 0.75rem; }
+.c-plan-preview dt { font-weight: 600; }
+.c-plan-preview dd { margin: 0; overflow-wrap: anywhere; }
+
+.c-plan-state { display: inline-flex; padding: 0.15rem 0.65rem; border-radius: var(--radius-pill); background: var(--c-surface-quiet); font-size: var(--font-size-1); font-weight: 600; white-space: nowrap; }
+.c-plan-state--proposed { background: var(--c-warning-bg); color: var(--c-warning); }
+.c-plan-state--confirmed, .c-plan-state--completed { background: var(--c-success-bg, #e6f4ea); color: var(--c-success, #1e6b3a); }
+.c-plan-state--declined, .c-plan-state--cancelled, .c-plan-state--expired { background: var(--c-surface-quiet); color: var(--c-muted); }
+.c-plan-proposal { display: grid; gap: 0.4rem; padding: var(--space-3); border-radius: var(--radius-2); background: var(--c-surface-quiet); }
+.s-shell .c-plan-slots { display: grid; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.c-plan-slots li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.4rem 0.75rem; }
+.c-plan-contact, .c-plan-request code, .c-plan code { overflow-wrap: anywhere; word-break: break-word; }
+
+@media (max-width: 29.99em) {
+  .c-plan-step > section { padding: var(--space-3); }
+  .c-plan-preview > div { grid-template-columns: minmax(0, 1fr); }
+  .c-plan-slots li .s-btn { flex: 1 1 100%; justify-content: center; }
+}
+:root[data-scheme^="contrast"] :is(.c-plan-step > section, .c-plan-org, .c-plan-request) { border: 2px solid var(--c-text); background: var(--c-bg); }
