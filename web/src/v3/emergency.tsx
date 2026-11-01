@@ -20,7 +20,7 @@ export function EmergencySheet({
 }: {
   open: boolean;
   onClose: () => void;
-  context?: "talk" | "note";
+  context?: "talk" | "note" | "community" | "map";
 }) {
   const w = useWords();
   const { lang } = useI18n();
@@ -45,6 +45,16 @@ export function EmergencySheet({
             ? w(
                 "Balasan Sela dijeda di percakapan ini. Sela tidak menghubungi siapa pun atas namamu.",
                 "Sela's replies are paused in this conversation. Sela doesn't contact anyone on your behalf.",
+              )
+            : context === "community"
+            ? w(
+                "Tulisan ini tidak disimpan dan tidak ditampilkan ke siapa pun. Sela tidak menghubungi siapa pun atas namamu.",
+                "This text was not saved or shown to anyone. Sela doesn't contact anyone on your behalf.",
+              )
+            : context === "map"
+            ? w(
+                "Peta kondisimu tidak disimpan dan tidak dikirim ke siapa pun. Sela tidak menghubungi siapa pun atas namamu.",
+                "Your condition map isn't stored or sent to anyone. Sela doesn't contact anyone on your behalf.",
               )
             : w(
                 "Tulisanmu tetap tersimpan seperti pilihanmu. Sela tidak menghubungi siapa pun atas namamu.",
@@ -94,6 +104,10 @@ export function EmergencySheet({
           <button type="button" className={buttonClass("quiet")} onClick={onClose}>
             {context === "talk"
               ? w("Kembali ke percakapan", "Back to the conversation")
+              : context === "community"
+              ? w("Kembali ke ruang berbagi", "Back to the sharing space")
+              : context === "map"
+              ? w("Kembali ke peta kondisi", "Back to the condition map")
               : w("Kembali ke catatan", "Back to the note")}
           </button>
         </div>

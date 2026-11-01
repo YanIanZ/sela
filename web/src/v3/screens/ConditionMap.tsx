@@ -104,6 +104,8 @@ export function ConditionMapSection({ policy }: { policy?: Policy }) {
   const [error, setError] = useState<unknown>(null);
   const [map, setMap] = useState<ConditionMap | null>(null);
   const [emergency, setEmergency] = useState(false);
+  const [mapError, setMapError] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!consent.granted) {
@@ -111,6 +113,7 @@ export function ConditionMapSection({ policy }: { policy?: Policy }) {
       return;
     }
     let active = true;
+    setMapError(null);
     api<ConditionMap>("/condition-map")
       .then((m) => {
         if (!active) return;
@@ -127,11 +130,19 @@ export function ConditionMapSection({ policy }: { policy?: Policy }) {
           }
         }
       })
-      .catch((e) => active && setError(e));
+      .catch((e) => {
+        if (!active) return;
+        // The server no longer holds the consent (withdrawn elsewhere or a
+        // new policy version): re-read it so the page offers it again.
+        if ((e as { code?: string }).code === "consent_required") consent.reload();
+        setMapError(e);
+      });
     return () => {
       active = false;
     };
-  }, [consent.granted]);
+    // consent.reload is stable per purpose
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consent.granted, attempt]);
 
   const decide = async (granted: boolean) => {
     setBusy(true);
@@ -189,7 +200,11 @@ export function ConditionMapSection({ policy }: { policy?: Policy }) {
           </div>
         </div>
       ) : !map ? (
-        <Loading label={w("Membaca catatanmu…", "Reading your entries…")} />
+        mapError ? (
+          <ErrorNotice error={mapError} onRetry={() => setAttempt((n) => n + 1)} />
+        ) : (
+          <Loading label={w("Membaca catatanmu…", "Reading your entries…")} />
+        )
       ) : (
         <>
           <div className={`c-stage c-stage--${map.stage}`}>
@@ -250,7 +265,7 @@ export function ConditionMapSection({ policy }: { policy?: Policy }) {
               {w("Matikan peta kondisi", "Turn off the condition map")}
             </button>
           </p>
-          <EmergencySheet open={emergency} onClose={() => setEmergency(false)} context="note" />
+          <EmergencySheet open={emergency} onClose={() => setEmergency(false)} context="map" />
         </>
       )}
     </section>

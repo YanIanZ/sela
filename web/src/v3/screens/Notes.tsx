@@ -983,7 +983,11 @@ function EntryDetail({ id }: { id: string }) {
         ) : (
           <p className="s-preserve s-reading-body">{record.text}</p>
         )}
-        {record.safety === "crisis" && <CrisisAfterSave recordId={record.id} version={record.version} />}
+        {record.safety === "crisis" && (
+          // keyed by version: a new crisis version remounts and reads its own
+          // once-per-version flag, so quick-help opens again.
+          <CrisisAfterSave key={`${record.id}.${record.version}`} recordId={record.id} version={record.version} />
+        )}
       </article>
       <div className="s-actions">
         {!isCheckin && !isFollowup && !editing && (

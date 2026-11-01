@@ -167,7 +167,7 @@ export function CommunityPage({ user, policies }: { user: Profile; policies?: Re
 
 function useCrisis() {
   const [open, setOpen] = useState(false);
-  const sheet = <EmergencySheet open={open} onClose={() => setOpen(false)} context="note" />;
+  const sheet = <EmergencySheet open={open} onClose={() => setOpen(false)} context="community" />;
   return { sheet, open: () => setOpen(true) };
 }
 

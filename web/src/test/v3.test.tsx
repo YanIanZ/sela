@@ -1818,6 +1818,40 @@ describe("planned care and the sharing space", () => {
     expect(await screen.findByRole("alertdialog", { name: "Kamu tidak sendirian" })).toBeInTheDocument();
   });
 
+  it("offers a retry instead of loading forever when the condition map fails", async () => {
+    let fail = true;
+    mockApi(
+      {
+        "GET /me/consents": () => ({
+          data: { consents: [{ purpose: "condition_map", granted: true, outdated: false, revision: 1, currentPolicyVersion: "cm-1" }] },
+        }),
+        "GET /condition-map": () =>
+          fail
+            ? json({ error: { code: "unavailable", message: "unavailable" } }, 503)
+            : {
+                data: {
+                  stage: "everyday",
+                  signals: [],
+                  dataPoints: 2,
+                  windowDays: 30,
+                  dataLimited: true,
+                  sources: { checkin: 2 },
+                  computedAt: "2026-11-01T10:00:00Z",
+                },
+              },
+        "GET /care-demo": () => ({ data: { synthetic: true, practitioners: [] } }),
+        "GET /care-directory": () => ({ data: { entries: [] } }),
+      },
+      profile(),
+    );
+    renderPath("/support/directory");
+    const retry = await screen.findByRole("button", { name: "Coba lagi" });
+    expect(screen.queryByText("Membaca catatanmu…")).not.toBeInTheDocument();
+    fail = false;
+    fireEvent.click(retry);
+    expect(await screen.findByText("Sehari-hari", { selector: "strong" })).toBeInTheDocument();
+  });
+
   it("sends one report and one delete however often the buttons are pressed", async () => {
     const user = profile();
     let releaseReport: () => void = () => {};

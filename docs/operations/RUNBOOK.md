@@ -108,6 +108,8 @@ docker build -f deploy/v2/Dockerfile --build-arg VERSION=$(git rev-parse --short
 docker run --rm -p 8080:8080 -e SELA_SECURE_COOKIES=false sela:v2
 ```
 
+With Docker Compose, build and start through `scripts/compose-up.sh`: it sets `SELA_VERSION` to `git describe --always --dirty` so `/api/v2/health` reports the deployed commit (S-001). A plain `docker compose up --build` reports `dev`, or whatever `SELA_VERSION` the environment sets.
+
 Deploy as **one instance** (sessions live in process memory; several instances would split them). Put HTTPS in front, set `SELA_PUBLIC_ORIGIN`, keep `SELA_SECURE_COOKIES=true`, and set `SELA_TRUST_PROXY=true` only behind a proxy that overwrites `X-Forwarded-For`. A restart erases all sessions, which the UI explains. On SIGTERM/SIGINT the server ends open event streams with a final content-free event and exits cleanly; a second signal forces exit. **Not run:** no hosting account was available (B-3).
 
 ## 5. Meta model on Modal
