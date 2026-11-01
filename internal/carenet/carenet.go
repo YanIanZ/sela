@@ -389,3 +389,21 @@ func (s *Store) PublicOrgs(ctx context.Context) ([]PublicOrg, error) {
 	}
 	return out, prs.Err()
 }
+
+// NetworkTasks counts what waits for an operator in the network.
+type NetworkTasks struct {
+	PendingOrgs     int `json:"pendingOrgs"`
+	PendingLicenses int `json:"pendingLicenses"`
+	OpenInvites     int `json:"openInvites"`
+}
+
+// Tasks returns the network work queue counts.
+func (s *Store) Tasks(ctx context.Context) (NetworkTasks, error) {
+	var t NetworkTasks
+	err := s.pool.QueryRow(ctx, `SELECT
+		(SELECT count(*) FROM care_orgs WHERE status='pending'),
+		(SELECT count(*) FROM admin_users WHERE role='practitioner' AND status='active' AND license_no IS NOT NULL AND license_verified_at IS NULL),
+		(SELECT count(*) FROM admin_invites WHERE accepted_at IS NULL AND revoked_at IS NULL AND expires_at > $1)`, s.now()).
+		Scan(&t.PendingOrgs, &t.PendingLicenses, &t.OpenInvites)
+	return t, err
+}

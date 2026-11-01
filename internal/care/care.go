@@ -402,7 +402,7 @@ func (s *Store) ListSandbox(ctx context.Context) ([]SandboxRequest, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []SandboxRequest
+	out := []SandboxRequest{}
 	for rows.Next() {
 		var v SandboxRequest
 		var id pgtype.UUID
@@ -478,7 +478,7 @@ func (s *Store) Audit(ctx context.Context, limit int) ([]AuditEvent, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []AuditEvent
+	out := []AuditEvent{}
 	for rows.Next() {
 		var e AuditEvent
 		if err := rows.Scan(&e.ID, &e.Actor, &e.Action, &e.ObjectKind, &e.ObjectID, &e.OldStatus, &e.NewStatus, &e.Reason, &e.CreatedAt); err != nil {
@@ -593,7 +593,7 @@ func scanEntry(row entryScanner) (Entry, error) {
 }
 
 func scanEntries(rows pgx.Rows) ([]Entry, error) {
-	var out []Entry
+	out := []Entry{}
 	for rows.Next() {
 		e, err := scanEntry(rows)
 		if err != nil {

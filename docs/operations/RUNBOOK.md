@@ -261,7 +261,7 @@ Open `/support/directory` for the public sourced search (no login, no location, 
 **Care network (D-076).** Partner organisations and their accounts make planned care reach a professional. In staging and production only simulated organisations are accepted until `SELA_CARE_NETWORK_REAL_ACK=B-10-owner` is set.
 
 1. In `/operator` → *Jaringan profesional*, an owner creates the organisation (kind, city, modes, the condition-map stages it fits; tick *Simulasi* for a simulated one). A synthetic organisation may be verified by its creator; a real one must be verified by a different operator (`directory_reviewer` or another owner).
-2. Provision each account out of band after checking the person (password on stdin; the TOTP secret is printed once):
+2. Invite each account from the organisation's page (*Undang akun*, D-079): the console shows a 72-hour activation link once; send it over a safe channel. The invitee sets their own password and authenticator. As a fallback, provision out of band after checking the person (password on stdin; the TOTP secret is printed once):
 
 ```sh
 printf '%s' "$PASSWORD" | docker compose exec -T app /sela admin create-partner \

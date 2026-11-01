@@ -240,10 +240,10 @@ func TestMigrateCommands(t *testing.T) {
 	if code, out, _ := runMain(t, env, "migrate status"); code != 0 || !strings.Contains(out, "result: current") || !strings.Contains(out, "environment marker: test") {
 		t.Fatalf("status: %d\n%s", code, out)
 	}
-	if code, _, stderr := runMain(t, env, "migrate down-last --confirm 0001"); code != 1 || !strings.Contains(stderr, "1200_meaning_integrity") {
+	if code, _, stderr := runMain(t, env, "migrate down-last --confirm 0001"); code != 1 || !strings.Contains(stderr, "1300_partner_invites") {
 		t.Fatalf("down-last with the wrong confirm: %d %s", code, stderr)
 	}
-	if code, out, _ := runMain(t, env, "migrate down-last --confirm 1200"); code != 0 || !strings.Contains(out, "reverted 1200_meaning_integrity") {
+	if code, out, _ := runMain(t, env, "migrate down-last --confirm 1300"); code != 0 || !strings.Contains(out, "reverted 1300_partner_invites") {
 		t.Fatalf("down-last: %d\n%s", code, out)
 	}
 	if code, _, _ := runMain(t, env, "migrate status"); code != 3 {

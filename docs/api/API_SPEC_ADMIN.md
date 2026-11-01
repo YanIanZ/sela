@@ -84,6 +84,22 @@ Migration `0600_reading_reviews` (range 600–699):
 
 `approved_by` and the audit actor are opaque uuids without a foreign key to `admin_users`: the reading range (0600) is applied before the operator range (0910), so a foreign key would make one migration range depend on another. `REVOKE ALL ... FROM PUBLIC` applies to both reading tables. They never reference or copy consumer records.
 
+## 5a. Care network, partner invitations and the console home (D-076, D-079)
+
+Professional care network routes (`/network/*`, `/partner/*`) are specified in [API_SPEC_CARE_NETWORK](API_SPEC_CARE_NETWORK.md). Added by D-079:
+
+| Method and path | Permission | Notes |
+| --- | --- | --- |
+| `GET /tasks` | any internal operator | `{tasks:{network?:{pendingOrgs,pendingLicenses,openInvites}, moderation?, directoryPending?}}`, each key only for permissions held; partners `403` |
+| `POST /network/invites` | `network/manage` | `{username, role: partner_admin\|practitioner\|partner_staff, careOrgId, displayName?, professionalType?, licenseNo?}` → `201 {invite, activationUrl}`; the URL carries a one-time token in its `#fragment` and is returned once; `409 username_taken` |
+| `GET /network/orgs/{id}/invites` | `network/manage` or `network/verify` | invitations with `state` open, accepted, revoked or expired; never the token |
+| `POST /network/invites/{id}/revoke` | `network/manage` | ends an open invitation |
+| `POST /activation` | public (token in body, login throttle) | `{token}` → `{activation:{username, role, orgName, displayName, secret, otpauthUrl}}`; the TOTP secret is created on first use and sealed in the invitation; `410 invite_invalid` for an unknown, used, revoked or expired token |
+| `POST /activation/complete` | public (token in body, login throttle) | `{token, password, totp}` → account created with the enrolled secret, invitation accepted and the first session opened in one transaction; sets the operator cookie; `400 password_weak`, `401 admin_invalid_credentials` (field `totp`), `410`; ten failed attempts end the invitation |
+| `GET /partner/members` | partner roles | the organisation's accounts; licence numbers only for `partner_admin` |
+
+Invitations last 72 hours; only the SHA-256 of the token is stored (migration `1300_partner_invites`); the inviting operator never sees the password or the TOTP secret. Audit actions `network.invite_create`, `network.invite_revoke`, `network.invite_accept`. Internal staff accounts stay out of band (D-061).
+
 ## 6. Deliberately absent
 
 Role editing, two-person approval for staff grants, real partner onboarding or booking, research/safety review queues, provider budget editing, WebAuthn/passkeys and IP allowlisting. The UI at `/operator` consumes the routes above (dashboard, staff, planned care and reading review); these remaining workflows are target design in [Admin Console](../vision/ADMIN_CONSOLE.md) and must not be inferred from the presence of a role name or of the reading reviewer permission.

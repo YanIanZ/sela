@@ -128,6 +128,10 @@ func (s *Server) adminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.setAdminCookie(w, sess.Token, time.Until(sess.Principal.AbsoluteExpiresAt))
+	// The session read carries the partner organisation and display name.
+	if full, err := s.opt.Admin.AuthenticateSession(r.Context(), sess.Token); err == nil {
+		sess.Principal = full
+	}
 	writeData(w, http.StatusOK, map[string]any{"admin": adminView(sess.Principal)})
 }
 

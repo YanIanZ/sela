@@ -74,6 +74,7 @@ var Ranges = []Range{
 	{1000, 1099, "community"},
 	{1100, 1199, "professional care network"},
 	{1200, 1299, "meaning integrity"},
+	{1300, 1399, "operator console"},
 }
 
 // RangeOf returns the owner of a version, or "" when it is not reserved.

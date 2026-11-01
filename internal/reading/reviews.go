@@ -102,7 +102,7 @@ func (s *ReviewStore) List(ctx context.Context) ([]Approval, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Approval
+	out := []Approval{}
 	for rows.Next() {
 		a, err := scanApproval(rows)
 		if err != nil {
@@ -214,7 +214,7 @@ func (s *ReviewStore) Audit(ctx context.Context, limit int) ([]AuditEvent, error
 		return nil, err
 	}
 	defer rows.Close()
-	var out []AuditEvent
+	out := []AuditEvent{}
 	for rows.Next() {
 		var e AuditEvent
 		if err := rows.Scan(&e.ID, &e.Actor, &e.Action, &e.ObjectKind, &e.ObjectID,

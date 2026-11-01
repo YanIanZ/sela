@@ -78,6 +78,7 @@ func (s *Server) routes() {
 	s.adminReadingRoutes()
 	s.adminCommunityRoutes()
 	s.adminNetworkRoutes()
+	s.adminInviteRoutes()
 
 	m.HandleFunc("/api/", s.apiFallback)
 	m.Handle("/", s.static())

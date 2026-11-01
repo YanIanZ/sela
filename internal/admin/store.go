@@ -408,7 +408,7 @@ func (s *Store) ListStaff(ctx context.Context) ([]StaffView, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []StaffView
+	out := []StaffView{}
 	for rows.Next() {
 		var v StaffView
 		if err := rows.Scan(&v.Username, &v.Role, &v.OrgID, &v.CareOrgID, &v.Status, &v.CreatedAt, &v.LastLoginAt, &v.LiveSessions); err != nil {
@@ -464,7 +464,7 @@ func (s *Store) ListAudit(ctx context.Context, limit int) ([]AuditEvent, error) 
 		return nil, err
 	}
 	defer rows.Close()
-	var out []AuditEvent
+	out := []AuditEvent{}
 	for rows.Next() {
 		var e AuditEvent
 		if err := rows.Scan(&e.ID, &e.Actor, &e.Action, &e.ObjectKind, &e.ObjectID, &e.OldStatus, &e.NewStatus, &e.Reason, &e.CreatedAt); err != nil {

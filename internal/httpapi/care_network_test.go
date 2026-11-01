@@ -8,6 +8,7 @@ import (
 
 	"github.com/YanIanZ/sela/internal/account"
 	"github.com/YanIanZ/sela/internal/admin"
+	"github.com/YanIanZ/sela/internal/care"
 	"github.com/YanIanZ/sela/internal/carenet"
 	"github.com/YanIanZ/sela/internal/httpapi"
 )
@@ -32,6 +33,11 @@ func newNetworkEnv(t *testing.T, allowReal bool) (*v3env, *admin.Store) {
 				t.Fatal(err)
 			}
 			o.Network = n
+			cs, err := care.New(e.db.Pool, e.clock.Now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			o.Care = cs
 		},
 	})
 	return e, st
