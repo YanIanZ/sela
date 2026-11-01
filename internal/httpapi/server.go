@@ -29,6 +29,7 @@ import (
 	"github.com/YanIanZ/sela/internal/budget"
 	"github.com/YanIanZ/sela/internal/cache"
 	"github.com/YanIanZ/sela/internal/care"
+	"github.com/YanIanZ/sela/internal/carenet"
 	"github.com/YanIanZ/sela/internal/community"
 	"github.com/YanIanZ/sela/internal/journey"
 	"github.com/YanIanZ/sela/internal/reading"
@@ -91,6 +92,10 @@ type Options struct {
 	// Community is the anonymous peer-sharing store (D-072). Nil disables
 	// the community routes (503 store_unavailable).
 	Community *community.Store
+	// Network is the professional care network (D-076): partner
+	// organisations, their accounts and licence checks. Nil disables the
+	// care network and care request routes.
+	Network *carenet.Store
 	// Moderator checks community posts and replies before they are shown.
 	Moderator community.Moderator
 	// ReadingReviews is the operator sign-off store for the embedded reading

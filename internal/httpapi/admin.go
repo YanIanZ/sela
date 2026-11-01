@@ -95,6 +95,9 @@ func adminView(p admin.Principal) map[string]any {
 		"username":    p.Username,
 		"role":        string(p.Role),
 		"orgId":       p.OrgID,
+		"careOrgId":   p.CareOrgID,
+		"displayName": p.DisplayName,
+		"partner":     admin.IsPartnerRole(p.Role),
 		"permissions": admin.Permissions(p.Role),
 	}
 }

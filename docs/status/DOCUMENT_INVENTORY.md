@@ -21,6 +21,7 @@ Updated: 1 November 2026 (28 previously unlisted documents classified: the visio
 | [docs/api/API_SPEC_V2.md](../api/API_SPEC_V2.md) | Current project / v2 supporting documentation |
 | [docs/api/API_SPEC_V3.md](../api/API_SPEC_V3.md) | Current project / v3 API contract (foundation implemented and verified locally, CI passed on draft PR #9; feature sections reserved) |
 | [docs/api/API_SPEC_ADMIN.md](../api/API_SPEC_ADMIN.md) | Current project / separate operator API v1 (implemented locally 2026-10-30; UI and directory workflows pending) |
+| [docs/api/API_SPEC_CARE_NETWORK.md](../api/API_SPEC_CARE_NETWORK.md) | Current project / care network API (D-076; implemented and tested locally, simulated partners only in production) |
 | [docs/architecture/ARCHITECTURE.md](../architecture/ARCHITECTURE.md) | Current project / v3 and v2 supporting documentation |
 | [docs/product/BACKLOG.md](../product/BACKLOG.md) | Current project / v3 planning document (backlog and milestones) |
 | [docs/status/BLOCKERS.md](BLOCKERS.md) | Current project / v3 and v2 supporting documentation |

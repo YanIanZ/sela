@@ -258,4 +258,19 @@ docker compose exec -T app /sela care seed-demo --admin ops.local
 
 Open `/support/directory` for the public sourced search (no login, no location, no booking). The operator console shows the editorial queue and the sandbox for owners, directory editors/reviewers and ops; every sandbox row is labelled **Simulasi**. The directory shows `Synthetic` rows only in development/test/demo. Production and staging refuse the seed command.
 
+**Care network (D-076).** Partner organisations and their accounts make planned care reach a professional. In staging and production only simulated organisations are accepted until `SELA_CARE_NETWORK_REAL_ACK=B-10-owner` is set.
+
+1. In `/operator` → *Jaringan profesional*, an owner creates the organisation (kind, city, modes, the condition-map stages it fits; tick *Simulasi* for a simulated one). A synthetic organisation may be verified by its creator; a real one must be verified by a different operator (`directory_reviewer` or another owner).
+2. Provision each account out of band after checking the person (password on stdin; the TOTP secret is printed once):
+
+```sh
+printf '%s' "$PASSWORD" | docker compose exec -T app /sela admin create-partner \
+  --username psy.teduh --role practitioner --org <org id> \
+  --display-name "Nama Psikolog" --professional-type psychologist --license <STR/SIP>
+```
+
+   Roles: `partner_admin` (reads and answers the organisation's requests), `practitioner` (the same, and listed to people with their professional type), `partner_staff` (status and times only, never the summary).
+3. A different operator checks the licence number against the official register and presses *Verifikasi lisensi*; the person then sees "Lisensi terverifikasi".
+4. Partners sign in at `/operator` and see only *Permintaan bantuan*: they open the summary (recorded for the person and in the audit), propose up to three times with their own contact instructions, or decline with a reason, and mark a confirmed request completed. Suspending the organisation stops new requests.
+
 **AI budget.** When `SELA_AI_MONTHLY_BUDGET_USD` is positive, every generative listening operation reserves `SELA_AI_RESERVE_USD` in `ai_spend` inside a transaction serialized by an advisory lock, then settles the measured estimate from provenance. A failed operation settles at the reservation, because provider work may already have been billed. Admission failures fail closed: the operation returns `aiState: "budget_limited"` and makes no provider call. Redis is not consulted, so an outage or restart can neither reset nor bypass the cap. The ledger stores task, provider, token counts and cost estimates only — no user id, session id, prompt or reply. The operator overview reports month-to-date committed/actual spend, open reservations and the top tasks; there is no prompt or per-user view by design.

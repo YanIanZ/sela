@@ -33,6 +33,7 @@ var v3Messages = map[string]message{
 	"store_unavailable":          {"Penyimpanan sedang tidak tersedia. Coba lagi sebentar lagi.", "Storage is unavailable right now. Try again shortly."},
 	"server_busy":                {"Server sedang sibuk. Coba lagi sebentar lagi.", "The server is busy. Try again shortly."},
 	"invalid_share":              {"Tautan atau kode tidak cocok, atau sudah tidak berlaku.", "The link or code doesn't match, or it is no longer valid."},
+	"care_org_unavailable":       {"Layanan ini sedang tidak menerima permintaan. Pilih layanan lain.", "This service isn't taking requests right now. Choose another one."},
 	"name_taken":                 {"Nama ini sudah ada di daftarmu.", "This name is already on your list."},
 	"name_limit_reached":         {"Daftar nama berisi paling banyak 20 nama. Hapus satu dulu untuk menambah yang lain.", "The name list holds at most 20 names. Remove one before adding another."},
 }
@@ -53,7 +54,8 @@ var v3Status = map[string]int{
 	"username_taken": http.StatusConflict, "password_too_short": http.StatusBadRequest, "password_too_long": http.StatusBadRequest,
 	"password_weak": http.StatusBadRequest, "invalid_share": http.StatusUnauthorized,
 	"name_taken": http.StatusConflict, "name_limit_reached": http.StatusConflict,
-	"store_unavailable": http.StatusServiceUnavailable, "server_busy": http.StatusServiceUnavailable,
+	"care_org_unavailable": http.StatusConflict,
+	"store_unavailable":    http.StatusServiceUnavailable, "server_busy": http.StatusServiceUnavailable,
 }
 
 func init() {

@@ -27,6 +27,12 @@ const (
 	RoleResearchEditor    Role = "research_editor"
 	RoleSafetyReviewer    Role = "safety_reviewer"
 	RoleOps               Role = "ops"
+
+	// Partner roles (D-076) belong to exactly one care organisation and only
+	// ever see that organisation's care requests.
+	RolePartnerAdmin Role = "partner_admin"
+	RolePractitioner Role = "practitioner"
+	RolePartnerStaff Role = "partner_staff"
 )
 
 // Permission strings are deliberately narrow and checked server-side.
@@ -43,16 +49,39 @@ const (
 	// PermCommunityModerate decides held, hidden and reported community
 	// posts (D-072).
 	PermCommunityModerate = "community/moderate"
+	// PermNetworkManage creates partner organisations and lists their
+	// accounts; PermNetworkVerify verifies or suspends an organisation and a
+	// practitioner's licence (the creator never verifies their own, D-076).
+	PermNetworkManage = "network/manage"
+	PermNetworkVerify = "network/verify"
+	// Care request permissions are always scoped to the principal's
+	// organisation. Staff see status and times but never the summary.
+	PermCareRequestsRead    = "care-requests/read"
+	PermCareRequestsContent = "care-requests/content"
+	PermCareRequestsRespond = "care-requests/respond"
 )
 
 var rolePermissions = map[Role][]string{
-	RoleOwner:             {PermOverviewRead, PermAuditRead, PermCacheWrite, PermDirectoryWrite, PermDirectoryVerify, PermResearchReview, PermSafetyReview, PermStaffManage, PermSandboxWrite, PermCommunityModerate},
+	RoleOwner:             {PermOverviewRead, PermAuditRead, PermCacheWrite, PermDirectoryWrite, PermDirectoryVerify, PermResearchReview, PermSafetyReview, PermStaffManage, PermSandboxWrite, PermCommunityModerate, PermNetworkManage, PermNetworkVerify},
 	RoleSecurityAdmin:     {PermOverviewRead, PermAuditRead, PermStaffManage},
 	RoleDirectoryEditor:   {PermOverviewRead, PermDirectoryWrite},
-	RoleDirectoryReviewer: {PermOverviewRead, PermDirectoryVerify},
+	RoleDirectoryReviewer: {PermOverviewRead, PermDirectoryVerify, PermNetworkVerify},
 	RoleResearchEditor:    {PermOverviewRead, PermResearchReview},
 	RoleSafetyReviewer:    {PermOverviewRead, PermSafetyReview, PermCommunityModerate},
 	RoleOps:               {PermOverviewRead, PermCacheWrite, PermSandboxWrite},
+	RolePartnerAdmin:      {PermCareRequestsRead, PermCareRequestsContent, PermCareRequestsRespond},
+	RolePractitioner:      {PermCareRequestsRead, PermCareRequestsContent, PermCareRequestsRespond},
+	RolePartnerStaff:      {PermCareRequestsRead},
+}
+
+// IsPartnerRole reports whether r is bound to one care organisation.
+func IsPartnerRole(r Role) bool {
+	return r == RolePartnerAdmin || r == RolePractitioner || r == RolePartnerStaff
+}
+
+// ProfessionalTypes is the closed set a practitioner may hold.
+var ProfessionalTypes = map[string]bool{
+	"psychologist": true, "psychiatrist": true, "doctor": true, "counsellor": true, "nurse": true, "social_worker": true,
 }
 
 // ValidRole reports whether r is one of the closed set.
@@ -67,11 +96,15 @@ func Permissions(r Role) []string {
 // Principal is an authenticated staff session. It deliberately has no user
 // id or anonymous-session field.
 type Principal struct {
-	AdminID           AdminID
-	SessionID         SessionID
-	Username          string
-	Role              Role
-	OrgID             string
+	AdminID   AdminID
+	SessionID SessionID
+	Username  string
+	Role      Role
+	OrgID     string
+	// CareOrgID is set for partner roles only: every care request query is
+	// filtered by it.
+	CareOrgID         string
+	DisplayName       string
 	IdleExpiresAt     time.Time
 	AbsoluteExpiresAt time.Time
 }
@@ -151,6 +184,7 @@ type StaffView struct {
 	Username     string     `json:"username"`
 	Role         Role       `json:"role"`
 	OrgID        string     `json:"orgId,omitempty"`
+	CareOrgID    string     `json:"careOrgId,omitempty"`
 	Status       string     `json:"status"`
 	CreatedAt    time.Time  `json:"createdAt"`
 	LastLoginAt  *time.Time `json:"lastLoginAt,omitempty"`

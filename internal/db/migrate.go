@@ -72,6 +72,7 @@ var Ranges = []Range{
 	{800, 899, "privacy controls"},
 	{900, 999, "ops"},
 	{1000, 1099, "community"},
+	{1100, 1199, "professional care network"},
 }
 
 // RangeOf returns the owner of a version, or "" when it is not reserved.

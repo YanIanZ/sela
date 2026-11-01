@@ -65,6 +65,12 @@ type Config struct {
 	ResearchKB           string
 	LogLevel             string
 	Env                  string
+	// CareNetworkReal allows real (non-synthetic) partner organisations in
+	// the care network (D-076). Development and test always allow them;
+	// staging and production need SELA_CARE_NETWORK_REAL_ACK=B-10-owner,
+	// the owner's acceptance while B-10 is open. Without it only simulated
+	// organisations can be created or receive requests.
+	CareNetworkReal bool
 	// MetricsToken, when set, enables GET /api/v2/metrics for requests with
 	// "Authorization: Bearer <MetricsToken>". Never logged.
 	MetricsToken string
@@ -220,6 +226,7 @@ func LoadMode(mode Mode) (Config, error) {
 	}
 	var err error
 	c.Env = env("SELA_ENV", EnvProduction)
+	c.CareNetworkReal = c.Env == EnvDevelopment || c.Env == EnvTest || env("SELA_CARE_NETWORK_REAL_ACK", "") == "B-10-owner"
 	if KEKPrefix[c.Env] == "" {
 		add(errors.New("SELA_ENV: must be production, staging, development or test"))
 	}

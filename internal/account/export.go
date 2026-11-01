@@ -207,6 +207,9 @@ func foundationExporters() []Exporter {
 			evRows.Close()
 			return shares, evRows.Err()
 		}},
+		exporterFunc{"careRequests", []string{"care_requests"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
+			return b.store.exportCareRequests(ctx, tx, owner)
+		}},
 		exporterFunc{"guardianConsents", []string{"guardian_consents"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
 			return b.store.guardianRecords(ctx, tx, owner)
 		}},

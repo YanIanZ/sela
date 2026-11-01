@@ -158,6 +158,11 @@ type OwnerStore interface {
 	ShareEvents(context.Context, UserID, string) ([]ShareEvent, error)
 	CreateShare(context.Context, UserID, string, string, string, int) (Share, string, string, error)
 	RevokeShare(context.Context, UserID, string, int) (Share, error)
+	CareRequests(context.Context, UserID) ([]CareRequest, error)
+	CareRequest(context.Context, UserID, string) (CareRequest, error)
+	CreateCareRequest(context.Context, UserID, CareRequestInput, bool) (CareRequest, error)
+	ConfirmCareRequest(context.Context, UserID, string, time.Time, int) (CareRequest, error)
+	CancelCareRequest(context.Context, UserID, string, int) (CareRequest, error)
 
 	PrivateNames(context.Context, UserID) ([]PrivateName, error)
 	CreatePrivateName(context.Context, UserID, string) (PrivateName, error)
@@ -202,6 +207,11 @@ type SystemStore interface {
 	OpenShare(ctx context.Context, token, code string) (SharedProjection, string, error)
 	RecipientShare(ctx context.Context, session string) (SharedProjection, error)
 	AcknowledgeShare(ctx context.Context, session string) error
+	// Partner methods are scoped by organisation, never by owner (D-076).
+	PartnerCareRequests(ctx context.Context, orgID string) ([]PartnerCareRequest, error)
+	PartnerCareRequest(ctx context.Context, orgID, id string, content bool) (PartnerCareRequest, error)
+	PartnerRespond(ctx context.Context, orgID, id string, in PartnerRespondInput) (PartnerCareRequest, error)
+	PartnerComplete(ctx context.Context, orgID, id string, expectedVersion int) (PartnerCareRequest, error)
 }
 
 var (

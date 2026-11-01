@@ -149,6 +149,21 @@ func (s *Store) CreateShare(ctx context.Context, owner UserID, summaryID, label,
 	share := Share{ID: newShareID(), SummaryID: summaryID, Label: label, Purpose: purpose, State: ShareActive,
 		Version: 1, CreatedAt: now, ExpiresAt: now.Add(time.Duration(hours) * time.Hour)}
 	err = s.tx(ctx, func(tx pgx.Tx) error {
+		return s.createShareTx(ctx, tx, owner, &share, token, code)
+	})
+	if err != nil {
+		return Share{}, "", "", err
+	}
+	return share, token, code, nil
+}
+
+// createShareTx freezes the approved summary share.SummaryID into share
+// inside tx. share carries the id, label, purpose and times; it gains the
+// summary version. Care requests (D-076) use it with a token and code that
+// are never shown, so their share can only be read through the request.
+func (s *Store) createShareTx(ctx context.Context, tx pgx.Tx, owner UserID, share *Share, token, code string) error {
+	summaryID, label, purpose, now := share.SummaryID, share.Label, share.Purpose, share.CreatedAt
+	{
 		summary, err := s.record(ctx, tx, owner, summaryID, true)
 		if err != nil {
 			return err
@@ -219,11 +234,7 @@ func (s *Store) CreateShare(ctx context.Context, owner UserID, summaryID, label,
 			return err
 		}
 		return s.shareEvent(ctx, tx, share.ID, "created", now)
-	})
-	if err != nil {
-		return Share{}, "", "", err
 	}
-	return share, token, code, nil
 }
 
 // Shares lists the owner's shares, newest first, without secrets. The

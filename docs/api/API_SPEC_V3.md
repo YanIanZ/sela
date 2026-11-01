@@ -488,6 +488,21 @@ Every route needs the optional `community` consent and the `18_plus` age band (`
 
 Operators (permission `community/moderate`, roles owner and safety reviewer) use `GET /api/admin/v1/community/queue` and `POST /api/admin/v1/community/{kind}/{id}/decision` with `{ "action": "restore|remove", "reason" }`; every decision is audited. The queue carries no author information. Migration `1000_community` (range 1000–1099).
 
+## 6.15 Care network and care requests (2026-11-01 local implementation, D-076)
+
+Full contract, including the professional workspace: [API_SPEC_CARE_NETWORK](API_SPEC_CARE_NETWORK.md).
+
+| Route | Behaviour |
+| --- | --- |
+| `GET /api/v3/care-network` | Verified organisations that accept requests, with their active practitioners (display name, professional type, licence verified). Real organisations only when the deployment allows them; synthetic ones carry `synthetic: true` |
+| `GET /api/v3/care-requests` | The owner's requests, newest first; open requests whose share was revoked or expired are settled to `cancelled`/`expired` first |
+| `POST /api/v3/care-requests` | `{summaryId, orgId, practitionerId?, mode}` → **201**; needs the `sharing` consent and an approved current summary; creates a seven-day share with no usable link |
+| `GET /api/v3/care-requests/{id}` | One request with the organisation's proposal |
+| `POST /api/v3/care-requests/{id}/confirm` | `{slot, expectedVersion}`: one of the proposed future times |
+| `POST /api/v3/care-requests/{id}/cancel` | `{expectedVersion}`: ends the request and revokes its share |
+
+The export gains a `careRequests` section (requests and their history).
+
 ## 7. Guest and account differences (foundation)
 
 | Capability | Guest | Account |

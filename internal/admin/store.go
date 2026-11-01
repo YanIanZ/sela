@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -70,7 +71,8 @@ func (s *Store) Create(ctx context.Context, username, password string, role Role
 	if err := ValidateUsername(username); err != nil {
 		return Principal{}, "", err
 	}
-	if !ValidRole(role) {
+	if !ValidRole(role) || IsPartnerRole(role) {
+		// partner accounts carry an organisation: CreatePartner
 		return Principal{}, "", ErrInvalid
 	}
 	if len(orgID) > 80 {
@@ -114,6 +116,92 @@ func (s *Store) Create(ctx context.Context, username, password string, role Role
 		return Principal{}, "", err
 	}
 	return Principal{AdminID: id, Username: username, Role: role, OrgID: orgID}, secretText, nil
+}
+
+// PartnerInput describes one partner account (D-076). CareOrgID must name
+// an existing care organisation; a practitioner needs a display name and a
+// professional type, and may carry a licence number (STR/SIP) that a
+// different operator verifies later.
+type PartnerInput struct {
+	Username         string
+	Password         string
+	Role             Role
+	CareOrgID        string
+	DisplayName      string
+	ProfessionalType string
+	LicenseNo        string
+}
+
+// CreatePartner provisions an organisation-scoped partner account out of
+// band and returns the TOTP secret once, like Create.
+func (s *Store) CreatePartner(ctx context.Context, in PartnerInput) (Principal, string, error) {
+	if err := ValidateUsername(in.Username); err != nil {
+		return Principal{}, "", err
+	}
+	in.DisplayName = strings.TrimSpace(in.DisplayName)
+	in.LicenseNo = strings.TrimSpace(in.LicenseNo)
+	if !IsPartnerRole(in.Role) || in.CareOrgID == "" {
+		return Principal{}, "", ErrInvalid
+	}
+	if n := len([]rune(in.DisplayName)); in.DisplayName != "" && (n < 2 || n > 120) {
+		return Principal{}, "", ErrInvalid
+	}
+	if in.Role == RolePractitioner && (in.DisplayName == "" || !ProfessionalTypes[in.ProfessionalType]) {
+		return Principal{}, "", ErrInvalid
+	}
+	if in.Role != RolePractitioner {
+		in.ProfessionalType = ""
+	} else if in.ProfessionalType != "" && !ProfessionalTypes[in.ProfessionalType] {
+		return Principal{}, "", ErrInvalid
+	}
+	if n := len([]rune(in.LicenseNo)); in.LicenseNo != "" && (n < 3 || n > 64) {
+		return Principal{}, "", ErrInvalid
+	}
+	normalized, err := account.CheckPassword(in.Password, in.Username, "password")
+	if err != nil {
+		return Principal{}, "", ErrInvalid
+	}
+	hash, err := s.hasher.Hash(ctx, normalized)
+	if err != nil {
+		return Principal{}, "", err
+	}
+	secretText, err := NewTOTPSecret()
+	if err != nil {
+		return Principal{}, "", err
+	}
+	secret, err := DecodeTOTPSecret(secretText)
+	if err != nil {
+		return Principal{}, "", err
+	}
+	id := newAdminID()
+	sealed, err := sealMFA(s.mfaKey, id, secret)
+	if err != nil {
+		return Principal{}, "", err
+	}
+	now := s.now()
+	err = s.tx(ctx, func(tx pgx.Tx) error {
+		var orgStatus string
+		if err := tx.QueryRow(ctx, `SELECT status FROM care_orgs WHERE id::text = $1`, in.CareOrgID).Scan(&orgStatus); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ErrInvalid
+			}
+			return err
+		}
+		_, err := tx.Exec(ctx, `INSERT INTO admin_users
+			(id, username, password_hash, password_salt, argon2_version, argon2_memory_kib, argon2_iterations, argon2_parallelism,
+			 mfa_secret_ct, role, care_org_id, display_name, professional_type, license_no, status, created_at)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::uuid,NULLIF($12,''),NULLIF($13,''),NULLIF($14,''),'active',$15)`,
+			id, in.Username, hash.Tag, hash.Salt, 19, hash.Params.MemoryKiB, hash.Params.Iterations, hash.Params.Parallelism,
+			sealed, in.Role, in.CareOrgID, in.DisplayName, in.ProfessionalType, in.LicenseNo, now)
+		if err != nil {
+			return err
+		}
+		return s.audit(ctx, tx, nil, "admin.create", "admin_user", in.Username, "", "active", "partner account provisioned out of band")
+	})
+	if err != nil {
+		return Principal{}, "", err
+	}
+	return Principal{AdminID: id, Username: in.Username, Role: in.Role, CareOrgID: in.CareOrgID, DisplayName: in.DisplayName}, secretText, nil
 }
 
 // Authenticate verifies username, password and TOTP and creates a session.
@@ -223,10 +311,11 @@ func (s *Store) AuthenticateSession(ctx context.Context, token string) (Principa
 		revoked  *time.Time
 		status   string
 	)
-	err := s.pool.QueryRow(ctx, `SELECT s.id, s.admin_id, a.username, a.role, COALESCE(a.org_id,''), s.last_seen_at,
+	err := s.pool.QueryRow(ctx, `SELECT s.id, s.admin_id, a.username, a.role, COALESCE(a.org_id,''),
+		COALESCE(a.care_org_id::text,''), COALESCE(a.display_name,''), s.last_seen_at,
 		s.idle_timeout_seconds, s.absolute_expires_at, s.revoked_at, a.status
 		FROM admin_sessions s JOIN admin_users a ON a.id = s.admin_id WHERE s.token_hash = $1`, hash).Scan(
-		&p.SessionID, &p.AdminID, &p.Username, &p.Role, &p.OrgID, &lastSeen, &idle, &p.AbsoluteExpiresAt, &revoked, &status)
+		&p.SessionID, &p.AdminID, &p.Username, &p.Role, &p.OrgID, &p.CareOrgID, &p.DisplayName, &lastSeen, &idle, &p.AbsoluteExpiresAt, &revoked, &status)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Principal{}, ErrNotSignedIn
 	}
@@ -235,6 +324,10 @@ func (s *Store) AuthenticateSession(ctx context.Context, token string) (Principa
 	}
 	now := s.now()
 	if status != "active" || revoked != nil || !now.Before(p.AbsoluteExpiresAt) || !now.Before(lastSeen.Add(time.Duration(idle)*time.Second)) {
+		return Principal{}, ErrNotSignedIn
+	}
+	if IsPartnerRole(p.Role) != (p.CareOrgID != "") {
+		// the schema forbids it; refuse rather than widen or narrow scope
 		return Principal{}, ErrNotSignedIn
 	}
 	if now.Sub(lastSeen) >= time.Minute {
@@ -306,7 +399,7 @@ func (s *Store) Revoke(ctx context.Context, actor *AdminID, username, reason str
 // to callers holding staff/manage; the HTTP layer enforces that.
 func (s *Store) ListStaff(ctx context.Context) ([]StaffView, error) {
 	now := s.now()
-	rows, err := s.pool.Query(ctx, `SELECT u.username, u.role, COALESCE(u.org_id,''), u.status, u.created_at, u.last_login_at,
+	rows, err := s.pool.Query(ctx, `SELECT u.username, u.role, COALESCE(u.org_id,''), COALESCE(u.care_org_id::text,''), u.status, u.created_at, u.last_login_at,
 		count(s.id) FILTER (WHERE s.revoked_at IS NULL AND s.absolute_expires_at > $1
 			AND s.last_seen_at + make_interval(secs => s.idle_timeout_seconds) > $1)
 		FROM admin_users u LEFT JOIN admin_sessions s ON s.admin_id = u.id
@@ -318,7 +411,7 @@ func (s *Store) ListStaff(ctx context.Context) ([]StaffView, error) {
 	var out []StaffView
 	for rows.Next() {
 		var v StaffView
-		if err := rows.Scan(&v.Username, &v.Role, &v.OrgID, &v.Status, &v.CreatedAt, &v.LastLoginAt, &v.LiveSessions); err != nil {
+		if err := rows.Scan(&v.Username, &v.Role, &v.OrgID, &v.CareOrgID, &v.Status, &v.CreatedAt, &v.LastLoginAt, &v.LiveSessions); err != nil {
 			return nil, err
 		}
 		out = append(out, v)
