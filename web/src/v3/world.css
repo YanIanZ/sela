@@ -501,7 +501,9 @@
 @media (max-width: 23.99em) {
   :root:is([data-text-scale="130"], [data-text-scale="150"]) .s-shell .s-header-actions .s-btn--help-quiet { grid-column: 1 / -1; }
   :root:is([data-text-scale="130"], [data-text-scale="150"]) .s-shell .s-header-actions .s-exit-wrap { grid-row: 3; grid-column: 1 / -1; }
-  .s-shell .s-header-actions :is(.s-btn--help-quiet, .s-exit-wrap .s-btn) { white-space: nowrap; }
+  /* nowrap only where each button has a full row; at 100% the two share a
+     row and must be allowed to wrap rather than clip. */
+  :root:is([data-text-scale="130"], [data-text-scale="150"]) .s-shell .s-header-actions :is(.s-btn--help-quiet, .s-exit-wrap .s-btn) { white-space: nowrap; }
 }
 
 /* Polish: menu sheet rows, field hints, stacked page sections. */

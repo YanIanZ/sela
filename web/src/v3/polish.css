@@ -202,3 +202,11 @@
 :root[data-scheme^="contrast"] .s-emergency-sheet .s-dialog-head { background: transparent; border-bottom: 2px solid var(--c-text); }
 .s-dialog .s-emergency-services { padding: 0; margin: 0; }
 .s-emergency-sheet .s-dialog-head h2:focus:not(:focus-visible) { outline: none; }
+
+/* Mobile polish: nothing may push the page wider than the screen. */
+.s-notice-head { min-width: 0; }
+.s-notice :is(code, a) { overflow-wrap: anywhere; }
+.s-dialog { max-height: 100vh; max-height: 100dvh; }
+@media (max-width: 23.99em) {
+  .s-shell .s-subnav-link { white-space: normal; text-align: center; min-width: 0; }
+}

@@ -33,7 +33,7 @@
 .c-demo-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .s-shell .c-demo-head h3 { margin: 0; }
 .c-demo-badge { padding: 0.15rem 0.7rem; border-radius: var(--radius-pill); background: var(--c-demo-bg, #eee9f8); color: var(--c-demo, #5e4a99); font-family: var(--font-display); font-size: var(--font-size-1); font-weight: 500; }
-.s-shell .c-demo-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+.s-shell .c-demo-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .c-demo-list li { display: grid; gap: 0.35rem; padding: 0.9rem 1rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-2); background: var(--c-surface); }
 .c-demo-list li.is-match { border-color: var(--c-leaf); box-shadow: inset 3px 0 0 var(--c-leaf); }
 .c-demo-list li > div { display: grid; gap: 0.1rem; }
@@ -72,5 +72,10 @@
 @media (max-width: 47.99em) {
   .c-stage-track li { font-size: 0.6875rem; }
   .c-stage-label { font-size: var(--font-size-4); }
+}
+/* Phones: four stages in one row would break words mid-way; use 2 x 2. */
+@media (max-width: 29.99em) {
+  .s-shell .c-stage-track { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 0.6rem; }
+  .c-stage-track li { font-size: var(--font-size-1); overflow-wrap: anywhere; }
 }
 :root[data-scheme^="contrast"] :is(.c-stage, .s-shell .c-demo, .s-shell .c-community-card, .s-shell .c-community-reply, .s-shell .c-community-thread) { border: 2px solid var(--c-text); background: var(--c-bg); }
