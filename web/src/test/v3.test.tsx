@@ -1818,6 +1818,49 @@ describe("planned care and the sharing space", () => {
     expect(await screen.findByRole("alertdialog", { name: "Kamu tidak sendirian" })).toBeInTheDocument();
   });
 
+  it("sends one report and one delete however often the buttons are pressed", async () => {
+    const user = profile();
+    let releaseReport: () => void = () => {};
+    let releaseDelete: () => void = () => {};
+    const calls = mockApi(
+      {
+        "GET /me/consents": () => ({
+          data: { consents: [{ purpose: "community", granted: true, outdated: false, revision: 1, currentPolicyVersion: "c-1" }] },
+        }),
+        "GET /community/posts/p1": () => ({
+          data: {
+            post: { id: "p1", alias: "Bintang", topic: "daily", body: "Hari ini berat.", status: "published", replies: 1, mine: false, createdAt: "2026-11-01T08:00:00Z" },
+            replies: [{ id: "r1", alias: "Awan", body: "Semangat ya.", status: "published", mine: true, createdAt: "2026-11-01T09:00:00Z" }],
+          },
+        }),
+        "POST /community/reports": () => new Promise((resolve) => (releaseReport = () => resolve({ data: { ok: true } }))),
+        "DELETE /community/replies/r1": () => new Promise((resolve) => (releaseDelete = () => resolve({ data: null }))),
+      },
+      user,
+    );
+    renderPath("/support/community/p1");
+    expect(await screen.findByText("Hari ini berat.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Laporkan" }));
+    const reason = screen.getByRole("button", { name: "Perundungan" });
+    fireEvent.click(reason);
+    fireEvent.click(reason);
+    fireEvent.click(screen.getByRole("button", { name: "Pelecehan" }));
+    expect(reason).toBeDisabled();
+    releaseReport();
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Perundungan" })).not.toBeInTheDocument());
+
+    const del = screen.getByRole("button", { name: "Hapus balasanku" });
+    fireEvent.click(del);
+    fireEvent.click(del);
+    expect(await screen.findByRole("button", { name: "Menghapus…" })).toBeDisabled();
+    releaseDelete();
+    await waitFor(() => expect(calls.filter((c) => c.method === "DELETE").length).toBe(1));
+
+    expect(calls.filter((c) => c.method === "POST" && c.path === "/community/reports").length).toBe(1);
+    expect(calls.filter((c) => c.method === "DELETE" && c.path === "/community/replies/r1").length).toBe(1);
+  });
+
   it("keeps the sharing space closed to people under 18", async () => {
     mockApi({}, profile({ ageBand: "15_17" }));
     renderPath("/support/community");

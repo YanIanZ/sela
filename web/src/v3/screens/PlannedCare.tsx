@@ -147,17 +147,29 @@ export function PlannedCarePage({ user, policies }: { user?: Profile | null; pol
                 {w("Sumber", "Source")}: {e.sourcePublisher} · {loc.shortDate(e.sourceAccessedAt)}
                 {e.reverifyAt ? ` · ${w("Diverifikasi ulang", "Reverify by")} ${loc.shortDate(e.reverifyAt)}` : ""}
               </p>
-              <div className="c-care-actions">
-                <a href={e.sourceUrl} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
-                  {w("Lihat sumber resmi", "Open official source")}
-                  <span className="s-sr-only">{w(" (tab baru)", " (new tab)")}</span>
-                </a>
-                {e.contactUrl && (
-                  <a href={e.contactUrl} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
-                    {w("Buka kontak resmi", "Open official contact")}
+              {e.synthetic ? (
+                // A simulated entry has no real source or contact: no link
+                // may suggest it can be reached.
+                <p className="s-hint c-care-synthetic">
+                  {w(
+                    "Entri simulasi: tidak ada sumber atau kontak nyata.",
+                    "Simulated entry: no real source or contact.",
+                  )}
+                </p>
+              ) : (
+                <div className="c-care-actions">
+                  <a href={e.sourceUrl} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
+                    {w("Lihat sumber resmi", "Open official source")}
+                    <span className="s-sr-only">{w(" (tab baru)", " (new tab)")}</span>
                   </a>
-                )}
-              </div>
+                  {e.contactUrl && (
+                    <a href={e.contactUrl} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
+                      {w("Buka kontak resmi", "Open official contact")}
+                      <span className="s-sr-only">{w(" (tab baru)", " (new tab)")}</span>
+                    </a>
+                  )}
+                </div>
+              )}
             </article>
           ))}
         </div>

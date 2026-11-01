@@ -18,6 +18,17 @@ const entries = [
     synthetic: true,
     reverifyAt: "2027-01-20T00:00:00Z",
   },
+  {
+    id: "e2",
+    kind: "organization",
+    name: "Organisasi Nyata",
+    city: "Jakarta",
+    contactUrl: "https://real.example/contact",
+    sourceUrl: "https://real.example/source",
+    sourcePublisher: "Penerbit resmi",
+    sourceAccessedAt: "2026-10-20T00:00:00Z",
+    synthetic: false,
+  },
 ];
 
 afterEach(() => {
@@ -48,9 +59,19 @@ it("shows sourced planned-care entries, labels simulations and sends a search", 
   expect(await screen.findByRole("heading", { name: "Klinik Teduh (simulasi)" })).toBeInTheDocument();
   expect(screen.getAllByText("Simulasi").length).toBeGreaterThan(0);
   expect(screen.getByText(/Sumber simulasi/)).toBeInTheDocument();
+  // A simulated entry offers no link that suggests it can be reached; a
+  // real entry keeps its official source and contact.
+  expect(screen.getByText("Entri simulasi: tidak ada sumber atau kontak nyata.")).toBeInTheDocument();
+  for (const link of screen.getAllByRole("link", { name: /resmi/ })) {
+    expect(link.getAttribute("href")).not.toContain("example.org");
+  }
   expect(screen.getByRole("link", { name: /Buka kontak resmi/ })).toHaveAttribute(
     "href",
-    "https://example.org/contact",
+    "https://real.example/contact",
+  );
+  expect(screen.getByRole("link", { name: /Lihat sumber resmi/ })).toHaveAttribute(
+    "href",
+    "https://real.example/source",
   );
 
   fireEvent.change(screen.getByLabelText("Cari nama atau sumber"), {

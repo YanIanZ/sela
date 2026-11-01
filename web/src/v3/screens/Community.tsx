@@ -312,6 +312,7 @@ function ReportButton({ kind, id, onDone }: { kind: "post" | "reply"; id: string
   const w = useWords();
   const { announce } = useAnnounce();
   const [open, setOpen] = useState(false);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState<unknown>(null);
   if (!open) {
     return (
@@ -329,7 +330,12 @@ function ReportButton({ kind, id, onDone }: { kind: "post" | "reply"; id: string
           key={r.value}
           type="button"
           className="s-filter"
+          disabled={sending}
+          aria-busy={sending || undefined}
           onClick={async () => {
+            if (sending) return;
+            setSending(true);
+            setError(null);
             try {
               await api("/community/reports", { kind, id, reason: r.value });
               announce("status", w("Terima kasih, laporanmu diterima.", "Thank you, your report was received."));
@@ -337,13 +343,15 @@ function ReportButton({ kind, id, onDone }: { kind: "post" | "reply"; id: string
               onDone();
             } catch (e) {
               setError(e);
+            } finally {
+              setSending(false);
             }
           }}
         >
           {w(r.id, r.en)}
         </button>
       ))}
-      <button type="button" className="s-text-button" onClick={() => setOpen(false)}>
+      <button type="button" className="s-text-button" disabled={sending} onClick={() => setOpen(false)}>
         {w("Batal", "Cancel")}
       </button>
     </div>
@@ -362,6 +370,23 @@ function Thread({ id }: { id: string }) {
   const [missing, setMissing] = useState(false);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  // deleting is "post" or the id of the reply being deleted; one delete
+  // runs at a time so repeated clicks send one request.
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<unknown>(null);
+  const remove = async (path: string, key: string, after: () => void) => {
+    if (deleting) return;
+    setDeleting(key);
+    setActionError(null);
+    try {
+      await api(path, undefined, "DELETE");
+      after();
+    } catch (err) {
+      setActionError(err);
+    } finally {
+      setDeleting(null);
+    }
+  };
   const load = useCallback(() => {
     api<{ post: Post; replies: Reply[] }>("/community/posts/" + id)
       .then((d) => {
@@ -413,6 +438,7 @@ function Thread({ id }: { id: string }) {
   return (
     <>
       {crisis.sheet}
+      <ErrorNotice error={actionError} />
       <article className="c-community-thread">
         <p className="c-community-meta">
           <span className="c-community-alias">{post.alias}</span>
@@ -427,11 +453,13 @@ function Thread({ id }: { id: string }) {
               label={w("Hapus ceritaku", "Delete my story")}
               question={w("Hapus cerita ini beserta semua balasannya?", "Delete this story and all its replies?")}
               confirmLabel={w("Hapus", "Delete")}
-              onConfirm={async () => {
-                await api("/community/posts/" + post.id, undefined, "DELETE");
-                announce("status", w("Ceritamu dihapus.", "Your story was deleted."));
-                navigate("/support/community");
-              }}
+              busy={deleting !== null}
+              onConfirm={() =>
+                void remove("/community/posts/" + post.id, "post", () => {
+                  announce("status", w("Ceritamu dihapus.", "Your story was deleted."));
+                  navigate("/support/community");
+                })
+              }
             />
           ) : (
             <ReportButton kind="post" id={post.id} onDone={load} />
@@ -458,12 +486,16 @@ function Thread({ id }: { id: string }) {
                     <button
                       type="button"
                       className="s-text-button"
-                      onClick={async () => {
-                        await api("/community/replies/" + r.id, undefined, "DELETE");
-                        load();
-                      }}
+                      disabled={deleting !== null}
+                      aria-busy={deleting === r.id || undefined}
+                      onClick={() =>
+                        void remove("/community/replies/" + r.id, r.id, () => {
+                          announce("status", w("Balasanmu dihapus.", "Your reply was deleted."));
+                          load();
+                        })
+                      }
                     >
-                      {w("Hapus balasanku", "Delete my reply")}
+                      {deleting === r.id ? w("Menghapus…", "Deleting…") : w("Hapus balasanku", "Delete my reply")}
                     </button>
                   ) : (
                     <ReportButton kind="reply" id={r.id} onDone={load} />
