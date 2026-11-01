@@ -290,7 +290,9 @@ func (r Report) Checks() []Check {
 
 // Identity describes a configured verifier without secrets.
 type Identity struct {
-	// Provider is "anthropic" or "deepseek".
+	// Provider names the verifier backend: metaverifier.Provider
+	// ("meta_verifier") since D-065. "anthropic" and "deepseek" are historical
+	// values that stored records may still carry; they are never produced.
 	Provider string
 	// Model is the configured model id.
 	Model string
@@ -323,7 +325,8 @@ type Result struct {
 	Identity
 	// ServedModel is the model the response reported.
 	ServedModel string
-	// APIVersion is the anthropic-version sent ("" for DeepSeek).
+	// APIVersion is a provider API version header when one is sent; it is
+	// empty for the Meta verifier and kept for historical records.
 	APIVersion string
 	// RefusalCategory is a refusal's stop_details category when it is a
 	// known value, "other" otherwise, "" without a refusal.

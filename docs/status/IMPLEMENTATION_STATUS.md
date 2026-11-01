@@ -2,7 +2,7 @@
 >
 > | Area | Status on 2026-11-01 |
 > | --- | --- |
-> | Accounts, guest mode, recovery, sessions, consents, guardian consent, export, deletion | Implemented locally; PostgreSQL + Docker browser journey passing. No hosted deployment. |
+> | Accounts, guest mode, recovery, sessions, consents, guardian consent, export, deletion | Implemented locally; PostgreSQL + Docker browser journey passing. One owner-controlled production deployment (`sela.vertalt.my.id`, D-069) runs while B-10 is open; no pilot or public launch. |
 > | Conversation room | Implemented: saved/unsaved holds, hold warning, crisis pause, reflections with confirm/correct/reject, post-validation streaming with SSE keep-alives, no-AI path. True provider-token streaming is not implemented (V22 keeps unvalidated text off the wire). |
 > | Journal, check-in, weekly reflection, notes, home | Implemented locally; weekly reflection is computed in the browser and saved as a normal note. |
 > | Memory | Implemented: confirmed/corrected items can enter AT-1 (max 5 / 600 runes), AT-3 proposals, review/versioning, private names redaction. |
@@ -14,6 +14,9 @@
 > | Operator console | Password+TOTP console, AI spend, cache, audit, staff list, care directory demo and reading review. Staff/role editing, two-person approval and the warm/cold benchmark are not built. |
 > | Accessibility | Automated axe WCAG 2.2 AA gate in CI; manual screen-reader/usability audit not done. |
 > | Security | Independent security assessment not done. |
+> | Guardrails | Danger lexicon and quick-help mode (D-073), anti-jailbreak, typo tolerance and 13 more languages (D-070), gap fixes of ruleset `sela-safety-2026.11.01-2` (D-075). Quick-help lists the first two verified help services, with no 24-hour or emergency number yet (owner decision). |
+> | Condition map and planned care | `condition_map` consent, four stages from saved records with their signals and no score, four fictional professionals (D-071); simulated care entries show no source or contact link. No component test for the condition-map screen. |
+> | Peer sharing | Adults-only, `community` consent, safety router + rules + Meta moderation before publication, reports, operator queue, migration `1000_community` (D-072); one request per report/delete. No HTTP-layer tests for the community and admin routes. |
 > | Hosting, legal and live evaluation | Not done: B-1 (Modal), B-3 (hosting), B-5 (help lines), B-6 (user research), B-10 (legal/DPIA/PSE), B-13 (legacy deployments), B-14 (WHO licence), B-15 (region). |
 >
 > **Still genuinely open in code/product:** true token streaming; earlier policy versions + in-app restore announcement; legacy 15/16–17 split; unified timeline; reading content approval by a human; reconciliation of the older P2–P8 rows below.
@@ -77,7 +80,7 @@ recovery, guest upgrade, Home, Talk list and room, notes/check-ins, timeline and
 patterns, Support hub, Immediate help, Privacy & data, Display & accessibility,
 Account and Policies. Memory, consultation summary/preparation/sharing/
 recipient/follow-up and reading are honest blocked states and name their missing
-API or editorial gate. The v2 synthetic demo stays at `/demo` and `/r`. The
+API or editorial gate. The v2 synthetic demo routes `/demo` and `/r` are no longer in `web/src`; the demo environment itself was removed by D-068. The
 legacy Next.js app was retired on 2026-10-29; its self-help cards, help
 destinations and support options are embedded under `internal/fixtures/data/`,
 and the v1 crisis test snapshot is under `internal/safety/testdata/v1/`.

@@ -10,9 +10,9 @@ Production: **https://sela.vertalt.my.id** (owner-confirmed). A read-only check 
 | --- | --- | --- | --- |
 | Production | Owner-reported, unverified URL | URL known and answering; build SHA still unknown | §3 S-001 |
 | Listening replies | One reply style, four intents | Two modes: "Ngobrol & cari solusi" (default) and "Didengarkan saja"; natural, solution-oriented | D-066, D-067 |
-| Safety router | v1-derived catalogue | Danger lexicon: threats to others, the speaker in danger (`in_danger`), prepared means, farewells; quick-help mode opens by itself | D-068 |
+| Safety router | v1-derived catalogue | Danger lexicon: threats to others, the speaker in danger (`in_danger`), prepared means, farewells; quick-help mode opens by itself | D-073 (was a duplicate D-068), D-075 |
 | Demo edition | Present | Retired; production runs the real configuration | `b8fe618` |
-| Scope during the event | MIE only; no new large features | Owner adds: anti-jailbreak and multilingual guardrails, condition map, simulated professionals, anonymous peer sharing with Meta moderation, operator upgrades | D-069 (this plan) |
+| Scope during the event | MIE only; no new large features | Owner adds: anti-jailbreak and multilingual guardrails, condition map, simulated professionals, anonymous peer sharing with Meta moderation, operator upgrades | D-074 (this plan; first recorded as a duplicate D-069) |
 
 The flagship of PR #28 — source-bound correction and invalidation (Meaning Integrity Engine, H-003–H-009) — is **kept** and not displaced: the new features are built so that they consume only user-approved, versioned material and therefore inherit MIE's invalidation once it lands.
 
@@ -128,4 +128,4 @@ Status legend: `.` planned · `~` in progress · `x` done with evidence · `!` b
 
 ## 6. Decision
 
-D-069 (2026-11-01, owner): adopt this plan. The new features stay inside Sela's boundaries — not diagnosis, triage, therapy or emergency service; demo professionals are fictional; community is adults-only and moderated before anything is shown.
+D-074 (2026-11-01, owner; first recorded as a duplicate D-069): adopt this plan. The new features stay inside Sela's boundaries — not diagnosis, triage, therapy or emergency service; demo professionals are fictional; community is adults-only and moderated before anything is shown.

@@ -1,10 +1,10 @@
 # Documentation inventory
 
-Updated: 26 October 2026 (v3 planning documents added; classifications updated after the v3 foundation commit `0ff3341`). Authority: [SPEC.md](../../SPEC.md). Every repository Markdown document is classified below. Supporting v1 SQL/JSON assets are in the relocation map. Node dependencies and generated build output are excluded. "v3 and v2" marks a current document that now describes the v3 plan as well as the implemented v2; a v3 planning document describes planned work only and marks nothing implemented.
+Updated: 1 November 2026 (28 previously unlisted documents classified: the vision set, ADR-0004/0005, v3 validation, research, audit and supporting READMEs); earlier: 26 October 2026 (v3 planning documents added; classifications updated after the v3 foundation commit `0ff3341`). Authority: [SPEC.md](../../SPEC.md). Every repository Markdown document is classified below. Supporting v1 SQL/JSON assets are in the relocation map. Node dependencies and generated build output are excluded. "v3 and v2" marks a current document that now describes the v3 plan as well as the implemented v2; a v3 planning document describes planned work only and marks nothing implemented.
 
 **Reorganisation — 1 November 2026:** the flat `docs/` root was grouped by purpose into `product/`, `architecture/`, `api/`, `operations/`, `status/`, `decisions/` and `validation/` (see the [docs index](../README.md)); every link and code reference was rewritten, and no document was deleted. `OWNER_TESTER.md` moved to [validation/OWNER_ACCEPTANCE_GUIDE.md](../validation/OWNER_ACCEPTANCE_GUIDE.md), `docs/API_SPEC.md` became [api/API_SPEC_V2.md](../api/API_SPEC_V2.md), the 27 October plan moved to [archive/plans/](../archive/plans/2026-10-27-v3-core-journey.md), and the v1 `proto/carebridge/dataset.proto` moved to [archive/v1/carebridge/](../archive/v1/carebridge/dataset.proto). The superseded EvidenceGuard and DeepSeek generation-fallback prototypes (`prototypes/`, D-065) and their CI workflows were removed; they remain in git history up to `e1bf7fc`.
 
-**Added — 1 November 2026:** [roadmap/SAFE_FLOW_AND_TODO.md](../roadmap/SAFE_FLOW_AND_TODO.md) (plan, weaknesses, TODO), `CODE_OF_CONDUCT.md`; `CONTRIBUTING.md` and `SECURITY.md` rewritten (D-069).
+**Added — 1 November 2026:** [roadmap/SAFE_FLOW_AND_TODO.md](../roadmap/SAFE_FLOW_AND_TODO.md) (plan, weaknesses, TODO), `CODE_OF_CONDUCT.md`; `CONTRIBUTING.md` and `SECURITY.md` rewritten (D-074, first recorded as a duplicate D-069).
 
 ## Current files
 
@@ -126,6 +126,34 @@ Updated: 26 October 2026 (v3 planning documents added; classifications updated a
 | [modal/README.md](../../modal/README.md) | Current project / v2 Modal serving runbook |
 | prototypes/evidenceguard/README.md (removed after commit e1bf7fc) | Standalone verifier prototype documentation (not wired into v2) |
 | prototypes/generationfallback/README.md (removed after commit e1bf7fc) | Standalone DeepSeek fallback prototype documentation (not wired into v2) |
+| [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md) | Current project / community conduct policy |
+| [web/DESIGN.md](../../web/DESIGN.md) | Current project / v3 frontend design system |
+| [eval/verifier/README.md](../../eval/verifier/README.md) | Supporting evaluation inputs (EV-0 seed set; inputs only, no evaluation run; provider parts superseded by D-065) |
+| [data/research/register_inputs/frozen/README.md](../../data/research/register_inputs/frozen/README.md) | Supporting research data documentation |
+| [data/content/reading/LICENSE.md](../../data/content/reading/LICENSE.md) | Licence notice for the reading content |
+| [internal/safety/testdata/v1/README.md](../../internal/safety/testdata/v1/README.md) | Supporting safety test data (v1 crisis snapshot) |
+| [docs/adr/ADR-0004-anonymous-first-meaning-integrity-care-network.md](../adr/ADR-0004-anonymous-first-meaning-integrity-care-network.md) | Current project / ADR (anonymous-first, meaning integrity, care discovery; largely target design) |
+| [docs/adr/ADR-0005-admin-and-redis-acceleration.md](../adr/ADR-0005-admin-and-redis-acceleration.md) | Current project / ADR (operator console and Redis; implemented locally, T23 and T24) |
+| [docs/api/V3_CONSULTATION_AND_SHARING.md](../api/V3_CONSULTATION_AND_SHARING.md) | Current project / v3 P4 API contract (its header still says planned; summaries and sharing are implemented, see implementation status) |
+| [docs/audits/REPOSITORY_ALIGNMENT_2026-10-29.md](../audits/REPOSITORY_ALIGNMENT_2026-10-29.md) | Historical audit (its voice and dictation work was removed by D-060) |
+| [docs/content/READING_LIBRARY.md](../content/READING_LIBRARY.md) | Current project / reading content set v1 (0 of 38 items approved) |
+| [docs/research/EVIDENCE_MAP_V3.md](../research/EVIDENCE_MAP_V3.md) | Research / machine-assembled, unreviewed evidence map |
+| [docs/research/V3_GAP_SEARCH.md](../research/V3_GAP_SEARCH.md) | Research / frozen gap search runs with machine screening |
+| [docs/validation/V3_CORE_VALIDATION.md](../validation/V3_CORE_VALIDATION.md) | Historical validation checkpoint (2026-10-27; frontend since replaced) |
+| [docs/validation/V3_CONTINUITY_VALIDATION.md](../validation/V3_CONTINUITY_VALIDATION.md) | Local validation evidence (continuity increment) |
+| [docs/validation/V3_DASHBOARD_VALIDATION.md](../validation/V3_DASHBOARD_VALIDATION.md) | Local validation evidence (dashboard and workspace) |
+| [docs/validation/V3_FRONTEND_VALIDATION.md](../validation/V3_FRONTEND_VALIDATION.md) | Local validation evidence (v3 frontend delivery) |
+| [docs/validation/V3_INFO_PORTAL_VALIDATION.md](../validation/V3_INFO_PORTAL_VALIDATION.md) | Local validation evidence (public information portal) |
+| [docs/vision/README.md](../vision/README.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
+| [docs/vision/ARCHITECTURE.md](../vision/ARCHITECTURE.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
+| [docs/vision/ADMIN_CARE_OPERATIONS.md](../vision/ADMIN_CARE_OPERATIONS.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
+| [docs/vision/ADMIN_CONSOLE.md](../vision/ADMIN_CONSOLE.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
+| [docs/vision/AI_EVIDENCE_SAFETY.md](../vision/AI_EVIDENCE_SAFETY.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
+| [docs/vision/DELIVERY_AND_ACCEPTANCE.md](../vision/DELIVERY_AND_ACCEPTANCE.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
+| [docs/vision/MEANING_INTEGRITY_ENGINE.md](../vision/MEANING_INTEGRITY_ENGINE.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
+| [docs/vision/PRODUCT_REQUIREMENTS.md](../vision/PRODUCT_REQUIREMENTS.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
+| [docs/vision/PROFESSIONAL_CARE_NETWORK.md](../vision/PROFESSIONAL_CARE_NETWORK.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
+| [docs/vision/REDIS_AI_COST_ENGINEERING.md](../vision/REDIS_AI_COST_ENGINEERING.md) | Owner-directed target design (vision set); not implementation evidence — see the document's own status line |
 
 
 ## Research and proposal package

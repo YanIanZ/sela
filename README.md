@@ -35,7 +35,7 @@ Most wellbeing apps decide what to remember about you. Sela is built to **respec
 | --- | --- |
 | **Talk** | A calm conversation room with streamed replies in two modes — *talk it through* (options, honest views, feedback) or *just listen* (one small step) — save / don't save per conversation, and "What Sela noticed" reflection cards you can review |
 | **My notes** | Free writing, mood check-ins with drawn mood faces, a timeline, and a weekly look-back without automatic conclusions |
-| **What Sela remembers** | Memory you add and edit yourself — never extracted automatically — behind its own consent |
+| **What Sela remembers** | Memory you add, edit or confirm yourself, behind its own consent. Sela can suggest items from a saved conversation when you ask; nothing is remembered until you confirm or correct it |
 | **Support** | Build a consultation summary from chosen notes, approve the exact version, export it (HTML / Markdown) or share it through a revocable link with an access code; record follow-ups afterwards |
 | **Planned care** | An opt-in **condition map** that reads your saved check-ins, notes, reflections and conversations and shows one of four stages — everyday to needs help now — with its reasons (not a diagnosis), the help that fits, a public directory and simulated professionals for the product demo |
 | **Sharing space** | Share stories anonymously with other adults and reply with support; every post and reply passes the safety router and Meta moderation before it appears, bullying is hidden at once, and reports go to an operator |
