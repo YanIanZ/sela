@@ -73,6 +73,8 @@ function stubApi(
     staff?: Staff[];
     directory?: unknown[];
     sandbox?: unknown[];
+    tasks?: unknown;
+    auditEvents?: AuditEvent[];
   } = {},
 ): Call[] {
   const calls: Call[] = [];
@@ -98,6 +100,9 @@ function stubApi(
       }
       if (url.endsWith("/api/admin/v1/overview")) {
         return reply(200, { data: overview });
+      }
+      if (url.endsWith("/api/admin/v1/tasks")) {
+        return reply(200, { data: { tasks: options.tasks ?? {} } });
       }
       if (url.endsWith("/api/admin/v1/cache/health")) {
         return reply(200, { data: { cache: { enabled: true, ok: true, latencyMs: 3 } } });
@@ -141,7 +146,7 @@ function stubApi(
         return reply(200, { data: { id: "s1", status: "pending", version: 2 } });
       }
       if (url.includes("/api/admin/v1/audit")) {
-        return reply(200, { data: { events } });
+        return reply(200, { data: { events: options.auditEvents ?? events } });
       }
       throw new Error(`unexpected request ${url}`);
     }),
@@ -149,7 +154,8 @@ function stubApi(
   return calls;
 }
 
-function renderOperator() {
+function renderOperator(path = "/operator") {
+  window.history.replaceState(null, "", path);
   return render(
     <I18nProvider initial="en">
       <OperatorApp />
@@ -161,6 +167,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   window.localStorage.clear();
+  window.history.replaceState(null, "", "/");
 });
 
 describe("operator console", () => {
@@ -180,7 +187,7 @@ describe("operator console", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
-    await screen.findByRole("heading", { name: "Operator console" });
+    await screen.findByRole("heading", { name: "Home" });
     const login = calls.find(
       (c) => c.url.endsWith("/sessions") && c.init.method === "POST",
     );
@@ -199,9 +206,9 @@ describe("operator console", () => {
 
   it("invalidates the public cache with the mutation marker", async () => {
     const calls = stubApi(admin);
-    renderOperator();
+    renderOperator("/operator/system");
 
-    await screen.findByRole("heading", { name: "Operator console" });
+    await screen.findByRole("heading", { name: "System" });
     const button = await screen.findByRole("button", {
       name: "Invalidate help cache",
     });
@@ -224,16 +231,16 @@ describe("operator console", () => {
       permissions: ["ops/read", "security/audit/read"],
     };
     const calls = stubApi(security);
-    renderOperator();
+    renderOperator("/operator/system");
 
-    await screen.findByRole("heading", { name: "Operator console" });
+    await screen.findByRole("heading", { name: "System" });
     expect(
       screen.queryByRole("button", { name: "Invalidate help cache" }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByText("Your role can't invalidate the cache."),
     ).toBeInTheDocument();
-    expect(await screen.findByText("Staff created")).toBeInTheDocument();
+    expect(await screen.findByText("Account created")).toBeInTheDocument();
     expect(calls.some((c) => c.url.includes("/cache/invalidate"))).toBe(false);
   });
 
@@ -266,7 +273,7 @@ describe("operator console", () => {
     const calls = stubApi(admin);
     renderOperator();
 
-    await screen.findByRole("heading", { name: "Operator console" });
+    await screen.findByRole("heading", { name: "Home" });
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
 
     await screen.findByRole("heading", { name: "Sign in to the operator console" });
@@ -280,7 +287,7 @@ describe("operator console", () => {
   it("has no serious or critical axe findings on the dashboard", async () => {
     stubApi(admin);
     const { container } = renderOperator();
-    await screen.findByRole("heading", { name: "Operator console" });
+    await screen.findByRole("heading", { name: "Home" });
     await waitFor(() => expect(screen.getByText("Active staff")).toBeInTheDocument());
     const results = await axe.run(container, {
       rules: { "color-contrast": { enabled: false } },
@@ -340,9 +347,9 @@ const staffRows: Staff[] = [
 describe("operator staff", () => {
   it("lists staff and revokes another operator after an inline confirmation", async () => {
     const calls = stubApi(owner, { staff: staffRows });
-    renderOperator();
+    renderOperator("/operator/system");
 
-    await screen.findByRole("heading", { name: "Operator staff" });
+    await screen.findByRole("heading", { name: "Internal staff" });
     expect(await screen.findByText("ops.two")).toBeInTheDocument();
     expect(
       screen.getByText("You can't revoke your own account"),
@@ -373,9 +380,9 @@ describe("operator staff", () => {
       permissions: ["ops/read", "security/audit/read", "staff/manage"],
     };
     stubApi(security, { staff: [staffRows[0]!, staffRows[1]!] });
-    renderOperator();
+    renderOperator("/operator/system");
 
-    await screen.findByRole("heading", { name: "Operator staff" });
+    await screen.findByRole("heading", { name: "Internal staff" });
     expect(await screen.findByText("Last active owner")).toBeInTheDocument();
     // Only the non-owner row offers revocation.
     expect(screen.getAllByRole("button", { name: "Revoke access" })).toHaveLength(1);
@@ -402,7 +409,7 @@ describe("operator planned care", () => {
       },
     ];
     const calls = stubApi(owner, { directory, sandbox: [] });
-    renderOperator();
+    renderOperator("/operator/content");
     await screen.findByRole("heading", { name: "Planned support directory" });
     expect(await screen.findByText("Ruang Contoh")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Verify" }));
@@ -429,7 +436,7 @@ describe("operator planned care", () => {
       },
     ];
     const calls = stubApi(owner, { directory: [], sandbox });
-    renderOperator();
+    renderOperator("/operator/content");
     await screen.findByRole("heading", { name: "Planned support sandbox" });
     expect(await screen.findByText("Ruang Fiktif")).toBeInTheDocument();
     expect(screen.getAllByText("Simulation").length).toBeGreaterThan(0);
@@ -506,8 +513,9 @@ describe("professional care network (D-076)", () => {
     expiresAt: "2026-11-09T00:00:00Z",
   };
 
-  function stubNetwork(session: Admin): Call[] {
+  function stubNetwork(session: Admin, requests?: Record<string, unknown>[]): Call[] {
     const calls: Call[] = [];
+    let invites: Record<string, unknown>[] = [];
     let currentOrg = { ...org };
     let members = [
       { username: "psy.demo", role: "practitioner", displayName: "Psikolog Demo", professionalType: "psychologist", licenseNo: "STR-SIM-1", licenseVerified: false, status: "active" },
@@ -521,7 +529,26 @@ describe("professional care network (D-076)", () => {
         const method = init.method ?? "GET";
         if (url.endsWith("/api/admin/v1/me")) return reply(200, { data: { admin: session } });
         if (url.endsWith("/api/admin/v1/overview")) return reply(200, { data: overview });
+        if (url.endsWith("/api/admin/v1/tasks")) return reply(200, { data: { tasks: {} } });
         if (url.endsWith("/api/admin/v1/cache/health")) return reply(200, { data: { cache: { enabled: false, ok: true } } });
+        if (url.endsWith("/api/admin/v1/network/orgs/org-1/invites")) return reply(200, { data: { invites } });
+        if (url.endsWith("/api/admin/v1/network/invites") && method === "POST") {
+          const body = JSON.parse(String(init.body));
+          const invite = { id: "inv-1", ...body, createdAt: "2026-11-01T00:00:00Z", expiresAt: "2026-11-04T00:00:00Z", state: "open" };
+          invites = [invite];
+          return reply(201, { data: { invite, activationUrl: "https://sela.example/operator/activate#tok-once" } });
+        }
+        if (url.endsWith("/api/admin/v1/network/invites/inv-1/revoke")) {
+          invites = invites.map((i) => ({ ...i, state: "revoked" }));
+          return reply(200, { data: { revoked: true } });
+        }
+        if (url.endsWith("/api/admin/v1/partner/members")) {
+          return reply(200, {
+            data: {
+              members: members.map((m) => (session.role === "partner_admin" ? m : { ...m, licenseNo: undefined })),
+            },
+          });
+        }
         if (url.endsWith("/api/admin/v1/network/orgs") && method === "GET") {
           return reply(200, { data: { orgs: [currentOrg], realPartners: false } });
         }
@@ -540,7 +567,7 @@ describe("professional care network (D-076)", () => {
         if (url.endsWith("/api/admin/v1/partner/org")) {
           return reply(200, { data: { org: { ...org, status: "verified" }, displayName: session.displayName } });
         }
-        if (url.endsWith("/api/admin/v1/partner/requests")) return reply(200, { data: { requests: [current] } });
+        if (url.endsWith("/api/admin/v1/partner/requests")) return reply(200, { data: { requests: requests ?? [current] } });
         if (url.endsWith("/api/admin/v1/partner/requests/r1")) {
           const content = session.permissions.includes("care-requests/content");
           return reply(200, { data: { request: content ? { ...current, summary } : current, canReadContent: content } });
@@ -558,9 +585,9 @@ describe("professional care network (D-076)", () => {
 
   it("lets an internal owner create and verify a simulated clinic and verify a licence", async () => {
     const calls = stubNetwork(networkOwner);
-    renderOperator();
+    renderOperator("/operator/network");
     await screen.findByRole("heading", { name: "Professional network" });
-    expect(await screen.findByText("Klinik Teduh (simulasi)")).toBeInTheDocument();
+    expect((await screen.findAllByText("Klinik Teduh (simulasi)")).length).toBeGreaterThan(0);
     expect(screen.getByText(/allows simulated organisations only/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Add organisation" }));
@@ -578,7 +605,6 @@ describe("professional care network (D-076)", () => {
     await waitFor(() => expect(calls.some((c) => c.url.endsWith("/network/orgs/org-1/status"))).toBe(true));
     expect(JSON.parse(String(calls.find((c) => c.url.endsWith("/status"))?.init.body))).toEqual({ status: "verified" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Show accounts" }));
     expect(await screen.findByText(/STR-SIM-1/)).toBeInTheDocument();
     expect(screen.getByText(/--org org-1/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Verify licence" }));
@@ -589,10 +615,10 @@ describe("professional care network (D-076)", () => {
   it("shows a practitioner only the workspace, the shared summary and a proposal form", async () => {
     const calls = stubNetwork(practitioner);
     renderOperator();
-    await screen.findByRole("heading", { name: "Professional workspace" });
+    await screen.findByRole("heading", { name: "Inbox" });
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
     expect(calls.some((c) => c.url.endsWith("/overview"))).toBe(false);
-    expect(await screen.findByText("Klinik Teduh (simulasi)")).toBeInTheDocument();
+    expect((await screen.findAllByText("Klinik Teduh (simulasi)")).length).toBeGreaterThan(0);
 
     fireEvent.click(await screen.findByRole("button", { name: /SR-ABC234/ }));
     expect(await screen.findByRole("heading", { name: "Rangkuman sintetis" })).toBeInTheDocument();
@@ -628,5 +654,297 @@ describe("professional care network (D-076)", () => {
     expect(screen.queryByRole("heading", { name: "Rangkuman sintetis" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send proposal" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Decline request" })).not.toBeInTheDocument();
+  });
+});
+
+describe("operator shell (overhaul)", () => {
+  it("shows only the pages a role may use", async () => {
+    const security: Admin = {
+      username: "security.one",
+      role: "security_admin",
+      orgId: "",
+      permissions: ["ops/read", "security/audit/read", "staff/manage"],
+    };
+    stubApi(security);
+    renderOperator();
+    await screen.findByRole("heading", { name: "Home" });
+    const nav = screen.getByRole("navigation", { name: "Operator navigation" });
+    const links = Array.from(nav.querySelectorAll("a")).map((a) => a.textContent);
+    expect(links).toEqual(["Home", "System"]);
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("sends a forbidden page to Home and moves between pages without reloading", async () => {
+    const calls = stubApi(admin);
+    renderOperator("/operator/network");
+    await screen.findByRole("heading", { name: "Home" });
+    await waitFor(() => expect(window.location.pathname).toBe("/operator"));
+    fireEvent.click(screen.getByRole("link", { name: "System" }));
+    await screen.findByRole("heading", { name: "System" });
+    expect(window.location.pathname).toBe("/operator/system");
+    expect(calls.filter((c) => c.url.endsWith("/api/admin/v1/me"))).toHaveLength(1);
+  });
+
+  it("lists what needs action on Home and hides zero counts", async () => {
+    const ownerAll: Admin = {
+      ...owner,
+      permissions: [...owner.permissions, "network/manage", "network/verify", "community/moderate"],
+    };
+    stubApi(ownerAll, { tasks: { network: { pendingOrgs: 1, pendingLicenses: 0, openInvites: 2 }, moderation: 3, directoryPending: 0 } });
+    renderOperator();
+    await screen.findByRole("heading", { name: "Needs action" });
+    expect(await screen.findByText("organisations waiting for verification")).toBeInTheDocument();
+    expect(screen.getByText("invitations not activated yet")).toBeInTheDocument();
+    expect(screen.getByText("posts waiting for moderation")).toBeInTheDocument();
+    expect(screen.queryByText("practitioner licences waiting for a check")).not.toBeInTheDocument();
+    expect(screen.queryByText("directory entries waiting for review")).not.toBeInTheDocument();
+    expect(screen.getByText("posts waiting for moderation").closest("a")).toHaveAttribute("href", "/operator/moderation");
+  });
+
+  it("says nothing is waiting when the task list is empty", async () => {
+    stubApi(admin, { tasks: {} });
+    renderOperator();
+    expect(await screen.findByText("Nothing is waiting.")).toBeInTheDocument();
+  });
+
+  it("labels audit actions in words and filters them by category", async () => {
+    const auditEvents: AuditEvent[] = [
+      { id: "e1", actor: "owner.one", action: "network.invite_create", objectKind: "admin_invite", objectId: "psy.new", createdAt: "2026-11-01T10:00:00Z" },
+      { id: "e2", actor: "owner.one", action: "admin.login", createdAt: "2026-11-01T09:00:00Z" },
+      { id: "e3", actor: "psy.demo", action: "care_request.open", objectKind: "care_request", objectId: "r1", createdAt: "2026-11-01T08:00:00Z" },
+    ];
+    stubApi(owner, { auditEvents, staff: staffRows });
+    renderOperator("/operator/system");
+    expect(await screen.findByText("Invitation created")).toBeInTheDocument();
+    expect(screen.getByText("Summary opened")).toBeInTheDocument();
+    expect(screen.queryByText("network.invite_create")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "network" } });
+    expect(screen.getByText("Invitation created")).toBeInTheDocument();
+    expect(screen.queryByText("Signed in")).not.toBeInTheDocument();
+    expect(screen.queryByText("Summary opened")).not.toBeInTheDocument();
+  });
+});
+
+describe("console invitations and activation (D-079)", () => {
+  const networkOwner: Admin = {
+    username: "owner.net",
+    role: "owner",
+    orgId: "",
+    permissions: ["ops/read", "network/manage", "network/verify"],
+  };
+
+  function stubInvites(): Call[] {
+    const calls: Call[] = [];
+    let invites: Record<string, unknown>[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+        const url = String(input);
+        const method = init.method ?? "GET";
+        calls.push({ url, init });
+        if (url.endsWith("/api/admin/v1/me")) return reply(200, { data: { admin: networkOwner } });
+        if (url.endsWith("/api/admin/v1/tasks")) return reply(200, { data: { tasks: {} } });
+        if (url.endsWith("/api/admin/v1/network/orgs")) {
+          return reply(200, {
+            data: {
+              orgs: [{ id: "org-1", kind: "clinic", name: "Klinik Undangan", modes: ["online"], stages: [], synthetic: true, status: "verified", acceptsRequests: true, createdAt: "2026-11-01T00:00:00Z", members: 0 }],
+              realPartners: false,
+            },
+          });
+        }
+        if (url.endsWith("/network/orgs/org-1/members")) return reply(200, { data: { members: [] } });
+        if (url.endsWith("/network/orgs/org-1/invites")) return reply(200, { data: { invites } });
+        if (url.endsWith("/network/invites") && method === "POST") {
+          const body = JSON.parse(String(init.body));
+          const invite = { id: "inv-1", ...body, createdAt: "2026-11-01T00:00:00Z", expiresAt: "2026-11-04T00:00:00Z", state: "open" };
+          invites = [invite];
+          return reply(201, { data: { invite, activationUrl: "https://sela.example/operator/activate#tok-once" } });
+        }
+        throw new Error(`unexpected request ${method} ${url}`);
+      }),
+    );
+    return calls;
+  }
+
+  it("creates an invitation from the console and shows the link once", async () => {
+    const calls = stubInvites();
+    renderOperator("/operator/network");
+    await screen.findByRole("heading", { name: "Invite an account" });
+    fireEvent.change(screen.getByLabelText(/^Username/), { target: { value: "psy.new" } });
+    fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Psikolog Baru" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create invitation" }));
+    expect(await screen.findByText("https://sela.example/operator/activate#tok-once")).toBeInTheDocument();
+    expect(screen.getByText(/shown once and is valid for 72 hours/)).toBeInTheDocument();
+    const post = calls.find((c) => c.url.endsWith("/network/invites") && c.init.method === "POST");
+    expect(JSON.parse(String(post?.init.body))).toEqual({
+      username: "psy.new",
+      role: "practitioner",
+      displayName: "Psikolog Baru",
+      professionalType: "psychologist",
+      licenseNo: "",
+      careOrgId: "org-1",
+    });
+    expect(new Headers(post?.init.headers).get("X-Sela-Request")).toBe("1");
+    expect(await screen.findByText("Waiting for activation")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "I've saved it" }));
+    expect(screen.queryByText("https://sela.example/operator/activate#tok-once")).not.toBeInTheDocument();
+  });
+
+  function stubActivation(startStatus = 200): Call[] {
+    const calls: Call[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+        const url = String(input);
+        calls.push({ url, init });
+        if (url.endsWith("/api/admin/v1/activation")) {
+          return startStatus === 200
+            ? reply(200, {
+                data: {
+                  activation: {
+                    username: "psy.new",
+                    role: "practitioner",
+                    orgName: "Klinik Undangan",
+                    displayName: "Psikolog Baru",
+                    secret: "ABCDEFGHIJKLMNOP",
+                    otpauthUrl: "otpauth://totp/Sela:psy.new?secret=ABCDEFGHIJKLMNOP",
+                  },
+                },
+              })
+            : reply(startStatus, { error: { code: "invite_invalid" } });
+        }
+        if (url.endsWith("/api/admin/v1/activation/complete")) {
+          return reply(200, {
+            data: { admin: { username: "psy.new", role: "practitioner", orgId: "", careOrgId: "org-1", displayName: "Psikolog Baru", partner: true, permissions: ["care-requests/read"] } },
+          });
+        }
+        if (url.endsWith("/api/admin/v1/partner/org")) {
+          return reply(200, { data: { org: { id: "org-1", kind: "clinic", name: "Klinik Undangan", modes: ["online"], stages: [], synthetic: true, status: "verified", acceptsRequests: true, createdAt: "2026-11-01T00:00:00Z", members: 1 } } });
+        }
+        if (url.endsWith("/api/admin/v1/partner/requests")) return reply(200, { data: { requests: [] } });
+        throw new Error(`unexpected request ${url}`);
+      }),
+    );
+    return calls;
+  }
+
+  it("activates from the link: drops the token from the address bar and signs in", async () => {
+    const calls = stubActivation();
+    renderOperator("/operator/activate#tok-once");
+    expect(await screen.findByText(/You are invited as Practitioner at Klinik Undangan/)).toBeInTheDocument();
+    expect(window.location.hash).toBe("");
+    expect(screen.getByText("ABCD EFGH IJKL MNOP")).toBeInTheDocument();
+    const start = calls.find((c) => c.url.endsWith("/activation"));
+    expect(JSON.parse(String(start?.init.body))).toEqual({ token: "tok-once" });
+    expect(start?.url).not.toContain("tok-once");
+
+    fireEvent.change(screen.getByLabelText("New password"), { target: { value: "sungai biru tenang sekali" } });
+    fireEvent.change(screen.getByLabelText("Repeat the password"), { target: { value: "sungai biru tenang sekali" } });
+    fireEvent.change(screen.getByLabelText("Code from the authenticator app"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "Activate and sign in" }));
+    await screen.findByRole("heading", { name: "Inbox" });
+    const done = calls.find((c) => c.url.endsWith("/activation/complete"));
+    expect(JSON.parse(String(done?.init.body))).toEqual({ token: "tok-once", password: "sungai biru tenang sekali", totp: "123456" });
+    expect(new Headers(done?.init.headers).get("X-Sela-Request")).toBe("1");
+    expect(window.location.pathname).toBe("/operator");
+  });
+
+  it("explains a used or expired link", async () => {
+    stubActivation(410);
+    renderOperator("/operator/activate#old-token");
+    expect(await screen.findByRole("alert")).toHaveTextContent(/already used, revoked or has expired/);
+    expect(screen.queryByLabelText("New password")).not.toBeInTheDocument();
+  });
+});
+
+describe("partner workspace (overhaul)", () => {
+  const partnerAdmin: Admin = {
+    username: "admin.klinik",
+    role: "partner_admin",
+    orgId: "",
+    careOrgId: "org-1",
+    displayName: "Admin Klinik",
+    partner: true,
+    permissions: ["care-requests/read", "care-requests/content", "care-requests/respond"],
+  };
+  const base = {
+    mode: "online",
+    synthetic: true,
+    version: 1,
+    contentAvailable: true,
+    expiresAt: "2099-11-09T00:00:00Z",
+    createdAt: "2026-11-02T00:00:00Z",
+    updatedAt: "2026-11-02T00:00:00Z",
+  };
+  const requests = [
+    { ...base, id: "r1", reference: "SR-NEW111", state: "sent" },
+    { ...base, id: "r2", reference: "SR-LATER2", state: "confirmed", confirmedSlot: "2099-12-02T03:00:00Z" },
+    { ...base, id: "r3", reference: "SR-SOON33", state: "confirmed", confirmedSlot: "2099-11-20T03:00:00Z" },
+    { ...base, id: "r4", reference: "SR-PAST44", state: "completed", confirmedSlot: "2020-01-02T03:00:00Z" },
+    { ...base, id: "r5", reference: "SR-GONE55", state: "cancelled" },
+  ];
+
+  function stubPartner(session: Admin): Call[] {
+    const calls: Call[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+        const url = String(input);
+        calls.push({ url, init });
+        if (url.endsWith("/api/admin/v1/me")) return reply(200, { data: { admin: session } });
+        if (url.endsWith("/api/admin/v1/partner/org")) {
+          return reply(200, { data: { org: { id: "org-1", kind: "clinic", name: "Klinik Teduh (simulasi)", city: "Bandung", modes: ["online", "in_person"], stages: ["support"], synthetic: true, status: "verified", acceptsRequests: true, createdAt: "2026-11-01T00:00:00Z", members: 2 } } });
+        }
+        if (url.endsWith("/api/admin/v1/partner/requests")) return reply(200, { data: { requests } });
+        if (url.endsWith("/api/admin/v1/partner/members")) {
+          return reply(200, {
+            data: {
+              members: [
+                { username: "admin.klinik", role: "partner_admin", displayName: "Admin Klinik", licenseVerified: false, status: "active" },
+                { username: "psy.demo", role: "practitioner", displayName: "Psikolog Demo", professionalType: "psychologist", licenseNo: "STR-SIM-1", licenseVerified: true, status: "active" },
+              ],
+            },
+          });
+        }
+        throw new Error(`unexpected request ${url}`);
+      }),
+    );
+    return calls;
+  }
+
+  it("filters the inbox by status with counts", async () => {
+    stubPartner(partnerAdmin);
+    renderOperator();
+    await screen.findByRole("heading", { name: "Inbox" });
+    expect(await screen.findByRole("button", { name: /SR-NEW111/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /SR-LATER2/ })).not.toBeInTheDocument();
+    const confirmedTab = screen.getByRole("button", { name: /^Confirmed\s*2$/ });
+    fireEvent.click(confirmedTab);
+    expect(confirmedTab).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /SR-LATER2/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /SR-NEW111/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^Closed\s*1$/ }));
+    expect(screen.getByRole("button", { name: /SR-GONE55/ })).toBeInTheDocument();
+  });
+
+  it("orders the schedule and separates past sessions", async () => {
+    stubPartner(partnerAdmin);
+    renderOperator("/operator/schedule");
+    await screen.findByRole("heading", { name: "Schedule" });
+    const upcoming = await screen.findByRole("list", { name: "Upcoming sessions" });
+    const refs = Array.from(upcoming.querySelectorAll(".op-partner-ref")).map((n) => n.textContent);
+    expect(refs).toEqual(["SR-SOON33", "SR-LATER2"]);
+    expect(screen.getByText("SR-PAST44")).toBeInTheDocument();
+  });
+
+  it("shows the clinic and team with licence status", async () => {
+    stubPartner(partnerAdmin);
+    renderOperator("/operator/team");
+    await screen.findByRole("heading", { name: "Team & clinic" });
+    expect(await screen.findByText("Psikolog Demo")).toBeInTheDocument();
+    expect(screen.getByText("Licence verified")).toBeInTheDocument();
+    expect(screen.getByText(/STR-SIM-1/)).toBeInTheDocument();
+    expect(screen.getByText(/Admin Klinik \(you\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Do not provide real clinical care from here/)).toBeInTheDocument();
   });
 });

@@ -23,3 +23,4 @@
   .op-care-list > li { grid-template-columns: 1fr; }
   .op-care-actions { justify-content: flex-start; }
 }
+.op-care-form { align-items: start; }

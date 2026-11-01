@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useI18n } from "../i18n";
 import { useWords } from "../v3/shared";
 import {
@@ -6,10 +6,12 @@ import {
   adminApi,
   type Admin,
   type CareOrg,
+  type CareOrgMember,
   type PartnerCareRequest,
 } from "./api";
-import { OperatorHeader } from "./chrome";
-import { mapLabel, ORG_KIND } from "./NetworkPanel";
+import { roleLabel } from "./chrome";
+import { mapLabel, MODES, ORG_KIND, PROFESSIONAL_TYPE, STAGES } from "./NetworkPanel";
+import { Page, Shell, useRouter } from "./shell";
 import "./care-panels.css";
 import "./network.css";
 
@@ -59,9 +61,24 @@ function errorText(err: unknown, w: Words): string {
   return w("Permintaan gagal. Coba lagi.", "The request failed. Try again.");
 }
 
+const TABS: { key: string; states: string[]; label: [string, string] }[] = [
+  { key: "new", states: ["sent"], label: ["Baru", "New"] },
+  { key: "waiting", states: ["proposed"], label: ["Menunggu pasien", "Waiting for the person"] },
+  { key: "confirmed", states: ["confirmed"], label: ["Terkonfirmasi", "Confirmed"] },
+  { key: "done", states: ["completed"], label: ["Selesai", "Completed"] },
+  { key: "closed", states: ["declined", "cancelled", "expired"], label: ["Ditutup", "Closed"] },
+];
+
+function statusTone(state: string): string {
+  if (state === "sent") return "pending";
+  if (state === "declined" || state === "cancelled" || state === "expired") return "revoked";
+  return "verified";
+}
+
 /**
  * PartnerConsole is the whole operator surface for a partner account
- * (D-076): it shows only the care requests of the account's organisation.
+ * (D-076): an inbox of its organisation's care requests, the confirmed
+ * schedule and the clinic and team. Nothing internal is reachable.
  */
 export function PartnerConsole({
   admin,
@@ -73,65 +90,11 @@ export function PartnerConsole({
   onExpired: () => void;
 }) {
   const w = useWords();
+  const { path, navigate } = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    titleRef.current?.focus();
-  }, []);
-
-  const signOut = async () => {
-    setSigningOut(true);
-    try {
-      await adminApi.logout();
-      onSignOut();
-    } catch (err) {
-      if (err instanceof AdminError && err.status === 401) onSignOut();
-      else setError(errorText(err, w));
-    } finally {
-      setSigningOut(false);
-    }
-  };
-
-  return (
-    <div className="op">
-      <a className="op-skip" href="#op-main">
-        {w("Lewati ke konten", "Skip to content")}
-      </a>
-      <OperatorHeader admin={admin} active="console" signingOut={signingOut} onSignOut={() => void signOut()} />
-      <main className="op-main" id="op-main">
-        <div className="op-intro">
-          <div>
-            <h1 ref={titleRef} tabIndex={-1}>
-              {w("Ruang kerja profesional", "Professional workspace")}
-            </h1>
-            <p>
-              {w(
-                "Permintaan bantuan yang dikirim ke organisasimu. Rangkuman dibagikan oleh pasien sendiri dan hanya bisa dibaca selama permintaan aktif. Sela tidak memberikan kontak pasien.",
-                "Care requests sent to your organisation. The summary was shared by the person themself and can only be read while the request is active. Sela does not give you the person's contact details.",
-              )}
-            </p>
-          </div>
-        </div>
-        {error && <p className="op-alert" role="alert">{error}</p>}
-        <PartnerRequestsPanel admin={admin} onExpired={onExpired} />
-      </main>
-    </div>
-  );
-}
-
-export function PartnerRequestsPanel({ admin, onExpired }: { admin: Admin; onExpired: () => void }) {
-  const w = useWords();
-  const date = useDateTime();
-  const canRespond = admin.permissions.includes("care-requests/respond");
   const [org, setOrg] = useState<CareOrg | null>(null);
   const [list, setList] = useState<PartnerCareRequest[] | null>(null);
-  const [selected, setSelected] = useState("");
-  const [detail, setDetail] = useState<PartnerCareRequest | null>(null);
-  const [canRead, setCanRead] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
 
   const fail = useCallback(
     (err: unknown) => {
@@ -157,10 +120,101 @@ export function PartnerRequestsPanel({ admin, onExpired }: { admin: Admin; onExp
     void loadList();
   }, [fail, loadList]);
 
+  const pages = ["/operator", "/operator/schedule", "/operator/team"];
+  const active = pages.includes(path) ? path : "/operator";
+  useEffect(() => {
+    if (!pages.includes(path)) navigate("/operator");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
+
+  const signOut = async () => {
+    setSigningOut(true);
+    try {
+      await adminApi.logout();
+      onSignOut();
+    } catch (err) {
+      if (err instanceof AdminError && err.status === 401) onSignOut();
+      else setError(errorText(err, w));
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
+  const open = (list ?? []).filter((r) => r.state === "sent").length;
+  const upcoming = (list ?? []).filter((r) => r.state === "confirmed" && r.confirmedSlot && new Date(r.confirmedSlot) >= new Date()).length;
+
+  return (
+    <Shell
+      admin={admin}
+      active={active}
+      signingOut={signingOut}
+      onSignOut={() => void signOut()}
+      context={org ? org.name : undefined}
+      items={[
+        { path: "/operator", label: w("Kotak masuk", "Inbox"), count: open },
+        { path: "/operator/schedule", label: w("Jadwal", "Schedule"), count: upcoming },
+        { path: "/operator/team", label: w("Tim & klinik", "Team & clinic") },
+      ]}
+    >
+      {error && <p className="op-alert" role="alert">{error}</p>}
+      {active === "/operator/schedule" ? (
+        <PartnerSchedule list={list} />
+      ) : active === "/operator/team" ? (
+        <PartnerTeam admin={admin} org={org} fail={fail} />
+      ) : (
+        <PartnerInbox admin={admin} org={org} list={list} onReload={loadList} fail={fail} />
+      )}
+    </Shell>
+  );
+}
+
+function SimulationNote({ org }: { org: CareOrg | null }) {
+  const w = useWords();
+  if (!org?.synthetic) return null;
+  return (
+    <p className="op-hint op-network-sim">
+      {w(
+        "Organisasi simulasi: permintaan di sini berasal dari pengguna yang tahu layanannya simulasi. Jangan memberi layanan klinis nyata dari sini.",
+        "Simulated organisation: requests here come from people who know the service is simulated. Do not provide real clinical care from here.",
+      )}
+    </p>
+  );
+}
+
+function PartnerInbox({
+  admin,
+  org,
+  list,
+  onReload,
+  fail,
+}: {
+  admin: Admin;
+  org: CareOrg | null;
+  list: PartnerCareRequest[] | null;
+  onReload: () => Promise<void>;
+  fail: (err: unknown) => void;
+}) {
+  const w = useWords();
+  const date = useDateTime();
+  const canRespond = admin.permissions.includes("care-requests/respond");
+  const [tab, setTab] = useState("new");
+  const [selected, setSelected] = useState("");
+  const [detail, setDetail] = useState<PartnerCareRequest | null>(null);
+  const [canRead, setCanRead] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const t of TABS) c[t.key] = (list ?? []).filter((r) => t.states.includes(r.state)).length;
+    return c;
+  }, [list]);
+  const current = TABS.find((t) => t.key === tab) ?? TABS[0]!;
+  const shown = (list ?? []).filter((r) => current.states.includes(r.state));
+
   const open = async (id: string) => {
     setSelected(id);
     setDetail(null);
-    setError("");
     setNotice("");
     try {
       const r = await adminApi.partnerRequest(id);
@@ -174,13 +228,12 @@ export function PartnerRequestsPanel({ admin, onExpired }: { admin: Admin; onExp
   const act = async (job: () => Promise<PartnerCareRequest>, done: string) => {
     if (busy) return;
     setBusy(true);
-    setError("");
     setNotice("");
     try {
       const updated = await job();
       setDetail((d) => (d ? { ...d, ...updated, summary: d.summary } : updated));
       setNotice(done);
-      await loadList();
+      await onReload();
     } catch (err) {
       fail(err);
     } finally {
@@ -189,72 +242,76 @@ export function PartnerRequestsPanel({ admin, onExpired }: { admin: Admin; onExp
   };
 
   return (
-    <section className="op-section" aria-labelledby="op-partner">
-      <div className="op-section-head">
-        <div>
-          <h2 id="op-partner" className="op-partner-head">
-            <span>{w("Permintaan bantuan", "Care requests")}</span>
-          </h2>
-          {org && (
-            <p className="op-care-tags">
-              <strong>{org.name}</strong>
-              <span className="op-badge op-badge--soft">{mapLabel(ORG_KIND, org.kind, w)}</span>
-              {org.synthetic && <span className="op-badge op-badge--demo">{w("Simulasi", "Simulation")}</span>}
-              {org.city && <span className="op-hint">{org.city}</span>}
-            </p>
-          )}
-          {org?.synthetic && (
-            <p className="op-hint">
-              {w(
-                "Organisasi simulasi: permintaan di sini berasal dari pengguna yang tahu layanannya simulasi. Jangan memberi layanan klinis nyata dari sini.",
-                "Simulated organisation: requests here come from people who know the service is simulated. Do not provide real clinical care from here.",
-              )}
-            </p>
-          )}
-        </div>
-        <button type="button" className="op-btn op-btn--quiet" onClick={() => void loadList()}>
+    <Page
+      title={w("Kotak masuk", "Inbox")}
+      lead={w(
+        "Permintaan bantuan yang dikirim ke organisasimu. Rangkuman dibagikan oleh pasien sendiri dan hanya bisa dibaca selama permintaan aktif. Sela tidak memberikan kontak pasien.",
+        "Care requests sent to your organisation. The summary was shared by the person themself and can only be read while the request is active. Sela does not give you the person's contact details.",
+      )}
+      actions={
+        <button type="button" className="op-btn op-btn--quiet" onClick={() => void onReload()}>
           {w("Muat ulang", "Refresh")}
         </button>
-      </div>
-
-      {error && <p className="op-alert" role="alert">{error}</p>}
+      }
+    >
+      {org && (
+        <p className="op-care-tags">
+          <strong>{org.name}</strong>
+          <span className="op-badge op-badge--soft">{mapLabel(ORG_KIND, org.kind, w)}</span>
+          {org.synthetic && <span className="op-badge op-badge--demo">{w("Simulasi", "Simulation")}</span>}
+          {org.city && <span className="op-hint">{org.city}</span>}
+        </p>
+      )}
+      <SimulationNote org={org} />
       <p className="op-notice" role="status" hidden={!notice}>
         {notice}
       </p>
-
+      <div className="op-tabs" role="group" aria-label={w("Saring menurut status", "Filter by status")}>
+        {TABS.map((t) => (
+          <button key={t.key} type="button" aria-pressed={tab === t.key} onClick={() => setTab(t.key)}>
+            <span>{w(t.label[0], t.label[1])}</span>
+            <span className="op-tab-count">{counts[t.key] ?? 0}</span>
+          </button>
+        ))}
+      </div>
       <div className="op-partner-layout">
-        <div>
+        <section className="op-section" aria-label={w("Daftar permintaan", "Request list")}>
           {list === null ? (
             <p className="op-hint">{w("Memuat permintaan…", "Loading requests…")}</p>
-          ) : list.length === 0 ? (
-            <p className="op-hint">{w("Belum ada permintaan.", "No requests yet.")}</p>
+          ) : shown.length === 0 ? (
+            <p className="op-hint">
+              {list.length === 0 ? w("Belum ada permintaan.", "No requests yet.") : w("Tidak ada permintaan di status ini.", "No requests in this status.")}
+            </p>
           ) : (
-            <ul className="op-partner-list" aria-label={w("Daftar permintaan", "Request list")}>
-              {list.map((r) => (
+            <ul className="op-partner-list">
+              {shown.map((r) => (
                 <li key={r.id}>
                   <button type="button" aria-current={selected === r.id ? "true" : undefined} onClick={() => void open(r.id)}>
                     <span className="op-care-tags">
                       <span className="op-partner-ref">{r.reference}</span>
-                      <span className={`op-care-status op-care-status--${r.state === "sent" ? "pending" : r.state === "declined" || r.state === "cancelled" || r.state === "expired" ? "revoked" : "verified"}`}>
-                        {mapLabel(STATE, r.state, w)}
-                      </span>
+                      <span className={`op-care-status op-care-status--${statusTone(r.state)}`}>{mapLabel(STATE, r.state, w)}</span>
                     </span>
                     <span className="op-hint">
                       {mapLabel(MODE, r.mode, w)}
                       {r.practitionerName ? ` · ${r.practitionerName}` : ""}
                     </span>
                     <span className="op-hint">
-                      {w("Masuk", "Received")} {date(r.createdAt)} · {w("Berlaku sampai", "Valid until")} {date(r.expiresAt)}
+                      {r.state === "confirmed" && r.confirmedSlot
+                        ? `${w("Sesi", "Session")} ${date(r.confirmedSlot)}`
+                        : `${w("Masuk", "Received")} ${date(r.createdAt)} · ${w("Berlaku sampai", "Valid until")} ${date(r.expiresAt)}`}
                     </span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </section>
 
         <div aria-live="polite">
           {selected && !detail && <p className="op-hint">{w("Memuat detail…", "Loading details…")}</p>}
+          {!selected && list !== null && list.length > 0 && (
+            <p className="op-hint">{w("Pilih permintaan untuk melihat detailnya.", "Choose a request to see its details.")}</p>
+          )}
           {detail && (
             <RequestDetail
               request={detail}
@@ -275,16 +332,146 @@ export function PartnerRequestsPanel({ admin, onExpired }: { admin: Admin; onExp
                 )
               }
               onComplete={() =>
-                void act(
-                  () => adminApi.partnerComplete(detail.id, detail.version),
-                  w("Ditandai selesai.", "Marked as completed."),
-                )
+                void act(() => adminApi.partnerComplete(detail.id, detail.version), w("Ditandai selesai.", "Marked as completed."))
               }
             />
           )}
         </div>
       </div>
-    </section>
+    </Page>
+  );
+}
+
+function PartnerSchedule({ list }: { list: PartnerCareRequest[] | null }) {
+  const w = useWords();
+  const date = useDateTime();
+  const now = Date.now();
+  const confirmed = (list ?? [])
+    .filter((r) => (r.state === "confirmed" || r.state === "completed") && r.confirmedSlot)
+    .sort((a, b) => new Date(a.confirmedSlot ?? 0).getTime() - new Date(b.confirmedSlot ?? 0).getTime());
+  const upcoming = confirmed.filter((r) => new Date(r.confirmedSlot ?? 0).getTime() >= now);
+  const past = confirmed.filter((r) => new Date(r.confirmedSlot ?? 0).getTime() < now).reverse();
+  const row = (r: PartnerCareRequest) => (
+    <li key={r.id}>
+      <time dateTime={r.confirmedSlot}>{date(r.confirmedSlot)}</time>
+      <span className="op-care-tags">
+        <span className="op-partner-ref">{r.reference}</span>
+        <span className={`op-care-status op-care-status--${statusTone(r.state)}`}>{mapLabel(STATE, r.state, w)}</span>
+      </span>
+      <span className="op-hint">
+        {mapLabel(MODE, r.proposal?.mode ?? r.mode, w)}
+        {r.practitionerName ? ` · ${r.practitionerName}` : ""}
+      </span>
+    </li>
+  );
+  return (
+    <Page
+      title={w("Jadwal", "Schedule")}
+      lead={w("Sesi yang sudah dikonfirmasi pasien, urut waktu.", "Sessions the person confirmed, in time order.")}
+    >
+      {list === null ? (
+        <p className="op-hint" role="status">{w("Memuat jadwal…", "Loading the schedule…")}</p>
+      ) : (
+        <>
+          <section className="op-section" aria-labelledby="op-schedule-next">
+            <h2 id="op-schedule-next">{w("Akan datang", "Upcoming")}</h2>
+            {upcoming.length === 0 ? (
+              <p className="op-hint">{w("Belum ada sesi terjadwal.", "No sessions scheduled yet.")}</p>
+            ) : (
+              <ol className="op-schedule" aria-label={w("Sesi akan datang", "Upcoming sessions")}>{upcoming.map(row)}</ol>
+            )}
+          </section>
+          <section className="op-section" aria-labelledby="op-schedule-past">
+            <h2 id="op-schedule-past">{w("Sudah lewat", "Past")}</h2>
+            {past.length === 0 ? (
+              <p className="op-hint">{w("Belum ada sesi yang lewat.", "No past sessions yet.")}</p>
+            ) : (
+              <ol className="op-schedule">{past.map(row)}</ol>
+            )}
+          </section>
+        </>
+      )}
+    </Page>
+  );
+}
+
+function PartnerTeam({ admin, org, fail }: { admin: Admin; org: CareOrg | null; fail: (err: unknown) => void }) {
+  const w = useWords();
+  const [members, setMembers] = useState<CareOrgMember[] | null>(null);
+  useEffect(() => {
+    adminApi.partnerMembers().then(setMembers).catch(fail);
+  }, [fail]);
+  return (
+    <Page
+      title={w("Tim & klinik", "Team & clinic")}
+      lead={w(
+        "Informasi organisasimu seperti yang dilihat pengguna, dan akun timmu. Perubahan data klinik dilakukan oleh tim Sela.",
+        "Your organisation as people see it, and your team's accounts. Clinic details are changed by the Sela team.",
+      )}
+    >
+      <section className="op-section" aria-labelledby="op-team-org">
+        <h2 id="op-team-org">{org?.name ?? w("Klinik", "Clinic")}</h2>
+        {org ? (
+          <>
+            <p className="op-care-tags">
+              <span className="op-badge op-badge--soft">{mapLabel(ORG_KIND, org.kind, w)}</span>
+              {org.synthetic && <span className="op-badge op-badge--demo">{w("Simulasi", "Simulation")}</span>}
+              {org.city && <span className="op-hint">{org.city}</span>}
+            </p>
+            {org.description && <p>{org.description}</p>}
+            <p className="op-hint">
+              {w("Cara layanan", "Service modes")}: {org.modes.map((m) => mapLabel(MODES, m, w)).join(", ") || "—"} ·{" "}
+              {w("Cocok untuk tahap", "Fits stages")}:{" "}
+              {org.stages
+                .map((s) => {
+                  const st = STAGES.find(([k]) => k === s);
+                  return st ? w(st[1], st[2]) : s;
+                })
+                .join(", ") || "—"}
+            </p>
+            <SimulationNote org={org} />
+          </>
+        ) : (
+          <p className="op-hint">{w("Memuat klinik…", "Loading the clinic…")}</p>
+        )}
+      </section>
+      <section className="op-section" aria-labelledby="op-team-members">
+        <h2 id="op-team-members">{w("Tim", "Team")}</h2>
+        {members === null ? (
+          <p className="op-hint">{w("Memuat tim…", "Loading the team…")}</p>
+        ) : members.length === 0 ? (
+          <p className="op-hint">{w("Belum ada akun.", "No accounts yet.")}</p>
+        ) : (
+          <ul className="op-network-member-list">
+            {members.map((m) => (
+              <li key={m.username}>
+                <div className="op-care-main">
+                  <strong>
+                    {m.displayName || m.username}
+                    {m.username === admin.username ? ` (${w("kamu", "you")})` : ""}
+                  </strong>
+                  <span className="op-care-tags">
+                    <span className="op-badge op-badge--soft">{roleLabel(m.role, w)}</span>
+                    {m.professionalType && <span className="op-hint">{mapLabel(PROFESSIONAL_TYPE, m.professionalType, w)}</span>}
+                    {m.role === "practitioner" && (
+                      <span className={`op-care-status op-care-status--${m.licenseVerified ? "verified" : "pending"}`}>
+                        {m.licenseVerified ? w("Lisensi terverifikasi", "Licence verified") : w("Belum diverifikasi", "Not verified")}
+                      </span>
+                    )}
+                    {m.status !== "active" && <span className="op-care-status op-care-status--revoked">{w("Dicabut", "Revoked")}</span>}
+                  </span>
+                  {m.licenseNo && (
+                    <p className="op-hint">
+                      {w("Lisensi", "Licence")}: {m.licenseNo}
+                    </p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </Page>
   );
 }
 

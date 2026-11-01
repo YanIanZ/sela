@@ -251,7 +251,7 @@ describe("operator reading review", () => {
     await waitFor(() => expect(screen.getAllByText("Revoked").length).toBeGreaterThan(0));
   });
 
-  it("marks the nav entry and denies a role without a review permission", async () => {
+  it("marks the nav entry and sends a role without a review permission to Home", async () => {
     stubReading(owner);
     renderReading();
     await screen.findByRole("heading", { name: "Reading reviews" });
@@ -269,12 +269,9 @@ describe("operator reading review", () => {
     };
     const { calls } = stubReading(ops);
     renderReading();
-    await screen.findByRole("heading", { name: "Reading reviews" });
-    expect(
-      screen.getByText(
-        "Your role doesn't hold research/review or safety-content/review.",
-      ),
-    ).toBeInTheDocument();
+    // A page the role may not use falls back to Home (operator shell).
+    await screen.findByRole("heading", { name: "Home" });
+    await waitFor(() => expect(window.location.pathname).toBe("/operator"));
     expect(
       screen.queryByRole("link", { name: "Reading reviews" }),
     ).not.toBeInTheDocument();

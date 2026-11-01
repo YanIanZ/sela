@@ -118,10 +118,13 @@ export function ReadingPage({
   admin,
   onSignOut,
   onExpired,
+  embedded = false,
 }: {
   admin: Admin;
   onSignOut: () => void;
   onExpired: () => void;
+  /** embedded renders the page body inside the operator shell. */
+  embedded?: boolean;
 }) {
   const w = useWords();
   const { lang } = useI18n();
@@ -250,21 +253,11 @@ export function ReadingPage({
     }
   };
 
-  return (
-    <div className="op">
-      <a className="op-skip" href="#op-main">
-        {w("Lewati ke konten", "Skip to content")}
-      </a>
-      <OperatorHeader
-        admin={admin}
-        active="reading"
-        signingOut={signingOut}
-        onSignOut={() => void signOut()}
-      />
-      <main className="op-main" id="op-main">
+  const body = (
+    <>
         <div className="op-intro">
           <div>
-            <h1 ref={titleRef} tabIndex={-1}>
+            <h1 ref={titleRef} tabIndex={-1} className="op-page-title">
               {w("Tinjauan bacaan", "Reading reviews")}
             </h1>
             <p>
@@ -372,6 +365,22 @@ export function ReadingPage({
             "Operator reading review. An approval binds the exact text shown; nothing is approved automatically.",
           )}
         </p>
+    </>
+  );
+  if (embedded) return body;
+  return (
+    <div className="op">
+      <a className="op-skip" href="#op-main">
+        {w("Lewati ke konten", "Skip to content")}
+      </a>
+      <OperatorHeader
+        admin={admin}
+        active="reading"
+        signingOut={signingOut}
+        onSignOut={() => void signOut()}
+      />
+      <main className="op-main" id="op-main">
+        {body}
       </main>
     </div>
   );

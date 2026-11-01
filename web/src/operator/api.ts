@@ -127,6 +127,7 @@ export type Staff = {
   username: string;
   role: string;
   orgId?: string;
+  careOrgId?: string;
   status: string;
   createdAt: string;
   lastLoginAt?: string;
@@ -287,6 +288,36 @@ export type CommunityQueueItem = {
   updatedAt: string;
 };
 
+export type Invite = {
+  id: string;
+  username: string;
+  role: string;
+  careOrgId: string;
+  displayName?: string;
+  professionalType?: string;
+  licenseNo?: string;
+  createdAt: string;
+  expiresAt: string;
+  acceptedAt?: string;
+  revokedAt?: string;
+  state: "open" | "accepted" | "revoked" | "expired";
+};
+
+export type Activation = {
+  username: string;
+  role: string;
+  orgName: string;
+  displayName?: string;
+  secret: string;
+  otpauthUrl: string;
+};
+
+export type Tasks = {
+  network?: { pendingOrgs: number; pendingLicenses: number; openInvites: number };
+  moderation?: number;
+  directoryPending?: number;
+};
+
 export class AdminError extends Error {
   readonly status: number;
   readonly code: string;
@@ -333,8 +364,42 @@ async function request<T>(
 }
 
 export const adminApi = {
+  tasks: () => request<{ tasks: Tasks }>("/tasks").then((r) => r.tasks ?? {}),
+  createInvite: (input: Record<string, unknown>) =>
+    request<{ invite: Invite; activationUrl: string }>(
+      "/network/invites",
+      { method: "POST", body: JSON.stringify(input) },
+      true,
+    ),
+  invites: (orgId: string) =>
+    request<{ invites: Invite[] }>(`/network/orgs/${encodeURIComponent(orgId)}/invites`).then(
+      (r) => r.invites ?? [],
+    ),
+  revokeInvite: (id: string) =>
+    request<{ revoked: boolean }>(
+      `/network/invites/${encodeURIComponent(id)}/revoke`,
+      { method: "POST" },
+      true,
+    ),
+  activationStart: (token: string) =>
+    request<{ activation: Activation }>(
+      "/activation",
+      { method: "POST", body: JSON.stringify({ token }) },
+      true,
+    ).then((r) => r.activation),
+  activationComplete: (token: string, password: string, totp: string) =>
+    request<{ admin: Admin }>(
+      "/activation/complete",
+      { method: "POST", body: JSON.stringify({ token, password, totp }) },
+      true,
+    ).then((r) => r.admin),
+  partnerMembers: () =>
+    request<{ members: CareOrgMember[] }>("/partner/members").then((r) => r.members ?? []),
   networkOrgs: () =>
-    request<{ orgs: CareOrg[]; realPartners: boolean }>("/network/orgs"),
+    request<{ orgs: CareOrg[]; realPartners: boolean }>("/network/orgs").then((r) => ({
+      orgs: r.orgs ?? [],
+      realPartners: r.realPartners,
+    })),
   createNetworkOrg: (input: Record<string, unknown>) =>
     request<{ org: CareOrg }>(
       "/network/orgs",
@@ -350,7 +415,7 @@ export const adminApi = {
   networkMembers: (id: string) =>
     request<{ members: CareOrgMember[] }>(
       `/network/orgs/${encodeURIComponent(id)}/members`,
-    ).then((r) => r.members),
+    ).then((r) => r.members ?? []),
   verifyLicense: (username: string) =>
     request<{ username: string; licenseVerified: boolean }>(
       `/network/members/${encodeURIComponent(username)}/verify-license`,
@@ -360,7 +425,7 @@ export const adminApi = {
   partnerOrg: () =>
     request<{ org: CareOrg; displayName: string }>("/partner/org"),
   partnerRequests: () =>
-    request<{ requests: PartnerCareRequest[] }>("/partner/requests").then((r) => r.requests),
+    request<{ requests: PartnerCareRequest[] }>("/partner/requests").then((r) => r.requests ?? []),
   partnerRequest: (id: string) =>
     request<{ request: PartnerCareRequest; canReadContent: boolean }>(
       `/partner/requests/${encodeURIComponent(id)}`,
@@ -378,7 +443,7 @@ export const adminApi = {
       true,
     ).then((r) => r.request),
   communityQueue: () =>
-    request<{ items: CommunityQueueItem[] }>("/community/queue").then((r) => r.items),
+    request<{ items: CommunityQueueItem[] }>("/community/queue").then((r) => r.items ?? []),
   communityDecide: (kind: string, id: string, action: "restore" | "remove", reason: string) =>
     request<{ status: string }>(
       `/community/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/decision`,
@@ -397,9 +462,9 @@ export const adminApi = {
   overview: () => request<Overview>("/overview"),
   audit: (limit = 50) =>
     request<{ events: AuditEvent[] }>(`/audit?limit=${limit}`).then(
-      (r) => r.events,
+      (r) => r.events ?? [],
     ),
-  staff: () => request<{ staff: Staff[] }>("/staff").then((r) => r.staff),
+  staff: () => request<{ staff: Staff[] }>("/staff").then((r) => r.staff ?? []),
   revokeStaff: (username: string, reason: string) =>
     request<{ username: string; status: string }>(
       `/staff/${encodeURIComponent(username)}/revoke`,
@@ -409,7 +474,7 @@ export const adminApi = {
   directory: (status = "") =>
     request<{ entries: DirectoryEntry[] }>(
       "/directory" + (status ? `?status=${encodeURIComponent(status)}` : ""),
-    ).then((r) => r.entries),
+    ).then((r) => r.entries ?? []),
   createDirectory: (input: Record<string, unknown>) =>
     request<DirectoryEntry>("/directory", { method: "POST", body: JSON.stringify(input) }, true),
   directoryAction: (
@@ -424,9 +489,9 @@ export const adminApi = {
       true,
     ),
   careAudit: () =>
-    request<{ events: CareAudit[] }>("/directory/audit").then((r) => r.events),
+    request<{ events: CareAudit[] }>("/directory/audit").then((r) => r.events ?? []),
   sandbox: () =>
-    request<{ requests: SandboxRequest[] }>("/sandbox/requests").then((r) => r.requests),
+    request<{ requests: SandboxRequest[] }>("/sandbox/requests").then((r) => r.requests ?? []),
   createSandbox: (input: Record<string, unknown>) =>
     request<SandboxRequest>(
       "/sandbox/requests",

@@ -19,7 +19,7 @@
 .op-partner-layout { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); gap: 1rem; align-items: start; }
 .op-partner-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
 .op-partner-list button { width: 100%; display: grid; gap: 0.2rem; padding: 0.65rem 0.75rem; border: 1px solid var(--op-line); border-radius: 8px; background: var(--op-surface); color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.op-partner-list button[aria-current="true"] { border-color: var(--op-line-strong); box-shadow: inset 3px 0 0 var(--op-line-strong); }
+.op-partner-list button[aria-current="true"] { border-color: var(--op-line-strong); background: var(--op-accent-soft); }
 .op-partner-ref { font-variant-numeric: tabular-nums; letter-spacing: 0.04em; font-weight: 600; }
 .op-partner-detail { display: grid; gap: 0.9rem; min-width: 0; padding: 1rem; border: 1px solid var(--op-line); border-radius: 8px; }
 .op-partner-detail h3 { margin: 0; }

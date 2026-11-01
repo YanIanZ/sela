@@ -1,0 +1,356 @@
+/* Operator app shell: a sidebar on wide screens, a top bar with a wrapping
+   nav on phones. Nothing here may widen the page past the viewport. */
+
+.op-app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.op-side {
+  position: static;
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.75rem clamp(1rem, 3vw, 1.5rem);
+  background: var(--op-surface);
+  border-bottom: 1px solid var(--op-line);
+}
+
+.op-side-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  min-width: 0;
+}
+
+.op-side-context {
+  margin: 0;
+  color: var(--op-muted);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.op-side-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.op-side-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 40px;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--op-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.op-side-nav a:hover {
+  background: var(--op-surface-quiet);
+  color: var(--op-ink);
+}
+
+.op-side-nav a[aria-current="page"] {
+  background: var(--op-accent-soft);
+  border-color: var(--op-line);
+  color: var(--op-ink);
+}
+
+.op-side-count {
+  min-width: 1.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--op-warning-bg);
+  color: var(--op-warning);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.op-side-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.op-side-foot .op-user {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.op-side-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.op-page {
+  min-width: 0;
+  align-content: start;
+}
+
+/* The page heading takes focus on navigation so screen readers announce
+   the new page; it is not interactive, so it draws no focus box. */
+.op .op-page-title:focus,
+.op .op-page-title:focus-visible {
+  outline: none;
+}
+
+.op-tasks {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.op-tasks a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 48px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--op-line);
+  border-radius: 8px;
+  background: var(--op-surface-quiet);
+  color: var(--op-ink);
+  text-decoration: none;
+}
+
+.op-tasks a:hover {
+  border-color: var(--op-line-strong);
+}
+
+.op-task-count {
+  min-width: 2.2rem;
+  font-family: "Lexend", "Hanken Grotesk", system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.op-task-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.op-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.op-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 38px;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--op-line);
+  border-radius: 999px;
+  background: var(--op-surface);
+  color: var(--op-muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.op-tabs button[aria-pressed="true"] {
+  background: var(--op-accent-soft);
+  border-color: var(--op-line-strong);
+  color: var(--op-ink);
+}
+
+.op-tab-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--op-muted);
+}
+
+.op-org-pick {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.op-org-pick button {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--op-line);
+  border-radius: 8px;
+  background: var(--op-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.op-org-pick button[aria-current="true"] {
+  background: var(--op-accent-soft);
+  border-color: var(--op-line-strong);
+}
+
+.op-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.op-once {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--op-warning);
+  border-radius: 8px;
+  background: var(--op-warning-bg);
+}
+
+.op-once code,
+.op-secret {
+  display: block;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: var(--op-surface);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.op-secret {
+  letter-spacing: 0.08em;
+  word-break: normal;
+}
+
+.op-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.op-filter select {
+  max-width: 100%;
+}
+
+.op-schedule {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.op-schedule li {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--op-line);
+  border-radius: 8px;
+  background: var(--op-surface-quiet);
+}
+
+.op-schedule time {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.op-activate {
+  width: min(32rem, 100%);
+  margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+  .op-app {
+    grid-template-columns: 15.5rem minmax(0, 1fr);
+  }
+
+  .op-side {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: 100svh;
+    align-content: start;
+    grid-template-rows: auto 1fr auto;
+    padding: 1.1rem 1rem;
+    border-right: 1px solid var(--op-line);
+    border-bottom: 0;
+  }
+
+  .op-side-top {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .op-side-nav ul {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .op-side-nav a {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .op-side-foot {
+    display: grid;
+    gap: 0.6rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--op-line);
+  }
+
+  .op-two {
+    grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .op-side-nav a {
+    padding-inline: 0.55rem;
+    font-size: 0.86rem;
+  }
+}
+
+.op h3 {
+  margin: 0;
+  font-family: "Lexend", "Hanken Grotesk", system-ui, sans-serif;
+  font-size: 0.98rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.op-network-set .op-check {
+  max-width: 100%;
+  align-items: flex-start;
+}
+
+.op-network-set .op-check > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.op details > summary {
+  cursor: pointer;
+  font-weight: 600;
+}

@@ -473,13 +473,13 @@
 .op-notice {
   padding: 0.65rem 0.85rem;
   border-radius: 8px;
-  border-left: 4px solid var(--op-danger);
+  border: 1px solid color-mix(in srgb, var(--op-danger) 45%, transparent);
   background: var(--op-danger-bg);
   color: var(--op-ink);
 }
 
 .op-notice {
-  border-left-color: var(--op-success);
+  border-color: color-mix(in srgb, var(--op-success) 45%, transparent);
   background: var(--op-success-bg);
 }
 
@@ -531,6 +531,7 @@
 
 .op-field {
   display: grid;
+  align-content: start;
   gap: 0.28rem;
   font-size: 0.86rem;
   font-weight: 600;
