@@ -49,6 +49,9 @@ type Share struct {
 	OpenedCount       int        `json:"openedCount"`
 	AcknowledgedCount int        `json:"acknowledgedCount"`
 	LastOpenedAt      *time.Time `json:"lastOpenedAt"`
+	// EndReason says why an ended share stopped: owner_revoked, expired,
+	// source_deleted, account_deleted or meaning_invalidated (D-078).
+	EndReason string `json:"endReason,omitempty"`
 }
 
 // ShareEvent is one access-history entry the owner may see. It carries no
@@ -252,6 +255,7 @@ func (s *Store) createShareTx(ctx context.Context, tx pgx.Tx, owner UserID, shar
 // list stays a single query.
 func (s *Store) Shares(ctx context.Context, owner UserID) ([]Share, error) {
 	rows, err := s.pool.Query(ctx, `SELECT s.id,s.summary_id,s.summary_version,s.label,s.purpose,s.state,s.version,s.expires_at,s.created_at,
+			COALESCE(s.end_reason,''),
 			count(ev.id) FILTER (WHERE ev.kind='opened'),
 			count(ev.id) FILTER (WHERE ev.kind='acknowledged'),
 			max(ev.at) FILTER (WHERE ev.kind='opened')
@@ -269,7 +273,7 @@ func (s *Store) Shares(ctx context.Context, owner UserID) ([]Share, error) {
 		var id, summaryID pgtype.UUID
 		var lastOpened *time.Time
 		if err := rows.Scan(&id, &summaryID, &sh.SummaryVersion, &sh.Label, &sh.Purpose, &sh.State, &sh.Version,
-			&sh.ExpiresAt, &sh.CreatedAt, &sh.OpenedCount, &sh.AcknowledgedCount, &lastOpened); err != nil {
+			&sh.ExpiresAt, &sh.CreatedAt, &sh.EndReason, &sh.OpenedCount, &sh.AcknowledgedCount, &lastOpened); err != nil {
 			return nil, err
 		}
 		sh.ID, sh.SummaryID = uuidText(id.Bytes), uuidText(summaryID.Bytes)
