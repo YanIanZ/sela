@@ -167,6 +167,7 @@ try {
 
   // The menu is a panel under the header's menu button, not a centred modal.
   await page.getByRole("button", { name: "Menu" }).click();
+  await page.locator(".s-menu-sheet").waitFor({ state: "visible" });
   const desktopMenu = await page.locator(".s-menu-sheet").boundingBox();
   const desktopViewport = page.viewportSize();
   check(
