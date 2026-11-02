@@ -1,6 +1,6 @@
 # Care Passport — owner-approved consultation preparation
 
-**Status: proposed, not implemented in this PR.** Task IDs BW-005/006/009. Related [Care Network API](../api/API_SPEC_CARE_NETWORK.md), [MIE](../vision/MEANING_INTEGRITY_ENGINE.md) and [Build for Your World plan](../roadmap/BUILD_FOR_YOUR_WORLD_2026.md).
+**Status: implemented (D-081, not yet deployed).** Preview `GET /api/v3/consultation-summaries/{id}/passport` (a summary sub-route instead of the proposed `/passports/{id}/preview`), export `preset=passport`, routes `/support/passport` and `/support/passport/:id`. One projection (`projectSummary`) serves shares, care requests, the preview and the export. Open: CP-T09 manual screen-reader/320px run, server-side 1–5 question limit, the optional "what helps me explain" section. Original proposal text follows. Task IDs BW-005/006/009. Related [Care Network API](../api/API_SPEC_CARE_NETWORK.md), [MIE](../vision/MEANING_INTEGRITY_ENGINE.md) and [Build for Your World plan](../roadmap/BUILD_FOR_YOUR_WORLD_2026.md).
 
 ## 1. Goal and terminology
 

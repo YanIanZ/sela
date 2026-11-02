@@ -1,6 +1,6 @@
 # SELA — Build for Your World expansion: Story → Meaning → Next Step
 
-Status: **PROPOSED feature roadmap; implementation not included in this PR**. Date: **2026-11-02 (WIB)**. Target: Meta Global AI Developer Hackathon 2026, Indie / Build for Your World. Starting point inspected: `main@198b134002d7036da5057add8fdcde2d1539700c`. This roadmap is subordinate to existing shipped code, SPEC, D-065, D-076, D-078, D-079 and real safety/privacy gates. It **does not** replace the existing November roadmap or claim clinical efficacy.
+Status: **P0 features implemented 2026-11-02 (D-081): Life Context Timeline (BW-002/003), Care Passport (BW-005/006), Personal Action Bridge (BW-007/008) with MIE integration (BW-009); not yet deployed to production.** BW-004, BW-010–BW-015 open. Originally a proposed roadmap. Date: **2026-11-02 (WIB)**. Target: Meta Global AI Developer Hackathon 2026, Indie / Build for Your World. Starting point inspected: `main@198b134002d7036da5057add8fdcde2d1539700c`. This roadmap is subordinate to existing shipped code, SPEC, D-065, D-076, D-078, D-079 and real safety/privacy gates. It **does not** replace the existing November roadmap or claim clinical efficacy.
 
 ## 0. Positioning and the user-world problem
 

@@ -1,6 +1,6 @@
 # Life Context Timeline — product and technical specification
 
-**Status: proposed / not implemented in this PR.** Task IDs BW-002–BW-004. Reference [Build for Your World roadmap](../roadmap/BUILD_FOR_YOUR_WORLD_2026.md), [MIE](../vision/MEANING_INTEGRITY_ENGINE.md).
+**Status: BW-002/BW-003 implemented (D-081, not yet deployed); BW-004 (Meta "what changed" proposal) not implemented.** `GET /api/v3/context-timeline` and `/notes/context` ([API §6.17](../api/API_SPEC_V3.md)). Covered by tests: LT-01, 02, 04–07, 09–11; open: LT-08 manual accessibility run. Original proposal text follows. Task IDs BW-002–BW-004. Reference [Build for Your World roadmap](../roadmap/BUILD_FOR_YOUR_WORLD_2026.md), [MIE](../vision/MEANING_INTEGRITY_ENGINE.md).
 
 ## 1. User story and differentiator
 

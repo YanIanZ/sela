@@ -1,6 +1,6 @@
 # Personal Action Bridge — one self-chosen next step
 
-**Status: PROPOSAL / not implemented in this PR.** Task BW-007/BW-008/BW-009. Related [BWYW roadmap](../roadmap/BUILD_FOR_YOUR_WORLD_2026.md) and [MIE 1.0 concept](../vision/MEANING_INTEGRITY_ENGINE.md).
+**Status: implemented (D-081, migration `1302_action_steps`, not yet deployed).** Sealed `action_step` records, `/api/v3/action-steps` (+ `/suggest`, Meta-only AT-7, proposal only), `/notes/steps` ([API §6.18](../api/API_SPEC_V3.md)). Open: AB-T11 manual accessibility run, live Meta run of AT-7, list pagination. Original proposal text follows. Task BW-007/BW-008/BW-009. Related [BWYW roadmap](../roadmap/BUILD_FOR_YOUR_WORLD_2026.md) and [MIE 1.0 concept](../vision/MEANING_INTEGRITY_ENGINE.md).
 
 ## 1. Why this is a useful product task
 

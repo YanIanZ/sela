@@ -1,6 +1,6 @@
 # Build for Your World — acceptance, test and evidence matrix
 
-**Status: proposed tests; NOT RUN by this documentation PR.** References [roadmap](../roadmap/BUILD_FOR_YOUR_WORLD_2026.md), [architecture](../architecture/MEANING_CONTINUITY_EXTENSION.md), [video](../demo/META_HACKATHON_2026_STORYBOARD.md). Existing MIE scenario-B coverage is not evidence that proposed Timeline, Passport or Action Bridge flows are shipped.
+**Status (2026-11-02, D-081): P0 automated tests executed locally for the three features** — BW-T01, T02, T05–T19 (except T20), T22 (store side), T23 in Go/PostgreSQL and Vitest; manual accessibility (BW-T20), browser E2E and live Meta for AT-7 not run. Originally proposed tests. References [roadmap](../roadmap/BUILD_FOR_YOUR_WORLD_2026.md), [architecture](../architecture/MEANING_CONTINUITY_EXTENSION.md), [video](../demo/META_HACKATHON_2026_STORYBOARD.md). Existing MIE scenario-B coverage is not evidence that proposed Timeline, Passport or Action Bridge flows are shipped.
 
 ## 1. Test levels and evidence
 
@@ -84,11 +84,11 @@ Critical review must include integration with migrations 1200 (MIE) and 1300 (pa
 
 ```yaml
 feature_pack: "bwyw-2026"
-status: NOT_IMPLEMENTED_IN_THIS_PR
+status: P0_IMPLEMENTED_LOCAL
 features:
-  context_timeline: PLANNED
-  care_passport_preset: PLANNED
-  personal_action_bridge: PLANNED
+  context_timeline: IMPLEMENTED_LOCAL
+  care_passport_preset: IMPLEMENTED_LOCAL
+  personal_action_bridge: IMPLEMENTED_LOCAL   # migration 1302_action_steps
   video_shotlist: AUTHORED
   video_recording: NOT_RECORDED
 test_evidence:
