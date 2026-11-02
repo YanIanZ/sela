@@ -40,6 +40,7 @@ export async function attach(page, router, log = []) {
       const reply = router(req.method(), path, body) ?? { status: 404, error: { code: "not_found" } };
       log.push(`${req.method()} ${path} -> ${reply.status ?? 200}`);
       const status = reply.status ?? 200;
+      if (reply.delay) await new Promise((r) => setTimeout(r, reply.delay));
       return route.fulfill({
         status,
         contentType: "application/json",

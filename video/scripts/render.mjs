@@ -155,6 +155,27 @@ else if (cmd === "master") {
   await renderRange(page, "Teaser", 0, total, file);
   await browser.close();
   concatAndMux([file], join(ROOT, "public/audio/score-teaser.wav"), join(OUT, "SELA-Beyond-Being-Heard-teaser-30s.mp4"));
+} else if (cmd === "demo") {
+  // Product demo: render in ~30 s chunks on parallel pages, then concat + mux.
+  bundle();
+  const total = 5400, chunk = 900;
+  const ranges = [];
+  for (let f = 0; f < total; f += chunk) ranges.push([f, Math.min(total, f + chunk)]);
+  const browser = await launch();
+  const queue = ranges.map((r, i) => ({ r, file: join(CACHE, "demo", `part${String(i).padStart(2, "0")}.mp4`) })).filter((q) => process.env.SELA_FORCE || !existsSync(q.file));
+  await Promise.all(
+    Array.from({ length: Math.min(Number(process.env.SELA_WORKERS ?? 2), queue.length) }, async () => {
+      const page = await openPage(browser);
+      while (queue.length) {
+        const q = queue.shift();
+        await renderRange(page, "Demo", q.r[0], q.r[1], q.file);
+        console.log("demo part done", q.r.join("-"));
+      }
+    }),
+  );
+  await browser.close();
+  const files = ranges.map((_, i) => join(CACHE, "demo", `part${String(i).padStart(2, "0")}.mp4`));
+  concatAndMux(files, join(ROOT, "public/audio/score-demo.wav"), join(OUT, "SELA-Product-Demo-3min-1080p-EN-subs.mp4"));
 } else {
-  console.log("usage: render.mjs still|scene|master|teaser");
+  console.log("usage: render.mjs still|scene|master|teaser|demo");
 }

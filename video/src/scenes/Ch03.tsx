@@ -152,14 +152,14 @@ function Graph({ start }: { start: number }) {
 }
 
 // ---------------- the chapter ----------------
-export function Ch03() {
+export function Ch03({ hideMark = false }: { hideMark?: boolean } = {}) {
   const frame = useCurrentFrame();
   const swap = prog(frame, q.swap, 22, EASE.inOut);
   const graphOn = envelope(frame, q.graph - 6, q.proof + 6, 16, 18);
   const settled = frame >= q.cancelled + 20;
   return (
     <Ground glow={0.55} gx={frame > q.graph ? 50 : 62} grid={frame > q.graph ? 0.4 : 0.22} tint={frame >= q.wave && frame < q.proof ? C.leaf : C.leafSoft}>
-      <ChapterMark n="03" title="MEANING INTEGRITY ENGINE" at={q.diff} out={q.title - 10} />
+      {!hideMark && <ChapterMark n="03" title="MEANING INTEGRITY ENGINE" at={q.diff} out={q.title - 10} />}
 
       {/* ONE WORD. kadang -> selalu. DIFFERENT MEANING. */}
       <AbsoluteFill style={{ opacity: 1 - prog(frame, q.diff - 16, 14) }}>

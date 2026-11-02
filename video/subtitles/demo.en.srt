@@ -1,0 +1,143 @@
+1
+00:00:00,500 --> 00:00:03,900
+Some days, the hardest part isn't finding an answer.
+
+2
+00:00:04,100 --> 00:00:07,700
+It's explaining what we really feel.
+
+3
+00:00:08,400 --> 00:00:12,000
+This is Sela. Nadia, a fictional adult, starts to write.
+
+4
+00:00:13,433 --> 00:00:18,033
+Replies here come from a labelled test program, not from Meta.
+
+5
+00:00:18,100 --> 00:00:21,700
+Sela notices what she meant: an interpretation, not a fact.
+
+6
+00:00:22,067 --> 00:00:27,667
+A meaning check compares it with her words. Nadia decides.
+
+7
+00:00:30,467 --> 00:00:34,267
+But what if a wrong interpretation was already saved?
+
+8
+00:00:34,700 --> 00:00:39,500
+This is a scripted test mistake: "sometimes" became "always".
+
+9
+00:00:39,800 --> 00:00:43,200
+The meaning check flags it as an important change.
+
+10
+00:00:45,533 --> 00:00:48,733
+Nadia fixes it in her own words.
+
+11
+00:00:50,300 --> 00:00:55,300
+Before saving, Sela shows everything this will affect.
+
+12
+00:00:57,867 --> 00:01:01,667
+One correction reaches everything that depends on it.
+
+13
+00:01:02,200 --> 00:01:07,600
+The Meaning Integrity Engine traces summaries, links and requests in one step.
+
+14
+00:01:08,500 --> 00:01:11,700
+The old summary needs review again.
+
+15
+00:01:12,733 --> 00:01:15,533
+Its share link is stopped.
+
+16
+00:01:16,267 --> 00:01:22,667
+The request to the simulated service is cancelled. What others already read can't be recalled.
+
+17
+00:01:23,667 --> 00:01:27,467
+"My story over time" shows Nadia's notes across the days.
+
+18
+00:01:28,167 --> 00:01:32,967
+Her own words, with source versions. No AI, no scores, no diagnosis.
+
+19
+00:01:33,367 --> 00:01:36,767
+She picks two notes to bring to a summary.
+
+20
+00:01:39,800 --> 00:01:43,000
+If she wants, Nadia picks one small step.
+
+21
+00:01:44,367 --> 00:01:47,967
+She writes it herself: two questions for a consultation.
+
+22
+00:01:50,367 --> 00:01:53,967
+No reminders, no day counts. She can skip it.
+
+23
+00:01:54,167 --> 00:01:55,967
+Next, a sheet to bring along.
+
+24
+00:01:56,200 --> 00:02:00,800
+Sela says it clearly: not a medical passport, record or diagnosis.
+
+25
+00:02:02,767 --> 00:02:06,767
+Each statement points to an original quote and its source version.
+
+26
+00:02:08,333 --> 00:02:12,333
+This preview is exactly what a recipient would receive.
+
+27
+00:02:13,800 --> 00:02:18,600
+Nadia approves this exact version. Only approved versions can be shared.
+
+28
+00:02:21,067 --> 00:02:24,467
+When she's ready, Nadia can send the sheet to a service.
+
+29
+00:02:25,533 --> 00:02:30,333
+Here the recipient is a simulated service, not a real clinic or practitioner.
+
+30
+00:02:31,867 --> 00:02:34,867
+The service proposes times. Nadia chooses.
+
+31
+00:02:36,667 --> 00:02:39,667
+No real appointment is made in this demo.
+
+32
+00:02:40,100 --> 00:02:43,100
+Nadia can revoke access at any time.
+
+33
+00:02:46,067 --> 00:02:49,967
+Future access is blocked. Copies already viewed can't be recalled.
+
+34
+00:02:50,500 --> 00:02:54,500
+AI should help us explain our story, not take over its meaning.
+
+35
+00:02:54,900 --> 00:02:58,100
+Your story. Your meaning. Your next step.
+
+36
+00:02:58,200 --> 00:02:59,900
+Sela. Beyond being heard.

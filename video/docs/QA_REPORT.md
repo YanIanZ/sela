@@ -82,3 +82,31 @@ No passwords, tokens, API keys, real users, real records, share links, access co
 | Flashing | No full-frame flashes; light sweeps peak at ~22 % alpha; no strobe |
 | Type check | Not completed here: `@types/react` could not be installed offline, so `tsc` stops on missing React types. Run `npm i && npm run typecheck` once. The bundle builds and every frame renders. |
 | Frame review | Stills reviewed at the busiest moments of every chapter before the full render; rendered chapter files spot-checked mid-transition |
+
+
+---
+
+# Product demo (3:00) — addendum
+
+`out/SELA-Product-Demo-3min-1080p-EN-subs.mp4`, 1920×1080, 30 fps, 5,400 frames.
+
+| Item | Detail |
+| --- | --- |
+| Footage | Real interactions recorded by `capture/record.mjs` in the real SELA web UI (`web/src` at `dfdffd0`), synthetic Nadia fixture, viewport 1280×720 at 1.2× (1536×864). Typing, clicks, scrolling and page changes are real UI events; the drawn cursor and click ripple are added because headless Chrome has no pointer. Push-ins follow element boxes recorded at capture time. |
+| Share of film | 4,683 of 5,400 frames (86.7 %) are product footage; the rest are the intro, a 6 s Meaning Integrity Engine graph insert (from the master, labelled as illustration) and the end card. |
+| Waits | "Sela sedang menulis…" and the reflection request are real client states; the fixture delays the response by 1.6 s / 1.1 s so the state is visible. |
+| AI wording | The talk reply is SELA's labelled test double ("Sela · balasan uji (bukan AI)"); the bottom bar adds "TEST DOUBLE · NOT LIVE META OUTPUT" from the moment it is sent. The reflection "Kamu kadang butuh waktu sendiri." has no Meaning Diff differences (real `CompareMeaning` output). |
+| Fixture error | "TEST FIXTURE · SIMULATED AI ERROR" (solid amber) is on screen for the whole memory sequence until Nadia saves her correction. |
+| Partners | "Klinik Cerita Demo" always appears with SELA's own "Simulasi" badge and the film's "SIMULATED PROFESSIONAL" tag. |
+| Subtitles | English, burned in, ≤ 17 characters per second, never overlapping (`node scripts/demo-plan.mjs` checks). Also as `subtitles/demo.en.srt` (and as a soft track in the dubbed file). |
+| Dubbing | **Not produced in this build:** no text-to-speech engine is available offline here and building one was blocked. `scripts/dub.py` places recorded takes or `edge-tts` voices on the exact cue times with ducking; its timing/ducking path was verified here with `--test-tones`. |
+| Music | `scripts/score_demo.py`, original, −18 LUFS bed (final dubbed mix normalised to −16 LUFS). |
+
+Every narration line maps to the same evidence as the master (see the claim checklist above). New lines specific to the demo:
+
+| Line | Backing |
+| --- | --- |
+| "Replies here come from a labelled test program, not from Meta." | Talk reply provenance `test_double` → UI label "balasan uji (bukan AI)" |
+| "She picks two notes to bring to a summary." | "Bawa ke ringkasan" checkboxes on `/notes/context` (`ContextTimeline.tsx:456`) |
+| "The service proposes times. Nadia chooses." | Proposal slots + "Pilih …" → `POST /care-requests/{id}/confirm` (`CarePlan.tsx:233`) |
+| "Nadia can revoke access at any time. Future access is blocked." | "Cabut akses" → `POST /shares/{id}/revoke`; `TestRevokeExpiryAndDeleteEndRecipientAccess` |

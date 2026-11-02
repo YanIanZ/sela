@@ -356,6 +356,11 @@ export function createRouter(initial = {}) {
     }
     if (method === "GET" && p.startsWith("/conversations/")) return { data: room(state) };
     if (method === "GET" && p === "/memory/mem-f0") return { data: memory(state) };
+    // Demo recording: sending a turn and asking for reflections. The stream
+    // route answers "unavailable" so the client uses its JSON compatibility path.
+    if (method === "POST" && p === "/conversations/room-1/turns/stream") return { status: 404, error: { code: "stream_unavailable" } };
+    if (method === "POST" && p === "/conversations/room-1/turns") { state.sent = true; return { data: room(state), delay: 1600 }; }
+    if (method === "POST" && p === "/conversations/room-1/reflections") { state.reflection = true; return { data: room(state), delay: 1100 }; }
     if (method === "POST" && p === "/consultation-summaries/sum-new/approve") { state.approved = true; return { data: summaryNew(state) }; }
     if (method === "POST" && p === "/action-steps") { state.stepSaved = true; return { data: steps(state)[0] }; }
     if (method === "POST" && p === "/care-requests/cr-new/confirm") { state.request = "confirmed"; return { data: { request: careRequests(state)[0] } }; }

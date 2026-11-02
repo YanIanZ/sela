@@ -10,6 +10,7 @@ A 3-minute kinetic-typography product film and a 30-second teaser for SELA's *Bu
 | Truth audit | [`docs/QA_REPORT.md`](docs/QA_REPORT.md) — scene-by-scene evidence, labels, missing assets |
 | Narration | [`docs/VO_SCRIPT_ID.md`](docs/VO_SCRIPT_ID.md), [`subtitles/`](subtitles/) (ID + EN SRT) |
 | Sound | [`docs/SOUND_DESIGN.md`](docs/SOUND_DESIGN.md) — original, code-synthesised score |
+| **Product demo** | 1920×1080 · 30 fps · 180 s (`out/SELA-Product-Demo-3min-1080p-EN-subs.mp4`): ~85 % real SELA UI in motion, English subtitles burned in; Indonesian dubbing via [`docs/DUB_SCRIPT_ID.md`](docs/DUB_SCRIPT_ID.md) + `scripts/dub.py` |
 
 ## Layout
 
@@ -48,5 +49,18 @@ npm run still -- Master 1750 2000       # check frames before a full render
 npm run render:master                   # .cache/scenes/ch01–08.mp4 → concat → mux score
 npm run render:teaser
 ```
+
+### Product demo
+
+```sh
+npm run capture:build
+node capture/record.mjs            # frame-exact screen recording → public/demo/<clip>/ + demo.json
+node scripts/demo-plan.mjs         # resolve edit + cues → .cache/demo-plan.json, subtitles/demo.*.srt
+python3 scripts/score_demo.py      # music bed + UI sounds → public/audio/score-demo.wav
+node scripts/render.mjs demo       # → out/SELA-Product-Demo-3min-1080p-EN-subs.mp4
+python3 scripts/dub.py --tts edge  # or --lines DIR with recorded takes → ...-ID-dub-EN-subs.mp4
+```
+
+The edit lives in `src/demo/plan.mjs` (segment order, chapter titles, truth tags) and `src/demo/vo.json` (narration anchored to recorded marks such as `send` or `impact`). Re-recording a clip moves its marks, and the subtitles, sounds and dubbing follow automatically.
 
 To change one chapter, edit its scene, delete `.cache/scenes/<id>.mp4` and run `render:master` again: only that chapter re-renders.
