@@ -1,0 +1,170 @@
+/* Life Context Timeline (BW-003). Textual timeline first; no chart.
+   Status is carried by text and icon, never colour alone. Reflows at 320px. */
+
+.ct-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin: var(--space-3) 0 0;
+}
+
+.ct-note .s-icon {
+  flex: none;
+  margin-top: 0.15em;
+}
+
+.ct-day {
+  margin-top: var(--space-5);
+}
+
+.ct-day h2 {
+  font-size: var(--font-size-4);
+  font-weight: var(--font-weight-medium);
+  color: var(--c-muted);
+  margin-bottom: var(--space-2);
+}
+
+.ct-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ct-item {
+  border: 1px solid var(--c-border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--c-surface);
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+.ct-item:focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.ct-item--stale {
+  border-left: 4px solid var(--c-warning-border);
+}
+
+.ct-item--needs_review {
+  border-left: 4px dotted var(--c-ai);
+}
+
+.ct-item-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ct-item-head h3 {
+  margin: 0;
+  font-size: var(--font-size-3);
+  overflow-wrap: anywhere;
+}
+
+.ct-meta {
+  margin: var(--space-1) 0 0;
+  color: var(--c-muted);
+  font-size: var(--font-size-2);
+}
+
+.ct-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.ct-status--stale {
+  border-color: var(--c-warning-border);
+  background: var(--c-warning-bg);
+  color: var(--c-warning);
+}
+
+.ct-status--needs_review {
+  border: 1px dashed var(--c-ai);
+  background: var(--c-ai-bg);
+  color: var(--c-ai-text);
+}
+
+.ct-status--current {
+  border-color: var(--c-success);
+  color: var(--c-success);
+}
+
+.ct-explain {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-2);
+}
+
+.ct-excerpt,
+.ct-source-text {
+  margin: var(--space-3) 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: var(--line-height-body);
+}
+
+.ct-source {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-2);
+  background: var(--c-user-bg);
+  color: var(--c-user-text);
+}
+
+.ct-source-label {
+  margin: 0;
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-bold);
+}
+
+.ct-source .ct-source-text {
+  margin-top: var(--space-2);
+}
+
+.ct-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.ct-select {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  cursor: pointer;
+}
+
+.ct-select input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+}
+
+.ct-more {
+  margin-top: var(--space-4);
+}
+
+.ct-summary {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--c-border-subtle);
+}
+
+.ct-count {
+  font-weight: var(--font-weight-medium);
+}
+
+@media (forced-colors: active) {
+  .ct-item--stale,
+  .ct-item--needs_review {
+    border-left-color: CanvasText;
+  }
+}

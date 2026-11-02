@@ -1,0 +1,26 @@
+/* Care Passport (BW-2): a preset view of a consultation summary. Every
+ * status is icon + words; nothing relies on colour, and every block wraps
+ * at 320px. */
+.c-passport { display: grid; gap: 1.5rem; min-width: 0; }
+.c-passport-head { display: grid; gap: 0.5rem; min-width: 0; }
+.c-passport-head h2 { margin: 0; overflow-wrap: anywhere; }
+.c-passport-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0; }
+.c-passport-status { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.65rem; border: 1px solid currentColor; border-radius: var(--radius-pill); font-size: var(--font-size-1); font-weight: 600; max-width: 100%; overflow-wrap: anywhere; }
+.c-passport-status--approved { background: var(--c-success-bg); color: var(--c-success); }
+.c-passport-status--needs_review { background: var(--c-warning-bg); color: var(--c-warning); }
+.c-passport-status--draft { background: var(--c-surface-quiet); color: var(--c-text, inherit); }
+.c-passport-sim { white-space: normal; max-width: 100%; overflow-wrap: anywhere; }
+.c-passport-list, .c-passport-sources, .c-passport-recipients { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; min-width: 0; }
+.c-passport-card { display: grid; gap: 0.5rem; padding: 1.25rem; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-3); min-width: 0; }
+.c-passport-card h2 { margin: 0; font-size: var(--font-size-3); overflow-wrap: anywhere; }
+.c-passport-section { display: grid; gap: 0.75rem; min-width: 0; }
+.c-passport-section h2 { margin: 0; }
+.c-passport-section p, .c-passport-section li { overflow-wrap: anywhere; }
+.c-passport-source { display: grid; gap: 0.25rem; min-width: 0; }
+.c-passport-questions { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.35rem; }
+.c-passport-preview .c-paper { gap: 0.75rem; }
+.c-passport-preview .c-paper h3, .c-passport-preview .c-paper h4 { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 30rem) {
+  .c-passport-card { padding: 1rem; }
+  .c-passport-preview .c-paper { padding: 1rem; }
+}

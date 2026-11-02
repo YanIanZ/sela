@@ -195,3 +195,127 @@ func TestMeaningSourceDeletionKeepsHistoryButStopsShares(t *testing.T) {
 		t.Fatalf("kept summary: %v", kept)
 	}
 }
+
+// TestMeaningSourceEditMarksActionForReview (BW-3, AB-T07/BW-T11): an
+// action step pinned to a note is a leaf MIE descendant. Editing the note
+// marks the action's current version needs_review in the same transaction,
+// keeps its text, and counts it in the event; the owner reaffirms, detaches
+// or discards. An action with no source, or pinned elsewhere, is untouched.
+func TestMeaningSourceEditMarksActionForReview(t *testing.T) {
+	t.Parallel()
+	e, _ := actionEnv(t)
+	owner := e.client()
+	owner.guest("18_plus")
+	noteID, noteV := newNote(owner, actionSourceID)
+	otherID, otherV := newNote(owner, "Catatan sintetis lain.")
+	pin := func(text, id string, v int) string {
+		return owner.must(201, "POST", "/api/v3/action-steps", map[string]any{"text": text, "storageGranted": true,
+			"sourceRefs": []map[string]any{{"recordId": id, "version": v}}}).data()["id"].(string)
+	}
+	pinned := pin(actionMarker, noteID, noteV)
+	discardMe := pin("Langkah sintetis yang nanti dibuang.", noteID, noteV)
+	elsewhere := pin("Langkah sintetis untuk catatan lain.", otherID, otherV)
+	manual := owner.must(201, "POST", "/api/v3/action-steps", map[string]any{"text": "Langkah manual tanpa sumber.", "storageGranted": true}).data()["id"].(string)
+
+	impact := owner.must(200, "GET", "/api/v3/meaning/impact?id="+noteID, nil).data()["impact"].(map[string]any)
+	if impact["actions"].(float64) != 2 || impact["summaries"].(float64) != 0 {
+		t.Fatalf("impact preview: %v", impact)
+	}
+
+	noteV = editNote(owner, noteID, noteV, actionSourceID+" Versi kedua.")
+	got := owner.must(200, "GET", "/api/v3/action-steps/"+pinned, nil).data()
+	review := got["review"].(map[string]any)
+	ref := got["sourceRefs"].([]any)[0].(map[string]any)
+	if got["status"] != "needs_review" || got["text"] != actionMarker || review["stale"] != true || review["staleReason"] != "source_edited" ||
+		review["userApproved"] != false || ref["current"] != false || ref["version"].(float64) != 1 || ver(got) != 1 {
+		t.Fatalf("after source edit: %v", got)
+	}
+	for _, id := range []string{elsewhere, manual} {
+		if d := owner.must(200, "GET", "/api/v3/action-steps/"+id, nil).data(); d["status"] != "chosen" || d["review"].(map[string]any)["stale"] != false {
+			t.Fatalf("unrelated action changed: %v", d)
+		}
+	}
+	events := owner.must(200, "GET", "/api/v3/meaning/events", nil).data()["events"].([]any)
+	if len(events) != 1 || events[0].(map[string]any)["actions"].(float64) != 2 || events[0].(map[string]any)["reason"] != "source_edited" {
+		t.Fatalf("events: %v", events)
+	}
+	if n := e.count(`SELECT count(*) FROM mie_stale WHERE kind='action_step'`); n != 2 {
+		t.Fatalf("%d action stale marks", n)
+	}
+
+	// needs_review leaves only by a review or a discard.
+	for _, body := range []map[string]any{
+		{"expectedVersion": 1, "status": "tried"},
+		{"expectedVersion": 1, "text": "Teks baru tanpa meninjau sumber."},
+		{"expectedVersion": 1, "reaffirm": true, "status": "tried"},
+	} {
+		if r := owner.call("PATCH", "/api/v3/action-steps/"+pinned, body); r.status != 409 || r.code() != "invalid_transition" {
+			t.Fatalf("%v: %d %s", body, r.status, r.raw)
+		}
+	}
+	re := owner.must(200, "PATCH", "/api/v3/action-steps/"+pinned, map[string]any{"expectedVersion": 1, "reaffirm": true}).data()
+	ref = re["sourceRefs"].([]any)[0].(map[string]any)
+	if re["status"] != "chosen" || re["review"].(map[string]any)["stale"] != false || ref["version"].(float64) != float64(noteV) || ref["current"] != true || ver(re) != 2 {
+		t.Fatalf("reaffirmed: %v", re)
+	}
+	dis := owner.must(200, "PATCH", "/api/v3/action-steps/"+discardMe, map[string]any{"expectedVersion": 1, "status": "discarded"}).data()
+	if dis["status"] != "discarded" || dis["text"] != "Langkah sintetis yang nanti dibuang." {
+		t.Fatalf("discarded: %v", dis)
+	}
+
+	// A second edit reaches the reaffirmed version; detaching ends the link.
+	noteV = editNote(owner, noteID, noteV, actionSourceID+" Versi ketiga.")
+	if d := owner.must(200, "GET", "/api/v3/action-steps/"+pinned, nil).data(); d["status"] != "needs_review" {
+		t.Fatalf("second edit: %v", d)
+	}
+	det := owner.must(200, "PATCH", "/api/v3/action-steps/"+pinned, map[string]any{"expectedVersion": 2, "sourceRefs": []any{}}).data()
+	if det["status"] != "chosen" || len(det["sourceRefs"].([]any)) != 0 || det["text"] != actionMarker {
+		t.Fatalf("detached: %v", det)
+	}
+	editNote(owner, noteID, noteV, actionSourceID+" Versi keempat.")
+	if d := owner.must(200, "GET", "/api/v3/action-steps/"+pinned, nil).data(); d["status"] != "chosen" || d["review"].(map[string]any)["stale"] != false {
+		t.Fatalf("detached action reached by a later edit: %v", d)
+	}
+	lineage := owner.must(200, "GET", "/api/v3/meaning/lineage?id="+pinned, nil).data()["lineage"].(map[string]any)
+	if node := lineage["node"].(map[string]any); node["kind"] != "action_step" || len(lineage["parents"].([]any)) != 0 || len(lineage["descendants"].([]any)) != 0 {
+		t.Fatalf("lineage of a detached action: %v", lineage)
+	}
+}
+
+// TestMeaningSourceDeletionMarksActionForReview (BW-3, AB-T08/BW-T11):
+// deleting a pinned source, even with derived=delete, never deletes the
+// action text; it reads needs_review, cannot be reaffirmed against the
+// deleted source, and can be detached.
+func TestMeaningSourceDeletionMarksActionForReview(t *testing.T) {
+	t.Parallel()
+	e, _ := actionEnv(t)
+	owner := e.client()
+	owner.guest("18_plus")
+	noteID, noteV := newNote(owner, actionSourceID)
+	id := owner.must(201, "POST", "/api/v3/action-steps", map[string]any{"text": actionMarker, "storageGranted": true,
+		"sourceRefs": []map[string]any{{"recordId": noteID, "version": noteV}}}).data()["id"].(string)
+	owner.must(200, "PATCH", "/api/v3/action-steps/"+id, map[string]any{"expectedVersion": 1, "status": "tried"})
+	owner.must(200, "DELETE", "/api/v3/records/"+noteID+"?derived=delete", map[string]any{"expectedVersion": noteV})
+
+	got := owner.must(200, "GET", "/api/v3/action-steps/"+id, nil).data()
+	ref := got["sourceRefs"].([]any)[0].(map[string]any)
+	if got["status"] != "needs_review" || got["text"] != actionMarker || got["review"].(map[string]any)["staleReason"] != "source_deleted" ||
+		ref["current"] != false || ref["kind"] != nil {
+		t.Fatalf("after source deletion: %v", got)
+	}
+	if n := e.count(`SELECT count(*) FROM mie_edges WHERE parent_id::text=$1`, noteID); n != 0 {
+		t.Fatalf("%d edges from the deleted source", n)
+	}
+	if r := owner.call("PATCH", "/api/v3/action-steps/"+id, map[string]any{"expectedVersion": 2, "reaffirm": true}); r.status != 404 || r.field() != "sourceRefs" {
+		t.Fatalf("reaffirm a deleted source: %d %s", r.status, r.raw)
+	}
+	// A late client still holding the deleted source cannot pin it again.
+	if r := owner.call("POST", "/api/v3/action-steps", map[string]any{"text": "x", "storageGranted": true,
+		"sourceRefs": []map[string]any{{"recordId": noteID, "version": noteV}}}); r.status != 404 {
+		t.Fatalf("pin a deleted source: %d %s", r.status, r.raw)
+	}
+	det := owner.must(200, "PATCH", "/api/v3/action-steps/"+id, map[string]any{"expectedVersion": 2, "sourceRefs": []any{}}).data()
+	if det["status"] != "chosen" || det["text"] != actionMarker || len(det["sourceRefs"].([]any)) != 0 {
+		t.Fatalf("detached: %v", det)
+	}
+}

@@ -29,6 +29,16 @@ func (s *Server) v3ExportSummary(w http.ResponseWriter, r *http.Request, p accou
 	if lang != "en" {
 		lang = "id"
 	}
+	switch r.URL.Query().Get("preset") {
+	case "", "summary":
+	case "passport":
+		// Care Passport preset: renders the recipient projection (BW-006).
+		s.v3ExportPassport(w, r, p, format, lang)
+		return
+	default:
+		writeError(w, r, http.StatusBadRequest, "invalid_input", "preset")
+		return
+	}
 	rec, err := s.opt.Accounts.Summary(r.Context(), p.UserID, r.PathValue("id"))
 	if err != nil {
 		s.v3Error(w, r, err)

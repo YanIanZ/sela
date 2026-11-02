@@ -137,6 +137,7 @@ type OwnerStore interface {
 	UpdateRecord(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
 	DeleteRecord(context.Context, UserID, string, int, string) error
 	DerivedImpact(context.Context, UserID, string) (DerivedImpact, error)
+	ContextTimeline(context.Context, UserID, TimelineQuery) (TimelinePage, error)
 
 	Memory(context.Context, UserID) (MemoryView, error)
 	MemoryItem(context.Context, UserID, string) (PersonalRecord, error)
@@ -151,6 +152,7 @@ type OwnerStore interface {
 	UpdateSummary(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
 	ApproveSummary(context.Context, UserID, string, int) (PersonalRecord, error)
 	DeleteSummary(context.Context, UserID, string, int) error
+	PassportPreview(context.Context, UserID, string) (PassportPreview, error)
 	CreateFollowup(context.Context, UserID, string, RecordInput) (PersonalRecord, error)
 	UpdateFollowup(context.Context, UserID, string, string, RecordInput) (PersonalRecord, error)
 	Followups(context.Context, UserID, string) ([]PersonalRecord, error)
@@ -166,6 +168,12 @@ type OwnerStore interface {
 	MeaningImpact(context.Context, UserID, string) (MIEImpact, error)
 	MeaningLineage(context.Context, UserID, string) (MIELineage, error)
 	MeaningEvents(context.Context, UserID) ([]MIEImpact, error)
+	ActionSteps(context.Context, UserID) ([]ActionStep, error)
+	ActionStep(context.Context, UserID, string) (ActionStep, error)
+	CreateActionStep(context.Context, UserID, ActionStepInput) (ActionStep, error)
+	UpdateActionStep(context.Context, UserID, string, ActionStepPatch) (ActionStep, error)
+	DeleteActionStep(context.Context, UserID, string, int) error
+	SignActionProposal(context.Context, UserID, ActionProposal) (string, error)
 
 	PrivateNames(context.Context, UserID) ([]PrivateName, error)
 	CreatePrivateName(context.Context, UserID, string) (PrivateName, error)

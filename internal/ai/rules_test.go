@@ -81,7 +81,7 @@ func TestRR8NeedsVerification(t *testing.T) {
 		want := map[Task][2]bool{
 			TaskCrisisSupport: {false, false}, TaskListeningReply: {false, true}, TaskReflection: {false, true},
 			TaskMemoryProposal: {true, true}, TaskSummaryDraft: {true, true}, TaskOpeningLines: {false, true},
-			TaskReadingVerification: {true, true},
+			TaskReadingVerification: {true, true}, TaskActionSuggestion: {false, true},
 		}[task]
 		if got := needsVerification(pol, clean); got != want[0] {
 			t.Errorf("%s clean: %v", task, got)
@@ -109,6 +109,7 @@ func TestTaxonomy(t *testing.T) {
 		TaskSummaryDraft:        {"AT-4", true, false, VerifyAlways, false},
 		TaskOpeningLines:        {"AT-5", true, false, VerifyWhenFlagged, true},
 		TaskReadingVerification: {"AT-6", false, false, VerifyAlways, false},
+		TaskActionSuggestion:    {"AT-7", true, false, VerifyWhenFlagged, true},
 	}
 	for task, w := range want {
 		p, ok := PolicyFor(task)
@@ -117,8 +118,8 @@ func TestTaxonomy(t *testing.T) {
 			t.Errorf("%s: %+v", task, p)
 		}
 	}
-	if len(Tasks()) != 7 {
-		t.Fatal("seven tasks")
+	if len(Tasks()) != 8 {
+		t.Fatal("eight tasks")
 	}
 	if p, _ := PolicyFor(TaskListeningReply); p.Budget != 60*time.Second || p.FirstContentWait != 20*time.Second ||
 		p.VerifierAttempt != 15*time.Second || p.MaxRetryAfter != 3*time.Second || p.reserves() != 0 {

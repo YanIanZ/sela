@@ -18,6 +18,7 @@ import {
   entryRoute,
 } from "./Continuity";
 import { WeeklyPage } from "./Weekly";
+import { ContextTimelinePage } from "./ContextTimeline";
 import { EmergencySheet } from "../emergency";
 import { ImpactSummary, latestMeaningEvent, resultText, useMeaningImpact } from "../meaning";
 import { helpData } from "../helpdata";
@@ -92,6 +93,7 @@ export function NotesPage({ user, path }: { user: Profile; path: string }) {
   if (path === "/notes/check-in") return <CheckIn />;
   if (path === "/notes/patterns") return <Patterns />;
   if (path === "/notes/weekly") return <WeeklyPage />;
+  if (path === "/notes/context") return <ContextTimelinePage />;
   if (path === "/notes/memory") return <MemoryPage />;
   if (path.startsWith("/notes/memory/")) {
     return <MemoryDetailPage key={path} id={path.slice("/notes/memory/".length)} />;
@@ -169,6 +171,7 @@ function Timeline({ user }: { user: Profile }) {
         current="/notes"
         items={[
           { to: "/notes", label: w("Linimasa", "Timeline") },
+          { to: "/notes/context", label: w("Perjalanan cerita", "Story over time") },
           { to: "/notes/weekly", label: w("Refleksi mingguan", "Weekly reflection") },
           { to: "/notes/memory", label: w("Yang Sela ingat", "What Sela remembers") },
         ]}

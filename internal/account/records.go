@@ -104,9 +104,12 @@ type PersonalRecord struct {
 	Stale *StaleInfo `json:"stale,omitempty"`
 	// Meaning is the Meaning Diff of an AI claim against its quote; nil
 	// for the owner's own wording.
-	Meaning   *ledger.MeaningCheck `json:"meaning,omitempty"`
-	CreatedAt time.Time            `json:"createdAt"`
-	UpdatedAt time.Time            `json:"updatedAt"`
+	Meaning *ledger.MeaningCheck `json:"meaning,omitempty"`
+	// Action holds the sealed state of an action step (BW-3); nil for
+	// every other kind.
+	Action    *ActionDetails `json:"action,omitempty"`
+	CreatedAt time.Time      `json:"createdAt"`
+	UpdatedAt time.Time      `json:"updatedAt"`
 }
 
 func recordRef(id string, version int) vault.Ref {
@@ -272,6 +275,11 @@ func (s *Store) Record(ctx context.Context, owner UserID, id string) (PersonalRe
 	if err != nil {
 		return PersonalRecord{}, err
 	}
+	if r.Kind == KindActionStep {
+		// Action steps have their own owner routes (BW-3); the generic
+		// record surface neither lists nor opens them.
+		return PersonalRecord{}, ErrNotFound
+	}
 	if r.Kind == KindMemory {
 		enabled, err := s.memoryEnabled(ctx, s.pool, owner)
 		if err != nil {
@@ -342,6 +350,9 @@ func (s *Store) Records(ctx context.Context, owner UserID) ([]PersonalRecord, er
 	}
 	out := make([]PersonalRecord, 0, len(records))
 	for _, r := range records {
+		if r.Kind == KindActionStep {
+			continue
+		}
 		if r.Kind != KindMemory || enabled {
 			out = append(out, r)
 		}
@@ -414,6 +425,9 @@ func (s *Store) DeleteRecord(ctx context.Context, owner UserID, id string, versi
 		r, err := s.record(ctx, tx, owner, id, true)
 		if err != nil {
 			return err
+		}
+		if r.Kind == KindActionStep {
+			return ErrNotFound // DeleteActionStep is the one deletion path
 		}
 		if version != r.Version {
 			return ErrStaleVersion

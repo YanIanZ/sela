@@ -16,6 +16,8 @@ const SupportPage = lazy(() =>
   import("./screens/Support").then((m) => ({ default: m.SupportPage })),
 );
 const SummariesPage = lazy(() => import("./screens/Continuity").then(m => ({ default: m.SummariesPage })));
+const PassportPage = lazy(() => import("./screens/Passport").then((m) => ({ default: m.PassportPage })));
+const ActionStepsPage = lazy(() => import("./screens/ActionSteps").then((m) => ({ default: m.ActionStepsPage })));
 const SupportFeaturePage = lazy(() =>
   import("./screens/Support").then((m) => ({ default: m.SupportFeaturePage })),
 );
@@ -112,7 +114,9 @@ function titleFor(path: string, lang: string): string {
   if (path === "/notes/write") return t("Tulis catatan", "Write a note");
   if (path === "/notes/check-in") return t("Cek perasaan", "Check-in");
   if (path === "/notes/patterns") return t("Pola dari cek perasaanmu", "Patterns in your check-ins");
+  if (path === "/notes/context") return t("Perjalanan ceritaku", "My story over time");
   if (path === "/notes/memory") return t("Yang Sela ingat", "What Sela remembers");
+  if (path === "/notes/steps") return t("Satu langkah, pilihanku", "One step I choose");
   if (path.startsWith("/notes/memory/")) return t("Yang Sela ingat", "What Sela remembers");
   if (path.startsWith("/notes/")) return t("Catatan", "Note");
   if (path === "/support") return t("Dukungan", "Support");
@@ -120,6 +124,7 @@ function titleFor(path: string, lang: string): string {
   if (path === "/support/plan") return t("Bantuan terencana", "Planned support");
   if (path === "/support/community" || path.startsWith("/support/community/")) return t("Ruang berbagi", "Sharing space");
   if (path.startsWith("/support/summaries")) return t("Ringkasan untuk konsultasi", "Summary for a consultation");
+  if (path === "/support/passport" || path.startsWith("/support/passport/")) return t("Ringkasan untuk dibawa", "My consultation preparation");
   if (path.startsWith("/support/shares")) return t("Status berbagi", "Sharing status");
   if (path === "/help") return t("Bantuan sekarang", "Help now");
   if (path === "/reading") return t("Bacaan & latihan kecil", "Reading & small exercises");
@@ -280,6 +285,8 @@ function AppRoutes() {
     screen = <HomePage user={user} />;
   } else if (user && (path === "/talk" || path.startsWith("/talk/"))) {
     screen = <TalkPage user={user} />;
+  } else if (user && path === "/notes/steps") {
+    screen = <ActionStepsPage user={user} />;
   } else if (user && (path === "/notes" || path.startsWith("/notes/"))) {
     screen = <NotesPage user={user} path={path} />;
   } else if (path === "/support/directory") {
@@ -290,6 +297,8 @@ function AppRoutes() {
     screen = <CarePlanPage />;
   } else if (user && (path.startsWith("/support/summaries") || path === "/support/prepare" || path === "/support/after")) {
     screen = <SummariesPage path={path.startsWith("/support/summaries") ? path : "/support/summaries"} />;
+  } else if (user && (path === "/support/passport" || path.startsWith("/support/passport/"))) {
+    screen = <PassportPage path={path} />;
   } else if (user && (path === "/support/community" || path.startsWith("/support/community/"))) {
     screen = <CommunityPage user={user} policies={policies} />;
   } else if (user && path.startsWith("/support/shares")) {

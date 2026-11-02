@@ -17,7 +17,7 @@ import (
 // Versions recorded in provenance.
 const (
 	GenerationSchemaVersion = "sela-ai-generation-v1"
-	PromptVersion           = "sela-ai-prompts-2026.11.01-2"
+	PromptVersion           = "sela-ai-prompts-2026.11.02-1"
 )
 
 // GenerationSchemaJSON is the generator output schema, the same for Meta
@@ -64,12 +64,23 @@ Set "declined" to true and return no items when you cannot help safely. Set "ris
 Reply with one json object only, without markdown, matching exactly this JSON schema: ` + GenerationSchemaJSON
 
 var taskRules = map[Task]string{
-	TaskListeningReply: listeningReplyRules,
-	TaskReflection:     "Task: write one item, a short \"Sela menangkap...\" card in one or two sentences saying what Sela understood, in the person's own terms. It is an interpretation the person will confirm, correct or remove. Cite the spans it rests on.",
-	TaskMemoryProposal: "Task: propose at most five short memory items, each a fact the person stated about themselves that may help later conversations, citing the spans it comes from. Return an empty items list when nothing is worth remembering.",
-	TaskSummaryDraft:   "Task: for each span with role \"item\", write one summary item that words it clearly for a consultation (see \"purpose\") in the person's own voice, citing exactly that span. Keep every item faithful and do not merge items.",
-	TaskOpeningLines:   "Task: write one to three first-person opening lines the person could say at the start of a consultation, each citing the approved summary items (spans with role \"item\") it uses.",
+	TaskListeningReply:   listeningReplyRules,
+	TaskReflection:       "Task: write one item, a short \"Sela menangkap...\" card in one or two sentences saying what Sela understood, in the person's own terms. It is an interpretation the person will confirm, correct or remove. Cite the spans it rests on.",
+	TaskMemoryProposal:   "Task: propose at most five short memory items, each a fact the person stated about themselves that may help later conversations, citing the spans it comes from. Return an empty items list when nothing is worth remembering.",
+	TaskSummaryDraft:     "Task: for each span with role \"item\", write one summary item that words it clearly for a consultation (see \"purpose\") in the person's own voice, citing exactly that span. Keep every item faithful and do not merge items.",
+	TaskOpeningLines:     "Task: write one to three first-person opening lines the person could say at the start of a consultation, each citing the approved summary items (spans with role \"item\") it uses.",
+	TaskActionSuggestion: actionSuggestionRules,
 }
+
+// actionSuggestionRules (AT-7, BW-3): one tentative, optional next step the
+// person may accept, rewrite or ignore. It is never treatment, a referral,
+// a score or a reminder.
+const actionSuggestionRules = `Task: offer exactly one item: one small, optional next step the person could choose to try, drawn only from what the spans say, worded as a gentle question or option in the person's language (for example "Mau menuliskan satu pertanyaan yang ingin kamu bawa saat berbicara dengan orang lain?").
+- It is an everyday, low-risk thing the person can do themselves: writing something down, preparing one question, drafting a short message to someone they trust, taking a pause, or looking up accurate information.
+- Never a treatment, a coping or breathing exercise framed as therapy, medication, a diagnosis, a call to an emergency line, an appointment booking, or anything that requires a professional. Never promise that it helps, and never mention streaks, scores, points, deadlines or reminders.
+- No pressure or urgency: the person may ignore it, and not trying it is fine.
+- Under 200 characters. Cite in span_ids the span it rests on.
+Set "declined" to true when the spans give no basis for a safe, practical step.`
 
 // listeningReplyRules (AT-1) make Sela talk like a person, not a template,
 // in one of two modes chosen by the person: "listen" (be heard, with one

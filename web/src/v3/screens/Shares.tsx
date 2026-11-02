@@ -74,12 +74,15 @@ export function SharesPage() {
   const w = useWords();
   const loc = useLocale();
   const { policies } = useSession();
+  const { query } = useRouter();
   const [shares, setShares] = useState<Share[] | null>(null);
   const [summaries, setSummaries] = useState<Entry[]>([]);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState(false);
-  const [form, setForm] = useState({ summaryId: "", label: "", purpose: "consultation", hours: 24 });
+  // A Care Passport hands its summary over as ?summary=; the owner still
+  // picks the recipient label, purpose and duration and gives consent.
+  const [form, setForm] = useState({ summaryId: query.get("summary") ?? "", label: "", purpose: "consultation", hours: 24 });
   const [created, setCreated] = useState<{ token: string; code: string; share: Share } | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [history, setHistory] = useState<Record<string, HistoryState>>({});
@@ -92,7 +95,9 @@ export function SharesPage() {
     ])
       .then(([s, c]) => {
         setShares(s.shares);
-        setSummaries(c.summaries.filter((x) => x.summaryState === "approved"));
+        const approved = c.summaries.filter((x) => x.summaryState === "approved");
+        setSummaries(approved);
+        setForm((f) => (f.summaryId === "" || approved.some((x) => x.id === f.summaryId) ? f : { ...f, summaryId: "" }));
       })
       .catch(setError);
   };

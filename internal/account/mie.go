@@ -30,6 +30,10 @@ const (
 	MIESummary = "summary"
 	MIEShare   = "share"
 	MIECare    = "care_request"
+	// MIEAction is an owner-chosen action step pinned to a source record
+	// version (BW-3). It is always a leaf: an invalidation marks its current
+	// version for review and never removes its text.
+	MIEAction = "action_step"
 )
 
 // Source record kinds a claim or statement may rest on.
@@ -84,12 +88,15 @@ type MIEImpact struct {
 	Summaries    int       `json:"summaries"`
 	Shares       int       `json:"shares"`
 	CareRequests int       `json:"careRequests"`
+	Actions      int       `json:"actions"`
 	Nodes        []MIENode `json:"nodes"`
 	At           time.Time `json:"at,omitempty"`
 }
 
 // Total is the number of descendants reached.
-func (m MIEImpact) Total() int { return m.Memories + m.Summaries + m.Shares + m.CareRequests }
+func (m MIEImpact) Total() int {
+	return m.Memories + m.Summaries + m.Shares + m.CareRequests + m.Actions
+}
 
 func (s *Store) mieEdge(ctx context.Context, tx pgx.Tx, owner UserID, parent, child MIENode) error {
 	if parent.ID == "" || child.ID == "" || parent.Version <= 0 || child.Version <= 0 || parent.ID == child.ID {
@@ -199,7 +206,7 @@ func mieLive(ctx context.Context, q db.DBTX, owner UserID, n MIENode) (bool, err
 	var ok bool
 	var err error
 	switch n.Kind {
-	case MIEMemory, MIESummary:
+	case MIEMemory, MIESummary, MIEAction:
 		err = q.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM personal_records WHERE user_id=$1 AND id::text=$2 AND version=$3)`,
 			owner, n.ID, n.Version).Scan(&ok)
 	case MIEShare:
@@ -227,6 +234,8 @@ func tally(nodes []MIENode, impact *MIEImpact) {
 			impact.Shares++
 		case MIECare:
 			impact.CareRequests++
+		case MIEAction:
+			impact.Actions++
 		}
 	}
 }
@@ -250,14 +259,14 @@ func (s *Store) invalidate(ctx context.Context, tx pgx.Tx, owner UserID, origin 
 	now := s.clock()
 	impact.EventID = newID().String()
 	impact.At = now
-	if _, err := tx.Exec(ctx, `INSERT INTO mie_events (id, user_id, origin_kind, origin_id, origin_version, reason, memories, summaries, shares, care_requests, at)
-		VALUES ($1,$2,$3,$4::uuid,$5,$6,$7,$8,$9,$10,$11)`, impact.EventID, owner, origin.Kind, origin.ID, origin.Version, reason,
-		impact.Memories, impact.Summaries, impact.Shares, impact.CareRequests, now); err != nil {
+	if _, err := tx.Exec(ctx, `INSERT INTO mie_events (id, user_id, origin_kind, origin_id, origin_version, reason, memories, summaries, shares, care_requests, actions, at)
+		VALUES ($1,$2,$3,$4::uuid,$5,$6,$7,$8,$9,$10,$11,$12)`, impact.EventID, owner, origin.Kind, origin.ID, origin.Version, reason,
+		impact.Memories, impact.Summaries, impact.Shares, impact.CareRequests, impact.Actions, now); err != nil {
 		return impact, err
 	}
 	for _, n := range nodes {
 		switch n.Kind {
-		case MIEMemory, MIESummary:
+		case MIEMemory, MIESummary, MIEAction:
 			if _, err := tx.Exec(ctx, `INSERT INTO mie_stale (record_id, user_id, version, kind, event_id, reason, at)
 				VALUES ($1::uuid,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING`, n.ID, owner, n.Version, n.Kind, impact.EventID, reason, now); err != nil {
 				return impact, err
@@ -329,6 +338,8 @@ func (s *Store) mieOrigin(ctx context.Context, q db.DBTX, owner UserID, id strin
 		return MIENode{Kind: MIESummary, ID: id, Version: version}, nil
 	case KindFollowup:
 		return MIENode{}, ErrNotFound
+	case KindActionStep:
+		return MIENode{Kind: MIEAction, ID: id, Version: version}, nil
 	}
 	return MIENode{Kind: MIERecord, ID: id, Version: version}, nil
 }
@@ -389,7 +400,7 @@ func (s *Store) MeaningLineage(ctx context.Context, owner UserID, id string) (MI
 
 // MeaningEvents lists the owner's latest invalidations, newest first.
 func (s *Store) MeaningEvents(ctx context.Context, owner UserID) ([]MIEImpact, error) {
-	rows, err := s.pool.Query(ctx, `SELECT id::text, reason, origin_kind, origin_id::text, origin_version, memories, summaries, shares, care_requests, at
+	rows, err := s.pool.Query(ctx, `SELECT id::text, reason, origin_kind, origin_id::text, origin_version, memories, summaries, shares, care_requests, actions, at
 		FROM mie_events WHERE user_id=$1 ORDER BY at DESC LIMIT 20`, owner)
 	if err != nil {
 		return nil, err
@@ -399,7 +410,7 @@ func (s *Store) MeaningEvents(ctx context.Context, owner UserID) ([]MIEImpact, e
 	for rows.Next() {
 		var m MIEImpact
 		if err := rows.Scan(&m.EventID, &m.Reason, &m.Origin.Kind, &m.Origin.ID, &m.Origin.Version, &m.Memories, &m.Summaries,
-			&m.Shares, &m.CareRequests, &m.At); err != nil {
+			&m.Shares, &m.CareRequests, &m.Actions, &m.At); err != nil {
 			return nil, err
 		}
 		m.Nodes = []MIENode{}
@@ -574,7 +585,7 @@ func (s *Store) exportMeaning(ctx context.Context, tx pgx.Tx, owner UserID) (MIE
 	if err := rows.Err(); err != nil {
 		return out, err
 	}
-	rows, err = tx.Query(ctx, `SELECT id::text, reason, origin_kind, origin_id::text, origin_version, memories, summaries, shares, care_requests, at
+	rows, err = tx.Query(ctx, `SELECT id::text, reason, origin_kind, origin_id::text, origin_version, memories, summaries, shares, care_requests, actions, at
 		FROM mie_events WHERE user_id=$1 ORDER BY at`, owner)
 	if err != nil {
 		return out, err
@@ -582,7 +593,7 @@ func (s *Store) exportMeaning(ctx context.Context, tx pgx.Tx, owner UserID) (MIE
 	for rows.Next() {
 		var m MIEImpact
 		if err := rows.Scan(&m.EventID, &m.Reason, &m.Origin.Kind, &m.Origin.ID, &m.Origin.Version, &m.Memories, &m.Summaries,
-			&m.Shares, &m.CareRequests, &m.At); err != nil {
+			&m.Shares, &m.CareRequests, &m.Actions, &m.At); err != nil {
 			rows.Close()
 			return out, err
 		}

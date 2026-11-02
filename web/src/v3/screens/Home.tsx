@@ -275,6 +275,7 @@ export function HomePage({ user, previewEntries }: { user: Profile; previewEntri
       <section className="c-home-continuity" aria-label={w("Lanjutkan dengan caramu", "Continue your way")}>
         <Link to="/notes/weekly"><span><strong>{w("Lihat minggu ini", "Look back at this week")}</strong><small>{w("Tulisanmu, tanpa kesimpulan otomatis.", "Your writing, without automatic conclusions.")}</small></span><Icon name="arrow-right" /></Link>
         <Link to="/support/summaries"><span><strong>{w("Bawa yang penting", "Bring what matters")}</strong><small>{w("Ringkasan dari cerita yang kamu pilih.", "A summary from the stories you choose.")}</small></span><Icon name="arrow-right" /></Link>
+        <Link to="/notes/steps"><span><strong>{w("Satu langkah, pilihanku", "One step I choose")}</strong><small>{w("Hanya kamu yang memilih apa yang dicoba; tidak ada nilai.", "Only you choose what to try; there are no grades.")}</small></span><Icon name="arrow-right" /></Link>
       </section>
 
   </>);

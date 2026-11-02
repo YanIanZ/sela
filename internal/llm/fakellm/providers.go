@@ -727,6 +727,14 @@ func aiGenerate(in aiInput, fault Fault) aiDraft {
 			}
 			d.Items = append(d.Items, quote(i, 240))
 		}
+	case "action_suggestion":
+		if len(user) > 0 {
+			text := "Mau menuliskan satu pertanyaan yang paling ingin kamu bawa dari catatan ini?"
+			if in.Language == "en" {
+				text = "Would you like to write down one question you most want to bring from this note?"
+			}
+			d.Items = append(d.Items, aiItem{Text: text, SpanIDs: []string{in.Spans[user[len(user)-1]].ID}})
+		}
 	}
 	if len(d.Items) > 0 {
 		switch fault {

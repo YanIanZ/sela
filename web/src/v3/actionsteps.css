@@ -1,0 +1,91 @@
+/* Satu langkah, pilihanku (BW-3). Plain cards on the shared tokens. */
+.a-steps {
+  display: grid;
+  gap: var(--space-5);
+  max-width: var(--measure-wide);
+}
+
+.a-steps-promise {
+  margin: 0;
+  color: var(--c-muted);
+}
+
+.a-steps-start,
+.a-steps-editor,
+.a-steps-proposal {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--c-border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--c-surface);
+}
+
+.a-steps-start h2,
+.a-steps-editor h2,
+.a-steps-proposal h2,
+.a-steps-list h2 {
+  margin: 0;
+  font-size: var(--font-size-4);
+}
+
+.a-steps-list {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.a-step {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--c-border-subtle);
+  border-radius: var(--radius-3);
+  background: var(--c-surface);
+}
+
+.a-step--review {
+  border-color: var(--c-warning-border);
+}
+
+.a-step-text {
+  margin: 0;
+  font-size: var(--font-size-4);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.a-step-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0;
+  color: var(--c-muted);
+  font-size: var(--font-size-2);
+}
+
+.a-step-status {
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid var(--c-border-control);
+  border-radius: var(--radius-pill);
+  color: var(--c-text);
+}
+
+.a-step-why {
+  margin: 0;
+  font-size: var(--font-size-2);
+}
+
+.a-step-why summary {
+  cursor: pointer;
+  min-height: var(--target-min);
+  display: inline-flex;
+  align-items: center;
+}
+
+.a-steps .s-actions {
+  flex-wrap: wrap;
+}

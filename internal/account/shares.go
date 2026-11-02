@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/YanIanZ/sela/internal/db"
 	"github.com/YanIanZ/sela/internal/vault"
 )
 
@@ -187,45 +188,12 @@ func (s *Store) createShareTx(ctx context.Context, tx pgx.Tx, owner UserID, shar
 		}
 		share.SummaryVersion = summary.Version
 		share.Acknowledged = false
-		sources := make([]string, 0, len(summary.SourceRefs))
-		sourceLabels := make(map[string]string, len(summary.SourceRefs))
-		for _, ref := range summary.SourceRefs {
-			label := ref.RecordID
-			if src, err := s.record(ctx, tx, owner, ref.RecordID, false); err == nil {
-				if src.Title != "" {
-					label = src.Title
-				} else if src.Kind != "" {
-					label = src.Kind
-				}
-			}
-			display := label + " · v" + strconv.Itoa(ref.Version)
-			sources = append(sources, display)
-			sourceLabels[summarySourceKey(ref)] = display
-		}
-		items := make([]SharedSummaryItem, 0, len(summary.Items))
-		for _, item := range summary.Items {
-			itemLabel := sourceLabels[summaryItemSourceKey(item.SourceRef)]
-			if itemLabel == "" {
-				itemLabel = item.SourceRef.RecordID + " · v" + strconv.Itoa(item.SourceRef.Version)
-			}
-			items = append(items, SharedSummaryItem{
-				Text: item.Text, Quote: item.Quote, Position: item.Position,
-				SourceLabel: itemLabel,
-			})
-		}
-		projection := SharedProjection{
-			ShareID: share.ID, Label: label, Purpose: purpose, SummaryVersion: summary.Version,
-			Title: summary.Title, Text: summary.Text, Prepared: clonePrepared(summary.Prepared),
-			Items: items, Sources: sources,
-			CreatedAt: now, ExpiresAt: share.ExpiresAt,
-		}
-		// Names the owner marked private are masked in the frozen projection
-		// too: sharing must not undo the privacy control the AI path honours.
-		privateNames, err := s.privateNames(ctx, tx, owner)
+		projection, err := s.projectSummary(ctx, tx, owner, summary)
 		if err != nil {
 			return err
 		}
-		projection = maskProjection(projection, privateNames)
+		projection.ShareID, projection.Label, projection.Purpose = share.ID, label, purpose
+		projection.CreatedAt, projection.ExpiresAt = now, share.ExpiresAt
 		raw, err := json.Marshal(projection)
 		if err != nil {
 			return err
@@ -248,6 +216,53 @@ func (s *Store) createShareTx(ctx context.Context, tx pgx.Tx, owner UserID, shar
 		return s.mieEdge(ctx, tx, owner, MIENode{Kind: MIESummary, ID: summaryID, Version: share.SummaryVersion},
 			MIENode{Kind: MIEShare, ID: share.ID, Version: 1})
 	}
+}
+
+// projectSummary builds the recipient projection of one summary version:
+// the owner's wording, the exact quotes, the pinned source labels, and the
+// owner's private names masked. It is the single projection: share and
+// care-request creation freeze it, and the Care Passport preview and export
+// preset render it, so what the owner previews is what a recipient gets.
+// Share metadata (id, label, purpose, times) is left for the caller.
+func (s *Store) projectSummary(ctx context.Context, q db.DBTX, owner UserID, summary PersonalRecord) (SharedProjection, error) {
+	sources := make([]string, 0, len(summary.SourceRefs))
+	sourceLabels := make(map[string]string, len(summary.SourceRefs))
+	for _, ref := range summary.SourceRefs {
+		label := ref.RecordID
+		if src, err := s.record(ctx, q, owner, ref.RecordID, false); err == nil {
+			if src.Title != "" {
+				label = src.Title
+			} else if src.Kind != "" {
+				label = src.Kind
+			}
+		}
+		display := label + " · v" + strconv.Itoa(ref.Version)
+		sources = append(sources, display)
+		sourceLabels[summarySourceKey(ref)] = display
+	}
+	items := make([]SharedSummaryItem, 0, len(summary.Items))
+	for _, item := range summary.Items {
+		itemLabel := sourceLabels[summaryItemSourceKey(item.SourceRef)]
+		if itemLabel == "" {
+			itemLabel = item.SourceRef.RecordID + " · v" + strconv.Itoa(item.SourceRef.Version)
+		}
+		items = append(items, SharedSummaryItem{
+			Text: item.Text, Quote: item.Quote, Position: item.Position,
+			SourceLabel: itemLabel,
+		})
+	}
+	projection := SharedProjection{
+		SummaryVersion: summary.Version,
+		Title:          summary.Title, Text: summary.Text, Prepared: clonePrepared(summary.Prepared),
+		Items: items, Sources: sources,
+	}
+	// Names the owner marked private are masked in the frozen projection
+	// too: sharing must not undo the privacy control the AI path honours.
+	privateNames, err := s.privateNames(ctx, q, owner)
+	if err != nil {
+		return SharedProjection{}, err
+	}
+	return maskProjection(projection, privateNames), nil
 }
 
 // Shares lists the owner's shares, newest first, without secrets. The

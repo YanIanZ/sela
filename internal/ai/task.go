@@ -32,12 +32,16 @@ const (
 	TaskSummaryDraft        Task = "summary_draft"        // AT-4
 	TaskOpeningLines        Task = "opening_lines"        // AT-5
 	TaskReadingVerification Task = "reading_verification" // AT-6
+	// TaskActionSuggestion (AT-7, BW-3) offers at most one tentative,
+	// source-bound next step the owner may accept, rewrite or reject. Its
+	// output is a proposal only: the caller never stores it.
+	TaskActionSuggestion Task = "action_suggestion" // AT-7
 )
 
 // Tasks lists every task in taxonomy order.
 func Tasks() []Task {
 	return []Task{TaskCrisisSupport, TaskListeningReply, TaskReflection, TaskMemoryProposal, TaskSummaryDraft,
-		TaskOpeningLines, TaskReadingVerification}
+		TaskOpeningLines, TaskReadingVerification, TaskActionSuggestion}
 }
 
 // Verification says when a task's output must be verified (RR-8).
@@ -170,6 +174,15 @@ var policies = map[Task]Policy{
 		RequireCitations: true, MaxSpans: 12, MaxSpanRunes: 1600, MaxTotalRunes: 9600, MaxOutputTokens: 1024,
 		Roles:           []Role{RoleItem},
 		ProvenanceClass: ClassAISummary},
+	// AT-7 reads only the excerpt of the one saved source the owner
+	// selected (role user, crisis-screened first) and returns one short
+	// citing proposal. Verified when a guard flags it, like AT-2.
+	TaskActionSuggestion: {ID: "AT-7", Task: TaskActionSuggestion, Generative: true, Verification: VerifyWhenFlagged,
+		Regenerate: true, RegenerateMinRemaining: 30 * time.Second,
+		Budget: 90 * time.Second, VerifierAttempt: 20 * time.Second,
+		MaxRetryAfter: 10 * time.Second, MetaMaxRetries: 1, MaxVerifierCalls: 1, MinItems: 1, MaxItems: 1, MaxItemRunes: 300,
+		Roles: []Role{RoleUser}, RequireCitations: true, MaxSpans: 4, MaxSpanRunes: 1600, MaxTotalRunes: 4800,
+		MaxOutputTokens: 512, ProvenanceClass: ClassUnconfirmedInterpretation},
 	TaskReadingVerification: {ID: "AT-6", Task: TaskReadingVerification, Verification: VerifyAlways,
 		Budget: 10 * time.Minute, VerifierAttempt: 60 * time.Second, MaxRetryAfter: 10 * time.Second,
 		MaxVerifierCalls: 1, MaxSpans: 16, MaxSpanRunes: 1600, MaxTotalRunes: 25600, Roles: []Role{RoleSource},

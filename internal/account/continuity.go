@@ -577,7 +577,7 @@ func (s *Store) validateSourceRefs(ctx context.Context, q db.DBTX, owner UserID,
 			return err
 		}
 		switch kind {
-		case KindMemory, KindSummary, KindFollowup:
+		case KindMemory, KindSummary, KindFollowup, KindActionStep:
 			return invalid("sourceRefs")
 		}
 		if version != ref.Version {
@@ -609,7 +609,7 @@ func (s *Store) sourceRefsCurrent(ctx context.Context, q db.DBTX, owner UserID, 
 			return false, err
 		}
 		switch kind {
-		case KindMemory, KindSummary, KindFollowup:
+		case KindMemory, KindSummary, KindFollowup, KindActionStep:
 			return false, nil
 		}
 		if version != ref.Version {

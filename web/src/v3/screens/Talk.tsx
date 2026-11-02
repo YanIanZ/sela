@@ -1312,6 +1312,16 @@ function RoomPage({ id }: { id: string }) {
                     <LinkButton to="/notes/check-in" variant="secondary">
                       {w("Cek perasaan", "Check in")}
                     </LinkButton>
+                    {/* BW-3: offered after "Ngobrol & cari solusi" only, never in
+                        "Didengarkan saja" and never after a crisis pause. */}
+                    {intent === "discuss" && !paused && (
+                      <LinkButton
+                        to={"/notes/steps" + (ended === "saved" && room.recordId ? "?source=" + encodeURIComponent(room.recordId) : "")}
+                        variant="secondary"
+                      >
+                        {w("Satu langkah, pilihanku", "One step I choose")}
+                      </LinkButton>
+                    )}
                     <LinkButton to="/home" variant="quiet">
                       {w("Kembali ke beranda", "Back to Home")}
                     </LinkButton>

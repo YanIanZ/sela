@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useRouter } from "../../lib/router";
+import { takeSummarySelection } from "../summarySelection";
 import { api, download as downloadFile, type Consent, type Entry } from "../api";
 import { Icon } from "../icons";
 import {
@@ -31,6 +32,7 @@ import {
   ProvenanceBadge,
   ReviewStatusChip,
   SelectField,
+  StatusLine,
   TextArea,
   TextField,
 } from "../ui";
@@ -1490,7 +1492,7 @@ type Lineage = {
 };
 
 /** MeaningLineage answers "why did Sela say this?" on demand. */
-function MeaningLineage({ id, version, label }: { id: string; version: number; label: (n: MeaningNode) => string }) {
+export function MeaningLineage({ id, version, label }: { id: string; version: number; label: (n: MeaningNode) => string }) {
   const w = useWords();
   const [lineage, setLineage] = useState<Lineage | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -1642,18 +1644,29 @@ function SummaryEditor() {
       .then((d) => setClaims(d.enabled ? d.items : []))
       .catch(() => setClaims([]));
   }, []);
+  const [handedOver, setHandedOver] = useState<{ ids: string[]; dropped: number } | null>(null);
   const load = () => {
     setError(null);
     api<{ records: Entry[] }>("/records")
-      .then((d) =>
-        setRecords(
-          d.records.filter(
-            (r) =>
-              ["note", "checkin", "conversation"].includes(r.kind) &&
-              sourceText(r).trim(),
-          ),
-        ),
-      )
+      .then((d) => {
+        const list = d.records.filter(
+          (r) =>
+            ["note", "checkin", "conversation"].includes(r.kind) &&
+            sourceText(r).trim(),
+        );
+        setRecords(list);
+        // Sources chosen on the Life Context Timeline arrive as ids with
+        // versions (in memory, never in the URL); only those still at that
+        // version are preselected.
+        const taken = takeSummarySelection(list);
+        if (taken) {
+          setHandedOver(taken);
+          if (taken.ids.length) {
+            setSelected(taken.ids);
+            setText(list.filter((r) => taken.ids.includes(r.id)).map(sourceText).join("\n\n"));
+          }
+        }
+      })
       .catch(setError);
   };
   useEffect(load, []);
@@ -1730,6 +1743,20 @@ function SummaryEditor() {
         )}
       />
       <ErrorNotice error={error} onRetry={load} />
+      {handedOver && (
+        <StatusLine tone={handedOver.dropped ? "warning" : "neutral"}>
+          {w(
+            `${handedOver.ids.length} sumber dari Perjalanan ceritaku sudah dipilih.`,
+            `${handedOver.ids.length} sources from My story over time are selected.`,
+          )}
+          {handedOver.dropped > 0 &&
+            " " +
+              w(
+                `${handedOver.dropped} lainnya sudah berubah atau dihapus sejak dipilih, jadi tidak dipilih otomatis.`,
+                `${handedOver.dropped} others changed or were deleted since, so they were not selected automatically.`,
+              )}
+        </StatusLine>
+      )}
       <form onSubmit={save} className="c-summary-grid">
         <section className="c-sources">
           <h2>{w("Dari Catatanku", "From My notes")}</h2>
@@ -2029,6 +2056,11 @@ function SummaryDetail({ id }: { id: string }) {
               v{r.version} · {loc.shortDate(r.updatedAt)}
             </span>
           </div>
+          <p className="s-hint">
+            <Link to={`/support/passport/${r.id}`}>
+              {w("Lihat sebagai Ringkasan untuk dibawa (Care Passport)", "View as My consultation preparation (Care Passport)")}
+            </Link>
+          </p>
           {serverStale && !sourceStale && (
             <StaleNotice
               stale={serverStale}

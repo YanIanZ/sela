@@ -210,6 +210,12 @@ func foundationExporters() []Exporter {
 		exporterFunc{"meaningIntegrity", []string{"mie_edges", "mie_events", "mie_stale"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
 			return b.store.exportMeaning(ctx, tx, owner)
 		}},
+		// Action steps (BW-3) are personal records, so their sealed revisions
+		// are already in personalRecords; this section is the owner's
+		// readable current list with the effective status (needs_review).
+		exporterFunc{"actionSteps", nil, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
+			return b.store.exportActionSteps(ctx, tx, owner)
+		}},
 		exporterFunc{"careRequests", []string{"care_requests"}, func(ctx context.Context, tx pgx.Tx, owner UserID, b *ExportBuilder) (any, error) {
 			return b.store.exportCareRequests(ctx, tx, owner)
 		}},
@@ -359,6 +365,7 @@ var sectionTitles = map[string][2]string{
 	"guardianConsents": {"Persetujuan orang tua atau wali", "Parent or guardian consent"},
 	"sessions":         {"Sesi masuk", "Sign-in sessions"},
 	"privateNames":     {"Nama yang disamarkan", "Names kept private"},
+	"actionSteps":      {"Satu langkah, pilihanku", "One step I choose"},
 	"audit":            {"Catatan aktivitas keamanan", "Security activity log"},
 }
 
