@@ -118,6 +118,9 @@ func TestContextTimelineOrderingAndPagination(t *testing.T) {
 	}
 	f.clock.Advance(2 * time.Second) // past midnight, next UTC day
 	made = append(made, mustNote(t, f, p.UserID, "Synthetic note after midnight."))
+	// The check-in gets its own instant so it is newest regardless of the
+	// random record-id tie-break.
+	f.clock.Advance(time.Second)
 	ck, err := f.store.CreateRecord(ctx, p.UserID, account.RecordInput{Kind: "checkin", Day: "2026-11-03", Mood: "okay",
 		Energy: "low", Text: "Synthetic check-in.", StorageGranted: true})
 	if err != nil {
