@@ -60,7 +60,7 @@ Show the user exporting the approved summary locally and explanation of the simu
 | Architecture diagram | Go privacy/consent gates, Meta Spark, Meta Wonder, PostgreSQL, browser | PLANNED |
 | Engineering evidence | CI for exact SHA, e2e, security/revoke/race, WCAG results | NOT COLLECTED FOR PROPOSED MIE |
 | Model evidence | Observed Meta API/Modal mode, model IDs, failure labels, budget | NOT COLLECTED FOR FINAL SHA |
-| Baseline benchmark | B0/B1/B2/T metrics + confidence intervals + limitations | NOT RUN |
+| Baseline benchmark | B0/B1/B2/T metrics + confidence intervals + limitations | MEASURED once 2026-11-02 on synthetic data: [MIE live benchmark](../validation/MIE_LIVE_BENCHMARK.md) (no headroom; single AI-agent labels, owner adjudication pending) |
 | Credits / license | Sela lineage and contributors to Dengar.in; third-party terms | DOCUMENTED, REVIEW NEEDED |
 | Safety limitations | Not therapy/diagnosis/emergency, synthetic recipients, no clinical claim | DRAFT |
 | Eligibility check | Official portal, accepted participant, video/rights/format rules | OWNER MUST VERIFY |

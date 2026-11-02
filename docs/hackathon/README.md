@@ -2,6 +2,8 @@
 
 Status: **proposal / implementation plan only**. Date: **2026-11-01 WIB**. Track: **Indie Developer**. Theme: **Build for Your World**. Owner: project maintainer. Base inspected: `main@45c02487283f321f9930475e7a6e9fa3e1454f1c`.
 
+> **Reference (2026-11-02, owner):** [Build for Your World 2026](../roadmap/BUILD_FOR_YOUR_WORLD_2026.md) (PR #3) is the current hackathon direction. Where this package and PR #3 differ — positioning, demo story, scope or acceptance — PR #3 applies; this package stays the MIE evaluation, QA and production-verification reference beneath it. Measured since this was written: the live Meta B0/B1/B2/T run ([results](../validation/MIE_LIVE_BENCHMARK.md)) and production on the commit shown by `/api/v2/health`.
+>
 > This package does not implement MIE v1, deploy software, verify production, claim clinical outcomes or submit the project. Keep PR unmerged until the owner reviews it. If any fact conflicts with later source code or release evidence, code and verified checks win.
 
 ## 1. One-sentence product thesis
@@ -36,7 +38,7 @@ Official event page: https://cerebralvalley.ai/e/meta-ai-developer-hackathon and
 | Operator | Separate MFA, audit, cache and spend visibility | Human operations, role editing stretch |
 | Accessibility | Automated checks recorded | Independent/manual user task checks |
 | Security/compliance | Encryption, consent and safeguards designed/tested | No independent assessment or real-user pilot |
-| **Production hosting** | **https://sela.vertalt.my.id** — owner-confirmed; read-only health/ready checks pass (`mode: production`, `ai: meta_api`, `database: ok`) | **Release SHA, model ID and region not yet verified; see PRODUCTION_VERIFICATION.md** |
+| **Production hosting** | **https://sela.vertalt.my.id** — owner-confirmed; read-only health/ready checks pass (`mode: production`, `ai: meta_api`, `database: ok`) | **Release SHA verified on `/api/v2/health` (`586fd8c`, 2026-11-02) and generator `muse-spark-1.3` observed in the live benchmark; region not yet verified; see PRODUCTION_VERIFICATION.md** |
 | Listening modes and safety (D-066–D-068, D-070) | Two reply modes; danger lexicon, quick-help mode; anti-jailbreak, typo tolerance, 13 more languages | Moderation and multilingual evaluation sets |
 | Condition map and demo professionals (D-071) | Opt-in, deterministic four-stage map from saved records; fictional practitioners | Hand-off to a simulated practitioner after H-008 |
 | Sharing space (D-072) | Adults-only anonymous posts; safety router + Meta moderation before publish; reports, operator queue | Moderation evaluation (false positives) |

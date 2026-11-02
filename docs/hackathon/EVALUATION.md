@@ -118,7 +118,9 @@ Include at least:
 
 Use existing `cmd/sela-eval` and `eval` conventions where possible; do not create an independent evaluator incompatible with the codebase.
 
-## 9. Example results table (NOT RUN)
+## 9. Example results table (template)
+
+The first live run of B0/B1/B2/T (2026-11-02, thresholds `sela-eval-thresholds-2026.11.02-1`, 128 synthetic cases) is reported in [MIE live benchmark](../validation/MIE_LIVE_BENCHMARK.md); the table below stays the template.
 
 | Config | N | UIR | Semantic fidelity | Abstain | Median latency | Cost / task |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
