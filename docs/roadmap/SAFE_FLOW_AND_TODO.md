@@ -1,5 +1,7 @@
 # Safer flow and TODO — November 2026
 
+> **Build for Your World expansion — proposed, 2026-11-02:** [Story → Meaning → Next Step](BUILD_FOR_YOUR_WORLD_2026.md) adds implementation-ready specifications for Life Context Timeline, Care Passport, and Personal Action Bridge; includes a [3-minute hackathon demo storyboard](../demo/META_HACKATHON_2026_STORYBOARD.md), [recording runbook](../demo/META_HACKATHON_2026_RUNBOOK.md), synthetic fixture and [acceptance matrix](../validation/BWYW_ACCEPTANCE.md). **These additions are proposals only in the separate documentation PR**; currently implemented D-078 MIE, D-076 Care Network and D-079 Operator Console remain the baseline. This note does not mark proposed features as done or grant production/real-user approval.
+
 Status: **owner-directed plan, in progress**. Date: 2026-11-01 (WIB). This is the working plan that the owner asked for on 2026-11-01. It reconciles the open draft PR #28 (`docs/hackathon/*`, Meta Hackathon 2026 package) with the direction taken in this repository since then. Where this plan and PR #28 differ, the decision records named below win; every status word follows [SPEC §G](../../SPEC.md#g-goal).
 
 Production: **https://sela.vertalt.my.id** (owner-confirmed). A read-only check on 2026-11-01 returned `200`, `/api/v2/health` → `mode: production`, `/api/v2/ready` → `ai: meta_api`, `database: ok`, `schema: current`, with a strict CSP, HSTS and `X-Frame-Options: DENY`. The deployed commit is not exposed (`version: prod`), so the build that production runs is still **unverified** (PR #28 H-001).
