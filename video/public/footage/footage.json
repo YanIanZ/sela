@@ -1,0 +1,371 @@
+{
+  "talk-reflection": {
+    "file": "footage/talk-reflection.jpg",
+    "width": 1616,
+    "height": 889,
+    "path": "/talk/room-1",
+    "state": {
+      "sent": true,
+      "reflection": true
+    },
+    "marks": {}
+  },
+  "steps-write": {
+    "file": "footage/steps-write.jpg",
+    "width": 2720,
+    "height": 2617,
+    "path": "/notes/steps",
+    "state": {},
+    "marks": {
+      "editor": {
+        "y": 891,
+        "x": 114,
+        "h": 43
+      },
+      "none": {
+        "y": 757,
+        "x": 80,
+        "h": 51
+      }
+    }
+  },
+  "steps-saved": {
+    "file": "footage/steps-saved.jpg",
+    "width": 2720,
+    "height": 1820,
+    "path": "/notes/steps",
+    "state": {
+      "stepSaved": true
+    },
+    "marks": {
+      "chosen": {
+        "y": 1130,
+        "x": 80,
+        "h": 53
+      },
+      "none": {
+        "y": 757,
+        "x": 80,
+        "h": 51
+      }
+    }
+  },
+  "passport-draft": {
+    "file": "footage/passport-draft.jpg",
+    "width": 2720,
+    "height": 6588,
+    "path": "/support/passport/sum-new",
+    "state": {},
+    "marks": {
+      "notMedical": {
+        "y": 1135,
+        "x": 826,
+        "h": 41
+      },
+      "words": {
+        "y": 2538,
+        "x": 720,
+        "h": 53
+      },
+      "ask": {
+        "y": 3526,
+        "x": 720,
+        "h": 53
+      },
+      "recipient": {
+        "y": 4073,
+        "x": 720,
+        "h": 53
+      },
+      "notSent": {
+        "y": 5820,
+        "x": 720,
+        "h": 47
+      },
+      "approve": {
+        "y": 6213,
+        "x": 720,
+        "h": 53
+      }
+    }
+  },
+  "passport-approved": {
+    "file": "footage/passport-approved.jpg",
+    "width": 2720,
+    "height": 6964,
+    "path": "/support/passport/sum-new",
+    "state": {},
+    "marks": {
+      "notMedical": {
+        "y": 1302,
+        "x": 826,
+        "h": 41
+      },
+      "recipient": {
+        "y": 4240,
+        "x": 720,
+        "h": 53
+      },
+      "notSent": {
+        "y": 5987,
+        "x": 720,
+        "h": 47
+      },
+      "bring": {
+        "y": 6380,
+        "x": 720,
+        "h": 53
+      }
+    }
+  },
+  "care-proposed": {
+    "file": "footage/care-proposed.jpg",
+    "width": 2720,
+    "height": 4636,
+    "path": "/support/plan",
+    "state": {
+      "approved": true,
+      "request": "proposed",
+      "oldRequest": false
+    },
+    "marks": {
+      "pick": {
+        "y": 2332,
+        "x": 114,
+        "h": 61
+      },
+      "send": {
+        "y": 3340,
+        "x": 114,
+        "h": 61
+      },
+      "status": {
+        "y": 3583,
+        "x": 114,
+        "h": 61
+      }
+    }
+  },
+  "care-confirmed": {
+    "file": "footage/care-confirmed.jpg",
+    "width": 2720,
+    "height": 4378,
+    "path": "/support/plan",
+    "state": {
+      "approved": true,
+      "request": "confirmed",
+      "oldRequest": false
+    },
+    "marks": {
+      "pick": {
+        "y": 2332,
+        "x": 114,
+        "h": 61
+      },
+      "status": {
+        "y": 3583,
+        "x": 114,
+        "h": 61
+      }
+    }
+  },
+  "share-active": {
+    "file": "footage/share-active.jpg",
+    "width": 2720,
+    "height": 2801,
+    "path": "/support/shares",
+    "state": {
+      "approved": true,
+      "newShare": "active",
+      "corrected": true
+    },
+    "marks": {
+      "active": {
+        "y": 801,
+        "x": 720,
+        "h": 53
+      },
+      "make": {
+        "y": 1765,
+        "x": 720,
+        "h": 53
+      }
+    }
+  },
+  "share-revoked": {
+    "file": "footage/share-revoked.jpg",
+    "width": 2720,
+    "height": 2801,
+    "path": "/support/shares",
+    "state": {
+      "approved": true,
+      "newShare": "revoked",
+      "corrected": true
+    },
+    "marks": {
+      "active": {
+        "y": 801,
+        "x": 720,
+        "h": 53
+      },
+      "make": {
+        "y": 1765,
+        "x": 720,
+        "h": 53
+      }
+    }
+  },
+  "home": {
+    "file": "footage/home.jpg",
+    "width": 2880,
+    "height": 1800,
+    "path": "/home",
+    "state": {
+      "sent": true
+    }
+  },
+  "talk-compose": {
+    "file": "footage/talk-compose.jpg",
+    "width": 2880,
+    "height": 1800,
+    "path": "/talk/room-1",
+    "state": {}
+  },
+  "talk-reply": {
+    "file": "footage/talk-reply.jpg",
+    "width": 2880,
+    "height": 1800,
+    "path": "/talk/room-1",
+    "state": {
+      "sent": true
+    }
+  },
+  "mie-diff": {
+    "file": "footage/mie-diff.jpg",
+    "width": 1280,
+    "height": 1399,
+    "path": "/notes/memory/mem-f0",
+    "state": {}
+  },
+  "mie-impact": {
+    "file": "footage/mie-impact.jpg",
+    "width": 1280,
+    "height": 1743,
+    "path": "/notes/memory/mem-f0",
+    "state": {}
+  },
+  "mie-result": {
+    "file": "footage/mie-result.jpg",
+    "width": 1280,
+    "height": 2449,
+    "path": "/notes/memory/mem-f0",
+    "state": {}
+  },
+  "mie-stale-summaries": {
+    "file": "footage/mie-stale-summaries.jpg",
+    "width": 2720,
+    "height": 2036,
+    "path": "/support/passport",
+    "state": {
+      "corrected": true,
+      "approved": true
+    },
+    "marks": {
+      "stale": {
+        "y": 1586,
+        "x": 165,
+        "h": 38
+      },
+      "notMedical": {
+        "y": 873,
+        "x": 186,
+        "h": 41
+      }
+    }
+  },
+  "mie-stopped-shares": {
+    "file": "footage/mie-stopped-shares.jpg",
+    "width": 2720,
+    "height": 1725,
+    "path": "/support/shares",
+    "state": {
+      "corrected": true
+    },
+    "marks": {
+      "stopped": {
+        "y": 961,
+        "x": 754,
+        "h": 39
+      }
+    }
+  },
+  "mie-cancelled-request": {
+    "file": "footage/mie-cancelled-request.jpg",
+    "width": 2720,
+    "height": 3786,
+    "path": "/support/plan",
+    "state": {
+      "corrected": true
+    },
+    "marks": {
+      "status": {
+        "y": 3389,
+        "x": 114,
+        "h": 61
+      },
+      "pick": {
+        "y": 2138,
+        "x": 114,
+        "h": 61
+      },
+      "how": {
+        "y": 842,
+        "x": 186,
+        "h": 41
+      }
+    }
+  },
+  "timeline": {
+    "file": "footage/timeline.jpg",
+    "width": 2880,
+    "height": 1800,
+    "path": "/notes/context",
+    "state": {}
+  },
+  "timeline-list": {
+    "file": "footage/timeline-list.jpg",
+    "width": 2720,
+    "height": 3086,
+    "path": "/notes/context",
+    "state": {},
+    "marks": {
+      "filters": {
+        "y": 903,
+        "x": 80,
+        "h": 45
+      },
+      "noAI": {
+        "y": 794,
+        "x": 80,
+        "h": 39
+      },
+      "first": {
+        "y": 1249,
+        "x": 213,
+        "h": 42
+      },
+      "last": {
+        "y": 2714,
+        "x": 80,
+        "h": 53
+      }
+    }
+  },
+  "steps-empty": {
+    "file": "footage/steps-empty.jpg",
+    "width": 2720,
+    "height": 1633,
+    "path": "/notes/steps",
+    "state": {}
+  }
+}

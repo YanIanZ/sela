@@ -1,0 +1,31 @@
+{
+  "fps": 30,
+  "durationInFrames": 5400,
+  "chapters": [
+    { "id": "ch01", "title": "EVERY STORY MATTERS", "from": 0, "duration": 600 },
+    { "id": "ch02", "title": "BEYOND LISTENING", "from": 600, "duration": 600 },
+    { "id": "ch03", "title": "MEANING INTEGRITY ENGINE", "from": 1200, "duration": 1050 },
+    { "id": "ch04", "title": "CONTEXT OVER TIME", "from": 2250, "duration": 750 },
+    { "id": "ch05", "title": "PERSONAL ACTION BRIDGE", "from": 3000, "duration": 600 },
+    { "id": "ch06", "title": "CARE PASSPORT", "from": 3600, "duration": 750 },
+    { "id": "ch07", "title": "SUPPORT, ON YOUR TERMS", "from": 4350, "duration": 600 },
+    { "id": "ch08", "title": "FINAL REVEAL", "from": 4950, "duration": 450 }
+  ],
+  "cues": {
+    "ch01": { "pulse1": 45, "pulse2": 72, "every": 96, "matters": 146, "silenceFrom": 250, "silenceTo": 292, "butWho": 300, "understands": 348, "close": 540 },
+    "ch02": { "listen": 8, "butCanIt": 128, "understand": 170, "ui": 258, "reply": 368, "reflection": 452, "out": 566 },
+    "ch03": { "oneWord": 10, "swap": 70, "different": 112, "diff": 160, "flag": 214, "oneCorrection": 304, "impact": 364, "impactHit": 412, "every": 486, "graph": 546, "edges": 556, "correct": 676, "wave": 690, "stale": 712, "revoked": 734, "cancelled": 756, "proof": 876, "title": 966 },
+    "ch04": { "moment": 8, "story": 120, "context": 162, "axis": 240, "m1": 300, "m2": 372, "m3": 444, "noScores": 530, "ui": 606 },
+    "ch05": { "understanding": 8, "beginning": 46, "next": 152, "write": 236, "saved": 392, "optional": 470 },
+    "ch06": { "words": 8, "choice": 56, "approval": 104, "cards": 212, "pick1": 262, "pick2": 300, "assemble": 346, "approve": 432, "ui": 486 },
+    "ch07": { "ready": 8, "support": 112, "terms": 152, "connect": 242, "send": 280, "propose": 330, "confirm": 372, "revoke": 404, "ui": 436, "revokedUi": 520 },
+    "ch08": { "converge": 0, "logo": 96, "story": 146, "meaning": 180, "next": 214, "wordmark": 290, "beyond": 312, "built": 350 }
+  },
+  "teaser": [
+    { "from": 80, "to": 240 },
+    { "from": 1206, "to": 1356 },
+    { "from": 1866, "to": 2046 },
+    { "from": 3600, "to": 3770 },
+    { "from": 5160, "to": 5400 }
+  ]
+}

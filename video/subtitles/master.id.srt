@@ -1,0 +1,119 @@
+1
+00:00:00,800 --> 00:00:04,600
+Kadang, yang paling sulit bukan mencari jawaban.
+
+2
+00:00:04,800 --> 00:00:08,000
+Tapi menjelaskan apa yang sebenarnya kita rasakan.
+
+3
+00:00:10,200 --> 00:00:15,500
+Banyak aplikasi bisa mendengar. Tapi siapa yang benar-benar paham?
+
+4
+00:00:20,600 --> 00:00:24,200
+AI bisa mendengar. Belum tentu paham.
+
+5
+00:00:28,600 --> 00:00:33,200
+Ini Nadia, tokoh fiktif. Dia menulis: "Kadang aku butuh waktu sendiri."
+
+6
+00:00:33,400 --> 00:00:39,000
+Yang Sela tangkap cuma tafsiran. Nadia yang memutuskan: setuju, koreksi, atau tolak.
+
+7
+00:00:40,400 --> 00:00:45,000
+Satu kata bisa mengubah makna. "Kadang" jadi "selalu".
+
+8
+00:00:45,500 --> 00:00:50,200
+Kesalahan ini sengaja dibuat untuk pengujian. Bukan keluaran asli dari Meta.
+
+9
+00:00:50,400 --> 00:00:53,200
+Pemeriksa makna di Sela langsung menandainya.
+
+10
+00:00:53,400 --> 00:00:58,600
+Nadia mengoreksi dengan kata-katanya sendiri. Sebelum disimpan, Sela menunjukkan apa saja yang ikut berubah.
+
+11
+00:00:58,800 --> 00:01:01,600
+Di Sela, koreksi bukan sekadar edit chat.
+
+12
+00:01:01,800 --> 00:01:05,800
+Meaning Integrity Engine menelusuri semua yang bergantung pada makna itu.
+
+13
+00:01:06,000 --> 00:01:10,400
+Ringkasan perlu ditinjau ulang. Tautan dihentikan. Permintaan dibatalkan.
+
+14
+00:01:10,600 --> 00:01:14,800
+Yang sudah dibaca orang lain tidak bisa ditarik kembali.
+
+15
+00:01:15,400 --> 00:01:19,600
+Cerita tidak berhenti di satu momen.
+
+16
+00:01:23,000 --> 00:01:29,000
+Nadia bisa melihat catatannya dari waktu ke waktu, dengan kata-katanya sendiri.
+
+17
+00:01:29,400 --> 00:01:35,000
+Tanpa skor. Tanpa diagnosis. Halaman ini tidak memakai AI.
+
+18
+00:01:40,400 --> 00:01:45,000
+Memahami adalah awal.
+
+19
+00:01:48,000 --> 00:01:54,500
+Kalau mau, Nadia memilih satu langkah kecil: menulis dua pertanyaan untuk konsultasi.
+
+20
+00:01:54,800 --> 00:01:59,400
+Tidak ada pengingat, tidak ada target. Boleh dilewati.
+
+21
+00:02:00,400 --> 00:02:04,000
+Kata-katanya. Pilihannya. Persetujuannya.
+
+22
+00:02:07,000 --> 00:02:13,600
+Nadia memilih kutipan asli dari catatannya. Catatan lain tetap pribadi.
+
+23
+00:02:14,000 --> 00:02:18,400
+Dia menyetujui versi yang persis akan dibagikan.
+
+24
+00:02:18,800 --> 00:02:24,600
+Ini lembar persiapan pribadi, bukan rekam medis atau diagnosis.
+
+25
+00:02:25,400 --> 00:02:29,400
+Saat Nadia siap, dukungan mengikuti aturannya.
+
+26
+00:02:33,000 --> 00:02:39,000
+Di demo ini, penerimanya layanan simulasi. Bukan klinik atau praktisi sungguhan.
+
+27
+00:02:39,400 --> 00:02:44,600
+Nadia bisa membatalkan kapan saja. Salinan yang sudah dilihat tidak bisa ditarik.
+
+28
+00:02:46,000 --> 00:02:50,200
+AI seharusnya membantu kita menjelaskan cerita, bukan mengambil alih maknanya.
+
+29
+00:02:50,400 --> 00:02:56,000
+Ceritamu. Maknamu. Langkahmu berikutnya.
+
+30
+00:02:56,400 --> 00:02:59,500
+Sela. Lebih dari sekadar didengar.
