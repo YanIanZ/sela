@@ -1,0 +1,33 @@
+"Kadang aku butuh waktu sendiri."
+  -> "Kamu kadang butuh waktu sendiri."
+  {"version":"sela-meaning-2026.11.01-1","differences":[],"critical":false}
+"Kadang aku butuh waktu sendiri."
+  -> "Kamu kadang perlu waktu sendiri."
+  {"version":"sela-meaning-2026.11.01-1","differences":[],"critical":false}
+"Kadang aku butuh waktu sendiri, tapi aku tetap senang bertemu teman-temanku."
+  -> "Kadang aku butuh waktu sendiri, tapi aku tetap senang bertemu teman."
+  {"version":"sela-meaning-2026.11.01-1","differences":[],"critical":false}
+"Kadang aku butuh waktu sendiri, tapi aku tetap senang bertemu teman-temanku."
+  -> "Kamu selalu butuh waktu sendiri dan menghindari teman."
+  {"version":"sela-meaning-2026.11.01-1","differences":[{"code":"frequency","severity":"critical","source":"kadang","wording":"selalu"},{"code":"added_content","severity":"review","wording":"menghindari"}],"critical":true}
+"Kadang aku butuh waktu sendiri, tapi aku tetap senang bertemu teman-temanku."
+  -> "Nadia selalu menghindari teman-temannya dan tidak suka bergaul."
+  {"version":"sela-meaning-2026.11.01-1","differences":[{"code":"negation","severity":"critical","wording":"tidak"},{"code":"frequency","severity":"critical","source":"kadang","wording":"selalu"},{"code":"added_content","severity":"review","wording":"nadia"}],"critical":true}
+"Kadang aku butuh waktu sendiri."
+  -> "Kamu selalu butuh waktu sendiri."
+  {"version":"sela-meaning-2026.11.01-1","differences":[{"code":"frequency","severity":"critical","source":"kadang","wording":"selalu"}],"critical":true}
+"Kadang aku butuh waktu sendiri, tapi aku tetap senang bertemu teman-temanku."
+  -> "Kamu selalu butuh waktu sendiri."
+  {"version":"sela-meaning-2026.11.01-1","differences":[{"code":"frequency","severity":"critical","source":"kadang","wording":"selalu"}],"critical":true}
+"Kadang aku butuh waktu sendiri, tapi aku tetap senang bertemu teman-temanku."
+  -> "Kamu selalu butuh waktu sendiri dan menghindari teman."
+  {"version":"sela-meaning-2026.11.01-1","differences":[{"code":"frequency","severity":"critical","source":"kadang","wording":"selalu"},{"code":"added_content","severity":"review","wording":"menghindari"}],"critical":true}
+"Kadang aku butuh waktu sendiri, tapi aku tetap senang bertemu teman-temanku."
+  -> "Kamu selalu butuh waktu sendiri, tapi kamu tetap senang bertemu teman-temanmu."
+  {"version":"sela-meaning-2026.11.01-1","differences":[{"code":"frequency","severity":"critical","source":"kadang","wording":"selalu"}],"critical":true}
+"Kadang aku butuh waktu sendiri, tapi aku tetap senang bertemu teman-temanku."
+  -> "Kadang kamu butuh waktu sendiri, tapi kamu tetap senang bertemu teman-temanmu."
+  {"version":"sela-meaning-2026.11.01-1","differences":[],"critical":false}
+"Kadang aku butuh waktu sendiri, tapi aku tetap senang bertemu teman-temanku."
+  -> "Kadang aku perlu waktu tenang setelah kuliah, tetapi aku tetap menikmati waktu bersama teman. Aku belum tahu penyebab rasa lelahku."
+  {"version":"sela-meaning-2026.11.01-1","differences":[{"code":"added_content","severity":"review","wording":"setelah"}],"critical":false}

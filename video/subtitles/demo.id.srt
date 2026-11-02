@@ -1,0 +1,143 @@
+1
+00:00:00,500 --> 00:00:03,900
+Kadang, yang paling sulit bukan mencari jawaban.
+
+2
+00:00:04,100 --> 00:00:07,700
+Tapi menjelaskan apa yang sebenarnya kita rasakan.
+
+3
+00:00:08,400 --> 00:00:12,000
+Ini Sela. Nadia, tokoh fiktif, mulai bercerita.
+
+4
+00:00:13,433 --> 00:00:18,033
+Balasan di demo ini dari program uji, bukan dari Meta. Labelnya selalu terlihat.
+
+5
+00:00:18,100 --> 00:00:21,700
+Sela menangkap maksudnya. Ini cuma tafsiran, bukan fakta.
+
+6
+00:00:22,067 --> 00:00:27,667
+Pemeriksa makna membandingkannya dengan kata-kata Nadia. Nadia yang memutuskan.
+
+7
+00:00:30,467 --> 00:00:34,267
+Bagaimana kalau tafsiran yang salah sempat tersimpan?
+
+8
+00:00:34,700 --> 00:00:39,500
+Ini kesalahan yang sengaja dibuat untuk pengujian: "kadang" jadi "selalu".
+
+9
+00:00:39,800 --> 00:00:43,200
+Pemeriksa makna menandainya sebagai perubahan penting.
+
+10
+00:00:45,533 --> 00:00:48,733
+Nadia memperbaikinya dengan kata-katanya sendiri.
+
+11
+00:00:50,300 --> 00:00:55,300
+Sebelum disimpan, Sela menunjukkan apa saja yang ikut berubah.
+
+12
+00:00:57,867 --> 00:01:01,667
+Satu koreksi diteruskan ke semua yang bergantung padanya.
+
+13
+00:01:02,200 --> 00:01:07,600
+Meaning Integrity Engine menelusuri ringkasan, tautan, dan permintaan dalam satu langkah.
+
+14
+00:01:08,500 --> 00:01:11,700
+Ringkasan lama perlu ditinjau ulang.
+
+15
+00:01:12,733 --> 00:01:15,533
+Tautan berbaginya dihentikan.
+
+16
+00:01:16,267 --> 00:01:22,667
+Permintaan ke layanan simulasi dibatalkan. Yang sudah dibaca orang lain tidak bisa ditarik kembali.
+
+17
+00:01:23,667 --> 00:01:27,467
+Perjalanan ceritaku menampilkan catatan Nadia dari waktu ke waktu.
+
+18
+00:01:28,167 --> 00:01:32,967
+Kata-katanya sendiri, dengan versi sumbernya. Tanpa AI, tanpa skor, tanpa diagnosis.
+
+19
+00:01:33,367 --> 00:01:36,767
+Dia memilih dua catatan untuk dibawa ke ringkasan.
+
+20
+00:01:39,800 --> 00:01:43,000
+Kalau mau, Nadia memilih satu langkah kecil.
+
+21
+00:01:44,367 --> 00:01:47,967
+Dia menulisnya sendiri: dua pertanyaan untuk konsultasi.
+
+22
+00:01:50,367 --> 00:01:53,967
+Tidak ada pengingat, tidak ada hitungan hari. Boleh dilewati.
+
+23
+00:01:54,167 --> 00:01:55,967
+Lalu ringkasan untuk dibawa.
+
+24
+00:01:56,200 --> 00:02:00,800
+Sela menulisnya dengan jelas: ini bukan paspor medis, bukan rekam medis, bukan diagnosis.
+
+25
+00:02:02,767 --> 00:02:06,767
+Setiap kalimat menunjuk ke kutipan asli dan versi sumbernya.
+
+26
+00:02:08,333 --> 00:02:12,333
+Pratinjau ini persis sama dengan yang akan diterima penerima.
+
+27
+00:02:13,800 --> 00:02:18,600
+Nadia menyetujui versi yang persis ini. Hanya versi yang disetujui yang bisa dibagikan.
+
+28
+00:02:21,067 --> 00:02:24,467
+Saat siap, Nadia bisa mengirim ringkasan ke layanan.
+
+29
+00:02:25,533 --> 00:02:30,333
+Di demo ini penerimanya layanan simulasi, bukan klinik atau praktisi sungguhan.
+
+30
+00:02:31,867 --> 00:02:34,867
+Layanan mengusulkan waktu. Nadia yang memilih.
+
+31
+00:02:36,667 --> 00:02:39,667
+Tidak ada janji temu sungguhan di demo ini.
+
+32
+00:02:40,100 --> 00:02:43,100
+Nadia bisa mencabut akses kapan saja.
+
+33
+00:02:46,067 --> 00:02:49,967
+Akses berikutnya diblokir. Salinan yang sudah dilihat tidak bisa ditarik.
+
+34
+00:02:50,500 --> 00:02:54,500
+AI seharusnya membantu kita menjelaskan cerita, bukan mengambil alih maknanya.
+
+35
+00:02:54,900 --> 00:02:58,100
+Ceritamu. Maknamu. Langkahmu berikutnya.
+
+36
+00:02:58,200 --> 00:02:59,900
+Sela. Lebih dari sekadar didengar.

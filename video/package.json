@@ -1,0 +1,32 @@
+{
+  "name": "sela-beyond-being-heard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SELA — Beyond Being Heard: kinetic typography product film (Remotion + TypeScript). Not part of the deployed app.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render:remotion": "remotion render src/index.ts Master out/SELA-master-remotion.mp4 --codec=h264 --audio=public/audio/score-master.wav",
+    "capture:build": "node capture/build-web.mjs",
+    "capture": "node capture/capture.mjs",
+    "score": "python3 scripts/score.py",
+    "subs": "python3 scripts/cues.py",
+    "still": "node scripts/render.mjs still",
+    "render:master": "node scripts/render.mjs master",
+    "render:teaser": "node scripts/render.mjs teaser",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "esbuild": "^0.25.0",
+    "playwright-core": "^1.55.0",
+    "typescript": "^5.9.0"
+  }
+}

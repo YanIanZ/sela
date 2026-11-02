@@ -1,0 +1,51 @@
+{
+  "note": "Demo narration. Indonesian = dubbing script, English = burned-in subtitles. Each cue is anchored to a segment and a recorded mark; times resolve in plan.mjs.",
+  "cues": [
+    { "seg": "intro", "mark": 0, "off": 0.5, "dur": 3.4, "id": "Kadang, yang paling sulit bukan mencari jawaban.", "en": "Some days, the hardest part isn't finding an answer." },
+    { "seg": "intro", "mark": 0, "off": 4.1, "dur": 3.6, "id": "Tapi menjelaskan apa yang sebenarnya kita rasakan.", "en": "It's explaining what we really feel." },
+
+    { "seg": "talk", "mark": 0, "off": 0.4, "dur": 3.6, "id": "Ini Sela. Nadia, tokoh fiktif, mulai bercerita.", "en": "This is Sela. Nadia, a fictional adult, starts to write." },
+    { "seg": "talk", "mark": "send", "off": 0.3, "dur": 4.6, "id": "Balasan di demo ini dari program uji, bukan dari Meta. Labelnya selalu terlihat.", "en": "Replies here come from a labelled test program, not from Meta." },
+    { "seg": "talk", "mark": "notice", "off": -1.7, "dur": 3.6, "id": "Sela menangkap maksudnya. Ini cuma tafsiran, bukan fakta.", "en": "Sela notices what she meant: an interpretation, not a fact." },
+    { "seg": "talk", "mark": "reflection", "off": 0.4, "dur": 5.6, "id": "Pemeriksa makna membandingkannya dengan kata-kata Nadia. Nadia yang memutuskan.", "en": "A meaning check compares it with her words. Nadia decides." },
+
+    { "seg": "memory", "mark": 0, "off": 0.6, "dur": 3.8, "id": "Bagaimana kalau tafsiran yang salah sempat tersimpan?", "en": "But what if a wrong interpretation was already saved?" },
+    { "seg": "memory", "mark": "diff", "off": 0.3, "dur": 4.8, "id": "Ini kesalahan yang sengaja dibuat untuk pengujian: \"kadang\" jadi \"selalu\".", "en": "This is a scripted test mistake: \"sometimes\" became \"always\"." },
+    { "seg": "memory", "mark": "diff", "off": 5.4, "dur": 3.4, "id": "Pemeriksa makna menandainya sebagai perubahan penting.", "en": "The meaning check flags it as an important change." },
+    { "seg": "memory", "mark": "edit", "off": 0.2, "dur": 3.2, "id": "Nadia memperbaikinya dengan kata-katanya sendiri.", "en": "Nadia fixes it in her own words." },
+    { "seg": "memory", "mark": "impact", "off": 0.3, "dur": 5.0, "id": "Sebelum disimpan, Sela menunjukkan apa saja yang ikut berubah.", "en": "Before saving, Sela shows everything this will affect." },
+    { "seg": "memory", "mark": "result", "off": 0.3, "dur": 3.8, "id": "Satu koreksi diteruskan ke semua yang bergantung padanya.", "en": "One correction reaches everything that depends on it." },
+
+    { "seg": "graph", "mark": 0, "off": 0.3, "dur": 5.4, "id": "Meaning Integrity Engine menelusuri ringkasan, tautan, dan permintaan dalam satu langkah.", "en": "The Meaning Integrity Engine traces summaries, links and requests in one step." },
+
+    { "seg": "reach-summary", "mark": 0, "off": 0.6, "dur": 3.2, "id": "Ringkasan lama perlu ditinjau ulang.", "en": "The old summary needs review again." },
+    { "seg": "reach-share", "mark": 0, "off": 0.3, "dur": 2.8, "id": "Tautan berbaginya dihentikan.", "en": "Its share link is stopped." },
+    { "seg": "reach-care", "mark": 0, "off": 0.3, "dur": 6.4, "id": "Permintaan ke layanan simulasi dibatalkan. Yang sudah dibaca orang lain tidak bisa ditarik kembali.", "en": "The request to the simulated service is cancelled. What others already read can't be recalled." },
+
+    { "seg": "timeline", "mark": 0, "off": 0.5, "dur": 3.8, "id": "Perjalanan ceritaku menampilkan catatan Nadia dari waktu ke waktu.", "en": "\"My story over time\" shows Nadia's notes across the days." },
+    { "seg": "timeline", "mark": "entries", "off": 0.0, "dur": 4.8, "id": "Kata-katanya sendiri, dengan versi sumbernya. Tanpa AI, tanpa skor, tanpa diagnosis.", "en": "Her own words, with source versions. No AI, no scores, no diagnosis." },
+    { "seg": "timeline", "mark": "entries", "off": 5.2, "dur": 3.4, "id": "Dia memilih dua catatan untuk dibawa ke ringkasan.", "en": "She picks two notes to bring to a summary." },
+
+    { "seg": "steps", "mark": 0, "off": 0.5, "dur": 3.2, "id": "Kalau mau, Nadia memilih satu langkah kecil.", "en": "If she wants, Nadia picks one small step." },
+    { "seg": "steps", "mark": "typing", "off": 0.0, "dur": 3.6, "id": "Dia menulisnya sendiri: dua pertanyaan untuk konsultasi.", "en": "She writes it herself: two questions for a consultation." },
+    { "seg": "steps", "mark": "saved", "off": 0.4, "dur": 3.6, "id": "Tidak ada pengingat, tidak ada hitungan hari. Boleh dilewati.", "en": "No reminders, no day counts. She can skip it." },
+
+    { "seg": "passport", "mark": 0, "off": 0.2, "dur": 1.8, "id": "Lalu ringkasan untuk dibawa.", "en": "Next, a sheet to bring along." },
+    { "seg": "passport", "mark": "notMedical", "off": 0.3, "dur": 4.6, "id": "Sela menulisnya dengan jelas: ini bukan paspor medis, bukan rekam medis, bukan diagnosis.", "en": "Sela says it clearly: not a medical passport, record or diagnosis." },
+    { "seg": "passport", "mark": "quotes", "off": 0.4, "dur": 4.0, "id": "Setiap kalimat menunjuk ke kutipan asli dan versi sumbernya.", "en": "Each statement points to an original quote and its source version." },
+    { "seg": "passport", "mark": "recipient", "off": 0.3, "dur": 4.0, "id": "Pratinjau ini persis sama dengan yang akan diterima penerima.", "en": "This preview is exactly what a recipient would receive." },
+    { "seg": "passport", "mark": "approve", "off": 0.3, "dur": 4.8, "id": "Nadia menyetujui versi yang persis ini. Hanya versi yang disetujui yang bisa dibagikan.", "en": "Nadia approves this exact version. Only approved versions can be shared." },
+
+    { "seg": "care", "mark": 0, "off": 0.5, "dur": 3.4, "id": "Saat siap, Nadia bisa mengirim ringkasan ke layanan.", "en": "When she's ready, Nadia can send the sheet to a service." },
+    { "seg": "care", "mark": "partner", "off": 0.3, "dur": 4.8, "id": "Di demo ini penerimanya layanan simulasi, bukan klinik atau praktisi sungguhan.", "en": "Here the recipient is a simulated service, not a real clinic or practitioner." },
+    { "seg": "care", "mark": "proposed", "off": 0.3, "dur": 3.0, "id": "Layanan mengusulkan waktu. Nadia yang memilih.", "en": "The service proposes times. Nadia chooses." },
+    { "seg": "care", "mark": "confirmed", "off": 0.3, "dur": 3.0, "id": "Tidak ada janji temu sungguhan di demo ini.", "en": "No real appointment is made in this demo." },
+
+    { "seg": "revoke", "mark": 0, "off": 0.4, "dur": 3.0, "id": "Nadia bisa mencabut akses kapan saja.", "en": "Nadia can revoke access at any time." },
+    { "seg": "revoke", "mark": "revoked", "off": 0.3, "dur": 3.9, "id": "Akses berikutnya diblokir. Salinan yang sudah dilihat tidak bisa ditarik.", "en": "Future access is blocked. Copies already viewed can't be recalled." },
+
+    { "seg": "outro", "mark": 0, "off": 0.4, "dur": 4.0, "id": "AI seharusnya membantu kita menjelaskan cerita, bukan mengambil alih maknanya.", "en": "AI should help us explain our story, not take over its meaning." },
+    { "seg": "outro", "mark": 0, "off": 4.8, "dur": 3.2, "id": "Ceritamu. Maknamu. Langkahmu berikutnya.", "en": "Your story. Your meaning. Your next step." },
+    { "seg": "outro", "mark": 0, "off": 8.1, "dur": 1.7, "id": "Sela. Lebih dari sekadar didengar.", "en": "Sela. Beyond being heard." }
+  ]
+}

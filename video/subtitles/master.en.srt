@@ -1,0 +1,119 @@
+1
+00:00:00,800 --> 00:00:04,600
+Some days, the hardest part isn't finding an answer.
+
+2
+00:00:04,800 --> 00:00:08,000
+It's explaining what we really feel.
+
+3
+00:00:10,200 --> 00:00:15,500
+Many apps can listen. But who really understands?
+
+4
+00:00:20,600 --> 00:00:24,200
+AI can listen. That doesn't mean it understands.
+
+5
+00:00:28,600 --> 00:00:33,200
+This is Nadia, a fictional adult. She writes: "Sometimes I need time alone."
+
+6
+00:00:33,400 --> 00:00:39,000
+What Sela notices is only an interpretation. Nadia decides: agree, correct or reject.
+
+7
+00:00:40,400 --> 00:00:45,000
+One word can change the meaning. "Sometimes" becomes "always".
+
+8
+00:00:45,500 --> 00:00:50,200
+This mistake is a scripted test fixture, not a real Meta output.
+
+9
+00:00:50,400 --> 00:00:53,200
+Sela's meaning check flags it right away.
+
+10
+00:00:53,400 --> 00:00:58,600
+Nadia corrects it in her own words. Before saving, Sela shows what it will affect.
+
+11
+00:00:58,800 --> 00:01:01,600
+In Sela, a correction is more than a chat edit.
+
+12
+00:01:01,800 --> 00:01:05,800
+The Meaning Integrity Engine traces everything that rests on it.
+
+13
+00:01:06,000 --> 00:01:10,400
+The summary needs review. Links stop. The request is cancelled.
+
+14
+00:01:10,600 --> 00:01:14,800
+What others already read cannot be recalled.
+
+15
+00:01:15,400 --> 00:01:19,600
+A story doesn't stop at one moment.
+
+16
+00:01:23,000 --> 00:01:29,000
+Nadia can look back at her notes over time, in her own words.
+
+17
+00:01:29,400 --> 00:01:35,000
+No scores. No diagnosis. This page uses no AI.
+
+18
+00:01:40,400 --> 00:01:45,000
+Understanding is a beginning.
+
+19
+00:01:48,000 --> 00:01:54,500
+If she wants, Nadia picks one small step: writing two questions for a consultation.
+
+20
+00:01:54,800 --> 00:01:59,400
+No reminders, no targets. She can skip it.
+
+21
+00:02:00,400 --> 00:02:04,000
+Her words. Her choice. Her approval.
+
+22
+00:02:07,000 --> 00:02:13,600
+Nadia picks original quotes from her notes. Other notes stay private.
+
+23
+00:02:14,000 --> 00:02:18,400
+She approves the exact version that will be shared.
+
+24
+00:02:18,800 --> 00:02:24,600
+This is a personal preparation sheet, not a medical record or diagnosis.
+
+25
+00:02:25,400 --> 00:02:29,400
+When Nadia is ready, support follows her terms.
+
+26
+00:02:33,000 --> 00:02:39,000
+In this demo, the recipient is a simulated service. Not a real clinic or practitioner.
+
+27
+00:02:39,400 --> 00:02:44,600
+Nadia can cancel anytime. Copies already viewed cannot be recalled.
+
+28
+00:02:46,000 --> 00:02:50,200
+AI should help us explain our story, not take over its meaning.
+
+29
+00:02:50,400 --> 00:02:56,000
+Your story. Your meaning. Your next step.
+
+30
+00:02:56,400 --> 00:02:59,500
+Sela. Beyond being heard.
