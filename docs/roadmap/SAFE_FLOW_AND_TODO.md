@@ -26,7 +26,7 @@ The flagship of PR #28 — source-bound correction and invalidation (Meaning Int
 | W-04 | Production answers with two `Strict-Transport-Security` and two `X-Content-Type-Options` headers (proxy and app both set them) | P2 | S-002 (proxy owner) |
 | W-05 | PR #28 plans MIE but no step makes later features consume only approved versions | P1 | S-020 rule: the condition map reads approved/saved records only |
 | W-06 | Planned care shows a public directory but has no path from the person's own material to a prepared, consented hand-off | P1 | Condition map and demo professionals in D-071; hand-off S-023 open |
-| W-07 | No community feature, so the old Dengar.in peer space has no safe successor; a naive port would expose minors and crisis posts | P1 | Built moderated and adults-only in D-072; evaluation S-036 open |
+| W-07 | No community feature, so the old Dengar.in peer space has no safe successor; a naive port would expose minors and crisis posts | P1 | Built moderated and adults-only in D-072; evaluated in S-036 with a `self_risk` signal and crisis lexicon gaps closed (D-080) |
 | W-08 | Repository hygiene: no Code of Conduct, credits and security policy describe retired branches | P2 | Fixed (S-040–S-046) |
 
 ## 3. Safer flow
@@ -113,11 +113,12 @@ Status legend: `.` planned · `~` in progress · `x` done with evidence · `!` b
 - [x] S-033 Operator moderation queue (restore / remove)
 - [x] S-034 Web: community list, thread, compose, report, own-post delete
 - [x] S-035 Rate limits per author (5 posts, 30 replies per hour) with PostgreSQL counters; a Redis fast path stays optional
-- [ ] S-036 Moderation evaluation set (bullying, banter, quotes, reclaimed words) with false-positive review
+- [x] S-036 Moderation evaluation set (222 synthetic cases, 10 strata, id/en/mixed) with false-positive review ([review](../validation/MODERATION_FALSE_POSITIVE_REVIEW.md); thresholds `sela-eval-thresholds-2026.11.02-2`). Rules now two-tier (held-out rules FP 13/46 → 3/46, still one case over the ≤ 5% bar); live full pipeline benign FP 3/46 and harmful FN 0/23 pass. Crisis misses closed by safety ruleset `2026.11.02-2` and the Meta `self_risk` signal (D-080), which answers `422 crisis`; held-out crisis is no longer an independent measure, new cases needed
+- [ ] S-037 Fresh crisis and benign-venting cases to measure `self_risk` and ruleset `2026.11.02-2` independently; venting interjections ("bangsat, …") still hidden by the rules
 
 ### Meaning Integrity Engine (unchanged from PR #28)
 - [x] H-003–H-009 claim graph, corrections, invalidation, read-time gate, review UI — MIE 1.0 (D-078): backend `a19b876`, review/impact/stale UI; scenario B passes in `TestMeaningCorrectionPropagates` and in one browser run against a local server
-- [~] H-010–H-013 scenarios, evaluation, end-to-end evidence, video and submission — synthetic MIE set (128 cases) and offline B1 evaluation done; live Meta B0/B2/T comparison, video and submission open
+- [~] H-010–H-013 scenarios, evaluation, end-to-end evidence, video and submission — synthetic MIE set (128 cases), offline B1 evaluation and the live Meta B0/B1/B2/T run (2026-11-02, thresholds `2026.11.02-1`, 528 calls, [results](../validation/MIE_LIVE_BENCHMARK.md)) done: all held-out targets pass, but Muse Spark made no unsupported first-pass interpretation (0/128) and no leak (0/68), so there was no headroom; the gates stopped 68/68 gold distortions. New issue: Meaning Diff reads correction acknowledgements as negation (B1 withheld 58/66 faithful no-graph outputs). Open: larger adversarial and multi-turn set, human double labels, Meaning Diff fix, video and submission
 
 ## 5. Evidence (2026-11-01, branch `feat/sela-roadmap-nov`)
 

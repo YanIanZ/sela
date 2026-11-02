@@ -59,6 +59,11 @@ func TestDangerLexicon(t *testing.T) {
 		{"aku barusan mukul-mukul kepala ke tembok", LevelCrisis},
 		{"I have pills ready", LevelCrisis},
 		{"this is my last message", LevelCrisis},
+		// contracted threats and post farewells (ruleset 2026.11.02-1, S-036)
+		{"my partner said he'll kill me if I leave, I'm scared", LevelCrisis},
+		{"she's going to hurt me again tonight", LevelCrisis},
+		{"makasih semuanya, ini postingan terakhirku. selamat tinggal", LevelCrisis},
+		{"ini status terakhirku", LevelCrisis},
 		// denial and play: support only
 		{"aku nggak mau bunuh dia", LevelElevated},
 		{"aku nggak pernah dipukul ortu", LevelElevated},
@@ -84,6 +89,10 @@ func TestDangerLexicon(t *testing.T) {
 		{"aku pamit pergi selamanya dari grup ini", LevelNone},
 		{"aku mau bom chat dia", LevelNone},
 		{"I'm going to kill it at the interview", LevelNone},
+		{"he'll kill it at the show tonight", LevelNone},
+		{"she's gonna kill me with these memes lol", LevelNone},
+		{"ini postingan terakhirku dari grup ini, makasih ya", LevelNone},
+		{"postingan terakhirmu lucu banget", LevelNone},
 		{"I killed the presentation", LevelNone},
 		{"my boss hits me with deadlines", LevelNone},
 		{"aku berangkat pukul 7 pagi", LevelNone},
@@ -137,6 +146,45 @@ func TestTypoAndLanguages(t *testing.T) {
 	for _, c := range cases {
 		if got := Assess(c.text).Level; got != c.want {
 			t.Errorf("Assess(%q) = %s, want %s", c.text, got, c.want)
+		}
+	}
+}
+
+// TestDangerLexiconPillsHeightReady pins ruleset 2026.11.02-2: hoarded pills
+// to take at once, being at a height right now and "ready to end it", with
+// the everyday readings on the other side.
+func TestDangerLexiconPillsHeightReady(t *testing.T) {
+	crisis := []string{
+		"aku udah ngumpulin obat banyak buat diminum sekaligus nanti malam",
+		"gue lagi nimbun obat, minggu ini mau gue telan semua",
+		"obatnya mau kuminum semua sekaligus malam ini",
+		"aku udah berdiri di atap gedung sekarang",
+		"aku lagi duduk di pinggir jembatan sekarang, maaf ya",
+		"I wrote letters to my family, I'm ready to end it",
+		"i am so ready to end it all",
+		"I'm standing on the roof right now",
+		"i'm sitting on the edge of the bridge right now",
+	}
+	ordinary := []string{
+		"aku lagi ngumpulin obat buat donasi posko banjir",
+		"obatnya diminum sekaligus sesuai resep dokter",
+		"aku berdiri di atap gedung sekarang liat kembang api",
+		"lagi duduk di rooftop hotel sambil ngopi",
+		"aku berdiri di atap rumah kemarin benerin genteng",
+		"I'm ready to end it with him, the relationship is over",
+		"we're ready to end the meeting",
+		"I'm standing on the roof right now watching the fireworks",
+		"standing on the bridge for the view, so pretty",
+		"I'm ready to go now, see you at the station",
+	}
+	for _, s := range crisis {
+		if got := Assess(s).Level; got != LevelCrisis {
+			t.Errorf("Assess(%q) = %s, want crisis", s, got)
+		}
+	}
+	for _, s := range ordinary {
+		if got := Assess(s).Level; got == LevelCrisis {
+			t.Errorf("Assess(%q) = crisis, want not crisis (rules %v)", s, Assess(s).RuleIDs)
 		}
 	}
 }

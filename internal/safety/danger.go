@@ -137,7 +137,10 @@ var dangerRules = []dangerRule{
 			`\b`+dangerSelfID+`\b(?:\s+\S+){0,2}?\s+korban\s+(?:kdrt|kekerasan|perkosaan|pemerkosaan|pelecehan|penganiayaan|perdagangan\s+orang)\b`),
 	func() dangerRule {
 		r := dRule("danger-en-hurt-me", CategoryInDanger,
-			`\b`+dangerOtherSubjEN+`\s+(?:\S+\s+){0,2}?`+dangerHitMeEN+`\s+me\b`)
+			`\b`+dangerOtherSubjEN+`\s+(?:\S+\s+){0,2}?`+dangerHitMeEN+`\s+me\b|`+
+				// "he'll kill me", "she's going to hurt me": the contracted
+				// form of "will kill" (ruleset 2026.11.02-1, S-036).
+				`\b`+dangerOtherSubjEN+`(?:'ll|'s\s+going\s+to|'s\s+gonna|'s\s+trying\s+to)\s+(?:kill|hurt|stab|shoot|rape)\s+me\b`)
 		r.after = regexp.MustCompile(`^\s+(?:up|with|in\s+(?:the\s+)?(?:game|match))\b`)
 		return r
 	}(),
@@ -155,11 +158,26 @@ var dangerRules = []dangerRule{
 	}(),
 	func() dangerRule {
 		r := dRule("danger-id-farewell", CategorySuicide,
-			`\b(?:ini|inilah)\s+(?:pesan|kata-kata|tulisan)\s+terakhir(?:ku)?\b|\b(?:pesan|surat)\s+(?:terakhirku|perpisahanku)\b|`+
+			`\b(?:ini|inilah)\s+(?:pesan|kata-kata|tulisan|postingan|post|status|curhatan)\s+terakhir(?:ku)?\b|\b(?:pesan|surat)\s+(?:terakhirku|perpisahanku)\b|`+
 				`\b(?:besok|nanti|minggu\s+depan)\s+(?:\S+\s+){0,2}?`+dangerSelfID+`\s+(?:\S+\s+)?(?:udah|sudah|udh|sdh)\s+(?:nggak|gak|tidak|ga|enggak|ngga)\s+(?:ada|di\s+sini|disini)(?:\s+lagi)?\s*(?:$|[.!?,\n])|`+
 				`\bnyusul\s+(?:almarhum|almarhumah|alm|mendiang)\b|`+
 				`\b`+dangerSelfID+`\b(?:\s+\S+){0,3}?\s+(?:pergi|pamit)\s+(?:untuk\s+)?selamanya\b`)
 		r.after = regexp.MustCompile(`^\s+(?:dari|dr)\s+(?:grup|group|gc|kantor|sekolah|kampus|kota|komunitas|tim|organisasi|medsos|sosmed|ig|twitter|tiktok|chat|wa)\b`)
+		return r
+	}(),
+	// Ruleset 2026.11.02-2 (S-036 held-out crisis misses): hoarded pills to
+	// take at once, and standing at a height "right now".
+	func() dangerRule {
+		r := dRule("danger-id-pills-at-once", CategorySuicide,
+			`\b(?:ngumpulin|ngumpulun|kumpulin|mengumpulkan|nimbun|menimbun|numpuk|numpukin)\s+(?:\S+\s+){0,2}?obat(?:-obatan|nya)?\b|`+
+				`\bobat(?:-obatan|nya)?\b(?:\s+\S+){0,4}?\s+(?:buat\s+|untuk\s+|mau\s+|bakal\s+|akan\s+)?(?:diminum|ditelen|ditelan|kuminum|kutelan|minum|nelen|menelan)\s+(?:semua(?:nya)?\s+)?sekaligus\b`)
+		r.after = regexp.MustCompile(`^\s+(?:buat|untuk)\s+(?:donasi|posko|bantuan|korban|sumbangan|bakti\s+sosial|baksos)\b|^\s+(?:sesuai|kata|menurut|dari)\s+(?:resep|dokter|apoteker)\b`)
+		return r
+	}(),
+	func() dangerRule {
+		r := dRule("danger-id-height-now", CategorySuicide,
+			`\b(?:berdiri|duduk|udah\s+naik|sudah\s+naik|lagi\s+naik)\s+di\s+(?:atas\s+)?(?:atap|pinggir|tepi|ujung|pagar|pembatas)\s+(?:\S+\s+){0,1}?(?:gedung|jembatan|rooftop|tebing|balkon|apartemen|hotel|mall|flyover|menara|tower)\b(?:\s+\S+){0,2}?\s+(?:sekarang|skrg|skrng|saat\s+ini|sekarang\s+juga)\b`)
+		r.after = regexp.MustCompile(`^\s+(?:liat|lihat|ngeliat|nonton|menonton|foto|fotoin|motret|ngambil\s+foto|buat|untuk|sambil|bareng|benerin|memperbaiki|kerja|nunggu\s+sunset|nungguin)\b`)
 		return r
 	}(),
 	dRule("danger-id-vanish", CategorySuicide,
@@ -169,6 +187,15 @@ var dangerRules = []dangerRule{
 	dRule("danger-en-prepared-means", CategorySuicide,
 		`\bi\s+(?:have|'ve\s+got|got)\s+(?:the\s+|my\s+|a\s+)?(?:pills|rope|gun|blades?|razor)\s+ready\b|`+
 			`\bi(?:'ve|\s+have)?\s+(?:been\s+)?(?:saving|stockpiling|hoarding|collecting)\s+(?:up\s+)?(?:my\s+)?(?:pills|meds|medication|sleeping\s+pills)\b|\bi\s+bought\s+a\s+(?:rope|gun)\b`),
+	func() dangerRule {
+		// "I'm ready to end it" (not "ready to end it with him"), and being
+		// on a roof, ledge or bridge "right now" (ruleset 2026.11.02-2).
+		r := dRule("danger-en-ready-height", CategorySuicide,
+			`\bi(?:'m|\s+am)\s+(?:\S+\s+)?ready\s+to\s+(?:end\s+it(?:\s+all)?|end\s+my\s+life|die)\b|`+
+				`\bi(?:'m|\s+am)\s+(?:\S+\s+)?(?:standing|sitting)\s+on\s+(?:the|a|this|top\s+of\s+the)\s+(?:edge\s+of\s+(?:the|a)\s+)?(?:roof|rooftop|ledge|bridge|railing)\b(?:\s+\S+){0,3}?\s+right\s+now\b`)
+		r.after = regexp.MustCompile(`^\s+(?:with|between)\b|^\s+(?:watching|to\s+watch|taking|fixing|for\s+(?:the|a)\s+(?:view|photo|picture|fireworks|party))\b|^\s*,?\s+(?:with|and)\s+(?:my\s+)?friends\b`)
+		return r
+	}(),
 	dRule("danger-en-farewell", CategorySuicide,
 		`\bthis\s+is\s+my\s+last\s+(?:message|post|goodbye|note)\b|\bmy\s+last\s+words\b|\bi\s+won'?t\s+be\s+(?:here|around|alive)\s+(?:tomorrow|anymore)\b`),
 	// Other languages (S-012): suicidal intent in Malay, Javanese,

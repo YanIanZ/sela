@@ -75,7 +75,13 @@ func (s *Server) moderate(w http.ResponseWriter, r *http.Request, body string, m
 		return community.Draft{}, level, false
 	}
 	v := s.moderator().Moderate(r.Context(), text, contextText)
-	s.log.Info("community.moderated", "status", string(v.Status), "source", v.Source, "labels", len(v.Labels))
+	s.log.Info("community.moderated", "status", string(v.Status), "source", v.Source, "labels", len(v.Labels), "self_risk", v.SelfRisk)
+	if v.SelfRisk {
+		// Meta read the author as in danger now: same path as a crisis from
+		// the safety router. Nothing is stored; the app opens quick help.
+		writeError(w, r, http.StatusUnprocessableEntity, "crisis", "body")
+		return community.Draft{}, safety.LevelCrisis, false
+	}
 	return community.Draft{Body: text, Status: v.Status, Labels: v.Labels}, level, true
 }
 
