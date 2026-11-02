@@ -1,0 +1,15 @@
+# Sela: only the public information pages may be indexed. Personal spaces,
+# share and recipient links, the operator console and the API stay out.
+User-agent: *
+Allow: /$
+Allow: /about
+Allow: /help
+Allow: /reading
+Allow: /policies
+Allow: /assets/
+Allow: /fonts/
+Allow: /boot.js
+Allow: /manifest.json
+Allow: /icon
+Allow: /apple-touch-icon.png
+Disallow: /
