@@ -1,5 +1,9 @@
 # Blockers
 
+> **Hosting status note (2026-11-01, owner-reported):** The owner states that Sela has been deployed to production. B-3 is **not** a request to build hosting again: verify its current URL, deployed SHA/image, TLS, environment/profile, database, secret management, backup and rollback before retiring the B-3 evidence gate. This report does not resolve B-1 live Meta, B-10 legal/privacy, B-15 region or other release blockers. [Detailed read-only production checklist](../hackathon/PRODUCTION_VERIFICATION.md). Do not run invasive validation or seed data against a real-user production environment.
+>
+> **Update 2026-11-02 (checked):** URL, TLS and the deployed commit are verified: `https://sela.vertalt.my.id/api/v2/health` reports the build SHA (`586fd8c` after D-080) and `/api/v2/ready` reports `database: ok`, `schema: current`, `ai: meta_api`. Deploys run by push to `main`. Secret management, backup and rollback evidence are still to be attached before B-3 is retired.
+
 Updated: 2026-10-26 (owner brief v3; B-8 to B-15 added from the PM decisions of 2026-10-26). Only **external** blockers are listed: things that cannot be completed with the access available in this environment. Each states what is blocked, why, the evidence, what was done instead, and the exact owner action that unblocks it. Independent work continues around every blocker (owner brief §6: separate feature implementation from launch requirements).
 
 Blockers are grouped by what they stop:

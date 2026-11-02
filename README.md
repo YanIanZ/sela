@@ -131,6 +131,7 @@ Sela runs in **production at [sela.vertalt.my.id](https://sela.vertalt.my.id)** 
 | [API](docs/api/API_SPEC_V3.md) | HTTP contracts |
 | [Safer flow and TODO](docs/roadmap/SAFE_FLOW_AND_TODO.md) | The current plan, weaknesses found and what is next |
 | [Docs index](docs/README.md) | Everything else, grouped by purpose |
+| [Meta hackathon plan](docs/hackathon/README.md) | Detailed scoring strategy, MIE, seven scenarios, QA, production verification and submission checklist |
 
 ## Contributing and security
 
