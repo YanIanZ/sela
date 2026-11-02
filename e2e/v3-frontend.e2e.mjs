@@ -56,7 +56,9 @@ const context = await browser.newContext({ viewport: { width: 1365, height: 900 
 const page = await context.newPage();
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 page.on("console", (m) => {
-  if (m.type() === "error" && !/401 \(Unauthorized\)/.test(m.text())) {
+  // The signed-out session probe answers 401; over HTTP/2 the browser logs it
+  // as "status of 401 ()" without the reason phrase.
+  if (m.type() === "error" && !/status of 401\b/.test(m.text())) {
     errors.push("console: " + m.text());
   }
 });

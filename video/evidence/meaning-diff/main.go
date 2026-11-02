@@ -1,3 +1,10 @@
+//go:build ignore
+
+// Evidence for the product film (chapter 03): output.txt came from running
+// this in a scratch module where internal/ledger was importable as
+// mdiff/ledger.
+// Excluded from the Sela module build, vet and tests.
+
 package main
 
 import (

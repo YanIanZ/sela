@@ -103,7 +103,7 @@ const page = await context.newPage();
 page.on("console", (message) => {
   // The anonymous probe and the sign-out are expected 401s: there is no
   // staff session yet or any more. Everything else is a real error.
-  if (message.type() === "error" && !/401 \(Unauthorized\)/.test(message.text())) {
+  if (message.type() === "error" && !/status of 401\b/.test(message.text())) {
     errors.push(message.text());
   }
 });
