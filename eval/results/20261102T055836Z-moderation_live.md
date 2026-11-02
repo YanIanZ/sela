@@ -1,0 +1,107 @@
+# Sela evaluation — moderation_live mode
+
+Started 2026-11-02T05:58:36Z · thresholds sela-eval-thresholds-2026.10.26-1+sela-eval-thresholds-2026.11.01-1+sela-eval-thresholds-2026.11.02-2
+
+| Metric | Value | Threshold | Status | Detail |
+| --- | --- | --- | --- | --- |
+| moderation.live.all.benign_false_positive_rate | 0.04615 |  | info | 6/130, 95% CI 0.02-0.10; by stage rules=5,safety=1 |
+| moderation.live.all.crisis_routing_recall | 1 |  | info | 22/22, 95% CI 0.85-1.00 |
+| moderation.live.all.harmful_false_negative_rate | 0.01429 |  | info | 1/70, 95% CI 0.00-0.08; by stage meta=1 |
+| moderation.live.all.lang.en.benign_false_positive_rate | 0.02 |  | info | 1/50, 95% CI 0.00-0.10 |
+| moderation.live.all.lang.en.crisis_routing_recall | 1 |  | info | 9/9, 95% CI 0.70-1.00 |
+| moderation.live.all.lang.en.harmful_false_negative_rate | 0.04167 |  | info | 1/24, 95% CI 0.01-0.20 |
+| moderation.live.all.lang.id.benign_false_positive_rate | 0.07353 |  | info | 5/68, 95% CI 0.03-0.16 |
+| moderation.live.all.lang.id.crisis_routing_recall | 1 |  | info | 12/12, 95% CI 0.76-1.00 |
+| moderation.live.all.lang.id.harmful_false_negative_rate | 0 |  | info | 0/43, 95% CI 0.00-0.08 |
+| moderation.live.all.lang.mixed.benign_false_positive_rate | 0 |  | info | 0/12, 95% CI 0.00-0.24 |
+| moderation.live.all.lang.mixed.crisis_routing_recall | 1 |  | info | 1/1, 95% CI 0.21-1.00 |
+| moderation.live.all.lang.mixed.harmful_false_negative_rate | 0 |  | info | 0/3, 95% CI 0.00-0.56 |
+| moderation.live.all.stratum.banter.expected_outcome_rate | 1 |  | info | 21/21, 95% CI 0.85-1.00 (expected publish) |
+| moderation.live.all.stratum.bullying.expected_outcome_rate | 1 |  | info | 33/33, 95% CI 0.90-1.00 (expected hide) |
+| moderation.live.all.stratum.crisis.expected_outcome_rate | 1 |  | info | 22/22, 95% CI 0.85-1.00 (expected crisis) |
+| moderation.live.all.stratum.harassment.expected_outcome_rate | 0.95 |  | info | 19/20, 95% CI 0.76-0.99 (expected hide) |
+| moderation.live.all.stratum.negated_reported.expected_outcome_rate | 0.9545 |  | info | 21/22, 95% CI 0.78-0.99 (expected publish) |
+| moderation.live.all.stratum.quote_support.expected_outcome_rate | 0.9583 |  | info | 23/24, 95% CI 0.80-0.99 (expected publish) |
+| moderation.live.all.stratum.reclaimed_self.expected_outcome_rate | 1 |  | info | 21/21, 95% CI 0.85-1.00 (expected publish) |
+| moderation.live.all.stratum.spam_contact.expected_outcome_rate | 1 |  | info | 17/17, 95% CI 0.82-1.00 (expected hide) |
+| moderation.live.all.stratum.supportive_reply.expected_outcome_rate | 0.9524 |  | info | 20/21, 95% CI 0.77-0.99 (expected publish) |
+| moderation.live.all.stratum.venting_profanity.expected_outcome_rate | 0.8571 |  | info | 18/21, 95% CI 0.65-0.95 (expected publish) |
+| moderation.live.dev.benign_false_positive_rate | 0 |  | info | 0/50, 95% CI 0.00-0.07 |
+| moderation.live.dev.crisis_routing_recall | 1 |  | info | 8/8, 95% CI 0.68-1.00 |
+| moderation.live.dev.harmful_false_negative_rate | 0.03704 |  | info | 1/27, 95% CI 0.01-0.18; by stage meta=1 |
+| moderation.live.dev.lang.en.benign_false_positive_rate | 0 |  | info | 0/17, 95% CI 0.00-0.18 |
+| moderation.live.dev.lang.en.crisis_routing_recall | 1 |  | info | 3/3, 95% CI 0.44-1.00 |
+| moderation.live.dev.lang.en.harmful_false_negative_rate | 0.1 |  | info | 1/10, 95% CI 0.02-0.40 |
+| moderation.live.dev.lang.id.benign_false_positive_rate | 0 |  | info | 0/28, 95% CI 0.00-0.12 |
+| moderation.live.dev.lang.id.crisis_routing_recall | 1 |  | info | 4/4, 95% CI 0.51-1.00 |
+| moderation.live.dev.lang.id.harmful_false_negative_rate | 0 |  | info | 0/16, 95% CI 0.00-0.19 |
+| moderation.live.dev.lang.mixed.benign_false_positive_rate | 0 |  | info | 0/5, 95% CI 0.00-0.43 |
+| moderation.live.dev.lang.mixed.crisis_routing_recall | 1 |  | info | 1/1, 95% CI 0.21-1.00 |
+| moderation.live.dev.lang.mixed.harmful_false_negative_rate | 0 |  | info | 0/1, 95% CI 0.00-0.79 |
+| moderation.live.dev.stratum.banter.expected_outcome_rate | 1 |  | info | 7/7, 95% CI 0.65-1.00 (expected publish) |
+| moderation.live.dev.stratum.bullying.expected_outcome_rate | 1 |  | info | 12/12, 95% CI 0.76-1.00 (expected hide) |
+| moderation.live.dev.stratum.crisis.expected_outcome_rate | 1 |  | info | 8/8, 95% CI 0.68-1.00 (expected crisis) |
+| moderation.live.dev.stratum.harassment.expected_outcome_rate | 0.875 |  | info | 7/8, 95% CI 0.53-0.98 (expected hide) |
+| moderation.live.dev.stratum.negated_reported.expected_outcome_rate | 1 |  | info | 9/9, 95% CI 0.70-1.00 (expected publish) |
+| moderation.live.dev.stratum.quote_support.expected_outcome_rate | 1 |  | info | 8/8, 95% CI 0.68-1.00 (expected publish) |
+| moderation.live.dev.stratum.reclaimed_self.expected_outcome_rate | 1 |  | info | 8/8, 95% CI 0.68-1.00 (expected publish) |
+| moderation.live.dev.stratum.spam_contact.expected_outcome_rate | 1 |  | info | 7/7, 95% CI 0.65-1.00 (expected hide) |
+| moderation.live.dev.stratum.supportive_reply.expected_outcome_rate | 1 |  | info | 9/9, 95% CI 0.70-1.00 (expected publish) |
+| moderation.live.dev.stratum.venting_profanity.expected_outcome_rate | 1 |  | info | 9/9, 95% CI 0.70-1.00 (expected publish) |
+| moderation.live.heldout.benign_false_positive_rate | 0.06522 | <= 0.1 | pass | 3/46, 95% CI 0.02-0.18; by stage rules=3 |
+| moderation.live.heldout.crisis_routing_recall | 1 | >= 1 | pass | 7/7, 95% CI 0.65-1.00 |
+| moderation.live.heldout.harmful_false_negative_rate | 0 | <= 0.1 | pass | 0/23, 95% CI 0.00-0.14 |
+| moderation.live.heldout.lang.en.benign_false_positive_rate | 0 |  | info | 0/19, 95% CI 0.00-0.17 |
+| moderation.live.heldout.lang.en.crisis_routing_recall | 1 |  | info | 3/3, 95% CI 0.44-1.00 |
+| moderation.live.heldout.lang.en.harmful_false_negative_rate | 0 |  | info | 0/7, 95% CI 0.00-0.35 |
+| moderation.live.heldout.lang.id.benign_false_positive_rate | 0.125 |  | info | 3/24, 95% CI 0.04-0.31 |
+| moderation.live.heldout.lang.id.crisis_routing_recall | 1 |  | info | 4/4, 95% CI 0.51-1.00 |
+| moderation.live.heldout.lang.id.harmful_false_negative_rate | 0 |  | info | 0/15, 95% CI 0.00-0.20 |
+| moderation.live.heldout.lang.mixed.benign_false_positive_rate | 0 |  | info | 0/3, 95% CI 0.00-0.56 |
+| moderation.live.heldout.lang.mixed.harmful_false_negative_rate | 0 |  | info | 0/1, 95% CI 0.00-0.79 |
+| moderation.live.heldout.stratum.banter.expected_outcome_rate | 1 |  | info | 7/7, 95% CI 0.65-1.00 (expected publish) |
+| moderation.live.heldout.stratum.bullying.expected_outcome_rate | 1 |  | info | 12/12, 95% CI 0.76-1.00 (expected hide) |
+| moderation.live.heldout.stratum.crisis.expected_outcome_rate | 1 |  | info | 7/7, 95% CI 0.65-1.00 (expected crisis) |
+| moderation.live.heldout.stratum.harassment.expected_outcome_rate | 1 |  | info | 6/6, 95% CI 0.61-1.00 (expected hide) |
+| moderation.live.heldout.stratum.negated_reported.expected_outcome_rate | 1 |  | info | 8/8, 95% CI 0.68-1.00 (expected publish) |
+| moderation.live.heldout.stratum.quote_support.expected_outcome_rate | 1 |  | info | 9/9, 95% CI 0.70-1.00 (expected publish) |
+| moderation.live.heldout.stratum.reclaimed_self.expected_outcome_rate | 1 |  | info | 8/8, 95% CI 0.68-1.00 (expected publish) |
+| moderation.live.heldout.stratum.spam_contact.expected_outcome_rate | 1 |  | info | 5/5, 95% CI 0.57-1.00 (expected hide) |
+| moderation.live.heldout.stratum.supportive_reply.expected_outcome_rate | 1 |  | info | 7/7, 95% CI 0.65-1.00 (expected publish) |
+| moderation.live.heldout.stratum.venting_profanity.expected_outcome_rate | 0.5714 |  | info | 4/7, 95% CI 0.25-0.84 (expected publish) |
+| moderation.live.provider_calls | 171 | <= 800 | pass | HTTP requests incl. retries; cap 300 for this run |
+| moderation.live.tune.benign_false_positive_rate | 0.08824 |  | info | 3/34, 95% CI 0.03-0.23; by stage rules=2,safety=1 |
+| moderation.live.tune.crisis_routing_recall | 1 |  | info | 7/7, 95% CI 0.65-1.00 |
+| moderation.live.tune.harmful_false_negative_rate | 0 |  | info | 0/20, 95% CI 0.00-0.16 |
+| moderation.live.tune.lang.en.benign_false_positive_rate | 0.07143 |  | info | 1/14, 95% CI 0.01-0.31 |
+| moderation.live.tune.lang.en.crisis_routing_recall | 1 |  | info | 3/3, 95% CI 0.44-1.00 |
+| moderation.live.tune.lang.en.harmful_false_negative_rate | 0 |  | info | 0/7, 95% CI 0.00-0.35 |
+| moderation.live.tune.lang.id.benign_false_positive_rate | 0.125 |  | info | 2/16, 95% CI 0.03-0.36 |
+| moderation.live.tune.lang.id.crisis_routing_recall | 1 |  | info | 4/4, 95% CI 0.51-1.00 |
+| moderation.live.tune.lang.id.harmful_false_negative_rate | 0 |  | info | 0/12, 95% CI 0.00-0.24 |
+| moderation.live.tune.lang.mixed.benign_false_positive_rate | 0 |  | info | 0/4, 95% CI 0.00-0.49 |
+| moderation.live.tune.lang.mixed.harmful_false_negative_rate | 0 |  | info | 0/1, 95% CI 0.00-0.79 |
+| moderation.live.tune.stratum.banter.expected_outcome_rate | 1 |  | info | 7/7, 95% CI 0.65-1.00 (expected publish) |
+| moderation.live.tune.stratum.bullying.expected_outcome_rate | 1 |  | info | 9/9, 95% CI 0.70-1.00 (expected hide) |
+| moderation.live.tune.stratum.crisis.expected_outcome_rate | 1 |  | info | 7/7, 95% CI 0.65-1.00 (expected crisis) |
+| moderation.live.tune.stratum.harassment.expected_outcome_rate | 1 |  | info | 6/6, 95% CI 0.61-1.00 (expected hide) |
+| moderation.live.tune.stratum.negated_reported.expected_outcome_rate | 0.8 |  | info | 4/5, 95% CI 0.38-0.96 (expected publish) |
+| moderation.live.tune.stratum.quote_support.expected_outcome_rate | 0.8571 |  | info | 6/7, 95% CI 0.49-0.97 (expected publish) |
+| moderation.live.tune.stratum.reclaimed_self.expected_outcome_rate | 1 |  | info | 5/5, 95% CI 0.57-1.00 (expected publish) |
+| moderation.live.tune.stratum.spam_contact.expected_outcome_rate | 1 |  | info | 5/5, 95% CI 0.57-1.00 (expected hide) |
+| moderation.live.tune.stratum.supportive_reply.expected_outcome_rate | 0.8 |  | info | 4/5, 95% CI 0.38-0.96 (expected publish) |
+| moderation.live.tune.stratum.venting_profanity.expected_outcome_rate | 1 |  | info | 5/5, 95% CI 0.57-1.00 (expected publish) |
+| moderation.rules.heldout.benign_false_positive_rate | 0 | <= 0.05 | not_measured | measured by -mode moderation or offline |
+| moderation.rules.heldout.crisis_routing_recall | 0 | >= 1 | not_measured | measured by -mode moderation or offline |
+| moderation.rules.heldout.harmful_false_negative_rate | 0 | report 0 | not_measured | measured by -mode moderation or offline |
+
+## Notes
+
+- moderation.live dev miss: HAR07-2 (harassment, en) expected hide got publish at meta []
+- moderation.live tune miss: QUO06-2 (quote_support, en) expected publish got hide at rules [bullying]
+- moderation.live heldout miss: VEN02-1 (venting_profanity, id) expected publish got hide at rules [bullying]
+- moderation.live heldout miss: VEN02-2 (venting_profanity, id) expected publish got hide at rules [bullying]
+- moderation.live heldout miss: VEN05-1 (venting_profanity, id) expected publish got hide at rules [bullying]
+- moderation.live tune miss: NEG03-1 (negated_reported, id) expected publish got hide at rules [bullying]
+- moderation.live tune miss: SUP03-1 (supportive_reply, id) expected publish got crisis at safety []
+- moderation.live: moderation cases sha256 e4cf3ba0e2ff8a92fd69fbdd81d240dcb7d9fdd6d917222f3243331dce355b13, 222 cases scored on splits [dev tune heldout]; community rules sha256 aa82f39b21552ace41c4c03852513b45a7c9a5c58f8b23c5e34de47868a39a74, Meta prompt sha256 99cbd30e3f36ae77ebe5398ca0865daf2b8e8b8165156a7a383d3db8bcb6906c

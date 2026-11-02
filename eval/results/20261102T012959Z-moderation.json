@@ -1,0 +1,744 @@
+{
+  "started": "2026-11-02T01:29:59.832503Z",
+  "finished": "2026-11-02T01:29:59.89149Z",
+  "mode": "moderation",
+  "thresholds": "sela-eval-thresholds-2026.10.26-1+sela-eval-thresholds-2026.11.01-1+sela-eval-thresholds-2026.11.02-1",
+  "provider": {},
+  "versions": {
+    "community_rules_sha256": "e41f0e8f38c6ad90cc66338d31221b91dd569c2a201b66e34a92f957fe6c26ce",
+    "fixtures": "sela-fixtures-2026.11.01-1",
+    "ledger_schema": "sela-ledger-draft-v1",
+    "ledger_validator": "sela-meaning-lock-2026.10.26-2",
+    "moderation_cases_sha256": "e4cf3ba0e2ff8a92fd69fbdd81d240dcb7d9fdd6d917222f3243331dce355b13",
+    "prompts": "sela-prompts-2026.10.26-1",
+    "safety_ruleset": "sela-safety-2026.11.01-2"
+  },
+  "metrics": [
+    {
+      "name": "moderation.live.heldout.benign_false_positive_rate",
+      "value": 0,
+      "threshold": "\u003c= 0.1",
+      "status": "not_measured",
+      "detail": "requires -mode moderation_live (live Meta moderation)"
+    },
+    {
+      "name": "moderation.live.heldout.crisis_routing_recall",
+      "value": 0,
+      "threshold": "\u003e= 1",
+      "status": "not_measured",
+      "detail": "requires -mode moderation_live (live Meta moderation)"
+    },
+    {
+      "name": "moderation.live.heldout.harmful_false_negative_rate",
+      "value": 0,
+      "threshold": "\u003c= 0.1",
+      "status": "not_measured",
+      "detail": "requires -mode moderation_live (live Meta moderation)"
+    },
+    {
+      "name": "moderation.live.provider_calls",
+      "value": 0,
+      "threshold": "\u003c= 800",
+      "status": "not_measured",
+      "detail": "requires -mode moderation_live (live Meta moderation)"
+    },
+    {
+      "name": "moderation.rules.all.benign_false_positive_rate",
+      "value": 0.25384615384615383,
+      "status": "info",
+      "detail": "33/130, 95% CI 0.19-0.33; by stage rules=32,safety=1",
+      "n": 130
+    },
+    {
+      "name": "moderation.rules.all.crisis_routing_recall",
+      "value": 0.7272727272727273,
+      "status": "info",
+      "detail": "16/22, 95% CI 0.52-0.87; by stage none=6",
+      "n": 22
+    },
+    {
+      "name": "moderation.rules.all.harmful_false_negative_rate",
+      "value": 0.6714285714285714,
+      "status": "info",
+      "detail": "47/70, 95% CI 0.56-0.77; by stage none=47",
+      "n": 70
+    },
+    {
+      "name": "moderation.rules.all.lang.en.benign_false_positive_rate",
+      "value": 0.32,
+      "status": "info",
+      "detail": "16/50, 95% CI 0.21-0.46",
+      "n": 50
+    },
+    {
+      "name": "moderation.rules.all.lang.en.crisis_routing_recall",
+      "value": 0.6666666666666666,
+      "status": "info",
+      "detail": "6/9, 95% CI 0.35-0.88",
+      "n": 9
+    },
+    {
+      "name": "moderation.rules.all.lang.en.harmful_false_negative_rate",
+      "value": 0.6666666666666666,
+      "status": "info",
+      "detail": "16/24, 95% CI 0.47-0.82",
+      "n": 24
+    },
+    {
+      "name": "moderation.rules.all.lang.id.benign_false_positive_rate",
+      "value": 0.22058823529411764,
+      "status": "info",
+      "detail": "15/68, 95% CI 0.14-0.33",
+      "n": 68
+    },
+    {
+      "name": "moderation.rules.all.lang.id.crisis_routing_recall",
+      "value": 0.75,
+      "status": "info",
+      "detail": "9/12, 95% CI 0.47-0.91",
+      "n": 12
+    },
+    {
+      "name": "moderation.rules.all.lang.id.harmful_false_negative_rate",
+      "value": 0.7209302325581395,
+      "status": "info",
+      "detail": "31/43, 95% CI 0.57-0.83",
+      "n": 43
+    },
+    {
+      "name": "moderation.rules.all.lang.mixed.benign_false_positive_rate",
+      "value": 0.16666666666666666,
+      "status": "info",
+      "detail": "2/12, 95% CI 0.05-0.45",
+      "n": 12
+    },
+    {
+      "name": "moderation.rules.all.lang.mixed.crisis_routing_recall",
+      "value": 1,
+      "status": "info",
+      "detail": "1/1, 95% CI 0.21-1.00",
+      "n": 1
+    },
+    {
+      "name": "moderation.rules.all.lang.mixed.harmful_false_negative_rate",
+      "value": 0,
+      "status": "info",
+      "detail": "0/3, 95% CI 0.00-0.56",
+      "n": 3
+    },
+    {
+      "name": "moderation.rules.all.stratum.banter.expected_outcome_rate",
+      "value": 0.9523809523809523,
+      "status": "info",
+      "detail": "20/21, 95% CI 0.77-0.99 (expected publish)",
+      "n": 21
+    },
+    {
+      "name": "moderation.rules.all.stratum.bullying.expected_outcome_rate",
+      "value": 0.2727272727272727,
+      "status": "info",
+      "detail": "9/33, 95% CI 0.15-0.44 (expected hide)",
+      "n": 33
+    },
+    {
+      "name": "moderation.rules.all.stratum.crisis.expected_outcome_rate",
+      "value": 0.7272727272727273,
+      "status": "info",
+      "detail": "16/22, 95% CI 0.52-0.87 (expected crisis)",
+      "n": 22
+    },
+    {
+      "name": "moderation.rules.all.stratum.harassment.expected_outcome_rate",
+      "value": 0.15,
+      "status": "info",
+      "detail": "3/20, 95% CI 0.05-0.36 (expected hide)",
+      "n": 20
+    },
+    {
+      "name": "moderation.rules.all.stratum.negated_reported.expected_outcome_rate",
+      "value": 0.5909090909090909,
+      "status": "info",
+      "detail": "13/22, 95% CI 0.39-0.77 (expected publish)",
+      "n": 22
+    },
+    {
+      "name": "moderation.rules.all.stratum.quote_support.expected_outcome_rate",
+      "value": 0.5416666666666666,
+      "status": "info",
+      "detail": "13/24, 95% CI 0.35-0.72 (expected publish)",
+      "n": 24
+    },
+    {
+      "name": "moderation.rules.all.stratum.reclaimed_self.expected_outcome_rate",
+      "value": 0.6666666666666666,
+      "status": "info",
+      "detail": "14/21, 95% CI 0.45-0.83 (expected publish)",
+      "n": 21
+    },
+    {
+      "name": "moderation.rules.all.stratum.spam_contact.expected_outcome_rate",
+      "value": 0.6470588235294118,
+      "status": "info",
+      "detail": "11/17, 95% CI 0.41-0.83 (expected hide)",
+      "n": 17
+    },
+    {
+      "name": "moderation.rules.all.stratum.supportive_reply.expected_outcome_rate",
+      "value": 0.9523809523809523,
+      "status": "info",
+      "detail": "20/21, 95% CI 0.77-0.99 (expected publish)",
+      "n": 21
+    },
+    {
+      "name": "moderation.rules.all.stratum.venting_profanity.expected_outcome_rate",
+      "value": 0.8095238095238095,
+      "status": "info",
+      "detail": "17/21, 95% CI 0.60-0.92 (expected publish)",
+      "n": 21
+    },
+    {
+      "name": "moderation.rules.dev.benign_false_positive_rate",
+      "value": 0.14,
+      "status": "info",
+      "detail": "7/50, 95% CI 0.07-0.26; by stage rules=7",
+      "n": 50
+    },
+    {
+      "name": "moderation.rules.dev.crisis_routing_recall",
+      "value": 0.75,
+      "status": "info",
+      "detail": "6/8, 95% CI 0.41-0.93; by stage none=2",
+      "n": 8
+    },
+    {
+      "name": "moderation.rules.dev.harmful_false_negative_rate",
+      "value": 0.7407407407407407,
+      "status": "info",
+      "detail": "20/27, 95% CI 0.55-0.87; by stage none=20",
+      "n": 27
+    },
+    {
+      "name": "moderation.rules.dev.lang.en.benign_false_positive_rate",
+      "value": 0.29411764705882354,
+      "status": "info",
+      "detail": "5/17, 95% CI 0.13-0.53",
+      "n": 17
+    },
+    {
+      "name": "moderation.rules.dev.lang.en.crisis_routing_recall",
+      "value": 0.6666666666666666,
+      "status": "info",
+      "detail": "2/3, 95% CI 0.21-0.94",
+      "n": 3
+    },
+    {
+      "name": "moderation.rules.dev.lang.en.harmful_false_negative_rate",
+      "value": 0.7,
+      "status": "info",
+      "detail": "7/10, 95% CI 0.40-0.89",
+      "n": 10
+    },
+    {
+      "name": "moderation.rules.dev.lang.id.benign_false_positive_rate",
+      "value": 0.07142857142857142,
+      "status": "info",
+      "detail": "2/28, 95% CI 0.02-0.23",
+      "n": 28
+    },
+    {
+      "name": "moderation.rules.dev.lang.id.crisis_routing_recall",
+      "value": 0.75,
+      "status": "info",
+      "detail": "3/4, 95% CI 0.30-0.95",
+      "n": 4
+    },
+    {
+      "name": "moderation.rules.dev.lang.id.harmful_false_negative_rate",
+      "value": 0.8125,
+      "status": "info",
+      "detail": "13/16, 95% CI 0.57-0.93",
+      "n": 16
+    },
+    {
+      "name": "moderation.rules.dev.lang.mixed.benign_false_positive_rate",
+      "value": 0,
+      "status": "info",
+      "detail": "0/5, 95% CI 0.00-0.43",
+      "n": 5
+    },
+    {
+      "name": "moderation.rules.dev.lang.mixed.crisis_routing_recall",
+      "value": 1,
+      "status": "info",
+      "detail": "1/1, 95% CI 0.21-1.00",
+      "n": 1
+    },
+    {
+      "name": "moderation.rules.dev.lang.mixed.harmful_false_negative_rate",
+      "value": 0,
+      "status": "info",
+      "detail": "0/1, 95% CI 0.00-0.79",
+      "n": 1
+    },
+    {
+      "name": "moderation.rules.dev.stratum.banter.expected_outcome_rate",
+      "value": 1,
+      "status": "info",
+      "detail": "7/7, 95% CI 0.65-1.00 (expected publish)",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.dev.stratum.bullying.expected_outcome_rate",
+      "value": 0.16666666666666666,
+      "status": "info",
+      "detail": "2/12, 95% CI 0.05-0.45 (expected hide)",
+      "n": 12
+    },
+    {
+      "name": "moderation.rules.dev.stratum.crisis.expected_outcome_rate",
+      "value": 0.75,
+      "status": "info",
+      "detail": "6/8, 95% CI 0.41-0.93 (expected crisis)",
+      "n": 8
+    },
+    {
+      "name": "moderation.rules.dev.stratum.harassment.expected_outcome_rate",
+      "value": 0,
+      "status": "info",
+      "detail": "0/8, 95% CI 0.00-0.32 (expected hide)",
+      "n": 8
+    },
+    {
+      "name": "moderation.rules.dev.stratum.negated_reported.expected_outcome_rate",
+      "value": 0.7777777777777778,
+      "status": "info",
+      "detail": "7/9, 95% CI 0.45-0.94 (expected publish)",
+      "n": 9
+    },
+    {
+      "name": "moderation.rules.dev.stratum.quote_support.expected_outcome_rate",
+      "value": 0.625,
+      "status": "info",
+      "detail": "5/8, 95% CI 0.31-0.86 (expected publish)",
+      "n": 8
+    },
+    {
+      "name": "moderation.rules.dev.stratum.reclaimed_self.expected_outcome_rate",
+      "value": 0.75,
+      "status": "info",
+      "detail": "6/8, 95% CI 0.41-0.93 (expected publish)",
+      "n": 8
+    },
+    {
+      "name": "moderation.rules.dev.stratum.spam_contact.expected_outcome_rate",
+      "value": 0.7142857142857143,
+      "status": "info",
+      "detail": "5/7, 95% CI 0.36-0.92 (expected hide)",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.dev.stratum.supportive_reply.expected_outcome_rate",
+      "value": 1,
+      "status": "info",
+      "detail": "9/9, 95% CI 0.70-1.00 (expected publish)",
+      "n": 9
+    },
+    {
+      "name": "moderation.rules.dev.stratum.venting_profanity.expected_outcome_rate",
+      "value": 1,
+      "status": "info",
+      "detail": "9/9, 95% CI 0.70-1.00 (expected publish)",
+      "n": 9
+    },
+    {
+      "name": "moderation.rules.heldout.benign_false_positive_rate",
+      "value": 0.2826086956521739,
+      "threshold": "\u003c= 0.05",
+      "status": "fail",
+      "detail": "13/46, 95% CI 0.17-0.43; by stage rules=13",
+      "n": 46
+    },
+    {
+      "name": "moderation.rules.heldout.crisis_routing_recall",
+      "value": 0.42857142857142855,
+      "threshold": "\u003e= 1",
+      "status": "fail",
+      "detail": "3/7, 95% CI 0.16-0.75; by stage none=4",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.heldout.harmful_false_negative_rate",
+      "value": 0.6086956521739131,
+      "threshold": "report",
+      "status": "info",
+      "detail": "14/23, 95% CI 0.41-0.78; by stage none=14",
+      "n": 23
+    },
+    {
+      "name": "moderation.rules.heldout.lang.en.benign_false_positive_rate",
+      "value": 0.3684210526315789,
+      "status": "info",
+      "detail": "7/19, 95% CI 0.19-0.59",
+      "n": 19
+    },
+    {
+      "name": "moderation.rules.heldout.lang.en.crisis_routing_recall",
+      "value": 0.3333333333333333,
+      "status": "info",
+      "detail": "1/3, 95% CI 0.06-0.79",
+      "n": 3
+    },
+    {
+      "name": "moderation.rules.heldout.lang.en.harmful_false_negative_rate",
+      "value": 0.7142857142857143,
+      "status": "info",
+      "detail": "5/7, 95% CI 0.36-0.92",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.heldout.lang.id.benign_false_positive_rate",
+      "value": 0.20833333333333334,
+      "status": "info",
+      "detail": "5/24, 95% CI 0.09-0.40",
+      "n": 24
+    },
+    {
+      "name": "moderation.rules.heldout.lang.id.crisis_routing_recall",
+      "value": 0.5,
+      "status": "info",
+      "detail": "2/4, 95% CI 0.15-0.85",
+      "n": 4
+    },
+    {
+      "name": "moderation.rules.heldout.lang.id.harmful_false_negative_rate",
+      "value": 0.6,
+      "status": "info",
+      "detail": "9/15, 95% CI 0.36-0.80",
+      "n": 15
+    },
+    {
+      "name": "moderation.rules.heldout.lang.mixed.benign_false_positive_rate",
+      "value": 0.3333333333333333,
+      "status": "info",
+      "detail": "1/3, 95% CI 0.06-0.79",
+      "n": 3
+    },
+    {
+      "name": "moderation.rules.heldout.lang.mixed.harmful_false_negative_rate",
+      "value": 0,
+      "status": "info",
+      "detail": "0/1, 95% CI 0.00-0.79",
+      "n": 1
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.banter.expected_outcome_rate",
+      "value": 1,
+      "status": "info",
+      "detail": "7/7, 95% CI 0.65-1.00 (expected publish)",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.bullying.expected_outcome_rate",
+      "value": 0.4166666666666667,
+      "status": "info",
+      "detail": "5/12, 95% CI 0.19-0.68 (expected hide)",
+      "n": 12
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.crisis.expected_outcome_rate",
+      "value": 0.42857142857142855,
+      "status": "info",
+      "detail": "3/7, 95% CI 0.16-0.75 (expected crisis)",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.harassment.expected_outcome_rate",
+      "value": 0,
+      "status": "info",
+      "detail": "0/6, 95% CI 0.00-0.39 (expected hide)",
+      "n": 6
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.negated_reported.expected_outcome_rate",
+      "value": 0.75,
+      "status": "info",
+      "detail": "6/8, 95% CI 0.41-0.93 (expected publish)",
+      "n": 8
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.quote_support.expected_outcome_rate",
+      "value": 0.5555555555555556,
+      "status": "info",
+      "detail": "5/9, 95% CI 0.27-0.81 (expected publish)",
+      "n": 9
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.reclaimed_self.expected_outcome_rate",
+      "value": 0.5,
+      "status": "info",
+      "detail": "4/8, 95% CI 0.22-0.78 (expected publish)",
+      "n": 8
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.spam_contact.expected_outcome_rate",
+      "value": 0.8,
+      "status": "info",
+      "detail": "4/5, 95% CI 0.38-0.96 (expected hide)",
+      "n": 5
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.supportive_reply.expected_outcome_rate",
+      "value": 1,
+      "status": "info",
+      "detail": "7/7, 95% CI 0.65-1.00 (expected publish)",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.heldout.stratum.venting_profanity.expected_outcome_rate",
+      "value": 0.5714285714285714,
+      "status": "info",
+      "detail": "4/7, 95% CI 0.25-0.84 (expected publish)",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.tune.benign_false_positive_rate",
+      "value": 0.38235294117647056,
+      "status": "info",
+      "detail": "13/34, 95% CI 0.24-0.55; by stage rules=12,safety=1",
+      "n": 34
+    },
+    {
+      "name": "moderation.rules.tune.crisis_routing_recall",
+      "value": 1,
+      "status": "info",
+      "detail": "7/7, 95% CI 0.65-1.00",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.tune.harmful_false_negative_rate",
+      "value": 0.65,
+      "status": "info",
+      "detail": "13/20, 95% CI 0.43-0.82; by stage none=13",
+      "n": 20
+    },
+    {
+      "name": "moderation.rules.tune.lang.en.benign_false_positive_rate",
+      "value": 0.2857142857142857,
+      "status": "info",
+      "detail": "4/14, 95% CI 0.12-0.55",
+      "n": 14
+    },
+    {
+      "name": "moderation.rules.tune.lang.en.crisis_routing_recall",
+      "value": 1,
+      "status": "info",
+      "detail": "3/3, 95% CI 0.44-1.00",
+      "n": 3
+    },
+    {
+      "name": "moderation.rules.tune.lang.en.harmful_false_negative_rate",
+      "value": 0.5714285714285714,
+      "status": "info",
+      "detail": "4/7, 95% CI 0.25-0.84",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.tune.lang.id.benign_false_positive_rate",
+      "value": 0.5,
+      "status": "info",
+      "detail": "8/16, 95% CI 0.28-0.72",
+      "n": 16
+    },
+    {
+      "name": "moderation.rules.tune.lang.id.crisis_routing_recall",
+      "value": 1,
+      "status": "info",
+      "detail": "4/4, 95% CI 0.51-1.00",
+      "n": 4
+    },
+    {
+      "name": "moderation.rules.tune.lang.id.harmful_false_negative_rate",
+      "value": 0.75,
+      "status": "info",
+      "detail": "9/12, 95% CI 0.47-0.91",
+      "n": 12
+    },
+    {
+      "name": "moderation.rules.tune.lang.mixed.benign_false_positive_rate",
+      "value": 0.25,
+      "status": "info",
+      "detail": "1/4, 95% CI 0.05-0.70",
+      "n": 4
+    },
+    {
+      "name": "moderation.rules.tune.lang.mixed.harmful_false_negative_rate",
+      "value": 0,
+      "status": "info",
+      "detail": "0/1, 95% CI 0.00-0.79",
+      "n": 1
+    },
+    {
+      "name": "moderation.rules.tune.stratum.banter.expected_outcome_rate",
+      "value": 0.8571428571428571,
+      "status": "info",
+      "detail": "6/7, 95% CI 0.49-0.97 (expected publish)",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.tune.stratum.bullying.expected_outcome_rate",
+      "value": 0.2222222222222222,
+      "status": "info",
+      "detail": "2/9, 95% CI 0.06-0.55 (expected hide)",
+      "n": 9
+    },
+    {
+      "name": "moderation.rules.tune.stratum.crisis.expected_outcome_rate",
+      "value": 1,
+      "status": "info",
+      "detail": "7/7, 95% CI 0.65-1.00 (expected crisis)",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.tune.stratum.harassment.expected_outcome_rate",
+      "value": 0.5,
+      "status": "info",
+      "detail": "3/6, 95% CI 0.19-0.81 (expected hide)",
+      "n": 6
+    },
+    {
+      "name": "moderation.rules.tune.stratum.negated_reported.expected_outcome_rate",
+      "value": 0,
+      "status": "info",
+      "detail": "0/5, 95% CI 0.00-0.43 (expected publish)",
+      "n": 5
+    },
+    {
+      "name": "moderation.rules.tune.stratum.quote_support.expected_outcome_rate",
+      "value": 0.42857142857142855,
+      "status": "info",
+      "detail": "3/7, 95% CI 0.16-0.75 (expected publish)",
+      "n": 7
+    },
+    {
+      "name": "moderation.rules.tune.stratum.reclaimed_self.expected_outcome_rate",
+      "value": 0.8,
+      "status": "info",
+      "detail": "4/5, 95% CI 0.38-0.96 (expected publish)",
+      "n": 5
+    },
+    {
+      "name": "moderation.rules.tune.stratum.spam_contact.expected_outcome_rate",
+      "value": 0.4,
+      "status": "info",
+      "detail": "2/5, 95% CI 0.12-0.77 (expected hide)",
+      "n": 5
+    },
+    {
+      "name": "moderation.rules.tune.stratum.supportive_reply.expected_outcome_rate",
+      "value": 0.8,
+      "status": "info",
+      "detail": "4/5, 95% CI 0.38-0.96 (expected publish)",
+      "n": 5
+    },
+    {
+      "name": "moderation.rules.tune.stratum.venting_profanity.expected_outcome_rate",
+      "value": 0.8,
+      "status": "info",
+      "detail": "4/5, 95% CI 0.38-0.96 (expected publish)",
+      "n": 5
+    }
+  ],
+  "notes": [
+    "moderation.rules dev miss: BUL01-1 (bullying, id) expected hide got publish at none []",
+    "moderation.rules dev miss: BUL01-2 (bullying, id) expected hide got publish at none []",
+    "moderation.rules dev miss: BUL01-3 (bullying, en) expected hide got publish at none []",
+    "moderation.rules heldout miss: BUL02-1 (bullying, id) expected hide got publish at none []",
+    "moderation.rules heldout miss: BUL02-2 (bullying, id) expected hide got publish at none []",
+    "moderation.rules heldout miss: BUL02-3 (bullying, en) expected hide got publish at none []",
+    "moderation.rules tune miss: BUL03-2 (bullying, id) expected hide got publish at none []",
+    "moderation.rules dev miss: BUL04-1 (bullying, id) expected hide got publish at none []",
+    "moderation.rules dev miss: BUL04-2 (bullying, id) expected hide got publish at none []",
+    "moderation.rules dev miss: BUL04-3 (bullying, en) expected hide got publish at none []",
+    "moderation.rules heldout miss: BUL05-2 (bullying, id) expected hide got publish at none []",
+    "moderation.rules tune miss: BUL06-1 (bullying, id) expected hide got publish at none []",
+    "moderation.rules tune miss: BUL06-2 (bullying, id) expected hide got publish at none []",
+    "moderation.rules tune miss: BUL06-3 (bullying, en) expected hide got publish at none []",
+    "moderation.rules dev miss: BUL07-1 (bullying, id) expected hide got publish at none []",
+    "moderation.rules dev miss: BUL07-2 (bullying, id) expected hide got publish at none []",
+    "moderation.rules heldout miss: BUL08-3 (bullying, en) expected hide got publish at none []",
+    "moderation.rules tune miss: BUL09-1 (bullying, id) expected hide got publish at none []",
+    "moderation.rules tune miss: BUL09-2 (bullying, id) expected hide got publish at none []",
+    "moderation.rules tune miss: BUL09-3 (bullying, en) expected hide got publish at none []",
+    "moderation.rules dev miss: BUL10-1 (bullying, id) expected hide got publish at none []",
+    "moderation.rules dev miss: BUL10-2 (bullying, en) expected hide got publish at none []",
+    "moderation.rules heldout miss: BUL11-1 (bullying, id) expected hide got publish at none []",
+    "moderation.rules heldout miss: BUL11-2 (bullying, en) expected hide got publish at none []",
+    "moderation.rules dev miss: HAR01-1 (harassment, id) expected hide got publish at none []",
+    "moderation.rules dev miss: HAR01-2 (harassment, id) expected hide got publish at none []",
+    "moderation.rules dev miss: HAR01-3 (harassment, en) expected hide got publish at none []",
+    "moderation.rules heldout miss: HAR02-1 (harassment, id) expected hide got publish at none []",
+    "moderation.rules heldout miss: HAR02-2 (harassment, id) expected hide got publish at none []",
+    "moderation.rules heldout miss: HAR02-3 (harassment, en) expected hide got publish at none []",
+    "moderation.rules tune miss: HAR03-2 (harassment, id) expected hide got publish at none []",
+    "moderation.rules dev miss: HAR04-1 (harassment, id) expected hide got publish at none []",
+    "moderation.rules dev miss: HAR04-2 (harassment, id) expected hide got publish at none []",
+    "moderation.rules dev miss: HAR04-3 (harassment, en) expected hide got publish at none []",
+    "moderation.rules heldout miss: HAR05-1 (harassment, id) expected hide got publish at none []",
+    "moderation.rules heldout miss: HAR05-2 (harassment, id) expected hide got publish at none []",
+    "moderation.rules heldout miss: HAR05-3 (harassment, en) expected hide got publish at none []",
+    "moderation.rules tune miss: HAR06-1 (harassment, id) expected hide got publish at none []",
+    "moderation.rules tune miss: HAR06-2 (harassment, en) expected hide got publish at none []",
+    "moderation.rules dev miss: HAR07-1 (harassment, id) expected hide got publish at none []",
+    "moderation.rules dev miss: HAR07-2 (harassment, en) expected hide got publish at none []",
+    "moderation.rules dev miss: SPM04-1 (spam_contact, id) expected hide got publish at none []",
+    "moderation.rules dev miss: SPM04-2 (spam_contact, en) expected hide got publish at none []",
+    "moderation.rules heldout miss: SPM05-2 (spam_contact, id) expected hide got publish at none []",
+    "moderation.rules tune miss: SPM06-1 (spam_contact, id) expected hide got publish at none []",
+    "moderation.rules tune miss: SPM06-2 (spam_contact, id) expected hide got publish at none []",
+    "moderation.rules tune miss: SPM06-3 (spam_contact, en) expected hide got publish at none []",
+    "moderation.rules tune miss: BAN03-1 (banter, id) expected publish got hide at rules [bullying]",
+    "moderation.rules dev miss: QUO01-1 (quote_support, id) expected publish got hide at rules [bullying]",
+    "moderation.rules dev miss: QUO01-3 (quote_support, en) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: QUO02-3 (quote_support, en) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: QUO03-2 (quote_support, en) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: QUO03-3 (quote_support, mixed) expected publish got hide at rules [bullying]",
+    "moderation.rules dev miss: QUO04-2 (quote_support, en) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: QUO05-2 (quote_support, en) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: QUO06-1 (quote_support, id) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: QUO06-2 (quote_support, en) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: QUO08-2 (quote_support, en) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: QUO08-3 (quote_support, id) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: REC02-1 (reclaimed_self, id) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: REC02-2 (reclaimed_self, en) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: REC02-3 (reclaimed_self, mixed) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: REC03-1 (reclaimed_self, id) expected publish got hide at rules [bullying]",
+    "moderation.rules dev miss: REC04-1 (reclaimed_self, id) expected publish got hide at rules [bullying]",
+    "moderation.rules dev miss: REC04-2 (reclaimed_self, en) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: REC08-2 (reclaimed_self, en) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: VEN02-1 (venting_profanity, id) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: VEN02-2 (venting_profanity, id) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: VEN05-1 (venting_profanity, id) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: VEN06-1 (venting_profanity, id) expected publish got hide at rules [bullying]",
+    "moderation.rules dev miss: NEG01-3 (negated_reported, en) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: NEG02-3 (negated_reported, en) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: NEG03-1 (negated_reported, id) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: NEG03-2 (negated_reported, id) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: NEG03-3 (negated_reported, en) expected publish got hide at rules [bullying]",
+    "moderation.rules dev miss: NEG04-3 (negated_reported, en) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: NEG06-1 (negated_reported, id) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: NEG06-2 (negated_reported, en) expected publish got hide at rules [bullying]",
+    "moderation.rules heldout miss: NEG08-2 (negated_reported, en) expected publish got hide at rules [bullying]",
+    "moderation.rules tune miss: SUP03-1 (supportive_reply, id) expected publish got crisis at safety []",
+    "moderation.rules heldout miss: CRI02-1 (crisis, id) expected crisis got publish at none []",
+    "moderation.rules dev miss: CRI04-1 (crisis, id) expected crisis got publish at none []",
+    "moderation.rules heldout miss: CRI05-3 (crisis, en) expected crisis got publish at none []",
+    "moderation.rules dev miss: CRI07-2 (crisis, en) expected crisis got publish at none []",
+    "moderation.rules heldout miss: CRI08-1 (crisis, id) expected crisis got publish at none []",
+    "moderation.rules heldout miss: CRI08-2 (crisis, en) expected crisis got publish at none []",
+    "moderation.rules: moderation cases sha256 e4cf3ba0e2ff8a92fd69fbdd81d240dcb7d9fdd6d917222f3243331dce355b13, 222 cases scored on splits [dev tune heldout]; community rules sha256 e41f0e8f38c6ad90cc66338d31221b91dd569c2a201b66e34a92f957fe6c26ce"
+  ],
+  "failures": [
+    "moderation.rules.heldout.benign_false_positive_rate = 0.2826086956521739 (want \u003c= 0.05)",
+    "moderation.rules.heldout.crisis_routing_recall = 0.42857142857142855 (want \u003e= 1)"
+  ]
+}

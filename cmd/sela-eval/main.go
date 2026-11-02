@@ -10,6 +10,13 @@
 //	                   cmd/fakellm handler (TEST ONLY; never Meta inference)
 //	-mode live         offline + ledger runs against the configured Modal
 //	                   endpoint (SELA_LLM_* env, as for cmd/sela)
+//	-mode moderation   S-036 only: the deterministic part of the community
+//	                   publishing pipeline (safety router + community rules)
+//	                   on eval/moderation/cases.jsonl (also part of offline)
+//	-mode moderation_live
+//	                   S-036 only: the full pipeline with Meta moderation
+//	                   (SELA_LLM_* env, as for cmd/sela) on -splits, capped at
+//	                   -max-calls provider HTTP requests including retries
 //
 // Metrics marked "live" in the thresholds are reported as not_measured in
 // the other modes. All inputs are synthetic fixtures; outputs contain counts,
@@ -82,6 +89,7 @@ type Report struct {
 	Notes      []string          `json:"notes"`
 	Failures   []string          `json:"failures"`
 	measured   map[string]Metric
+	only       string // judge only metrics with this prefix ("" = all)
 }
 
 func (r *Report) put(name string, value float64, n int, detail string) {
@@ -111,11 +119,21 @@ func (r *Report) judge(th thresholds) {
 	for _, k := range keys {
 		m, measured := r.measured[k]
 		t, hasT := th.Metrics[k]
+		if r.only != "" && !strings.HasPrefix(k, r.only) {
+			continue
+		}
 		if !measured {
 			m = Metric{Name: k, Status: "not_measured"}
 			if hasT {
 				m.Threshold = fmt.Sprintf("%s %g", t.Op, t.Value)
-				if t.Mode == "live" && r.Mode != "live" {
+				switch {
+				case strings.HasPrefix(k, "moderation.live.") && r.Mode != "moderation_live":
+					m.Detail = "requires -mode moderation_live (live Meta moderation)"
+				case strings.HasPrefix(k, "moderation.live.") && r.Mode == "moderation_live":
+					m.Detail = "split not run in this invocation (see -splits)"
+				case strings.HasPrefix(k, "moderation.rules.") && r.Mode == "moderation_live":
+					m.Detail = "measured by -mode moderation or offline"
+				case t.Mode == "live" && r.Mode != "live" && r.Mode != "mie-live":
 					m.Detail = "requires live Meta inference (blocked: see docs/status/BLOCKERS.md B-1)"
 				}
 			}
@@ -124,6 +142,12 @@ func (r *Report) judge(th thresholds) {
 		}
 		if !hasT {
 			m.Status = "info"
+			r.Metrics = append(r.Metrics, m)
+			continue
+		}
+		if t.Op == "report" {
+			// Registered without a pass bar.
+			m.Threshold, m.Status = "report", "info"
 			r.Metrics = append(r.Metrics, m)
 			continue
 		}
@@ -140,12 +164,38 @@ func (r *Report) judge(th thresholds) {
 }
 
 func main() {
-	mode := flag.String("mode", "offline", "offline | test_double | live")
+	mode := flag.String("mode", "offline", "offline | test_double | live | moderation | moderation_live")
 	root := flag.String("root", ".", "repository root")
 	out := flag.String("out", "eval/results", "output directory")
+	splits := flag.String("splits", "", "moderation modes: comma-separated splits (default dev,tune,heldout for moderation, dev,tune for moderation_live)")
+	maxCalls := flag.Int("max-calls", 800, "moderation_live: hard cap on provider HTTP requests including retries (at most 800)")
+	var lo mieLiveOpts
+	flag.StringVar(&lo.action, "mie-live", "", "live MIE benchmark: run | sheet | labels | score (replaces -mode)")
+	flag.StringVar(&lo.raw, "mie-raw", "", "mie-live: raw directory outside the repository (holds model text)")
+	flag.StringVar(&lo.envFile, "mie-env", "", "mie-live run: env file with META_LLAMA_API_KEY or SELA_LLM_API_KEY")
+	flag.StringVar(&lo.baseURL, "mie-base-url", mieLiveBaseURL, "mie-live run: Meta Model API base URL")
+	flag.StringVar(&lo.callsFile, "mie-calls", "", "mie-live: shared provider-call ledger (default: next to -mie-raw)")
+	flag.StringVar(&lo.splits, "mie-splits", "dev,tune,heldout", "mie-live run: splits to run")
+	flag.IntVar(&lo.maxCalls, "mie-max-calls", 1200, "mie-live run: hard cap on provider HTTP attempts across all runs")
+	flag.IntVar(&lo.concurrency, "mie-concurrency", 3, "mie-live run: concurrent provider calls")
+	flag.IntVar(&lo.limit, "mie-limit", 0, "mie-live run: at most this many cases (smoke runs)")
 	flag.Parse()
-	if *mode != "offline" && *mode != "test_double" && *mode != "live" {
-		fmt.Fprintln(os.Stderr, "sela-eval: -mode must be offline, test_double or live")
+	if lo.action != "" {
+		lo.root, lo.out = *root, *out
+		if err := runMIELive(lo); err != nil {
+			fmt.Fprintln(os.Stderr, "sela-eval:", err)
+			os.Exit(1)
+		}
+		return
+	}
+	switch *mode {
+	case "offline", "test_double", "live", "moderation", "moderation_live":
+	default:
+		fmt.Fprintln(os.Stderr, "sela-eval: -mode must be offline, test_double, live, moderation or moderation_live")
+		os.Exit(2)
+	}
+	if *maxCalls < 1 || *maxCalls > 800 {
+		fmt.Fprintln(os.Stderr, "sela-eval: -max-calls must be between 1 and 800")
 		os.Exit(2)
 	}
 	raw, err := os.ReadFile(filepath.Join(*root, "eval", "thresholds.json"))
@@ -160,6 +210,25 @@ func main() {
 	}
 	th.merge()
 	rep := &Report{Started: time.Now().UTC(), Mode: *mode, Thresholds: th.Version, Provider: map[string]string{}, Versions: versions()}
+	dir := *out
+	if !filepath.IsAbs(dir) {
+		dir = filepath.Join(*root, dir)
+	}
+	if strings.HasPrefix(*mode, "moderation") {
+		opt := moderationOptions{live: *mode == "moderation_live", maxCalls: *maxCalls, out: dir, splits: []string{"dev", "tune", "heldout"}}
+		if opt.live {
+			opt.splits = []string{"dev", "tune"}
+		}
+		if *splits != "" {
+			opt.splits = strings.Split(*splits, ",")
+		}
+		rep.only = "moderation."
+		if err := runModeration(rep, *root, opt); err != nil {
+			rep.Failures = append(rep.Failures, "moderation: "+err.Error())
+		}
+		finish(rep, th, dir)
+		return
+	}
 	steps := []struct {
 		name string
 		fn   func(*Report, string) error
@@ -170,6 +239,9 @@ func main() {
 		{"authorization", runAuthorization},
 		{"crisis_path", runCrisisPath},
 		{"mie", runMIE},
+		{"moderation", func(r *Report, root string) error {
+			return runModeration(r, root, moderationOptions{splits: []string{"dev", "tune", "heldout"}, out: dir})
+		}},
 	}
 	for _, s := range steps {
 		if err := s.fn(rep, *root); err != nil {
@@ -181,12 +253,13 @@ func main() {
 			rep.Failures = append(rep.Failures, "model: "+err.Error())
 		}
 	}
+	finish(rep, th, dir)
+}
+
+// finish judges, writes the report and exits non-zero on any failure.
+func finish(rep *Report, th thresholds, dir string) {
 	rep.judge(th)
 	rep.Finished = time.Now().UTC()
-	dir := *out
-	if !filepath.IsAbs(dir) {
-		dir = filepath.Join(*root, dir)
-	}
 	if err := write(rep, dir); err != nil {
 		fmt.Fprintln(os.Stderr, "sela-eval:", err)
 		os.Exit(2)
