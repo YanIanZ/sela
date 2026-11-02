@@ -1,9 +1,23 @@
 # Meta integration
 
+## Current state (2026-11-02) — read this first
+
+| Item | Now |
+| --- | --- |
+| Generator | **Muse Spark** `muse-spark-1.3` via the hosted Meta Model API `https://api.meta.ai/v1`, reasoning effort minimal; the served model id is checked on every response |
+| Verifier | **Muse Wonder** `muse-wonder-1.0`, a different Meta model, under the same `ai_processing` consent (D-065) |
+| Tasks | AT-1 listening replies, AT-2 reflections, AT-3 memory proposals, AT-4 summary drafts, AT-5 opening lines, AT-7 one tentative next step (D-081), plus community moderation with the `self_risk` signal (D-080). AT-0 crisis support never calls a model |
+| Production | `sela.vertalt.my.id` runs `meta_api` (`/api/v2/ready` → `ai: meta_api`); the deployed commit is on `/api/v2/health` (D-069) |
+| Live evidence | [MIE live benchmark](../validation/MIE_LIVE_BENCHMARK.md) (528 calls) and the [moderation evaluation](../validation/MODERATION_FALSE_POSITIVE_REVIEW.md) (live runs plus a production check) |
+| Not used in production | Modal open-weight serving (the adapter and app remain in `modal/`, B-1), Claude, DeepSeek, image models, fine-tuning |
+
+Statements below that say no live call was made, that the Meta Model API is refused in production, or that Claude/DeepSeek take part are **history** from before D-063, D-065 and D-069.
+
+
 > **2026-10-31 — superseded in part by [D-065](../decisions/DECISION_LOG.md#d-065):** the Claude verifier and the DeepSeek fallback are removed. One *different Meta model* (`muse-wonder-1.0` by default) verifies under the existing `ai_processing` consent, and there is no fallback generator or second verifier. Where this document names Anthropic/Claude, DeepSeek, `live_anthropic`, `live_deepseek_*` or `ai_provider_*` consents as current behaviour, D-065 governs; the routing, consent, minimisation, guard, provenance and "no unverified release" guarantees continue with the Meta verifier.
 Status: **adapter and Modal serving app implemented; live deployment not verified** ([B-1](../status/BLOCKERS.md)). The v3 role of Meta as primary generator inside a routed system (DeepSeek fallback, Claude verifier; [ADR-0003](../adr/ADR-0003-ai-routing-verifier-fallback.md), PM decision D-030) is **in progress**: committed on branch `feat/sela-v3-ai` (`44845d3` and `63a5c98`, then `02051ae`, which merges `feat/sela-v3-pilot` at `59dba14`), not merged; nothing verified, and nothing of it is wired into the delivery branch; live use **blocked externally** (B-1, B-8, B-9). Authority: [SPEC](../../SPEC.md) I.meta, I.ai, I.fallback, C4, C13, C18, V7, V15, V19–V21, V22, V25, V35 (supersedes V9 and V10), V41 and V42; the owner's [DeepSeek fallback contract](DEEPSEEK_FALLBACK.md). Decision record: [ADR-0001](../adr/ADR-0001-meta-open-weight-model-on-modal.md).
 
-## Role in v3 (PM decision D-030; in progress on branch `feat/sela-v3-ai`, not merged)
+## History: role in v3 as planned (PM decision D-030; superseded by D-065)
 
 - **Primary generator for every generative task:**
   - listening replies

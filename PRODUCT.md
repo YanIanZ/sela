@@ -1,5 +1,7 @@
 # Product
 
+> **Current AI setup (2026-11-02, D-065):** every model call goes to Meta through the hosted Meta Model API — **Muse Spark** (`muse-spark-1.3`) generates and a different Meta model, **Muse Wonder** (`muse-wonder-1.0`), verifies. There is no Claude verifier, no DeepSeek fallback and no Modal deployment in production; mentions of them below are planning history. See the [README](README.md#meta-models-in-use) and [Meta integration](docs/architecture/META_INTEGRATION.md).
+
 <!-- impeccable:product-schema 1 -->
 
 > **Owner direction update (29 October 2026; not yet implemented):** Sela will be anonymous-first and **consumer login-free**, text-only, without voice/TTS/ASR, avatar or required GPS. Planned differentiator: [Meaning Integrity Engine](docs/vision/MEANING_INTEGRITY_ENGINE.md). Meta remains primary, Claude Sonnet 5.5 verifier, DeepSeek opt-in availability fallback; manual professional/facility discovery joins the real product, while external hospital collaboration is **synthetic-only until real partnerships**. This supersedes conflicting aspirational statements below **for planning**, not claims about the working code. The full scope and migration requirements are [here](docs/vision/README.md) and [ADR-0004](docs/adr/ADR-0004-anonymous-first-meaning-integrity-care-network.md).
@@ -34,7 +36,7 @@ Environments: the user's own phone browser (often a cheap Android on slow 3G, pr
 ## Capabilities and Constraints
 
 - Backend: Go. Frontend: React 19, TypeScript, Vite, plain CSS with custom properties. One Go process serves API and assets. PostgreSQL 16 for persistent storage.
-- AI: Meta open-weight model on Modal is the primary generator; Claude is the verifier (never a generator); DeepSeek is an optional, off-by-default availability fallback. Provider keys stay server-side. Every AI output records provider provenance and is labelled in the UI.
+- AI (current, D-065): Muse Spark generates and Muse Wonder verifies, both through the Meta Model API; no other provider and no fallback. (Planned on 2026-10-29 and superseded: Meta open-weight on Modal as generator, Claude verifier, DeepSeek fallback.) Provider keys stay server-side. Every AI output records provider provenance and is labelled in the UI.
 - Bilingual: Indonesian and English across the complete journey, including error states. Code-switched input is tested.
 - Privacy: anonymous or pseudonymous use (guest mode or username account, no real name required). Per-user envelope encryption with crypto-shredding. Separate consents for AI processing (per provider), storage and sharing. Retention and deletion that actually work. No story content, prompts/outputs, credentials or tokens in operational logs.
 - Minors (15–17): self-declared age band; age-appropriate copy; guardian consent gives no account, access, notification or export; memory and pattern features opt-in only; no DeepSeek; no hidden monitoring.

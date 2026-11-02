@@ -65,6 +65,19 @@ flowchart LR
 - **Privacy by construction**: personal records are encrypted per user and can be crypto-shredded; nothing personal is written to logs or to Redis.
 - **No fallback that bypasses consent**: if the Meta model is unavailable, Sela shows an honest no-AI state rather than routing elsewhere.
 
+### Meta models in use
+
+Every model call goes to Meta through the hosted Meta Model API (`https://api.meta.ai/v1`); there is no other provider and no fallback (D-065). Production runs this configuration (`/api/v2/ready` → `ai: meta_api`).
+
+| Model | Role | Where it is used |
+| --- | --- | --- |
+| **Muse Spark** (`muse-spark-1.3`, reasoning effort minimal) | Generator | Listening replies (AT-1), reflection cards (AT-2), memory proposals (AT-3), consultation-summary drafts (AT-4), opening lines (AT-5), one tentative next step (AT-7), and pre-publication moderation of the sharing space, including the `self_risk` signal that opens quick help instead of publishing |
+| **Muse Wonder** (`muse-wonder-1.0`) | Separate verifier | Checks each generated claim against the person's own source spans; a claim it does not support is never released as fact |
+
+Go code decides everything around the models: consent before any call, a deterministic crisis check that runs first and never calls a model (AT-0), data minimisation, schema validation, the Meaning Diff and what is finally shown. The served model id is checked on every response.
+
+**What a live benchmark showed (2026-11-02, 128 synthetic cases, 528 calls, [details](docs/validation/MIE_LIVE_BENCHMARK.md)):** Muse Spark kept the meaning of the source in 128/128 first-pass reflections; Muse Wonder plus the Go gates stopped 68/68 deliberately distorted interpretations, withholding 2/60 faithful ones; and dropping a rejected interpretation from context (Sela's correction graph) kept 65/68 follow-up replies available, against 5/68 when the correction only stays in the chat. Synthetic, short cases and single-labeller results: a measurement of the pipeline, not a clinical claim.
+
 More: [architecture](docs/architecture/ARCHITECTURE.md) · [AI policy](docs/architecture/AI_POLICY.md) · [safety](docs/architecture/SAFETY.md) · [Meaning Integrity Engine](docs/vision/MEANING_INTEGRITY_ENGINE.md)
 
 ## Getting started
