@@ -3,3 +3,8 @@ node_modules/
 out/
 public/audio/*.wav
 public/demo/
+
+# Local-only working material (toolchain probes, production screenshots, brand exports).
+audit/
+assets/
+captures/

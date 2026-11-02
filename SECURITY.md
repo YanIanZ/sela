@@ -6,7 +6,7 @@ Sela stores and processes deeply personal writing. We treat every vulnerability 
 
 | Version | Where | Supported |
 | --- | --- | --- |
-| `main` (Sela v3) | Production: https://sela.vertalt.my.id | Yes |
+| `main` | Production: https://sela.vertalt.my.id | Yes |
 | Older branches, the retired v2 demo and archived Dengar.in deployments | — | No |
 
 The legacy Dengar.in deployments are not Sela and are not covered by this policy.

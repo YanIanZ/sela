@@ -1,10 +1,8 @@
-name: Sela v2
+name: Sela CI
 
 on:
   pull_request:
-    # feat/sela-v3-pilot: the v3 delivery branch; the stacked v3 PRs (AI layer,
-    # listening, consultation and sharing) target it and need the same checks.
-    branches: [main, feat/sela-v3-pilot]
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -13,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: v2-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -142,21 +140,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Build image
-        run: docker build -f deploy/v2/Dockerfile -t sela-v2:ci .
+        run: docker build -f deploy/v2/Dockerfile -t sela:ci .
       - name: Production default refuses to start without its configuration
         run: |
-          if docker run --rm sela-v2:ci > /tmp/refuse.txt 2>&1; then
+          if docker run --rm sela:ci > /tmp/refuse.txt 2>&1; then
             echo "the production default started without a database, key or https origin"; exit 1
           fi
           cat /tmp/refuse.txt
           grep -q 'SELA_DATABASE_URL' /tmp/refuse.txt
       - name: Start container (development settings, synthetic CI database, AI disabled)
         run: |
-          kek="$(docker run --rm sela-v2:ci keys generate-kek --env development | sed -n 's/^SELA_DATA_KEK=//p')"
+          kek="$(docker run --rm sela:ci keys generate-kek --env development | sed -n 's/^SELA_DATA_KEK=//p')"
           docker run -d --name sela --network host \
             -e SELA_ENV=development -e SELA_SECURE_COOKIES=false -e SELA_DB_AUTO_MIGRATE=true \
             -e SELA_DATABASE_URL='postgres://sela:sela-dev-only@127.0.0.1:5432/sela_smoke?sslmode=disable' \
-            -e SELA_DATA_KEK="$kek" -e SELA_DATA_KEK_ID=dev-ci sela-v2:ci
+            -e SELA_DATA_KEK="$kek" -e SELA_DATA_KEK_ID=dev-ci sela:ci
       - name: Health, readiness, static frontend and public /api/v3 routes
         run: |
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/api/v2/health && break; sleep 1; done

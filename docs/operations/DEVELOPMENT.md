@@ -17,7 +17,7 @@ snapshot is under `internal/safety/testdata/v1/`.
 | Code | `cmd/`, `internal/` (Go 1.26.10, D-054), `web/` (React 19 + TypeScript + Vite 7), `modal/` (Modal + vLLM), `e2e/`, `eval/`, `scripts/ops/`, `scripts/research/` |
 | Data | v2 demo (`/api/v2`): in-memory sessions, embedded synthetic fixtures. v3 (`/api/v3`): PostgreSQL 16 with per-user encryption (ADR-0002) |
 | AI | Meta Muse Glimmer on Modal (not yet deployed) or a labelled test double |
-| CI | `.github/workflows/v2.yml` |
+| CI | `.github/workflows/ci.yml` |
 
 ## Commands
 

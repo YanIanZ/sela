@@ -8,7 +8,7 @@ A private, bilingual place to talk, write and check in — and to bring only the
 
 **[Open Sela → sela.vertalt.my.id](https://sela.vertalt.my.id)**
 
-[![CI](https://github.com/YanIanZ/sela/actions/workflows/v2.yml/badge.svg)](https://github.com/YanIanZ/sela/actions/workflows/v2.yml)
+[![CI](https://github.com/YanIanZ/sela/actions/workflows/ci.yml/badge.svg)](https://github.com/YanIanZ/sela/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Go 1.26](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)

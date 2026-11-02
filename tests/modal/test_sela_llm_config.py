@@ -38,7 +38,7 @@ README_PATH = MODAL_DIR / "README.md"
 NOTES_PATH = MODAL_DIR / "MODEL_NOTES.md"
 REQUIREMENTS_PATH = MODAL_DIR / "requirements.txt"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "modal-deploy.yml"
-V2_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "v2.yml"
+CI_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "ci.yml"
 
 sys.path.insert(0, str(MODAL_DIR))
 import smoke_test  # noqa: E402  (stdlib only, asserted below)
@@ -537,7 +537,7 @@ class ModalDeployWorkflowTest(unittest.TestCase):
         self.assertTrue(uses)
         for ref in uses:
             self.assertRegex(ref, r"^actions/[a-z-]+@v\d+$")
-        ci_checkout = re.search(r"actions/checkout@(v\d+)", V2_WORKFLOW_PATH.read_text(encoding="utf-8"))
+        ci_checkout = re.search(r"actions/checkout@(v\d+)", CI_WORKFLOW_PATH.read_text(encoding="utf-8"))
         self.assertIn(f"actions/checkout@{ci_checkout.group(1)}", uses)
 
     def test_secrets_only_via_env_and_never_echoed(self):

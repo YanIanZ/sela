@@ -26,3 +26,6 @@ README.md
 
 # Design decisions and review captures are development-only.
 **/.impeccable
+
+# The product film workspace is not part of the deployed app.
+video

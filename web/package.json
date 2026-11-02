@@ -2,7 +2,7 @@
   "name": "sela-web",
   "version": "2.0.0",
   "private": true,
-  "description": "Sela v2 bilingual frontend (static, served by the Go binary)",
+  "description": "Sela bilingual frontend (static, served by the Go binary)",
   "type": "module",
   "license": "MIT",
   "scripts": {
