@@ -245,6 +245,62 @@ export type ReadingApproval = {
   approvedAt: string;
   revokedAt?: string;
   version: number;
+  /** Absent for approvals recorded before migration 1301. */
+  accessibility?: ReadingA11yApproval;
+};
+
+export type ReadingA11yFinding = {
+  code: string;
+  path?: string;
+  lang?: string;
+  value?: number;
+};
+
+export type ReadingA11yCheck = {
+  id: string;
+  status: "pass" | "fail" | "not_applicable";
+  blocking: boolean;
+  findings: ReadingA11yFinding[];
+};
+
+export type ReadingA11yMetrics = {
+  sentences: number;
+  words: number;
+  avgWordsPerSentence: number;
+  maxWordsPerSentence: number;
+  sentencesOver20Words: number;
+  fkGrade: number | null;
+};
+
+export type ReadingA11yReport = {
+  version: string;
+  result: "pass" | "needs_override" | "blocked";
+  checks: ReadingA11yCheck[];
+  metrics: Record<string, ReadingA11yMetrics>;
+};
+
+export type ReadingA11yApproval = {
+  checksVersion: string;
+  result: "pass" | "overridden";
+  checks: ReadingA11yCheck[];
+  manualVersion: string;
+  manualConfirmed: string[];
+  overrideReason?: string;
+  overridden?: string[];
+};
+
+export type ReadingA11yMeta = {
+  checksVersion: string;
+  manualVersion: string;
+  manualChecklist: { id: string; label: ReadingLocalized }[];
+  overrideReason: { min: number; max: number };
+};
+
+export type ReadingA11yRequest = {
+  checksVersion: string;
+  manualVersion: string;
+  manualChecks: Record<string, boolean>;
+  overrideReason: string;
 };
 
 export type ReadingAdminItem = {
@@ -252,6 +308,7 @@ export type ReadingAdminItem = {
   detail: ReadingDetail;
   contentHash: string;
   embeddedReview: ReadingEmbeddedReview;
+  accessibility: ReadingA11yReport;
   approval?: ReadingApproval;
   hashMatches: boolean;
   published: boolean;
@@ -321,16 +378,19 @@ export type Tasks = {
 export class AdminError extends Error {
   readonly status: number;
   readonly code: string;
+  /** The request field the server named, when it named one. */
+  readonly field: string;
 
-  constructor(status: number, code: string) {
+  constructor(status: number, code: string, field = "") {
     super(code);
     this.name = "AdminError";
     this.status = status;
     this.code = code;
+    this.field = field;
   }
 }
 
-type ErrorBody = { error?: { code?: string } };
+type ErrorBody = { error?: { code?: string; field?: string } };
 
 async function request<T>(
   path: string,
@@ -357,8 +417,8 @@ async function request<T>(
     body = null;
   }
   if (!res.ok) {
-    const code = (body as ErrorBody | null)?.error?.code ?? "internal";
-    throw new AdminError(res.status, code);
+    const err = (body as ErrorBody | null)?.error;
+    throw new AdminError(res.status, err?.code ?? "internal", err?.field ?? "");
   }
   return (body as { data: T }).data;
 }
@@ -513,7 +573,9 @@ export const adminApi = {
       true,
     ).then((r) => r.invalidated),
   reading: () =>
-    request<{ items: ReadingAdminItem[] }>("/reading").then((r) => r.items),
+    request<{ items: ReadingAdminItem[]; accessibility: ReadingA11yMeta }>(
+      "/reading",
+    ),
   readingAudit: () =>
     request<{ events: ReadingAudit[] }>("/reading/audit").then((r) => r.events),
   approveReading: (
@@ -525,6 +587,7 @@ export const adminApi = {
       verifierStatus: "supported";
       contentHash: string;
       confirm: boolean;
+      accessibility: ReadingA11yRequest;
     },
   ) =>
     request<{ slug: string; approval: ReadingApproval }>(

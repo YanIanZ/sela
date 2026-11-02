@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -29,6 +30,9 @@ type Approval struct {
 	ApprovedAt     time.Time  `json:"approvedAt"`
 	RevokedAt      *time.Time `json:"revokedAt,omitempty"`
 	Version        int        `json:"version"`
+	// Accessibility is the check record stored with the approval. It is
+	// nil for approvals recorded before migration 1301.
+	Accessibility *ApprovalAccessibility `json:"accessibility,omitempty"`
 }
 
 // publishes reports whether this approval still binds the exact embedded
@@ -55,6 +59,9 @@ type ApproveInput struct {
 	Note           string
 	VerifierStatus string
 	ContentHash    string
+	// Accessibility is the record produced by GateAccessibility for this
+	// exact content. It is required.
+	Accessibility *ApprovalAccessibility
 }
 
 // AuditEvent is one reading review action, content-free.
@@ -95,8 +102,7 @@ func NewReviewStore(pool *pgxpool.Pool, now func() time.Time) (*ReviewStore, err
 
 // List returns every approval row, current or revoked, oldest slug first.
 func (s *ReviewStore) List(ctx context.Context) ([]Approval, error) {
-	rows, err := s.pool.Query(ctx, `SELECT slug, reviewer_name, reviewed_on, note, verifier_status,
-		content_hash, approved_by, approved_at, revoked_at, version
+	rows, err := s.pool.Query(ctx, `SELECT `+approvalColumns+`
 		FROM reading_reviews ORDER BY slug`)
 	if err != nil {
 		return nil, err
@@ -124,7 +130,16 @@ func (s *ReviewStore) Approve(ctx context.Context, actor admin.AdminID, slug str
 		return Approval{}, fmt.Errorf("%w: reviewedOn", ErrReviewInvalid)
 	}
 	reviewedOn := in.ReviewedOn.Format(time.DateOnly)
-	err := s.tx(ctx, func(tx pgx.Tx) error {
+	a11y := in.Accessibility
+	checksJSON, err := json.Marshal(a11y.Checks)
+	if err != nil {
+		return Approval{}, err
+	}
+	manualJSON, err := json.Marshal(a11y.ManualConfirmed)
+	if err != nil {
+		return Approval{}, err
+	}
+	err = s.tx(ctx, func(tx pgx.Tx) error {
 		var oldStatus string
 		var revokedAt *time.Time
 		err := tx.QueryRow(ctx, `SELECT revoked_at FROM reading_reviews WHERE slug=$1 FOR UPDATE`, slug).Scan(&revokedAt)
@@ -140,8 +155,9 @@ func (s *ReviewStore) Approve(ctx context.Context, actor admin.AdminID, slug str
 		}
 		_, err = tx.Exec(ctx, `INSERT INTO reading_reviews
 			(slug, reviewer_name, reviewed_on, note, verifier_status, content_hash,
-			 approved_by, approved_at, revoked_at, version)
-			VALUES ($1,$2,$3,$4,'supported',$5,$6,$7,NULL,1)
+			 approved_by, approved_at, revoked_at, version,
+			 a11y_checks_version, a11y_result, a11y_checks, a11y_manual_version, a11y_manual, a11y_override_reason)
+			VALUES ($1,$2,$3,$4,'supported',$5,$6,$7,NULL,1,$8,$9,$10,$11,$12,NULLIF($13,''))
 			ON CONFLICT (slug) DO UPDATE SET
 				reviewer_name=EXCLUDED.reviewer_name,
 				reviewed_on=EXCLUDED.reviewed_on,
@@ -151,13 +167,30 @@ func (s *ReviewStore) Approve(ctx context.Context, actor admin.AdminID, slug str
 				approved_by=EXCLUDED.approved_by,
 				approved_at=EXCLUDED.approved_at,
 				revoked_at=NULL,
-				version=reading_reviews.version+1`,
+				version=reading_reviews.version+1,
+				a11y_checks_version=EXCLUDED.a11y_checks_version,
+				a11y_result=EXCLUDED.a11y_result,
+				a11y_checks=EXCLUDED.a11y_checks,
+				a11y_manual_version=EXCLUDED.a11y_manual_version,
+				a11y_manual=EXCLUDED.a11y_manual,
+				a11y_override_reason=EXCLUDED.a11y_override_reason`,
 			slug, strings.TrimSpace(in.ReviewerName), reviewedOn, strings.TrimSpace(in.Note),
-			in.ContentHash, actor, now)
+			in.ContentHash, actor, now,
+			a11y.ChecksVersion, a11y.Result, checksJSON, a11y.ManualVersion, manualJSON,
+			strings.TrimSpace(a11y.OverrideReason))
 		if err != nil {
 			return err
 		}
-		return s.audit(ctx, tx, actor, "reading.approve", slug, oldStatus, "approved", in.Note)
+		if err := s.audit(ctx, tx, actor, "reading.approve", slug, oldStatus, "approved", in.Note); err != nil {
+			return err
+		}
+		if a11y.Result == A11yApprovedOverridden {
+			// The override is its own event: the reason, not the note, and
+			// the failing checks as the old status.
+			return s.audit(ctx, tx, actor, "reading.a11y_override", slug,
+				strings.Join(a11y.Overridden, ","), A11yApprovedOverridden, a11y.OverrideReason)
+		}
+		return nil
 	})
 	if err != nil {
 		return Approval{}, err
@@ -174,8 +207,7 @@ func (s *ReviewStore) Revoke(ctx context.Context, actor admin.AdminID, slug, rea
 	}
 	now := s.now().UTC()
 	err := s.tx(ctx, func(tx pgx.Tx) error {
-		a, err := scanApproval(tx.QueryRow(ctx, `SELECT slug, reviewer_name, reviewed_on, note, verifier_status,
-			content_hash, approved_by, approved_at, revoked_at, version
+		a, err := scanApproval(tx.QueryRow(ctx, `SELECT `+approvalColumns+`
 			FROM reading_reviews WHERE slug=$1 FOR UPDATE`, slug))
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrReviewNotFound
@@ -227,8 +259,7 @@ func (s *ReviewStore) Audit(ctx context.Context, limit int) ([]AuditEvent, error
 }
 
 func (s *ReviewStore) get(ctx context.Context, slug string) (Approval, error) {
-	a, err := scanApproval(s.pool.QueryRow(ctx, `SELECT slug, reviewer_name, reviewed_on, note, verifier_status,
-		content_hash, approved_by, approved_at, revoked_at, version
+	a, err := scanApproval(s.pool.QueryRow(ctx, `SELECT `+approvalColumns+`
 		FROM reading_reviews WHERE slug=$1`, slug))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Approval{}, ErrReviewNotFound
@@ -250,8 +281,9 @@ func (s *ReviewStore) tx(ctx context.Context, fn func(pgx.Tx) error) error {
 
 func (s *ReviewStore) audit(ctx context.Context, tx pgx.Tx, actor admin.AdminID, action, slug, old, new, reason string) error {
 	reason = strings.TrimSpace(reason)
-	if len(reason) > 300 {
-		reason = reason[:300]
+	if r := []rune(reason); len(r) > 300 {
+		// Cut on a rune boundary: a byte cut could split a UTF-8 sequence.
+		reason = string(r[:300])
 	}
 	_, err := tx.Exec(ctx, `INSERT INTO reading_review_audit
 		(id, actor_id, action, object_kind, object_id, old_status, new_status, reason, created_at)
@@ -262,20 +294,53 @@ func (s *ReviewStore) audit(ctx context.Context, tx pgx.Tx, actor admin.AdminID,
 
 type approvalScanner interface{ Scan(...any) error }
 
+const approvalColumns = `slug, reviewer_name, reviewed_on, note, verifier_status,
+		content_hash, approved_by, approved_at, revoked_at, version,
+		a11y_checks_version, a11y_result, a11y_checks, a11y_manual_version, a11y_manual, a11y_override_reason`
+
 func scanApproval(row approvalScanner) (Approval, error) {
 	var (
-		a          Approval
-		reviewedOn time.Time
-		approvedBy pgtype.UUID
-		revokedAt  *time.Time
+		a              Approval
+		reviewedOn     time.Time
+		approvedBy     pgtype.UUID
+		revokedAt      *time.Time
+		checksVersion  *string
+		result         *string
+		checksJSON     []byte
+		manualVersion  *string
+		manualJSON     []byte
+		overrideReason *string
 	)
 	if err := row.Scan(&a.Slug, &a.ReviewerName, &reviewedOn, &a.Note, &a.VerifierStatus,
-		&a.ContentHash, &approvedBy, &a.ApprovedAt, &revokedAt, &a.Version); err != nil {
+		&a.ContentHash, &approvedBy, &a.ApprovedAt, &revokedAt, &a.Version,
+		&checksVersion, &result, &checksJSON, &manualVersion, &manualJSON, &overrideReason); err != nil {
 		return Approval{}, err
 	}
 	a.ReviewedOn = reviewedOn.Format(time.DateOnly)
 	a.ApprovedBy = approvedBy.String()
 	a.RevokedAt = revokedAt
+	if checksVersion != nil {
+		rec := &ApprovalAccessibility{ChecksVersion: *checksVersion}
+		if result != nil {
+			rec.Result = *result
+		}
+		if manualVersion != nil {
+			rec.ManualVersion = *manualVersion
+		}
+		if overrideReason != nil {
+			rec.OverrideReason = *overrideReason
+		}
+		if err := json.Unmarshal(checksJSON, &rec.Checks); err != nil {
+			return Approval{}, err
+		}
+		if err := json.Unmarshal(manualJSON, &rec.ManualConfirmed); err != nil {
+			return Approval{}, err
+		}
+		if rec.Result == A11yApprovedOverridden {
+			_, rec.Overridden = A11yReport{Checks: rec.Checks}.Failing()
+		}
+		a.Accessibility = rec
+	}
 	return a, nil
 }
 
@@ -298,6 +363,9 @@ func validateApproval(slug string, in ApproveInput) error {
 	}
 	if len(strings.TrimSpace(in.Note)) > 1000 {
 		return fmt.Errorf("%w: note", ErrReviewInvalid)
+	}
+	if !in.Accessibility.validRecord() {
+		return fmt.Errorf("%w: accessibility", ErrReviewInvalid)
 	}
 	return nil
 }

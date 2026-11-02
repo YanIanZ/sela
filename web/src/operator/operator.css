@@ -95,6 +95,15 @@
   outline-offset: 2px;
 }
 
+/* A date input's day/month/year segments take focus inside the control,
+   where the host no longer matches :focus-visible in Chromium; keep the
+   ring on the whole field while any segment is focused (WCAG 2.4.7). */
+.op input[type="date"]:focus,
+.op input[type="date"]:focus-within {
+  outline: 3px solid var(--op-focus);
+  outline-offset: 2px;
+}
+
 .op-skip {
   position: fixed;
   top: -10rem;
@@ -428,7 +437,8 @@
   cursor: pointer;
 }
 
-.op-btn:disabled {
+.op-btn:disabled,
+.op-btn[aria-disabled="true"] {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -438,7 +448,7 @@
   color: var(--op-on-accent);
 }
 
-.op-btn--primary:hover:not(:disabled) {
+.op-btn--primary:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--op-accent-hover);
 }
 

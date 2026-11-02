@@ -132,6 +132,9 @@ type ReviewItem struct {
 	Detail         Detail         `json:"detail"`
 	ContentHash    string         `json:"contentHash"`
 	EmbeddedReview EmbeddedReview `json:"embeddedReview"`
+	// Accessibility is the automatic check report for this exact content
+	// (A11yChecksVersion). The approve endpoint recomputes it server-side.
+	Accessibility A11yReport `json:"accessibility"`
 }
 
 // AdminItem is one row of GET /api/admin/v1/reading. Approval is the current
@@ -156,9 +159,10 @@ func (l *Library) AdminItems(approvals map[string]Approval) []AdminItem {
 		}
 		item := AdminItem{
 			ReviewItem: ReviewItem{
-				Slug:        it.ID,
-				Detail:      l.detail(it, rv),
-				ContentHash: it.contentHash,
+				Slug:          it.ID,
+				Detail:        l.detail(it, rv),
+				ContentHash:   it.contentHash,
+				Accessibility: it.a11y,
 				EmbeddedReview: EmbeddedReview{
 					Status:             it.Review.Status,
 					HumanEditor:        deref(it.Review.HumanEditor),
@@ -202,7 +206,10 @@ type item struct {
 	// contentHash is the SHA-256 of the exact raw item object from the
 	// embedded file. It is not part of the public JSON.
 	contentHash string
-	Content     struct {
+	// a11y is the deterministic accessibility report for this content,
+	// computed once at load because the content set is immutable.
+	a11y    A11yReport
+	Content struct {
 		Title        Localized      `json:"title"`
 		Summary      Localized      `json:"summary"`
 		Steps        *LocalizedList `json:"steps"`
@@ -307,6 +314,7 @@ func LoadFS(fsys fs.FS) (*Library, error) {
 			// or formatting change therefore changes the hash.
 			sum := sha256.Sum256(raw)
 			it.contentHash = hex.EncodeToString(sum[:])
+			it.a11y = it.checkAccessibility(lib.sources)
 			lib.bySlug[it.ID] = len(lib.items)
 			lib.items = append(lib.items, it)
 		}
@@ -371,6 +379,17 @@ func (l *Library) ContentHash(slug string) (string, bool) {
 		return "", false
 	}
 	return l.items[idx].contentHash, true
+}
+
+// Accessibility returns the automatic accessibility report and content hash
+// for slug, computed from the same embedded bytes the hash binds.
+func (l *Library) Accessibility(slug string) (A11yReport, string, bool) {
+	idx, ok := l.bySlug[slug]
+	if !ok {
+		return A11yReport{}, "", false
+	}
+	it := l.items[idx]
+	return it.a11y, it.contentHash, true
 }
 
 // review decides publication for one item and returns the public review

@@ -57,6 +57,14 @@ var messages = map[string]message{
 	"cache_disabled":            {"Cache Redis tidak diaktifkan di server ini.", "Redis cache isn't enabled on this server."},
 	"directory_forbidden":       {"Entri ini hanya dapat diverifikasi oleh peninjau lain.", "This entry can only be verified by another reviewer."},
 	"directory_conflict":        {"Entri ini sudah berubah atau tidak berada di status yang tepat. Muat ulang lalu coba lagi.", "This entry changed or isn't in the right state. Reload and try again."},
+
+	// Operator reading review and its accessibility gate (API_SPEC_ADMIN 2.1).
+	"reading_content_changed":            {"Teks bacaan berubah sejak pratinjau dibuka. Muat ulang lalu tinjau teks terbaru.", "The reading text changed since the preview was opened. Reload and review the current text."},
+	"reading_not_approved":               {"Bacaan ini tidak punya persetujuan aktif.", "This reading item has no current approval."},
+	"accessibility_checks_changed":       {"Aturan pemeriksaan aksesibilitas berubah. Muat ulang lalu tinjau hasil terbaru.", "The accessibility checks changed. Reload and review the current results."},
+	"accessibility_checks_failed":        {"Pemeriksaan aksesibilitas otomatis gagal. Teks perlu diperbaiki sebelum bisa disetujui.", "Automatic accessibility checks failed. The text must be fixed before it can be approved."},
+	"accessibility_checklist_incomplete": {"Konfirmasi setiap butir daftar periksa aksesibilitas.", "Confirm every item of the accessibility checklist."},
+	"accessibility_override_required":    {"Beberapa pemeriksaan keterbacaan tidak terpenuhi. Tulis alasan pengecualian (20 sampai 300 karakter).", "Some readability checks are not met. Give a reason for the exception (20 to 300 characters)."},
 }
 
 // lang picks the message language: explicit header, then Accept-Language.

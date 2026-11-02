@@ -1,10 +1,20 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import axe from "axe-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "../i18n";
 import { OperatorApp } from "../operator/OperatorApp";
 import type {
   Admin,
+  ReadingA11yCheck,
+  ReadingA11yMeta,
+  ReadingA11yReport,
   ReadingAdminItem,
   ReadingApproval,
   ReadingDetail,
@@ -60,6 +70,69 @@ const detail: ReadingDetail = {
 
 const hash = "a".repeat(64);
 
+const CHECK_IDS = [
+  "language_parity",
+  "heading_structure",
+  "list_structure",
+  "link_text",
+  "image_alt",
+  "sensory_instructions",
+  "sentence_length",
+  "readability",
+  "block_length",
+];
+
+type A11yState = "pass" | "needs_override" | "blocked";
+
+function a11yReport(state: A11yState): ReadingA11yReport {
+  const checks: ReadingA11yCheck[] = CHECK_IDS.map((id) => ({
+    id,
+    status: id === "image_alt" ? "not_applicable" : "pass",
+    blocking: !["sentence_length", "readability", "block_length"].includes(id),
+    findings: [],
+  }));
+  if (state === "needs_override") {
+    const c = checks.find((x) => x.id === "sentence_length")!;
+    c.status = "fail";
+    c.findings = [
+      { code: "sentence_over_20_words", path: "content.seek_help_when.en", lang: "en", value: 22 },
+    ];
+  }
+  if (state === "blocked") {
+    const c = checks.find((x) => x.id === "sensory_instructions")!;
+    c.status = "fail";
+    c.findings = [
+      { code: "sensory_only_instruction", path: "content.steps.en[0]", lang: "en" },
+    ];
+  }
+  return {
+    version: "sela-reading-a11y-v1",
+    result: state,
+    checks,
+    metrics: {
+      id: { sentences: 6, words: 60, avgWordsPerSentence: 10, maxWordsPerSentence: 14, sentencesOver20Words: 0, fkGrade: null },
+      en: { sentences: 6, words: 66, avgWordsPerSentence: 11, maxWordsPerSentence: 22, sentencesOver20Words: state === "needs_override" ? 1 : 0, fkGrade: 5.2 },
+    },
+  };
+}
+
+const meta: ReadingA11yMeta = {
+  checksVersion: "sela-reading-a11y-v1",
+  manualVersion: "sela-reading-a11y-manual-v1",
+  manualChecklist: [
+    { id: "read_aloud_plain_language", label: { id: "Saya membaca dengan suara keras.", en: "I read it aloud." } },
+    { id: "meaning_without_visuals", label: { id: "Makna jelas tanpa warna.", en: "Meaning is clear without colour." } },
+    { id: "names_and_order", label: { id: "Judul dan urutan jelas.", en: "Headings and order are clear." } },
+  ],
+  overrideReason: { min: 20, max: 300 },
+};
+
+const allManual = {
+  read_aloud_plain_language: true,
+  meaning_without_visuals: true,
+  names_and_order: true,
+};
+
 function approval(revoked = false): ReadingApproval {
   return {
     slug: "draft-one",
@@ -75,12 +148,16 @@ function approval(revoked = false): ReadingApproval {
   };
 }
 
-function item(state: "draft" | "approved" | "revoked"): ReadingAdminItem {
+function item(
+  state: "draft" | "approved" | "revoked",
+  a11y: A11yState = "pass",
+): ReadingAdminItem {
   const ap = state === "draft" ? undefined : approval(state === "revoked");
   return {
     slug: "draft-one",
     detail,
     contentHash: hash,
+    accessibility: a11yReport(a11y),
     embeddedReview: {
       status: "machine_drafted_unreviewed",
       verifierStatus: "not_run",
@@ -106,6 +183,8 @@ type Call = { url: string; init: RequestInit };
 function stubReading(
   session: Admin,
   start: "draft" | "approved" = "draft",
+  a11y: A11yState = "pass",
+  approveError?: { status: number; code: string; field: string },
 ): { calls: Call[]; state: { value: "draft" | "approved" | "revoked" } } {
   const calls: Call[] = [];
   const state = { value: start as "draft" | "approved" | "revoked" };
@@ -121,6 +200,11 @@ function stubReading(
         return reply(200, { data: { events: [] } });
       }
       if (url.endsWith("/api/admin/v1/reading/draft-one/approve")) {
+        if (approveError) {
+          return reply(approveError.status, {
+            error: { code: approveError.code, message: "x", field: approveError.field },
+          });
+        }
         state.value = "approved";
         return reply(200, {
           data: { slug: "draft-one", approval: approval() },
@@ -133,7 +217,9 @@ function stubReading(
         });
       }
       if (url.endsWith("/api/admin/v1/reading")) {
-        return reply(200, { data: { items: [item(state.value)] } });
+        return reply(200, {
+          data: { items: [item(state.value, a11y)], accessibility: meta },
+        });
       }
       throw new Error(`unexpected request ${url}`);
     }),
@@ -183,7 +269,7 @@ describe("operator reading review", () => {
     const submit = screen.getByRole("button", {
       name: "Approve for publication",
     });
-    expect(submit).toBeDisabled();
+    expect(submit).toHaveAttribute("aria-disabled", "true");
     fireEvent.change(screen.getByLabelText("Reviewer name"), {
       target: { value: "Editor Manusia" },
     });
@@ -193,9 +279,20 @@ describe("operator reading review", () => {
     fireEvent.change(screen.getByLabelText("Note (optional)"), {
       target: { value: "read it" },
     });
-    expect(submit).toBeDisabled();
-    fireEvent.click(screen.getByRole("checkbox"));
-    expect(submit).toBeEnabled();
+    expect(submit).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /I have read this exact text/ }),
+    );
+    // The manual accessibility checklist is still open.
+    expect(submit).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText(/Still needed: accessibility checklist \(0 of 3\)/)).toBeInTheDocument();
+    const checklist = screen.getByRole("group", {
+      name: "Manual accessibility checklist (required)",
+    });
+    for (const box of within(checklist).getAllByRole("checkbox")) {
+      fireEvent.click(box);
+    }
+    expect(submit).not.toHaveAttribute("aria-disabled");
     fireEvent.click(submit);
 
     await screen.findByText(/draft-one is approved/);
@@ -210,6 +307,12 @@ describe("operator reading review", () => {
       verifierStatus: "supported",
       contentHash: hash,
       confirm: true,
+      accessibility: {
+        checksVersion: "sela-reading-a11y-v1",
+        manualVersion: "sela-reading-a11y-manual-v1",
+        manualChecks: allManual,
+        overrideReason: "",
+      },
     });
     expect(new Headers(call?.init.headers).get("X-Sela-Request")).toBe("1");
     await waitFor(() => expect(screen.getAllByText("Published").length).toBeGreaterThan(0));
@@ -276,5 +379,176 @@ describe("operator reading review", () => {
       screen.queryByRole("link", { name: "Reading reviews" }),
     ).not.toBeInTheDocument();
     expect(calls.some((c) => c.url.endsWith("/api/admin/v1/reading"))).toBe(false);
+  });
+});
+
+describe("operator reading review: accessibility gate", () => {
+  async function fillCommon() {
+    fireEvent.change(screen.getByLabelText("Reviewer name"), {
+      target: { value: "Editor Manusia" },
+    });
+    fireEvent.change(screen.getByLabelText("Review date"), {
+      target: { value: "2026-11-01" },
+    });
+    const checklist = screen.getByRole("group", {
+      name: "Manual accessibility checklist (required)",
+    });
+    for (const box of within(checklist).getAllByRole("checkbox")) {
+      fireEvent.click(box);
+    }
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /I have read this exact text/ }),
+    );
+  }
+
+  it("lists every automatic check with a text status, not colour alone", async () => {
+    stubReading(owner, "draft", "needs_override");
+    renderReading();
+    await openItem();
+    const section = screen.getByRole("region", {
+      name: "Automatic accessibility checks",
+    });
+    expect(within(section).getByText("Sentence length (at most 20 words)")).toBeInTheDocument();
+    expect(
+      within(section).getByText("Fails · can be excepted with a reason"),
+    ).toBeInTheDocument();
+    expect(within(section).getAllByText("Pass").length).toBe(7);
+    expect(within(section).getByText("Not applicable")).toBeInTheDocument();
+    expect(within(section).getByText(/22-word sentence/)).toBeInTheDocument();
+    expect(within(section).getByText("content.seek_help_when.en")).toBeInTheDocument();
+    // The list row carries the same result as words.
+    expect(
+      screen.getAllByText("Accessibility: needs a reason").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("requires a reasoned override when only readability fails and sends it", async () => {
+    const { calls } = stubReading(owner, "draft", "needs_override");
+    renderReading();
+    await openItem();
+    await fillCommon();
+    const submit = screen.getByRole("button", { name: "Approve for publication" });
+    expect(submit).toHaveAttribute("aria-disabled", "true");
+    const reason = screen.getByRole("textbox", {
+      name: "Readability exception reason (required)",
+    });
+    expect(reason).toHaveAccessibleDescription(/Checks not met: Sentence length/);
+    fireEvent.change(reason, { target: { value: "too short" } });
+    expect(submit).toHaveAttribute("aria-disabled", "true");
+    fireEvent.change(reason, {
+      target: { value: "Emergency line kept whole so the number is not split." },
+    });
+    expect(submit).not.toHaveAttribute("aria-disabled");
+    fireEvent.click(submit);
+    await screen.findByText(/draft-one is approved/);
+    const call = calls.find((c) => c.url.endsWith("/draft-one/approve"));
+    expect(JSON.parse(String(call?.init.body)).accessibility).toEqual({
+      checksVersion: "sela-reading-a11y-v1",
+      manualVersion: "sela-reading-a11y-manual-v1",
+      manualChecks: allManual,
+      overrideReason: "Emergency line kept whole so the number is not split.",
+    });
+  });
+
+  it("cannot be approved when a required check fails", async () => {
+    stubReading(owner, "draft", "blocked");
+    renderReading();
+    await openItem();
+    expect(
+      screen.getByText("Fails · must be fixed"),
+    ).toBeInTheDocument();
+    const checklist = screen.getByRole("group", {
+      name: "Manual accessibility checklist (required)",
+    });
+    for (const box of within(checklist).getAllByRole("checkbox")) {
+      expect(box).toBeDisabled();
+    }
+    const submit = screen.getByRole("button", { name: "Approve for publication" });
+    expect(submit).toHaveAttribute("aria-disabled", "true");
+    expect(submit).toHaveAccessibleDescription(/can't be approved: a required accessibility check failed/);
+    expect(
+      screen.queryByRole("textbox", { name: /exception reason/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a refusal inside the form, focuses it and marks the field invalid", async () => {
+    stubReading(owner, "draft", "needs_override", {
+      status: 422,
+      code: "accessibility_override_required",
+      field: "accessibility.overrideReason",
+    });
+    renderReading();
+    await openItem();
+    await fillCommon();
+    const reason = screen.getByRole("textbox", {
+      name: "Readability exception reason (required)",
+    });
+    fireEvent.change(reason, {
+      target: { value: "A reason long enough for the client check." },
+    });
+    const submit = screen.getByRole("button", { name: "Approve for publication" });
+    const form = submit.closest("form")!;
+    fireEvent.click(submit);
+    const alert = await within(form).findByText(
+      "Give a reason for the readability exception, 20 to 300 characters.",
+    );
+    expect(alert).toHaveAttribute("role", "alert");
+    await waitFor(() => expect(alert).toHaveFocus());
+    expect(reason).toHaveAttribute("aria-invalid", "true");
+    expect(reason).toHaveAccessibleDescription(/Give a reason for the readability exception/);
+  });
+});
+
+describe("operator reading review: unavailable approve button", () => {
+  it("stays focusable, says what is missing and sends nothing", async () => {
+    const { calls } = stubReading(owner);
+    renderReading();
+    await openItem();
+    const submit = screen.getByRole("button", { name: "Approve for publication" });
+    expect(submit).not.toBeDisabled();
+    submit.focus();
+    expect(submit).toHaveFocus();
+    expect(submit).toHaveAttribute("aria-disabled", "true");
+    expect(submit).toHaveAccessibleDescription(
+      /Still needed: reviewer name, review date, accessibility checklist \(0 of 3\), confirmation/,
+    );
+    fireEvent.click(submit);
+    expect(calls.some((c) => c.url.endsWith("/approve"))).toBe(false);
+  });
+});
+
+describe("operator reading review: focus and live regions", () => {
+  it("keeps status and alert live regions mounted before any message", async () => {
+    stubReading(owner);
+    renderReading();
+    await screen.findByRole("heading", { name: "Reading reviews" });
+    expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
+  });
+
+  it("moves focus to the opened item and keeps it inside the revoke step", async () => {
+    stubReading(owner, "approved");
+    renderReading();
+    await screen.findByRole("heading", { name: "Reading reviews" });
+    fireEvent.click(await screen.findByRole("button", { name: /Exercise title/ }));
+    const heading = await screen.findByRole("heading", { level: 3, name: /Exercise title/ });
+    await waitFor(() => expect(heading).toHaveFocus());
+
+    fireEvent.click(screen.getByRole("button", { name: "End publication" }));
+    const reasonInput = await screen.findByLabelText("Reason (optional)");
+    await waitFor(() => expect(reasonInput).toHaveFocus());
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "End publication" })).toHaveFocus(),
+    );
+  });
+
+  it("names a source link that opens a new tab", async () => {
+    stubReading(owner);
+    renderReading();
+    await openItem();
+    expect(
+      screen.getByRole("link", { name: "Source one (opens in a new tab)" }),
+    ).toHaveAttribute("target", "_blank");
   });
 });

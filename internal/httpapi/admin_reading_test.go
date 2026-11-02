@@ -59,6 +59,12 @@ func TestAdminReadingApprovalPublishesAndRevocationStopsIt(t *testing.T) {
 		t.Fatalf("public list is not empty before approval: %v", got)
 	}
 
+	// The first embedded item fails only overridable readability checks,
+	// so its approval needs the full checklist and an override reason.
+	a11y, _ := first["accessibility"].(map[string]any)
+	if a11y["version"] != reading.A11yChecksVersion || a11y["result"] != reading.A11yResultNeedsOverride {
+		t.Fatalf("first item accessibility = %+v", a11y)
+	}
 	body := func(over map[string]any) map[string]any {
 		b := map[string]any{
 			"reviewerName":   "Editor Uji Manusia",
@@ -67,6 +73,7 @@ func TestAdminReadingApprovalPublishesAndRevocationStopsIt(t *testing.T) {
 			"verifierStatus": "supported",
 			"contentHash":    hash,
 			"confirm":        true,
+			"accessibility":  a11yBody(overrideReason),
 		}
 		for k, v := range over {
 			b[k] = v
@@ -130,14 +137,14 @@ func TestAdminReadingApprovalPublishesAndRevocationStopsIt(t *testing.T) {
 	owner.must(200, "POST", "/api/admin/v1/reading/"+slug+"/revoke", map[string]any{})
 
 	events := owner.must(200, "GET", "/api/admin/v1/reading/audit", nil).data()["events"].([]any)
-	if len(events) != 2 {
-		t.Fatalf("audit events = %d, want one approve and one revoke: %v", len(events), events)
+	if len(events) != 3 {
+		t.Fatalf("audit events = %d, want approve, accessibility override and revoke: %v", len(events), events)
 	}
 	seen := map[string]bool{}
 	for _, ev := range events {
 		seen[ev.(map[string]any)["action"].(string)] = true
 	}
-	if !seen["reading.approve"] || !seen["reading.revoke"] {
+	if !seen["reading.approve"] || !seen["reading.revoke"] || !seen["reading.a11y_override"] {
 		t.Fatalf("audit actions = %v", seen)
 	}
 
@@ -145,6 +152,120 @@ func TestAdminReadingApprovalPublishesAndRevocationStopsIt(t *testing.T) {
 	adminLogin(t, e, st, ops, "reading.ops", adminPassword, admin.RoleOps)
 	ops.must(403, "GET", "/api/admin/v1/reading", nil)
 	ops.must(403, "POST", "/api/admin/v1/reading/"+slug+"/revoke", map[string]any{})
+}
+
+const overrideReason = "Kalimat bantuan darurat dibiarkan utuh agar nomor 119 tidak terpisah."
+
+func a11yBody(reason string) map[string]any {
+	checks := map[string]any{}
+	for _, id := range reading.ManualCheckIDs() {
+		checks[id] = true
+	}
+	return map[string]any{
+		"checksVersion":  reading.A11yChecksVersion,
+		"manualVersion":  reading.A11yManualVersion,
+		"manualChecks":   checks,
+		"overrideReason": reason,
+	}
+}
+
+func readingItemBySlug(t *testing.T, items []any, slug string) map[string]any {
+	t.Helper()
+	for _, raw := range items {
+		it := raw.(map[string]any)
+		if it["slug"] == slug {
+			return it
+		}
+	}
+	t.Fatalf("no admin reading item %q", slug)
+	return nil
+}
+
+func TestAdminReadingAccessibilityGate(t *testing.T) {
+	e, st, _ := newReadingEnv(t)
+	owner := e.client()
+	adminLogin(t, e, st, owner, "reading.a11y", adminPassword, admin.RoleOwner)
+
+	list := owner.must(200, "GET", "/api/admin/v1/reading", nil).data()
+	meta, _ := list["accessibility"].(map[string]any)
+	checklist, _ := meta["manualChecklist"].([]any)
+	if meta["checksVersion"] != reading.A11yChecksVersion || meta["manualVersion"] != reading.A11yManualVersion ||
+		len(checklist) != len(reading.ManualChecklist) {
+		t.Fatalf("accessibility meta = %+v", meta)
+	}
+	items := list["items"].([]any)
+	results := map[string]int{}
+	for _, raw := range items {
+		a := raw.(map[string]any)["accessibility"].(map[string]any)
+		results[a["result"].(string)]++
+		if checks, _ := a["checks"].([]any); len(checks) != 9 {
+			t.Fatalf("checks = %v", a["checks"])
+		}
+	}
+	// No embedded item is blocked today; 10 pass and 28 need a reasoned
+	// readability override (matching sela-plain-language-v1).
+	if results[reading.A11yResultPass] != 10 || results[reading.A11yResultNeedsOverride] != 28 || results[reading.A11yResultBlocked] != 0 {
+		t.Fatalf("results = %v", results)
+	}
+
+	clean := readingItemBySlug(t, items, "grounding-satu-menit-lima-indra")
+	if clean["accessibility"].(map[string]any)["result"] != reading.A11yResultPass {
+		t.Fatalf("clean item = %+v", clean["accessibility"])
+	}
+	needs := readingItemBySlug(t, items, "grounding-saat-badai-emosi")
+	body := func(it map[string]any, a11y any) map[string]any {
+		return map[string]any{
+			"reviewerName": "Editor Uji Manusia", "reviewedOn": "2026-11-01", "note": "",
+			"verifierStatus": "supported", "contentHash": it["contentHash"], "confirm": true,
+			"accessibility": a11y,
+		}
+	}
+	path := func(it map[string]any) string { return "/api/admin/v1/reading/" + it["slug"].(string) + "/approve" }
+	expect := func(r resp, status int, code, field string) {
+		t.Helper()
+		if r.status != status || r.code() != code {
+			t.Fatalf("got %d %s, want %d %s", r.status, r.raw, status, code)
+		}
+		if field != "" && !bytes.Contains(r.raw, []byte(`"field":"`+field+`"`)) {
+			t.Fatalf("field: %s, want %s", r.raw, field)
+		}
+	}
+
+	expect(owner.call("POST", path(clean), body(clean, nil)), 400, "accessibility_checklist_incomplete", "accessibility")
+	stale := a11yBody("")
+	stale["checksVersion"] = "sela-reading-a11y-v0"
+	expect(owner.call("POST", path(clean), body(clean, stale)), 409, "accessibility_checks_changed", "accessibility.checksVersion")
+	partial := a11yBody("")
+	partial["manualChecks"].(map[string]any)["meaning_without_visuals"] = false
+	expect(owner.call("POST", path(clean), body(clean, partial)), 400, "accessibility_checklist_incomplete", "accessibility.manualChecks.meaning_without_visuals")
+	expect(owner.call("POST", path(needs), body(needs, a11yBody(""))), 422, "accessibility_override_required", "accessibility.overrideReason")
+	expect(owner.call("POST", path(needs), body(needs, a11yBody("terlalu pendek"))), 422, "accessibility_override_required", "accessibility.overrideReason")
+	expect(owner.call("POST", path(clean), body(clean, a11yBody(overrideReason))), 400, "invalid_input", "accessibility.overrideReason")
+
+	if got := e.client().must(200, "GET", "/api/v3/reading", nil).data()["items"].([]any); len(got) != 0 {
+		t.Fatalf("a refused approval published an item: %v", got)
+	}
+	if events := owner.must(200, "GET", "/api/admin/v1/reading/audit", nil).data()["events"].([]any); len(events) != 0 {
+		t.Fatalf("refusals were audited as approvals: %v", events)
+	}
+
+	ok := owner.must(200, "POST", path(clean), body(clean, a11yBody(""))).data()["approval"].(map[string]any)
+	rec := ok["accessibility"].(map[string]any)
+	if rec["result"] != reading.A11yApprovedPass || rec["checksVersion"] != reading.A11yChecksVersion || rec["overrideReason"] != nil {
+		t.Fatalf("pass record = %+v", rec)
+	}
+	ov := owner.must(200, "POST", path(needs), body(needs, a11yBody(overrideReason))).data()["approval"].(map[string]any)
+	rec = ov["accessibility"].(map[string]any)
+	if rec["result"] != reading.A11yApprovedOverridden || rec["overrideReason"] != overrideReason {
+		t.Fatalf("override record = %+v", rec)
+	}
+	actions := map[string]int{}
+	for _, ev := range owner.must(200, "GET", "/api/admin/v1/reading/audit", nil).data()["events"].([]any) {
+		actions[ev.(map[string]any)["action"].(string)]++
+	}
+	if actions["reading.approve"] != 2 || actions["reading.a11y_override"] != 1 {
+		t.Fatalf("audit actions = %v", actions)
+	}
 }
 
 func TestAdminReadingReviewerRolesCanRead(t *testing.T) {

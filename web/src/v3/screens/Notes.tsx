@@ -315,9 +315,27 @@ function NoteEditor({ user }: { user: Profile }) {
   const [savedAt, setSavedAt] = useState("");
   useLeaveWarning(Boolean(text || title));
 
+  // The save button stays focusable while it can't save yet
+  // (ACCESSIBILITY_CRITERIA 4.1.2: aria-disabled plus the reason), so a
+  // keyboard or screen-reader user hears why instead of skipping a silent,
+  // disabled control.
+  const saveBlocked = !text.trim()
+    ? w("Tulis catatanmu dulu untuk menyimpan.", "Write your note first to save it.")
+    : !save
+      ? w(
+          "Centang \u201cSimpan catatan ini di Catatanku\u201d untuk menyimpan.",
+          "Tick \u201cSave this note to My notes\u201d to save it.",
+        )
+      : "";
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (busy) return;
+    if (!text.trim()) {
+      setError(w("Tulis catatanmu dulu untuk menyimpan.", "Write your note first to save it."));
+      return;
+    }
     if (!save) {
       setError(w("Pilih dulu apakah catatan ini disimpan.", "Choose first whether this note is saved."));
       return;
@@ -393,13 +411,24 @@ function NoteEditor({ user }: { user: Profile }) {
           {w("Simpan catatan ini di Catatanku", "Save this note to My notes")}
         </CheckboxRow>
         <div className="s-actions">
-          <Button type="submit" variant="primary" busy={busy} disabled={!save || !text.trim()}>
+          <Button
+            type="submit"
+            variant="primary"
+            busy={busy}
+            aria-disabled={saveBlocked !== "" || undefined}
+            aria-describedby={saveBlocked ? "note-save-reason" : undefined}
+          >
             {busy ? w("Menyimpan…", "Saving…") : w("Simpan catatan", "Save note")}
           </Button>
           <LinkButton to="/notes" variant="quiet">
             {w("Batal", "Cancel")}
           </LinkButton>
         </div>
+        {saveBlocked && (
+          <p id="note-save-reason" className="s-hint">
+            {saveBlocked}
+          </p>
+        )}
         </div>
         <aside className="s-editor-aside" aria-labelledby="prompts-title">
           <h2 id="prompts-title">{w("Butuh pancingan?", "Need a prompt?")}</h2>

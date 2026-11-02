@@ -332,3 +332,98 @@
     padding: 0.7rem;
   }
 }
+
+/* Visually hidden but read by screen readers (live regions, link hints). */
+.op-sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.op-reading-a11y {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid var(--op-line);
+  border-radius: 8px;
+}
+
+.op-reading-a11y h4 {
+  margin: 0;
+  font-family: "Lexend", "Hanken Grotesk", system-ui, sans-serif;
+  font-size: 0.95rem;
+}
+
+.op-a11y-checks {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+}
+
+.op-a11y-checks > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  min-width: 0;
+}
+
+.op-a11y-check-name {
+  flex: 1 1 14rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.op-a11y-checks .op-reading-state {
+  white-space: normal;
+}
+
+.op-a11y-findings {
+  flex-basis: 100%;
+  margin: 0;
+  padding-left: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.op-a11y-findings code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.op-a11y-metric {
+  display: contents;
+}
+
+.op-reading-checklist {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--op-line-strong);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.op-reading-checklist legend {
+  padding: 0 0.3rem;
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+
+.op-reading-blocked {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--op-danger);
+  border-radius: 8px;
+  background: var(--op-danger-bg);
+  color: var(--op-danger);
+  font-size: 0.86rem;
+  font-weight: 600;
+}

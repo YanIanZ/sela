@@ -339,6 +339,9 @@ export function ReadingItemPage({ slug }: { slug: string }) {
               <li key={s.id}>
                 <a href={s.url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
                   {s.title}
+                  <span className="s-sr-only">
+                    {w(" (membuka situs sumber di tab baru)", " (opens the source website in a new tab)")}
+                  </span>
                 </a>{" "}
                 <span className="s-muted">· {s.publisher}</span>
               </li>

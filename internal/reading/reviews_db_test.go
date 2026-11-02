@@ -27,6 +27,23 @@ func reviewActor(n byte) admin.AdminID {
 	return a
 }
 
+// passRecord is the accessibility record of a clean fixture, as
+// GateAccessibility returns it after a full checklist.
+func passRecord() *ApprovalAccessibility {
+	lib, err := LoadFS(fixtureFS(unreviewedItem("clean")))
+	if err != nil {
+		panic(err)
+	}
+	report, _, _ := lib.Accessibility("clean")
+	rec, err := GateAccessibility(report, &A11yRequest{
+		ChecksVersion: A11yChecksVersion, ManualVersion: A11yManualVersion, ManualChecks: fullChecklist(),
+	})
+	if err != nil {
+		panic(err)
+	}
+	return &rec
+}
+
 func approveInput(hash string) ApproveInput {
 	return ApproveInput{
 		ReviewerName:   "Editor Manusia",
@@ -34,6 +51,7 @@ func approveInput(hash string) ApproveInput {
 		Note:           "read the current text",
 		VerifierStatus: "supported",
 		ContentHash:    hash,
+		Accessibility:  passRecord(),
 	}
 }
 
@@ -108,11 +126,17 @@ func TestReviewStoreRefusesIncompleteApproval(t *testing.T) {
 	actor := reviewActor(2)
 	hash := "b" + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde"
 	cases := map[string]func(*ApproveInput){
-		"blank reviewer":         func(in *ApproveInput) { in.ReviewerName = "  " },
-		"future review date":     func(in *ApproveInput) { in.ReviewedOn = time.Date(2026, 11, 3, 0, 0, 0, 0, time.UTC) },
-		"verifier not supported": func(in *ApproveInput) { in.VerifierStatus = "not_run" },
-		"bad hash":               func(in *ApproveInput) { in.ContentHash = "not-a-hash" },
-		"bad slug":               func(in *ApproveInput) {},
+		"blank reviewer":          func(in *ApproveInput) { in.ReviewerName = "  " },
+		"future review date":      func(in *ApproveInput) { in.ReviewedOn = time.Date(2026, 11, 3, 0, 0, 0, 0, time.UTC) },
+		"verifier not supported":  func(in *ApproveInput) { in.VerifierStatus = "not_run" },
+		"bad hash":                func(in *ApproveInput) { in.ContentHash = "not-a-hash" },
+		"bad slug":                func(in *ApproveInput) {},
+		"no accessibility record": func(in *ApproveInput) { in.Accessibility = nil },
+		"partial checklist": func(in *ApproveInput) {
+			rec := *in.Accessibility
+			rec.ManualConfirmed = rec.ManualConfirmed[:1]
+			in.Accessibility = &rec
+		},
 	}
 	for name, mutate := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -130,5 +154,90 @@ func TestReviewStoreRefusesIncompleteApproval(t *testing.T) {
 	rows, _ := s.List(ctx)
 	if len(rows) != 0 {
 		t.Fatalf("invalid approvals were stored: %+v", rows)
+	}
+}
+
+func TestReviewStoreRecordsAccessibilityAndOverride(t *testing.T) {
+	s, _ := newReviewStore(t)
+	ctx := context.Background()
+	actor := reviewActor(3)
+	hash := "c" + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde"
+
+	a, err := s.Approve(ctx, actor, "clean-one", approveInput(hash))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := a.Accessibility
+	if rec == nil || rec.ChecksVersion != A11yChecksVersion || rec.Result != A11yApprovedPass ||
+		rec.ManualVersion != A11yManualVersion || len(rec.ManualConfirmed) != len(ManualChecklist) ||
+		len(rec.Checks) != 9 || rec.OverrideReason != "" {
+		t.Fatalf("stored accessibility = %+v", rec)
+	}
+
+	lib, err := LoadFS(fixtureFS(a11yFixture("long", map[string]any{"summary": loc(
+		"Kalimat ini sengaja dibuat sangat panjang supaya jumlah katanya melewati batas dua puluh kata yang ditetapkan oleh panduan gaya konten Sela.",
+		"Short.")}, "")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, _, _ := lib.Accessibility("long")
+	reason := "Kalimat bantuan darurat dibiarkan utuh agar nomor 119 tidak terpisah."
+	override, err := GateAccessibility(report, &A11yRequest{ChecksVersion: A11yChecksVersion,
+		ManualVersion: A11yManualVersion, ManualChecks: fullChecklist(), OverrideReason: reason})
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := approveInput(hash)
+	in.Accessibility = &override
+	a, err = s.Approve(ctx, actor, "long-one", in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Accessibility == nil || a.Accessibility.Result != A11yApprovedOverridden ||
+		a.Accessibility.OverrideReason != reason || len(a.Accessibility.Overridden) != 1 ||
+		a.Accessibility.Overridden[0] != "sentence_length" {
+		t.Fatalf("override record = %+v", a.Accessibility)
+	}
+	events, err := s.Audit(ctx, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var overrides int
+	for _, e := range events {
+		if e.Action == "reading.a11y_override" {
+			overrides++
+			if e.ObjectID != "long-one" || e.Reason != reason || e.OldStatus != "sentence_length" || e.NewStatus != "overridden" {
+				t.Fatalf("override event = %+v", e)
+			}
+		}
+	}
+	if overrides != 1 || len(events) != 3 {
+		t.Fatalf("events = %+v", events)
+	}
+
+	// The database refuses an inconsistent record even if the application
+	// check were bypassed: an override result without a reason.
+	_, err = s.pool.Exec(ctx, `UPDATE reading_reviews SET a11y_override_reason = NULL WHERE slug = 'long-one'`)
+	if err == nil {
+		t.Fatal("database accepted an override without a reason")
+	}
+	// A pre-1301 style row (no accessibility record) still lists and revokes.
+	_, err = s.pool.Exec(ctx, `INSERT INTO reading_reviews (slug, reviewer_name, reviewed_on, verifier_status,
+		content_hash, approved_by, approved_at) VALUES ('legacy-one','Editor','2026-10-31','supported',$1,$2,now())`,
+		hash, actor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Revoke(ctx, actor, "legacy-one", "legacy"); err != nil {
+		t.Fatalf("revoking a legacy approval: %v", err)
+	}
+	rows, err := s.List(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range rows {
+		if r.Slug == "legacy-one" && r.Accessibility != nil {
+			t.Fatalf("legacy row reports an accessibility record: %+v", r)
+		}
 	}
 }

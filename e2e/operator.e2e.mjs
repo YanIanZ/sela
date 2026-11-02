@@ -198,8 +198,8 @@ try {
   check(
     "approval is not prefilled and starts disabled",
     (await page.getByLabel("Reviewer name").inputValue()) === "" &&
-      !(await page.getByRole("checkbox").isChecked()) &&
-      (await page.getByRole("button", { name: "Approve for publication" }).isDisabled()),
+      !(await page.getByRole("checkbox", { name: /I have read this exact text/ }).isChecked()) &&
+      (await page.getByRole("button", { name: "Approve for publication" }).getAttribute("aria-disabled")) === "true",
   );
   await audit(page, "reading review has no serious/critical WCAG 2.2 AA findings");
   await page.screenshot({

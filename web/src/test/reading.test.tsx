@@ -100,7 +100,12 @@ describe("reading library", () => {
     expect(screen.getAllByText(/1 November 2026/).length).toBeGreaterThan(0);
     expect(screen.getByText(/bukan nasihat medis/)).toBeInTheDocument();
     expect(screen.getByText(/CC BY-NC-SA 3.0 IGO/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Source one" })).toHaveAttribute("href", "https://example.org/source");
+    // The source opens in a new tab, and its name says so (WCAG 3.2.5 advisory, G201).
+    const source = screen.getByRole("link", {
+      name: "Source one (membuka situs sumber di tab baru)",
+    });
+    expect(source).toHaveAttribute("href", "https://example.org/source");
+    expect(source).toHaveAttribute("target", "_blank");
   });
 
   it("explains that an unpublished slug is absent", async () => {

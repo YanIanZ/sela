@@ -50,7 +50,17 @@ func (s *Server) adminReadingList(w http.ResponseWriter, r *http.Request, p admi
 	for _, row := range rows {
 		bySlug[row.Slug] = row
 	}
-	writeData(w, http.StatusOK, map[string]any{"items": s.v3.readingLib.AdminItems(bySlug)})
+	writeData(w, http.StatusOK, map[string]any{
+		"items": s.v3.readingLib.AdminItems(bySlug),
+		// The rule set and the checklist the reviewer must confirm. The
+		// approve request echoes both versions back.
+		"accessibility": map[string]any{
+			"checksVersion":   reading.A11yChecksVersion,
+			"manualVersion":   reading.A11yManualVersion,
+			"manualChecklist": reading.ManualChecklist,
+			"overrideReason":  map[string]int{"min": reading.A11yOverrideMin, "max": reading.A11yOverrideMax},
+		},
+	})
 }
 
 func (s *Server) adminReadingApprove(w http.ResponseWriter, r *http.Request, p admin.Principal) {
@@ -68,6 +78,8 @@ func (s *Server) adminReadingApprove(w http.ResponseWriter, r *http.Request, p a
 		VerifierStatus string `json:"verifierStatus"`
 		ContentHash    string `json:"contentHash"`
 		Confirm        bool   `json:"confirm"`
+		// Accessibility is required: see reading.GateAccessibility.
+		Accessibility *reading.A11yRequest `json:"accessibility"`
 	}
 	if !decode(w, r, &req) {
 		return
@@ -83,7 +95,7 @@ func (s *Server) adminReadingApprove(w http.ResponseWriter, r *http.Request, p a
 		return
 	}
 	slug := r.PathValue("slug")
-	currentHash, ok := s.v3.readingLib.ContentHash(slug)
+	report, currentHash, ok := s.v3.readingLib.Accessibility(slug)
 	if !ok {
 		writeError(w, r, http.StatusNotFound, "not_found", "")
 		return
@@ -100,12 +112,21 @@ func (s *Server) adminReadingApprove(w http.ResponseWriter, r *http.Request, p a
 		writeError(w, r, http.StatusBadRequest, "invalid_input", "reviewedOn")
 		return
 	}
+	// Accessibility is checked against the report computed from the same
+	// embedded bytes as currentHash, never against anything the client says
+	// about the checks.
+	a11y, err := reading.GateAccessibility(report, req.Accessibility)
+	if err != nil {
+		writeA11yGateError(w, r, err)
+		return
+	}
 	approval, err := s.opt.ReadingReviews.Approve(r.Context(), p.AdminID, slug, reading.ApproveInput{
 		ReviewerName:   req.ReviewerName,
 		ReviewedOn:     reviewedOn,
 		Note:           req.Note,
 		VerifierStatus: req.VerifierStatus,
 		ContentHash:    currentHash,
+		Accessibility:  &a11y,
 	})
 	if err != nil {
 		if errors.Is(err, reading.ErrReviewInvalid) {
@@ -116,6 +137,27 @@ func (s *Server) adminReadingApprove(w http.ResponseWriter, r *http.Request, p a
 		return
 	}
 	writeData(w, http.StatusOK, map[string]any{"slug": slug, "approval": approval})
+}
+
+// writeA11yGateError maps an accessibility refusal to its stable code.
+func writeA11yGateError(w http.ResponseWriter, r *http.Request, err error) {
+	field := "accessibility"
+	var ge *reading.A11yGateError
+	if errors.As(err, &ge) {
+		field = ge.Field
+	}
+	switch {
+	case errors.Is(err, reading.ErrA11yVersion):
+		writeError(w, r, http.StatusConflict, "accessibility_checks_changed", field)
+	case errors.Is(err, reading.ErrA11yBlocked):
+		writeError(w, r, http.StatusUnprocessableEntity, "accessibility_checks_failed", field)
+	case errors.Is(err, reading.ErrA11yOverrideRequired):
+		writeError(w, r, http.StatusUnprocessableEntity, "accessibility_override_required", field)
+	case errors.Is(err, reading.ErrA11yChecklist):
+		writeError(w, r, http.StatusBadRequest, "accessibility_checklist_incomplete", field)
+	default:
+		writeError(w, r, http.StatusBadRequest, "invalid_input", field)
+	}
 }
 
 func (s *Server) adminReadingRevoke(w http.ResponseWriter, r *http.Request, p admin.Principal) {

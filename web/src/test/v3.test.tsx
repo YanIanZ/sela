@@ -405,6 +405,30 @@ describe("home, notes and conversations", () => {
     });
   });
 
+  it("keeps the unavailable save button focusable and says why", async () => {
+    const calls = mockApi(
+      { "GET /records": () => ({ data: { records: [] } }) },
+      profile(),
+    );
+    renderPath("/notes/write");
+    await screen.findByLabelText("Catatanmu");
+    const save = screen.getByRole("button", { name: "Simpan catatan" });
+    expect(save).not.toBeDisabled();
+    expect(save).toHaveAttribute("aria-disabled", "true");
+    expect(save).toHaveAccessibleDescription("Tulis catatanmu dulu untuk menyimpan.");
+    fireEvent.change(screen.getByLabelText("Catatanmu"), {
+      target: { value: "Tulisan sintetis." },
+    });
+    if (!(screen.getByLabelText(/Simpan catatan ini di Catatanku/) as HTMLInputElement).checked) {
+      expect(save).toHaveAccessibleDescription(/Centang .Simpan catatan ini di Catatanku. untuk menyimpan/);
+      fireEvent.click(save);
+      expect(await screen.findByText("Pilih dulu apakah catatan ini disimpan.")).toBeInTheDocument();
+      fireEvent.click(screen.getByLabelText(/Simpan catatan ini di Catatanku/));
+    }
+    expect(save).not.toHaveAttribute("aria-disabled");
+    expect(calls.some((c) => c.method === "POST" && c.path === "/records")).toBe(false);
+  });
+
   it("checks derived impact and keeps summaries by default", async () => {
     const user = profile();
     const note = {
